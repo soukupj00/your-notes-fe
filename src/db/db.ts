@@ -1,36 +1,62 @@
 import Dexie, { type Table } from 'dexie';
 
 export interface Note {
-  id?: number;
-  text: string;
-  media?: Blob[]; // audio/images
-  createdAt: Date;
+  id: string;
+  header?: string;
+  description?: string;
+  checklist?: string[]; // array of strings
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface Image {
+  id: string;
+  noteId: string; // foreign key
+  url: string; // Blob URL or base64
+}
+
+export interface Audio {
+  id: string;
+  noteId: string;
+  url: string;
+}
+
+export interface FileAttachment {
+  id: string;
+  noteId: string;
+  name: string;
+  url: string;
 }
 
 export interface Tag {
-  id?: number;
+  id: string;
   name: string;
 }
 
 export interface NoteTag {
-  id?: number;
-  noteId: number;
-  tagId: number;
+  noteId: string;
+  tagId: string;
 }
 
-export class AppDB extends Dexie {
-  notes!: Table<Note>;
-  tags!: Table<Tag>;
-  noteTags!: Table<NoteTag>;
+export class NotesDB extends Dexie {
+  notes!: Table<Note, string>;
+  images!: Table<Image, string>;
+  audios!: Table<Audio, string>;
+  files!: Table<FileAttachment, string>;
+  tags!: Table<Tag, string>;
+  noteTags!: Table<NoteTag, [string, string]>; // composite key
 
   constructor() {
-    super('AppDB');
+    super('NotesDB');
     this.version(1).stores({
-      notes: '++id, createdAt',
-      tags: '++id, name',
-      noteTags: '++id, noteId, tagId',
+      notes: 'id, header, createdAt, updatedAt',
+      images: 'id, noteId',
+      audios: 'id, noteId',
+      files: 'id, noteId',
+      tags: 'id, name',
+      noteTags: '[noteId+tagId], noteId, tagId',
     });
   }
 }
 
-export const db = new AppDB();
+export const db = new NotesDB();
