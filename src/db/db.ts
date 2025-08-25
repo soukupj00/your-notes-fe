@@ -1,48 +1,11 @@
+import type { Note, NoteAudio, NoteFile, NoteImage, NoteTag, Tag } from '@/models.ts';
 import Dexie, { type Table } from 'dexie';
-
-export interface Note {
-  id: string;
-  header?: string;
-  description?: string;
-  checklist?: string[]; // array of strings
-  createdAt: number;
-  updatedAt: number;
-}
-
-export interface Image {
-  id: string;
-  noteId: string; // foreign key
-  url: string; // Blob URL or base64
-}
-
-export interface Audio {
-  id: string;
-  noteId: string;
-  url: string;
-}
-
-export interface FileAttachment {
-  id: string;
-  noteId: string;
-  name: string;
-  url: string;
-}
-
-export interface Tag {
-  id: string;
-  name: string;
-}
-
-export interface NoteTag {
-  noteId: string;
-  tagId: string;
-}
 
 export class NotesDB extends Dexie {
   notes!: Table<Note, string>;
-  images!: Table<Image, string>;
-  audios!: Table<Audio, string>;
-  files!: Table<FileAttachment, string>;
+  images!: Table<NoteImage, string>;
+  audios!: Table<NoteAudio, string>;
+  files!: Table<NoteFile, string>;
   tags!: Table<Tag, string>;
   noteTags!: Table<NoteTag, [string, string]>; // composite key
 

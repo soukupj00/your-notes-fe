@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 
-const now = Date.now();
+const now = new Date(Date.now()).toISOString();
 
 export const dummyNotes = [
   // Only header

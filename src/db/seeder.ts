@@ -1,4 +1,6 @@
+import 'fake-indexeddb/auto';
 import { dummyNotes } from '@/db/dummyNotes.ts';
+import type { NoteTag } from '@/models.ts';
 import { v4 as uuid } from 'uuid';
 import { db } from './db.ts';
 
@@ -8,21 +10,23 @@ async function seedDummyData() {
     await db.tags.clear();
     await db.noteTags.clear();
 
+    const now = new Date(Date.now()).toISOString();
+
     const notes = dummyNotes;
 
     const tagsPool = ['Work', 'Personal', 'Health', 'Shopping', 'Travel', 'Study', 'Food', 'Ideas'];
-    const tags = tagsPool.map((name) => ({ id: uuid(), name }));
+    const tags = tagsPool.map((name) => ({ id: uuid(), name, createdAt: now, updatedAt: now }));
     await db.tags.bulkAdd(tags);
 
     await db.notes.bulkAdd(notes);
 
-    const noteTags: { noteId: string; tagId: string }[] = [];
+    const noteTags: NoteTag[] = [];
 
     notes.forEach((note) => {
       const tagCount = Math.floor(Math.random() * 4); // 0–3 tags
       const shuffledTags = tags.sort(() => Math.random() - 0.5).slice(0, tagCount);
       shuffledTags.forEach((tag) => {
-        noteTags.push({ noteId: note.id, tagId: tag.id });
+        noteTags.push({ noteId: note.id, tagId: tag.id, createdAt: now, updatedAt: now });
       });
     });
 

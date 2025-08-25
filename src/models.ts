@@ -7,18 +7,22 @@ export interface Note {
   images?: NoteImage[]; // Array of images
   files?: NoteFile[]; // Array of file attachments
   tags?: Tag[]; // Array of tags
-  createdAt: number; // Timestamp
-  updatedAt: number; // Timestamp
+  createdAt: string; // Timestamp
+  updatedAt: string; // Timestamp
 }
 
 export interface Tag {
   id: string; // Unique ID for tag
   name: string; // Tag name (e.g., "Work", "Personal")
+  createdAt: string; // Timestamp
+  updatedAt: string; // Timestamp
 }
 
 export interface NoteTag {
   noteId: string; // Foreign key to Note.id
   tagId: string; // Foreign key to Tag.id
+  createdAt: string; // Timestamp
+  updatedAt: string; // Timestamp
 }
 
 /**
@@ -30,6 +34,8 @@ export interface NoteImage {
   noteId: string; // FK to Note.id
   url: string; // Object URL or Base64 string
   name?: string; // Optional image name
+  createdAt: string; // Timestamp
+  updatedAt: string; // Timestamp
 }
 
 export interface NoteAudio {
@@ -38,6 +44,8 @@ export interface NoteAudio {
   url: string; // Audio file URL or Base64 string
   name?: string; // Optional audio name
   duration?: number; // Duration in seconds
+  createdAt: string; // Timestamp
+  updatedAt: string; // Timestamp
 }
 
 export interface NoteFile {
@@ -47,4 +55,6 @@ export interface NoteFile {
   name: string; // Original filename
   size?: number; // File size in bytes
   type?: string; // MIME type
+  createdAt: string; // Timestamp
+  updatedAt: string; // Timestamp
 }
