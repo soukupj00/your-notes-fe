@@ -1,10 +1,11 @@
+import { ColorPicker } from '@/components/ColorPicker.tsx';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 
 import type { Note, NoteAudio, NoteFile, NoteImage } from '@/models.ts';
-import React from 'react';
+import React, { useState } from 'react';
 
 interface NoteCardProps {
   note?: Note;
@@ -19,9 +20,14 @@ export const NoteCard: React.FC<NoteCardProps> = ({
   audios = [],
   files = [],
 }) => {
+  const [bgColor, setBgColor] = useState<string>('#f5f5f5');
+
   return (
     note && (
-      <Card className="w-full max-w-lg shadow-md">
+      <Card
+        className="w-full max-w-lg shadow-md transition-colors duration-300"
+        style={{ backgroundColor: bgColor }}
+      >
         {/* Header */}
         {note.header && (
           <CardHeader>
@@ -106,6 +112,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
               </ul>
             </div>
           )}
+          <ColorPicker color={bgColor} onChange={setBgColor} />
         </CardContent>
       </Card>
     )
