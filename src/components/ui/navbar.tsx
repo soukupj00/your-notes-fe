@@ -1,6 +1,7 @@
 import { SearchInput } from '@/components/searchInput.tsx';
+import { ThemeModeToggleButton } from '@/components/themeModeToggleButton.tsx';
 import { Button } from '@/components/ui/button.tsx';
-import { Globe, Menu, Moon, Settings } from 'lucide-react';
+import { Globe, Menu, Settings } from 'lucide-react';
 import * as React from 'react';
 
 function Navbar({ className, children, ...props }: React.ComponentProps<'header'>) {
@@ -21,9 +22,7 @@ function Navbar({ className, children, ...props }: React.ComponentProps<'header'
           <Button variant="ghost" size="icon">
             <Globe />
           </Button>
-          <Button variant="ghost" size="icon">
-            <Moon />
-          </Button>
+          <ThemeModeToggleButton />
           <Button variant="ghost" size="icon">
             <Settings />
           </Button>

@@ -16,7 +16,6 @@ export function useSearchNotes(query: string) {
       const matchesChecklist = note.checklist?.some((item) =>
         item.toLowerCase().includes(lowerQuery)
       );
-      console.log(note.createdAt, note.updatedAt);
       const matchesDates =
         note.createdAt.toLowerCase().includes(lowerQuery) ||
         note.updatedAt.toLowerCase().includes(lowerQuery);

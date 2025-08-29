@@ -15,8 +15,13 @@ export function ColorPicker({ color, onChange }: ColorPickerProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="default" size="icon" title="Pick a color">
-          <Palette className="" />
+        <Button
+          variant="default"
+          size="icon"
+          title="Pick a color"
+          className="rounded-full p-0 shadow-none"
+        >
+          <Palette />
         </Button>
       </DialogTrigger>
 

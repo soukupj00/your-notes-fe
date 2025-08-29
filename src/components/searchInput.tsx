@@ -1,7 +1,9 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog.tsx';
 import { Input } from '@/components/ui/input.tsx';
+import { useNotes } from '@/context/NotesProvider.tsx';
 import { Search } from 'lucide-react';
 import * as React from 'react';
+import { useState } from 'react';
 
 /**
  * TODO Use Command from shadcn instead of this component for a better search experience.
@@ -10,8 +12,8 @@ import * as React from 'react';
  * @constructor
  */
 function SearchInput({ className, ...props }: React.ComponentProps<'div'>) {
-  const [value, setValue] = React.useState('');
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
+  const { query, setQuery } = useNotes();
 
   const searchInput = (
     <div className="relative w-full">
@@ -27,10 +29,10 @@ function SearchInput({ className, ...props }: React.ComponentProps<'div'>) {
       </button>
       <Input
         type="search"
-        placeholder="Search..."
+        placeholder="Search notes..."
         className="w-full pl-8"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
         autoFocus
       />
     </div>
