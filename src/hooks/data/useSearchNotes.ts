@@ -1,5 +1,5 @@
-import { db } from '@/db/db';
-import type { Note, Tag } from '@/models';
+import { db } from '@/db/db.ts';
+import type { Note, Tag } from '@/models.ts';
 import { useLiveQuery } from 'dexie-react-hooks';
 
 export function useSearchNotes(query: string) {

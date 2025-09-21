@@ -1,5 +1,5 @@
-import { db } from '@/db/db';
-import type { Tag } from '@/models';
+import { db } from '@/db/db.ts';
+import type { Tag } from '@/models.ts';
 import { v4 as uuid } from 'uuid';
 
 export function useTagActions() {

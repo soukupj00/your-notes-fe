@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button.tsx';
 import { Dialog, DialogContent } from '@/components/ui/dialog.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { useNotes } from '@/context/NotesProvider.tsx';
@@ -5,32 +6,25 @@ import { Search } from 'lucide-react';
 import * as React from 'react';
 import { useState } from 'react';
 
-/**
- * TODO Use Command from shadcn instead of this component for a better search experience.
- * @param className
- * @param props
- * @constructor
- */
 function SearchInput({ className, ...props }: React.ComponentProps<'div'>) {
   const [open, setOpen] = useState(false);
   const { query, setQuery } = useNotes();
 
   const searchInput = (
     <div className="relative w-full">
-      <button
+      <Button
         type="button"
-        className="text-muted-foreground absolute top-1/2 left-2 -translate-y-1/2"
-        onClick={() => {
-          /* handle search logic here */
-        }}
+        variant="transparent"
+        size="icon"
+        className="text-muted-foreground absolute top-1/2 left-1 -translate-y-1/2"
         tabIndex={-1}
       >
-        <Search size={18} />
-      </button>
+        <Search size={18} className="hover:bg-red-500" />
+      </Button>
       <Input
         type="search"
         placeholder="Search notes..."
-        className="w-full pl-8"
+        className="text-foreground placeholder-muted-foreground w-full pl-9"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         autoFocus
@@ -40,18 +34,22 @@ function SearchInput({ className, ...props }: React.ComponentProps<'div'>) {
 
   return (
     <div className={className} {...props}>
-      {/* Desktop: show input */}
+      {/* Desktop: input visible */}
       <div className="hidden sm:block">{searchInput}</div>
-      {/* Mobile: show icon button */}
-      <button
+
+      {/* Mobile: shadcn Button instead of raw button */}
+      <Button
         type="button"
-        className="text-muted-foreground rounded-full p-2 sm:hidden"
+        variant="ghost"
+        size="icon"
+        className="text-muted-foreground sm:hidden"
         onClick={() => setOpen(true)}
         aria-label="Open search"
       >
         <Search size={20} />
-      </button>
-      {/* Mobile: Dialog */}
+      </Button>
+
+      {/* Mobile Dialog with input */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>{searchInput}</DialogContent>
       </Dialog>

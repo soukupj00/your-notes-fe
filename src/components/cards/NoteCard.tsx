@@ -1,8 +1,8 @@
 import { ColorPicker } from '@/components/ColorPicker.tsx';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardHeader } from '@/components/ui/card.tsx';
+import { Checkbox } from '@/components/ui/checkbox.tsx';
+import { ScrollArea } from '@/components/ui/scroll-area.tsx';
+import { Separator } from '@/components/ui/separator.tsx';
 
 import type { Note, NoteAudio, NoteFile, NoteImage } from '@/models.ts';
 import React, { useState } from 'react';
@@ -20,7 +20,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
   audios = [],
   files = [],
 }) => {
-  const [bgColor, setBgColor] = useState<string>('#f5f5f5');
+  const [bgColor, setBgColor] = useState<string>('');
 
   return (
     note && (
@@ -37,9 +37,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
 
         <CardContent className="space-y-4">
           {/* Description */}
-          {note.description && (
-            <p className="text-gray-700 dark:text-gray-300">{note.description}</p>
-          )}
+          {note.description && <p>{note.description}</p>}
 
           {/* Checklist */}
           {note.checklist && note.checklist.length > 0 && (

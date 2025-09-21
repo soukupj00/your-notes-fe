@@ -1,4 +1,4 @@
-import { db } from '@/db/db';
+import { db } from '@/db/db.ts';
 import type { Note } from '@/models.ts';
 import { useLiveQuery } from 'dexie-react-hooks';
 

@@ -1,4 +1,4 @@
-import { NoteCard } from '@/components/ui/NoteCard.tsx';
+import { NoteCard } from '@/components/cards/NoteCard.tsx';
 import { useNotes } from '@/context/NotesProvider.tsx';
 
 export function NoteContent() {

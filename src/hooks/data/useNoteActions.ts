@@ -1,5 +1,5 @@
-import { db } from '@/db/db';
-import type { Note } from '@/models';
+import { db } from '@/db/db.ts';
+import type { Note } from '@/models.ts';
 import { v4 as uuid } from 'uuid';
 
 export function useNoteActions() {

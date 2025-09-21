@@ -1,6 +1,6 @@
+import { db } from '@/db/db.ts';
+import type { Note } from '@/models.ts';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/db/db';
-import type { Note } from '@/models';
 
 export function useNote(id: string) {
   const note: Note | null | undefined = useLiveQuery(async () => {

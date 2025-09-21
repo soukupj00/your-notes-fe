@@ -1,5 +1,5 @@
 import { db } from '@/db/db';
-import { useSearchNotes } from '@/hooks/useSearchNotes';
+import { useSearchNotes } from '@/hooks/data/useSearchNotes.ts';
 import type { Note } from '@/models';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { createContext, type ReactNode, useContext, useState } from 'react';
