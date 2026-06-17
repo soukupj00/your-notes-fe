@@ -1,11 +1,11 @@
+import { Home, User } from 'lucide-react';
 import { SearchInput } from '@/components/searchInput.tsx';
 import { Button } from '@/components/ui/button';
 import { Navbar } from '@/components/ui/navbar.tsx';
-import { Home, User } from 'lucide-react';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-background flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-background">
       <Navbar />
       {/* ===== CONTENT ===== */}
       <main className="flex-1 px-4 py-6">{children}</main>

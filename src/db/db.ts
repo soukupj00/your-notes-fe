@@ -1,5 +1,5 @@
-import type { Note, NoteAudio, NoteFile, NoteImage, NoteTag, Tag } from '@/models.ts';
 import Dexie, { type Table } from 'dexie';
+import type { Note, NoteAudio, NoteFile, NoteImage, NoteTag, Tag } from '@/models.ts';
 
 export class NotesDB extends Dexie {
   notes!: Table<Note, string>;

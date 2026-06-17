@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Editor } from '@/components/editor/editor.tsx';
 import Layout from '@/components/layout.tsx';
 import { NoteContent } from '@/components/NoteContent.tsx';
@@ -7,7 +8,6 @@ import { TooltipProvider } from '@/components/ui/tooltip.tsx';
 import { NotesProvider } from '@/context/NotesProvider.tsx';
 import { ThemeProvider } from '@/context/themeProvider.tsx';
 import { seedBrowserData } from '@/db/browserSeeder.ts';
-import { useState } from 'react';
 
 function App() {
   const [count, setCount] = useState(0);

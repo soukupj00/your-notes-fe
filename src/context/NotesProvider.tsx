@@ -1,8 +1,8 @@
+import { useLiveQuery } from 'dexie-react-hooks';
+import { createContext, type ReactNode, useContext, useState } from 'react';
 import { db } from '@/db/db';
 import { useSearchNotes } from '@/hooks/data/useSearchNotes.ts';
 import type { Note } from '@/models';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { createContext, type ReactNode, useContext, useState } from 'react';
 
 type NotesContextType = {
   query: string;
@@ -21,7 +21,9 @@ export function NotesProvider({ children }: { children: ReactNode }) {
     return db.notes.toArray();
   }, []);
 
-  const notes = query.trim() ? searchResults : allNotes || [];
+  const notes = (query.trim() ? searchResults : (allNotes ?? [])).filter(
+    (n): n is Note => n !== undefined
+  );
 
   return (
     <NotesContext.Provider value={{ query, setQuery, notes }}>{children}</NotesContext.Provider>

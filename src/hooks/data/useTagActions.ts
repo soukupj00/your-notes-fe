@@ -1,11 +1,12 @@
+import { v4 as uuid } from 'uuid';
 import { db } from '@/db/db.ts';
 import type { Tag } from '@/models.ts';
-import { v4 as uuid } from 'uuid';
 
 export function useTagActions() {
   // CREATE a new tag
   const createTag = async (name: string) => {
-    const newTag: Tag = { id: uuid(), name };
+    const now = new Date().toISOString();
+    const newTag: Tag = { id: uuid(), name, createdAt: now, updatedAt: now };
     await db.tags.add(newTag);
     return newTag;
   };
@@ -33,7 +34,8 @@ export function useTagActions() {
     const exists = await db.noteTags.where({ noteId, tagId }).first();
 
     if (!exists) {
-      await db.noteTags.add({ noteId, tagId });
+      const now = new Date().toISOString();
+      await db.noteTags.add({ noteId, tagId, createdAt: now, updatedAt: now });
     }
   };
 

@@ -15,7 +15,7 @@ const tokens = [
 
 export function ThemeDebugger() {
   return (
-    <div className="bg-background grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 bg-background p-4 sm:grid-cols-3 md:grid-cols-4">
       {tokens.map((token) => (
         <div
           key={token}

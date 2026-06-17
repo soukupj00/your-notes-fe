@@ -1,5 +1,5 @@
-import type { NoteTag } from '@/models.ts';
 import { v4 as uuid } from 'uuid';
+import type { NoteTag } from '@/models.ts';
 import { db } from './db';
 import { dummyNotes } from './dummyNotes';
 

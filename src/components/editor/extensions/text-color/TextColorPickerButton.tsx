@@ -1,14 +1,14 @@
-import ToolbarButton from '@/components/editor/menus/ToolbarButton.tsx';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx';
-import type { toggleVariants } from '@/components/ui/toggle.tsx';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip.tsx';
-import { useTheme } from '@/context/themeProvider.tsx';
-import { cn } from '@/lib/utils.ts';
-import { Editor } from '@tiptap/react';
+import type { Editor } from '@tiptap/react';
 import type { VariantProps } from 'class-variance-authority';
 import { Baseline, CheckIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import ToolbarButton from '@/components/editor/menus/ToolbarButton.tsx';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
+import type { toggleVariants } from '@/components/ui/toggle.tsx';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip.tsx';
+import { useTheme } from '@/context/themeProvider.tsx';
+import { cn } from '@/lib/utils.ts';
 
 type ColorItem = {
   lightLabel: string;
@@ -106,14 +106,12 @@ interface Props extends VariantProps<typeof toggleVariants> {
 }
 
 export const TextColorPickerButton: React.FC<Props> = ({ editor, size, variant }) => {
-  if (!editor) return null;
-
-  const color = editor.getAttributes('textStyle')?.color || 'hsl(var(--foreground))';
+  const color = editor?.getAttributes('textStyle')?.color || 'hsl(var(--foreground))';
   const [selectedColor, setSelectedColor] = useState<string>(color);
 
   const handleColorChange = React.useCallback(
-    (color: string) => {
-      setSelectedColor(color);
+    (newColor: string) => {
+      setSelectedColor(newColor);
       if (editor.state.storedMarks) {
         const textStyleMark = editor.schema.marks.textStyle;
         if (textStyleMark) {
@@ -121,15 +119,17 @@ export const TextColorPickerButton: React.FC<Props> = ({ editor, size, variant }
         }
       }
       setTimeout(() => {
-        editor.chain().focus().setColor(color).run();
+        editor.chain().focus().setColor(newColor).run();
       }, 0);
     },
     [editor]
   );
 
   useEffect(() => {
-    setSelectedColor(selectedColor);
-  }, [selectedColor]);
+    setSelectedColor(color);
+  }, [color]);
+
+  if (!editor) return null;
 
   return (
     <Popover>

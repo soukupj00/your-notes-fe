@@ -1,11 +1,11 @@
+import type React from 'react';
+import { useState } from 'react';
 import { ColorPicker } from '@/components/ColorPicker.tsx';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.tsx';
 import { Checkbox } from '@/components/ui/checkbox.tsx';
 import { ScrollArea } from '@/components/ui/scroll-area.tsx';
 import { Separator } from '@/components/ui/separator.tsx';
-
 import type { Note, NoteAudio, NoteFile, NoteImage } from '@/models.ts';
-import React, { useState } from 'react';
 
 interface NoteCardProps {
   note?: Note;
@@ -31,7 +31,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
         {/* Header */}
         {note.header && (
           <CardHeader>
-            <h2 className="text-xl font-semibold">{note.header}</h2>
+            <h2 className="font-semibold text-xl">{note.header}</h2>
           </CardHeader>
         )}
 
@@ -43,7 +43,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
           {note.checklist && note.checklist.length > 0 && (
             <div>
               <Separator className="my-2" />
-              <h4 className="mb-2 text-sm font-medium">Checklist</h4>
+              <h4 className="mb-2 font-medium text-sm">Checklist</h4>
               <div className="space-y-2">
                 {note.checklist.map((item, index) => (
                   <div key={index} className="flex items-center space-x-2">
@@ -61,10 +61,12 @@ export const NoteCard: React.FC<NoteCardProps> = ({
           {audios.length > 0 && (
             <div>
               <Separator className="my-2" />
-              <h4 className="mb-2 text-sm font-medium">Audio</h4>
+              <h4 className="mb-2 font-medium text-sm">Audio</h4>
               <div className="flex flex-col gap-3">
                 {audios.map((audio) => (
-                  <audio key={audio.id} controls src={audio.url} className="w-full" />
+                  <audio key={audio.id} controls src={audio.url} className="w-full">
+                    <track kind="captions" />
+                  </audio>
                 ))}
               </div>
             </div>
@@ -74,7 +76,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
           {images.length > 0 && (
             <div>
               <Separator className="my-2" />
-              <h4 className="mb-2 text-sm font-medium">Images</h4>
+              <h4 className="mb-2 font-medium text-sm">Images</h4>
               <ScrollArea className="h-32 w-full rounded-md border p-2">
                 <div className="flex gap-2">
                   {images.map((img) => (
@@ -94,7 +96,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
           {files.length > 0 && (
             <div>
               <Separator className="my-2" />
-              <h4 className="mb-2 text-sm font-medium">Files</h4>
+              <h4 className="mb-2 font-medium text-sm">Files</h4>
               <ul className="list-inside list-disc space-y-1">
                 {files.map((file) => (
                   <li key={file.id}>

@@ -1,19 +1,126 @@
-# You can override the included template(s) by including variable overrides
-# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
-# Secret Detection customization: https://docs.gitlab.com/user/application_security/secret_detection/pipeline/configure
-# Dependency Scanning customization: https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#customizing-the-dependency-scanning-settings
-# Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
-# Note that environment variables can be set in several places
-# See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
 stages:
+  - quality
   - test
+  - build
+  - publish
   - secret-detection
-sast:
-  stage: test
+
+variables:
+  PNPM_STORE_PATH: .pnpm-store
+  NODE_VERSION: "22"
+
+# ─── Security (keep existing templates) ───────────────────────────────────────
 include:
   - template: Security/SAST.gitlab-ci.yml
   - template: Security/Secret-Detection.gitlab-ci.yml
+
 variables:
-  SECRET_DETECTION_ENABLED: 'true'
+  SECRET_DETECTION_ENABLED: "true"
+
+sast:
+  stage: quality
+
 secret_detection:
   stage: secret-detection
+
+# ─── Shared setup ─────────────────────────────────────────────────────────────
+.pnpm-setup: &pnpm-setup
+  image: node:22-alpine
+  before_script:
+    - corepack enable
+    - pnpm config set store-dir "$PNPM_STORE_PATH"
+    - pnpm install --frozen-lockfile
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - .pnpm-store/
+    policy: pull-push
+
+# ─── Quality ──────────────────────────────────────────────────────────────────
+lint:
+  <<: *pnpm-setup
+  stage: quality
+  script:
+    - pnpm check:ci
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+typecheck:
+  <<: *pnpm-setup
+  stage: quality
+  script:
+    - pnpm exec tsc -b --noEmit
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+# ─── Tests (enabled as suites land in M1) ─────────────────────────────────────
+test:unit:
+  <<: *pnpm-setup
+  stage: test
+  script:
+    - pnpm test --run
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      allow_failure: true
+    - if: $CI_COMMIT_BRANCH
+      allow_failure: true
+
+test:e2e:
+  image: mcr.microsoft.com/playwright:v1.52.0-noble
+  stage: test
+  before_script:
+    - corepack enable
+    - pnpm config set store-dir "$PNPM_STORE_PATH"
+    - pnpm install --frozen-lockfile
+  script:
+    - pnpm test:e2e
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - .pnpm-store/
+    policy: pull-push
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      allow_failure: true
+    - if: $CI_COMMIT_BRANCH
+      allow_failure: true
+
+# ─── Build ────────────────────────────────────────────────────────────────────
+build:
+  <<: *pnpm-setup
+  stage: build
+  script:
+    - pnpm build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+# ─── Publish (Docker image → GitLab Container Registry) ───────────────────────
+publish:image:
+  stage: publish
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  script:
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}"
+      --destination "${CI_REGISTRY_IMAGE}:latest"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+      variables:
+        EXTRA_DESTINATION: "--destination ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}"
+  needs:
+    - build

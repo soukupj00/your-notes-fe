@@ -1,6 +1,3 @@
-import { TextColorPickerButton } from '@/components/editor/extensions/text-color/TextColorPickerButton.tsx';
-import FormatSection from '@/components/editor/menus/toolbars/FormatSection.tsx';
-import ListSection from '@/components/editor/menus/toolbars/ListSection.tsx';
 import Bold from '@tiptap/extension-bold';
 import Document from '@tiptap/extension-document';
 import Italic from '@tiptap/extension-italic';
@@ -10,9 +7,12 @@ import Strike from '@tiptap/extension-strike';
 import Text from '@tiptap/extension-text';
 import { Color, TextStyle } from '@tiptap/extension-text-style';
 import Underline from '@tiptap/extension-underline';
-
 import { EditorContent, useEditor } from '@tiptap/react';
-import React, { useEffect } from 'react';
+import type React from 'react';
+import { useEffect } from 'react';
+import { TextColorPickerButton } from '@/components/editor/extensions/text-color/TextColorPickerButton.tsx';
+import FormatSection from '@/components/editor/menus/toolbars/FormatSection.tsx';
+import ListSection from '@/components/editor/menus/toolbars/ListSection.tsx';
 
 type EditorProps = {
   content?: string;
@@ -47,7 +47,7 @@ export const Editor: React.FC<EditorProps> = ({ content, editable, onUpdate }) =
 
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content);
+      editor.commands.setContent(content ?? '');
     }
   }, [content, editor]);
 

@@ -1,7 +1,7 @@
-import type { toggleVariants } from '@/components/ui/toggle.tsx';
 import type { Editor } from '@tiptap/react';
 import type { VariantProps } from 'class-variance-authority';
-import React from 'react';
+import type React from 'react';
+import type { toggleVariants } from '@/components/ui/toggle.tsx';
 
 /**
  * Represents the props for the ButtonView component.

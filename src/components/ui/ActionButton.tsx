@@ -1,12 +1,13 @@
+import { Slot } from '@radix-ui/react-slot';
+import type { TooltipContentProps } from '@radix-ui/react-tooltip';
+import * as React from 'react';
+import { icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import type { ButtonViewReturnComponentProps } from '@/types';
 import { getShortcutKeys } from '@/utils/platform.ts';
-import { Slot } from '@radix-ui/react-slot';
-import type { TooltipContentProps } from '@radix-ui/react-tooltip';
-import * as React from 'react';
 
 export interface ActionButtonProps {
   /** Whether button is disabled */
@@ -25,6 +26,8 @@ export interface ActionButtonProps {
   action?: ButtonViewReturnComponentProps['action'];
   /** Active state checker */
   isActive?: ButtonViewReturnComponentProps['isActive'];
+  /** Icon name */
+  icon?: string;
   /** Child elements (icon + text) */
   children?: React.ReactNode;
   /** Render as child */
@@ -44,6 +47,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
       tooltipOptions,
       action,
       isActive,
+      icon,
       children,
       asChild = false,
       toggle = false,
@@ -52,6 +56,8 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
     ref
   ) => {
     const Comp = asChild ? Slot : toggle ? Toggle : Button;
+
+    const Icon = icons[icon as string];
 
     return (
       <Tooltip>
@@ -65,6 +71,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
             className={cn('flex h-8 w-8 items-center justify-center p-0', className)}
             {...rest}
           >
+            {Icon && <Icon className="h-4 w-4" />}
             {children}
           </Comp>
         </TooltipTrigger>
@@ -75,7 +82,9 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
               <span>{tooltip}</span>
               {!!shortcutKeys?.length && (
                 <span className="text-muted-foreground text-xs">
-                  {getShortcutKeys(shortcutKeys)}
+                  {getShortcutKeys(shortcutKeys)
+                    .map((k) => k.symbol)
+                    .join(' + ')}
                 </span>
               )}
             </div>

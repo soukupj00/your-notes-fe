@@ -1,6 +1,6 @@
+import type React from 'react';
 import { cn } from '@/lib/utils.ts';
 import { getShortcutKey } from '@/utils/platform.ts';
-import React from 'react';
 
 export interface ShortcutKeyProps extends React.ComponentProps<'span'> {
   keys: string[];
@@ -12,6 +12,7 @@ export const ShortcutKey = ({ ref, className, keys, ...props }: ShortcutKeyProps
 
   return (
     <span
+      role="group"
       aria-label={ariaLabel}
       className={cn('inline-flex items-center gap-0.5', className)}
       {...props}
@@ -21,7 +22,7 @@ export const ShortcutKey = ({ ref, className, keys, ...props }: ShortcutKeyProps
         <kbd
           key={shortcut.symbol}
           className={cn(
-            'text-foreground inline-block min-w-2.5 text-center align-baseline text-xs font-medium capitalize',
+            'inline-block min-w-2.5 text-center align-baseline font-medium text-foreground text-xs capitalize',
             className
           )}
           {...props}

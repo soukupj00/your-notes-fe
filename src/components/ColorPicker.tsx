@@ -1,8 +1,8 @@
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Palette } from 'lucide-react';
 import * as React from 'react';
 import { HexColorPicker } from 'react-colorful';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
 interface ColorPickerProps {
   color: string;

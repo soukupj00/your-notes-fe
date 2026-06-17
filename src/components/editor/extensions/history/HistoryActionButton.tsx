@@ -37,7 +37,13 @@ function HistoryActionButton({
         <TooltipContent {...tooltipOptions}>
           <div className="flex flex-col items-center text-center">
             {tooltip}
-            {!!props?.shortcutKeys?.length && <span>{getShortcutKeys(props?.shortcutKeys)}</span>}
+            {!!props?.shortcutKeys?.length && (
+              <span>
+                {getShortcutKeys(props.shortcutKeys)
+                  .map((k) => k.symbol)
+                  .join(' + ')}
+              </span>
+            )}
           </div>
         </TooltipContent>
       )}

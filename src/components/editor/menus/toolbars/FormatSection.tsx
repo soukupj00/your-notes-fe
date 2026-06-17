@@ -1,5 +1,3 @@
-import Toolbar from '@/components/editor/menus/ToolbarSection.tsx';
-import type { FormatAction, ToolbarSectionProps } from '@/types.ts';
 import {
   BoldIcon,
   FlipHorizontalIcon,
@@ -8,7 +6,9 @@ import {
   StrikethroughIcon,
   UnderlineIcon,
 } from 'lucide-react';
-import React from 'react';
+import type React from 'react';
+import Toolbar from '@/components/editor/menus/ToolbarSection.tsx';
+import type { FormatAction, ToolbarSectionProps } from '@/types.ts';
 
 type TextStyleAction = 'bold' | 'italic' | 'underline' | 'strikethrough' | 'clearFormatting';
 

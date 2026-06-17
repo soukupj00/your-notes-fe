@@ -1,16 +1,16 @@
+import { Globe, Menu, Settings } from 'lucide-react';
+import type * as React from 'react';
 import { SearchInput } from '@/components/searchInput.tsx';
 import { ThemeModeToggleButton } from '@/components/themeModeToggleButton.tsx';
 import { Button } from '@/components/ui/button.tsx';
-import { Globe, Menu, Settings } from 'lucide-react';
-import * as React from 'react';
 
-function Navbar({ className, children, ...props }: React.ComponentProps<'header'>) {
+function Navbar(_props: React.ComponentProps<'header'>) {
   return (
-    <header className="bg-background border-b">
+    <header className="border-b bg-background">
       {/* Web Navbar */}
       <div className="hidden items-center justify-between px-4 py-2 sm:flex">
         {/* Left: Logo */}
-        <div className="text-xl font-bold">Logo</div>
+        <div className="font-bold text-xl">Logo</div>
 
         {/* Center: Search */}
         <div className="max-w-md flex-1 px-4">
@@ -34,7 +34,7 @@ function Navbar({ className, children, ...props }: React.ComponentProps<'header'
         <Button variant="ghost" size="icon">
           <Menu />
         </Button>
-        <div className="text-lg font-bold">Logo</div>
+        <div className="font-bold text-lg">Logo</div>
         <Button variant="ghost" size="icon">
           <Settings />
         </Button>

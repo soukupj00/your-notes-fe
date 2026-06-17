@@ -1,7 +1,7 @@
+import { FlipHorizontalIcon, ListIcon, ListOrderedIcon } from 'lucide-react';
+import type React from 'react';
 import Toolbar from '@/components/editor/menus/ToolbarSection.tsx';
 import type { FormatAction, ToolbarSectionProps } from '@/types.ts';
-import { FlipHorizontalIcon, ListIcon, ListOrderedIcon } from 'lucide-react';
-import React from 'react';
 
 type ListItemAction = 'bulletList' | 'orderedList';
 

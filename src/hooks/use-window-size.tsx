@@ -1,9 +1,9 @@
 'use client';
 
+import * as React from 'react';
 import { useState } from 'react';
 import { useDebounceCallback } from './use-debounce-callback';
 import { useIsomorphicLayoutEffect } from './use-isomorphic-layout-effect';
-import * as React from 'react';
 
 type WindowSize<T extends number | undefined = number | undefined> = {
   width: T;

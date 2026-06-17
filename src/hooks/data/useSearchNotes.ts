@@ -1,6 +1,6 @@
+import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db.ts';
 import type { Note, Tag } from '@/models.ts';
-import { useLiveQuery } from 'dexie-react-hooks';
 
 export function useSearchNotes(query: string) {
   const notes: (Note | undefined)[] | undefined = useLiveQuery(async () => {

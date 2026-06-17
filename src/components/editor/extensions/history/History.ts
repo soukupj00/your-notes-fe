@@ -1,8 +1,8 @@
-import HistoryActionButton from '@/components/editor/extensions/history/HistoryActionButton.tsx';
 import type { HistoryOptions as TiptapHistoryOptions } from '@tiptap/extension-history';
 import { History as TiptapHistory } from '@tiptap/extension-history';
+import HistoryActionButton from '@/components/editor/extensions/history/HistoryActionButton.tsx';
 
-export interface HistoryOptions extends TiptapHistoryOptions, General {}
+export interface HistoryOptions extends TiptapHistoryOptions {}
 const historyOptions: ['undo', 'redo'] = ['undo', 'redo'];
 
 export const History = TiptapHistory.extend<HistoryOptions>({

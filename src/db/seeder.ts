@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
+import { v4 as uuid } from 'uuid';
 import { dummyNotes } from '@/db/dummyNotes.ts';
 import type { NoteTag } from '@/models.ts';
-import { v4 as uuid } from 'uuid';
 import { db } from './db.ts';
 
 async function seedDummyData() {
