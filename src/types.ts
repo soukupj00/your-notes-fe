@@ -3,19 +3,11 @@ import type { VariantProps } from 'class-variance-authority';
 import type React from 'react';
 import type { toggleVariants } from '@/components/ui/toggle.tsx';
 
-/**
- * Represents the props for the ButtonView component.
- */
 export interface ButtonViewReturnComponentProps {
-  /** Method triggered when action is performed */
-  action?: (value?: any) => void;
-  /** Whether it is in the active state */
+  action?: () => void;
   isActive?: () => boolean;
-  /** Button icon */
-  icon?: any;
-  /** Text displayed on hover */
+  icon?: string;
   tooltip?: string;
-  [x: string]: any;
 }
 
 export interface FormatAction {

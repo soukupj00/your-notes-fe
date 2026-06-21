@@ -40,11 +40,20 @@ export const Bold = TiptapBold.extend<BoldOptions>({
 
 ## Current state (mismatch to fix in M1)
 
-The code does **not** yet fully follow Pattern A:
+Pattern A is partly adopted:
 
-- `editor.tsx` registers **upstream** TipTap extensions directly (`Document, Paragraph, Text, Bold, Italic, Strike, Underline, BulletList, OrderedList, ListItem, Color, TextStyle`) — not the wrapped `extensions/*` versions.
-- Only `extensions/Bold/Bold.ts` and `extensions/history/History.ts` actually define a `button`; the rest (`Italic`, `Strike`, `Image`, `Heading`, `Highlight`, `TaskList`, `Excalidraw`, `Video`, `Attachment`, `FontFamily`, `FontSize`, `Clear`, `Color`, `TextUnderline`, `Selection`, `BulletList`, `OrderedList`, `ListItem`) are **empty/partial stubs**.
-- `menus/toolbars/FormatSection.tsx` and `ListSection.tsx` use the **legacy Pattern B**: a local `formatActions` array with inline Lucide JSX icons rendered through `Toolbar`/`ToolbarSection`. This is what `editor.tsx` currently renders.
+- **Wrapped extensions following Pattern A, each with a headless test:** `Bold`, `BulletList`, `Heading` (level 1–3 button array), `Blockquote` (markdown `>` showcase), `Mathematics` (inline KaTeX), plus `history`. `editor.tsx` registers these wrapped versions for `Bold`, `BulletList`, `Heading`, `Blockquote`, `Mathematics` (and imports `katex/dist/katex.min.css`).
+- Still **upstream / stubs:** `Italic`, `Strike`, `Underline`, `OrderedList`, `ListItem`, `TaskList`, `Image`, `Highlight`, `Excalidraw` (drawing — deferred), `Video`, `Attachment`, `FontFamily`, `FontSize`, `Clear`, `Color`, `TextUnderline`, `Selection` are empty/partial stubs and/or registered upstream in `editor.tsx`.
+- `menus/toolbars/FormatSection.tsx` and `ListSection.tsx` still use the **legacy Pattern B** (`formatActions` array with inline Lucide JSX). They do **not** yet consume the extension `button` factories, so `Heading`/`Blockquote`/`Mathematics` have no toolbar button yet (reachable via markdown input rules / keyboard shortcuts).
 - Duplicate case-variant folders exist: `History/` vs `history/`, and `Color/` vs `text-color/`. Consolidate to one casing.
+
+## Testing extensions (Vitest)
+
+Tests run **headless** — no DOM render needed. Build `new Editor({ extensions: [Document, Paragraph, Text, <Ext>] })` from `@tiptap/core`, then:
+- drive `editor.commands.*` and assert `editor.getHTML()` / `editor.isActive(...)`;
+- pull the button via `editor.extensionManager.extensions.find(e => e.name === '<name>').options.button({ editor, t })` and assert its `componentProps` (`icon`, `tooltip`, `shortcutKeys`) and that `action()` flips `isActive()`;
+- trigger markdown input rules with `editor.view.someProp('handleTextInput', (f) => f(editor.view, from, from, ' '))`.
+
+`extensions/Bold/Bold.test.ts` is the canonical template. Run `pnpm test`.
 
 When editing here, follow Pattern A for new work and migrate the above — don't add more Pattern B arrays.

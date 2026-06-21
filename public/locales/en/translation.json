@@ -1,0 +1,16 @@
+{
+  "editor": {
+    "bold": { "tooltip": "Bold" },
+    "italic": { "tooltip": "Italic" },
+    "underline": { "tooltip": "Underline" },
+    "undo": "Undo",
+    "redo": "Redo",
+    "heading": {
+      "tooltip": "Heading",
+      "level": "Heading {{level}}"
+    },
+    "bulletList": { "tooltip": "Bullet list" },
+    "blockquote": { "tooltip": "Quote" },
+    "math": { "tooltip": "Inline math" }
+  }
+}

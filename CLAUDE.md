@@ -25,14 +25,18 @@ pnpm seed         # seed IndexedDB with dummy notes (ts-node)
 
 Package manager is **pnpm**. Do not use npm or yarn.
 
-Planned scripts (see [M0 in PLAN.md](./PLAN.md) — not yet wired up):
-
 ```bash
 pnpm check        # biome check --write (lint + format + import sort, applies safe fixes)
 pnpm check:ci     # biome ci .        (non-mutating gate, used in CI)
 pnpm format       # biome format --write
-pnpm test         # Vitest (unit/component/data) — added in M1
-pnpm test:e2e     # Playwright — added in M1
+pnpm test         # Vitest run (unit/component/data) — wired up in M1
+pnpm test:watch   # Vitest watch mode
+```
+
+Still planned (see [M0/M1 in PLAN.md](./PLAN.md) — not yet wired up):
+
+```bash
+pnpm test:e2e     # Playwright — not yet added
 ```
 
 > `pnpm lint` (ESLint) is being **replaced by Biome** — see [ADR 0005](./docs/adr/0005-biome-replaces-eslint-prettier.md).
@@ -76,7 +80,7 @@ The `icon` prop is a **string key** resolved via `src/components/icons/icons.ts`
 
 `ActionButton` (`src/components/ui/ActionButton.tsx`) is the shared toolbar button: wraps a Radix Toggle/Button with Tooltip and resolves the icon string from the registry.
 
-> **Canonical vs. legacy.** This per-extension pattern (Pattern A) is the **canonical** one — see [ADR 0004](./docs/adr/0004-canonical-editor-toolbar-pattern.md). Today only `Bold` and `history` actually use it, most extension folders are stubs, and `editor.tsx` still registers upstream TipTap extensions directly. The legacy toolbars (`menus/toolbars/FormatSection.tsx`, `ListSection.tsx`) use a centralized `formatActions` array with inline Lucide imports; they are being migrated to consume extension-provided buttons. See [`src/components/editor/PLAN.md`](./src/components/editor/PLAN.md).
+> **Canonical vs. legacy.** This per-extension pattern (Pattern A) is the **canonical** one — see [ADR 0004](./docs/adr/0004-canonical-editor-toolbar-pattern.md). So far `Bold`, `BulletList`, `Heading`, `Blockquote`, `Mathematics`, and `history` use it (each with a headless Vitest test) and are registered as the wrapped versions in `editor.tsx`; the remaining extension folders are still stubs or upstream registrations. The legacy toolbars (`menus/toolbars/FormatSection.tsx`, `ListSection.tsx`) use a centralized `formatActions` array with inline Lucide imports; they are being migrated to consume extension-provided buttons. See [`src/components/editor/PLAN.md`](./src/components/editor/PLAN.md).
 
 ### Theming (`src/themes.ts`, `src/context/themeProvider.tsx`)
 

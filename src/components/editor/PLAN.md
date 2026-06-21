@@ -4,28 +4,33 @@ This folder is the focus of **M1** (see [root PLAN.md](../../../PLAN.md)). Goal:
 
 ## 1. Test tooling (prerequisite)
 
-- Install & configure **Vitest** + **React Testing Library** (+ `@testing-library/jest-dom`) and **Playwright**.
-- Add scripts: `test` (Vitest), `test:e2e` (Playwright). Vitest reuses `vite.config.ts` (so `@/` alias works).
+- [x] **Vitest** + **React Testing Library** (+ `@testing-library/jest-dom`) configured via a standalone `vitest.config.ts` (jsdom env, `src/test/setup.ts`, `@/` alias). Scripts: `test` (`vitest run`), `test:watch`.
+- [ ] **Playwright** E2E + `test:e2e` script — still to add.
 - Reuse `fake-indexeddb` for any test that touches the data layer.
+
+> Extension tests run **headless**: build a `new Editor({ extensions })` from `@tiptap/core`, drive commands / the `button` factory, and assert `editor.getHTML()` / `isActive(...)`. Markdown input rules are exercised via `editor.view.someProp('handleTextInput', ...)`. See `extensions/Bold/Bold.test.ts` for the template.
 
 ## 2. Cleanup
 
 - Consolidate duplicate case-variant folders: keep one of `History/`↔`history/` and one of `Color/`↔`text-color/`; delete the other and fix imports.
-- Expand `src/components/icons/icons.ts` to include every icon the toolbar buttons need (currently only `Bold`, `Italic`, `Underline`).
+- Expand `src/components/icons/icons.ts` to include every icon the toolbar buttons need (now also `Heading1`–`Heading3`, `List`, `Quote`, `Sigma`).
 
 ## 3. Standardize on Pattern A
 
 - Flesh out each stub extension as `Tiptap<X>.extend()` with a `button` option returning `ActionButton` + a **string** `icon` + i18n `tooltip` + `shortcutKeys` (model on `extensions/Bold/Bold.ts` and `extensions/history/History.ts`).
-- Register the wrapped extensions in `editor.tsx` (replace the direct upstream imports).
+- Register the wrapped extensions in `editor.tsx` (replace the direct upstream imports). Done so far: `Bold`, `BulletList`, `Heading`, `Blockquote`, `Mathematics`.
 - Migrate `menus/toolbars/FormatSection.tsx` and `ListSection.tsx` to **consume extension-provided buttons** (compose them into sections/dropdowns) instead of defining `formatActions` arrays with inline Lucide icons.
 
 ## 4. Extension order (each shipped with a test)
 
-1. Basic marks — **Bold** (done), **Italic**, **Strike**, **Underline**, **Clear formatting**.
-2. Lists & blocks — **BulletList**, **OrderedList**, **ListItem**, **Heading**, **TaskList**.
+1. Basic marks — **Bold** ✅, **Italic**, **Strike**, **Underline**, **Clear formatting**.
+2. Lists & blocks — **BulletList** ✅, **OrderedList**, **ListItem**, **Heading** ✅ (level 1–3 button array), **Blockquote** ✅ (markdown `>` showcase), **TaskList**.
 3. Styling — **Color** / **text-color**, **Highlight**, **FontFamily**, **FontSize**.
-4. Media — **Image**, **Video**, **Attachment** (depends on attachment storage, `src/db/PLAN.md`).
-5. **Excalidraw** drawing — last (heaviest integration).
+4. Math — **Mathematics** ✅ (inline KaTeX via `@tiptap/extension-mathematics`; `katex` CSS imported in `editor.tsx`).
+5. Media — **Image**, **Video**, **Attachment** (depends on attachment storage, `src/db/PLAN.md`).
+6. **Excalidraw** drawing — last (heaviest integration).
+
+> Shipped with tests: `Bold`, `BulletList`, `Heading`, `Blockquote`, `Mathematics` (24 headless tests). The toolbars (`FormatSection`/`ListSection`) still don't consume these extension `button` factories — step 3's migration is outstanding, so Heading/Blockquote/Math currently have no toolbar UI yet (reachable via markdown input / shortcuts).
 
 ## 5. Tests per extension
 

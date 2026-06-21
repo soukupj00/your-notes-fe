@@ -1,0 +1,16 @@
+{
+  "editor": {
+    "bold": { "tooltip": "Tučné" },
+    "italic": { "tooltip": "Kurzíva" },
+    "underline": { "tooltip": "Podtržené" },
+    "undo": "Zpět",
+    "redo": "Znovu",
+    "heading": {
+      "tooltip": "Nadpis",
+      "level": "Nadpis {{level}}"
+    },
+    "bulletList": { "tooltip": "Odrážkový seznam" },
+    "blockquote": { "tooltip": "Citace" },
+    "math": { "tooltip": "Vzorec" }
+  }
+}
