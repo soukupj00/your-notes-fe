@@ -18,6 +18,7 @@ export const Mathematics = InlineMath.extend<MathematicsExtensionOptions>({
           shortcutKeys: ['Mod', 'Shift', 'M'],
           icon: 'Sigma',
           tooltip: t('editor.math.tooltip'),
+          toggle: true,
         },
       }),
     } as unknown as MathematicsExtensionOptions;

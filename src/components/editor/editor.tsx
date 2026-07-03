@@ -20,6 +20,7 @@ import { Strike } from '@/components/editor/extensions/Strike';
 import { TaskList } from '@/components/editor/extensions/TaskList';
 import { TextColorPickerButton } from '@/components/editor/extensions/text-color/TextColorPickerButton.tsx';
 import { Underline } from '@/components/editor/extensions/Underline';
+import BlocksSection from '@/components/editor/menus/toolbars/BlocksSection.tsx';
 import FormatSection from '@/components/editor/menus/toolbars/FormatSection.tsx';
 import ListSection from '@/components/editor/menus/toolbars/ListSection.tsx';
 
@@ -78,6 +79,7 @@ export const Editor: React.FC<EditorProps> = ({ content, editable, onUpdate }) =
           <FormatSection editor={editor} />
           <TextColorPickerButton editor={editor} />
           <ListSection editor={editor} />
+          <BlocksSection editor={editor} />
         </div>
       )}
 
@@ -91,6 +93,7 @@ export const Editor: React.FC<EditorProps> = ({ content, editable, onUpdate }) =
           <FormatSection editor={editor} />
           <TextColorPickerButton editor={editor} />
           <ListSection editor={editor} />
+          <BlocksSection editor={editor} />
         </div>
       )}
     </div>

@@ -22,6 +22,7 @@ export const Heading = TiptapHeading.extend<HeadingExtensionOptions>({
             shortcutKeys: ['Mod', 'Alt', String(level)],
             icon: `Heading${level}` as ButtonView['componentProps']['icon'],
             tooltip: t('editor.heading.level', { level }),
+            toggle: true,
           },
         })),
     } as unknown as HeadingExtensionOptions;

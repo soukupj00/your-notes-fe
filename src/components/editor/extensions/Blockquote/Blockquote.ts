@@ -21,6 +21,7 @@ export const Blockquote = TiptapBlockquote.extend<BlockquoteExtensionOptions>({
           shortcutKeys: ['Mod', 'Shift', 'B'],
           icon: 'Quote',
           tooltip: t('editor.blockquote.tooltip'),
+          toggle: true,
         },
       }),
     } as unknown as BlockquoteExtensionOptions;
