@@ -128,6 +128,29 @@ ol {
   list-style-type: decimal;
 }
 
+/* Heading styles (editor content). Tailwind's preflight resets heading size/weight
+   to inherit; these restore a visible hierarchy since the `prose` classes are inert
+   (the @tailwindcss/typography plugin is not installed). */
+.tiptap h1,
+.tiptap h2,
+.tiptap h3 {
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 0.8em 0 0.4em;
+}
+
+.tiptap h1 {
+  font-size: 1.75rem;
+}
+
+.tiptap h2 {
+  font-size: 1.4rem;
+}
+
+.tiptap h3 {
+  font-size: 1.2rem;
+}
+
 /* Task lists (TipTap TaskList/TaskItem): checkbox and text on the same line */
 ul[data-type="taskList"] {
   list-style: none;

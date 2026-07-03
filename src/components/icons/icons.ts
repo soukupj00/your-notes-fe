@@ -9,10 +9,10 @@ import {
   ListTodo,
   Quote,
   RemoveFormatting,
-  Sigma,
   Strikethrough,
   Underline,
 } from 'lucide-react';
+import { LatexIcon } from './LatexIcon';
 
 export const icons = {
   Bold,
@@ -27,5 +27,5 @@ export const icons = {
   ListTodo,
   Quote,
   RemoveFormatting,
-  Sigma,
+  Latex: LatexIcon,
 } as any;

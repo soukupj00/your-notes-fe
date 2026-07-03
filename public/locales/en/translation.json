@@ -14,7 +14,7 @@
     "orderedList": { "tooltip": "Numbered list" },
     "taskList": { "tooltip": "Task list" },
     "blockquote": { "tooltip": "Quote" },
-    "math": { "tooltip": "Inline math" },
+    "math": { "tooltip": "Math (LaTeX)", "prompt": "Enter LaTeX" },
     "clearFormatting": { "tooltip": "Clear formatting" }
   }
 }

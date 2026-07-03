@@ -1,17 +1,33 @@
 import { render, screen } from '@testing-library/react';
-import { Editor } from '@tiptap/core';
+import { Editor, Extension } from '@tiptap/core';
 import Document from '@tiptap/extension-document';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Bold } from '@/components/editor/extensions/Bold';
-import { Heading } from '@/components/editor/extensions/Heading';
+import { ActionButton } from '@/components/ui/ActionButton';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import ExtensionButtonBar from './ExtensionButtonBar';
 
+// A stand-in extension whose button factory returns an array (like Heading / history).
+const TwoButtons = Extension.create({
+  name: 'twoButtons',
+  addOptions() {
+    return {
+      button: () => [
+        { component: ActionButton, componentProps: { icon: 'Bold', tooltip: 'one', toggle: true } },
+        {
+          component: ActionButton,
+          componentProps: { icon: 'Italic', tooltip: 'two', toggle: true },
+        },
+      ],
+    };
+  },
+});
+
 function createEditor() {
   return new Editor({
-    extensions: [Document, Paragraph, Text, Bold, Heading],
+    extensions: [Document, Paragraph, Text, Bold, TwoButtons],
     content: '<p>hi</p>',
   });
 }
@@ -30,9 +46,9 @@ describe('ExtensionButtonBar', () => {
 
   it('renders one button for a single-button extension and one per button for an array', () => {
     editor = createEditor();
-    // Heading contributes a 3-button array (H1-H3); Bold contributes a single button.
-    renderBar(editor, ['heading', 'bold']);
-    expect(screen.getAllByRole('button')).toHaveLength(4);
+    // Bold contributes a single button; twoButtons contributes an array of two.
+    renderBar(editor, ['bold', 'twoButtons']);
+    expect(screen.getAllByRole('button')).toHaveLength(3);
   });
 
   it('skips names with no registered extension or no button', () => {

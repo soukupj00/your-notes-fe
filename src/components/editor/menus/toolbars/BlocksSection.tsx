@@ -3,11 +3,11 @@ import type React from 'react';
 import ExtensionButtonBar from '@/components/editor/menus/ExtensionButtonBar.tsx';
 
 /**
- * Block-level buttons in order: heading levels 1-3 (Heading contributes a button
- * array), blockquote, and inline math. Each is an extension-owned Pattern A button
- * (ADR 0004). `inlineMath` is the name of the wrapped Mathematics extension.
+ * Block-level buttons: blockquote and math. Each is an extension-owned Pattern A
+ * button (ADR 0004). `Mathematics` is the name of the bundled math extension
+ * (inline + block). Headings live in their own section at the start of the toolbar.
  */
-const BLOCK_EXTENSION_NAMES = ['heading', 'blockquote', 'inlineMath'];
+const BLOCK_EXTENSION_NAMES = ['blockquote', 'Mathematics'];
 
 interface BlocksSectionProps {
   editor: Editor;

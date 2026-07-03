@@ -19,18 +19,18 @@ This folder is the focus of **M1** (see [root PLAN.md](../../../PLAN.md)). Goal:
 
 - Flesh out each stub extension as `Tiptap<X>.extend()` with a `button` option returning `ActionButton` + a **string** `icon` + i18n `tooltip` + `shortcutKeys` (model on `extensions/Bold/Bold.ts` and `extensions/history/History.ts`).
 - Register the wrapped extensions in `editor.tsx` (replace the direct upstream imports). Done so far: `Bold`, `Italic`, `Strike`, `Underline`, `Clear`, `BulletList`, `OrderedList`, `ListItem`, `TaskList`, `Heading`, `Blockquote`, `Mathematics`.
-- Migrate `menus/toolbars/FormatSection.tsx` and `ListSection.tsx` to **consume extension-provided buttons** instead of defining `formatActions` arrays with inline Lucide icons. **Both done** — thin wrappers over `menus/ExtensionButtonBar.tsx` (resolves each extension's `button` by name; handles single or array returns). The legacy `ToolbarSection.tsx` was removed. A **blocks section** (`toolbars/BlocksSection.tsx`) now renders `Heading` (H1-H3), `Blockquote`, and `Mathematics` (`inlineMath`). Remaining toolbar work: migrate `TextColorPickerButton` (still legacy, uses `ToolbarButton.tsx`) onto `ExtensionButtonBar`, and consider collapsing the 3 heading buttons into a dropdown.
+- Migrate `menus/toolbars/FormatSection.tsx` and `ListSection.tsx` to **consume extension-provided buttons** instead of defining `formatActions` arrays with inline Lucide icons. **Both done** — thin wrappers over `menus/ExtensionButtonBar.tsx` (resolves each extension's `button` by name; handles single or array returns). The legacy `ToolbarSection.tsx` was removed. Toolbar sections: `HeadingSection` (H1-H3 buttons, at the start), `FormatSection`, `ListSection`, `BlocksSection` (`Blockquote` + `Mathematics`), divided by vertical `Separator`s. Remaining toolbar work: migrate `TextColorPickerButton` (still legacy, uses `ToolbarButton.tsx`) onto `ExtensionButtonBar`; hide H2/H3 on small screens (mobile-first).
 
 ## 4. Extension order (each shipped with a test)
 
 1. Basic marks — **Bold** ✅, **Italic** ✅, **Strike** ✅, **Underline** ✅, **Clear formatting** ✅.
-2. Lists & blocks — **BulletList** ✅, **OrderedList** ✅, **ListItem** ✅ (structural, no button), **Heading** ✅ (level 1–3 button array), **Blockquote** ✅ (markdown `>` showcase), **TaskList** ✅.
+2. Lists & blocks — **BulletList** ✅, **OrderedList** ✅, **ListItem** ✅ (structural, no button), **Heading** ✅ (H1–H3 buttons at toolbar start), **Blockquote** ✅ (markdown `>` showcase), **TaskList** ✅.
 3. Styling — **Color** / **text-color**, **Highlight**, **FontFamily**, **FontSize**.
-4. Math — **Mathematics** ✅ (inline KaTeX via `@tiptap/extension-mathematics`; `katex` CSS imported in `editor.tsx`).
+4. Math — **Mathematics** ✅ (KaTeX via bundled `@tiptap/extension-mathematics`; write LaTeX with `$$…$$` / `$$$…$$$`, button prompt-inserts, click a node to edit; `katex` CSS imported in `editor.tsx`).
 5. Media — **Image**, **Video**, **Attachment** (depends on attachment storage, `src/db/PLAN.md`).
 6. **Excalidraw** drawing — last (heaviest integration).
 
-> Shipped with tests: `Bold`, `Italic`, `Strike`, `Underline`, `Clear`, `BulletList`, `OrderedList`, `ListItem`, `TaskList`, `Heading`, `Blockquote`, `Mathematics` (38 headless tests). The **list section** is migrated to Pattern A (via `ExtensionButtonBar`); `FormatSection` is still legacy, so `Heading`/`Blockquote`/`Math` have no toolbar UI yet (reachable via markdown input / shortcuts).
+> Shipped with tests: `Bold`, `Italic`, `Strike`, `Underline`, `Clear`, `BulletList`, `OrderedList`, `ListItem`, `TaskList`, `Heading`, `Blockquote`, `Mathematics`, plus `ExtensionButtonBar` (48 tests). All of headings / format / lists / blocks render in the toolbar via Pattern A; only `TextColorPickerButton` remains legacy.
 
 ## 5. Tests per extension
 
