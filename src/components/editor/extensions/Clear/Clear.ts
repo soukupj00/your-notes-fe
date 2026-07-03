@@ -18,6 +18,7 @@ export const Clear = Extension.create<ClearExtensionOptions>({
           icon: 'RemoveFormatting',
           shortcutKeys: ['Mod', '\\'],
           tooltip: t('editor.clearFormatting.tooltip'),
+          toggle: true,
         },
       }),
     } as unknown as ClearExtensionOptions;

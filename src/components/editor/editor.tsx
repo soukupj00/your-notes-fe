@@ -73,18 +73,26 @@ export const Editor: React.FC<EditorProps> = ({ content, editable, onUpdate }) =
   return (
     <div className="relative rounded-xl border p-4">
       {/* Floating toolbar */}
-      {editable && <FormatSection editor={editor} />}
-      {editable && <TextColorPickerButton editor={editor} />}
-      {editable && <ListSection editor={editor} />}
+      {editable && (
+        <div className="flex flex-wrap items-center gap-1">
+          <FormatSection editor={editor} />
+          <TextColorPickerButton editor={editor} />
+          <ListSection editor={editor} />
+        </div>
+      )}
 
       {/* Editable area */}
       <EditorContent
         editor={editor}
         className="prose prose-sm min-h-[150px] max-w-none focus:outline-none"
       />
-      {editable && <FormatSection editor={editor} />}
-      {editable && <TextColorPickerButton editor={editor} />}
-      {editable && <ListSection editor={editor} />}
+      {editable && (
+        <div className="flex flex-wrap items-center gap-1">
+          <FormatSection editor={editor} />
+          <TextColorPickerButton editor={editor} />
+          <ListSection editor={editor} />
+        </div>
+      )}
     </div>
   );
 };

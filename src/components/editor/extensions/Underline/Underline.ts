@@ -18,6 +18,7 @@ export const Underline = TiptapUnderline.extend<UnderlineExtensionOptions>({
           shortcutKeys: ['Mod', 'U'],
           icon: 'Underline',
           tooltip: t('editor.underline.tooltip'),
+          toggle: true,
         },
       }),
     } as unknown as UnderlineExtensionOptions;

@@ -36,16 +36,17 @@ export const ExtensionButtonBar: React.FC<ExtensionButtonBarProps> = ({
       {names.map((name) => {
         const extension = editor.extensionManager.extensions.find((e) => e.name === name);
         const buttonFactory = extension?.options?.button as
-          | ((context: ButtonContext) => ButtonView)
+          | ((context: ButtonContext) => ButtonView | ButtonView[])
           | undefined;
         if (!buttonFactory) {
           return null;
         }
-        const { component: Component, componentProps } = buttonFactory({
-          editor,
-          t: t as TFunction,
-        });
-        return <Component key={name} {...componentProps} />;
+        // A `button` factory may return one button or several (e.g. Heading levels, undo/redo).
+        const result = buttonFactory({ editor, t: t as TFunction });
+        const views = Array.isArray(result) ? result : [result];
+        return views.map(({ component: Component, componentProps }, index) => (
+          <Component key={`${name}-${index}`} {...componentProps} />
+        ));
       })}
     </div>
   );

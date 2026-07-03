@@ -18,6 +18,7 @@ export const Italic = TiptapItalic.extend<ItalicExtensionOptions>({
           shortcutKeys: ['Mod', 'I'],
           icon: 'Italic',
           tooltip: t('editor.italic.tooltip'),
+          toggle: true,
         },
       }),
     } as unknown as ItalicExtensionOptions;

@@ -18,6 +18,7 @@ export const Strike = TiptapStrike.extend<StrikeExtensionOptions>({
           shortcutKeys: ['Mod', 'Shift', 'S'],
           icon: 'Strikethrough',
           tooltip: t('editor.strike.tooltip'),
+          toggle: true,
         },
       }),
     } as unknown as StrikeExtensionOptions;

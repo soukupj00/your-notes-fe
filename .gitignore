@@ -27,3 +27,4 @@ dist-ssr
 # Agent tooling artifacts
 .claude-flow/
 .ai/
+.playwright-mcp/

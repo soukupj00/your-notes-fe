@@ -19,7 +19,7 @@ This folder is the focus of **M1** (see [root PLAN.md](../../../PLAN.md)). Goal:
 
 - Flesh out each stub extension as `Tiptap<X>.extend()` with a `button` option returning `ActionButton` + a **string** `icon` + i18n `tooltip` + `shortcutKeys` (model on `extensions/Bold/Bold.ts` and `extensions/history/History.ts`).
 - Register the wrapped extensions in `editor.tsx` (replace the direct upstream imports). Done so far: `Bold`, `Italic`, `Strike`, `Underline`, `Clear`, `BulletList`, `OrderedList`, `ListItem`, `TaskList`, `Heading`, `Blockquote`, `Mathematics`.
-- Migrate `menus/toolbars/FormatSection.tsx` and `ListSection.tsx` to **consume extension-provided buttons** instead of defining `formatActions` arrays with inline Lucide icons. `ListSection` **done** (renders via the new `menus/ExtensionButtonBar.tsx`, which resolves each extension's `button` by name); `FormatSection` still legacy. `ExtensionButtonBar` is the reusable renderer to migrate `FormatSection` onto next.
+- Migrate `menus/toolbars/FormatSection.tsx` and `ListSection.tsx` to **consume extension-provided buttons** instead of defining `formatActions` arrays with inline Lucide icons. **Both done** — thin wrappers over `menus/ExtensionButtonBar.tsx` (resolves each extension's `button` by name; handles single or array returns). The legacy `ToolbarSection.tsx` was removed. Remaining toolbar work: a **blocks section** for `Heading`/`Blockquote`/`Mathematics`, and migrating `TextColorPickerButton` (still legacy, uses `ToolbarButton.tsx`).
 
 ## 4. Extension order (each shipped with a test)
 
