@@ -1,8 +1,9 @@
 import { Palette } from 'lucide-react';
 import * as React from 'react';
-import { HexColorPicker } from 'react-colorful';
+import { ColorPickerPanel } from '@/components/color-picker/ColorPickerPanel';
+import { CARD_COLORS } from '@/components/color-picker/palettes';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface ColorPickerProps {
   color: string;
@@ -25,8 +26,9 @@ export function ColorPicker({ color, onChange }: ColorPickerProps) {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="flex w-fit items-center justify-center border-none p-11 shadow-none">
-        <HexColorPicker color={color} onChange={onChange} />
+      <DialogContent className="w-fit pt-10" aria-describedby={undefined}>
+        <DialogTitle className="sr-only">Pick a color</DialogTitle>
+        <ColorPickerPanel palette={CARD_COLORS} value={color} onChange={onChange} />
       </DialogContent>
     </Dialog>
   );

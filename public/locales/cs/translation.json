@@ -15,6 +15,7 @@
     "taskList": { "tooltip": "Seznam úkolů" },
     "blockquote": { "tooltip": "Citace" },
     "math": { "tooltip": "Vzorec (LaTeX)", "prompt": "Zadejte LaTeX" },
-    "clearFormatting": { "tooltip": "Zrušit formátování" }
+    "clearFormatting": { "tooltip": "Zrušit formátování" },
+    "textColor": { "tooltip": "Barva textu" }
   }
 }

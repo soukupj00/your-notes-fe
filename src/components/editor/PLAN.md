@@ -12,25 +12,25 @@ This folder is the focus of **M1** (see [root PLAN.md](../../../PLAN.md)). Goal:
 
 ## 2. Cleanup
 
-- Consolidate duplicate case-variant folders: `History/`↔`history/` done (empty `History/` removed); `Color/`↔`text-color/` still to resolve when the color extension lands.
+- Consolidate duplicate case-variant folders: `History/`↔`history/` done (empty `History/` removed); `Color/`↔`text-color/` **done** (kept `Color/`, removed `text-color/` and the legacy `menus/ToolbarButton.tsx`).
 - Expand `src/components/icons/icons.ts` to include every icon the toolbar buttons need (now also `Heading1`–`Heading3`, `List`, `Quote`, `Sigma`, `Strikethrough`, `RemoveFormatting`).
 
 ## 3. Standardize on Pattern A
 
 - Flesh out each stub extension as `Tiptap<X>.extend()` with a `button` option returning `ActionButton` + a **string** `icon` + i18n `tooltip` + `shortcutKeys` (model on `extensions/Bold/Bold.ts` and `extensions/history/History.ts`).
 - Register the wrapped extensions in `editor.tsx` (replace the direct upstream imports). Done so far: `Bold`, `Italic`, `Strike`, `Underline`, `Clear`, `BulletList`, `OrderedList`, `ListItem`, `TaskList`, `Heading`, `Blockquote`, `Mathematics`.
-- Migrate `menus/toolbars/FormatSection.tsx` and `ListSection.tsx` to **consume extension-provided buttons** instead of defining `formatActions` arrays with inline Lucide icons. **Both done** — thin wrappers over `menus/ExtensionButtonBar.tsx` (resolves each extension's `button` by name; handles single or array returns). The legacy `ToolbarSection.tsx` was removed. Toolbar sections: `HeadingSection` (H1-H3 buttons, at the start), `FormatSection`, `ListSection`, `BlocksSection` (`Blockquote` + `Mathematics`), divided by vertical `Separator`s. Remaining toolbar work: migrate `TextColorPickerButton` (still legacy, uses `ToolbarButton.tsx`) onto `ExtensionButtonBar`; hide H2/H3 on small screens (mobile-first).
+- Migrate `menus/toolbars/FormatSection.tsx` and `ListSection.tsx` to **consume extension-provided buttons** instead of defining `formatActions` arrays with inline Lucide icons. **Both done** — thin wrappers over `menus/ExtensionButtonBar.tsx` (resolves each extension's `button` by name; handles single or array returns). The legacy `ToolbarSection.tsx` was removed. Toolbar sections: `HeadingSection` (H1-H3 buttons, at the start), `FormatSection`, `ListSection`, `BlocksSection` (`Blockquote` + `Mathematics`), divided by vertical `Separator`s. The text color button is now a Pattern A extension (`extensions/Color/`, rendered in `FormatSection`), so no legacy toolbar items remain. Remaining toolbar work: hide H2/H3 on small screens (mobile-first).
 
 ## 4. Extension order (each shipped with a test)
 
 1. Basic marks — **Bold** ✅, **Italic** ✅, **Strike** ✅, **Underline** ✅, **Clear formatting** ✅.
 2. Lists & blocks — **BulletList** ✅, **OrderedList** ✅, **ListItem** ✅ (structural, no button), **Heading** ✅ (H1–H3 buttons at toolbar start), **Blockquote** ✅ (markdown `>` showcase), **TaskList** ✅.
-3. Styling — **Color** / **text-color**, **Highlight**, **FontFamily**, **FontSize**.
+3. Styling — **Color** ✅ (text color, `@tiptap/extension-text-style`; custom `TextColorButton` popover over the shared `ColorPickerPanel`), **Highlight**, **FontFamily**, **FontSize**.
 4. Math — **Mathematics** ✅ (KaTeX via bundled `@tiptap/extension-mathematics`; write LaTeX with `$$…$$` / `$$$…$$$`, button prompt-inserts, click a node to edit; `katex` CSS imported in `editor.tsx`).
 5. Media — **Image**, **Video**, **Attachment** (depends on attachment storage, `src/db/PLAN.md`).
 6. **Excalidraw** drawing — last (heaviest integration).
 
-> Shipped with tests: `Bold`, `Italic`, `Strike`, `Underline`, `Clear`, `BulletList`, `OrderedList`, `ListItem`, `TaskList`, `Heading`, `Blockquote`, `Mathematics`, plus `ExtensionButtonBar` (48 tests). All of headings / format / lists / blocks render in the toolbar via Pattern A; only `TextColorPickerButton` remains legacy.
+> Shipped with tests: `Bold`, `Italic`, `Strike`, `Underline`, `Clear`, `BulletList`, `OrderedList`, `ListItem`, `TaskList`, `Heading`, `Blockquote`, `Mathematics`, `Color` (text color), plus `ExtensionButtonBar` and the shared `ColorPickerPanel` (54 tests). All toolbar sections render via Pattern A; no legacy toolbar items remain.
 
 ## 5. Tests per extension
 

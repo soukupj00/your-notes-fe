@@ -3,7 +3,7 @@ import type React from 'react';
 import ExtensionButtonBar from '@/components/editor/menus/ExtensionButtonBar.tsx';
 
 /** Text-formatting buttons in order. Each is an extension-owned Pattern A button (ADR 0004). */
-const FORMAT_EXTENSION_NAMES = ['bold', 'italic', 'underline', 'strike', 'clear'];
+const FORMAT_EXTENSION_NAMES = ['bold', 'italic', 'underline', 'strike', 'clear', 'color'];
 
 interface FormatSectionProps {
   editor: Editor;

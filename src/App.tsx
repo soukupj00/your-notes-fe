@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Editor } from '@/components/editor/editor.tsx';
 import Layout from '@/components/layout.tsx';
 import { NoteContent } from '@/components/NoteContent.tsx';
-import { ThemeDebugger } from '@/components/themeDebugger.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
 import { NotesProvider } from '@/context/NotesProvider.tsx';
@@ -10,7 +9,6 @@ import { ThemeProvider } from '@/context/themeProvider.tsx';
 import { seedBrowserData } from '@/db/browserSeeder.ts';
 
 function App() {
-  const [count, setCount] = useState(0);
   const [content, setContent] = useState(`
         <p>
           I like lists. Let’s add one:
@@ -38,11 +36,8 @@ function App() {
       <TooltipProvider>
         <NotesProvider>
           <Layout>
-            <ThemeDebugger />
+            {/**<ThemeDebugger />**/}
             <Editor content={content} onUpdate={setContent} editable={true} />
-            <Button title="Text For Button" onClick={() => setCount((count) => count + 1)}>
-              count is {count}
-            </Button>
             <Button title="Seed notes to indexedDB" onClick={seedBrowserData}>
               Seed Notes
             </Button>

@@ -15,6 +15,7 @@
     "taskList": { "tooltip": "Task list" },
     "blockquote": { "tooltip": "Quote" },
     "math": { "tooltip": "Math (LaTeX)", "prompt": "Enter LaTeX" },
-    "clearFormatting": { "tooltip": "Clear formatting" }
+    "clearFormatting": { "tooltip": "Clear formatting" },
+    "textColor": { "tooltip": "Text color" }
   }
 }
