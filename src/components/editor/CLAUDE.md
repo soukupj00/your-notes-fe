@@ -42,10 +42,10 @@ export const Bold = TiptapBold.extend<BoldOptions>({
 
 Pattern A is partly adopted:
 
-- **Wrapped extensions following Pattern A, each with a headless test:** `Bold`, `BulletList`, `Heading` (level 1–3 button array), `Blockquote` (markdown `>` showcase), `Mathematics` (inline KaTeX), plus `history`. `editor.tsx` registers these wrapped versions for `Bold`, `BulletList`, `Heading`, `Blockquote`, `Mathematics` (and imports `katex/dist/katex.min.css`).
-- Still **upstream / stubs:** `Italic`, `Strike`, `Underline`, `OrderedList`, `ListItem`, `TaskList`, `Image`, `Highlight`, `Excalidraw` (drawing — deferred), `Video`, `Attachment`, `FontFamily`, `FontSize`, `Clear`, `Color`, `TextUnderline`, `Selection` are empty/partial stubs and/or registered upstream in `editor.tsx`.
-- `menus/toolbars/FormatSection.tsx` and `ListSection.tsx` still use the **legacy Pattern B** (`formatActions` array with inline Lucide JSX). They do **not** yet consume the extension `button` factories, so `Heading`/`Blockquote`/`Mathematics` have no toolbar button yet (reachable via markdown input rules / keyboard shortcuts).
-- Duplicate case-variant folders exist: `History/` vs `history/`, and `Color/` vs `text-color/`. Consolidate to one casing.
+- **Wrapped extensions following Pattern A, each with a headless test:** `Bold`, `Italic`, `Strike`, `Underline`, `Clear` (clear formatting), `BulletList`, `Heading` (level 1–3 button array), `Blockquote` (markdown `>` showcase), `Mathematics` (inline KaTeX), plus `history`. `editor.tsx` registers all of these wrapped versions (and imports `katex/dist/katex.min.css`). `Clear` is not a mark - it is an `Extension.create` whose button runs `clearNodes().unsetAllMarks()`.
+- Still **upstream / stubs:** `OrderedList`, `ListItem`, `TaskList`, `Image`, `Highlight`, `Excalidraw` (drawing — deferred), `Video`, `Attachment`, `FontFamily`, `FontSize`, `Color`, `Selection` are empty/partial stubs and/or registered upstream in `editor.tsx`.
+- `menus/toolbars/FormatSection.tsx` and `ListSection.tsx` still use the **legacy Pattern B** (`formatActions` array with inline Lucide JSX). They do **not** yet consume the extension `button` factories, so the wrapped-but-not-in-legacy buttons (`Heading`/`Blockquote`/`Mathematics`) have no toolbar button yet (reachable via markdown input rules / keyboard shortcuts).
+- Remaining duplicate case-variant folders: `Color/` vs `text-color/` (resolve when the color extension is fleshed out). The `History/` empty variant has been removed; only `history/` remains.
 
 ## Testing extensions (Vitest)
 

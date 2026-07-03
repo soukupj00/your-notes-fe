@@ -2,6 +2,7 @@
   "editor": {
     "bold": { "tooltip": "Bold" },
     "italic": { "tooltip": "Italic" },
+    "strike": { "tooltip": "Strikethrough" },
     "underline": { "tooltip": "Underline" },
     "undo": "Undo",
     "redo": "Redo",
@@ -11,6 +12,7 @@
     },
     "bulletList": { "tooltip": "Bullet list" },
     "blockquote": { "tooltip": "Quote" },
-    "math": { "tooltip": "Inline math" }
+    "math": { "tooltip": "Inline math" },
+    "clearFormatting": { "tooltip": "Clear formatting" }
   }
 }

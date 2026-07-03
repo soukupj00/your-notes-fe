@@ -2,6 +2,7 @@
   "editor": {
     "bold": { "tooltip": "Tučné" },
     "italic": { "tooltip": "Kurzíva" },
+    "strike": { "tooltip": "Přeškrtnuté" },
     "underline": { "tooltip": "Podtržené" },
     "undo": "Zpět",
     "redo": "Znovu",
@@ -11,6 +12,7 @@
     },
     "bulletList": { "tooltip": "Odrážkový seznam" },
     "blockquote": { "tooltip": "Citace" },
-    "math": { "tooltip": "Vzorec" }
+    "math": { "tooltip": "Vzorec" },
+    "clearFormatting": { "tooltip": "Zrušit formátování" }
   }
 }

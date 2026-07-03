@@ -1,11 +1,8 @@
 import Document from '@tiptap/extension-document';
-import Italic from '@tiptap/extension-italic';
 import { ListItem, OrderedList } from '@tiptap/extension-list';
 import Paragraph from '@tiptap/extension-paragraph';
-import Strike from '@tiptap/extension-strike';
 import Text from '@tiptap/extension-text';
 import { Color, TextStyle } from '@tiptap/extension-text-style';
-import Underline from '@tiptap/extension-underline';
 import { EditorContent, useEditor } from '@tiptap/react';
 import 'katex/dist/katex.min.css';
 import type React from 'react';
@@ -13,9 +10,13 @@ import { useEffect } from 'react';
 import { Blockquote } from '@/components/editor/extensions/Blockquote';
 import { Bold } from '@/components/editor/extensions/Bold';
 import { BulletList } from '@/components/editor/extensions/BulletList';
+import { Clear } from '@/components/editor/extensions/Clear';
 import { Heading } from '@/components/editor/extensions/Heading';
+import { Italic } from '@/components/editor/extensions/Italic';
 import { Mathematics } from '@/components/editor/extensions/Mathematics';
+import { Strike } from '@/components/editor/extensions/Strike';
 import { TextColorPickerButton } from '@/components/editor/extensions/text-color/TextColorPickerButton.tsx';
+import { Underline } from '@/components/editor/extensions/Underline';
 import FormatSection from '@/components/editor/menus/toolbars/FormatSection.tsx';
 import ListSection from '@/components/editor/menus/toolbars/ListSection.tsx';
 
@@ -40,6 +41,7 @@ export const Editor: React.FC<EditorProps> = ({ content, editable, onUpdate }) =
       BulletList,
       OrderedList,
       ListItem,
+      Clear,
       Mathematics,
       Color,
       TextStyle,
