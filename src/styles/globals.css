@@ -163,3 +163,12 @@
 .tiptap ul[data-type="taskList"] li > div p {
   @apply my-0;
 }
+
+/* While a color/highlight picker is open (`.color-picking` toggled on the editor by the
+   picker buttons), the editor is blurred but the text stays selected. The native selection
+   highlight would sit on top of the live preview / freshly-committed color and mask it on
+   every selected line. Making the selection transparent lets those colors show across the
+   whole multi-line selection until the picker closes and the selection clears. */
+.tiptap.color-picking ::selection {
+  background-color: transparent;
+}

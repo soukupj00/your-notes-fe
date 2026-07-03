@@ -1,6 +1,6 @@
 import Color from 'color';
 import { Check, Pipette } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { HexColorPicker } from 'react-colorful';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -60,8 +60,15 @@ function Swatch({ color, selected, onSelect }: SwatchProps) {
 export interface ColorPickerPanelProps {
   /** Current color (hex/css). Empty string means none/default. */
   value: string;
-  /** Fired on swatch click and on every change from the custom picker. */
+  /** Commit: fired on a swatch click and when the custom picker drag is released. */
   onChange: (color: string) => void;
+  /**
+   * Transient preview: fired continuously while dragging the custom picker. When provided,
+   * the drag no longer calls `onChange` on every move (only the final `onChange` on release)
+   * - callers use this to show a live, uncommitted preview. When omitted, the custom picker
+   * falls back to calling `onChange` on every move (live, immediate).
+   */
+  onPreview?: (color: string) => void;
   palette: ColorPalette;
   /** Enable the "Custom" full-picker reveal (default true). */
   showCustom?: boolean;
@@ -77,12 +84,29 @@ export interface ColorPickerPanelProps {
 export function ColorPickerPanel({
   value,
   onChange,
+  onPreview,
   palette,
   showCustom = true,
   className,
 }: ColorPickerPanelProps) {
   const inPalette = palette.colors.some((c) => c.cssValue === value);
   const [customOpen, setCustomOpen] = useState(!inPalette && value !== '');
+
+  // The custom picker previews into `draft` while dragging and commits on pointer release.
+  // A ref mirrors `draft` so the pointer-up handler reads the latest value, not a stale closure.
+  const [draft, setDraft] = useState(value || '#000000');
+  const draftRef = useRef(draft);
+  useEffect(() => {
+    const next = value || '#000000';
+    setDraft(next);
+    draftRef.current = next;
+  }, [value]);
+
+  const handlePickerChange = (color: string) => {
+    setDraft(color);
+    draftRef.current = color;
+    (onPreview ?? onChange)(color);
+  };
 
   return (
     <div className={cn('flex flex-col gap-3', className)}>
@@ -111,7 +135,10 @@ export function ColorPickerPanel({
             Custom
           </Button>
           {customOpen && (
-            <HexColorPicker color={value || '#000000'} onChange={onChange} className="!w-full" />
+            // Release (pointerup) commits the drafted color once; dragging only previews.
+            <div onPointerUp={() => onChange(draftRef.current)}>
+              <HexColorPicker color={draft} onChange={handlePickerChange} className="!w-full" />
+            </div>
           )}
         </div>
       )}

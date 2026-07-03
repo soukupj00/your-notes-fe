@@ -44,9 +44,19 @@ export const ExtensionButtonBar: React.FC<ExtensionButtonBarProps> = ({
         // A `button` factory may return one button or several (e.g. Heading levels, undo/redo).
         const result = buttonFactory({ editor, t: t as TFunction });
         const views = Array.isArray(result) ? result : [result];
-        return views.map(({ component: Component, componentProps }, index) => (
-          <Component key={`${name}-${index}`} {...componentProps} />
-        ));
+        return views.map(({ component: Component, componentProps, hideOnMobile }, index) => {
+          const key = `${name}-${index}`;
+          // `hideOnMobile` buttons are wrapped so the responsive class hides them below
+          // `sm` regardless of whether the button component itself forwards a className.
+          if (hideOnMobile) {
+            return (
+              <span key={key} className="hidden sm:inline-flex">
+                <Component {...componentProps} />
+              </span>
+            );
+          }
+          return <Component key={key} {...componentProps} />;
+        });
       })}
     </div>
   );

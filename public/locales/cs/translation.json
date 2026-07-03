@@ -16,6 +16,9 @@
     "blockquote": { "tooltip": "Citace" },
     "math": { "tooltip": "Vzorec (LaTeX)", "prompt": "Zadejte LaTeX" },
     "clearFormatting": { "tooltip": "Zrušit formátování" },
-    "textColor": { "tooltip": "Barva textu" }
+    "textColor": { "tooltip": "Barva textu" },
+    "highlight": { "tooltip": "Zvýraznění" },
+    "fontFamily": { "tooltip": "Písmo" },
+    "fontSize": { "tooltip": "Velikost písma" }
   }
 }

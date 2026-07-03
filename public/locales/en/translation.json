@@ -16,6 +16,9 @@
     "blockquote": { "tooltip": "Quote" },
     "math": { "tooltip": "Math (LaTeX)", "prompt": "Enter LaTeX" },
     "clearFormatting": { "tooltip": "Clear formatting" },
-    "textColor": { "tooltip": "Text color" }
+    "textColor": { "tooltip": "Text color" },
+    "highlight": { "tooltip": "Highlight" },
+    "fontFamily": { "tooltip": "Font family" },
+    "fontSize": { "tooltip": "Font size" }
   }
 }

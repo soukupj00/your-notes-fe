@@ -25,9 +25,23 @@ const TwoButtons = Extension.create({
   },
 });
 
+// An extension whose button opts into being hidden on small screens.
+const MobileHidden = Extension.create({
+  name: 'mobileHidden',
+  addOptions() {
+    return {
+      button: () => ({
+        component: ActionButton,
+        componentProps: { icon: 'Bold', tooltip: 'hidden-on-mobile', toggle: true },
+        hideOnMobile: true,
+      }),
+    };
+  },
+});
+
 function createEditor() {
   return new Editor({
-    extensions: [Document, Paragraph, Text, Bold, TwoButtons],
+    extensions: [Document, Paragraph, Text, Bold, TwoButtons, MobileHidden],
     content: '<p>hi</p>',
   });
 }
@@ -56,5 +70,16 @@ describe('ExtensionButtonBar', () => {
     // 'text' (the Text extension) exposes no button; 'nope' is not registered.
     renderBar(editor, ['bold', 'text', 'nope']);
     expect(screen.getAllByRole('button')).toHaveLength(1);
+  });
+
+  it('wraps a hideOnMobile button so it is hidden below the sm breakpoint', () => {
+    editor = createEditor();
+    renderBar(editor, ['twoButtons', 'mobileHidden']);
+    // A plain button (literal tooltip 'one') is rendered directly, not wrapped in a span.
+    expect(screen.getByRole('button', { name: 'one' }).parentElement?.tagName).not.toBe('SPAN');
+    // The hideOnMobile button is wrapped in a span carrying the responsive classes.
+    const wrapper = screen.getByRole('button', { name: 'hidden-on-mobile' }).parentElement;
+    expect(wrapper?.tagName).toBe('SPAN');
+    expect(wrapper).toHaveClass('hidden', 'sm:inline-flex');
   });
 });

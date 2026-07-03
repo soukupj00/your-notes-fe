@@ -25,6 +25,21 @@ export const TEXT_COLORS: ColorPalette = {
   ],
 };
 
+/** Muted pastel (Tailwind-200) swatches for editor text highlight, plus a leading Default. */
+export const HIGHLIGHT_COLORS: ColorPalette = {
+  label: 'Highlight colors',
+  colors: [
+    { label: 'Default', cssValue: '' },
+    { label: 'Red', cssValue: '#fecaca' },
+    { label: 'Orange', cssValue: '#fed7aa' },
+    { label: 'Yellow', cssValue: '#fef08a' },
+    { label: 'Green', cssValue: '#bbf7d0' },
+    { label: 'Blue', cssValue: '#bfdbfe' },
+    { label: 'Purple', cssValue: '#e9d5ff' },
+    { label: 'Pink', cssValue: '#fbcfe8' },
+  ],
+};
+
 /** Muted pastel (Tailwind-200) swatches for note card backgrounds, plus a leading Default. */
 export const CARD_COLORS: ColorPalette = {
   label: 'Background colors',

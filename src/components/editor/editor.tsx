@@ -14,7 +14,11 @@ import { Bold } from '@/components/editor/extensions/Bold';
 import { BulletList } from '@/components/editor/extensions/BulletList';
 import { Clear } from '@/components/editor/extensions/Clear';
 import { Color } from '@/components/editor/extensions/Color';
+import { ColorPreview } from '@/components/editor/extensions/color-preview';
+import { FontFamily } from '@/components/editor/extensions/FontFamily';
+import { FontSize } from '@/components/editor/extensions/FontSize';
 import { Heading } from '@/components/editor/extensions/Heading';
+import { Highlight } from '@/components/editor/extensions/Highlight';
 import { Italic } from '@/components/editor/extensions/Italic';
 import { ListItem } from '@/components/editor/extensions/ListItem';
 import { createMathematics } from '@/components/editor/extensions/Mathematics';
@@ -23,6 +27,7 @@ import { Strike } from '@/components/editor/extensions/Strike';
 import { TaskList } from '@/components/editor/extensions/TaskList';
 import { Underline } from '@/components/editor/extensions/Underline';
 import BlocksSection from '@/components/editor/menus/toolbars/BlocksSection.tsx';
+import FontSection from '@/components/editor/menus/toolbars/FontSection.tsx';
 import FormatSection from '@/components/editor/menus/toolbars/FormatSection.tsx';
 import HeadingSection from '@/components/editor/menus/toolbars/HeadingSection.tsx';
 import ListSection from '@/components/editor/menus/toolbars/ListSection.tsx';
@@ -58,7 +63,11 @@ export const Editor: React.FC<EditorProps> = ({ content, editable, onUpdate }) =
       Clear,
       createMathematics(() => editorRef.current, t),
       Color,
+      Highlight,
+      FontFamily,
+      FontSize,
       TextStyle,
+      ColorPreview,
     ],
     content,
     editable,
@@ -95,6 +104,8 @@ export const Editor: React.FC<EditorProps> = ({ content, editable, onUpdate }) =
           <ListSection editor={editor} />
           <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-6" />
           <BlocksSection editor={editor} />
+          <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-6" />
+          <FontSection editor={editor} />
         </div>
       )}
 
