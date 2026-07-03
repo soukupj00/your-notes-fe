@@ -11,6 +11,11 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'robots.txt'],
+      workbox: {
+        // Default globPatterns omit .json, which would leave the i18n locale files
+        // (dist/locales/<lng>/translation.json) uncached and break translations offline.
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
+      },
       manifest: {
         name: 'My PWA App',
         short_name: 'PWAApp',

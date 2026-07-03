@@ -1,6 +1,7 @@
 import { type BulletListOptions, BulletList as TiptapBulletList } from '@tiptap/extension-list';
 import { ActionButton } from '@/components/ui/ActionButton.tsx';
 import type { ButtonContext, ButtonView } from '../button-types';
+import { toggleWholeList } from '../list-toggle';
 
 export interface BulletListExtensionOptions extends BulletListOptions {
   button: (context: ButtonContext) => ButtonView;
@@ -13,7 +14,7 @@ export const BulletList = TiptapBulletList.extend<BulletListExtensionOptions>({
       button: ({ editor, t }: ButtonContext) => ({
         component: ActionButton,
         componentProps: {
-          action: () => editor.commands.toggleBulletList(),
+          action: () => toggleWholeList(editor, (chain) => chain.toggleBulletList()),
           isActive: () => editor.isActive('bulletList'),
           shortcutKeys: ['Mod', 'Shift', '8'],
           icon: 'List',
