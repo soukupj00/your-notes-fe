@@ -18,6 +18,7 @@ export const BulletList = TiptapBulletList.extend<BulletListExtensionOptions>({
           shortcutKeys: ['Mod', 'Shift', '8'],
           icon: 'List',
           tooltip: t('editor.bulletList.tooltip'),
+          toggle: true,
         },
       }),
     } as unknown as BulletListExtensionOptions;

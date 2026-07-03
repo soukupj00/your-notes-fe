@@ -1,5 +1,5 @@
 import Document from '@tiptap/extension-document';
-import { ListItem, OrderedList } from '@tiptap/extension-list';
+import { TaskItem } from '@tiptap/extension-list';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { Color, TextStyle } from '@tiptap/extension-text-style';
@@ -13,8 +13,11 @@ import { BulletList } from '@/components/editor/extensions/BulletList';
 import { Clear } from '@/components/editor/extensions/Clear';
 import { Heading } from '@/components/editor/extensions/Heading';
 import { Italic } from '@/components/editor/extensions/Italic';
+import { ListItem } from '@/components/editor/extensions/ListItem';
 import { Mathematics } from '@/components/editor/extensions/Mathematics';
+import { OrderedList } from '@/components/editor/extensions/OrderedList';
 import { Strike } from '@/components/editor/extensions/Strike';
+import { TaskList } from '@/components/editor/extensions/TaskList';
 import { TextColorPickerButton } from '@/components/editor/extensions/text-color/TextColorPickerButton.tsx';
 import { Underline } from '@/components/editor/extensions/Underline';
 import FormatSection from '@/components/editor/menus/toolbars/FormatSection.tsx';
@@ -41,6 +44,8 @@ export const Editor: React.FC<EditorProps> = ({ content, editable, onUpdate }) =
       BulletList,
       OrderedList,
       ListItem,
+      TaskList,
+      TaskItem,
       Clear,
       Mathematics,
       Color,

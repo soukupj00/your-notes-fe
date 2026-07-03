@@ -1,55 +1,23 @@
-import { FlipHorizontalIcon, ListIcon, ListOrderedIcon } from 'lucide-react';
+import type { Editor } from '@tiptap/react';
 import type React from 'react';
-import Toolbar from '@/components/editor/menus/ToolbarSection.tsx';
-import type { FormatAction, ToolbarSectionProps } from '@/types.ts';
+import ExtensionButtonBar from '@/components/editor/menus/ExtensionButtonBar.tsx';
 
-type ListItemAction = 'bulletList' | 'orderedList';
+/** List toggles rendered in order. Each is an extension-owned Pattern A button (ADR 0004). */
+const LIST_EXTENSION_NAMES = ['bulletList', 'orderedList', 'taskList'];
 
-interface ListItem extends FormatAction {
-  value: ListItemAction;
+interface ListSectionProps {
+  editor: Editor;
+  className?: string;
 }
 
-const formatActions: ListItem[] = [
-  {
-    value: 'orderedList',
-    label: 'Ordered List',
-    icon: <ListOrderedIcon className="size-5" />,
-    action: (editor) => editor.chain().focus().toggleOrderedList().run(),
-    isActive: (editor) => editor.isActive('orderedList'),
-    canExecute: (editor) => editor.can().chain().focus().toggleOrderedList().run(),
-    shortcuts: ['mod', 'shift', '7'],
-  },
-  {
-    value: 'bulletList',
-    label: 'Bullet List',
-    icon: <ListIcon className="size-5" />,
-    action: (editor) => editor.chain().focus().toggleBulletList().run(),
-    isActive: (editor) => editor.isActive('bulletList'),
-    canExecute: (editor) => editor.can().chain().focus().toggleBulletList().run(),
-    shortcuts: ['mod', 'shift', '8'],
-  },
-];
-
-export const ListSection: React.FC<ToolbarSectionProps> = ({
-  editor,
-  activeActions = formatActions.map((action) => action.value),
-  mainActionCount = 2,
-  size,
-  variant,
-}) => {
-  return (
-    <Toolbar
-      editor={editor}
-      actions={formatActions}
-      activeActions={activeActions}
-      mainActionCount={mainActionCount}
-      dropdownIcon={<FlipHorizontalIcon className="size-5" />}
-      dropdownTooltip="More formatting options"
-      dropdownClassName="w-8"
-      size={size}
-      variant={variant}
-    />
-  );
+/**
+ * The list section of the editor toolbar. Composes the bullet / ordered / task
+ * list buttons from their extensions. Because these buttons run the underlying
+ * `toggle*List` commands directly (no `can()` gating), clicking one while another
+ * list type is active switches between them, and clicking the active one turns it off.
+ */
+export const ListSection: React.FC<ListSectionProps> = ({ editor, className }) => {
+  return <ExtensionButtonBar editor={editor} names={LIST_EXTENSION_NAMES} className={className} />;
 };
 
 export default ListSection;

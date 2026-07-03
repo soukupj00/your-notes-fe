@@ -11,6 +11,8 @@
       "level": "Heading {{level}}"
     },
     "bulletList": { "tooltip": "Bullet list" },
+    "orderedList": { "tooltip": "Numbered list" },
+    "taskList": { "tooltip": "Task list" },
     "blockquote": { "tooltip": "Quote" },
     "math": { "tooltip": "Inline math" },
     "clearFormatting": { "tooltip": "Clear formatting" }

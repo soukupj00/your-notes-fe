@@ -11,6 +11,8 @@
       "level": "Nadpis {{level}}"
     },
     "bulletList": { "tooltip": "Odrážkový seznam" },
+    "orderedList": { "tooltip": "Číslovaný seznam" },
+    "taskList": { "tooltip": "Seznam úkolů" },
     "blockquote": { "tooltip": "Citace" },
     "math": { "tooltip": "Vzorec" },
     "clearFormatting": { "tooltip": "Zrušit formátování" }

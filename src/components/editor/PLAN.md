@@ -18,19 +18,19 @@ This folder is the focus of **M1** (see [root PLAN.md](../../../PLAN.md)). Goal:
 ## 3. Standardize on Pattern A
 
 - Flesh out each stub extension as `Tiptap<X>.extend()` with a `button` option returning `ActionButton` + a **string** `icon` + i18n `tooltip` + `shortcutKeys` (model on `extensions/Bold/Bold.ts` and `extensions/history/History.ts`).
-- Register the wrapped extensions in `editor.tsx` (replace the direct upstream imports). Done so far: `Bold`, `Italic`, `Strike`, `Underline`, `Clear`, `BulletList`, `Heading`, `Blockquote`, `Mathematics`.
-- Migrate `menus/toolbars/FormatSection.tsx` and `ListSection.tsx` to **consume extension-provided buttons** (compose them into sections/dropdowns) instead of defining `formatActions` arrays with inline Lucide icons.
+- Register the wrapped extensions in `editor.tsx` (replace the direct upstream imports). Done so far: `Bold`, `Italic`, `Strike`, `Underline`, `Clear`, `BulletList`, `OrderedList`, `ListItem`, `TaskList`, `Heading`, `Blockquote`, `Mathematics`.
+- Migrate `menus/toolbars/FormatSection.tsx` and `ListSection.tsx` to **consume extension-provided buttons** instead of defining `formatActions` arrays with inline Lucide icons. `ListSection` **done** (renders via the new `menus/ExtensionButtonBar.tsx`, which resolves each extension's `button` by name); `FormatSection` still legacy. `ExtensionButtonBar` is the reusable renderer to migrate `FormatSection` onto next.
 
 ## 4. Extension order (each shipped with a test)
 
 1. Basic marks — **Bold** ✅, **Italic** ✅, **Strike** ✅, **Underline** ✅, **Clear formatting** ✅.
-2. Lists & blocks — **BulletList** ✅, **OrderedList**, **ListItem**, **Heading** ✅ (level 1–3 button array), **Blockquote** ✅ (markdown `>` showcase), **TaskList**.
+2. Lists & blocks — **BulletList** ✅, **OrderedList** ✅, **ListItem** ✅ (structural, no button), **Heading** ✅ (level 1–3 button array), **Blockquote** ✅ (markdown `>` showcase), **TaskList** ✅.
 3. Styling — **Color** / **text-color**, **Highlight**, **FontFamily**, **FontSize**.
 4. Math — **Mathematics** ✅ (inline KaTeX via `@tiptap/extension-mathematics`; `katex` CSS imported in `editor.tsx`).
 5. Media — **Image**, **Video**, **Attachment** (depends on attachment storage, `src/db/PLAN.md`).
 6. **Excalidraw** drawing — last (heaviest integration).
 
-> Shipped with tests: `Bold`, `Italic`, `Strike`, `Underline`, `Clear`, `BulletList`, `Heading`, `Blockquote`, `Mathematics` (32 headless tests). The toolbars (`FormatSection`/`ListSection`) still don't consume these extension `button` factories — step 3's migration is outstanding, so Heading/Blockquote/Math currently have no toolbar UI yet (reachable via markdown input / shortcuts).
+> Shipped with tests: `Bold`, `Italic`, `Strike`, `Underline`, `Clear`, `BulletList`, `OrderedList`, `ListItem`, `TaskList`, `Heading`, `Blockquote`, `Mathematics` (38 headless tests). The **list section** is migrated to Pattern A (via `ExtensionButtonBar`); `FormatSection` is still legacy, so `Heading`/`Blockquote`/`Math` have no toolbar UI yet (reachable via markdown input / shortcuts).
 
 ## 5. Tests per extension
 

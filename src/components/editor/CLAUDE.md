@@ -6,7 +6,7 @@ How the rich-text editor is built. The canonical extension/toolbar pattern is fi
 
 - `editor.tsx` — the `Editor` React component: `useEditor({ extensions, content, editable, onUpdate })`, renders `EditorContent`. Syncs external `content` prop into the editor via `setContent`.
 - `extensions/<Name>/` — one folder per editing capability. Each has `<Name>.ts` (the extension) and `index.ts` (re-export).
-- `menus/` — `ToolbarButton.tsx`, `ToolbarSection.tsx`, and `toolbars/FormatSection.tsx` / `ListSection.tsx`.
+- `menus/` — `ExtensionButtonBar.tsx` (resolves + renders extension-owned Pattern A `button`s by name; the canonical way to compose a toolbar section), plus the legacy `ToolbarButton.tsx` / `ToolbarSection.tsx` and `toolbars/FormatSection.tsx` / `ListSection.tsx`. `ListSection` is migrated to Pattern A (uses `ExtensionButtonBar`); `FormatSection` is still legacy.
 - `ShortcutKey.tsx` — renders keyboard-shortcut hints.
 - Shared button: `ActionButton` (`src/components/ui/ActionButton.tsx`); icon registry: `src/components/icons/icons.ts`.
 
@@ -42,9 +42,9 @@ export const Bold = TiptapBold.extend<BoldOptions>({
 
 Pattern A is partly adopted:
 
-- **Wrapped extensions following Pattern A, each with a headless test:** `Bold`, `Italic`, `Strike`, `Underline`, `Clear` (clear formatting), `BulletList`, `Heading` (level 1–3 button array), `Blockquote` (markdown `>` showcase), `Mathematics` (inline KaTeX), plus `history`. `editor.tsx` registers all of these wrapped versions (and imports `katex/dist/katex.min.css`). `Clear` is not a mark - it is an `Extension.create` whose button runs `clearNodes().unsetAllMarks()`.
-- Still **upstream / stubs:** `OrderedList`, `ListItem`, `TaskList`, `Image`, `Highlight`, `Excalidraw` (drawing — deferred), `Video`, `Attachment`, `FontFamily`, `FontSize`, `Color`, `Selection` are empty/partial stubs and/or registered upstream in `editor.tsx`.
-- `menus/toolbars/FormatSection.tsx` and `ListSection.tsx` still use the **legacy Pattern B** (`formatActions` array with inline Lucide JSX). They do **not** yet consume the extension `button` factories, so the wrapped-but-not-in-legacy buttons (`Heading`/`Blockquote`/`Mathematics`) have no toolbar button yet (reachable via markdown input rules / keyboard shortcuts).
+- **Wrapped extensions following Pattern A, each with a headless test:** `Bold`, `Italic`, `Strike`, `Underline`, `Clear` (clear formatting), `BulletList`, `OrderedList`, `TaskList`, `Heading` (level 1–3 button array), `Blockquote` (markdown `>` showcase), `Mathematics` (inline KaTeX), plus `history`. `editor.tsx` registers all of these wrapped versions (and imports `katex/dist/katex.min.css`). `Clear` is not a mark - it is an `Extension.create` whose button runs `clearNodes().unsetAllMarks()`. `ListItem` is wrapped only as a local re-export (structural child, no button); `TaskList` needs `TaskItem` (registered upstream in `editor.tsx`), and task-list checkbox/text layout is styled in `src/styles/globals.css` (`ul[data-type="taskList"]`).
+- Still **upstream / stubs:** `Image`, `Highlight`, `Excalidraw` (drawing — deferred), `Video`, `Attachment`, `FontFamily`, `FontSize`, `Color`, `Selection` are empty/partial stubs and/or registered upstream in `editor.tsx`.
+- The **list section** of the toolbar now consumes extension `button` factories via `ExtensionButtonBar` (Pattern A) — bullet/ordered/task switch directly between each other (no `can()` gating). `menus/toolbars/FormatSection.tsx` still uses the **legacy Pattern B** (`formatActions` array with inline Lucide JSX), so `Heading`/`Blockquote`/`Mathematics` still have no toolbar button yet (reachable via markdown input rules / keyboard shortcuts).
 - Remaining duplicate case-variant folders: `Color/` vs `text-color/` (resolve when the color extension is fleshed out). The `History/` empty variant has been removed; only `history/` remains.
 
 ## Testing extensions (Vitest)

@@ -68,6 +68,8 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
             disabled={disabled || loading}
             data-state={isActive?.() ? 'on' : 'off'}
             size="sm"
+            // Icon-only buttons need an accessible name; the visual tooltip is not exposed to AT.
+            aria-label={tooltip}
             className={cn('flex h-8 w-8 items-center justify-center p-0', className)}
             {...rest}
           >
