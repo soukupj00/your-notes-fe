@@ -1,5 +1,11 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+
+/* Bind Tailwind's `dark:` variant to the app's `.dark` class (set by ThemeProvider)
+   instead of the v4 default `prefers-color-scheme` media query, so `dark:*` utilities
+   follow the in-app theme toggle rather than the OS setting. */
+@custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
   :root {
@@ -108,68 +114,52 @@
   --color-info: var(--info);
 }
 
-/* List styles */
-ul,
-ol {
-  padding: 0 1rem;
-  margin: 1.25rem 1rem 1.25rem 0.4rem;
+/* Rich-text content styling (headings, lists, blockquote, code, etc.) comes from the
+   @tailwindcss/typography `prose` classes applied to the editor in editor.tsx. Only
+   TipTap-specific structures that prose does not know about are styled here, scoped
+   to the editor (`.tiptap`) so nothing leaks to the rest of the app. */
 
-  li p {
-    margin-top: 0.25em;
-    margin-bottom: 0.25em;
-  }
+/* Map the typography plugin's palette onto the app theme tokens so prose content
+   matches the active theme in both light and dark (the tokens switch via the
+   .light/.dark class) instead of prose's built-in grays. This is why the editor
+   uses plain `prose` rather than `dark:prose-invert`. */
+.prose {
+  --tw-prose-body: var(--foreground);
+  --tw-prose-headings: var(--foreground);
+  --tw-prose-lead: var(--muted-foreground);
+  --tw-prose-links: var(--primary);
+  --tw-prose-bold: var(--foreground);
+  --tw-prose-counters: var(--muted-foreground);
+  --tw-prose-bullets: var(--muted-foreground);
+  --tw-prose-hr: var(--border);
+  --tw-prose-quotes: var(--foreground);
+  --tw-prose-quote-borders: var(--border);
+  --tw-prose-captions: var(--muted-foreground);
+  --tw-prose-code: var(--foreground);
+  --tw-prose-pre-code: var(--foreground);
+  --tw-prose-pre-bg: var(--muted);
+  --tw-prose-th-borders: var(--border);
+  --tw-prose-td-borders: var(--border);
 }
 
-ul {
-  list-style-type: disc;
+/* Task lists (TipTap TaskList/TaskItem): render the checkbox and text on one line,
+   overriding prose's default list indent/markers. */
+.tiptap ul[data-type="taskList"] {
+  @apply list-none p-0;
 }
 
-ol {
-  list-style-type: decimal;
+.tiptap ul[data-type="taskList"] li {
+  @apply flex items-start gap-2;
 }
 
-/* Heading styles (editor content). Tailwind's preflight resets heading size/weight
-   to inherit; these restore a visible hierarchy since the `prose` classes are inert
-   (the @tailwindcss/typography plugin is not installed). */
-.tiptap h1,
-.tiptap h2,
-.tiptap h3 {
-  font-weight: 600;
-  line-height: 1.25;
-  margin: 0.8em 0 0.4em;
+.tiptap ul[data-type="taskList"] li > label {
+  @apply mt-0.5 flex-none select-none;
 }
 
-.tiptap h1 {
-  font-size: 1.75rem;
+.tiptap ul[data-type="taskList"] li > div {
+  @apply flex-1;
 }
 
-.tiptap h2 {
-  font-size: 1.4rem;
-}
-
-.tiptap h3 {
-  font-size: 1.2rem;
-}
-
-/* Task lists (TipTap TaskList/TaskItem): checkbox and text on the same line */
-ul[data-type="taskList"] {
-  list-style: none;
-  padding: 0;
-  margin-left: 0;
-
-  li {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-
-  li > label {
-    margin-top: 0.2em;
-    flex: 0 0 auto;
-    user-select: none;
-  }
-
-  li > div {
-    flex: 1 1 auto;
-  }
+.tiptap ul[data-type="taskList"] li > div p {
+  @apply my-0;
 }

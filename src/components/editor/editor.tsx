@@ -89,12 +89,12 @@ export const Editor: React.FC<EditorProps> = ({ content, editable, onUpdate }) =
       {editable && (
         <div className="flex flex-wrap items-center gap-1">
           <HeadingSection editor={editor} />
-          <Separator orientation="vertical" className="mx-1" style={{ height: '1.5rem' }} />
+          <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-6" />
           <FormatSection editor={editor} />
           <TextColorPickerButton editor={editor} />
-          <Separator orientation="vertical" className="mx-1" style={{ height: '1.5rem' }} />
+          <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-6" />
           <ListSection editor={editor} />
-          <Separator orientation="vertical" className="mx-1" style={{ height: '1.5rem' }} />
+          <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-6" />
           <BlocksSection editor={editor} />
         </div>
       )}
