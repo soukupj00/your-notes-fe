@@ -56,6 +56,8 @@ export const Mathematics = TiptapMathematics.extend({
           tooltip: t('editor.math.tooltip'),
           toggle: true,
         },
+        // Mobile-first: hidden below `sm` to keep the mobile toolbar lean (Balanced preset).
+        hideOnMobile: true,
       }),
     } as unknown as MathematicsExtensionOptions;
   },

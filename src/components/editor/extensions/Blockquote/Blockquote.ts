@@ -23,6 +23,8 @@ export const Blockquote = TiptapBlockquote.extend<BlockquoteExtensionOptions>({
           tooltip: t('editor.blockquote.tooltip'),
           toggle: true,
         },
+        // Mobile-first: hidden below `sm` to keep the mobile toolbar lean (Balanced preset).
+        hideOnMobile: true,
       }),
     } as unknown as BlockquoteExtensionOptions;
   },

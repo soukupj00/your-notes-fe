@@ -20,6 +20,8 @@ export const Clear = Extension.create<ClearExtensionOptions>({
           tooltip: t('editor.clearFormatting.tooltip'),
           toggle: true,
         },
+        // Mobile-first: hidden below `sm` to keep the mobile toolbar lean (Balanced preset).
+        hideOnMobile: true,
       }),
     } as unknown as ClearExtensionOptions;
   },

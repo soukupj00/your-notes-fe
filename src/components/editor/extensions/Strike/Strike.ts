@@ -20,6 +20,8 @@ export const Strike = TiptapStrike.extend<StrikeExtensionOptions>({
           tooltip: t('editor.strike.tooltip'),
           toggle: true,
         },
+        // Mobile-first: hidden below `sm` to keep the mobile toolbar lean (Balanced preset).
+        hideOnMobile: true,
       }),
     } as unknown as StrikeExtensionOptions;
   },

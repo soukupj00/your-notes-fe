@@ -32,7 +32,10 @@ export const ExtensionButtonBar: React.FC<ExtensionButtonBarProps> = ({
   const { t } = useTranslation();
 
   return (
-    <div className={cn('flex items-center gap-1', className)}>
+    // On mobile the wrapper is `display: contents` so its buttons become direct children of
+    // the toolbar's flex-wrap and wrap button-by-button (not whole sections at a time); at
+    // `sm`+ it is a normal flex group so sections stay intact.
+    <div className={cn('contents items-center gap-1 sm:flex', className)}>
       {names.map((name) => {
         const extension = editor.extensionManager.extensions.find((e) => e.name === name);
         const buttonFactory = extension?.options?.button as
