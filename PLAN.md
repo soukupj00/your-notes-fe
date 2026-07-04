@@ -9,11 +9,11 @@ See [`CONTEXT.md`](./CONTEXT.md) for the domain glossary and [`docs/adr/`](./doc
 - ✅ Vite + React 19 + TS + Tailwind v4 + shadcn/Radix scaffolding; VitePWA configured.
 - ✅ Dexie data layer (`src/db`) with Notes/Tags/NoteTags + attachment tables; seeders.
 - ✅ Data-access hooks (`src/hooks/data`): live queries + CRUD + search.
-- ✅ TipTap editor with basic marks (bold/italic/strike/underline), lists, text color.
+- ✅ TipTap editor on the canonical Pattern A ([ADR 0004](./docs/adr/0004-canonical-editor-toolbar-pattern.md)): marks, headings, lists/tasks, blockquote, text color + highlight, font family/size, and Mathematics (KaTeX) - each shipped with a test; live color preview and a responsive, mobile-first toolbar.
 - ✅ i18n (en/cs) and light/dark theming via OKLCH tokens.
-- 🚧 `App.tsx` is still a demo harness — no real note list / create / edit flow yet.
-- 🚧 Most editor extensions are scaffolded folders only; two toolbar patterns coexist.
-- ❌ No test runner installed (only `fake-indexeddb` helper present).
+- ✅ Vitest + React Testing Library wired up (64 tests, reusing `fake-indexeddb`); legacy toolbar patterns removed.
+- 🚧 `App.tsx` is still a demo harness - no real note list / create / edit flow yet (M2).
+- ⏸️ Playwright E2E deferred (resource-heavy; UI tested manually). Media extensions (Image/Video/Attachment, Excalidraw) deferred to M3 - they depend on attachment storage.
 - ❌ No sync, no accounts, no accessibility themes, no animations.
 
 ## Milestones
@@ -34,15 +34,16 @@ Decisions: [ADR 0005](./docs/adr/0005-biome-replaces-eslint-prettier.md) (Biome)
   - `build` — `pnpm build`, artifact `dist/`.
   - `publish` — Kaniko build of the `Dockerfile`, push to `$CI_REGISTRY_IMAGE` tagged `$CI_COMMIT_SHORT_SHA` + `latest` (default branch) / git tag (releases); `rules` restrict to default branch and tags.
 
-### M1 — Test foundation + editor extensions  ← current focus
-- Install & configure **Vitest** + **React Testing Library** (reusing `fake-indexeddb`) and **Playwright**; add `test` / `test:e2e` scripts.
-- Consolidate duplicate case-variant extension folders (`History/`↔`history/`, `Color/`↔`text-color/`).
-- Standardize on the canonical toolbar pattern (extension-owned `button` + icon registry — [ADR 0004](./docs/adr/0004-canonical-editor-toolbar-pattern.md)); migrate `FormatSection`/`ListSection`.
-- Flesh out each scaffolded extension and register it in `editor.tsx`.
-- Write a test per extension (existing and new).
+### M1 — Test foundation + editor extensions  ✅ done
+- [x] Install & configure **Vitest** + **React Testing Library** (reusing `fake-indexeddb`); add `test` script. **Playwright** `test:e2e` deferred (resource-heavy; UI tested manually).
+- [x] Consolidate duplicate case-variant extension folders (`History/`↔`history/`, `Color/`↔`text-color/`).
+- [x] Standardize on the canonical toolbar pattern (extension-owned `button` + icon registry — [ADR 0004](./docs/adr/0004-canonical-editor-toolbar-pattern.md)); migrated `FormatSection`/`ListSection` (+ `Heading`/`Blocks`/`Font` sections); legacy toolbars removed.
+- [x] Flesh out each editor extension and register it in `editor.tsx` (marks, headings, lists/tasks, blockquote, color/highlight, fonts, Mathematics); responsive mobile-hide mechanism (`hideOnMobile`).
+- [x] Write a test per extension (64 tests total).
+- Deferred to M3: media extensions (Image/Video/Attachment) + Excalidraw - blocked on attachment storage (`src/db/PLAN.md`).
 - Detail: [`src/components/editor/PLAN.md`](./src/components/editor/PLAN.md).
 
-### M2 — Real notes CRUD UI
+### M2 — Real notes CRUD UI  ← current focus
 - Replace the `App.tsx` demo with the note list + create/edit flow, wiring `NoteCard` / `NoteContent` / `NoteCreateMain` to the data hooks. Mobile-first, offline-first usable.
 
 ### M3 — Attachments & rich media

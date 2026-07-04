@@ -1,11 +1,13 @@
 # PLAN — `src/components/editor` (Milestone 1 detail)
 
-This folder is the focus of **M1** (see [root PLAN.md](../../../PLAN.md)). Goal: stand up testing, standardize on the canonical pattern ([ADR 0004](../../../docs/adr/0004-canonical-editor-toolbar-pattern.md)), and ship each editor extension with a test.
+This folder was the focus of **M1** (see [root PLAN.md](../../../PLAN.md)). Goal: stand up testing, standardize on the canonical pattern ([ADR 0004](../../../docs/adr/0004-canonical-editor-toolbar-pattern.md)), and ship each editor extension with a test.
+
+> **Status: M1 done.** Toolbar/styling extensions are all shipped with tests (64 total). Deferred: Playwright E2E (resource-heavy; UI tested manually) and media extensions (Image/Video/Attachment, Excalidraw) - the latter blocked on attachment storage, so they move to M3.
 
 ## 1. Test tooling (prerequisite)
 
 - [x] **Vitest** + **React Testing Library** (+ `@testing-library/jest-dom`) configured via a standalone `vitest.config.ts` (jsdom env, `src/test/setup.ts`, `@/` alias). Scripts: `test` (`vitest run`), `test:watch`.
-- [ ] **Playwright** E2E + `test:e2e` script — still to add.
+- [~] **Playwright** E2E + `test:e2e` script — **deferred** (resource-heavy; UI is tested manually for now).
 - Reuse `fake-indexeddb` for any test that touches the data layer.
 
 > Extension tests run **headless**: build a `new Editor({ extensions })` from `@tiptap/core`, drive commands / the `button` factory, and assert `editor.getHTML()` / `isActive(...)`. Markdown input rules are exercised via `editor.view.someProp('handleTextInput', ...)`. See `extensions/Bold/Bold.test.ts` for the template.
