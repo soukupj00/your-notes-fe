@@ -1,8 +1,10 @@
 import { mergeAttributes, Node } from '@tiptap/core';
+import { ReactNodeViewRenderer } from '@tiptap/react';
 import type { AttachmentErrorCode } from '@/lib/attachments.ts';
 import type { Attachment } from '@/models.ts';
 import type { TFunction } from '../button-types';
 import { ImageButton } from './ImageButton';
+import { ImageNodeView } from './ImageNodeView';
 
 export interface ImageDeps {
   getNoteId: () => Promise<string>;
@@ -64,6 +66,10 @@ export function createImage(deps: ImageDeps) {
     renderHTML({ HTMLAttributes }) {
       // No src ever - the id is the only persisted reference (ADR 0007).
       return ['img', mergeAttributes(HTMLAttributes)];
+    },
+
+    addNodeView() {
+      return ReactNodeViewRenderer(ImageNodeView);
     },
 
     addCommands() {
