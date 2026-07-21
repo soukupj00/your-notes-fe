@@ -20,5 +20,21 @@
     "highlight": { "tooltip": "Highlight" },
     "fontFamily": { "tooltip": "Font family" },
     "fontSize": { "tooltip": "Font size" }
+  },
+  "notes": {
+    "createPlaceholder": "Take a note…",
+    "titlePlaceholder": "Title",
+    "newNoteTitle": "New note",
+    "editNoteTitle": "Edit note",
+    "create": "Create note",
+    "empty": {
+      "title": "No notes yet",
+      "subtitle": "Your notes will show up here. Tap the button to write your first one."
+    },
+    "noResults": "No notes match your search.",
+    "menu": "Note options",
+    "delete": "Delete",
+    "deleted": "Note deleted",
+    "undo": "Undo"
   }
 }

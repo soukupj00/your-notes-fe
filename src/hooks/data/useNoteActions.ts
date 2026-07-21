@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { db } from '@/db/db.ts';
-import type { Note } from '@/models.ts';
+import type { Note, NoteTag } from '@/models.ts';
 
 export function useNoteActions() {
   // CREATE a new note
@@ -12,6 +12,7 @@ export function useNoteActions() {
       id,
       header: data.header ?? '',
       description: data.description ?? '',
+      body: data.body ?? '',
       checklist: data.checklist ?? [],
       createdAt: now,
       updatedAt: now,
@@ -19,6 +20,19 @@ export function useNoteActions() {
 
     await db.notes.add(newNote);
     return newNote;
+  };
+
+  // RESTORE a previously captured note verbatim (for delete-undo). Unlike
+  // createNote it keeps the original id/timestamps and re-links its noteTags,
+  // so undoing a delete reproduces the exact prior state.
+  const restoreNote = async (note: Note, noteTags: NoteTag[] = []) => {
+    await db.transaction('rw', db.notes, db.noteTags, async () => {
+      await db.notes.put(note);
+      if (noteTags.length > 0) {
+        await db.noteTags.bulkPut(noteTags);
+      }
+    });
+    return note;
   };
 
   // UPDATE an existing note
@@ -31,13 +45,16 @@ export function useNoteActions() {
     return updatedNote;
   };
 
-  // DELETE a note and its relationships
+  // DELETE a note and its relationships. Returns the removed noteTags so the
+  // caller can pass them (with the captured note) to restoreNote for undo.
   const deleteNote = async (id: string) => {
-    await db.transaction('rw', db.notes, db.noteTags, async () => {
+    return db.transaction('rw', db.notes, db.noteTags, async () => {
+      const removedTags = await db.noteTags.where('noteId').equals(id).toArray();
       await db.notes.delete(id);
       await db.noteTags.where('noteId').equals(id).delete();
+      return removedTags;
     });
   };
 
-  return { createNote, updateNote, deleteNote };
+  return { createNote, restoreNote, updateNote, deleteNote };
 }

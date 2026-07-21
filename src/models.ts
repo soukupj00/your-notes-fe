@@ -1,7 +1,8 @@
 export interface Note {
   id: string; // Unique ID (UUID or nanoid)
   header?: string; // Optional title
-  description?: string; // Optional description
+  description?: string; // Optional plaintext subtitle (dormant until a later milestone gives it UI)
+  body?: string; // Rich-text HTML from the editor (see "Body" in CONTEXT.md)
   checklist: string[]; // Checklist items
   audio?: NoteAudio[]; // Array of audio attachments
   images?: NoteImage[]; // Array of images

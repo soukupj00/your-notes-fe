@@ -4,8 +4,9 @@ Domain glossary for the note-taking app. This file defines the **language** of t
 
 ## Core entities
 
-- **Note** — A single unit of content a user captures. Has an optional header and description, an ordered checklist, zero or more attachments, and zero or more tags. A Note is the central aggregate of the app.
-- **Checklist** — The ordered list of to-do items belonging to a Note. Distinct from a bullet/ordered list *inside* the rich-text body: the checklist is structured Note data, body lists are editor formatting.
+- **Note** — A single unit of content a user captures. Has an optional header, an optional plaintext description, a rich-text body, an ordered checklist, zero or more attachments, and zero or more tags. A Note is the central aggregate of the app.
+- **Body** — The rich-text content of a Note, authored in the Editor and stored as HTML. This is the main writing surface. Distinct from the **description** (a short plaintext subtitle) and from the **Checklist** (structured to-do data): a bullet/ordered list *inside* the Body is editor formatting, not the Checklist.
+- **Checklist** — The ordered list of to-do items belonging to a Note. Distinct from a bullet/ordered list *inside* the rich-text Body: the checklist is structured Note data, body lists are editor formatting.
 - **Tag** — A user-defined label (e.g. "Work", "Personal") used to group Notes. A Tag exists independently of any Note and can be attached to many Notes.
 - **NoteTag** — The many-to-many association between a Note and a Tag. Attaching or detaching a Tag creates or removes a NoteTag; it never deletes the Tag itself.
 - **Attachment** — Any non-text media belonging to a Note. Four kinds, each a separate concept:

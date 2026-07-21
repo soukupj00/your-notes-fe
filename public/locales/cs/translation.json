@@ -20,5 +20,21 @@
     "highlight": { "tooltip": "Zvýraznění" },
     "fontFamily": { "tooltip": "Písmo" },
     "fontSize": { "tooltip": "Velikost písma" }
+  },
+  "notes": {
+    "createPlaceholder": "Napsat poznámku…",
+    "titlePlaceholder": "Název",
+    "newNoteTitle": "Nová poznámka",
+    "editNoteTitle": "Upravit poznámku",
+    "create": "Vytvořit poznámku",
+    "empty": {
+      "title": "Zatím žádné poznámky",
+      "subtitle": "Vaše poznámky se zobrazí zde. Klepnutím na tlačítko napíšete první."
+    },
+    "noResults": "Žádné poznámky neodpovídají hledání.",
+    "menu": "Možnosti poznámky",
+    "delete": "Smazat",
+    "deleted": "Poznámka smazána",
+    "undo": "Zpět"
   }
 }

@@ -8,6 +8,7 @@ type NotesContextType = {
   query: string;
   setQuery: (value: string) => void;
   notes: Note[];
+  loading: boolean;
 };
 
 const NotesContext = createContext<NotesContextType | undefined>(undefined);
@@ -25,8 +26,14 @@ export function NotesProvider({ children }: { children: ReactNode }) {
     (n): n is Note => n !== undefined
   );
 
+  // The all-notes live query is `undefined` until it first resolves; surface
+  // that so the list can show skeletons instead of a false empty state.
+  const loading = !query.trim() && allNotes === undefined;
+
   return (
-    <NotesContext.Provider value={{ query, setQuery, notes }}>{children}</NotesContext.Provider>
+    <NotesContext.Provider value={{ query, setQuery, notes, loading }}>
+      {children}
+    </NotesContext.Provider>
   );
 }
 

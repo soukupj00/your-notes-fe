@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db.ts';
+import { stripHtml } from '@/lib/utils.ts';
 import type { Note, Tag } from '@/models.ts';
 
 export function useSearchNotes(query: string) {
@@ -13,6 +14,7 @@ export function useSearchNotes(query: string) {
     const matchingNotes: Note[] = allNotes.filter((note) => {
       const matchesHeader = note.header?.toLowerCase().includes(lowerQuery);
       const matchesDescription = note.description?.toLowerCase().includes(lowerQuery);
+      const matchesBody = stripHtml(note.body).toLowerCase().includes(lowerQuery);
       const matchesChecklist = note.checklist?.some((item) =>
         item.toLowerCase().includes(lowerQuery)
       );
@@ -20,7 +22,7 @@ export function useSearchNotes(query: string) {
         note.createdAt.toLowerCase().includes(lowerQuery) ||
         note.updatedAt.toLowerCase().includes(lowerQuery);
 
-      return matchesHeader || matchesDescription || matchesChecklist || matchesDates;
+      return matchesHeader || matchesDescription || matchesBody || matchesChecklist || matchesDates;
     });
 
     // 2. Search tags

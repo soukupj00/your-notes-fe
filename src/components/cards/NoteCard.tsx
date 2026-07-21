@@ -1,120 +1,124 @@
+import { MoreVertical } from 'lucide-react';
 import type React from 'react';
-import { useState } from 'react';
-import { ColorPicker } from '@/components/ColorPicker.tsx';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.tsx';
 import { Checkbox } from '@/components/ui/checkbox.tsx';
-import { ScrollArea } from '@/components/ui/scroll-area.tsx';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu.tsx';
 import { Separator } from '@/components/ui/separator.tsx';
-import type { Note, NoteAudio, NoteFile, NoteImage } from '@/models.ts';
+import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
+import { stripHtml } from '@/lib/utils.ts';
+import type { Note } from '@/models.ts';
 
 interface NoteCardProps {
-  note?: Note;
-  images?: NoteImage[];
-  audios?: NoteAudio[];
-  files?: NoteFile[];
+  note: Note;
+  onSelect: (id: string) => void;
 }
 
-export const NoteCard: React.FC<NoteCardProps> = ({
-  note,
-  images = [],
-  audios = [],
-  files = [],
-}) => {
-  const [bgColor, setBgColor] = useState<string>('');
+// How many checklist items to preview on a card before we stop.
+const CHECKLIST_PREVIEW_LIMIT = 4;
+
+export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
+  const { t } = useTranslation();
+  const { deleteNote, restoreNote } = useNoteActions();
+
+  const hasBody = stripHtml(note.body).trim().length > 0;
+  const checklist = note.checklist ?? [];
+
+  const handleDelete = async () => {
+    const removedTags = await deleteNote(note.id);
+    toast(t('notes.deleted'), {
+      action: {
+        label: t('notes.undo'),
+        onClick: () => restoreNote(note, removedTags),
+      },
+    });
+  };
+
+  const open = () => onSelect(note.id);
 
   return (
-    note && (
-      <Card
-        className="w-full max-w-lg shadow-md transition-colors duration-300"
-        style={{ backgroundColor: bgColor }}
-      >
-        {/* Header */}
-        {note.header && (
-          <CardHeader>
-            <h2 className="font-semibold text-xl">{note.header}</h2>
-          </CardHeader>
+    <Card
+      // Not a <button>: the card contains a menu trigger, and nesting
+      // interactive elements is invalid/inaccessible. A role="button" div with
+      // keyboard handling keeps the whole card clickable without the nesting.
+      role="button"
+      tabIndex={0}
+      onClick={open}
+      onKeyDown={(e) => {
+        // Only activate when the key originated on the card itself. React
+        // synthetic events bubble through the portalled dropdown menu, so
+        // without this an Enter/Space on the menu trigger or a menu item (e.g.
+        // Delete) would also open the editor.
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          open();
+        }
+      }}
+      className="mb-4 w-full cursor-pointer break-inside-avoid shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
+        {note.header ? (
+          <h2 className="font-semibold text-lg leading-tight">{note.header}</h2>
+        ) : (
+          <span className="sr-only">{t('notes.editNoteTitle')}</span>
+        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label={t('notes.menu')}
+            onClick={(e) => e.stopPropagation()}
+            className="-mt-1 -mr-1 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <MoreVertical className="size-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuItem
+              onClick={handleDelete}
+              className="text-destructive focus:text-destructive"
+            >
+              {t('notes.delete')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </CardHeader>
+
+      <CardContent className="space-y-3">
+        {hasBody && (
+          // Rendered rich-text preview, clamped. Self-authored HTML from our own
+          // editor, so rendering it directly is acceptable at local-only scale.
+          <div
+            className="prose prose-sm line-clamp-6 max-w-none text-foreground"
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: preview of the note's own editor HTML
+            dangerouslySetInnerHTML={{ __html: note.body ?? '' }}
+          />
         )}
 
-        <CardContent className="space-y-4">
-          {/* Description */}
-          {note.description && <p>{note.description}</p>}
-
-          {/* Checklist */}
-          {note.checklist && note.checklist.length > 0 && (
-            <div>
-              <Separator className="my-2" />
-              <h4 className="mb-2 font-medium text-sm">Checklist</h4>
-              <div className="space-y-2">
-                {note.checklist.map((item, index) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <Checkbox id={`item-${index}`} />
-                    <label htmlFor={`item-${index}`} className="text-sm">
-                      {item}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Audio */}
-          {audios.length > 0 && (
-            <div>
-              <Separator className="my-2" />
-              <h4 className="mb-2 font-medium text-sm">Audio</h4>
-              <div className="flex flex-col gap-3">
-                {audios.map((audio) => (
-                  <audio key={audio.id} controls src={audio.url} className="w-full">
-                    <track kind="captions" />
-                  </audio>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Images */}
-          {images.length > 0 && (
-            <div>
-              <Separator className="my-2" />
-              <h4 className="mb-2 font-medium text-sm">Images</h4>
-              <ScrollArea className="h-32 w-full rounded-md border p-2">
-                <div className="flex gap-2">
-                  {images.map((img) => (
-                    <img
-                      key={img.id}
-                      src={img.url}
-                      alt={img.name || 'Note image'}
-                      className="h-24 w-24 rounded object-cover"
-                    />
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
-          )}
-
-          {/* Files */}
-          {files.length > 0 && (
-            <div>
-              <Separator className="my-2" />
-              <h4 className="mb-2 font-medium text-sm">Files</h4>
-              <ul className="list-inside list-disc space-y-1">
-                {files.map((file) => (
-                  <li key={file.id}>
-                    <a
-                      href={file.url}
-                      download={file.name}
-                      className="text-blue-500 hover:underline"
-                    >
-                      {file.name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <ColorPicker color={bgColor} onChange={setBgColor} />
-        </CardContent>
-      </Card>
-    )
+        {checklist.length > 0 && (
+          <div>
+            {hasBody && <Separator className="my-2" />}
+            <ul className="space-y-1">
+              {checklist.slice(0, CHECKLIST_PREVIEW_LIMIT).map((item, index) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: read-only, unreordered preview; checklist items are plain strings with no stable id (revisit when checklist editing lands)
+                <li key={index} className="flex items-center gap-2">
+                  <Checkbox disabled aria-hidden />
+                  <span className="text-sm">{item}</span>
+                </li>
+              ))}
+              {checklist.length > CHECKLIST_PREVIEW_LIMIT && (
+                <li className="text-muted-foreground text-xs">
+                  +{checklist.length - CHECKLIST_PREVIEW_LIMIT}
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
