@@ -1,43 +1,86 @@
-// @vitest-environment node
-//
-// This file is forced to the `node` environment (overriding the project's
-// default `jsdom`) because jsdom's Blob polyfill is not recognized by
-// Node's native structuredClone, which fake-indexeddb relies on to persist
-// values. Under jsdom, a stored Blob comes back as a plain `{}`. Node's
-// native Blob round-trips correctly and matches what a real browser does.
+import { renderHook } from '@testing-library/react';
 import 'fake-indexeddb/auto';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '@/db/db.ts';
-import type { Attachment } from '@/models.ts';
+import { useAttachmentActions } from './useAttachmentActions.ts';
 
-function makeAttachment(overrides: Partial<Attachment> = {}): Attachment {
-  const now = new Date().toISOString();
-  return {
-    id: crypto.randomUUID(),
-    noteId: crypto.randomUUID(),
-    kind: 'image',
-    mime: 'image/png',
-    blob: new Blob(['x'], { type: 'image/png' }),
-    createdAt: now,
-    updatedAt: now,
-    ...overrides,
-  };
+function actions() {
+  return renderHook(() => useAttachmentActions()).result.current;
 }
 
-describe('attachments table', () => {
-  it('round-trips an Attachment row with its Blob', async () => {
-    const att = makeAttachment();
-    await db.attachments.put(att);
-    const read = await db.attachments.get(att.id);
-    expect(read?.id).toBe(att.id);
-    expect(read?.kind).toBe('image');
-    expect(read?.blob).toBeInstanceOf(Blob);
+const pngFile = () => new File([new Uint8Array(4)], 'p.png', { type: 'image/png' });
+
+beforeEach(async () => {
+  await db.attachments.clear();
+  await db.notes.clear();
+});
+
+describe('useAttachmentActions', () => {
+  it('createAttachment validates then writes a row', async () => {
+    const a = actions();
+    const noteId = crypto.randomUUID();
+    const att = await a.createAttachment(noteId, pngFile());
+    expect(att.noteId).toBe(noteId);
+    expect(att.kind).toBe('image');
+    expect(att.mime).toBe('image/png');
+    expect(await db.attachments.get(att.id)).toBeTruthy();
   });
 
-  it('indexes attachments by noteId', async () => {
+  it('createAttachment rejects a bad type without writing', async () => {
+    const a = actions();
+    const bad = new File(['x'], 'x.svg', { type: 'image/svg+xml' });
+    await expect(a.createAttachment(crypto.randomUUID(), bad)).rejects.toMatchObject({
+      code: 'unsupported-type',
+    });
+    expect(await db.attachments.count()).toBe(0);
+  });
+
+  it('getAttachment + deleteAttachment round-trip', async () => {
+    const a = actions();
+    const att = await a.createAttachment(crypto.randomUUID(), pngFile());
+    expect((await a.getAttachment(att.id))?.id).toBe(att.id);
+    await a.deleteAttachment(att.id);
+    expect(await a.getAttachment(att.id)).toBeUndefined();
+  });
+
+  it('cloneAttachment mints a distinct owned row with copied bytes', async () => {
+    const a = actions();
+    const src = await a.createAttachment(crypto.randomUUID(), pngFile());
+    const targetNote = crypto.randomUUID();
+    const clone = await a.cloneAttachment(src, targetNote);
+    expect(clone.id).not.toBe(src.id);
+    expect(clone.noteId).toBe(targetNote);
+    expect(clone.blob).toBeInstanceOf(Blob);
+    expect(await db.attachments.count()).toBe(2);
+  });
+
+  it('collectOrphans removes unreferenced rows for the note, keeps referenced', async () => {
+    const a = actions();
     const noteId = crypto.randomUUID();
-    await db.attachments.bulkPut([makeAttachment({ noteId }), makeAttachment({ noteId })]);
-    const rows = await db.attachments.where('noteId').equals(noteId).toArray();
-    expect(rows).toHaveLength(2);
+    const keep = await a.createAttachment(noteId, pngFile());
+    const drop = await a.createAttachment(noteId, pngFile());
+    const removed = await a.collectOrphans(noteId, [keep.id]);
+    expect(removed).toBe(1);
+    expect(await a.getAttachment(keep.id)).toBeTruthy();
+    expect(await a.getAttachment(drop.id)).toBeUndefined();
+  });
+
+  it('collectMissingNoteOrphans removes rows whose note is gone', async () => {
+    const a = actions();
+    const orphanNote = crypto.randomUUID();
+    await a.createAttachment(orphanNote, pngFile());
+    const liveNote = crypto.randomUUID();
+    await db.notes.put({
+      id: liveNote,
+      header: '',
+      description: '',
+      body: '',
+      checklist: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    await a.createAttachment(liveNote, pngFile());
+    const removed = await a.collectMissingNoteOrphans();
+    expect(removed).toBe(1);
   });
 });

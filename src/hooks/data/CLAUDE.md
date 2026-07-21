@@ -21,6 +21,7 @@ The React interface to the Dexie layer. Components use these hooks; they should 
 |------|-----------|
 | `useNoteActions()` | `createNote(partial)`, `updateNote(id, updates)`, `deleteNote(id)` |
 | `useTagActions()` | `createTag(name)`, `updateTag(id, name)`, `deleteTag(id)`, `addTagToNote(noteId, tagId)`, `removeTagFromNote(noteId, tagId)` |
+| `useAttachmentActions()` | `createAttachment(noteId, file, kind?)`, `getAttachment(id)`, `deleteAttachment(id)`, `cloneAttachment(source, noteId)`, `collectOrphans(noteId, referencedIds)`, `collectMissingNoteOrphans()` |
 
 ## Conventions & behaviors
 
