@@ -17,6 +17,11 @@ describe('validateImageFile', () => {
     expect(validateImageFile(fileOfType('application/pdf'))).toBe('unsupported-type');
   });
 
+  it('accepts a file of exactly the size cap', () => {
+    const exact = fileOfType('image/png', MAX_IMAGE_BYTES);
+    expect(validateImageFile(exact)).toBeNull();
+  });
+
   it('rejects an oversized file', () => {
     const big = fileOfType('image/png', MAX_IMAGE_BYTES + 1);
     expect(validateImageFile(big)).toBe('too-large');

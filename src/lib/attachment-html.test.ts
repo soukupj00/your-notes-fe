@@ -19,6 +19,15 @@ describe('bodyHasAttachment', () => {
     expect(bodyHasAttachment(html)).toBe(true);
     expect(bodyHasAttachment(html)).toBe(true);
   });
+
+  it('extractAttachmentIds is unaffected by a prior bodyHasAttachment call', () => {
+    expect(bodyHasAttachment('<img data-attachment-id="abc">')).toBe(true);
+    expect(
+      extractAttachmentIds(
+        '<img data-attachment-id="first"><img data-attachment-id="second">'
+      ).sort()
+    ).toEqual(['first', 'second']);
+  });
 });
 
 describe('extractAttachmentIds', () => {
