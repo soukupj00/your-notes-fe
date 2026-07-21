@@ -12,7 +12,8 @@ See [`CONTEXT.md`](./CONTEXT.md) for the domain glossary and [`docs/adr/`](./doc
 - ✅ TipTap editor on the canonical Pattern A ([ADR 0004](./docs/adr/0004-canonical-editor-toolbar-pattern.md)): marks, headings, lists/tasks, blockquote, text color + highlight, font family/size, and Mathematics (KaTeX) - each shipped with a test; live color preview and a responsive, mobile-first toolbar.
 - ✅ i18n (en/cs) and light/dark theming via OKLCH tokens.
 - ✅ Vitest + React Testing Library wired up (64 tests, reusing `fake-indexeddb`); legacy toolbar patterns removed.
-- 🚧 `App.tsx` is still a demo harness - no real note list / create / edit flow yet (M2).
+- ✅ Real notes home (M2): masonry list, create bar + mobile quick-capture, `NoteEditorDialog` with debounced autosave, delete + undo, search over body.
+- ✅ M2.5 polish: feed layout toggle (masonry ↔ list, persisted), mobile capture bar (note + checklist) with checklist smart-init, sticky-bottom mobile editor toolbar, local "Saved" autosave indicator.
 - ⏸️ Playwright E2E deferred (resource-heavy; UI tested manually). Media extensions (Image/Video/Attachment, Excalidraw) deferred to M3 - they depend on attachment storage.
 - ❌ No sync, no accounts, no accessibility themes, no animations.
 
@@ -43,8 +44,16 @@ Decisions: [ADR 0005](./docs/adr/0005-biome-replaces-eslint-prettier.md) (Biome)
 - Deferred to M3: media extensions (Image/Video/Attachment) + Excalidraw - blocked on attachment storage (`src/db/PLAN.md`).
 - Detail: [`src/components/editor/PLAN.md`](./src/components/editor/PLAN.md).
 
-### M2 — Real notes CRUD UI  ← current focus
-- Replace the `App.tsx` demo with the note list + create/edit flow, wiring `NoteCard` / `NoteContent` / `NoteCreateMain` to the data hooks. Mobile-first, offline-first usable.
+### M2 — Real notes CRUD UI  ✅ done
+- Replaced the `App.tsx` demo with the note list + create/edit flow, wiring `NoteCard` / `NoteContent` / `NotesHome` / `NoteEditorDialog` to the data hooks. Mobile-first, offline-first usable. Landed with tests (card click/keyboard, dialog autosave/draft/discard, delete/restore, search-by-body).
+
+### M2.5 — Notes UX polish  ✅ done
+Keep-simple friction-reducers layered on M2 (detailed slice plan lived in a planning session, not the repo):
+- [x] Feed layout toggle (masonry ↔ single-column list), persisted to localStorage via `ViewModeProvider`.
+- [x] Mobile quick-capture bar (note + checklist) replacing the FAB; checklist smart-init opens the editor with an empty task list ready + focused. Mobile search moved to the top bar.
+- [x] Sticky-bottom mobile editor toolbar (rides above the keyboard via `interactive-widget=resizes-content`); desktop unchanged.
+- [x] Local "Saved" autosave indicator (icon-only) in the editor; designed to extend to Syncing/Offline in M5.
+- Deferred: photo/mic capture + audio → M3; slash commands + real VirtualKeyboard docking → M4; full cloud sync-states → M5. Dropped: block drag handles, customizable toolbars.
 
 ### M3 — Attachments & rich media
 - Images, audio, video, files, and Excalidraw drawings end to end: extension → Dexie storage → render. See [`src/db/PLAN.md`](./src/db/PLAN.md) for storage strategy.
