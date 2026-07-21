@@ -3,7 +3,10 @@ import { NodeViewWrapper } from '@tiptap/react';
 import { useEffect, useState } from 'react';
 import type { ImageDeps } from './Image';
 
-type State = { status: 'loading' } | { status: 'ready'; url: string } | { status: 'missing' };
+type State =
+  | { status: 'loading' }
+  | { status: 'ready'; url: string; name?: string }
+  | { status: 'missing' };
 
 /**
  * Editor render path for imageAttachment. Resolves attachmentId → Blob → object
@@ -29,7 +32,7 @@ export function ImageNodeView(props: ReactNodeViewProps) {
         return;
       }
       url = URL.createObjectURL(att.blob);
-      setState({ status: 'ready', url });
+      setState({ status: 'ready', url, name: att.name });
     });
     return () => {
       active = false;
@@ -40,8 +43,7 @@ export function ImageNodeView(props: ReactNodeViewProps) {
   return (
     <NodeViewWrapper as="div" className="my-2" data-drag-handle>
       {state.status === 'ready' && (
-        // biome-ignore lint/a11y/useAltText: no caption yet (later slice); alt is omitted (not "") since empty alt maps to role="presentation" and would hide the image from a11y queries
-        <img src={state.url} className="h-auto max-w-full rounded-md" />
+        <img src={state.url} alt={state.name ?? 'Image'} className="h-auto max-w-full rounded-md" />
       )}
       {state.status === 'loading' && (
         <div className="h-32 w-full animate-pulse rounded-md bg-muted" aria-hidden />

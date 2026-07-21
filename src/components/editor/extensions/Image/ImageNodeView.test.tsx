@@ -44,6 +44,12 @@ describe('ImageNodeView', () => {
     await waitFor(() => expect(img).toHaveAttribute('src', expect.stringContaining('blob:mock/')));
   });
 
+  it('uses the attachment filename as the img accessible name', async () => {
+    render(<ImageNodeView {...fakeProps(async () => makeAtt())} />);
+    const img = await screen.findByRole('img', { name: 'p.png' });
+    expect(img).toHaveAttribute('alt', 'p.png');
+  });
+
   it('shows a broken state when the row is missing', async () => {
     render(<ImageNodeView {...fakeProps(async () => undefined)} />);
     expect(await screen.findByText(/unavailable/i)).toBeInTheDocument();
