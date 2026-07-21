@@ -7,7 +7,7 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { EditorContent, useEditor } from '@tiptap/react';
 import 'katex/dist/katex.min.css';
 import type React from 'react';
-import { useEffect, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Blockquote } from '@/components/editor/extensions/Blockquote';
 import { Bold } from '@/components/editor/extensions/Bold';
@@ -32,14 +32,31 @@ import FormatSection from '@/components/editor/menus/toolbars/FormatSection.tsx'
 import HeadingSection from '@/components/editor/menus/toolbars/HeadingSection.tsx';
 import ListSection from '@/components/editor/menus/toolbars/ListSection.tsx';
 import { Separator } from '@/components/ui/separator.tsx';
+import { cn } from '@/lib/utils.ts';
 
 type EditorProps = {
   content?: string;
   editable?: boolean;
   onUpdate?: (content: string) => void;
+  /** Focus the editor body on mount (cursor at end). */
+  autoFocus?: boolean;
+  /**
+   * On mobile, pin the toolbar to the bottom of the scroll container so it rides
+   * above the virtual keyboard (see the sheet's `interactive-widget` viewport
+   * meta). Desktop keeps the toolbar on top.
+   */
+  stickyToolbarOnMobile?: boolean;
+  /** Extra classes for the editor root (e.g. `flex-1` inside a full-screen sheet). */
+  className?: string;
 };
 
-export const Editor: React.FC<EditorProps> = ({ content, editable, onUpdate }) => {
+/** Imperative handle so a parent (e.g. a dialog) can drop the cursor into the body. */
+export type EditorHandle = { focus: () => void };
+
+export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
+  { content, editable, onUpdate, autoFocus, stickyToolbarOnMobile, className },
+  ref
+) {
   const { t } = useTranslation();
   // Math node onClick handlers need the live editor, which does not exist yet when
   // the extensions array is built; a ref lets those closures reach it at click time.
@@ -71,6 +88,7 @@ export const Editor: React.FC<EditorProps> = ({ content, editable, onUpdate }) =
     ],
     content,
     editable,
+    autofocus: autoFocus ? 'end' : false,
     onUpdate: ({ editor }) => {
       onUpdate?.(editor.getHTML());
     },
@@ -88,15 +106,40 @@ export const Editor: React.FC<EditorProps> = ({ content, editable, onUpdate }) =
     }
   }, [content, editor]);
 
+  useImperativeHandle(ref, () => ({ focus: () => editor?.commands.focus('end') }), [editor]);
+
   if (!editor) {
     return null;
   }
 
+  // Clicking the empty area below the text (not on the text itself or a control)
+  // drops the cursor at the end, so the whole content region feels editable.
+  const focusOnEmptyClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('.tiptap') || target.closest('button, input, [role="button"], a, select')) {
+      return;
+    }
+    e.preventDefault();
+    editor.commands.focus('end');
+  };
+
   return (
-    <div className="relative rounded-xl border p-4">
-      {/* Floating toolbar */}
+    // biome-ignore lint/a11y/noStaticElementInteractions: click just forwards focus into the editor; keyboard users already reach it via Tab.
+    <div
+      className={cn('relative flex flex-col rounded-xl border p-4', className)}
+      onMouseDown={editable ? focusOnEmptyClick : undefined}
+    >
+      {/* Toolbar. Desktop: on top (DOM order). Mobile + stickyToolbarOnMobile:
+          ordered last and pinned to the bottom of the scroll container (no
+          border; the editor is padding-free on mobile, so no margin cancelling). */}
       {editable && (
-        <div className="flex flex-wrap items-center gap-1">
+        <div
+          className={cn(
+            'flex flex-wrap items-center gap-1',
+            stickyToolbarOnMobile &&
+              'sticky bottom-0 z-10 order-last bg-background py-2 sm:static sm:order-none sm:py-0'
+          )}
+        >
           <HeadingSection editor={editor} />
           <Separator
             orientation="vertical"
@@ -121,11 +164,13 @@ export const Editor: React.FC<EditorProps> = ({ content, editable, onUpdate }) =
         </div>
       )}
 
-      {/* Editable area */}
+      {/* Editable area. `flex-1` lets it fill a full-screen sheet so a
+          sticky-bottom toolbar sits at the screen edge even with little text;
+          `cursor-text` makes the empty space read as editable. */}
       <EditorContent
         editor={editor}
-        className="prose prose-sm min-h-[150px] max-w-none focus:outline-none"
+        className="prose prose-sm min-h-[150px] max-w-none flex-1 cursor-text focus:outline-none"
       />
     </div>
   );
-};
+});

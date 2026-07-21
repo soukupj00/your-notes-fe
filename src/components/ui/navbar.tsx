@@ -29,15 +29,18 @@ function Navbar(_props: React.ComponentProps<'header'>) {
         </div>
       </div>
 
-      {/* Mobile Navbar */}
+      {/* Mobile Navbar - search lives up here (capture moved to the bottom bar). */}
       <div className="flex items-center justify-between px-4 py-2 sm:hidden">
         <Button variant="ghost" size="icon">
           <Menu />
         </Button>
         <div className="font-bold text-lg">Logo</div>
-        <Button variant="ghost" size="icon">
-          <Settings />
-        </Button>
+        <div className="flex items-center">
+          <SearchInput />
+          <Button variant="ghost" size="icon">
+            <Settings />
+          </Button>
+        </div>
       </div>
     </header>
   );

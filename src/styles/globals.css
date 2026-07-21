@@ -142,6 +142,14 @@
   --tw-prose-td-borders: var(--border);
 }
 
+/* The editable element gets a browser focus outline by default, which reads as a
+   stray border hugging the text/checkboxes when the editor is active. The editor
+   already has its own container framing, so suppress it. */
+.tiptap:focus,
+.tiptap:focus-visible {
+  outline: none;
+}
+
 /* Task lists (TipTap TaskList/TaskItem): render the checkbox and text on one line,
    overriding prose's default list indent/markers. */
 .tiptap ul[data-type="taskList"] {

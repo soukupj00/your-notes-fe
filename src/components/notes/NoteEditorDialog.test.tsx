@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { db } from '@/db/db.ts';
 import type { Note } from '@/models.ts';
-import { NoteEditorDialog } from './NoteEditorDialog.tsx';
+import { EMPTY_CHECKLIST_BODY, NoteEditorDialog } from './NoteEditorDialog.tsx';
 
 // Keys pass through untranslated so assertions are stable.
 vi.mock('react-i18next', () => ({
@@ -143,6 +143,48 @@ describe('NoteEditorDialog', () => {
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(await db.notes.get(note.id)).toBeUndefined();
+  });
+
+  it('seeds a new checklist draft with an empty task list and persists it once edited', async () => {
+    render(<NoteEditorDialog noteId={null} initialBody={EMPTY_CHECKLIST_BODY} onClose={vi.fn()} />);
+
+    expect(editorTextarea()).toHaveValue(EMPTY_CHECKLIST_BODY);
+
+    await userEvent.type(editorTextarea(), 'Buy milk');
+
+    await waitFor(async () => expect(await db.notes.count()).toBe(1), { timeout: 2000 });
+    const [saved] = await db.notes.toArray();
+    expect(saved.body).toContain('Buy milk');
+    expect(saved.body).toContain('data-type="taskList"');
+  });
+
+  it('surfaces a "saved" status after an edit autosaves', async () => {
+    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+
+    await userEvent.type(headerInput(), 'Hello');
+
+    expect(
+      await screen.findByText('notes.saveStatus.saved', undefined, { timeout: 2000 })
+    ).toBeInTheDocument();
+  });
+
+  it('stops writing once an edit settles (no autosave re-render loop)', async () => {
+    const addSpy = vi.spyOn(db.notes, 'add');
+    const putSpy = vi.spyOn(db.notes, 'put');
+    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+
+    await userEvent.type(headerInput(), 'Hi');
+    await waitFor(async () => expect(await db.notes.count()).toBe(1), { timeout: 2000 });
+
+    const writesAtSettle = addSpy.mock.calls.length + putSpy.mock.calls.length;
+    // Wait well past the debounce with no further edits. A loop (unstable save
+    // deps + status re-renders) would keep writing every ~600ms.
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    expect(addSpy.mock.calls.length + putSpy.mock.calls.length).toBe(writesAtSettle);
+
+    addSpy.mockRestore();
+    putSpy.mockRestore();
   });
 
   it('persists an edit to an existing note on close', async () => {

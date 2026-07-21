@@ -27,6 +27,7 @@
     "newNoteTitle": "New note",
     "editNoteTitle": "Edit note",
     "create": "Create note",
+    "newChecklist": "New checklist",
     "empty": {
       "title": "No notes yet",
       "subtitle": "Your notes will show up here. Tap the button to write your first one."
@@ -35,6 +36,15 @@
     "menu": "Note options",
     "delete": "Delete",
     "deleted": "Note deleted",
-    "undo": "Undo"
+    "undo": "Undo",
+    "view": {
+      "toggle": "Toggle layout",
+      "masonry": "Grid view",
+      "list": "List view"
+    },
+    "saveStatus": {
+      "saving": "Saving…",
+      "saved": "Saved"
+    }
   }
 }

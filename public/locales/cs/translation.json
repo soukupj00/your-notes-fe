@@ -27,6 +27,7 @@
     "newNoteTitle": "Nová poznámka",
     "editNoteTitle": "Upravit poznámku",
     "create": "Vytvořit poznámku",
+    "newChecklist": "Nový seznam úkolů",
     "empty": {
       "title": "Zatím žádné poznámky",
       "subtitle": "Vaše poznámky se zobrazí zde. Klepnutím na tlačítko napíšete první."
@@ -35,6 +36,15 @@
     "menu": "Možnosti poznámky",
     "delete": "Smazat",
     "deleted": "Poznámka smazána",
-    "undo": "Zpět"
+    "undo": "Zpět",
+    "view": {
+      "toggle": "Přepnout rozvržení",
+      "masonry": "Mřížka",
+      "list": "Seznam"
+    },
+    "saveStatus": {
+      "saving": "Ukládání…",
+      "saved": "Uloženo"
+    }
   }
 }
