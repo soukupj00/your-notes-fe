@@ -19,7 +19,14 @@
     "textColor": { "tooltip": "Text color" },
     "highlight": { "tooltip": "Highlight" },
     "fontFamily": { "tooltip": "Font family" },
-    "fontSize": { "tooltip": "Font size" }
+    "fontSize": { "tooltip": "Font size" },
+    "image": {
+      "tooltip": "Insert image",
+      "errors": {
+        "unsupported-type": "That image type is not supported",
+        "too-large": "Image is too large (max 10 MB)"
+      }
+    }
   },
   "notes": {
     "createPlaceholder": "Take a note…",

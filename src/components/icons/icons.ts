@@ -3,6 +3,7 @@ import {
   Heading1,
   Heading2,
   Heading3,
+  ImagePlus,
   Italic,
   List,
   ListOrdered,
@@ -27,5 +28,6 @@ export const icons = {
   ListTodo,
   Quote,
   RemoveFormatting,
+  ImagePlus,
   Latex: LatexIcon,
 } as any;

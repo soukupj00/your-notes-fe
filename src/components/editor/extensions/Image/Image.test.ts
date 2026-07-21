@@ -4,6 +4,7 @@ import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createImage, type ImageDeps } from './Image';
+import { insertImageFiles } from './insert';
 
 const t = ((key: string) => key) as ImageDeps['t'];
 
@@ -51,5 +52,54 @@ describe('imageAttachment node', () => {
     };
     const view = options.button({ editor, t });
     expect(view.componentProps.tooltip).toBe('editor.image.tooltip');
+  });
+});
+
+describe('insertImageFiles', () => {
+  it('creates an attachment then inserts a node per valid image', async () => {
+    const deps = stubDeps();
+    deps.createAttachment = vi.fn(async (_n, file) => ({
+      id: `att-${file.name}`,
+      noteId: 'note-1',
+      kind: 'image' as const,
+      mime: file.type,
+      blob: file,
+      createdAt: '',
+      updatedAt: '',
+    }));
+    const editor = createEditor(deps);
+    const png = new File([new Uint8Array(4)], 'a.png', { type: 'image/png' });
+
+    await insertImageFiles(editor, [png], deps);
+
+    expect(deps.getNoteId).toHaveBeenCalledOnce();
+    expect(deps.createAttachment).toHaveBeenCalledWith('note-1', png);
+    expect(editor.getHTML()).toContain('data-attachment-id="att-a.png"');
+    editor.destroy();
+  });
+
+  it('reports validation failures via onError and inserts nothing', async () => {
+    const deps = stubDeps();
+    const { AttachmentError } = await import('@/lib/attachments.ts');
+    deps.createAttachment = vi.fn(async () => {
+      throw new AttachmentError('too-large');
+    });
+    const editor = createEditor(deps);
+    const big = new File([new Uint8Array(4)], 'b.png', { type: 'image/png' });
+
+    await insertImageFiles(editor, [big], deps);
+
+    expect(deps.onError).toHaveBeenCalledWith('too-large');
+    expect(editor.getHTML()).not.toContain('data-attachment-id');
+    editor.destroy();
+  });
+
+  it('ignores non-image files', async () => {
+    const deps = stubDeps();
+    const editor = createEditor(deps);
+    const txt = new File(['hi'], 'n.txt', { type: 'text/plain' });
+    await insertImageFiles(editor, [txt], deps);
+    expect(deps.getNoteId).not.toHaveBeenCalled();
+    editor.destroy();
   });
 });

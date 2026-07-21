@@ -7,8 +7,9 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { EditorContent, useEditor } from '@tiptap/react';
 import 'katex/dist/katex.min.css';
 import type React from 'react';
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { Blockquote } from '@/components/editor/extensions/Blockquote';
 import { Bold } from '@/components/editor/extensions/Bold';
 import { BulletList } from '@/components/editor/extensions/BulletList';
@@ -19,6 +20,8 @@ import { FontFamily } from '@/components/editor/extensions/FontFamily';
 import { FontSize } from '@/components/editor/extensions/FontSize';
 import { Heading } from '@/components/editor/extensions/Heading';
 import { Highlight } from '@/components/editor/extensions/Highlight';
+import { createImage } from '@/components/editor/extensions/Image';
+import { dedupeForeignImages, insertImageFiles } from '@/components/editor/extensions/Image/insert';
 import { Italic } from '@/components/editor/extensions/Italic';
 import { ListItem } from '@/components/editor/extensions/ListItem';
 import { createMathematics } from '@/components/editor/extensions/Mathematics';
@@ -32,6 +35,8 @@ import FormatSection from '@/components/editor/menus/toolbars/FormatSection.tsx'
 import HeadingSection from '@/components/editor/menus/toolbars/HeadingSection.tsx';
 import ListSection from '@/components/editor/menus/toolbars/ListSection.tsx';
 import { Separator } from '@/components/ui/separator.tsx';
+import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
+import type { AttachmentErrorCode } from '@/lib/attachments.ts';
 import { cn } from '@/lib/utils.ts';
 
 type EditorProps = {
@@ -48,19 +53,39 @@ type EditorProps = {
   stickyToolbarOnMobile?: boolean;
   /** Extra classes for the editor root (e.g. `flex-1` inside a full-screen sheet). */
   className?: string;
+  /** Resolves the owning note id for image inserts (creating a draft note if needed). */
+  getNoteId?: () => Promise<string>;
 };
 
 /** Imperative handle so a parent (e.g. a dialog) can drop the cursor into the body. */
 export type EditorHandle = { focus: () => void };
 
 export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
-  { content, editable, onUpdate, autoFocus, stickyToolbarOnMobile, className },
+  { content, editable, onUpdate, autoFocus, stickyToolbarOnMobile, className, getNoteId },
   ref
 ) {
   const { t } = useTranslation();
   // Math node onClick handlers need the live editor, which does not exist yet when
   // the extensions array is built; a ref lets those closures reach it at click time.
   const editorRef = useRef<TiptapEditor | null>(null);
+
+  const { createAttachment, getAttachment, cloneAttachment } = useAttachmentActions();
+  const imageDeps = useMemo(
+    () => ({
+      getNoteId:
+        getNoteId ??
+        (async () => {
+          throw new Error('getNoteId not provided');
+        }),
+      createAttachment,
+      getAttachment,
+      cloneAttachment,
+      onError: (code: AttachmentErrorCode) => toast(t(`editor.image.errors.${code}`)),
+      t,
+    }),
+    [getNoteId, createAttachment, getAttachment, cloneAttachment, t]
+  );
+
   const editor = useEditor({
     extensions: [
       Document,
@@ -72,6 +97,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       Underline,
       Heading,
       Blockquote,
+      createImage(imageDeps),
       BulletList,
       OrderedList,
       ListItem,
@@ -91,6 +117,32 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     autofocus: autoFocus ? 'end' : false,
     onUpdate: ({ editor }) => {
       onUpdate?.(editor.getHTML());
+    },
+    editorProps: {
+      handlePaste: (_view, event) => {
+        const files = event.clipboardData?.files;
+        const ed = editorRef.current;
+        if (ed && files && Array.from(files).some((f) => f.type.startsWith('image/'))) {
+          void insertImageFiles(ed, files, imageDeps);
+          return true;
+        }
+        // Cross-note HTML paste with existing attachment nodes: let the default
+        // paste happen, then reclaim any foreign images into owned clones.
+        const html = event.clipboardData?.getData('text/html');
+        if (ed && html?.includes('data-attachment-id')) {
+          queueMicrotask(() => void dedupeForeignImages(ed, imageDeps));
+        }
+        return false;
+      },
+      handleDrop: (_view, event) => {
+        const files = (event as DragEvent).dataTransfer?.files;
+        const ed = editorRef.current;
+        if (ed && files && Array.from(files).some((f) => f.type.startsWith('image/'))) {
+          void insertImageFiles(ed, files, imageDeps);
+          return true;
+        }
+        return false;
+      },
     },
     shouldRerenderOnTransaction: true,
     immediatelyRender: true,

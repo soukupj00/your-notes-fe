@@ -19,7 +19,14 @@
     "textColor": { "tooltip": "Barva textu" },
     "highlight": { "tooltip": "Zvýraznění" },
     "fontFamily": { "tooltip": "Písmo" },
-    "fontSize": { "tooltip": "Velikost písma" }
+    "fontSize": { "tooltip": "Velikost písma" },
+    "image": {
+      "tooltip": "Vložit obrázek",
+      "errors": {
+        "unsupported-type": "Tento typ obrázku není podporován",
+        "too-large": "Obrázek je příliš velký (max 10 MB)"
+      }
+    }
   },
   "notes": {
     "createPlaceholder": "Napsat poznámku…",
