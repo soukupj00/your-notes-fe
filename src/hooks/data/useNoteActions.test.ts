@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { db } from '@/db/db.ts';
-import type { Note, NoteTag } from '@/models.ts';
+import type { Attachment, Note, NoteTag } from '@/models.ts';
 import { useNoteActions } from './useNoteActions.ts';
 
 // The hook holds no state, so we can call its returned functions directly.
@@ -10,9 +10,37 @@ function actions() {
   return renderHook(() => useNoteActions()).result.current;
 }
 
+function makeNote(overrides: Partial<Note> = {}): Note {
+  const now = new Date().toISOString();
+  return {
+    id: crypto.randomUUID(),
+    header: 'h',
+    description: '',
+    body: '',
+    checklist: [],
+    createdAt: now,
+    updatedAt: now,
+    ...overrides,
+  };
+}
+
+function makeAtt(noteId: string): Attachment {
+  const now = new Date().toISOString();
+  return {
+    id: crypto.randomUUID(),
+    noteId,
+    kind: 'image',
+    mime: 'image/png',
+    blob: new Blob(['x']),
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 afterEach(async () => {
   await db.notes.clear();
   await db.noteTags.clear();
+  await db.attachments.clear();
 });
 
 describe('useNoteActions', () => {
@@ -47,14 +75,42 @@ describe('useNoteActions', () => {
     };
     await db.noteTags.put(tag);
 
-    const removedTags = await deleteNote(created.id);
+    const removed = await deleteNote(created.id);
     expect(await db.notes.get(created.id)).toBeUndefined();
     expect(await db.noteTags.where('noteId').equals(created.id).count()).toBe(0);
-    expect(removedTags).toEqual([tag]);
+    expect(removed.removedTags).toEqual([tag]);
+    expect(removed.removedAttachments).toEqual([]);
 
-    await restoreNote(created as Note, removedTags);
+    await restoreNote(created as Note, removed);
 
     expect(await db.notes.get(created.id)).toEqual(created);
     expect(await db.noteTags.where('noteId').equals(created.id).toArray()).toEqual([tag]);
+  });
+});
+
+describe('deleteNote / restoreNote cascade attachments', () => {
+  it('deleteNote removes + returns the note attachments', async () => {
+    const a = actions();
+    const note = makeNote();
+    await db.notes.put(note);
+    const att = makeAtt(note.id);
+    await db.attachments.put(att);
+
+    const removed = await a.deleteNote(note.id);
+    expect(removed.removedAttachments.map((r) => r.id)).toEqual([att.id]);
+    expect(await db.attachments.get(att.id)).toBeUndefined();
+  });
+
+  it('restoreNote re-puts the note and its attachments', async () => {
+    const a = actions();
+    const note = makeNote();
+    await db.notes.put(note);
+    const att = makeAtt(note.id);
+    await db.attachments.put(att);
+
+    const removed = await a.deleteNote(note.id);
+    await a.restoreNote(note, removed);
+    expect(await db.notes.get(note.id)).toBeTruthy();
+    expect(await db.attachments.get(att.id)).toBeTruthy();
   });
 });

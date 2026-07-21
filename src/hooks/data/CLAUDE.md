@@ -26,7 +26,7 @@ The React interface to the Dexie layer. Components use these hooks; they should 
 ## Conventions & behaviors
 
 - Mutations set/refresh `updatedAt` and generate `uuid` ids (see `useNoteActions`).
-- Relationship-aware deletes run in a `db.transaction('rw', ...)`: `deleteNote` also clears the note's `noteTags`; `deleteTag` clears the tag's `noteTags`.
+- Relationship-aware deletes run in a `db.transaction('rw', ...)`: `deleteNote` also clears the note's `noteTags` and `attachments`, returning `{ removedTags, removedAttachments }` so callers can pass them (with the captured note) to `restoreNote` for a lossless undo; `deleteTag` clears the tag's `noteTags`.
 - `addTagToNote` is idempotent — it checks for an existing `[noteId+tagId]` before inserting.
 - Search is **client-side and linear** (`db.notes.toArray()` then `.filter`), fine for local-first scale but not indexed.
 

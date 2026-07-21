@@ -31,11 +31,11 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
   const checklist = note.checklist ?? [];
 
   const handleDelete = async () => {
-    const removedTags = await deleteNote(note.id);
+    const removed = await deleteNote(note.id);
     toast(t('notes.deleted'), {
       action: {
         label: t('notes.undo'),
-        onClick: () => restoreNote(note, removedTags),
+        onClick: () => restoreNote(note, removed),
       },
     });
   };
