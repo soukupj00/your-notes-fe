@@ -10,18 +10,16 @@ How the local persistence layer works. See [`PLAN.md`](./PLAN.md) for upcoming w
 - `seeder.ts` — Node/`ts-node` seeder (`pnpm seed`); imports `fake-indexeddb/auto` so it runs outside a browser.
 - `browserSeeder.ts` — `seedBrowserData()` called from the running app (a "Seed Notes" button in `App.tsx`) to populate the real browser IndexedDB.
 
-## Schema (`NotesDB`, version 1)
+## Schema (`NotesDB`, version 2)
 
-| Table      | Primary key            | Indexes                          | Model       |
-|------------|------------------------|----------------------------------|-------------|
-| `notes`    | `id`                   | `header`, `createdAt`, `updatedAt` | `Note`     |
-| `images`   | `id`                   | `noteId`                         | `NoteImage` |
-| `audios`   | `id`                   | `noteId`                         | `NoteAudio` |
-| `files`    | `id`                   | `noteId`                         | `NoteFile`  |
-| `tags`     | `id`                   | `name`                           | `Tag`       |
-| `noteTags` | `[noteId+tagId]` (composite) | `noteId`, `tagId`          | `NoteTag`   |
+| Table         | Primary key            | Indexes                          | Model        |
+|---------------|------------------------|-----------------------------------|--------------|
+| `notes`       | `id`                   | `header`, `createdAt`, `updatedAt` | `Note`      |
+| `attachments` | `id`                   | `noteId`, `kind`                   | `Attachment` |
+| `tags`        | `id`                   | `name`                            | `Tag`        |
+| `noteTags`    | `[noteId+tagId]` (composite) | `noteId`, `tagId`           | `NoteTag`    |
 
-- **Attachments** (images/audios/files) are 1:N with a Note via `noteId`. Note the `Note` model *also* carries optional embedded `images`/`audio`/`files`/`tags` arrays — these tables are the normalized source of truth; reconciling the two representations is open work (see PLAN).
+- **Attachments** are a single generic table, 1:N with a Note via `noteId`. The `kind` discriminator (`'image' | 'audio' | 'video' | 'file'`) distinguishes attachment types instead of separate per-type tables; bytes are stored as a native `Blob` (see [ADR 0007](../../docs/adr/0007-blob-over-base64-for-attachment-payloads.md)). The Note body references an attachment by id (`<img data-attachment-id>`); `Note` no longer carries embedded media arrays.
 - **Tags** are many-to-many with Notes through the `noteTags` join table, keyed by the composite `[noteId+tagId]`.
 
 ## Conventions

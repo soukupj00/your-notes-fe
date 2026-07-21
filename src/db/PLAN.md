@@ -9,9 +9,9 @@ What's left in the persistence layer. See [root PLAN.md](../../PLAN.md) for mile
 
 ## Attachment storage (M3)
 
-- Decide **Blob vs base64** for image/audio/video/file payloads in IndexedDB (Blobs are more memory-efficient and IndexedDB-native; base64 is simpler to serialize for sync). Document the choice as an ADR if non-obvious.
-- Add a `videos` table (the `NoteFile`/media model exists conceptually; the editor will gain a Video extension in M3) or fold video into `files` with a MIME-type discriminator — decide and record.
-- Reconcile the **embedded arrays on `Note`** (`images`/`audio`/`files`/`tags`) with the normalized tables. Pick one as source of truth (recommended: normalized tables; treat embedded arrays as hydrated read views) and document it.
+- ~~Decide **Blob vs base64** for image/audio/video/file payloads in IndexedDB.~~ Decided: native `Blob` (see [ADR 0007](../../docs/adr/0007-blob-over-base64-for-attachment-payloads.md)).
+- ~~Add a `videos` table or fold video into `files` with a MIME-type discriminator.~~ Decided: one generic `attachments` table with a `kind` discriminator (`'image' | 'audio' | 'video' | 'file'`), replacing the separate per-type tables.
+- ~~Reconcile the **embedded arrays on `Note`** (`images`/`audio`/`files`) with the normalized tables.~~ Decided: the embedded arrays are removed from `Note`; the `attachments` table (keyed by `noteId`) is the sole source of truth. `tags` on `Note` is unaffected by this decision.
 
 ## Sync metadata (M5)
 

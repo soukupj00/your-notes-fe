@@ -4,9 +4,6 @@ export interface Note {
   description?: string; // Optional plaintext subtitle (dormant until a later milestone gives it UI)
   body?: string; // Rich-text HTML from the editor (see "Body" in CONTEXT.md)
   checklist: string[]; // Checklist items
-  audio?: NoteAudio[]; // Array of audio attachments
-  images?: NoteImage[]; // Array of images
-  files?: NoteFile[]; // Array of file attachments
   tags?: Tag[]; // Array of tags
   createdAt: string; // Timestamp
   updatedAt: string; // Timestamp
@@ -26,36 +23,24 @@ export interface NoteTag {
   updatedAt: string; // Timestamp
 }
 
+export type AttachmentKind = 'image' | 'audio' | 'video' | 'file'; // grows per slice
+
 /**
- * Media models (1:N with Note)
- * Each Note can have multiple images, audio, files
+ * A binary attachment (starting with inline images in M3 Slice 1). Bytes live
+ * here as a native Blob (ADR 0007); the Note body references it by id via
+ * <img data-attachment-id>. One row is owned by exactly one Note (noteId).
  */
-export interface NoteImage {
-  id: string; // Unique ID
+export interface Attachment {
+  id: string; // uuid v4
   noteId: string; // FK to Note.id
-  url: string; // Object URL or Base64 string
-  name?: string; // Optional image name
-  createdAt: string; // Timestamp
-  updatedAt: string; // Timestamp
-}
-
-export interface NoteAudio {
-  id: string;
-  noteId: string;
-  url: string; // Audio file URL or Base64 string
-  name?: string; // Optional audio name
-  duration?: number; // Duration in seconds
-  createdAt: string; // Timestamp
-  updatedAt: string; // Timestamp
-}
-
-export interface NoteFile {
-  id: string;
-  noteId: string;
-  url: string; // File URL or Base64
-  name: string; // Original filename
-  size?: number; // File size in bytes
-  type?: string; // MIME type
-  createdAt: string; // Timestamp
-  updatedAt: string; // Timestamp
+  kind: AttachmentKind;
+  mime: string; // e.g. 'image/png'
+  blob: Blob; // the bytes
+  name?: string; // original filename
+  size?: number; // bytes
+  width?: number; // image/video (computed in a later processing slice)
+  height?: number; // image/video
+  duration?: number; // audio/video (later slices)
+  createdAt: string; // ISO
+  updatedAt: string; // ISO
 }
