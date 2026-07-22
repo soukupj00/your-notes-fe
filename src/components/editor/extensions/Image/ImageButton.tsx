@@ -7,13 +7,13 @@ import { insertImageFiles } from './insert';
 
 export interface ImageButtonProps {
   editor: Editor;
-  deps: ImageDeps;
+  getDeps: () => ImageDeps;
   tooltip: string;
 }
 
 /** Toolbar entry point: opens a hidden multi-file image picker (mobile camera
  *  comes free via accept="image/*"), then runs the shared insert pipeline. */
-export function ImageButton({ editor, deps, tooltip }: ImageButtonProps) {
+export function ImageButton({ editor, getDeps, tooltip }: ImageButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -26,7 +26,8 @@ export function ImageButton({ editor, deps, tooltip }: ImageButtonProps) {
         multiple
         className="hidden"
         onChange={(e) => {
-          if (e.target.files) void insertImageFiles(editor, e.target.files, deps);
+          // Resolve deps at click time so the button reads the freshest getNoteId.
+          if (e.target.files) void insertImageFiles(editor, e.target.files, getDeps());
           e.target.value = ''; // allow re-picking the same file
         }}
       />

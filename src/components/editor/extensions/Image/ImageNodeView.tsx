@@ -15,7 +15,9 @@ type State =
  */
 export function ImageNodeView(props: ReactNodeViewProps) {
   const attachmentId = props.node.attrs.attachmentId as string | null;
-  const deps = props.extension.options.deps as ImageDeps;
+  // Read deps through the stable getter so we always see live deps (the node is
+  // built once by useEditor); calling per render keeps `getAttachment` current.
+  const deps = (props.extension.options.getDeps as () => ImageDeps)();
   const [state, setState] = useState<State>({ status: 'loading' });
 
   useEffect(() => {

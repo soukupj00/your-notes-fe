@@ -21,7 +21,7 @@ function stubDeps(): ImageDeps {
 
 function createEditor(deps = stubDeps()) {
   return new Editor({
-    extensions: [Document, Paragraph, Text, createImage(deps)],
+    extensions: [Document, Paragraph, Text, createImage(() => deps)],
     content: '<p></p>',
   });
 }

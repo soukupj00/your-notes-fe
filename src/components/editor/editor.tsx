@@ -85,6 +85,13 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     }),
     [getNoteId, createAttachment, getAttachment, cloneAttachment, t]
   );
+  // useEditor builds the node (and its stored getter) exactly once, so all three
+  // entry points must reach the *current* imageDeps through a stable getter over
+  // a ref, not the first-render closure. The ref is refreshed every render; the
+  // getter identity never changes (mirrors createMathematics's live-editor ref).
+  const imageDepsRef = useRef(imageDeps);
+  imageDepsRef.current = imageDeps;
+  const getImageDeps = useRef(() => imageDepsRef.current).current;
 
   const editor = useEditor({
     extensions: [
@@ -97,7 +104,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       Underline,
       Heading,
       Blockquote,
-      createImage(imageDeps),
+      createImage(getImageDeps),
       BulletList,
       OrderedList,
       ListItem,
@@ -123,14 +130,14 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         const files = event.clipboardData?.files;
         const ed = editorRef.current;
         if (ed && files && Array.from(files).some((f) => f.type.startsWith('image/'))) {
-          void insertImageFiles(ed, files, imageDeps);
+          void insertImageFiles(ed, files, imageDepsRef.current);
           return true;
         }
         // Cross-note HTML paste with existing attachment nodes: let the default
         // paste happen, then reclaim any foreign images into owned clones.
         const html = event.clipboardData?.getData('text/html');
         if (ed && html?.includes('data-attachment-id')) {
-          queueMicrotask(() => void dedupeForeignImages(ed, imageDeps));
+          queueMicrotask(() => void dedupeForeignImages(ed, imageDepsRef.current));
         }
         return false;
       },
@@ -138,7 +145,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         const files = (event as DragEvent).dataTransfer?.files;
         const ed = editorRef.current;
         if (ed && files && Array.from(files).some((f) => f.type.startsWith('image/'))) {
-          void insertImageFiles(ed, files, imageDeps);
+          void insertImageFiles(ed, files, imageDepsRef.current);
           return true;
         }
         return false;

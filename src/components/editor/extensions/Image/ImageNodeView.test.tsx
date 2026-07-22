@@ -33,7 +33,7 @@ function makeAtt(): Attachment {
 function fakeProps(getAttachment: (id: string) => Promise<Attachment | undefined>) {
   return {
     node: { attrs: { attachmentId: 'a1' } },
-    extension: { options: { deps: { getAttachment } } },
+    extension: { options: { getDeps: () => ({ getAttachment }) } },
   } as unknown as ReactNodeViewProps;
 }
 

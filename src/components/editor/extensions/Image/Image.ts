@@ -30,7 +30,7 @@ declare module '@tiptap/core' {
  * data-layer deps (from the dialog + useAttachmentActions) reach the button,
  * paste/drop pipeline, and NodeView - mirrors createMathematics in editor.tsx.
  */
-export function createImage(deps: ImageDeps) {
+export function createImage(getDeps: () => ImageDeps) {
   return Node.create({
     name: 'imageAttachment',
     group: 'block',
@@ -39,11 +39,14 @@ export function createImage(deps: ImageDeps) {
 
     addOptions() {
       return {
-        // Deps are read by the NodeView (Task 6) and the button below.
-        deps,
+        // A getter (not a frozen object) so the NodeView (Task 6) and the button
+        // below always read the latest render-local deps. The node is built once
+        // by useEditor, so a plain `deps` would go stale once a real getNoteId is
+        // threaded in - mirrors createMathematics(() => editorRef.current, t).
+        getDeps,
         button: ({ editor, t }: { editor: import('@tiptap/core').Editor; t: TFunction }) => ({
           component: ImageButton,
-          componentProps: { editor, deps, tooltip: t('editor.image.tooltip') },
+          componentProps: { editor, getDeps, tooltip: t('editor.image.tooltip') },
         }),
       };
     },
