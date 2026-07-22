@@ -1,9 +1,17 @@
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { icons } from '@/components/icons';
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
+
+declare module '@tiptap/core' {
+  interface Storage {
+    /** One-shot "autoplay this attachment once its <audio> is ready" flag, set
+     *  by the editor when the note was opened via its card's audio chip. */
+    autoplayFirstAudioId?: string | null;
+  }
+}
 
 /** Seconds -> "m:ss". */
 export function formatTime(seconds: number): string {
@@ -47,6 +55,21 @@ export function AudioNodeView(props: ReactNodeViewProps) {
       el.removeEventListener('ended', onEnd);
     };
   }, []);
+
+  // Best-effort autoplay-on-open: consume the one-shot storage flag exactly
+  // when this attachment's <audio> element becomes available. Guarded for the
+  // mobile-autoplay policy - a rejected play() is expected and ignored.
+  useEffect(() => {
+    if (state.status !== 'ready') return;
+    const storage = props.editor?.storage;
+    if (!storage || storage.autoplayFirstAudioId !== attachmentId) return;
+    delete storage.autoplayFirstAudioId;
+    try {
+      void audioRef.current?.play()?.catch(() => {});
+    } catch {
+      // Ignore - autoplay can be rejected by the browser's mobile policy.
+    }
+  }, [state.status, attachmentId, props.editor]);
 
   const toggle = () => {
     const el = audioRef.current;

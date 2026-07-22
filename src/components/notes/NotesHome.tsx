@@ -8,8 +8,14 @@ import { Button } from '@/components/ui/button.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 
 // `null` = closed. Otherwise: `id` is the note being edited (null = new draft);
-// `initialBody` seeds a new draft (e.g. a checklist from quick-capture).
-type EditingState = { id: string | null; initialBody?: string } | null;
+// `initialBody` seeds a new draft (e.g. a checklist from quick-capture);
+// `autoplayFirstAudio` carries the "opened via an audio chip" intent through
+// to the dialog/editor (best-effort autoplay on open).
+type EditingState = {
+  id: string | null;
+  initialBody?: string;
+  autoplayFirstAudio?: boolean;
+} | null;
 
 export function NotesHome() {
   const { t } = useTranslation();
@@ -45,7 +51,9 @@ export function NotesHome() {
         <ViewModeToggle />
       </div>
 
-      <NoteContent onSelect={(id) => setEditing({ id })} />
+      <NoteContent
+        onSelect={(id, opts) => setEditing({ id, autoplayFirstAudio: opts?.autoplayFirstAudio })}
+      />
 
       {/* Mobile quick-capture bar: note + checklist. Photo/mic land in M3. */}
       <div className="fixed inset-x-0 bottom-0 z-40 flex justify-center pb-[env(safe-area-inset-bottom)] sm:hidden">
@@ -76,6 +84,7 @@ export function NotesHome() {
           key={editing.id ?? 'new'}
           noteId={editing.id}
           initialBody={editing.initialBody}
+          autoplayFirstAudio={editing.autoplayFirstAudio}
           onClose={() => setEditing(null)}
         />
       )}

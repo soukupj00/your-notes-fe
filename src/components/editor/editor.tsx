@@ -59,13 +59,25 @@ type EditorProps = {
   className?: string;
   /** Resolves the owning note id for image inserts (creating a draft note if needed). */
   getNoteId?: () => Promise<string>;
+  /** Best-effort: autoplay the first audioAttachment node once the editor is
+   *  ready (set when the note was opened via its card's audio chip). */
+  autoplayFirstAudio?: boolean;
 };
 
 /** Imperative handle so a parent (e.g. a dialog) can drop the cursor into the body. */
 export type EditorHandle = { focus: () => void };
 
 export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
-  { content, editable, onUpdate, autoFocus, stickyToolbarOnMobile, className, getNoteId },
+  {
+    content,
+    editable,
+    onUpdate,
+    autoFocus,
+    stickyToolbarOnMobile,
+    className,
+    getNoteId,
+    autoplayFirstAudio,
+  },
   ref
 ) {
   const { t } = useTranslation();
@@ -179,6 +191,25 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   useEffect(() => {
     editorRef.current = editor;
   }, [editor]);
+
+  // Best-effort autoplay-on-open: find the first audioAttachment node and stash
+  // its id on editor storage; AudioNodeView reads and clears the flag once its
+  // <audio> element is ready. Runs once per editor instance.
+  useEffect(() => {
+    if (!editor || !autoplayFirstAudio) return;
+    let firstAudioId: string | null = null;
+    editor.state.doc.descendants((node) => {
+      if (firstAudioId) return false;
+      if (node.type.name === 'audioAttachment') {
+        firstAudioId = node.attrs.attachmentId as string;
+        return false;
+      }
+      return true;
+    });
+    if (firstAudioId) {
+      editor.storage.autoplayFirstAudioId = firstAudioId;
+    }
+  }, [editor, autoplayFirstAudio]);
 
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {

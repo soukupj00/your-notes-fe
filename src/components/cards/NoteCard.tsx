@@ -19,7 +19,7 @@ import type { Note } from '@/models.ts';
 
 interface NoteCardProps {
   note: Note;
-  onSelect: (id: string) => void;
+  onSelect: (id: string, opts?: { autoplayFirstAudio?: boolean }) => void;
 }
 
 // How many checklist items to preview on a card before we stop.
@@ -47,6 +47,19 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
 
   const open = () => onSelect(note.id);
 
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // An audio chip inside the (read-only) NoteBody is not a separate button -
+    // clicking it means "open the note and autoplay this audio" instead of a
+    // plain open, so it needs its own branch before the card's normal open.
+    const chip = (e.target as HTMLElement).closest('[data-attachment-chip="audio"]');
+    if (chip) {
+      e.stopPropagation();
+      onSelect(note.id, { autoplayFirstAudio: true });
+      return;
+    }
+    open();
+  };
+
   return (
     <Card
       // Not a <button>: the card contains a menu trigger, and nesting
@@ -54,7 +67,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
       // keyboard handling keeps the whole card clickable without the nesting.
       role="button"
       tabIndex={0}
-      onClick={open}
+      onClick={handleClick}
       onKeyDown={(e) => {
         // Only activate when the key originated on the card itself. React
         // synthetic events bubble through the portalled dropdown menu, so

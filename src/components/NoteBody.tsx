@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { formatTime } from '@/components/editor/extensions/Audio/AudioNodeView';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { cn } from '@/lib/utils.ts';
 
@@ -36,6 +37,24 @@ export function NoteBody({
         const url = URL.createObjectURL(att.blob);
         urls.push(url);
         img.src = url;
+      });
+    });
+    // Audio attachments render as a compact chip (mic glyph + duration), never
+    // a full player, on the read-only card. No object URL is created, so there
+    // is nothing to revoke on cleanup.
+    const audios = root.querySelectorAll<HTMLElement>('audio[data-attachment-id]');
+    audios.forEach((el) => {
+      const id = el.getAttribute('data-attachment-id');
+      if (!id) return;
+      const chip = document.createElement('span');
+      chip.className =
+        'inline-flex items-center gap-1 rounded-full border bg-muted/40 px-2 py-0.5 align-middle text-muted-foreground text-xs';
+      chip.setAttribute('data-attachment-chip', 'audio');
+      el.replaceWith(chip);
+      getAttachment(id).then((att) => {
+        if (!active) return;
+        chip.textContent =
+          att?.duration != null ? `\u{1F399} ${formatTime(att.duration)}` : '\u{1F399}';
       });
     });
     return () => {

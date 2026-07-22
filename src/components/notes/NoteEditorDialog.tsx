@@ -28,6 +28,9 @@ type NoteEditorDialogProps = {
   noteId: string | null;
   /** Seed body for a new draft (e.g. an empty checklist for quick-capture). */
   initialBody?: string;
+  /** Best-effort: autoplay the note's first audio attachment on open (set when
+   *  the note was opened via its card's audio chip). */
+  autoplayFirstAudio?: boolean;
   onClose: () => void;
 };
 
@@ -39,7 +42,12 @@ type NoteEditorDialogProps = {
  * notes are held as a draft and only persisted on first meaningful change
  * (guardrail 2); a note left empty on close is discarded.
  */
-export function NoteEditorDialog({ noteId, initialBody, onClose }: NoteEditorDialogProps) {
+export function NoteEditorDialog({
+  noteId,
+  initialBody,
+  autoplayFirstAudio,
+  onClose,
+}: NoteEditorDialogProps) {
   const { t } = useTranslation();
   const { createNote, updateNote, deleteNote } = useNoteActions();
   const { collectOrphans } = useAttachmentActions();
@@ -212,6 +220,7 @@ export function NoteEditorDialog({ noteId, initialBody, onClose }: NoteEditorDia
           editable
           getNoteId={ensureNoteId}
           autoFocus={focusBody}
+          autoplayFirstAudio={autoplayFirstAudio}
           stickyToolbarOnMobile
           // Mobile: no bordered box, so the dialog's own padding is the only
           // spacing around the title + content. Desktop keeps the framed editor.
