@@ -92,12 +92,24 @@ export function NoteEditorDialog({ noteId, initialBody, onClose }: NoteEditorDia
 
   // Attachments need a persisted note to reference. When an image is inserted
   // into a not-yet-saved draft, create the note now (an image is meaningful
-  // content) and return its id; existing notes just return their id.
+  // content) and return its id; existing notes just return their id. The
+  // create is chained onto the SAME saveChainRef queue persist() uses, so a
+  // concurrent autosave/close cannot also create the draft: whichever runs
+  // first creates and sets idRef, the other sees it set (exactly-once create).
   const ensureNoteId = useCallback(async (): Promise<string> => {
-    if (idRef.current != null) return idRef.current;
-    const created = await createNote({ header, body });
-    idRef.current = created.id;
-    return created.id;
+    const chained = saveChainRef.current.then(async () => {
+      if (idRef.current == null) {
+        const created = await createNote({ header, body });
+        idRef.current = created.id;
+      }
+      return idRef.current as string;
+    });
+    // Advance the queue, swallowing errors so it is never left rejected.
+    saveChainRef.current = chained.then(
+      () => undefined,
+      () => undefined
+    );
+    return chained;
   }, [createNote, header, body]);
 
   const enqueueSave = useCallback(

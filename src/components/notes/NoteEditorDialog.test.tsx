@@ -17,21 +17,30 @@ vi.mock('@/components/editor/editor.tsx', () => ({
   Editor: ({
     content,
     onUpdate,
+    getNoteId,
   }: {
     content?: string;
     editable?: boolean;
     onUpdate?: (html: string) => void;
+    getNoteId?: () => Promise<string>;
   }) => (
-    // Controlled (not defaultValue): the real Editor's content is driven by
-    // the parent's `body` state, and a plain uncontrolled defaultValue would
-    // desync from React's change tracking once that state updates the DOM
-    // out from under it (e.g. the async note-load after mount), causing
-    // later onChange events to silently stop firing.
-    <textarea
-      data-testid="editor"
-      value={content ?? ''}
-      onChange={(e) => onUpdate?.(e.target.value)}
-    />
+    <>
+      {/* Controlled (not defaultValue): the real Editor's content is driven by
+          the parent's `body` state, and a plain uncontrolled defaultValue would
+          desync from React's change tracking once that state updates the DOM
+          out from under it (e.g. the async note-load after mount), causing
+          later onChange events to silently stop firing. */}
+      <textarea
+        data-testid="editor"
+        value={content ?? ''}
+        onChange={(e) => onUpdate?.(e.target.value)}
+      />
+      {/* Lets a test drive the real Editor's `getNoteId` path (image insert
+          persists a draft on demand) without a full ProseMirror instance. */}
+      <button type="button" data-testid="ensure-note" onClick={() => void getNoteId?.()}>
+        ensure
+      </button>
+    </>
   ),
 }));
 
@@ -205,6 +214,29 @@ describe('NoteEditorDialog', () => {
       expect(notes).toHaveLength(1); // kept, not discarded
       expect(notes[0].body).toContain('data-attachment-id="x1"');
     });
+  });
+
+  it('does not create two notes when an attach and a save race on a new draft', async () => {
+    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+
+    // Type into the draft (marks dirty, non-empty body).
+    fireEvent.change(editorTextarea(), { target: { value: '<p>hello</p>' } });
+
+    // Race two "create the draft" paths in the SAME synchronous tick, before
+    // either createNote resolves: (1) an image insert -> ensureNoteId, and
+    // (2) closing the dialog -> enqueueSave/persist. Both do a sync
+    // `idRef.current == null` check; back-to-back fireEvent.click (no awaits
+    // between them) guarantees both read null before either sets it. Without
+    // serialization through the save chain this creates two Note rows.
+    fireEvent.click(screen.getByTestId('ensure-note'));
+    fireEvent.click(closeButton());
+
+    // After both paths settle there must be exactly one Note (no silent
+    // duplicate / permanent orphan).
+    await waitFor(async () => expect(await db.notes.count()).toBe(1));
+    // And it must be a stable count, not still resolving toward 2.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(await db.notes.count()).toBe(1);
   });
 
   it('still discards a truly empty draft on close', async () => {
