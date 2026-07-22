@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { db } from '@/db/db.ts';
@@ -62,6 +62,7 @@ const closeButton = () => screen.getByRole('button', { name: 'Close' });
 afterEach(async () => {
   await db.notes.clear();
   await db.noteTags.clear();
+  await db.attachments.clear();
 });
 
 describe('NoteEditorDialog', () => {
@@ -185,6 +186,33 @@ describe('NoteEditorDialog', () => {
 
     addSpy.mockRestore();
     putSpy.mockRestore();
+  });
+
+  it('keeps an image-only note (no text) instead of discarding it on close', async () => {
+    const user = userEvent.setup();
+    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+
+    // An image-only body: no header, no text, just an attachment node.
+    fireEvent.change(editorTextarea(), {
+      target: { value: '<img data-attachment-id="x1">' },
+    });
+
+    // Close the dialog (flushes the final save + runs the empty-note check).
+    await user.click(closeButton());
+
+    await waitFor(async () => {
+      const notes = await db.notes.toArray();
+      expect(notes).toHaveLength(1); // kept, not discarded
+      expect(notes[0].body).toContain('data-attachment-id="x1"');
+    });
+  });
+
+  it('still discards a truly empty draft on close', async () => {
+    const user = userEvent.setup();
+    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+    fireEvent.change(editorTextarea(), { target: { value: '' } });
+    await user.click(closeButton());
+    await waitFor(async () => expect(await db.notes.count()).toBe(0));
   });
 
   it('persists an edit to an existing note on close', async () => {

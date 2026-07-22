@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { Editor, type EditorHandle } from '@/components/editor/editor.tsx';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog.tsx';
 import { db } from '@/db/db.ts';
+import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
+import { bodyHasAttachment, extractAttachmentIds } from '@/lib/attachment-html.ts';
 import { stripHtml } from '@/lib/utils.ts';
 
 const AUTOSAVE_DELAY_MS = 600;
@@ -19,7 +21,7 @@ type SaveStatus = 'idle' | 'saving' | 'saved';
 // stripped body are blank. Module-scoped: it closes over no component state, so
 // keeping it out of the component keeps the autosave callbacks stable.
 const isEmpty = (header: string, body: string) =>
-  header.trim() === '' && stripHtml(body).trim() === '';
+  header.trim() === '' && stripHtml(body).trim() === '' && !bodyHasAttachment(body);
 
 type NoteEditorDialogProps = {
   /** Existing note id, or null for a new (draft) note not yet persisted. */
@@ -40,6 +42,7 @@ type NoteEditorDialogProps = {
 export function NoteEditorDialog({ noteId, initialBody, onClose }: NoteEditorDialogProps) {
   const { t } = useTranslation();
   const { createNote, updateNote, deleteNote } = useNoteActions();
+  const { collectOrphans } = useAttachmentActions();
 
   const [header, setHeader] = useState('');
   // New drafts may seed a body (e.g. checklist); existing notes load below.
@@ -87,6 +90,16 @@ export function NoteEditorDialog({ noteId, initialBody, onClose }: NoteEditorDia
     [createNote, updateNote]
   );
 
+  // Attachments need a persisted note to reference. When an image is inserted
+  // into a not-yet-saved draft, create the note now (an image is meaningful
+  // content) and return its id; existing notes just return their id.
+  const ensureNoteId = useCallback(async (): Promise<string> => {
+    if (idRef.current != null) return idRef.current;
+    const created = await createNote({ header, body });
+    idRef.current = created.id;
+    return created.id;
+  }, [createNote, header, body]);
+
   const enqueueSave = useCallback(
     (h: string, b: string) => {
       saveChainRef.current = saveChainRef.current.then(() => persist(h, b));
@@ -115,11 +128,15 @@ export function NoteEditorDialog({ noteId, initialBody, onClose }: NoteEditorDia
     await enqueueSave(header, body); // flush the latest edit
     // Discard a note that ended up empty (covers a draft typed then cleared).
     if (idRef.current != null && isEmpty(header, body)) {
-      await deleteNote(idRef.current);
+      await deleteNote(idRef.current); // cascade-deletes its attachments (Task 4)
       idRef.current = null;
+    } else if (idRef.current != null) {
+      // Reclaim attachment rows no longer referenced by the saved Body. Safe now:
+      // the in-editor undo stack is gone once the dialog closes.
+      await collectOrphans(idRef.current, extractAttachmentIds(body));
     }
     onClose();
-  }, [enqueueSave, header, body, deleteNote, onClose]);
+  }, [enqueueSave, header, body, deleteNote, collectOrphans, onClose]);
 
   return (
     <Dialog
@@ -174,6 +191,7 @@ export function NoteEditorDialog({ noteId, initialBody, onClose }: NoteEditorDia
           ref={editorRef}
           content={body}
           editable
+          getNoteId={ensureNoteId}
           autoFocus={focusBody}
           stickyToolbarOnMobile
           // Mobile: no bordered box, so the dialog's own padding is the only
