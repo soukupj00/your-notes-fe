@@ -2,12 +2,12 @@ import type { Editor } from '@tiptap/core';
 import { useRef } from 'react';
 import { ActionButton } from '@/components/ui/ActionButton.tsx';
 import { ALLOWED_IMAGE_MIME } from '@/lib/attachments.ts';
-import type { ImageDeps } from './Image';
+import type { AttachmentDeps } from '../attachments/deps';
 import { insertImageFiles } from './insert';
 
 export interface ImageButtonProps {
   editor: Editor;
-  getDeps: () => ImageDeps;
+  getDeps: () => AttachmentDeps;
   tooltip: string;
 }
 

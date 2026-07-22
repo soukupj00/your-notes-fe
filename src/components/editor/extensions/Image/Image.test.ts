@@ -3,12 +3,13 @@ import Document from '@tiptap/extension-document';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createImage, type ImageDeps } from './Image';
+import type { AttachmentDeps } from '../attachments/deps';
+import { createImage } from './Image';
 import { insertImageFiles } from './insert';
 
-const t = ((key: string) => key) as ImageDeps['t'];
+const t = ((key: string) => key) as AttachmentDeps['t'];
 
-function stubDeps(): ImageDeps {
+function stubDeps(): AttachmentDeps {
   return {
     getNoteId: vi.fn(async () => 'note-1'),
     createAttachment: vi.fn(),
@@ -48,7 +49,9 @@ describe('imageAttachment node', () => {
   it('exposes a Pattern A button with the image icon + tooltip', () => {
     const ext = editor.extensionManager.extensions.find((e) => e.name === 'imageAttachment');
     const options = ext?.options as {
-      button: (c: { editor: Editor; t: ImageDeps['t'] }) => { componentProps: { tooltip: string } };
+      button: (c: { editor: Editor; t: AttachmentDeps['t'] }) => {
+        componentProps: { tooltip: string };
+      };
     };
     const view = options.button({ editor, t });
     expect(view.componentProps.tooltip).toBe('editor.image.tooltip');
@@ -73,7 +76,7 @@ describe('insertImageFiles', () => {
     await insertImageFiles(editor, [png], deps);
 
     expect(deps.getNoteId).toHaveBeenCalledOnce();
-    expect(deps.createAttachment).toHaveBeenCalledWith('note-1', png);
+    expect(deps.createAttachment).toHaveBeenCalledWith('note-1', png, 'image');
     expect(editor.getHTML()).toContain('data-attachment-id="att-a.png"');
     editor.destroy();
   });

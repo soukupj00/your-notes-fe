@@ -1,19 +1,9 @@
 import { mergeAttributes, Node } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
-import type { AttachmentErrorCode } from '@/lib/attachments.ts';
-import type { Attachment } from '@/models.ts';
+import type { AttachmentDeps } from '../attachments/deps';
 import type { TFunction } from '../button-types';
 import { ImageButton } from './ImageButton';
 import { ImageNodeView } from './ImageNodeView';
-
-export interface ImageDeps {
-  getNoteId: () => Promise<string>;
-  createAttachment: (noteId: string, file: File) => Promise<Attachment>;
-  getAttachment: (id: string) => Promise<Attachment | undefined>;
-  cloneAttachment: (source: Attachment, noteId: string) => Promise<Attachment>;
-  onError: (code: AttachmentErrorCode) => void;
-  t: TFunction;
-}
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -30,7 +20,7 @@ declare module '@tiptap/core' {
  * data-layer deps (from the dialog + useAttachmentActions) reach the button,
  * paste/drop pipeline, and NodeView - mirrors createMathematics in editor.tsx.
  */
-export function createImage(getDeps: () => ImageDeps) {
+export function createImage(getDeps: () => AttachmentDeps) {
   return Node.create({
     name: 'imageAttachment',
     group: 'block',

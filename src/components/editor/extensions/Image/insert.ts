@@ -1,21 +1,21 @@
 import type { Editor } from '@tiptap/core';
 import { extractAttachmentIds } from '@/lib/attachment-html.ts';
 import { AttachmentError } from '@/lib/attachments.ts';
-import type { ImageDeps } from './Image';
+import type { AttachmentDeps } from '../attachments/deps';
 
 /** Validate → createAttachment → insert node, for each image file. One
  *  getNoteId() call covers the whole batch (a draft persists once). */
 export async function insertImageFiles(
   editor: Editor,
   files: FileList | File[],
-  deps: ImageDeps
+  deps: AttachmentDeps
 ): Promise<void> {
   const images = Array.from(files).filter((f) => f.type.startsWith('image/'));
   if (images.length === 0) return;
   const noteId = await deps.getNoteId();
   for (const file of images) {
     try {
-      const att = await deps.createAttachment(noteId, file);
+      const att = await deps.createAttachment(noteId, file, 'image');
       editor.chain().focus().insertImageAttachment({ attachmentId: att.id }).run();
     } catch (err) {
       if (err instanceof AttachmentError) {
@@ -36,7 +36,7 @@ export async function insertImageFiles(
  *  any imageAttachment node whose row is owned by another Note is re-pointed at
  *  a fresh owned clone, so every row belongs to exactly one Note and the GC
  *  sweep stays trivial. Lowest-frequency path; runs async after paste applies. */
-export async function dedupeForeignImages(editor: Editor, deps: ImageDeps): Promise<void> {
+export async function dedupeForeignImages(editor: Editor, deps: AttachmentDeps): Promise<void> {
   const noteId = await deps.getNoteId();
   const ids = extractAttachmentIds(editor.getHTML());
   for (const id of ids) {
