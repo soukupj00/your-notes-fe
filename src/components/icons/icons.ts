@@ -8,6 +8,8 @@ import {
   List,
   ListOrdered,
   ListTodo,
+  Pause,
+  Play,
   Quote,
   RemoveFormatting,
   Strikethrough,
@@ -29,5 +31,7 @@ export const icons = {
   Quote,
   RemoveFormatting,
   ImagePlus,
+  Play,
+  Pause,
   Latex: LatexIcon,
 } as any;

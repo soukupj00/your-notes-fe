@@ -29,6 +29,12 @@
         "too-large": "Obrázek je příliš velký (max 10 MB)",
         "insert-failed": "Obrázek se nepodařilo přidat"
       }
+    },
+    "audio": {
+      "play": "Přehrát",
+      "pause": "Pozastavit",
+      "seek": "Přetáčet",
+      "unavailable": "Zvuk není k dispozici"
     }
   },
   "notes": {

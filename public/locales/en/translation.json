@@ -29,6 +29,12 @@
         "too-large": "Image is too large (max 10 MB)",
         "insert-failed": "Could not add the image"
       }
+    },
+    "audio": {
+      "play": "Play",
+      "pause": "Pause",
+      "seek": "Seek",
+      "unavailable": "Audio unavailable"
     }
   },
   "notes": {
