@@ -14,7 +14,8 @@ See [`CONTEXT.md`](./CONTEXT.md) for the domain glossary and [`docs/adr/`](./doc
 - ✅ Vitest + React Testing Library wired up (64 tests, reusing `fake-indexeddb`); legacy toolbar patterns removed.
 - ✅ Real notes home (M2): masonry list, create bar + mobile quick-capture, `NoteEditorDialog` with debounced autosave, delete + undo, search over body.
 - ✅ M2.5 polish: feed layout toggle (masonry ↔ list, persisted), mobile capture bar (note + checklist) with checklist smart-init, sticky-bottom mobile editor toolbar, local "Saved" autosave indicator.
-- ⏸️ Playwright E2E deferred (resource-heavy; UI tested manually). Media extensions (Image/Video/Attachment, Excalidraw) deferred to M3 - they depend on attachment storage.
+- ⏸️ Playwright E2E deferred (resource-heavy; UI tested manually).
+- ✅ M3 Slice 1: inline images end to end (custom `imageAttachment` node + Dexie-backed `attachments` table, cascade delete/undo, orphan GC). Video/Audio/File/Excalidraw and image processing/thumbnails deferred to later M3 sub-slices.
 - ❌ No sync, no accounts, no accessibility themes, no animations.
 
 ## Milestones
@@ -57,6 +58,8 @@ Keep-simple friction-reducers layered on M2 (detailed slice plan lived in a plan
 
 ### M3 — Attachments & rich media
 - Images, audio, video, files, and Excalidraw drawings end to end: extension → Dexie storage → render. See [`src/db/PLAN.md`](./src/db/PLAN.md) for storage strategy.
+- ✅ **Slice 1 - inline images end to end + storage foundation**: generic `attachments` Dexie table (blob-backed, not per-kind); `useAttachmentActions` (create/get/delete/clone, note-scoped GC, global orphan safety net); cascade delete/undo carries attachments with the note; custom `imageAttachment` TipTap node (`attachmentId`-only, no persisted `src`) with a React NodeView resolving to an object URL; paste/drop/toolbar insertion pipeline with validation and cross-note dedupe (`cloneAttachment`); `NoteBody` renders images on the home card; global GC sweep wired at `NotesHome` mount.
+- Deferred sub-slices (build on the Slice 1 foundation): image processing/re-compression + thumbnails (`width`/`height` currently unset); mobile quick-capture-bar photo button; image resize/alignment controls; audio, video, file, and Excalidraw attachments (each adds a node + `kind`, reusing `useAttachmentActions` and `NoteBody`).
 
 ### M4 — Accessibility & polish
 - Color-blindness / low-vision theme variants, descriptive icons, full i18n coverage, optional Motion/GSAP animations.

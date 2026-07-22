@@ -1,10 +1,11 @@
 import { ListChecks, SquarePen } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NoteContent } from '@/components/NoteContent.tsx';
 import { EMPTY_CHECKLIST_BODY, NoteEditorDialog } from '@/components/notes/NoteEditorDialog.tsx';
 import { ViewModeToggle } from '@/components/notes/ViewModeToggle.tsx';
 import { Button } from '@/components/ui/button.tsx';
+import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 
 // `null` = closed. Otherwise: `id` is the note being edited (null = new draft);
 // `initialBody` seeds a new draft (e.g. a checklist from quick-capture).
@@ -13,6 +14,14 @@ type EditingState = { id: string | null; initialBody?: string } | null;
 export function NotesHome() {
   const { t } = useTranslation();
   const [editing, setEditing] = useState<EditingState>(null);
+  const { collectMissingNoteOrphans } = useAttachmentActions();
+
+  // Global safety net: reclaim attachment rows whose owning Note vanished
+  // (crash / discarded-draft), beyond the dialog's own note-scoped sweep.
+  // `collectMissingNoteOrphans` is memoized, so this runs once on mount.
+  useEffect(() => {
+    void collectMissingNoteOrphans();
+  }, [collectMissingNoteOrphans]);
 
   const startNote = () => setEditing({ id: null });
   const startChecklist = () => setEditing({ id: null, initialBody: EMPTY_CHECKLIST_BODY });
