@@ -10,6 +10,7 @@ import type React from 'react';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { createAudio } from '@/components/editor/extensions/Audio';
 import {
   dedupeForeignAttachments,
   insertAttachmentFiles,
@@ -73,7 +74,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   const editorRef = useRef<TiptapEditor | null>(null);
 
   const { createAttachment, getAttachment, cloneAttachment } = useAttachmentActions();
-  const imageDeps = useMemo(
+  const attachmentDeps = useMemo(
     () => ({
       getNoteId:
         getNoteId ??
@@ -89,12 +90,12 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     [getNoteId, createAttachment, getAttachment, cloneAttachment, t]
   );
   // useEditor builds the node (and its stored getter) exactly once, so all three
-  // entry points must reach the *current* imageDeps through a stable getter over
+  // entry points must reach the *current* attachmentDeps through a stable getter over
   // a ref, not the first-render closure. The ref is refreshed every render; the
   // getter identity never changes (mirrors createMathematics's live-editor ref).
-  const imageDepsRef = useRef(imageDeps);
-  imageDepsRef.current = imageDeps;
-  const getImageDeps = useRef(() => imageDepsRef.current).current;
+  const attachmentDepsRef = useRef(attachmentDeps);
+  attachmentDepsRef.current = attachmentDeps;
+  const getAttachmentDeps = useRef(() => attachmentDepsRef.current).current;
 
   const editor = useEditor({
     extensions: [
@@ -107,7 +108,8 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       Underline,
       Heading,
       Blockquote,
-      createImage(getImageDeps),
+      createImage(getAttachmentDeps),
+      createAudio(getAttachmentDeps),
       BulletList,
       OrderedList,
       ListItem,
@@ -133,8 +135,14 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         const files = event.clipboardData?.files;
         const ed = editorRef.current;
         if (ed && files && Array.from(files).some((f) => f.type.startsWith('image/'))) {
-          void insertAttachmentFiles(ed, files, 'image', imageDepsRef.current, (id) =>
+          void insertAttachmentFiles(ed, files, 'image', attachmentDepsRef.current, (id) =>
             ed.chain().focus().insertImageAttachment({ attachmentId: id }).run()
+          );
+          return true;
+        }
+        if (ed && files && Array.from(files).some((f) => f.type.startsWith('audio/'))) {
+          void insertAttachmentFiles(ed, files, 'audio', attachmentDepsRef.current, (id) =>
+            ed.chain().focus().insertAudioAttachment({ attachmentId: id }).run()
           );
           return true;
         }
@@ -142,7 +150,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         // paste happen, then reclaim any foreign images into owned clones.
         const html = event.clipboardData?.getData('text/html');
         if (ed && html?.includes('data-attachment-id')) {
-          queueMicrotask(() => void dedupeForeignAttachments(ed, imageDepsRef.current));
+          queueMicrotask(() => void dedupeForeignAttachments(ed, attachmentDepsRef.current));
         }
         return false;
       },
@@ -150,8 +158,14 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         const files = (event as DragEvent).dataTransfer?.files;
         const ed = editorRef.current;
         if (ed && files && Array.from(files).some((f) => f.type.startsWith('image/'))) {
-          void insertAttachmentFiles(ed, files, 'image', imageDepsRef.current, (id) =>
+          void insertAttachmentFiles(ed, files, 'image', attachmentDepsRef.current, (id) =>
             ed.chain().focus().insertImageAttachment({ attachmentId: id }).run()
+          );
+          return true;
+        }
+        if (ed && files && Array.from(files).some((f) => f.type.startsWith('audio/'))) {
+          void insertAttachmentFiles(ed, files, 'audio', attachmentDepsRef.current, (id) =>
+            ed.chain().focus().insertAudioAttachment({ attachmentId: id }).run()
           );
           return true;
         }
