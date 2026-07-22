@@ -2,6 +2,7 @@ import { MoreVertical } from 'lucide-react';
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { NoteBody } from '@/components/NoteBody.tsx';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.tsx';
 import { Checkbox } from '@/components/ui/checkbox.tsx';
 import {
@@ -89,15 +90,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
       </CardHeader>
 
       <CardContent className="space-y-3">
-        {hasBody && (
-          // Rendered rich-text preview, clamped. Self-authored HTML from our own
-          // editor, so rendering it directly is acceptable at local-only scale.
-          <div
-            className="prose prose-sm line-clamp-6 max-w-none text-foreground"
-            // biome-ignore lint/security/noDangerouslySetInnerHtml: preview of the note's own editor HTML
-            dangerouslySetInnerHTML={{ __html: note.body ?? '' }}
-          />
-        )}
+        {hasBody && <NoteBody html={note.body} className="line-clamp-6" />}
 
         {checklist.length > 0 && (
           <div>
