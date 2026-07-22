@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { v4 as uuid } from 'uuid';
 import { db } from '@/db/db.ts';
-import { AttachmentError, validateImageFile } from '@/lib/attachments.ts';
+import { AttachmentError, validateAttachmentFile } from '@/lib/attachments.ts';
 import type { Attachment, AttachmentKind } from '@/models.ts';
 
 // Mutations close over the stable `db` import only, so they are memoized with
@@ -10,7 +10,7 @@ import type { Attachment, AttachmentKind } from '@/models.ts';
 export function useAttachmentActions() {
   const createAttachment = useCallback(
     async (noteId: string, file: File, kind: AttachmentKind = 'image'): Promise<Attachment> => {
-      const bad = validateImageFile(file);
+      const bad = validateAttachmentFile(file, kind);
       if (bad) throw new AttachmentError(bad);
       const now = new Date().toISOString();
       const att: Attachment = {
