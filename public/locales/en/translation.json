@@ -34,7 +34,15 @@
       "play": "Play",
       "pause": "Pause",
       "seek": "Seek",
-      "unavailable": "Audio unavailable"
+      "unavailable": "Audio unavailable",
+      "tooltip": "Record audio",
+      "attach": "Attach audio file",
+      "stop": "Stop",
+      "cancel": "Cancel",
+      "errors": {
+        "permission": "Microphone access was denied",
+        "unsupported": "Audio recording is not supported in this browser"
+      }
     }
   },
   "notes": {

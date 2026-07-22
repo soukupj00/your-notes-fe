@@ -34,7 +34,15 @@
       "play": "Přehrát",
       "pause": "Pozastavit",
       "seek": "Přetáčet",
-      "unavailable": "Zvuk není k dispozici"
+      "unavailable": "Zvuk není k dispozici",
+      "tooltip": "Nahrát zvuk",
+      "attach": "Připojit zvukový soubor",
+      "stop": "Zastavit",
+      "cancel": "Zrušit",
+      "errors": {
+        "permission": "Přístup k mikrofonu byl odepřen",
+        "unsupported": "Nahrávání zvuku není v tomto prohlížeči podporováno"
+      }
     }
   },
   "notes": {

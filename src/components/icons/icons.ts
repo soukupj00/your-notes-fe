@@ -8,10 +8,13 @@ import {
   List,
   ListOrdered,
   ListTodo,
+  Mic,
+  Paperclip,
   Pause,
   Play,
   Quote,
   RemoveFormatting,
+  Square,
   Strikethrough,
   Underline,
 } from 'lucide-react';
@@ -33,5 +36,8 @@ export const icons = {
   ImagePlus,
   Play,
   Pause,
+  Mic,
+  Square,
+  Paperclip,
   Latex: LatexIcon,
 } as any;
