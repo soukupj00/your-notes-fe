@@ -10,6 +10,10 @@ import type React from 'react';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import {
+  dedupeForeignAttachments,
+  insertAttachmentFiles,
+} from '@/components/editor/extensions/attachments/insert';
 import { Blockquote } from '@/components/editor/extensions/Blockquote';
 import { Bold } from '@/components/editor/extensions/Bold';
 import { BulletList } from '@/components/editor/extensions/BulletList';
@@ -21,7 +25,6 @@ import { FontSize } from '@/components/editor/extensions/FontSize';
 import { Heading } from '@/components/editor/extensions/Heading';
 import { Highlight } from '@/components/editor/extensions/Highlight';
 import { createImage } from '@/components/editor/extensions/Image';
-import { dedupeForeignImages, insertImageFiles } from '@/components/editor/extensions/Image/insert';
 import { Italic } from '@/components/editor/extensions/Italic';
 import { ListItem } from '@/components/editor/extensions/ListItem';
 import { createMathematics } from '@/components/editor/extensions/Mathematics';
@@ -130,14 +133,16 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         const files = event.clipboardData?.files;
         const ed = editorRef.current;
         if (ed && files && Array.from(files).some((f) => f.type.startsWith('image/'))) {
-          void insertImageFiles(ed, files, imageDepsRef.current);
+          void insertAttachmentFiles(ed, files, 'image', imageDepsRef.current, (id) =>
+            ed.chain().focus().insertImageAttachment({ attachmentId: id }).run()
+          );
           return true;
         }
         // Cross-note HTML paste with existing attachment nodes: let the default
         // paste happen, then reclaim any foreign images into owned clones.
         const html = event.clipboardData?.getData('text/html');
         if (ed && html?.includes('data-attachment-id')) {
-          queueMicrotask(() => void dedupeForeignImages(ed, imageDepsRef.current));
+          queueMicrotask(() => void dedupeForeignAttachments(ed, imageDepsRef.current));
         }
         return false;
       },
@@ -145,7 +150,9 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         const files = (event as DragEvent).dataTransfer?.files;
         const ed = editorRef.current;
         if (ed && files && Array.from(files).some((f) => f.type.startsWith('image/'))) {
-          void insertImageFiles(ed, files, imageDepsRef.current);
+          void insertAttachmentFiles(ed, files, 'image', imageDepsRef.current, (id) =>
+            ed.chain().focus().insertImageAttachment({ attachmentId: id }).run()
+          );
           return true;
         }
         return false;

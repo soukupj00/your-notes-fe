@@ -4,15 +4,17 @@ import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AttachmentDeps } from '../attachments/deps';
+import { insertAttachmentFiles } from '../attachments/insert';
 import { createImage } from './Image';
-import { insertImageFiles } from './insert';
 
 const t = ((key: string) => key) as AttachmentDeps['t'];
 
 function stubDeps(): AttachmentDeps {
   return {
     getNoteId: vi.fn(async () => 'note-1'),
-    createAttachment: vi.fn(),
+    createAttachment: vi.fn((_noteId, _file, _kind) => {
+      throw new Error('not implemented');
+    }),
     getAttachment: vi.fn(async () => undefined),
     cloneAttachment: vi.fn(),
     onError: vi.fn(),
@@ -58,7 +60,13 @@ describe('imageAttachment node', () => {
   });
 });
 
-describe('insertImageFiles', () => {
+describe('insertAttachmentFiles (image)', () => {
+  function insertImage(editor: Editor, files: FileList | File[], deps: AttachmentDeps) {
+    return insertAttachmentFiles(editor, files, 'image', deps, (id) =>
+      editor.chain().focus().insertImageAttachment({ attachmentId: id }).run()
+    );
+  }
+
   it('creates an attachment then inserts a node per valid image', async () => {
     const deps = stubDeps();
     deps.createAttachment = vi.fn(async (_n, file) => ({
@@ -73,7 +81,7 @@ describe('insertImageFiles', () => {
     const editor = createEditor(deps);
     const png = new File([new Uint8Array(4)], 'a.png', { type: 'image/png' });
 
-    await insertImageFiles(editor, [png], deps);
+    await insertImage(editor, [png], deps);
 
     expect(deps.getNoteId).toHaveBeenCalledOnce();
     expect(deps.createAttachment).toHaveBeenCalledWith('note-1', png, 'image');
@@ -90,7 +98,7 @@ describe('insertImageFiles', () => {
     const editor = createEditor(deps);
     const big = new File([new Uint8Array(4)], 'b.png', { type: 'image/png' });
 
-    await insertImageFiles(editor, [big], deps);
+    await insertImage(editor, [big], deps);
 
     expect(deps.onError).toHaveBeenCalledWith('too-large');
     expect(editor.getHTML()).not.toContain('data-attachment-id');
@@ -105,7 +113,7 @@ describe('insertImageFiles', () => {
     const editor = createEditor(deps);
     const png = new File([new Uint8Array(4)], 'c.png', { type: 'image/png' });
 
-    await expect(insertImageFiles(editor, [png], deps)).resolves.toBeUndefined();
+    await expect(insertImage(editor, [png], deps)).resolves.toBeUndefined();
 
     expect(deps.onError).toHaveBeenCalledWith('insert-failed');
     editor.destroy();
@@ -115,7 +123,7 @@ describe('insertImageFiles', () => {
     const deps = stubDeps();
     const editor = createEditor(deps);
     const txt = new File(['hi'], 'n.txt', { type: 'text/plain' });
-    await insertImageFiles(editor, [txt], deps);
+    await insertImage(editor, [txt], deps);
     expect(deps.getNoteId).not.toHaveBeenCalled();
     editor.destroy();
   });

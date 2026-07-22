@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { ActionButton } from '@/components/ui/ActionButton.tsx';
 import { ALLOWED_IMAGE_MIME } from '@/lib/attachments.ts';
 import type { AttachmentDeps } from '../attachments/deps';
-import { insertImageFiles } from './insert';
+import { insertAttachmentFiles } from '../attachments/insert';
 
 export interface ImageButtonProps {
   editor: Editor;
@@ -27,7 +27,10 @@ export function ImageButton({ editor, getDeps, tooltip }: ImageButtonProps) {
         className="hidden"
         onChange={(e) => {
           // Resolve deps at click time so the button reads the freshest getNoteId.
-          if (e.target.files) void insertImageFiles(editor, e.target.files, getDeps());
+          if (e.target.files)
+            void insertAttachmentFiles(editor, e.target.files, 'image', getDeps(), (id) =>
+              editor.chain().focus().insertImageAttachment({ attachmentId: id }).run()
+            );
           e.target.value = ''; // allow re-picking the same file
         }}
       />
