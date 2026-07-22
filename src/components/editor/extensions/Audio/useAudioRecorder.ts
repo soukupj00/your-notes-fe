@@ -10,7 +10,7 @@ export function pickAudioMimeType(): string | null {
   for (const m of CANDIDATE_MIME) {
     if (MediaRecorder.isTypeSupported(m)) return m;
   }
-  return '';
+  return null;
 }
 
 export type RecorderStatus = 'idle' | 'requesting' | 'recording' | 'error';
@@ -43,8 +43,12 @@ export function useAudioRecorder(): AudioRecorder {
   const startedAtRef = useRef(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoStopRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Bumped by cleanup() to invalidate any in-flight start() (e.g. unmount or
+   *  cancel() while getUserMedia is still pending). */
+  const startGenerationRef = useRef(0);
 
   const cleanup = useCallback(() => {
+    startGenerationRef.current += 1;
     if (tickRef.current) clearInterval(tickRef.current);
     if (autoStopRef.current) clearTimeout(autoStopRef.current);
     streamRef.current?.getTracks().forEach((t) => {
@@ -62,10 +66,20 @@ export function useAudioRecorder(): AudioRecorder {
       setError('unsupported');
       return;
     }
+    const myGeneration = startGenerationRef.current + 1;
+    startGenerationRef.current = myGeneration;
     setStatus('requesting');
     setError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (startGenerationRef.current !== myGeneration) {
+        // Unmounted or cancelled while permission was pending: release the
+        // mic we just acquired and bail without touching any refs/status.
+        stream.getTracks().forEach((t) => {
+          t.stop();
+        });
+        return;
+      }
       streamRef.current = stream;
       const mime = pickAudioMimeType() ?? '';
       const recorder = mime
@@ -118,6 +132,7 @@ export function useAudioRecorder(): AudioRecorder {
     const recorder = recorderRef.current;
     if (recorder && recorder.state !== 'inactive') {
       recorder.onstop = null;
+      recorder.ondataavailable = null;
       recorder.stop();
     }
     cleanup();

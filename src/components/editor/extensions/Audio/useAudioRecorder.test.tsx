@@ -53,6 +53,61 @@ describe('useAudioRecorder', () => {
     expect(result.current.status).toBe('idle');
   });
 
+  it('releases the mic if unmounted while permission is pending', async () => {
+    let resolveGetUserMedia: (s: unknown) => void = () => {};
+    const deferred = new Promise((resolve) => {
+      resolveGetUserMedia = resolve;
+    });
+    (navigator.mediaDevices.getUserMedia as ReturnType<typeof vi.fn>).mockReturnValueOnce(deferred);
+    const startSpy = vi.spyOn(FakeRecorder.prototype, 'start');
+    const { result, unmount } = renderHook(() => useAudioRecorder());
+
+    let startPromise: Promise<void> = Promise.resolve();
+    act(() => {
+      startPromise = result.current.start();
+    });
+    await waitFor(() => expect(result.current.status).toBe('requesting'));
+
+    unmount();
+
+    await act(async () => {
+      resolveGetUserMedia(stream);
+      await startPromise;
+    });
+
+    expect(track.stop).toHaveBeenCalled();
+    expect(startSpy).not.toHaveBeenCalled();
+  });
+
+  it('releases the mic if cancel() is called while permission is pending', async () => {
+    let resolveGetUserMedia: (s: unknown) => void = () => {};
+    const deferred = new Promise((resolve) => {
+      resolveGetUserMedia = resolve;
+    });
+    (navigator.mediaDevices.getUserMedia as ReturnType<typeof vi.fn>).mockReturnValueOnce(deferred);
+    const startSpy = vi.spyOn(FakeRecorder.prototype, 'start');
+    const { result } = renderHook(() => useAudioRecorder());
+
+    let startPromise: Promise<void> = Promise.resolve();
+    act(() => {
+      startPromise = result.current.start();
+    });
+    await waitFor(() => expect(result.current.status).toBe('requesting'));
+
+    act(() => {
+      result.current.cancel();
+    });
+
+    await act(async () => {
+      resolveGetUserMedia(stream);
+      await startPromise;
+    });
+
+    expect(track.stop).toHaveBeenCalled();
+    expect(startSpy).not.toHaveBeenCalled();
+    expect(result.current.status).toBe('idle');
+  });
+
   it('sets error state when getUserMedia is denied', async () => {
     (navigator.mediaDevices.getUserMedia as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
       new Error('denied')
