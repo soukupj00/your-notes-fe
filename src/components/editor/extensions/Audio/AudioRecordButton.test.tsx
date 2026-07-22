@@ -1,10 +1,13 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Editor } from '@tiptap/core';
+import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { AttachmentDeps } from '../attachments/deps';
 import { AudioRecordButton } from './AudioRecordButton';
+
+vi.mock('sonner', () => ({ toast: vi.fn() }));
 
 const recorder = {
   status: 'idle' as string,
@@ -24,9 +27,12 @@ vi.mock('./useAudioRecorder', () => ({
   MAX_RECORDING_MS: 300000,
 }));
 
+let insertAudioAttachmentMock: ReturnType<typeof vi.fn>;
+
 function makeEditor() {
+  insertAudioAttachmentMock = vi.fn(() => ({ run: vi.fn() }));
   return {
-    chain: () => ({ focus: () => ({ insertAudioAttachment: () => ({ run: vi.fn() }) }) }),
+    chain: () => ({ focus: () => ({ insertAudioAttachment: insertAudioAttachmentMock }) }),
   } as unknown as Editor;
 }
 
@@ -40,6 +46,8 @@ const deps = {
 
 beforeEach(() => {
   recorder.status = 'idle';
+  recorder.error = null;
+  recorder.supported = true;
   createAttachment.mockClear();
 });
 afterEach(() => vi.clearAllMocks());
@@ -64,5 +72,45 @@ describe('AudioRecordButton', () => {
     await userEvent.click(screen.getByRole('button', { name: /stop/i }));
     await waitFor(() => expect(deps.getNoteId).toHaveBeenCalled());
     expect(createAttachment).toHaveBeenCalledWith('note1', expect.any(File), 'audio');
+    await waitFor(() =>
+      expect(insertAudioAttachmentMock).toHaveBeenCalledWith({ attachmentId: 'att1' })
+    );
+  });
+
+  it('shows a permission-denied toast on recorder error', () => {
+    recorder.status = 'error';
+    recorder.error = 'denied';
+    render(
+      <TooltipProvider>
+        <AudioRecordButton editor={makeEditor()} getDeps={() => deps} tooltip="rec" />
+      </TooltipProvider>
+    );
+    expect(toast).toHaveBeenCalledWith('editor.audio.errors.permission');
+  });
+
+  it('shows an unsupported toast when the recorder reports unsupported', () => {
+    recorder.status = 'error';
+    recorder.error = 'unsupported';
+    render(
+      <TooltipProvider>
+        <AudioRecordButton editor={makeEditor()} getDeps={() => deps} tooltip="rec" />
+      </TooltipProvider>
+    );
+    expect(toast).toHaveBeenCalledWith('editor.audio.errors.unsupported');
+  });
+
+  it('picking a file inserts it through the shared attachment pipeline', async () => {
+    const { container } = render(
+      <TooltipProvider>
+        <AudioRecordButton editor={makeEditor()} getDeps={() => deps} tooltip="rec" />
+      </TooltipProvider>
+    );
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(['x'], 'a.webm', { type: 'audio/webm' });
+    fireEvent.change(input, { target: { files: [file] } });
+    await waitFor(() => expect(createAttachment).toHaveBeenCalledWith('note1', file, 'audio'));
+    await waitFor(() =>
+      expect(insertAudioAttachmentMock).toHaveBeenCalledWith({ attachmentId: 'att1' })
+    );
   });
 });
