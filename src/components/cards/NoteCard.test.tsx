@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '@/db/db.ts';
-import type { Note } from '@/models.ts';
+import type { Attachment, Note } from '@/models.ts';
 import { NoteCard } from './NoteCard.tsx';
 
 // Keys pass through untranslated so assertions are stable.
@@ -40,7 +40,23 @@ afterEach(async () => {
   toastMock.mockReset();
   await db.notes.clear();
   await db.noteTags.clear();
+  await db.attachments.clear();
 });
+
+function putAudioAttachment(id: string): Promise<string> {
+  const now = new Date().toISOString();
+  const att: Attachment = {
+    id,
+    noteId: 'n1',
+    kind: 'audio',
+    mime: 'audio/webm',
+    blob: new Blob(['x']),
+    duration: 14,
+    createdAt: now,
+    updatedAt: now,
+  };
+  return db.attachments.put(att);
+}
 
 beforeEach(() => {
   // jsdom lacks object-URL APIs; NoteBody resolves attachments to blob URLs.
@@ -117,5 +133,45 @@ describe('NoteCard', () => {
     await waitFor(() => {
       expect(document.querySelector('img[data-attachment-id="x1"]')).toBeInTheDocument();
     });
+  });
+
+  it('renders a chip for an audio-only note (no header, no checklist text)', async () => {
+    const note = makeNote({
+      header: '',
+      body: '<audio data-attachment-id="au1"></audio>',
+      checklist: [],
+    });
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    // Same failure mode as the Slice 1 image-only bug: without the
+    // bodyHasAttachment OR in hasBody, an audio-only body (stripHtml drops the
+    // <audio> tag entirely) would render no header, no NoteBody, no
+    // checklist - i.e. a blank card. Assert the chip mounts instead.
+    await waitFor(() => {
+      expect(document.querySelector('[data-attachment-chip="audio"]')).toBeInTheDocument();
+    });
+  });
+
+  it('opens the editor with autoplay intent when the audio chip is clicked', async () => {
+    await putAudioAttachment('au1');
+    const note = makeNote({ body: '<p>hello</p><audio data-attachment-id="au1"></audio>' });
+    const onSelect = vi.fn();
+    render(<NoteCard note={note} onSelect={onSelect} />);
+
+    const chip = await waitFor(() => {
+      const el = document.querySelector('[data-attachment-chip="audio"]');
+      expect(el).toBeInTheDocument();
+      return el as HTMLElement;
+    });
+
+    await userEvent.click(chip);
+    expect(onSelect).toHaveBeenCalledWith(note.id, { autoplayFirstAudio: true });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+
+    // Clicking elsewhere on the same card must still take the plain open path.
+    onSelect.mockClear();
+    await userEvent.click(screen.getByText('My note'));
+    expect(onSelect).toHaveBeenCalledWith(note.id);
+    expect(onSelect).toHaveBeenCalledTimes(1);
   });
 });
