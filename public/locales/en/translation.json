@@ -22,9 +22,12 @@
     "fontSize": { "tooltip": "Font size" },
     "image": {
       "tooltip": "Insert image",
+      "unavailable": "Image unavailable",
+      "fallbackAlt": "Image",
       "errors": {
         "unsupported-type": "That image type is not supported",
-        "too-large": "Image is too large (max 10 MB)"
+        "too-large": "Image is too large (max 10 MB)",
+        "insert-failed": "Could not add the image"
       }
     }
   },

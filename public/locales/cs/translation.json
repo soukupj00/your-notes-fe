@@ -22,9 +22,12 @@
     "fontSize": { "tooltip": "Velikost písma" },
     "image": {
       "tooltip": "Vložit obrázek",
+      "unavailable": "Obrázek není k dispozici",
+      "fallbackAlt": "Obrázek",
       "errors": {
         "unsupported-type": "Tento typ obrázku není podporován",
-        "too-large": "Obrázek je příliš velký (max 10 MB)"
+        "too-large": "Obrázek je příliš velký (max 10 MB)",
+        "insert-failed": "Obrázek se nepodařilo přidat"
       }
     }
   },

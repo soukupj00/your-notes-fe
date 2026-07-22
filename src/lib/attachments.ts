@@ -10,7 +10,7 @@ export const ALLOWED_IMAGE_MIME = [
 /** Per-image size cap: 10 MB. */
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
-export type AttachmentErrorCode = 'unsupported-type' | 'too-large';
+export type AttachmentErrorCode = 'unsupported-type' | 'too-large' | 'insert-failed';
 
 /** Thrown by createAttachment when a file fails validation; carries a code so
  *  the caller can map it to a translated toast. */

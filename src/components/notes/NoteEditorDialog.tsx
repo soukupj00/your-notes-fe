@@ -57,6 +57,13 @@ export function NoteEditorDialog({ noteId, initialBody, onClose }: NoteEditorDia
   // The id we persist to: the prop for an existing note, or null until a draft
   // is first saved. A ref (not state) so serialized saves see it synchronously.
   const idRef = useRef<string | null>(noteId);
+  // Mirrors of header/body for ensureNoteId, so its identity stays stable
+  // across keystrokes (it's read by the Image extension's deps, and a new
+  // identity there would mint a new imageDeps object on every render).
+  const headerRef = useRef(header);
+  headerRef.current = header;
+  const bodyRef = useRef(body);
+  bodyRef.current = body;
   const dirtyRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Serialize saves so a draft is created exactly once, then updated.
@@ -99,7 +106,7 @@ export function NoteEditorDialog({ noteId, initialBody, onClose }: NoteEditorDia
   const ensureNoteId = useCallback(async (): Promise<string> => {
     const chained = saveChainRef.current.then(async () => {
       if (idRef.current == null) {
-        const created = await createNote({ header, body });
+        const created = await createNote({ header: headerRef.current, body: bodyRef.current });
         idRef.current = created.id;
       }
       return idRef.current as string;
@@ -110,7 +117,7 @@ export function NoteEditorDialog({ noteId, initialBody, onClose }: NoteEditorDia
       () => undefined
     );
     return chained;
-  }, [createNote, header, body]);
+  }, [createNote]);
 
   const enqueueSave = useCallback(
     (h: string, b: string) => {

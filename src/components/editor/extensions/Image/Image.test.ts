@@ -94,6 +94,20 @@ describe('insertImageFiles', () => {
     editor.destroy();
   });
 
+  it('reports a generic failure via onError and continues past a non-validation error', async () => {
+    const deps = stubDeps();
+    deps.createAttachment = vi.fn(async () => {
+      throw new Error('boom');
+    });
+    const editor = createEditor(deps);
+    const png = new File([new Uint8Array(4)], 'c.png', { type: 'image/png' });
+
+    await expect(insertImageFiles(editor, [png], deps)).resolves.toBeUndefined();
+
+    expect(deps.onError).toHaveBeenCalledWith('insert-failed');
+    editor.destroy();
+  });
+
   it('ignores non-image files', async () => {
     const deps = stubDeps();
     const editor = createEditor(deps);

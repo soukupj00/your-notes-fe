@@ -18,8 +18,16 @@ export async function insertImageFiles(
       const att = await deps.createAttachment(noteId, file);
       editor.chain().focus().insertImageAttachment({ attachmentId: att.id }).run();
     } catch (err) {
-      if (err instanceof AttachmentError) deps.onError(err.code);
-      else throw err;
+      if (err instanceof AttachmentError) {
+        deps.onError(err.code);
+      } else {
+        // Non-validation failure (e.g. a Dexie write error). Every caller does
+        // `void insertImageFiles(...)`, so rethrowing here would become an
+        // unhandled rejection with no user-visible feedback. Surface a generic
+        // toast and keep processing the rest of the batch instead of aborting.
+        console.error('insertImageFiles: failed to add image', err);
+        deps.onError('insert-failed');
+      }
     }
   }
 }
@@ -35,21 +43,24 @@ export async function dedupeForeignImages(editor: Editor, deps: ImageDeps): Prom
     const att = await deps.getAttachment(id);
     if (!att || att.noteId === noteId) continue; // missing → NodeView shows broken; owned → keep
     const clone = await deps.cloneAttachment(att, noteId);
-    // Re-point the first node still carrying the old id. Re-scan each pass since
-    // positions shift; we only rewrite one occurrence per clone.
-    let pos: number | null = null;
+    // Two pasted nodes can share the SAME foreign id (e.g. one image pasted
+    // twice), so every node still carrying the old id must be re-pointed to
+    // this one clone - not just the first. Collect all matching positions from
+    // a fresh doc walk, then rewrite them within a single transaction/command
+    // so positions don't shift out from under later setNodeAttribute calls
+    // (they're independent per-node attribute writes, not structural edits).
+    const positions: number[] = [];
     editor.state.doc.descendants((node, p) => {
-      if (pos === null && node.type.name === 'imageAttachment' && node.attrs.attachmentId === id) {
-        pos = p;
-        return false;
+      if (node.type.name === 'imageAttachment' && node.attrs.attachmentId === id) {
+        positions.push(p);
       }
       return true;
     });
-    if (pos !== null) {
+    if (positions.length > 0) {
       editor
         .chain()
         .command(({ tr }) => {
-          tr.setNodeAttribute(pos as number, 'attachmentId', clone.id);
+          for (const p of positions) tr.setNodeAttribute(p, 'attachmentId', clone.id);
           return true;
         })
         .run();

@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu.tsx';
 import { Separator } from '@/components/ui/separator.tsx';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
+import { bodyHasAttachment } from '@/lib/attachment-html.ts';
 import { stripHtml } from '@/lib/utils.ts';
 import type { Note } from '@/models.ts';
 
@@ -28,7 +29,10 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
   const { t } = useTranslation();
   const { deleteNote, restoreNote } = useNoteActions();
 
-  const hasBody = stripHtml(note.body).trim().length > 0;
+  // stripHtml drops the <img data-attachment-id> tag along with the rest of the
+  // markup, so an image-only Body (no text) needs the attachment check too -
+  // otherwise the card renders blank (no header, no NoteBody, no checklist).
+  const hasBody = stripHtml(note.body).trim().length > 0 || bodyHasAttachment(note.body);
   const checklist = note.checklist ?? [];
 
   const handleDelete = async () => {

@@ -45,14 +45,18 @@ export function ImageNodeView(props: ReactNodeViewProps) {
   return (
     <NodeViewWrapper as="div" className="my-2" data-drag-handle>
       {state.status === 'ready' && (
-        <img src={state.url} alt={state.name ?? 'Image'} className="h-auto max-w-full rounded-md" />
+        <img
+          src={state.url}
+          alt={state.name ?? deps.t('editor.image.fallbackAlt')}
+          className="h-auto max-w-full rounded-md"
+        />
       )}
       {state.status === 'loading' && (
         <div className="h-32 w-full animate-pulse rounded-md bg-muted" aria-hidden />
       )}
       {state.status === 'missing' && (
         <div className="rounded-md border border-dashed p-4 text-center text-muted-foreground text-sm">
-          Image unavailable
+          {deps.t('editor.image.unavailable')}
         </div>
       )}
     </NodeViewWrapper>

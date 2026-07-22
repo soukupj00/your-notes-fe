@@ -20,7 +20,7 @@ export function NotesHome() {
   // (crash / discarded-draft), beyond the dialog's own note-scoped sweep.
   // `collectMissingNoteOrphans` is memoized, so this runs once on mount.
   useEffect(() => {
-    void collectMissingNoteOrphans();
+    collectMissingNoteOrphans().catch(console.error);
   }, [collectMissingNoteOrphans]);
 
   const startNote = () => setEditing({ id: null });

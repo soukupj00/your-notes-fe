@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '@/db/db.ts';
 import type { Note } from '@/models.ts';
 import { NoteCard } from './NoteCard.tsx';
@@ -40,6 +40,12 @@ afterEach(async () => {
   toastMock.mockReset();
   await db.notes.clear();
   await db.noteTags.clear();
+});
+
+beforeEach(() => {
+  // jsdom lacks object-URL APIs; NoteBody resolves attachments to blob URLs.
+  globalThis.URL.createObjectURL = vi.fn(() => 'blob:mock/0');
+  globalThis.URL.revokeObjectURL = vi.fn();
 });
 
 describe('NoteCard', () => {
@@ -95,5 +101,21 @@ describe('NoteCard', () => {
     await opts.action.onClick();
 
     await waitFor(async () => expect(await db.notes.get(note.id)).toEqual(note));
+  });
+
+  it('renders the body for an image-only note (no header, no checklist text)', async () => {
+    const note = makeNote({
+      header: '',
+      body: '<img data-attachment-id="x1">',
+      checklist: [],
+    });
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    // The attachment row is not stored, so NoteBody's async blob resolution
+    // never completes - but the <img> node itself must still mount (proving
+    // NoteBody rendered), so the card is not blank.
+    await waitFor(() => {
+      expect(document.querySelector('img[data-attachment-id="x1"]')).toBeInTheDocument();
+    });
   });
 });
