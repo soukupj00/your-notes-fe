@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Attachment } from '@/models.ts';
@@ -64,5 +64,35 @@ describe('AudioNodeView', () => {
   it('shows an unavailable state when the row is missing', async () => {
     render(<AudioNodeView {...props(async () => undefined)} />);
     expect(await screen.findByText('editor.audio.unavailable')).toBeInTheDocument();
+  });
+
+  // Regression: the media listeners must attach once the hidden <audio> mounts
+  // (state resolves ready AFTER first commit), not only on first render.
+  it('advances the scrubber and total time from media events after the element mounts', async () => {
+    render(<AudioNodeView {...props(async () => att())} />);
+    // Wait for the hidden <audio> to actually mount (state resolves 'ready'
+    // after the first commit) so the effect has attached its listeners.
+    await waitFor(() => expect(document.querySelector('audio')).not.toBeNull());
+    const audio = document.querySelector('audio') as HTMLAudioElement;
+
+    Object.defineProperty(audio, 'duration', { value: 30, configurable: true });
+    fireEvent(audio, new Event('loadedmetadata'));
+    Object.defineProperty(audio, 'currentTime', { value: 6, configurable: true });
+    fireEvent(audio, new Event('timeupdate'));
+
+    await waitFor(() => expect(screen.getByText(/0:06\s*\/\s*0:30/)).toBeInTheDocument());
+  });
+
+  it('flips the button back to play when playback ends', async () => {
+    render(<AudioNodeView {...props(async () => att())} />);
+    await waitFor(() => expect(document.querySelector('audio')).not.toBeNull());
+    const btn = screen.getByRole('button', { name: /play/i });
+    await userEvent.click(btn);
+    expect(screen.getByRole('button', { name: /pause/i })).toBeInTheDocument();
+
+    const audio = document.querySelector('audio') as HTMLAudioElement;
+    fireEvent(audio, new Event('ended'));
+
+    expect(await screen.findByRole('button', { name: /play/i })).toBeInTheDocument();
   });
 });

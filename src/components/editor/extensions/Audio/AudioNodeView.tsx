@@ -1,6 +1,6 @@
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { icons } from '@/components/icons';
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
@@ -27,8 +27,12 @@ export function AudioNodeView(props: ReactNodeViewProps) {
   const Play = icons.Play;
   const Pause = icons.Pause;
 
-  useEffect(() => {
-    const el = audioRef.current;
+  // Callback ref: the hidden <audio> only mounts once state resolves 'ready'
+  // (after the loading commit), so a plain useEffect with [] would run while the
+  // element is still null and wire nothing. Attaching here fires exactly when the
+  // element mounts; React 19 runs the returned cleanup when it unmounts.
+  const bindAudio = useCallback((el: HTMLAudioElement | null) => {
+    audioRef.current = el;
     if (!el) return;
     const onTime = () => setCurrent(el.currentTime);
     const onMeta = () => setDuration(Number.isFinite(el.duration) ? el.duration : 0);
@@ -37,6 +41,7 @@ export function AudioNodeView(props: ReactNodeViewProps) {
     el.addEventListener('loadedmetadata', onMeta);
     el.addEventListener('ended', onEnd);
     return () => {
+      audioRef.current = null;
       el.removeEventListener('timeupdate', onTime);
       el.removeEventListener('loadedmetadata', onMeta);
       el.removeEventListener('ended', onEnd);
@@ -100,7 +105,7 @@ export function AudioNodeView(props: ReactNodeViewProps) {
           )}
         </span>
         {state.status === 'ready' && (
-          <audio ref={audioRef} src={state.url} preload="metadata" className="hidden">
+          <audio ref={bindAudio} src={state.url} preload="metadata" className="hidden">
             <track kind="captions" />
           </audio>
         )}
