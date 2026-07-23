@@ -64,6 +64,13 @@
       "tooltip": "Attach video",
       "delete": "Delete video",
       "unavailable": "Video unavailable"
+    },
+    "file": {
+      "tooltip": "Attach file",
+      "open": "Open file",
+      "delete": "Delete file",
+      "unavailable": "File unavailable",
+      "fallbackName": "File"
     }
   },
   "settings": {
@@ -93,6 +100,7 @@
     "menu": "Note options",
     "playAudio": "Play audio",
     "playVideo": "Play video",
+    "openFile": "Open file",
     "delete": "Delete",
     "deleted": "Note deleted",
     "undo": "Undo",

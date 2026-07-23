@@ -64,6 +64,13 @@
       "tooltip": "Připojit video",
       "delete": "Smazat video",
       "unavailable": "Video není k dispozici"
+    },
+    "file": {
+      "tooltip": "Připojit soubor",
+      "open": "Otevřít soubor",
+      "delete": "Smazat soubor",
+      "unavailable": "Soubor není k dispozici",
+      "fallbackName": "Soubor"
     }
   },
   "settings": {
@@ -93,6 +100,7 @@
     "menu": "Možnosti poznámky",
     "playAudio": "Přehrát zvuk",
     "playVideo": "Přehrát video",
+    "openFile": "Otevřít soubor",
     "delete": "Smazat",
     "deleted": "Poznámka smazána",
     "undo": "Zpět",

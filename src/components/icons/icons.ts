@@ -1,5 +1,7 @@
 import {
   Bold,
+  Download,
+  FileText,
   FileVideo,
   Heading1,
   Heading2,
@@ -45,5 +47,7 @@ export const icons = {
   Trash2,
   FileVideo,
   Video,
+  FileText,
+  Download,
   Latex: LatexIcon,
 } as any;
