@@ -1,4 +1,15 @@
 {
+  "navbar": {
+    "logo": "Notes"
+  },
+  "attachments": {
+    "confirmDelete": {
+      "title": "Remove this attachment?",
+      "description": "It will be removed from this note. This cannot be undone once you close the note.",
+      "confirm": "Remove",
+      "cancel": "Cancel"
+    }
+  },
   "editor": {
     "bold": { "tooltip": "Bold" },
     "italic": { "tooltip": "Italic" },
@@ -24,6 +35,7 @@
       "tooltip": "Insert image",
       "unavailable": "Image unavailable",
       "fallbackAlt": "Image",
+      "delete": "Delete image",
       "errors": {
         "unsupported-type": "That image type is not supported",
         "too-large": "Image is too large (max 10 MB)",
@@ -52,6 +64,18 @@
       "tooltip": "Attach video",
       "delete": "Delete video",
       "unavailable": "Video unavailable"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "locale": {
+      "label": "Language"
+    },
+    "theme": {
+      "label": "Theme",
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
     }
   },
   "notes": {
