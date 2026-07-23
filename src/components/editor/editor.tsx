@@ -64,8 +64,9 @@ type EditorProps = {
   autoplayFirstAudio?: boolean;
 };
 
-/** Imperative handle so a parent (e.g. a dialog) can drop the cursor into the body. */
-export type EditorHandle = { focus: () => void };
+/** Imperative handle so a parent (e.g. a dialog) can drop the cursor into the body,
+ *  or (e.g. a test) reach the live TipTap editor instance. */
+export type EditorHandle = { focus: () => void; getEditor: () => TiptapEditor | null };
 
 export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   {
@@ -194,30 +195,45 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
 
   // Best-effort autoplay-on-open: find the first audioAttachment node and stash
   // its id on editor storage; AudioNodeView reads and clears the flag once its
-  // <audio> element is ready. Runs once per editor instance.
-  useEffect(() => {
-    if (!editor || !autoplayFirstAudio) return;
-    let firstAudioId: string | null = null;
-    editor.state.doc.descendants((node) => {
-      if (firstAudioId) return false;
-      if (node.type.name === 'audioAttachment') {
-        firstAudioId = node.attrs.attachmentId as string;
-        return false;
-      }
-      return true;
-    });
-    if (firstAudioId) {
-      editor.storage.autoplayFirstAudioId = firstAudioId;
-    }
-  }, [editor, autoplayFirstAudio]);
-
+  // <audio> element is ready. Guarded by a ref (not just the effect's deps) so
+  // it fires at most once per editor instance - an existing note's real body
+  // only lands via the setContent below (it's loaded async and seeded as ''
+  // at mount), so the scan must run against the doc setContent just applied,
+  // not the pre-load one; a seeded draft's content is already there at mount,
+  // so this still fires on the very first run for that case too.
+  const autoplayScannedRef = useRef(false);
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
       editor.commands.setContent(content ?? '');
     }
-  }, [content, editor]);
+    if (editor && autoplayFirstAudio && !autoplayScannedRef.current) {
+      let firstAudioId: string | null = null;
+      editor.state.doc.descendants((node) => {
+        if (firstAudioId) return false;
+        if (node.type.name === 'audioAttachment') {
+          firstAudioId = node.attrs.attachmentId as string;
+          return false;
+        }
+        return true;
+      });
+      // Only latch the guard once something is actually found: the real body
+      // for an existing note lands via a LATER setContent (loaded async, seeded
+      // as '' at mount), so an empty first pass must not block that later scan.
+      if (firstAudioId) {
+        autoplayScannedRef.current = true;
+        editor.storage.autoplayFirstAudioId = firstAudioId;
+      }
+    }
+  }, [content, editor, autoplayFirstAudio]);
 
-  useImperativeHandle(ref, () => ({ focus: () => editor?.commands.focus('end') }), [editor]);
+  useImperativeHandle(
+    ref,
+    () => ({
+      focus: () => editor?.commands.focus('end'),
+      getEditor: () => editorRef.current,
+    }),
+    [editor]
+  );
 
   if (!editor) {
     return null;
