@@ -21,8 +21,14 @@ export async function insertAttachmentFiles(
   insertNode: (attachmentId: string) => void
 ): Promise<void> {
   const prefix = MIME_PREFIX[kind];
-  if (!prefix) return;
-  const matched = Array.from(files).filter((f) => f.type.startsWith(prefix));
+  // `file` has no single MIME prefix: accept any picked file (the size cap in
+  // validateAttachmentFile gates it). Media kinds still filter by their prefix.
+  const matched =
+    kind === 'file'
+      ? Array.from(files)
+      : prefix
+        ? Array.from(files).filter((f) => f.type.startsWith(prefix))
+        : [];
   if (matched.length === 0) return;
   const noteId = await deps.getNoteId();
   for (const file of matched) {
