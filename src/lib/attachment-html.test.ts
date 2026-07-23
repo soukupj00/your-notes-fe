@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   bodyHasAttachment,
   bodyHasAudio,
+  bodyHasFile,
   bodyHasVideo,
   extractAttachmentIds,
 } from './attachment-html';
@@ -61,6 +62,19 @@ describe('bodyHasVideo', () => {
     expect(bodyHasVideo('<p>hi</p>')).toBe(false);
     expect(bodyHasVideo('')).toBe(false);
     expect(bodyHasVideo(undefined)).toBe(false);
+  });
+});
+
+describe('bodyHasFile', () => {
+  it('is true for an <a> carrying a data-attachment-id', () => {
+    expect(bodyHasFile('<a data-attachment-id="f1">report.pdf</a>')).toBe(true);
+  });
+  it('is false for a plain link without the marker', () => {
+    expect(bodyHasFile('<a href="https://example.com">link</a>')).toBe(false);
+  });
+  it('is false for empty/nullish', () => {
+    expect(bodyHasFile('')).toBe(false);
+    expect(bodyHasFile(null)).toBe(false);
   });
 });
 

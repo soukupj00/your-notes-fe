@@ -1,4 +1,4 @@
-import { MoreVertical, Play, Video } from 'lucide-react';
+import { FileText, MoreVertical, Play, Video } from 'lucide-react';
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -13,7 +13,12 @@ import {
 } from '@/components/ui/dropdown-menu.tsx';
 import { Separator } from '@/components/ui/separator.tsx';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
-import { bodyHasAttachment, bodyHasAudio, bodyHasVideo } from '@/lib/attachment-html.ts';
+import {
+  bodyHasAttachment,
+  bodyHasAudio,
+  bodyHasFile,
+  bodyHasVideo,
+} from '@/lib/attachment-html.ts';
 import { stripHtml } from '@/lib/utils.ts';
 import type { Note } from '@/models.ts';
 
@@ -35,6 +40,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
   const hasBody = stripHtml(note.body).trim().length > 0 || bodyHasAttachment(note.body);
   const hasAudio = bodyHasAudio(note.body);
   const hasVideo = bodyHasVideo(note.body);
+  const hasFile = bodyHasFile(note.body);
   const checklist = note.checklist ?? [];
 
   const handleDelete = async () => {
@@ -119,12 +125,12 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
         )}
       </CardContent>
 
-      {/* Always-visible audio/video affordances: pinned bottom-right, in a flex
-          row so both coexist without overlapping. They survive the card's
-          line-clamp even on long notes. Audio opens the note and autoplays its
-          first audio (same intent the old inline chip carried); video just
-          opens the note - no autoplay. */}
-      {(hasAudio || hasVideo) && (
+      {/* Always-visible audio/video/file affordances: pinned bottom-right, in a
+          flex row so all three coexist without overlapping. They survive the
+          card's line-clamp even on long notes. Audio opens the note and
+          autoplays its first audio (same intent the old inline chip carried);
+          video and file just open the note - no autoplay. */}
+      {(hasAudio || hasVideo || hasFile) && (
         <div className="absolute right-2 bottom-2 z-10 flex gap-2">
           {hasAudio && (
             <button
@@ -150,6 +156,19 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
               className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Video className="size-5" />
+            </button>
+          )}
+          {hasFile && (
+            <button
+              type="button"
+              aria-label={t('notes.openFile')}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(note.id);
+              }}
+              className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <FileText className="size-5" />
             </button>
           )}
         </div>

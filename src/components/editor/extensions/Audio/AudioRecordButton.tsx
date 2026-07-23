@@ -1,12 +1,10 @@
 import type { Editor } from '@tiptap/core';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { icons } from '@/components/icons';
 import { ActionButton } from '@/components/ui/ActionButton.tsx';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover.tsx';
-import { ALLOWED_AUDIO_MIME } from '@/lib/attachments.ts';
 import type { AttachmentDeps } from '../attachments/deps';
-import { insertAttachmentFiles } from '../attachments/insert';
 import { formatTime } from './AudioNodeView';
 import { RecordingWaveform } from './RecordingWaveform';
 import { useAudioRecorder } from './useAudioRecorder';
@@ -36,11 +34,11 @@ const EXT: Record<string, string> = {
 };
 
 /** Toolbar entry point for audio: a mic button that opens a recording popover
- *  (live waveform + timer + Stop + Cancel) and offers a file picker. Recording ->
- *  Blob -> audio attachment; picked files -> shared insert pipeline. */
+ *  (live waveform + timer + Stop + Cancel). Recording -> Blob -> audio attachment.
+ *  File uploads (including .mp3 etc.) go through the generic File extension's
+ *  toolbar button instead - this button is record-only. */
 export function AudioRecordButton({ editor, getDeps, tooltip }: AudioRecordButtonProps) {
   const rec = useAudioRecorder();
-  const inputRef = useRef<HTMLInputElement>(null);
   const Square = icons.Square;
 
   // Recorder errors surface as a toast. Each cause gets its own message so
@@ -85,22 +83,12 @@ export function AudioRecordButton({ editor, getDeps, tooltip }: AudioRecordButto
       }}
     >
       <PopoverAnchor asChild>
-        <span className="inline-flex items-center">
-          <ActionButton
-            icon="Mic"
-            tooltip={tooltip}
-            disabled={recording}
-            action={() => void rec.start()}
-          />
-          {/* File-attach affordance: reuses the same node insertion via the
-              shared pipeline. paste/drop (Task 9) also attach audio files. */}
-          <ActionButton
-            icon="Paperclip"
-            tooltip={t('editor.audio.attach')}
-            disabled={recording}
-            action={() => inputRef.current?.click()}
-          />
-        </span>
+        <ActionButton
+          icon="Mic"
+          tooltip={tooltip}
+          disabled={recording}
+          action={() => void rec.start()}
+        />
       </PopoverAnchor>
       <PopoverContent align="start" className="w-64" onOpenAutoFocus={(e) => e.preventDefault()}>
         <div className="flex flex-col gap-3">
@@ -128,17 +116,6 @@ export function AudioRecordButton({ editor, getDeps, tooltip }: AudioRecordButto
           </div>
         </div>
       </PopoverContent>
-      <input
-        ref={inputRef}
-        type="file"
-        accept={ALLOWED_AUDIO_MIME.join(',')}
-        className="hidden"
-        onChange={(e) => {
-          if (e.target.files)
-            void insertAttachmentFiles(editor, e.target.files, 'audio', getDeps(), insert);
-          e.target.value = '';
-        }}
-      />
     </Popover>
   );
 }

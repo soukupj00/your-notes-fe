@@ -48,7 +48,6 @@
       "seek": "Seek",
       "unavailable": "Audio unavailable",
       "tooltip": "Record audio",
-      "attach": "Attach audio file",
       "delete": "Delete audio",
       "stop": "Stop",
       "cancel": "Cancel",

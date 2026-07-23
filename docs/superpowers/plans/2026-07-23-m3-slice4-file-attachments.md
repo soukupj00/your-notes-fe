@@ -1,6 +1,6 @@
 # M3 Slice 4 - Generic file attachments Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Depends on:** Slice 3.5 (confirm-before-delete retrofit) having landed - Task 3's NodeView delete button consumes its shared `ConfirmDeleteButton` (`src/components/editor/extensions/attachments/ConfirmDeleteButton.tsx`) and the shared `attachments.confirmDelete.*` i18n strings it introduced.
 
@@ -58,7 +58,7 @@
 - Consumes: `AttachmentKind` (`@/models.ts`); existing `AttachmentErrorCode`, `validateAttachmentFile`.
 - Produces: `MAX_FILE_BYTES: number`; `validateAttachmentFile(file, 'file')` accepts any MIME under the cap, rejects oversize.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to `src/lib/attachments.test.ts`:
 
@@ -83,12 +83,12 @@ describe('validateAttachmentFile - file kind', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm test src/lib/attachments.test.ts`
 Expected: FAIL - `MAX_FILE_BYTES` not exported; `file` kind currently returns `'unsupported-type'`.
 
-- [ ] **Step 3: Implement in `src/lib/attachments.ts`**
+- [x] **Step 3: Implement in `src/lib/attachments.ts`**
 
 Add after the video constants:
 
@@ -111,17 +111,17 @@ if (kind === 'file') {
 return 'unsupported-type';
 ```
 
-- [ ] **Step 4: Run tests to verify green + no regression**
+- [x] **Step 4: Run tests to verify green + no regression**
 
 Run: `pnpm test src/lib/attachments.test.ts`
 Expected: PASS (new file cases + existing image/audio/video cases).
 
-- [ ] **Step 5: Full suite + build**
+- [x] **Step 5: Full suite + build**
 
 Run: `pnpm test && pnpm build`
 Expected: green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/lib/attachments.ts src/lib/attachments.test.ts
@@ -140,7 +140,7 @@ git commit -m "[EDIT] Add file-kind validation (size cap, no MIME whitelist)"
 - Consumes: `insertAttachmentFiles(editor, files, kind, deps, insertNode)` (existing), `AttachmentDeps`.
 - Produces: `insertAttachmentFiles(..., 'file', ...)` takes **all** files regardless of MIME and inserts a node per successfully created attachment.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add (or create `insert.test.ts` with) this case. It stubs deps and asserts an arbitrary-MIME file is inserted for `kind: 'file'`:
 
@@ -198,12 +198,12 @@ describe('insertAttachmentFiles - file kind', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm test src/components/editor/extensions/attachments/insert.test.ts`
 Expected: FAIL - `file` has no `MIME_PREFIX` entry, so `matched` is empty and `insertNode` is never called.
 
-- [ ] **Step 3: Implement the match-all path**
+- [x] **Step 3: Implement the match-all path**
 
 In `src/components/editor/extensions/attachments/insert.ts`, inside `insertAttachmentFiles`, replace the current prefix-filter block:
 
@@ -231,12 +231,12 @@ if (matched.length === 0) return;
 
 `MIME_PREFIX` is unchanged (no `file` entry).
 
-- [ ] **Step 4: Run to verify it passes + no regression**
+- [x] **Step 4: Run to verify it passes + no regression**
 
 Run: `pnpm test src/components/editor/extensions/attachments/ && pnpm test && pnpm build`
 Expected: green (new file case + existing image/audio/video pipeline behavior intact).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/editor/extensions/attachments/insert.ts src/components/editor/extensions/attachments/insert.test.ts
@@ -257,7 +257,7 @@ git commit -m "[EDIT] Match-all insert path for the file attachment kind"
 - Consumes: `useAttachmentObjectUrl` + `AttachmentDeps` + `ConfirmDeleteButton` (`../attachments/`, from Slice 3.5), `icons` (`@/components/icons`).
 - Produces: `FileNodeView` (default export) rendered by `ReactNodeViewRenderer` in Task 4.
 
-- [ ] **Step 1: Write the failing RTL test**
+- [x] **Step 1: Write the failing RTL test**
 
 Create `src/components/editor/extensions/File/FileNodeView.test.tsx` (mirrors `VideoNodeView.test.tsx`):
 
@@ -329,16 +329,16 @@ describe('FileNodeView', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm test src/components/editor/extensions/File/FileNodeView.test.tsx`
 Expected: FAIL - module not found.
 
-- [ ] **Step 3: Add the icons**
+- [x] **Step 3: Add the icons**
 
 In `src/components/icons/icons.ts`, add `Download` and `FileText` to the `lucide-react` import and to the `icons` object (keep alphabetical-ish grouping consistent with the file).
 
-- [ ] **Step 4: Add the i18n keys**
+- [x] **Step 4: Add the i18n keys**
 
 Add to `public/locales/en/translation.json` under `editor`, a new `file` object:
 
@@ -364,7 +364,7 @@ Add the Czech equivalents to `public/locales/cs/translation.json`:
 }
 ```
 
-- [ ] **Step 5: Implement the NodeView**
+- [x] **Step 5: Implement the NodeView**
 
 Create `src/components/editor/extensions/File/FileNodeView.tsx`:
 
@@ -436,12 +436,12 @@ export function FileNodeView(props: ReactNodeViewProps) {
 export default FileNodeView;
 ```
 
-- [ ] **Step 6: Run to verify it passes + full suite**
+- [x] **Step 6: Run to verify it passes + full suite**
 
 Run: `pnpm test src/components/editor/extensions/File/FileNodeView.test.tsx && pnpm test && pnpm build`
 Expected: green.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/components/editor/extensions/File/FileNodeView.tsx src/components/editor/extensions/File/FileNodeView.test.tsx src/components/icons/icons.ts public/locales/en/translation.json public/locales/cs/translation.json
@@ -459,7 +459,7 @@ git commit -m "[ADD] FileNodeView (filename + icon + open link + delete)"
 - Consumes: `createAttachmentNode` (`../attachments/createAttachmentNode`), `AttachmentDeps`, `FileNodeView` (Task 3), `insertAttachmentFiles` (Task 2), `ActionButton` (`@/components/ui/ActionButton.tsx`).
 - Produces: `createFile(getDeps: () => AttachmentDeps)` -> node `fileAttachment` with command `insertFileAttachment({ attachmentId })`; body tag `a[data-attachment-id]`. `FileButton` toolbar component.
 
-- [ ] **Step 1: Write the failing headless test**
+- [x] **Step 1: Write the failing headless test**
 
 Create `src/components/editor/extensions/File/File.test.ts` (mirrors `Video.test.ts`):
 
@@ -513,12 +513,12 @@ describe('fileAttachment node', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm test src/components/editor/extensions/File/File.test.ts`
 Expected: FAIL - `createFile` not found.
 
-- [ ] **Step 3: Implement `FileButton.tsx`**
+- [x] **Step 3: Implement `FileButton.tsx`**
 
 Create `src/components/editor/extensions/File/FileButton.tsx` (mirrors `VideoButton`, but no `accept`):
 
@@ -565,7 +565,7 @@ export function FileButton({ editor, getDeps, tooltip }: FileButtonProps) {
 }
 ```
 
-- [ ] **Step 4: Implement `File.ts` + `index.ts`**
+- [x] **Step 4: Implement `File.ts` + `index.ts`**
 
 Create `src/components/editor/extensions/File/File.ts` (mirrors `Video.ts`):
 
@@ -617,12 +617,12 @@ export * from './File';
 export * from './FileButton';
 ```
 
-- [ ] **Step 5: Run to verify it passes + full suite**
+- [x] **Step 5: Run to verify it passes + full suite**
 
 Run: `pnpm test src/components/editor/extensions/File/File.test.ts && pnpm test && pnpm build`
 Expected: green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/components/editor/extensions/File/
@@ -642,7 +642,7 @@ git commit -m "[ADD] fileAttachment node + toolbar picker button"
 - Consumes: `createFile` (Task 4), `getAttachmentDeps` (existing stable getter in `editor.tsx`).
 - Produces: the `fileAttachment` node registered in the editor; `'fileAttachment'` present in `BLOCK_EXTENSION_NAMES` so its button renders.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 In `src/components/editor/menus/toolbars/BlocksSection.test.tsx`, add `'fileAttachment'` to the expected block-extension names (mirror the existing `videoAttachment` regression assertion). For example, extend the assertion that `BLOCK_EXTENSION_NAMES` includes each custom attachment node:
 
@@ -654,16 +654,16 @@ it('includes the file attachment node so its toolbar button renders', () => {
 
 (Import `BLOCK_EXTENSION_NAMES` the same way the existing `videoAttachment` test does; if the constant is not exported yet, export it alongside the component in `BlocksSection.tsx`.)
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm test src/components/editor/menus/toolbars/BlocksSection.test.tsx`
 Expected: FAIL - `'fileAttachment'` not in `BLOCK_EXTENSION_NAMES`.
 
-- [ ] **Step 3: Add the node name to the section**
+- [x] **Step 3: Add the node name to the section**
 
 In `src/components/editor/menus/toolbars/BlocksSection.tsx`, add `'fileAttachment'` to `BLOCK_EXTENSION_NAMES` (after `'videoAttachment'`) and extend the doc comment to mention `fileAttachment` is the generic file node (M3 Slice 4).
 
-- [ ] **Step 4: Register the node in the editor**
+- [x] **Step 4: Register the node in the editor**
 
 In `src/components/editor/editor.tsx`:
 - add `import { createFile } from '@/components/editor/extensions/File';`
@@ -671,12 +671,12 @@ In `src/components/editor/editor.tsx`:
 
 Do **not** add a `handlePaste`/`handleDrop` branch for files this slice (out of scope - see the design spec).
 
-- [ ] **Step 5: Run to verify it passes + full suite + build**
+- [x] **Step 5: Run to verify it passes + full suite + build**
 
 Run: `pnpm test src/components/editor/menus/toolbars/BlocksSection.test.tsx && pnpm test && pnpm build`
 Expected: green - the file button now appears in the Blocks toolbar section.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/components/editor/editor.tsx src/components/editor/menus/toolbars/BlocksSection.tsx src/components/editor/menus/toolbars/BlocksSection.test.tsx
@@ -699,7 +699,7 @@ git commit -m "[ADD] Register fileAttachment node + toolbar button"
 - Consumes: existing `bodyHasAudio`/`bodyHasVideo` patterns, `icons` (`FileText`), `onSelect` from `NoteCardProps`.
 - Produces: `bodyHasFile(html)`; a pinned card button gated on `bodyHasFile` that opens the note.
 
-- [ ] **Step 1: Write the failing `bodyHasFile` test**
+- [x] **Step 1: Write the failing `bodyHasFile` test**
 
 Add to `src/lib/attachment-html.test.ts`:
 
@@ -720,12 +720,12 @@ describe('bodyHasFile', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm test src/lib/attachment-html.test.ts`
 Expected: FAIL - `bodyHasFile` not exported.
 
-- [ ] **Step 3: Implement `bodyHasFile`**
+- [x] **Step 3: Implement `bodyHasFile`**
 
 Add to `src/lib/attachment-html.ts` (after the video block):
 
@@ -743,7 +743,7 @@ export function bodyHasFile(html: string | null | undefined): boolean {
 }
 ```
 
-- [ ] **Step 4: Strip the file node from the read-only body**
+- [x] **Step 4: Strip the file node from the read-only body**
 
 In `src/components/NoteBody.tsx`, in the effect after the `video[data-attachment-id]` removal, add:
 
@@ -755,7 +755,7 @@ root.querySelectorAll('a[data-attachment-id]').forEach((el) => {
 
 Update the nearby comment to include file alongside audio/video (the card renders a dedicated button, so the raw node is removed).
 
-- [ ] **Step 5: Write the failing card test**
+- [x] **Step 5: Write the failing card test**
 
 Add to `src/components/cards/NoteCard.test.tsx` (mirror the existing audio/video button tests):
 
@@ -779,16 +779,16 @@ it('shows audio, video, and file buttons together', () => {
 
 (Use whatever `makeNote`/render helpers the existing `NoteCard.test.tsx` already defines; match the existing tests' i18n setup so `t('notes.openFile')` resolves to `'Open file'`.)
 
-- [ ] **Step 6: Run to verify it fails**
+- [x] **Step 6: Run to verify it fails**
 
 Run: `pnpm test src/components/cards/NoteCard.test.tsx`
 Expected: FAIL - no file button; `notes.openFile` missing.
 
-- [ ] **Step 7: Add `notes.openFile` i18n**
+- [x] **Step 7: Add `notes.openFile` i18n**
 
 Add `"openFile": "Open file"` to the `notes` object in `public/locales/en/translation.json` and `"openFile": "Otevřít soubor"` to `public/locales/cs/translation.json`.
 
-- [ ] **Step 8: Add the file button to the card**
+- [x] **Step 8: Add the file button to the card**
 
 In `src/components/cards/NoteCard.tsx`:
 - import `FileText` from `lucide-react` (alongside `Play`, `Video`), and `bodyHasFile` from `@/lib/attachment-html.ts`.
@@ -812,12 +812,12 @@ In `src/components/cards/NoteCard.tsx`:
 )}
 ```
 
-- [ ] **Step 9: Run to verify it passes + full suite + build**
+- [x] **Step 9: Run to verify it passes + full suite + build**
 
 Run: `pnpm test src/lib/attachment-html.test.ts src/components/cards/NoteCard.test.tsx && pnpm test && pnpm build`
 Expected: green.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add src/lib/attachment-html.ts src/lib/attachment-html.test.ts src/components/NoteBody.tsx src/components/cards/NoteCard.tsx src/components/cards/NoteCard.test.tsx public/locales/en/translation.json public/locales/cs/translation.json

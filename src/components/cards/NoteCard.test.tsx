@@ -186,4 +186,38 @@ describe('NoteCard', () => {
     expect(screen.getByRole('button', { name: 'notes.playAudio' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'notes.playVideo' })).toBeInTheDocument();
   });
+
+  it('shows a file button for a file-only body', () => {
+    const note = makeNote({
+      header: '',
+      body: '<a data-attachment-id="f1">report.pdf</a>',
+      checklist: [],
+    });
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: 'notes.openFile' })).toBeInTheDocument();
+  });
+
+  it('opens the note when the file button is clicked', async () => {
+    const note = makeNote({ body: '<p>hello</p><a data-attachment-id="f1">report.pdf</a>' });
+    const onSelect = vi.fn();
+    render(<NoteCard note={note} onSelect={onSelect} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'notes.openFile' }));
+    expect(onSelect).toHaveBeenCalledWith(note.id);
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows audio, video, and file buttons together', () => {
+    const note = makeNote({
+      header: '',
+      body: '<audio data-attachment-id="a1"></audio><video data-attachment-id="v1"></video><a data-attachment-id="f1">x</a>',
+      checklist: [],
+    });
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: 'notes.playAudio' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'notes.playVideo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'notes.openFile' })).toBeInTheDocument();
+  });
 });

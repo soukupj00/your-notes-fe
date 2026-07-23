@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Editor } from '@tiptap/core';
 import { toast } from 'sonner';
@@ -155,20 +155,5 @@ describe('AudioRecordButton', () => {
       </TooltipProvider>
     );
     expect(toast).toHaveBeenCalledWith('editor.audio.errors.unsupported');
-  });
-
-  it('picking a file inserts it through the shared attachment pipeline', async () => {
-    const { container } = render(
-      <TooltipProvider>
-        <AudioRecordButton editor={makeEditor()} getDeps={() => deps} tooltip="rec" />
-      </TooltipProvider>
-    );
-    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
-    const file = new File(['x'], 'a.webm', { type: 'audio/webm' });
-    fireEvent.change(input, { target: { files: [file] } });
-    await waitFor(() => expect(createAttachment).toHaveBeenCalledWith('note1', file, 'audio'));
-    await waitFor(() =>
-      expect(insertAudioAttachmentMock).toHaveBeenCalledWith({ attachmentId: 'att1' })
-    );
   });
 });

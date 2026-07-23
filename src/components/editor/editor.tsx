@@ -21,6 +21,7 @@ import { BulletList } from '@/components/editor/extensions/BulletList';
 import { Clear } from '@/components/editor/extensions/Clear';
 import { Color } from '@/components/editor/extensions/Color';
 import { ColorPreview } from '@/components/editor/extensions/color-preview';
+import { createFile } from '@/components/editor/extensions/File';
 import { FontFamily } from '@/components/editor/extensions/FontFamily';
 import { FontSize } from '@/components/editor/extensions/FontSize';
 import { Heading } from '@/components/editor/extensions/Heading';
@@ -125,6 +126,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       createImage(getAttachmentDeps),
       createAudio(getAttachmentDeps),
       createVideo(getAttachmentDeps),
+      createFile(getAttachmentDeps),
       BulletList,
       OrderedList,
       ListItem,

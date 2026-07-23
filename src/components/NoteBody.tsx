@@ -38,13 +38,17 @@ export function NoteBody({
         img.src = url;
       });
     });
-    // Audio and video attachments have no inline representation on the card -
-    // the card renders a dedicated play button (see NoteCard). Remove the
-    // src-less <audio>/<video> nodes so they don't show as broken native players.
+    // Audio, video, and file attachments have no inline representation on the
+    // card - the card renders a dedicated button (see NoteCard). Remove the
+    // src-less <audio>/<video>/<a> nodes so they don't show as broken native
+    // players or dead links.
     root.querySelectorAll('audio[data-attachment-id]').forEach((el) => {
       el.remove();
     });
     root.querySelectorAll('video[data-attachment-id]').forEach((el) => {
+      el.remove();
+    });
+    root.querySelectorAll('a[data-attachment-id]').forEach((el) => {
       el.remove();
     });
     return () => {

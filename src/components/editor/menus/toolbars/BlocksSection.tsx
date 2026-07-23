@@ -7,15 +7,17 @@ import ExtensionButtonBar from '@/components/editor/menus/ExtensionButtonBar.tsx
  * extension-owned Pattern A button (ADR 0004). `Mathematics` is the name of the
  * bundled math extension (inline + block); `imageAttachment` is the custom image
  * node (M3 Slice 1); `audioAttachment` is the custom audio node (M3 Slice 2);
- * `videoAttachment` is the custom video node (M3 Slice 3).
+ * `videoAttachment` is the custom video node (M3 Slice 3); `fileAttachment` is
+ * the generic file node (M3 Slice 4).
  * Headings live in their own section at the start of the toolbar.
  */
-const BLOCK_EXTENSION_NAMES = [
+export const BLOCK_EXTENSION_NAMES = [
   'blockquote',
   'Mathematics',
   'imageAttachment',
   'audioAttachment',
   'videoAttachment',
+  'fileAttachment',
 ];
 
 interface BlocksSectionProps {

@@ -6,10 +6,11 @@ import Text from '@tiptap/extension-text';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createAudio } from '@/components/editor/extensions/Audio';
 import type { AttachmentDeps } from '@/components/editor/extensions/attachments/deps';
+import { createFile } from '@/components/editor/extensions/File';
 import { createImage } from '@/components/editor/extensions/Image';
 import { createVideo } from '@/components/editor/extensions/Video';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import BlocksSection from './BlocksSection';
+import BlocksSection, { BLOCK_EXTENSION_NAMES } from './BlocksSection';
 
 // Stub deps: the toolbar buttons only need getDeps to be callable; tooltips are
 // resolved via ExtensionButtonBar's t (which returns the key in tests).
@@ -25,6 +26,7 @@ function createEditor() {
       createImage(getDeps),
       createAudio(getDeps),
       createVideo(getDeps),
+      createFile(getDeps),
     ],
     content: '<p>hi</p>',
   });
@@ -46,5 +48,10 @@ describe('BlocksSection', () => {
     expect(screen.getByRole('button', { name: 'editor.image.tooltip' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'editor.audio.tooltip' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'editor.video.tooltip' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'editor.file.tooltip' })).toBeInTheDocument();
+  });
+
+  it('includes the file attachment node so its toolbar button renders', () => {
+    expect(BLOCK_EXTENSION_NAMES).toContain('fileAttachment');
   });
 });
