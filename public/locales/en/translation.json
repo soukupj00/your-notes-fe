@@ -61,6 +61,7 @@
     },
     "noResults": "No notes match your search.",
     "menu": "Note options",
+    "playAudio": "Play audio",
     "delete": "Delete",
     "deleted": "Note deleted",
     "undo": "Undo",

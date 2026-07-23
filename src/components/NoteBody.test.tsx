@@ -44,21 +44,11 @@ describe('NoteBody', () => {
     expect(screen.getByText('just text')).toBeInTheDocument();
   });
 
-  it('renders a compact chip (not a player) for an audio attachment', async () => {
-    const now = new Date().toISOString();
-    await db.attachments.put({
-      id: 'au1',
-      noteId: 'n1',
-      kind: 'audio',
-      mime: 'audio/webm',
-      blob: new Blob(['x']),
-      duration: 14,
-      createdAt: now,
-      updatedAt: now,
-    });
-    render(<NoteBody html='<audio data-attachment-id="au1"></audio>' />);
-    await waitFor(() => expect(screen.getByText(/0:14/)).toBeInTheDocument());
-    // No <audio> element is mounted in the card (chip only).
+  it('strips src-less audio attachment nodes (card shows a play button instead)', () => {
+    render(<NoteBody html='<p>hi</p><audio data-attachment-id="au1"></audio>' />);
+    expect(screen.getByText('hi')).toBeInTheDocument();
+    // The audio node is removed, not rendered as a broken native player or chip.
     expect(document.querySelector('audio')).toBeNull();
+    expect(document.querySelector('[data-attachment-chip="audio"]')).toBeNull();
   });
 });

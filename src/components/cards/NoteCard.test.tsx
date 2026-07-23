@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '@/db/db.ts';
-import type { Attachment, Note } from '@/models.ts';
+import type { Note } from '@/models.ts';
 import { NoteCard } from './NoteCard.tsx';
 
 // Keys pass through untranslated so assertions are stable.
@@ -42,21 +42,6 @@ afterEach(async () => {
   await db.noteTags.clear();
   await db.attachments.clear();
 });
-
-function putAudioAttachment(id: string): Promise<string> {
-  const now = new Date().toISOString();
-  const att: Attachment = {
-    id,
-    noteId: 'n1',
-    kind: 'audio',
-    mime: 'audio/webm',
-    blob: new Blob(['x']),
-    duration: 14,
-    createdAt: now,
-    updatedAt: now,
-  };
-  return db.attachments.put(att);
-}
 
 beforeEach(() => {
   // jsdom lacks object-URL APIs; NoteBody resolves attachments to blob URLs.
@@ -135,7 +120,7 @@ describe('NoteCard', () => {
     });
   });
 
-  it('renders a chip for an audio-only note (no header, no checklist text)', async () => {
+  it('renders a play button for an audio-only note (no header, no checklist text)', () => {
     const note = makeNote({
       header: '',
       body: '<audio data-attachment-id="au1"></audio>',
@@ -143,28 +128,17 @@ describe('NoteCard', () => {
     });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    // Same failure mode as the Slice 1 image-only bug: without the
-    // bodyHasAttachment OR in hasBody, an audio-only body (stripHtml drops the
-    // <audio> tag entirely) would render no header, no NoteBody, no
-    // checklist - i.e. a blank card. Assert the chip mounts instead.
-    await waitFor(() => {
-      expect(document.querySelector('[data-attachment-chip="audio"]')).toBeInTheDocument();
-    });
+    // An audio-only body (stripHtml drops the <audio> tag) would otherwise be a
+    // blank card. The always-visible play button keeps it non-blank.
+    expect(screen.getByRole('button', { name: 'notes.playAudio' })).toBeInTheDocument();
   });
 
-  it('opens the editor with autoplay intent when the audio chip is clicked', async () => {
-    await putAudioAttachment('au1');
+  it('opens the editor with autoplay intent when the audio play button is clicked', async () => {
     const note = makeNote({ body: '<p>hello</p><audio data-attachment-id="au1"></audio>' });
     const onSelect = vi.fn();
     render(<NoteCard note={note} onSelect={onSelect} />);
 
-    const chip = await waitFor(() => {
-      const el = document.querySelector('[data-attachment-chip="audio"]');
-      expect(el).toBeInTheDocument();
-      return el as HTMLElement;
-    });
-
-    await userEvent.click(chip);
+    await userEvent.click(screen.getByRole('button', { name: 'notes.playAudio' }));
     expect(onSelect).toHaveBeenCalledWith(note.id, { autoplayFirstAudio: true });
     expect(onSelect).toHaveBeenCalledTimes(1);
 
@@ -173,5 +147,10 @@ describe('NoteCard', () => {
     await userEvent.click(screen.getByText('My note'));
     expect(onSelect).toHaveBeenCalledWith(note.id);
     expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders no play button when the note has no audio', () => {
+    render(<NoteCard note={makeNote()} onSelect={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: 'notes.playAudio' })).not.toBeInTheDocument();
   });
 });

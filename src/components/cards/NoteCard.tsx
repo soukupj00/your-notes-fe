@@ -1,4 +1,4 @@
-import { MoreVertical } from 'lucide-react';
+import { MoreVertical, Play } from 'lucide-react';
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu.tsx';
 import { Separator } from '@/components/ui/separator.tsx';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
-import { bodyHasAttachment } from '@/lib/attachment-html.ts';
+import { bodyHasAttachment, bodyHasAudio } from '@/lib/attachment-html.ts';
 import { stripHtml } from '@/lib/utils.ts';
 import type { Note } from '@/models.ts';
 
@@ -33,6 +33,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
   // markup, so an image-only Body (no text) needs the attachment check too -
   // otherwise the card renders blank (no header, no NoteBody, no checklist).
   const hasBody = stripHtml(note.body).trim().length > 0 || bodyHasAttachment(note.body);
+  const hasAudio = bodyHasAudio(note.body);
   const checklist = note.checklist ?? [];
 
   const handleDelete = async () => {
@@ -47,19 +48,6 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
 
   const open = () => onSelect(note.id);
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // An audio chip inside the (read-only) NoteBody is not a separate button -
-    // clicking it means "open the note and autoplay this audio" instead of a
-    // plain open, so it needs its own branch before the card's normal open.
-    const chip = (e.target as HTMLElement).closest('[data-attachment-chip="audio"]');
-    if (chip) {
-      e.stopPropagation();
-      onSelect(note.id, { autoplayFirstAudio: true });
-      return;
-    }
-    open();
-  };
-
   return (
     <Card
       // Not a <button>: the card contains a menu trigger, and nesting
@@ -67,7 +55,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
       // keyboard handling keeps the whole card clickable without the nesting.
       role="button"
       tabIndex={0}
-      onClick={handleClick}
+      onClick={open}
       onKeyDown={(e) => {
         // Only activate when the key originated on the card itself. React
         // synthetic events bubble through the portalled dropdown menu, so
@@ -79,7 +67,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
           open();
         }
       }}
-      className="mb-4 w-full cursor-pointer break-inside-avoid shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="relative mb-4 w-full cursor-pointer break-inside-avoid shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
         {note.header ? (
@@ -129,6 +117,23 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
           </div>
         )}
       </CardContent>
+
+      {/* Always-visible audio affordance: pinned bottom-right so it survives the
+          card's line-clamp even on long notes. Opens the note and autoplays its
+          first audio (same intent the old inline chip carried). */}
+      {hasAudio && (
+        <button
+          type="button"
+          aria-label={t('notes.playAudio')}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect(note.id, { autoplayFirstAudio: true });
+          }}
+          className="absolute right-2 bottom-2 z-10 flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Play className="size-5 translate-x-px" />
+        </button>
+      )}
     </Card>
   );
 };

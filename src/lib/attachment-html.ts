@@ -17,6 +17,18 @@ export function bodyHasAttachment(html: string | null | undefined): boolean {
   return ATTACHMENT_ID_TEST_RE.test(html);
 }
 
+// Matches an <audio> tag that carries a data-attachment-id (our audio node's
+// serialized form), regardless of attribute order. Non-global on purpose: only
+// used with `.test()`, so no stateful lastIndex to leak (see note above).
+const AUDIO_ATTACHMENT_RE = /<audio\b[^>]*\bdata-attachment-id="[^"]+"/i;
+
+/** True when the Body HTML embeds at least one audio attachment node.
+ *  Narrower than bodyHasAttachment, which also matches images. */
+export function bodyHasAudio(html: string | null | undefined): boolean {
+  if (!html) return false;
+  return AUDIO_ATTACHMENT_RE.test(html);
+}
+
 /** Every distinct attachment id referenced by the Body HTML. */
 export function extractAttachmentIds(html: string | null | undefined): string[] {
   if (!html) return [];

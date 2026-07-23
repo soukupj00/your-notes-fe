@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bodyHasAttachment, extractAttachmentIds } from './attachment-html';
+import { bodyHasAttachment, bodyHasAudio, extractAttachmentIds } from './attachment-html';
 
 describe('bodyHasAttachment', () => {
   it('is true when the HTML contains an img with data-attachment-id', () => {
@@ -27,6 +27,20 @@ describe('bodyHasAttachment', () => {
         '<img data-attachment-id="first"><img data-attachment-id="second">'
       ).sort()
     ).toEqual(['first', 'second']);
+  });
+});
+
+describe('bodyHasAudio', () => {
+  it('is true for an audio attachment tag', () => {
+    expect(bodyHasAudio('<p>hi</p><audio data-attachment-id="au1"></audio>')).toBe(true);
+  });
+
+  it('is false for images, plain <audio>, or no attachment', () => {
+    expect(bodyHasAudio('<img data-attachment-id="a">')).toBe(false);
+    expect(bodyHasAudio('<audio src="x.webm"></audio>')).toBe(false);
+    expect(bodyHasAudio('<p>hi</p>')).toBe(false);
+    expect(bodyHasAudio('')).toBe(false);
+    expect(bodyHasAudio(undefined)).toBe(false);
   });
 });
 
