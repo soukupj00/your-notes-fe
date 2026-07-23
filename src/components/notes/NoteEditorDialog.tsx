@@ -224,7 +224,7 @@ export function NoteEditorDialog({
           stickyToolbarOnMobile
           // Mobile: no bordered box, so the dialog's own padding is the only
           // spacing around the title + content. Desktop keeps the framed editor.
-          className="flex-1 rounded-none border-0 p-0 sm:rounded-xl sm:border sm:p-4"
+          className="flex-1 rounded-none border-0 p-0 sm:rounded-xl sm:border sm:px-4"
           onUpdate={(html) => {
             dirtyRef.current = true;
             setBody(html);

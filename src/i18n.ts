@@ -9,6 +9,7 @@ i18n
   .use(initReactI18next) // passes i18n down to react-i18next
   .init({
     fallbackLng: 'en',
+    supportedLngs: ['en', 'cs'], // must match the folders under public/locales
     debug: import.meta.env.DEV, // only debug in dev mode
     interpolation: {
       escapeValue: false, // react already escapes
