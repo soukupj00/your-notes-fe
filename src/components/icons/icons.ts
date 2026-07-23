@@ -1,5 +1,6 @@
 import {
   Bold,
+  FileVideo,
   Heading1,
   Heading2,
   Heading3,
@@ -18,6 +19,7 @@ import {
   Strikethrough,
   Trash2,
   Underline,
+  Video,
 } from 'lucide-react';
 import { LatexIcon } from './LatexIcon';
 
@@ -41,5 +43,7 @@ export const icons = {
   Square,
   Paperclip,
   Trash2,
+  FileVideo,
+  Video,
   Latex: LatexIcon,
 } as any;

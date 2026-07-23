@@ -1,4 +1,4 @@
-import { MoreVertical, Play } from 'lucide-react';
+import { MoreVertical, Play, Video } from 'lucide-react';
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu.tsx';
 import { Separator } from '@/components/ui/separator.tsx';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
-import { bodyHasAttachment, bodyHasAudio } from '@/lib/attachment-html.ts';
+import { bodyHasAttachment, bodyHasAudio, bodyHasVideo } from '@/lib/attachment-html.ts';
 import { stripHtml } from '@/lib/utils.ts';
 import type { Note } from '@/models.ts';
 
@@ -34,6 +34,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
   // otherwise the card renders blank (no header, no NoteBody, no checklist).
   const hasBody = stripHtml(note.body).trim().length > 0 || bodyHasAttachment(note.body);
   const hasAudio = bodyHasAudio(note.body);
+  const hasVideo = bodyHasVideo(note.body);
   const checklist = note.checklist ?? [];
 
   const handleDelete = async () => {
@@ -118,21 +119,40 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
         )}
       </CardContent>
 
-      {/* Always-visible audio affordance: pinned bottom-right so it survives the
-          card's line-clamp even on long notes. Opens the note and autoplays its
-          first audio (same intent the old inline chip carried). */}
-      {hasAudio && (
-        <button
-          type="button"
-          aria-label={t('notes.playAudio')}
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect(note.id, { autoplayFirstAudio: true });
-          }}
-          className="absolute right-2 bottom-2 z-10 flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <Play className="size-5 translate-x-px" />
-        </button>
+      {/* Always-visible audio/video affordances: pinned bottom-right, in a flex
+          row so both coexist without overlapping. They survive the card's
+          line-clamp even on long notes. Audio opens the note and autoplays its
+          first audio (same intent the old inline chip carried); video just
+          opens the note - no autoplay. */}
+      {(hasAudio || hasVideo) && (
+        <div className="absolute right-2 bottom-2 z-10 flex gap-2">
+          {hasAudio && (
+            <button
+              type="button"
+              aria-label={t('notes.playAudio')}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(note.id, { autoplayFirstAudio: true });
+              }}
+              className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Play className="size-5 translate-x-px" />
+            </button>
+          )}
+          {hasVideo && (
+            <button
+              type="button"
+              aria-label={t('notes.playVideo')}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(note.id);
+              }}
+              className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Video className="size-5" />
+            </button>
+          )}
+        </div>
       )}
     </Card>
   );

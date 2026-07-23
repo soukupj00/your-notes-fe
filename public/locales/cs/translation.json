@@ -47,6 +47,11 @@
         "in-use": "Mikrofon používá jiná aplikace",
         "failed": "Nahrávání se nepodařilo spustit"
       }
+    },
+    "video": {
+      "tooltip": "Připojit video",
+      "delete": "Smazat video",
+      "unavailable": "Video není k dispozici"
     }
   },
   "notes": {
@@ -63,6 +68,7 @@
     "noResults": "Žádné poznámky neodpovídají hledání.",
     "menu": "Možnosti poznámky",
     "playAudio": "Přehrát zvuk",
+    "playVideo": "Přehrát video",
     "delete": "Smazat",
     "deleted": "Poznámka smazána",
     "undo": "Zpět",

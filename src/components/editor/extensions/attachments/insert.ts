@@ -7,6 +7,7 @@ import type { AttachmentDeps } from './deps';
 const MIME_PREFIX: Partial<Record<AttachmentKind, string>> = {
   image: 'image/',
   audio: 'audio/',
+  video: 'video/',
 };
 
 /** Validate -> createAttachment -> insert node, for each file matching the

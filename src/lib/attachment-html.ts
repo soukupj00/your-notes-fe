@@ -29,6 +29,18 @@ export function bodyHasAudio(html: string | null | undefined): boolean {
   return AUDIO_ATTACHMENT_RE.test(html);
 }
 
+// Matches a <video> tag that carries a data-attachment-id (our video node's
+// serialized form), regardless of attribute order. Non-global on purpose: only
+// used with `.test()`, so no stateful lastIndex to leak (see note above).
+const VIDEO_ATTACHMENT_RE = /<video\b[^>]*\bdata-attachment-id="[^"]+"/i;
+
+/** True when the Body HTML embeds at least one video attachment node.
+ *  Narrower than bodyHasAttachment, which also matches images and audio. */
+export function bodyHasVideo(html: string | null | undefined): boolean {
+  if (!html) return false;
+  return VIDEO_ATTACHMENT_RE.test(html);
+}
+
 /** Every distinct attachment id referenced by the Body HTML. */
 export function extractAttachmentIds(html: string | null | undefined): string[] {
   if (!html) return [];

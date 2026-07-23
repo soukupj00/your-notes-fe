@@ -49,6 +49,17 @@ export const ALLOWED_AUDIO_MIME = [
 /** Per-audio size cap: 25 MB. */
 export const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 
+/** Video MIME types accepted for attachment. */
+export const ALLOWED_VIDEO_MIME = [
+  'video/mp4',
+  'video/webm',
+  'video/ogg',
+  'video/quicktime',
+] as const;
+
+/** Per-video size cap: 100 MB. */
+export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
+
 /** Kind-dispatched file validation. Returns the failure code or null. Pure. */
 export function validateAttachmentFile(
   file: File,
@@ -68,6 +79,15 @@ export function validateAttachmentFile(
     if (file.size > MAX_AUDIO_BYTES) return 'too-large';
     return null;
   }
-  // video/file kinds land in later slices; reject until then.
+  if (kind === 'video') {
+    // Same codec-suffix stripping as audio, e.g. 'video/mp4;codecs=avc1'.
+    const baseType = file.type.split(';')[0].trim();
+    if (!ALLOWED_VIDEO_MIME.includes(baseType as (typeof ALLOWED_VIDEO_MIME)[number])) {
+      return 'unsupported-type';
+    }
+    if (file.size > MAX_VIDEO_BYTES) return 'too-large';
+    return null;
+  }
+  // file kind lands in a later slice; reject until then.
   return 'unsupported-type';
 }

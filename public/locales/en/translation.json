@@ -47,6 +47,11 @@
         "in-use": "The microphone is being used by another app",
         "failed": "Could not start recording"
       }
+    },
+    "video": {
+      "tooltip": "Attach video",
+      "delete": "Delete video",
+      "unavailable": "Video unavailable"
     }
   },
   "notes": {
@@ -63,6 +68,7 @@
     "noResults": "No notes match your search.",
     "menu": "Note options",
     "playAudio": "Play audio",
+    "playVideo": "Play video",
     "delete": "Delete",
     "deleted": "Note deleted",
     "undo": "Undo",

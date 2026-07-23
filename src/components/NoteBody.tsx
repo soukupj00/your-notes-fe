@@ -38,10 +38,13 @@ export function NoteBody({
         img.src = url;
       });
     });
-    // Audio attachments have no inline representation on the card - the card
-    // renders a dedicated play button (see NoteCard). Remove the src-less
-    // <audio> nodes so they don't show as broken native players.
+    // Audio and video attachments have no inline representation on the card -
+    // the card renders a dedicated play button (see NoteCard). Remove the
+    // src-less <audio>/<video> nodes so they don't show as broken native players.
     root.querySelectorAll('audio[data-attachment-id]').forEach((el) => {
+      el.remove();
+    });
+    root.querySelectorAll('video[data-attachment-id]').forEach((el) => {
       el.remove();
     });
     return () => {

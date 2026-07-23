@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   MAX_AUDIO_BYTES,
   MAX_IMAGE_BYTES,
+  MAX_VIDEO_BYTES,
   validateAttachmentFile,
   validateImageFile,
 } from './attachments';
@@ -66,5 +67,25 @@ describe('validateAttachmentFile', () => {
       'too-large'
     );
     expect(validateAttachmentFile(fileOfType('audio/webm', MAX_AUDIO_BYTES), 'audio')).toBeNull();
+  });
+
+  it('video kind accepts whitelisted video under the cap', () => {
+    expect(validateAttachmentFile(fileOfType('video/mp4'), 'video')).toBeNull();
+    expect(validateAttachmentFile(fileOfType('video/webm'), 'video')).toBeNull();
+  });
+
+  it('video kind rejects a non-video type', () => {
+    expect(validateAttachmentFile(fileOfType('image/png'), 'video')).toBe('unsupported-type');
+  });
+
+  it('video kind accepts a codec-qualified MIME on the whitelisted base type', () => {
+    expect(validateAttachmentFile(fileOfType('video/mp4;codecs=avc1'), 'video')).toBeNull();
+  });
+
+  it('video kind rejects oversized and accepts exactly the cap', () => {
+    expect(validateAttachmentFile(fileOfType('video/mp4', MAX_VIDEO_BYTES + 1), 'video')).toBe(
+      'too-large'
+    );
+    expect(validateAttachmentFile(fileOfType('video/mp4', MAX_VIDEO_BYTES), 'video')).toBeNull();
   });
 });

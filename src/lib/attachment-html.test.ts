@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { bodyHasAttachment, bodyHasAudio, extractAttachmentIds } from './attachment-html';
+import {
+  bodyHasAttachment,
+  bodyHasAudio,
+  bodyHasVideo,
+  extractAttachmentIds,
+} from './attachment-html';
 
 describe('bodyHasAttachment', () => {
   it('is true when the HTML contains an img with data-attachment-id', () => {
@@ -41,6 +46,21 @@ describe('bodyHasAudio', () => {
     expect(bodyHasAudio('<p>hi</p>')).toBe(false);
     expect(bodyHasAudio('')).toBe(false);
     expect(bodyHasAudio(undefined)).toBe(false);
+  });
+});
+
+describe('bodyHasVideo', () => {
+  it('is true for a video attachment tag', () => {
+    expect(bodyHasVideo('<p>hi</p><video data-attachment-id="v1"></video>')).toBe(true);
+  });
+
+  it('is false for images, audio, plain <video>, or no attachment', () => {
+    expect(bodyHasVideo('<img data-attachment-id="a">')).toBe(false);
+    expect(bodyHasVideo('<audio data-attachment-id="a1"></audio>')).toBe(false);
+    expect(bodyHasVideo('<video src="x.mp4"></video>')).toBe(false);
+    expect(bodyHasVideo('<p>hi</p>')).toBe(false);
+    expect(bodyHasVideo('')).toBe(false);
+    expect(bodyHasVideo(undefined)).toBe(false);
   });
 });
 

@@ -33,6 +33,7 @@ import { OrderedList } from '@/components/editor/extensions/OrderedList';
 import { Strike } from '@/components/editor/extensions/Strike';
 import { TaskList } from '@/components/editor/extensions/TaskList';
 import { Underline } from '@/components/editor/extensions/Underline';
+import { createVideo } from '@/components/editor/extensions/Video';
 import BlocksSection from '@/components/editor/menus/toolbars/BlocksSection.tsx';
 import FontSection from '@/components/editor/menus/toolbars/FontSection.tsx';
 import FormatSection from '@/components/editor/menus/toolbars/FormatSection.tsx';
@@ -123,6 +124,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       Blockquote,
       createImage(getAttachmentDeps),
       createAudio(getAttachmentDeps),
+      createVideo(getAttachmentDeps),
       BulletList,
       OrderedList,
       ListItem,
@@ -159,6 +161,12 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
           );
           return true;
         }
+        if (ed && files && Array.from(files).some((f) => f.type.startsWith('video/'))) {
+          void insertAttachmentFiles(ed, files, 'video', attachmentDepsRef.current, (id) =>
+            ed.chain().focus().insertVideoAttachment({ attachmentId: id }).run()
+          );
+          return true;
+        }
         // Cross-note HTML paste with existing attachment nodes: let the default
         // paste happen, then reclaim any foreign images into owned clones.
         const html = event.clipboardData?.getData('text/html');
@@ -179,6 +187,12 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         if (ed && files && Array.from(files).some((f) => f.type.startsWith('audio/'))) {
           void insertAttachmentFiles(ed, files, 'audio', attachmentDepsRef.current, (id) =>
             ed.chain().focus().insertAudioAttachment({ attachmentId: id }).run()
+          );
+          return true;
+        }
+        if (ed && files && Array.from(files).some((f) => f.type.startsWith('video/'))) {
+          void insertAttachmentFiles(ed, files, 'video', attachmentDepsRef.current, (id) =>
+            ed.chain().focus().insertVideoAttachment({ attachmentId: id }).run()
           );
           return true;
         }
