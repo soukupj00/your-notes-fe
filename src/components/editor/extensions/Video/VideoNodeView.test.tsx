@@ -50,11 +50,24 @@ describe('VideoNodeView', () => {
     expect(await screen.findByText('editor.video.unavailable')).toBeInTheDocument();
   });
 
-  it('removes the node when the delete button is clicked', async () => {
+  it('confirms before deleting: clicking trash then Remove calls deleteNode once', async () => {
     const deleteNode = vi.fn();
     render(<VideoNodeView {...props(async () => att(), { deleteNode })} />);
     await userEvent.click(await screen.findByRole('button', { name: 'editor.video.delete' }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'attachments.confirmDelete.confirm' })
+    );
     expect(deleteNode).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not delete when the confirm dialog is cancelled', async () => {
+    const deleteNode = vi.fn();
+    render(<VideoNodeView {...props(async () => att(), { deleteNode })} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'editor.video.delete' }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'attachments.confirmDelete.cancel' })
+    );
+    expect(deleteNode).not.toHaveBeenCalled();
   });
 
   it('removes the node from the unavailable state too', async () => {
@@ -62,6 +75,9 @@ describe('VideoNodeView', () => {
     render(<VideoNodeView {...props(async () => undefined, { deleteNode })} />);
     await screen.findByText('editor.video.unavailable');
     await userEvent.click(screen.getByRole('button', { name: 'editor.video.delete' }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'attachments.confirmDelete.confirm' })
+    );
     expect(deleteNode).toHaveBeenCalledTimes(1);
   });
 
