@@ -16,6 +16,7 @@ import {
   RemoveFormatting,
   Square,
   Strikethrough,
+  Trash2,
   Underline,
 } from 'lucide-react';
 import { LatexIcon } from './LatexIcon';
@@ -39,5 +40,6 @@ export const icons = {
   Mic,
   Square,
   Paperclip,
+  Trash2,
   Latex: LatexIcon,
 } as any;

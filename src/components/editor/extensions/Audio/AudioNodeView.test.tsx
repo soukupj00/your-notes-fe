@@ -28,9 +28,14 @@ function att(): Attachment {
     updatedAt: now,
   };
 }
-function props(get: (i: string) => Promise<Attachment | undefined>) {
+function props(
+  get: (i: string) => Promise<Attachment | undefined>,
+  opts: { isEditable?: boolean; deleteNode?: () => void } = {}
+) {
   return {
     node: { attrs: { attachmentId: 'a1' } },
+    editor: { isEditable: opts.isEditable ?? true, storage: {} },
+    deleteNode: opts.deleteNode ?? vi.fn(),
     extension: { options: { getDeps: () => ({ getAttachment: get, t: (k: string) => k }) } },
   } as unknown as Parameters<typeof AudioNodeView>[0];
 }
@@ -81,6 +86,29 @@ describe('AudioNodeView', () => {
     fireEvent(audio, new Event('timeupdate'));
 
     await waitFor(() => expect(screen.getByText(/0:06\s*\/\s*0:30/)).toBeInTheDocument());
+  });
+
+  it('removes the node when the delete button is clicked', async () => {
+    const deleteNode = vi.fn();
+    render(<AudioNodeView {...props(async () => att(), { deleteNode })} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'editor.audio.delete' }));
+    expect(deleteNode).toHaveBeenCalledTimes(1);
+  });
+
+  it('removes the node from the unavailable state too', async () => {
+    const deleteNode = vi.fn();
+    render(<AudioNodeView {...props(async () => undefined, { deleteNode })} />);
+    // Let the state settle into 'missing' so we click the unavailable-state
+    // button, not the loading-state one that unmounts underneath it.
+    await screen.findByText('editor.audio.unavailable');
+    await userEvent.click(screen.getByRole('button', { name: 'editor.audio.delete' }));
+    expect(deleteNode).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the delete button when the editor is read-only', async () => {
+    render(<AudioNodeView {...props(async () => att(), { isEditable: false })} />);
+    await screen.findByRole('button', { name: /play/i });
+    expect(screen.queryByRole('button', { name: 'editor.audio.delete' })).not.toBeInTheDocument();
   });
 
   it('flips the button back to play when playback ends', async () => {

@@ -34,6 +34,19 @@ export function AudioNodeView(props: ReactNodeViewProps) {
   const [duration, setDuration] = useState(0);
   const Play = icons.Play;
   const Pause = icons.Pause;
+  const Trash = icons.Trash2;
+  const canDelete = props.editor?.isEditable ?? false;
+
+  const deleteButton = canDelete ? (
+    <button
+      type="button"
+      onClick={() => props.deleteNode()}
+      aria-label={deps.t('editor.audio.delete')}
+      className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+    >
+      <Trash className="size-4" />
+    </button>
+  ) : null;
 
   // Callback ref: the hidden <audio> only mounts once state resolves 'ready'
   // (after the loading commit), so a plain useEffect with [] would run while the
@@ -92,8 +105,9 @@ export function AudioNodeView(props: ReactNodeViewProps) {
   if (state.status === 'missing') {
     return (
       <NodeViewWrapper as="div" className="my-2" data-drag-handle>
-        <div className="rounded-md border border-dashed p-4 text-center text-muted-foreground text-sm">
-          {deps.t('editor.audio.unavailable')}
+        <div className="flex items-center gap-3 rounded-md border border-dashed p-4 text-muted-foreground text-sm">
+          <span className="flex-1 text-center">{deps.t('editor.audio.unavailable')}</span>
+          {deleteButton}
         </div>
       </NodeViewWrapper>
     );
@@ -127,6 +141,7 @@ export function AudioNodeView(props: ReactNodeViewProps) {
             duration || (state.status === 'ready' ? (state.attachment.duration ?? 0) : 0)
           )}
         </span>
+        {deleteButton}
         {state.status === 'ready' && (
           <audio ref={bindAudio} src={state.url} preload="metadata" className="hidden">
             <track kind="captions" />
