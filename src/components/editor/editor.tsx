@@ -207,27 +207,37 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   // so this still fires on the very first run for that case too.
   const autoplayScannedRef = useRef(false);
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content ?? '');
-    }
-    if (editor && autoplayFirstAudio && !autoplayScannedRef.current) {
-      let firstAudioId: string | null = null;
-      editor.state.doc.descendants((node) => {
-        if (firstAudioId) return false;
-        if (node.type.name === 'audioAttachment') {
-          firstAudioId = node.attrs.attachmentId as string;
-          return false;
-        }
-        return true;
-      });
-      // Only latch the guard once something is actually found: the real body
-      // for an existing note lands via a LATER setContent (loaded async, seeded
-      // as '' at mount), so an empty first pass must not block that later scan.
-      if (firstAudioId) {
-        autoplayScannedRef.current = true;
-        editor.storage.autoplayFirstAudioId = firstAudioId;
+    if (!editor) return;
+    // setContent mounts React node views (AudioNodeView); with
+    // shouldRerenderOnTransaction, the resulting transaction forces a
+    // synchronous React re-render, during which TipTap mounts the node view via
+    // flushSync -> "flushSync was called from inside a lifecycle method". Run it
+    // in a microtask so the mount never happens inside React's render/commit
+    // phase. The autoplay scan must see the applied doc, so it runs after.
+    queueMicrotask(() => {
+      if (content !== editor.getHTML()) {
+        editor.commands.setContent(content ?? '');
       }
-    }
+      if (autoplayFirstAudio && !autoplayScannedRef.current) {
+        let firstAudioId: string | null = null;
+        editor.state.doc.descendants((node) => {
+          if (firstAudioId) return false;
+          if (node.type.name === 'audioAttachment') {
+            firstAudioId = node.attrs.attachmentId as string;
+            return false;
+          }
+          return true;
+        });
+        // Only latch the guard once something is actually found: the real body
+        // for an existing note lands via a LATER setContent (loaded async,
+        // seeded as '' at mount), so an empty first pass must not block that
+        // later scan.
+        if (firstAudioId) {
+          autoplayScannedRef.current = true;
+          editor.storage.autoplayFirstAudioId = firstAudioId;
+        }
+      }
+    });
   }, [content, editor, autoplayFirstAudio]);
 
   useImperativeHandle(
