@@ -186,7 +186,11 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       },
     },
     shouldRerenderOnTransaction: true,
-    immediatelyRender: true,
+    // Client-only SPA (no SSR): render the editor view after commit, not during
+    // React's render phase. With `true`, content that mounts a React node view
+    // (e.g. AudioNodeView) makes TipTap call flushSync mid-render -> "flushSync
+    // was called from inside a lifecycle method" on any note with audio.
+    immediatelyRender: false,
   });
 
   useEffect(() => {
