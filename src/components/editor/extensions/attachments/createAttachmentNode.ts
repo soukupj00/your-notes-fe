@@ -1,4 +1,5 @@
-import { type Editor, mergeAttributes, Node } from '@tiptap/core';
+import { type ChainedCommands, type Editor, mergeAttributes, Node } from '@tiptap/core';
+import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 import { type ReactNodeViewProps, ReactNodeViewRenderer } from '@tiptap/react';
 import type { ComponentType } from 'react';
 import type { TFunction } from '../button-types';
@@ -67,8 +68,39 @@ export function createAttachmentNode(getDeps: () => AttachmentDeps, config: Atta
       const name = this.name;
       const command =
         (attrs: { attachmentId: string }) =>
-        ({ commands }: { commands: { insertContent: (c: unknown) => boolean } }) =>
-          commands.insertContent({ type: name, attrs });
+        ({ chain }: { chain: () => ChainedCommands }) =>
+          chain()
+            .insertContent({ type: name, attrs })
+            // A block atom leaves a NodeSelection on itself after insertContent.
+            // Without a cursor after it, the next insert (the picker loop or a
+            // second file) replaces the selected node instead of appending, so
+            // only the last attachment survived. Drop the selection after the
+            // node - adding a trailing paragraph when it lands at the document
+            // end - so attachments stack. Mirrors TipTap's own HorizontalRule.
+            .command(({ tr, dispatch }) => {
+              if (dispatch) {
+                const { $to } = tr.selection;
+                const posAfter = $to.end();
+                if ($to.nodeAfter) {
+                  if ($to.nodeAfter.isTextblock) {
+                    tr.setSelection(TextSelection.create(tr.doc, $to.pos + 1));
+                  } else if ($to.nodeAfter.isBlock) {
+                    tr.setSelection(NodeSelection.create(tr.doc, $to.pos));
+                  } else {
+                    tr.setSelection(TextSelection.create(tr.doc, $to.pos));
+                  }
+                } else {
+                  const node = $to.parent.type.contentMatch.defaultType?.create();
+                  if (node) {
+                    tr.insert(posAfter, node);
+                    tr.setSelection(TextSelection.create(tr.doc, posAfter + 1));
+                  }
+                }
+                tr.scrollIntoView();
+              }
+              return true;
+            })
+            .run();
       return { [config.insertCommandName]: command };
     },
   });

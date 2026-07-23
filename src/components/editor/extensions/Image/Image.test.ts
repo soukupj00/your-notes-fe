@@ -48,6 +48,17 @@ describe('imageAttachment node', () => {
     expect(editor.getHTML()).toContain('data-attachment-id="xyz"');
   });
 
+  // Regression: the node is an atom, so insertContent left a NodeSelection on it;
+  // a second insert (via the same focus()-restoring path the picker loop uses)
+  // replaced the first instead of appending. Multiple attachments must coexist.
+  it('stacks multiple attachments instead of replacing the previous one', () => {
+    editor.chain().focus().insertImageAttachment({ attachmentId: 'a1' }).run();
+    editor.chain().focus().insertImageAttachment({ attachmentId: 'a2' }).run();
+    const html = editor.getHTML();
+    expect(html).toContain('data-attachment-id="a1"');
+    expect(html).toContain('data-attachment-id="a2"');
+  });
+
   it('exposes a Pattern A button with the image icon + tooltip', () => {
     const ext = editor.extensionManager.extensions.find((e) => e.name === 'imageAttachment');
     const options = ext?.options as {
@@ -86,6 +97,29 @@ describe('insertAttachmentFiles (image)', () => {
     expect(deps.getNoteId).toHaveBeenCalledOnce();
     expect(deps.createAttachment).toHaveBeenCalledWith('note-1', png, 'image');
     expect(editor.getHTML()).toContain('data-attachment-id="att-a.png"');
+    editor.destroy();
+  });
+
+  it('inserts and keeps a node for every file in a multi-file pick', async () => {
+    const deps = stubDeps();
+    deps.createAttachment = vi.fn(async (_n, file) => ({
+      id: `att-${file.name}`,
+      noteId: 'note-1',
+      kind: 'image' as const,
+      mime: file.type,
+      blob: file,
+      createdAt: '',
+      updatedAt: '',
+    }));
+    const editor = createEditor(deps);
+    const a = new File([new Uint8Array(4)], 'a.png', { type: 'image/png' });
+    const b = new File([new Uint8Array(4)], 'b.png', { type: 'image/png' });
+
+    await insertImage(editor, [a, b], deps);
+
+    const html = editor.getHTML();
+    expect(html).toContain('data-attachment-id="att-a.png"');
+    expect(html).toContain('data-attachment-id="att-b.png"');
     editor.destroy();
   });
 
