@@ -2,18 +2,25 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Editor } from '@tiptap/core';
 import { toast } from 'sonner';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { AttachmentDeps } from '../attachments/deps';
 import { AudioRecordButton } from './AudioRecordButton';
 
 vi.mock('sonner', () => ({ toast: vi.fn() }));
 
+// Radix Popover relies on pointer-capture / scroll APIs jsdom lacks.
+beforeAll(() => {
+  Element.prototype.hasPointerCapture = vi.fn();
+  Element.prototype.scrollIntoView = vi.fn();
+});
+
 const recorder = {
   status: 'idle' as string,
   elapsedMs: 0,
   error: null as string | null,
   supported: true,
+  stream: null as MediaStream | null,
   start: vi.fn(async () => {}),
   stop: vi.fn(async () => ({
     blob: new Blob(['x'], { type: 'audio/webm' }),
@@ -48,6 +55,7 @@ beforeEach(() => {
   recorder.status = 'idle';
   recorder.error = null;
   recorder.supported = true;
+  recorder.stream = null;
   createAttachment.mockClear();
 });
 afterEach(() => vi.clearAllMocks());
@@ -60,6 +68,40 @@ describe('AudioRecordButton', () => {
       </TooltipProvider>
     );
     expect(screen.getByRole('button', { name: 'rec' })).toBeInTheDocument();
+  });
+
+  it('starts recording when the mic button is clicked', async () => {
+    render(
+      <TooltipProvider>
+        <AudioRecordButton editor={makeEditor()} getDeps={() => deps} tooltip="rec" />
+      </TooltipProvider>
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'rec' }));
+    expect(recorder.start).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens the recording popover with a timer, stop and cancel while recording', () => {
+    recorder.status = 'recording';
+    recorder.elapsedMs = 3000;
+    render(
+      <TooltipProvider>
+        <AudioRecordButton editor={makeEditor()} getDeps={() => deps} tooltip="rec" />
+      </TooltipProvider>
+    );
+    expect(screen.getByRole('button', { name: /stop/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+    expect(screen.getByText('0:03')).toBeInTheDocument();
+  });
+
+  it('cancel aborts the current take', async () => {
+    recorder.status = 'recording';
+    render(
+      <TooltipProvider>
+        <AudioRecordButton editor={makeEditor()} getDeps={() => deps} tooltip="rec" />
+      </TooltipProvider>
+    );
+    await userEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    expect(recorder.cancel).toHaveBeenCalledTimes(1);
   });
 
   it('stop creates an audio attachment and inserts it', async () => {

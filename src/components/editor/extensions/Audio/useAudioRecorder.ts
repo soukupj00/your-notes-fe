@@ -43,6 +43,8 @@ export interface AudioRecorder {
   elapsedMs: number;
   error: RecorderError | null;
   supported: boolean;
+  /** Live mic stream while recording (for waveform visualization), else null. */
+  stream: MediaStream | null;
   start: () => Promise<void>;
   stop: () => Promise<{ blob: Blob; mime: string; durationMs: number } | null>;
   cancel: () => void;
@@ -59,6 +61,7 @@ export function useAudioRecorder(): AudioRecorder {
   const [status, setStatus] = useState<RecorderStatus>('idle');
   const [elapsedMs, setElapsedMs] = useState(0);
   const [error, setError] = useState<RecorderError | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -79,6 +82,7 @@ export function useAudioRecorder(): AudioRecorder {
     });
     streamRef.current = null;
     recorderRef.current = null;
+    setStream(null);
   }, []);
 
   useEffect(() => cleanup, [cleanup]);
@@ -104,6 +108,7 @@ export function useAudioRecorder(): AudioRecorder {
         return;
       }
       streamRef.current = stream;
+      setStream(stream);
       const mime = pickAudioMimeType() ?? '';
       const recorder = mime
         ? new MediaRecorder(stream, { mimeType: mime })
@@ -163,5 +168,5 @@ export function useAudioRecorder(): AudioRecorder {
     setElapsedMs(0);
   }, [cleanup]);
 
-  return { status, elapsedMs, error, supported, start, stop, cancel };
+  return { status, elapsedMs, error, supported, stream, start, stop, cancel };
 }
