@@ -58,7 +58,11 @@ export function validateAttachmentFile(
     return validateImageFile(file);
   }
   if (kind === 'audio') {
-    if (!ALLOWED_AUDIO_MIME.includes(file.type as (typeof ALLOWED_AUDIO_MIME)[number])) {
+    // MediaRecorder output (recorder output is always allowed) carries a codec
+    // param, e.g. 'audio/webm;codecs=opus' - strip it before the whitelist
+    // check so an exact-match comparison doesn't reject a valid base type.
+    const baseType = file.type.split(';')[0].trim();
+    if (!ALLOWED_AUDIO_MIME.includes(baseType as (typeof ALLOWED_AUDIO_MIME)[number])) {
       return 'unsupported-type';
     }
     if (file.size > MAX_AUDIO_BYTES) return 'too-large';

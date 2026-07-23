@@ -48,6 +48,19 @@ describe('validateAttachmentFile', () => {
     expect(validateAttachmentFile(fileOfType('image/png'), 'audio')).toBe('unsupported-type');
   });
 
+  it('audio kind accepts a codec-qualified MIME on the whitelisted base type', () => {
+    // MediaRecorder output (e.g. useAudioRecorder's picked candidate) carries a
+    // codec param the whitelist's exact-match check used to reject outright.
+    expect(validateAttachmentFile(fileOfType('audio/webm;codecs=opus'), 'audio')).toBeNull();
+  });
+
+  it('audio kind rejects a codec-qualified MIME whose base type is not whitelisted', () => {
+    expect(validateAttachmentFile(fileOfType('audio/aac'), 'audio')).toBe('unsupported-type');
+    expect(validateAttachmentFile(fileOfType('audio/flac;codecs=flac'), 'audio')).toBe(
+      'unsupported-type'
+    );
+  });
+
   it('audio kind rejects oversized and accepts exactly the cap', () => {
     expect(validateAttachmentFile(fileOfType('audio/webm', MAX_AUDIO_BYTES + 1), 'audio')).toBe(
       'too-large'
