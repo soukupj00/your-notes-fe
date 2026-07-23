@@ -60,6 +60,10 @@ export const ALLOWED_VIDEO_MIME = [
 /** Per-video size cap: 100 MB. */
 export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 
+/** Per-file size cap: 50 MB. Generous relative to media caps because a file
+ *  attachment can be any document (PDFs, archives, ...). Adjustable. */
+export const MAX_FILE_BYTES = 50 * 1024 * 1024;
+
 /** Kind-dispatched file validation. Returns the failure code or null. Pure. */
 export function validateAttachmentFile(
   file: File,
@@ -88,6 +92,12 @@ export function validateAttachmentFile(
     if (file.size > MAX_VIDEO_BYTES) return 'too-large';
     return null;
   }
-  // file kind lands in a later slice; reject until then.
+  if (kind === 'file') {
+    // No MIME whitelist: a file attachment accepts any type. Only the size cap
+    // gates it (unlike image/audio/video, which whitelist their MIME).
+    if (file.size > MAX_FILE_BYTES) return 'too-large';
+    return null;
+  }
+  // Unknown kind: reject.
   return 'unsupported-type';
 }

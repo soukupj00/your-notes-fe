@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   MAX_AUDIO_BYTES,
+  MAX_FILE_BYTES,
   MAX_IMAGE_BYTES,
   MAX_VIDEO_BYTES,
   validateAttachmentFile,
@@ -87,5 +88,22 @@ describe('validateAttachmentFile', () => {
       'too-large'
     );
     expect(validateAttachmentFile(fileOfType('video/mp4', MAX_VIDEO_BYTES), 'video')).toBeNull();
+  });
+});
+
+describe('validateAttachmentFile - file kind', () => {
+  it('accepts any MIME type under the cap', () => {
+    expect(validateAttachmentFile(fileOfType('application/pdf'), 'file')).toBeNull();
+    expect(validateAttachmentFile(fileOfType('application/zip'), 'file')).toBeNull();
+    expect(validateAttachmentFile(fileOfType('application/octet-stream'), 'file')).toBeNull();
+  });
+
+  it('rejects oversized and accepts exactly the cap', () => {
+    expect(validateAttachmentFile(fileOfType('application/pdf', MAX_FILE_BYTES + 1), 'file')).toBe(
+      'too-large'
+    );
+    expect(
+      validateAttachmentFile(fileOfType('application/pdf', MAX_FILE_BYTES), 'file')
+    ).toBeNull();
   });
 });
