@@ -15,10 +15,33 @@ export function pickAudioMimeType(): string | null {
 
 export type RecorderStatus = 'idle' | 'requesting' | 'recording' | 'error';
 
+/** Why start() failed. Distinct codes so the UI can tell a genuine refusal
+ *  ('denied') apart from "no mic present" ('no-device') - the latter rejects
+ *  instantly with no permission prompt, which must not read as a denial. */
+export type RecorderError = 'unsupported' | 'denied' | 'no-device' | 'in-use' | 'failed';
+
+/** Map a getUserMedia rejection to a RecorderError via its DOMException name. */
+export function mapGetUserMediaError(err: unknown): RecorderError {
+  const name = err instanceof DOMException ? err.name : '';
+  switch (name) {
+    case 'NotAllowedError':
+    case 'SecurityError':
+      return 'denied';
+    case 'NotFoundError':
+    case 'DevicesNotFoundError':
+      return 'no-device';
+    case 'NotReadableError':
+    case 'TrackStartError':
+      return 'in-use';
+    default:
+      return 'failed';
+  }
+}
+
 export interface AudioRecorder {
   status: RecorderStatus;
   elapsedMs: number;
-  error: string | null;
+  error: RecorderError | null;
   supported: boolean;
   start: () => Promise<void>;
   stop: () => Promise<{ blob: Blob; mime: string; durationMs: number } | null>;
@@ -35,7 +58,7 @@ export function useAudioRecorder(): AudioRecorder {
 
   const [status, setStatus] = useState<RecorderStatus>('idle');
   const [elapsedMs, setElapsedMs] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<RecorderError | null>(null);
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -98,10 +121,10 @@ export function useAudioRecorder(): AudioRecorder {
       autoStopRef.current = setTimeout(() => {
         void stopInternalRef.current?.();
       }, MAX_RECORDING_MS);
-    } catch {
+    } catch (err) {
       cleanup();
       setStatus('error');
-      setError('denied');
+      setError(mapGetUserMediaError(err));
     }
   }, [supported, cleanup]);
 

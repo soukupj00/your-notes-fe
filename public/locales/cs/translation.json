@@ -41,7 +41,10 @@
       "cancel": "Zrušit",
       "errors": {
         "permission": "Přístup k mikrofonu byl odepřen",
-        "unsupported": "Nahrávání zvuku není v tomto prohlížeči podporováno"
+        "unsupported": "Nahrávání zvuku není v tomto prohlížeči podporováno",
+        "no-device": "Nebyl nalezen žádný mikrofon",
+        "in-use": "Mikrofon používá jiná aplikace",
+        "failed": "Nahrávání se nepodařilo spustit"
       }
     }
   },

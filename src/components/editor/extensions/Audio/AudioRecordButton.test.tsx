@@ -88,6 +88,22 @@ describe('AudioRecordButton', () => {
     expect(toast).toHaveBeenCalledWith('editor.audio.errors.permission');
   });
 
+  it.each([
+    ['denied', 'editor.audio.errors.permission'],
+    ['no-device', 'editor.audio.errors.no-device'],
+    ['in-use', 'editor.audio.errors.in-use'],
+    ['failed', 'editor.audio.errors.failed'],
+  ])('maps recorder error %s to toast key %s', (error, key) => {
+    recorder.status = 'error';
+    recorder.error = error;
+    render(
+      <TooltipProvider>
+        <AudioRecordButton editor={makeEditor()} getDeps={() => deps} tooltip="rec" />
+      </TooltipProvider>
+    );
+    expect(toast).toHaveBeenCalledWith(key);
+  });
+
   it('shows an unsupported toast when the recorder reports unsupported', () => {
     recorder.status = 'error';
     recorder.error = 'unsupported';

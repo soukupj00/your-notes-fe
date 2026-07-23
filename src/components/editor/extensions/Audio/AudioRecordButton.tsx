@@ -15,6 +15,16 @@ export interface AudioRecordButtonProps {
   tooltip: string;
 }
 
+/** RecorderError code -> translation key. 'denied' keeps the legacy 'permission'
+ *  key; the rest are distinct so the toast tells the true cause. */
+const ERROR_KEY: Record<string, string> = {
+  denied: 'editor.audio.errors.permission',
+  unsupported: 'editor.audio.errors.unsupported',
+  'no-device': 'editor.audio.errors.no-device',
+  'in-use': 'editor.audio.errors.in-use',
+  failed: 'editor.audio.errors.failed',
+};
+
 const EXT: Record<string, string> = {
   'audio/webm': 'webm',
   'audio/ogg': 'ogg',
@@ -31,14 +41,11 @@ export function AudioRecordButton({ editor, getDeps, tooltip }: AudioRecordButto
   const inputRef = useRef<HTMLInputElement>(null);
   const Square = icons.Square;
 
-  // Recorder errors (permission denied / unsupported) surface as a toast.
+  // Recorder errors surface as a toast. Each cause gets its own message so
+  // "no microphone found" is not misreported as a permission denial.
   useEffect(() => {
     if (rec.status === 'error') {
-      const key =
-        rec.error === 'unsupported'
-          ? 'editor.audio.errors.unsupported'
-          : 'editor.audio.errors.permission';
-      toast(getDeps().t(key));
+      toast(getDeps().t(ERROR_KEY[rec.error ?? 'failed'] ?? ERROR_KEY.failed));
     }
   }, [rec.status, rec.error, getDeps]);
 

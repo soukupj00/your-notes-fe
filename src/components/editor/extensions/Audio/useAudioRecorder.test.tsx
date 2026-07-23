@@ -119,4 +119,24 @@ describe('useAudioRecorder', () => {
     await waitFor(() => expect(result.current.status).toBe('error'));
     expect(result.current.error).toBeTruthy();
   });
+
+  // getUserMedia rejects with distinct DOMException names; each must map to its
+  // own code so the UI can tell "you refused" apart from "there is no mic".
+  it.each([
+    ['NotAllowedError', 'denied'],
+    ['SecurityError', 'denied'],
+    ['NotFoundError', 'no-device'],
+    ['NotReadableError', 'in-use'],
+    ['SomethingElseError', 'failed'],
+  ])('maps a %s rejection to error code %s', async (name, code) => {
+    (navigator.mediaDevices.getUserMedia as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new DOMException('nope', name)
+    );
+    const { result } = renderHook(() => useAudioRecorder());
+    await act(async () => {
+      await result.current.start();
+    });
+    await waitFor(() => expect(result.current.status).toBe('error'));
+    expect(result.current.error).toBe(code);
+  });
 });
