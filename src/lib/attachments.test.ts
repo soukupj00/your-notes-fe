@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   MAX_AUDIO_BYTES,
+  MAX_EXCALIDRAW_BYTES,
   MAX_FILE_BYTES,
   MAX_IMAGE_BYTES,
   MAX_VIDEO_BYTES,
@@ -11,6 +12,10 @@ import {
 function fileOfType(type: string, size = 10): File {
   const f = new File([new Uint8Array(size)], 'x', { type });
   return f;
+}
+
+function fileOf(type: string, size = 10): File {
+  return new File([new Uint8Array(size)], 'x', { type });
 }
 
 describe('validateImageFile', () => {
@@ -104,6 +109,25 @@ describe('validateAttachmentFile - file kind', () => {
     );
     expect(
       validateAttachmentFile(fileOfType('application/pdf', MAX_FILE_BYTES), 'file')
+    ).toBeNull();
+  });
+});
+
+describe('validateAttachmentFile - excalidraw', () => {
+  it('accepts an application/json scene under the cap', () => {
+    expect(validateAttachmentFile(fileOf('application/json'), 'excalidraw')).toBeNull();
+  });
+
+  it('rejects a non-json type', () => {
+    expect(validateAttachmentFile(fileOf('image/png'), 'excalidraw')).toBe('unsupported-type');
+  });
+
+  it('rejects oversize and accepts exactly the cap', () => {
+    expect(
+      validateAttachmentFile(fileOf('application/json', MAX_EXCALIDRAW_BYTES + 1), 'excalidraw')
+    ).toBe('too-large');
+    expect(
+      validateAttachmentFile(fileOf('application/json', MAX_EXCALIDRAW_BYTES), 'excalidraw')
     ).toBeNull();
   });
 });

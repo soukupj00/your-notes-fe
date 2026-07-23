@@ -64,6 +64,12 @@ export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
  *  attachment can be any document (PDFs, archives, ...). Adjustable. */
 export const MAX_FILE_BYTES = 50 * 1024 * 1024;
 
+/** Excalidraw scenes are stored as a JSON document (reuses the Blob-based attachments table). */
+export const EXCALIDRAW_MIME = 'application/json';
+
+/** Per-scene size cap: 25 MB. Enforced at creation only. */
+export const MAX_EXCALIDRAW_BYTES = 25 * 1024 * 1024;
+
 /** Kind-dispatched file validation. Returns the failure code or null. Pure. */
 export function validateAttachmentFile(
   file: File,
@@ -98,6 +104,11 @@ export function validateAttachmentFile(
     if (file.size > MAX_FILE_BYTES) return 'too-large';
     return null;
   }
-  // Unknown kind: reject.
+  if (kind === 'excalidraw') {
+    if (file.type.split(';')[0].trim() !== EXCALIDRAW_MIME) return 'unsupported-type';
+    if (file.size > MAX_EXCALIDRAW_BYTES) return 'too-large';
+    return null;
+  }
+  // file kind lands in a later slice; reject until then.
   return 'unsupported-type';
 }
