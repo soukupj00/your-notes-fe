@@ -88,11 +88,24 @@ describe('AudioNodeView', () => {
     await waitFor(() => expect(screen.getByText(/0:06\s*\/\s*0:30/)).toBeInTheDocument());
   });
 
-  it('removes the node when the delete button is clicked', async () => {
+  it('confirms before deleting: clicking trash then Remove calls deleteNode once', async () => {
     const deleteNode = vi.fn();
     render(<AudioNodeView {...props(async () => att(), { deleteNode })} />);
     await userEvent.click(await screen.findByRole('button', { name: 'editor.audio.delete' }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'attachments.confirmDelete.confirm' })
+    );
     expect(deleteNode).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not delete when the confirm dialog is cancelled', async () => {
+    const deleteNode = vi.fn();
+    render(<AudioNodeView {...props(async () => att(), { deleteNode })} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'editor.audio.delete' }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'attachments.confirmDelete.cancel' })
+    );
+    expect(deleteNode).not.toHaveBeenCalled();
   });
 
   it('removes the node from the unavailable state too', async () => {
@@ -102,6 +115,9 @@ describe('AudioNodeView', () => {
     // button, not the loading-state one that unmounts underneath it.
     await screen.findByText('editor.audio.unavailable');
     await userEvent.click(screen.getByRole('button', { name: 'editor.audio.delete' }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'attachments.confirmDelete.confirm' })
+    );
     expect(deleteNode).toHaveBeenCalledTimes(1);
   });
 

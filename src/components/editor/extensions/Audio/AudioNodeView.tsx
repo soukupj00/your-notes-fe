@@ -2,6 +2,7 @@ import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { icons } from '@/components/icons';
+import { ConfirmDeleteButton } from '../attachments/ConfirmDeleteButton';
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
 
@@ -34,18 +35,14 @@ export function AudioNodeView(props: ReactNodeViewProps) {
   const [duration, setDuration] = useState(0);
   const Play = icons.Play;
   const Pause = icons.Pause;
-  const Trash = icons.Trash2;
   const canDelete = props.editor?.isEditable ?? false;
 
   const deleteButton = canDelete ? (
-    <button
-      type="button"
-      onClick={() => props.deleteNode()}
-      aria-label={deps.t('editor.audio.delete')}
-      className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-    >
-      <Trash className="size-4" />
-    </button>
+    <ConfirmDeleteButton
+      onConfirm={() => props.deleteNode()}
+      label={deps.t('editor.audio.delete')}
+      t={deps.t}
+    />
   ) : null;
 
   // Callback ref: the hidden <audio> only mounts once state resolves 'ready'
