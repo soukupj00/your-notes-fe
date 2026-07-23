@@ -53,6 +53,17 @@ export function useAttachmentActions() {
     []
   );
 
+  // Write-back for interactive attachments (Excalidraw): replace the stored
+  // scene blob and/or refresh the SVG preview in place, on the same row the
+  // Body already references by id. Decoupled from Body autosave (the
+  // attachmentId never changes on an edit).
+  const updateAttachment = useCallback(
+    async (id: string, changes: { blob?: Blob; preview?: string }): Promise<void> => {
+      await db.attachments.update(id, { ...changes, updatedAt: new Date().toISOString() });
+    },
+    []
+  );
+
   // Note-scoped GC: drop this note's rows no longer referenced by the saved Body.
   const collectOrphans = useCallback(async (noteId: string, referencedIds: string[]) => {
     const referenced = new Set(referencedIds);
@@ -81,6 +92,7 @@ export function useAttachmentActions() {
     getAttachment,
     deleteAttachment,
     cloneAttachment,
+    updateAttachment,
     collectOrphans,
     collectMissingNoteOrphans,
   };

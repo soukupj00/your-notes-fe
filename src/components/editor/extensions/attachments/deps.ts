@@ -10,6 +10,7 @@ export interface AttachmentDeps {
   createAttachment: (noteId: string, file: File, kind: AttachmentKind) => Promise<Attachment>;
   getAttachment: (id: string) => Promise<Attachment | undefined>;
   cloneAttachment: (source: Attachment, noteId: string) => Promise<Attachment>;
+  updateAttachment: (id: string, changes: { blob?: Blob; preview?: string }) => Promise<void>;
   onError: (code: AttachmentErrorCode) => void;
   t: TFunction;
 }

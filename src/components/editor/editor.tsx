@@ -88,7 +88,8 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   // the extensions array is built; a ref lets those closures reach it at click time.
   const editorRef = useRef<TiptapEditor | null>(null);
 
-  const { createAttachment, getAttachment, cloneAttachment } = useAttachmentActions();
+  const { createAttachment, getAttachment, cloneAttachment, updateAttachment } =
+    useAttachmentActions();
   const attachmentDeps = useMemo(
     () => ({
       getNoteId:
@@ -99,10 +100,11 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       createAttachment,
       getAttachment,
       cloneAttachment,
+      updateAttachment,
       onError: (code: AttachmentErrorCode) => toast(t(`editor.image.errors.${code}`)),
       t,
     }),
-    [getNoteId, createAttachment, getAttachment, cloneAttachment, t]
+    [getNoteId, createAttachment, getAttachment, cloneAttachment, updateAttachment, t]
   );
   // useEditor builds the node (and its stored getter) exactly once, so all three
   // entry points must reach the *current* attachmentDeps through a stable getter over
