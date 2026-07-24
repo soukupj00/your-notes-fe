@@ -74,7 +74,15 @@
     "excalidraw": {
       "tooltip": "Insert drawing",
       "delete": "Delete drawing",
-      "unavailable": "Drawing unavailable"
+      "unavailable": "Drawing unavailable",
+      "title": "Drawing",
+      "save": "Save",
+      "cancel": "Cancel",
+      "deleteModal": "Delete drawing",
+      "discardTitle": "Discard drawing?",
+      "discardDescription": "Your changes will be lost.",
+      "discardConfirm": "Discard",
+      "discardCancel": "Keep editing"
     }
   },
   "settings": {

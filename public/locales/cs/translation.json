@@ -74,7 +74,15 @@
     "excalidraw": {
       "tooltip": "Vložit kresbu",
       "delete": "Smazat kresbu",
-      "unavailable": "Kresba není k dispozici"
+      "unavailable": "Kresba není k dispozici",
+      "title": "Kresba",
+      "save": "Uložit",
+      "cancel": "Zrušit",
+      "deleteModal": "Smazat kresbu",
+      "discardTitle": "Zahodit kresbu?",
+      "discardDescription": "Vaše změny budou ztraceny.",
+      "discardConfirm": "Zahodit",
+      "discardCancel": "Pokračovat v úpravách"
     }
   },
   "settings": {
