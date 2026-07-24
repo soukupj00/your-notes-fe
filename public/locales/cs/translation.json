@@ -80,6 +80,7 @@
       "save": "Uložit",
       "cancel": "Zrušit",
       "deleteModal": "Smazat kresbu",
+      "deleteAction": "Smazat",
       "discardTitle": "Zahodit kresbu?",
       "discardDescription": "Vaše změny budou ztraceny.",
       "discardConfirm": "Zahodit",

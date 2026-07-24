@@ -80,6 +80,7 @@
       "save": "Save",
       "cancel": "Cancel",
       "deleteModal": "Delete drawing",
+      "deleteAction": "Delete",
       "discardTitle": "Discard drawing?",
       "discardDescription": "Your changes will be lost.",
       "discardConfirm": "Discard",

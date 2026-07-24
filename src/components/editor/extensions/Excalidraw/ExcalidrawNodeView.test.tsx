@@ -40,12 +40,25 @@ afterEach(async () => {
 });
 
 describe('ExcalidrawNodeView (preview)', () => {
+  it('can open the editor on the first click while the preview is still loading', async () => {
+    await db.attachments.add(att());
+    const { p, openExcalidraw } = props();
+    render(<ExcalidrawNodeView {...p} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'editor.excalidraw.edit' }));
+
+    expect(openExcalidraw).toHaveBeenCalledWith(
+      expect.objectContaining({ attachmentId: 'a1', onDelete: expect.any(Function) })
+    );
+  });
+
   it('sizes the border and delete overlay to the preview instead of the editor width', async () => {
     await db.attachments.add(att());
     const { p } = props();
     render(<ExcalidrawNodeView {...p} />);
 
     const surface = await screen.findByRole('button', { name: 'editor.excalidraw.edit' });
+    await waitFor(() => expect(surface.querySelector('svg#snap')).toBeInTheDocument());
     const frame = surface.parentElement;
 
     expect(frame).toHaveClass('inline-block', 'relative', 'max-w-full');

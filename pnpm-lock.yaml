@@ -149,6 +149,9 @@ importers:
       dexie-react-hooks:
         specifier: ^4.2.0
         version: 4.2.0(@types/react@19.1.13)(dexie@4.2.0)(react@19.1.1)
+      dompurify:
+        specifier: ^3.4.12
+        version: 3.4.12
       i18next:
         specifier: ^25.5.2
         version: 25.5.2(typescript@5.9.2)

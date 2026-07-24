@@ -1,6 +1,15 @@
+import DOMPurify from 'dompurify';
 import { useEffect, useRef } from 'react';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { cn } from '@/lib/utils.ts';
+
+function replaceWithSanitizedMarkup(target: Element, markup: string): void {
+  const fragment = DOMPurify.sanitize(markup, {
+    RETURN_DOM_FRAGMENT: true,
+    ADD_TAGS: ['excalidraw-drawing'],
+  });
+  target.replaceChildren(fragment);
+}
 
 /**
  * Read-only renderer for a Note's Body HTML. Sets innerHTML, then resolves every
@@ -23,7 +32,7 @@ export function NoteBody({
     if (!root) return;
     // Self-authored HTML from our own editor (same trust model as the
     // dangerouslySetInnerHTML this component replaces).
-    root.innerHTML = html ?? '';
+    replaceWithSanitizedMarkup(root, html ?? '');
     const urls: string[] = [];
     let active = true;
     const imgs = root.querySelectorAll<HTMLImageElement>('img[data-attachment-id]');
@@ -47,9 +56,19 @@ export function NoteBody({
         if (!active || !att?.preview) return;
         // Self-generated SVG markup (see sceneToSvgString), same trust model as
         // the Body HTML this component already sets.
-        el.innerHTML = att.preview;
+        replaceWithSanitizedMarkup(el, att.preview);
+        // Custom elements are inline by default, which makes the SVG participate
+        // in a text line box and can reserve large blank space around wide
+        // drawings. Treat the preview as a normal responsive block image.
+        el.style.display = 'block';
+        el.style.lineHeight = '0';
         const svg = el.querySelector('svg');
-        if (svg) svg.style.maxWidth = '100%';
+        if (svg) {
+          svg.style.display = 'block';
+          svg.style.width = '100%';
+          svg.style.height = 'auto';
+          svg.style.maxWidth = '100%';
+        }
       });
     });
     // Audio, video, and file attachments have no inline representation on the

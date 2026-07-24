@@ -1,6 +1,7 @@
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import DOMPurify from 'dompurify';
 import { db } from '@/db/db.ts';
 import { cn } from '@/lib/utils.ts';
 import { ConfirmDeleteButton } from '../attachments/ConfirmDeleteButton';
@@ -26,22 +27,21 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
   // Delete is a sibling of the preview surface, positioned inside the same
   // shrink-wrapped frame. A delete tap never reaches the surface's open handler.
   const deleteButton = editable ? (
-    <span className="absolute top-2 right-2 z-10 rounded-full bg-background/80">
+    <span className="absolute top-2 right-2 z-10">
       <ConfirmDeleteButton
         onConfirm={() => props.deleteNode()}
         label={deps.t('editor.excalidraw.delete')}
         t={deps.t}
+        triggerClassName="size-9 bg-destructive text-white shadow-sm hover:bg-destructive/90 hover:text-white"
+        iconClassName="size-5"
       />
     </span>
   ) : null;
 
-  if (row === undefined) {
-    return (
-      <NodeViewWrapper as="div" className="my-2" data-drag-handle>
-        <div className="h-32 w-full animate-pulse rounded-md bg-muted" aria-hidden />
-      </NodeViewWrapper>
-    );
-  }
+  const openEditor = () => {
+    if (!attachmentId) return;
+    deps.openExcalidraw({ attachmentId, onDelete: () => props.deleteNode() });
+  };
 
   if (row === null) {
     return (
@@ -54,18 +54,21 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
     );
   }
 
-  const surfaceClass =
-    'block max-w-full overflow-hidden rounded-md border [&>svg]:block [&>svg]:h-auto [&>svg]:max-w-full';
-  const openEditor = () => {
-    if (!attachmentId) return;
-    deps.openExcalidraw({ attachmentId, onDelete: () => props.deleteNode() });
-  };
+  const loading = row === undefined;
+  const surfaceClass = cn(
+    'block max-w-full overflow-hidden rounded-md border [&>svg]:block [&>svg]:h-auto [&>svg]:max-w-full',
+    loading && 'h-32 w-64 animate-pulse border-0 bg-muted'
+  );
+  // Self-generated SVG snapshot (see sceneToSvgString), still run through
+  // DOMPurify to match the read-only NoteBody trust model.
+  const previewMarkup = loading ? undefined : { __html: DOMPurify.sanitize(row.preview ?? '') };
 
   return (
     <NodeViewWrapper as="div" className="my-2" data-drag-handle>
       <div className="relative inline-block max-w-full align-top">
-        {/* Passive preview surface (self-generated SVG snapshot). Editable: a real
-            button (tap/keyboard opens the shared modal); read-only: a plain box. */}
+        {/* Keep this button mounted while the live query resolves. Replacing the
+            loading element between pointer-down and click loses the user's first
+            click on fast note-open races. */}
         {editable ? (
           <button
             type="button"
@@ -73,14 +76,14 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
             onClick={openEditor}
             contentEditable={false}
             className={cn(surfaceClass, 'cursor-pointer text-left')}
-            // biome-ignore lint/security/noDangerouslySetInnerHtml: self-generated SVG snapshot (see sceneToSvgString).
-            dangerouslySetInnerHTML={{ __html: row.preview ?? '' }}
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: DOMPurify-sanitized SVG snapshot (see previewMarkup).
+            dangerouslySetInnerHTML={previewMarkup}
           />
         ) : (
           <div
             className={surfaceClass}
-            // biome-ignore lint/security/noDangerouslySetInnerHtml: self-generated SVG snapshot (see sceneToSvgString).
-            dangerouslySetInnerHTML={{ __html: row.preview ?? '' }}
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: DOMPurify-sanitized SVG snapshot (see previewMarkup).
+            dangerouslySetInnerHTML={previewMarkup}
           />
         )}
         {deleteButton}

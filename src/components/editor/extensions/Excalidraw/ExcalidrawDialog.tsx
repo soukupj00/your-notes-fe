@@ -11,7 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import type { ExcalidrawScene } from './scene';
+import { DeleteButton, SaveButton } from '@/components/ui/EntityActionButtons';
+import { type ExcalidrawScene, emptyScene } from './scene';
 
 /** Minimal structural view of the bits of Excalidraw's imperative API we read on
  *  Save. Kept local (not imported from the package's type path) so the dialog is
@@ -20,6 +21,31 @@ interface ExcalidrawApi {
   getSceneElements: () => readonly unknown[];
   getAppState: () => Record<string, unknown>;
   getFiles: () => Record<string, unknown>;
+}
+
+function elementFingerprint(element: unknown): unknown {
+  if (!element || typeof element !== 'object') return element;
+  const candidate = element as Record<string, unknown>;
+  if ('id' in candidate && ('version' in candidate || 'versionNonce' in candidate)) {
+    return {
+      id: candidate.id,
+      version: candidate.version,
+      versionNonce: candidate.versionNonce,
+      isDeleted: candidate.isDeleted,
+    };
+  }
+  return element;
+}
+
+/** Excalidraw's onChange includes transient canvas state such as viewport size,
+ *  zoom, and selection. Those changes are not drawing edits. Element versions
+ *  change for every persisted element mutation, while the background color is
+ *  the only app-state value authored as part of the drawing in this slice. */
+function sceneFingerprint(scene: ExcalidrawScene): string {
+  return JSON.stringify({
+    elements: scene.elements.map(elementFingerprint),
+    viewBackgroundColor: scene.appState.viewBackgroundColor ?? '#ffffff',
+  });
 }
 
 export interface ExcalidrawDialogProps {
@@ -53,8 +79,9 @@ export function ExcalidrawDialog({
   t,
 }: ExcalidrawDialogProps) {
   const apiRef = useRef<ExcalidrawApi | null>(null);
-  // dirty = onChange has fired since open (cheap over-approximation; Excalidraw
-  // may fire an initial onChange - accepted). Gates the discard-confirm.
+  const initialFingerprintRef = useRef(
+    initialScene ? sceneFingerprint(initialScene) : sceneFingerprint(emptyScene())
+  );
   const [dirty, setDirty] = useState(false);
   // Save is disabled while the scene has no elements. Seeded from the initial
   // scene (an existing drawing is immediately saveable) and kept fresh on change.
@@ -97,15 +124,20 @@ export function ExcalidrawDialog({
             <DialogDescription className="sr-only">
               {t('editor.excalidraw.title')}
             </DialogDescription>
+            <SaveButton
+              size="sm"
+              label={t('editor.excalidraw.save')}
+              disabled={!hasElements}
+              onClick={() => void handleSave()}
+            />
             {mode === 'edit' && onDelete && (
-              <Button
+              <DeleteButton
                 variant="ghost"
                 size="sm"
+                label={t('editor.excalidraw.deleteAction')}
                 className="text-destructive hover:text-destructive"
                 onClick={() => setConfirm('delete')}
-              >
-                {t('editor.excalidraw.deleteModal')}
-              </Button>
+              />
             )}
             <Button
               variant="ghost"
@@ -114,9 +146,6 @@ export function ExcalidrawDialog({
               onClick={requestClose}
             >
               <XIcon className="size-4" />
-            </Button>
-            <Button size="sm" disabled={!hasElements} onClick={() => void handleSave()}>
-              {t('editor.excalidraw.save')}
             </Button>
           </DialogHeader>
 
@@ -128,8 +157,14 @@ export function ExcalidrawDialog({
               excalidrawAPI={(api: unknown) => {
                 apiRef.current = api as ExcalidrawApi;
               }}
-              onChange={(elements: readonly unknown[]) => {
-                setDirty(true);
+              onChange={(elements, appState, files) => {
+                setDirty(
+                  sceneFingerprint({
+                    elements,
+                    appState: appState as unknown as Record<string, unknown>,
+                    files: files as unknown as Record<string, unknown>,
+                  }) !== initialFingerprintRef.current
+                );
                 setHasElements(elements.length > 0);
               }}
             />
@@ -182,15 +217,13 @@ export function ExcalidrawDialog({
             <Button variant="outline" onClick={() => setConfirm(null)}>
               {t('editor.excalidraw.discardCancel')}
             </Button>
-            <Button
-              variant="destructive"
+            <DeleteButton
+              label={t('editor.excalidraw.deleteAction')}
               onClick={() => {
                 setConfirm(null);
                 onDelete?.();
               }}
-            >
-              {t('editor.excalidraw.deleteModal')}
-            </Button>
+            />
           </DialogFooter>
         </DialogContent>
       </Dialog>

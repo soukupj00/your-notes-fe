@@ -1167,11 +1167,11 @@ git commit -m "[DOC] Document excalidraw attachment node"
 
 **Interfaces:** none (side-effect import).
 
-- [ ] **Step 1: Add the CSS import**
+- [x] **Step 1: Add the CSS import**
 
 Add `import '@excalidraw/excalidraw/index.css';` (confirmed export in v0.18.1: `exports['./index.css']`). Preferred final home is the top of `ExcalidrawDialog.tsx` (the only place the canvas mounts).
 
-- [ ] **Step 2: Verify build resolves the CSS export**
+- [x] **Step 2: Verify build resolves the CSS export**
 
 Run: `pnpm build`
 Expected: green (Vite resolves `@excalidraw/excalidraw/index.css`).
@@ -1202,12 +1202,12 @@ interface ExcalidrawDialogProps {
 }
 ```
 
-- [ ] **Step 1: Add i18n keys**
+- [x] **Step 1: Add i18n keys**
 
 `public/locales/en/translation.json` under `editor.excalidraw`, add: `"title": "Drawing"`, `"save": "Save"`, `"cancel": "Cancel"`, `"deleteModal": "Delete drawing"`, `"discardTitle": "Discard drawing?"`, `"discardDescription": "Your changes will be lost."`, `"discardConfirm": "Discard"`, `"discardCancel": "Keep editing"`.
 `public/locales/cs/translation.json`: `"title": "Kresba"`, `"save": "Uložit"`, `"cancel": "Zrušit"`, `"deleteModal": "Smazat kresbu"`, `"discardTitle": "Zahodit kresbu?"`, `"discardDescription": "Vaše změny budou ztraceny."`, `"discardConfirm": "Zahodit"`, `"discardCancel": "Pokračovat v úpravách"`.
 
-- [ ] **Step 2: Write the failing test** (mock `@excalidraw/excalidraw`)
+- [x] **Step 2: Write the failing test** (mock `@excalidraw/excalidraw`)
 
 Mirror the NodeView test's mock but expose an `excalidrawAPI` and let a click add an element and fire `onChange`. Assert:
 1. Save is **disabled** when the scene is empty (no elements).
@@ -1216,12 +1216,12 @@ Mirror the NodeView test's mock but expose an `excalidrawAPI` and let a click ad
 4. `mode: 'edit'` renders a Delete button that calls `onDelete`; `mode: 'new'` renders none.
 5. `onEscapeKeyDown`/`onPointerDownOutside` are prevented (no `onClose` on Escape/backdrop) - assert `onClose` not called on an Escape key event.
 
-- [ ] **Step 3: Run to verify it fails**
+- [x] **Step 3: Run to verify it fails**
 
 Run: `pnpm test src/components/editor/extensions/Excalidraw/ExcalidrawDialog.test.tsx`
 Expected: FAIL - module not found.
 
-- [ ] **Step 4: Implement `ExcalidrawDialog`**
+- [x] **Step 4: Implement `ExcalidrawDialog`**
 
 - Import `@excalidraw/excalidraw/index.css` at the top (Task 12's final home).
 - `DialogContent` with `showCloseButton={false}`, `onEscapeKeyDown={(e) => e.preventDefault()}`, `onPointerDownOutside={(e) => e.preventDefault()}`, and className (relative units only): base `w-screen h-[100dvh] max-w-none rounded-none p-0 gap-0 flex flex-col`, then `sm:w-[92vw] sm:max-w-[75rem] sm:h-[88vh] sm:rounded-lg`.
@@ -1232,12 +1232,12 @@ Expected: FAIL - module not found.
 - **Delete**: confirm using the `discard`-style dialog titled `deleteModal`; on confirm call `onDelete?.()`.
 - Reset local state (`dirty`) when `open`/identity changes - the parent `key`s the dialog by drawing identity (Task 14), so a fresh mount per open is the simplest reset.
 
-- [ ] **Step 5: Run to verify it passes + build**
+- [x] **Step 5: Run to verify it passes + build**
 
 Run: `pnpm test src/components/editor/extensions/Excalidraw/ExcalidrawDialog.test.tsx && pnpm build`
 Expected: green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/components/editor/extensions/Excalidraw/ExcalidrawDialog.tsx src/components/editor/extensions/Excalidraw/ExcalidrawDialog.test.tsx public/locales/en/translation.json public/locales/cs/translation.json
@@ -1256,11 +1256,11 @@ git commit -m "[ADD] ExcalidrawDialog modal editing surface + CSS fix"
 **Interfaces:**
 - Produces: `AttachmentDeps.openExcalidraw: (args: { attachmentId?: string; onDelete?: () => void }) => void`; a single `<ExcalidrawDialog>` rendered by `editor.tsx`.
 
-- [ ] **Step 1: Add `openExcalidraw` to `AttachmentDeps`**
+- [x] **Step 1: Add `openExcalidraw` to `AttachmentDeps`**
 
 In `deps.ts` add `openExcalidraw: (args: { attachmentId?: string; onDelete?: () => void }) => void;`.
 
-- [ ] **Step 2: Modal state + orchestration in `editor.tsx`**
+- [x] **Step 2: Modal state + orchestration in `editor.tsx`**
 
 - Hold state `{ open, attachmentId: string | null, initialScene, onDelete }`.
 - Implement `openExcalidraw({ attachmentId, onDelete })`: if `attachmentId`, one-shot `getAttachment` + `parseScene(await blob.text())` to seed `initialScene` (mode `edit`); else seed `emptyScene()` (mode `new`). Set `open = true`. Thread `openExcalidraw` into the `attachmentDeps` memo (+ dep array).
@@ -1270,12 +1270,12 @@ In `deps.ts` add `openExcalidraw: (args: { attachmentId?: string; onDelete?: () 
   - then close the modal.
 - Render `<ExcalidrawDialog key={attachmentId ?? 'new'} open={...} mode={...} initialScene={...} onSave={onSave} onDelete={onDelete} onClose={() => setOpen(false)} t={t} />`.
 
-- [ ] **Step 3: Tests + build**
+- [x] **Step 3: Tests + build**
 
 Run: `pnpm test src/components/editor/editor.test.tsx && pnpm build`
 Expected: green (new-drawing Save creates + inserts; edit Save calls `updateAttachment`).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/editor/extensions/attachments/deps.ts src/components/editor/editor.tsx src/components/editor/editor.test.tsx
@@ -1294,32 +1294,33 @@ git commit -m "[ADD] openExcalidraw deps + modal orchestration (commit-on-Save)"
 - Consumes: `deps.openExcalidraw` (Task 14), a live read of the attachment row (Dexie `useLiveQuery` via `db.attachments.get(id)` or an existing live hook), `ConfirmDeleteButton`, `Attachment.preview`.
 - Produces: preview-only NodeView (no `<Excalidraw>` import, no write-back).
 
-- [ ] **Step 1: Rewrite the test**
+- [x] **Step 1: Rewrite the test**
 
 Drop the canvas-mount + debounced-write-back assertions. Assert instead:
 1. Renders the live-queried `preview` SVG.
 2. Clicking the preview surface calls `deps.openExcalidraw({ attachmentId, onDelete: <fn> })`.
-3. The corner-X (`ConfirmDeleteButton`) confirm calls `props.deleteNode()` and, because of `stopPropagation`, does **not** call `openExcalidraw`.
+3. The corner-X (`ConfirmDeleteButton`) confirm calls `props.deleteNode()` and, because it is a sibling of the surface, does **not** call `openExcalidraw`.
 4. Missing row -> the unavailable box (with delete).
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm test src/components/editor/extensions/Excalidraw/ExcalidrawNodeView.test.tsx`
 Expected: FAIL (old behavior asserted / new behavior missing).
 
-- [ ] **Step 3: Implement the preview NodeView**
+- [x] **Step 3: Implement the preview NodeView**
 
 - Live-query the attachment row for its `preview` (Dexie `useLiveQuery`). Loading -> pulse box; missing -> unavailable box + delete; ready -> the SVG surface.
-- Wrap the SVG in a `cursor-pointer` `relative` surface (`onClick` -> `deps.openExcalidraw({ attachmentId, onDelete: () => props.deleteNode() })`, editable only), inject `preview` via `dangerouslySetInnerHTML` (self-generated SVG, existing trust model), `contentEditable={false}`.
-- Overlay the always-visible top-right `ConfirmDeleteButton` (absolute top-right) with `onClick`/pointer `stopPropagation` on its wrapper so a delete tap never opens the editor.
+- Wrap the SVG in a `cursor-pointer` surface (a native `<button>` when editable, so keyboard + `aria-label` come for free; `onClick` -> `deps.openExcalidraw({ attachmentId, onDelete: () => props.deleteNode() })`), inject `preview` via `dangerouslySetInnerHTML` after running it through `DOMPurify.sanitize` (matches the read-only `NoteBody` trust model), `contentEditable={false}`.
+- The surface sits in a `relative inline-block max-w-full` frame so the border and the delete overlay **shrink-wrap the drawing** instead of spanning the editor width.
+- Overlay the always-visible top-right `ConfirmDeleteButton`. It is a DOM sibling of the surface (not a descendant), so a delete tap never reaches the surface's open handler - no `stopPropagation` needed. It is styled larger and destructive-red for visibility on top of the drawing via the shared button's `triggerClassName`/`iconClassName` props.
 - Remove the `@excalidraw/excalidraw` import, `sceneToFile`/`sceneToSvgString` usage, the debounce refs, and the unmount flush.
 
-- [ ] **Step 4: Run to verify it passes + full suite + build**
+- [x] **Step 4: Run to verify it passes + full suite + build**
 
 Run: `pnpm test && pnpm build`
 Expected: green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/editor/extensions/Excalidraw/ExcalidrawNodeView.tsx src/components/editor/extensions/Excalidraw/ExcalidrawNodeView.test.tsx
@@ -1338,13 +1339,13 @@ git commit -m "[EDIT] ExcalidrawNodeView -> passive live-queried preview"
 - Consumes: `deps.openExcalidraw`. No longer calls `getNoteId`/`createAttachment`/insert.
 - Produces: an `ActionButton` (icon `PenTool`) whose action is `getDeps().openExcalidraw({})`.
 
-- [ ] **Step 1: Rewrite the test**
+- [x] **Step 1: Rewrite the test**
 
 Assert clicking the button calls `openExcalidraw({})` and does **not** call `createAttachment` or the insert command.
 
-- [ ] **Step 2: Run to verify it fails**; **Step 3: Implement** (`action: () => getDeps().openExcalidraw({})`); **Step 4: Run + build**.
+- [x] **Step 2: Run to verify it fails**; **Step 3: Implement** (`action: () => getDeps().openExcalidraw({})`); **Step 4: Run + build**.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/editor/extensions/Excalidraw/ExcalidrawButton.tsx src/components/editor/extensions/Excalidraw/ExcalidrawButton.test.tsx
@@ -1358,10 +1359,10 @@ git commit -m "[EDIT] ExcalidrawButton opens empty modal (commit-on-Save)"
 **Files:**
 - Modify: `src/components/editor/CLAUDE.md` (correct the Excalidraw paragraph to the modal architecture)
 
-- [ ] **Step 1: Manual E2E** (no Playwright on this project - verify by hand): click the drawing button -> modal opens (styled canvas, not broken); draw -> Save enabled; Save -> preview appears inline; tap preview -> modal reopens with the scene; edit + Save -> preview updates (live); Cancel while dirty -> discard-confirm; Delete (modal + corner-X) -> node gone + confirm; empty new drawing -> Save disabled, Cancel leaves nothing; mobile fullscreen; desktop large. Check light/dark.
-- [ ] **Step 2: Update `src/components/editor/CLAUDE.md`** - replace the inline-canvas Excalidraw description with the modal model: passive live-queried SVG preview node (tap-to-edit, corner-X delete), single shared `ExcalidrawDialog` owned by `editor.tsx` opened via `deps.openExcalidraw`, commit-on-Save (create+insert on new / `updateAttachment` on edit), guarded Save/Cancel/Delete, `@excalidraw/excalidraw/index.css` imported in the dialog.
-- [ ] **Step 3:** `pnpm check:ci && pnpm test && pnpm build` green.
-- [ ] **Step 4: Commit**
+- [x] **Step 1: Manual E2E** (no Playwright on this project - verify by hand): click the drawing button -> modal opens (styled canvas, not broken); draw -> Save enabled; Save -> preview appears inline; tap preview -> modal reopens with the scene; edit + Save -> preview updates (live); Cancel while dirty -> discard-confirm; Delete (modal + corner-X) -> node gone + confirm; empty new drawing -> Save disabled, Cancel leaves nothing; mobile fullscreen; desktop large. Check light/dark.
+- [x] **Step 2: Update `src/components/editor/CLAUDE.md`** - replace the inline-canvas Excalidraw description with the modal model: passive live-queried SVG preview node (tap-to-edit, corner-X delete), single shared `ExcalidrawDialog` owned by `editor.tsx` opened via `deps.openExcalidraw`, commit-on-Save (create+insert on new / `updateAttachment` on edit), guarded Save/Cancel/Delete, `@excalidraw/excalidraw/index.css` imported in the dialog.
+- [x] **Step 3:** `pnpm check:ci && pnpm test && pnpm build` green.
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/editor/CLAUDE.md
@@ -1376,3 +1377,9 @@ git commit -m "[DOC] Document Excalidraw modal editing architecture"
 - **Verb separation** (Save/Cancel/Delete) is a hard requirement - reviewers should reject any path where Save can delete or Cancel can persist.
 - **Live-query preview (Task 15)** is what makes edit-Save reflect without dirtying the body - do not "fix" a stale preview by bumping a node attribute.
 - **Kept-from-Phase-1** items (`scene.ts`, `updateAttachment`, validation, node/factory, `NoteBody` injection) are deliberately untouched.
+
+### Post-E2E refinements (from manual verification)
+
+- **Preview shrink-wraps the drawing.** The border/overlay frame is `relative inline-block max-w-full` (not full editor width), so the border hugs the SVG and the delete button lands on the drawing itself.
+- **Delete button visibility.** The overlaid `ConfirmDeleteButton` is enlarged and destructive-red via new optional `triggerClassName`/`iconClassName` props on the shared component (default look unchanged for image/audio/video/file).
+- **Preview sanitization.** The inline preview SVG is run through `DOMPurify.sanitize` before `dangerouslySetInnerHTML`, matching the read-only `NoteBody` path (both now depend on `dompurify`).
