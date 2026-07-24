@@ -74,6 +74,7 @@
     "excalidraw": {
       "tooltip": "Vložit kresbu",
       "delete": "Smazat kresbu",
+      "edit": "Upravit kresbu",
       "unavailable": "Kresba není k dispozici",
       "title": "Kresba",
       "save": "Uložit",

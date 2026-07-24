@@ -1,86 +1,41 @@
-import { Excalidraw } from '@excalidraw/excalidraw';
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
-import { useCallback, useEffect, useRef } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '@/db/db.ts';
+import { cn } from '@/lib/utils.ts';
 import { ConfirmDeleteButton } from '../attachments/ConfirmDeleteButton';
 import type { AttachmentDeps } from '../attachments/deps';
-import { type ExcalidrawScene, sceneToFile, sceneToSvgString } from './scene';
-import { useExcalidrawScene } from './useExcalidrawScene';
 
-const WRITE_DEBOUNCE_MS = 800;
-
-/** Editor render path for excalidrawAttachment. Editable: the live canvas with a
- *  debounced write-back to the same attachment row (blob + regenerated SVG
- *  snapshot). Read-only: the stored preview SVG. Missing/malformed: a dashed box.
- *  The home feed never mounts this - it injects the stored SVG in NoteBody. */
+/** Editor render path for excalidrawAttachment - a passive preview, never the
+ *  live canvas (that lives in the shared modal, opened on tap). The whole surface
+ *  is tap-to-edit; a corner-X always offers delete. The row is live-queried so a
+ *  modal Save refreshes the inline preview in place with zero body churn (the
+ *  node's attachmentId never changes). The home feed does not mount this at all -
+ *  it injects the stored SVG in NoteBody. */
 export function ExcalidrawNodeView(props: ReactNodeViewProps) {
   const attachmentId = props.node.attrs.attachmentId as string | null;
   const deps = (props.extension.options.getDeps as () => AttachmentDeps)();
-  const state = useExcalidrawScene(attachmentId, deps.getAttachment);
-  const canDelete = props.editor?.isEditable ?? false;
+  const editable = props.editor?.isEditable ?? false;
 
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingRef = useRef<ExcalidrawScene | null>(null);
-
-  const flush = useCallback(async () => {
-    const scene = pendingRef.current;
-    if (!scene || !attachmentId) return;
-    pendingRef.current = null;
-    try {
-      const blob = sceneToFile(scene);
-      let preview: string | undefined;
-      try {
-        preview = await sceneToSvgString(scene);
-      } catch (err) {
-        console.error('ExcalidrawNodeView: SVG snapshot failed', err);
-      }
-      await deps.updateAttachment(attachmentId, { blob, preview });
-    } catch (err) {
-      console.error('ExcalidrawNodeView: scene write-back failed', err);
-    }
-  }, [attachmentId, deps]);
-
-  // Flush any pending write on unmount so the last edit is not lost.
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      void flush();
-    };
-  }, [flush]);
-
-  const onChange = useCallback(
-    (
-      elements: readonly unknown[],
-      appState: Record<string, unknown>,
-      files: Record<string, unknown>
-    ) => {
-      pendingRef.current = { elements, appState, files };
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => void flush(), WRITE_DEBOUNCE_MS);
-    },
-    [flush]
+  // undefined = loading, null = missing, object = ready.
+  const row = useLiveQuery(
+    async () => (attachmentId ? ((await db.attachments.get(attachmentId)) ?? null) : null),
+    [attachmentId]
   );
 
-  const deleteButton = canDelete ? (
-    <ConfirmDeleteButton
-      onConfirm={() => props.deleteNode()}
-      label={deps.t('editor.excalidraw.delete')}
-      t={deps.t}
-    />
+  // Delete is a *sibling* of the preview surface (absolutely positioned over it),
+  // not a descendant - so a delete tap never reaches the surface's open handler.
+  const deleteButton = editable ? (
+    <span className="absolute top-2 right-2 z-10 rounded-full bg-background/80">
+      <ConfirmDeleteButton
+        onConfirm={() => props.deleteNode()}
+        label={deps.t('editor.excalidraw.delete')}
+        t={deps.t}
+      />
+    </span>
   ) : null;
 
-  if (state.status === 'missing') {
-    return (
-      <NodeViewWrapper as="div" className="my-2" data-drag-handle>
-        <div className="flex items-center gap-3 rounded-md border border-dashed p-4 text-muted-foreground text-sm">
-          <span className="flex-1 text-center">{deps.t('editor.excalidraw.unavailable')}</span>
-          {deleteButton}
-        </div>
-      </NodeViewWrapper>
-    );
-  }
-
-  if (state.status === 'loading') {
+  if (row === undefined) {
     return (
       <NodeViewWrapper as="div" className="my-2" data-drag-handle>
         <div className="h-32 w-full animate-pulse rounded-md bg-muted" aria-hidden />
@@ -88,27 +43,46 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
     );
   }
 
-  // Read-only viewer: the stored SVG snapshot (self-generated, trusted markup).
-  if (!canDelete) {
+  if (row === null) {
     return (
-      <NodeViewWrapper as="div" className="my-2" data-drag-handle>
-        <div
-          className="max-w-full [&>svg]:max-w-full"
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: self-generated SVG snapshot
-          dangerouslySetInnerHTML={{ __html: state.attachment.preview ?? '' }}
-        />
+      <NodeViewWrapper as="div" className="relative my-2" data-drag-handle>
+        <div className="flex items-center gap-3 rounded-md border border-dashed p-4 text-muted-foreground text-sm">
+          <span className="flex-1 text-center">{deps.t('editor.excalidraw.unavailable')}</span>
+        </div>
+        {deleteButton}
       </NodeViewWrapper>
     );
   }
 
+  const surfaceClass =
+    'block min-h-16 w-full max-w-full overflow-hidden rounded-md border [&>svg]:max-w-full';
+  const openEditor = () => {
+    if (!attachmentId) return;
+    deps.openExcalidraw({ attachmentId, onDelete: () => props.deleteNode() });
+  };
+
   return (
-    <NodeViewWrapper as="div" className="my-2" data-drag-handle>
-      <div className="flex items-start gap-3">
-        <div className="h-[420px] flex-1 overflow-hidden rounded-md border" contentEditable={false}>
-          <Excalidraw initialData={state.scene as never} onChange={onChange as never} />
-        </div>
-        {deleteButton}
-      </div>
+    <NodeViewWrapper as="div" className="relative my-2" data-drag-handle>
+      {/* Passive preview surface (self-generated SVG snapshot). Editable: a real
+          button (tap/keyboard opens the shared modal); read-only: a plain box. */}
+      {editable ? (
+        <button
+          type="button"
+          aria-label={deps.t('editor.excalidraw.edit')}
+          onClick={openEditor}
+          contentEditable={false}
+          className={cn(surfaceClass, 'cursor-pointer text-left')}
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: self-generated SVG snapshot (see sceneToSvgString).
+          dangerouslySetInnerHTML={{ __html: row.preview ?? '' }}
+        />
+      ) : (
+        <div
+          className={surfaceClass}
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: self-generated SVG snapshot (see sceneToSvgString).
+          dangerouslySetInnerHTML={{ __html: row.preview ?? '' }}
+        />
+      )}
+      {deleteButton}
     </NodeViewWrapper>
   );
 }

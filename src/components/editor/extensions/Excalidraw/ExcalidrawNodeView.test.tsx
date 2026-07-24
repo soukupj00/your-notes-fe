@@ -1,90 +1,84 @@
-import { render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import 'fake-indexeddb/auto';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { db } from '@/db/db.ts';
 import type { Attachment } from '@/models.ts';
-
-// Mock the heavy canvas: render a button that invokes onChange with one element.
-vi.mock('@excalidraw/excalidraw', () => ({
-  Excalidraw: ({
-    onChange,
-  }: {
-    onChange?: (els: unknown[], app: unknown, files: unknown) => void;
-  }) => (
-    <button type="button" data-testid="canvas" onClick={() => onChange?.([{ id: 'e1' }], {}, {})}>
-      canvas
-    </button>
-  ),
-  exportToSvg: vi.fn(async () => {
-    const el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    el.setAttribute('id', 'snap');
-    return el;
-  }),
-}));
-
 import { ExcalidrawNodeView } from './ExcalidrawNodeView';
 
-function att(body: string): Attachment {
+function att(overrides: Partial<Attachment> = {}): Attachment {
   const now = new Date().toISOString();
   return {
     id: 'a1',
     noteId: 'n1',
     kind: 'excalidraw',
     mime: 'application/json',
-    blob: new Blob([body], { type: 'application/json' }),
+    blob: new Blob(['{}'], { type: 'application/json' }),
+    preview: '<svg id="snap"></svg>',
     createdAt: now,
     updatedAt: now,
+    ...overrides,
   };
 }
-function props(
-  get: (i: string) => Promise<Attachment | undefined>,
-  updateAttachment = vi.fn(async () => {})
-) {
-  return {
+
+function props(over: { openExcalidraw?: () => void; deleteNode?: () => void } = {}) {
+  const openExcalidraw = over.openExcalidraw ?? vi.fn();
+  const deleteNode = over.deleteNode ?? vi.fn();
+  const p = {
     node: { attrs: { attachmentId: 'a1' } },
     editor: { isEditable: true },
-    deleteNode: vi.fn(),
+    deleteNode,
     extension: {
-      options: { getDeps: () => ({ getAttachment: get, updateAttachment, t: (k: string) => k }) },
+      options: { getDeps: () => ({ openExcalidraw, t: (k: string) => k }) },
     },
   } as unknown as Parameters<typeof ExcalidrawNodeView>[0];
+  return { p, openExcalidraw, deleteNode };
 }
 
-beforeEach(() => vi.useFakeTimers());
-afterEach(() => {
-  vi.runOnlyPendingTimers();
-  vi.useRealTimers();
-  vi.restoreAllMocks();
+afterEach(async () => {
+  await db.attachments.clear();
 });
 
-describe('ExcalidrawNodeView', () => {
-  it('mounts the canvas for a ready scene', async () => {
-    render(
-      <ExcalidrawNodeView {...props(async () => att('{"elements":[],"appState":{},"files":{}}'))} />
-    );
-    await vi.waitFor(() => expect(screen.getByTestId('canvas')).toBeInTheDocument());
+describe('ExcalidrawNodeView (preview)', () => {
+  it('renders the live-queried preview SVG', async () => {
+    await db.attachments.add(att());
+    const { p } = props();
+    const { container } = render(<ExcalidrawNodeView {...p} />);
+    await waitFor(() => expect(container.querySelector('svg#snap')).toBeInTheDocument());
   });
 
-  it('writes the edited scene back (blob + preview) on change, debounced', async () => {
-    const update = vi.fn(async () => {});
-    render(
-      <ExcalidrawNodeView
-        {...props(async () => att('{"elements":[],"appState":{},"files":{}}'), update)}
-      />
-    );
-    await vi.waitFor(() => expect(screen.getByTestId('canvas')).toBeInTheDocument());
-    screen.getByTestId('canvas').click();
-    await vi.advanceTimersByTimeAsync(1000);
-    await vi.waitFor(() =>
-      expect(update).toHaveBeenCalledWith(
-        'a1',
-        expect.objectContaining({ preview: expect.stringContaining('snap') })
-      )
+  it('tapping the preview opens the modal with attachmentId + onDelete', async () => {
+    await db.attachments.add(att());
+    const { p, openExcalidraw } = props();
+    render(<ExcalidrawNodeView {...p} />);
+    const surface = await screen.findByRole('button', { name: 'editor.excalidraw.edit' });
+    await userEvent.click(surface);
+    expect(openExcalidraw).toHaveBeenCalledWith(
+      expect.objectContaining({ attachmentId: 'a1', onDelete: expect.any(Function) })
     );
   });
 
-  it('shows the unavailable box when the row is missing', async () => {
-    render(<ExcalidrawNodeView {...props(async () => undefined)} />);
-    await vi.waitFor(() =>
+  it('the corner-X confirm deletes the node without opening the editor', async () => {
+    await db.attachments.add(att());
+    const { p, openExcalidraw, deleteNode } = props();
+    render(<ExcalidrawNodeView {...p} />);
+    await screen.findByRole('button', { name: 'editor.excalidraw.edit' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'editor.excalidraw.delete' }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'attachments.confirmDelete.confirm' })
+    );
+
+    expect(deleteNode).toHaveBeenCalledTimes(1);
+    expect(openExcalidraw).not.toHaveBeenCalled();
+  });
+
+  it('shows the unavailable box (with delete) when the row is missing', async () => {
+    const { p } = props();
+    render(<ExcalidrawNodeView {...p} />);
+    await waitFor(() =>
       expect(screen.getByText('editor.excalidraw.unavailable')).toBeInTheDocument()
     );
+    expect(screen.getByRole('button', { name: 'editor.excalidraw.delete' })).toBeInTheDocument();
   });
 });
