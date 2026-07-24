@@ -1,6 +1,6 @@
 # M3 Slice 6 - performance & polish closeout
 
-**Status:** in progress (Task 1 complete).
+**Status:** in progress (Tasks 1-2 complete).
 
 **Goal:** Close out M3 with the performance and correctness work that finishes "attachments render fast and don't leak," plus a bounded set of named polish fixes from daily use.
 No new media features - those are earmarked for M4.
@@ -50,7 +50,7 @@ Called from the **image** insert path only (not the shared media insert), since 
 
 Also in this task: add the **Preview** glossary entry to `CONTEXT.md` and fix the stale "Four kinds" line (it is five kinds now that Excalidraw shipped).
 
-### Task 2 - Comprehensive startup GC sweep (close the crash leak)
+### Task 2 - Comprehensive startup GC sweep (close the crash leak) ✅
 
 Current GC is nearly complete: node-delete + dialog-close runs `collectOrphans`; note-delete cascades with lossless undo; `collectMissingNoteOrphans` (at `NotesHome` mount) drops rows whose note is gone.
 The **one remaining leak** is the crash path: delete a node (or add then remove one) and the browser crashes/hard-closes before the dialog close handler runs, so `collectOrphans` never fires; the note still exists, so `collectMissingNoteOrphans` misses it too.

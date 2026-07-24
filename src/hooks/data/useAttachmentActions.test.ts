@@ -94,4 +94,29 @@ describe('useAttachmentActions', () => {
     const removed = await a.collectMissingNoteOrphans();
     expect(removed).toBe(1);
   });
+
+  it('collectStartupOrphans reconciles every saved note and missing note owner', async () => {
+    const a = actions();
+    const liveNote = crypto.randomUUID();
+    const keep = await a.createAttachment(liveNote, pngFile());
+    const drop = await a.createAttachment(liveNote, pngFile());
+    const missingOwner = await a.createAttachment(crypto.randomUUID(), pngFile());
+    const now = new Date().toISOString();
+    await db.notes.put({
+      id: liveNote,
+      header: '',
+      description: '',
+      body: `<img data-attachment-id="${keep.id}">`,
+      checklist: [],
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const removed = await a.collectStartupOrphans();
+
+    expect(removed).toBe(2);
+    expect(await a.getAttachment(keep.id)).toBeTruthy();
+    expect(await a.getAttachment(drop.id)).toBeUndefined();
+    expect(await a.getAttachment(missingOwner.id)).toBeUndefined();
+  });
 });

@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { v4 as uuid } from 'uuid';
 import { db } from '@/db/db.ts';
+import { extractAttachmentIds } from '@/lib/attachment-html.ts';
 import { AttachmentError, validateAttachmentFile } from '@/lib/attachments.ts';
 import type { Attachment, AttachmentKind } from '@/models.ts';
 
@@ -93,6 +94,17 @@ export function useAttachmentActions() {
     });
   }, []);
 
+  // Startup GC: the saved Body is authoritative because no editor undo stack
+  // survives a reload. Reconcile every live Note as well as missing owners.
+  const collectStartupOrphans = useCallback(async () => {
+    let removed = await collectMissingNoteOrphans();
+    const notes = await db.notes.toArray();
+    for (const note of notes) {
+      removed += await collectOrphans(note.id, extractAttachmentIds(note.body));
+    }
+    return removed;
+  }, [collectMissingNoteOrphans, collectOrphans]);
+
   return {
     createAttachment,
     getAttachment,
@@ -101,5 +113,6 @@ export function useAttachmentActions() {
     updateAttachment,
     collectOrphans,
     collectMissingNoteOrphans,
+    collectStartupOrphans,
   };
 }
