@@ -9,8 +9,15 @@ import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
 declare module '@tiptap/core' {
   interface Storage {
     /** One-shot "autoplay this attachment once its <audio> is ready" flag, set
-     *  by the editor when the note was opened via its card's audio chip. */
+     *  by the editor when the note was opened via its card's audio chip. Used
+     *  when the doc scan runs BEFORE the target attachment's blob has loaded. */
     autoplayFirstAudioId?: string | null;
+    /** Registry of ready-to-play triggers keyed by attachmentId, populated by
+     *  each AudioNodeView once its <audio> element is ready. Used when the doc
+     *  scan runs AFTER the target attachment is already ready - the two attachment
+     *  loads (note body, attachment blob) race independently, so either can
+     *  finish first; this registry plus the flag above cover both orderings. */
+    autoplayReadyAudio?: Map<string, () => void>;
   }
 }
 
@@ -66,20 +73,54 @@ export function AudioNodeView(props: ReactNodeViewProps) {
     };
   }, []);
 
+  // Best-effort autoplay: attempt play() and only reflect it in the UI once
+  // playback actually starts - a rejected play() (mobile autoplay policy) must
+  // leave the Play icon showing, not flip to Pause.
+  const attemptPlay = useCallback(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    try {
+      const result = el.play();
+      if (result && typeof result.then === 'function') {
+        result.then(() => setPlaying(true)).catch(() => {});
+      } else {
+        setPlaying(true);
+      }
+    } catch {
+      // Ignore - autoplay can be rejected by the browser's mobile policy.
+    }
+  }, []);
+
   // Best-effort autoplay-on-open: consume the one-shot storage flag exactly
-  // when this attachment's <audio> element becomes available. Guarded for the
-  // mobile-autoplay policy - a rejected play() is expected and ignored.
+  // when this attachment's <audio> element becomes available. Covers the case
+  // where the editor's doc scan (finding the target attachmentId) finishes
+  // BEFORE this element is ready.
   useEffect(() => {
     if (state.status !== 'ready') return;
     const storage = props.editor?.storage;
     if (!storage || storage.autoplayFirstAudioId !== attachmentId) return;
     delete storage.autoplayFirstAudioId;
-    try {
-      void audioRef.current?.play()?.catch(() => {});
-    } catch {
-      // Ignore - autoplay can be rejected by the browser's mobile policy.
-    }
-  }, [state.status, attachmentId, props.editor]);
+    attemptPlay();
+  }, [state.status, attachmentId, props.editor, attemptPlay]);
+
+  // The other race direction: this element may already be ready by the time
+  // the editor's doc scan runs (the note-body load and the attachment-blob
+  // load are two independent async chains with no ordering guarantee between
+  // them). Register a trigger the scan can call directly instead of relying
+  // on the flag above, which nothing re-checks once this effect has already
+  // run once.
+  useEffect(() => {
+    if (state.status !== 'ready' || !attachmentId) return;
+    const storage = props.editor?.storage;
+    if (!storage) return;
+    if (!storage.autoplayReadyAudio) storage.autoplayReadyAudio = new Map();
+    storage.autoplayReadyAudio.set(attachmentId, attemptPlay);
+    return () => {
+      if (storage.autoplayReadyAudio?.get(attachmentId) === attemptPlay) {
+        storage.autoplayReadyAudio.delete(attachmentId);
+      }
+    };
+  }, [state.status, attachmentId, props.editor, attemptPlay]);
 
   const toggle = () => {
     const el = audioRef.current;

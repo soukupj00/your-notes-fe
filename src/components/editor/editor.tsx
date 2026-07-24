@@ -294,14 +294,19 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     editorRef.current = editor;
   }, [editor]);
 
-  // Best-effort autoplay-on-open: find the first audioAttachment node and stash
-  // its id on editor storage; AudioNodeView reads and clears the flag once its
-  // <audio> element is ready. Guarded by a ref (not just the effect's deps) so
-  // it fires at most once per editor instance - an existing note's real body
-  // only lands via the setContent below (it's loaded async and seeded as ''
-  // at mount), so the scan must run against the doc setContent just applied,
-  // not the pre-load one; a seeded draft's content is already there at mount,
-  // so this still fires on the very first run for that case too.
+  // Best-effort autoplay-on-open: find the first audioAttachment node, then
+  // either play it immediately (if its AudioNodeView already registered a
+  // ready-to-play trigger) or stash its id on editor storage for AudioNodeView
+  // to consume once its <audio> element becomes ready. Both paths are needed:
+  // the note body and the target attachment's blob load via two independent
+  // async chains (IndexedDB reads with no ordering guarantee between them), so
+  // this scan can run either before or after the attachment is ready.
+  // Guarded by a ref (not just the effect's deps) so it fires at most once per
+  // editor instance - an existing note's real body only lands via the
+  // setContent below (it's loaded async and seeded as '' at mount), so the
+  // scan must run against the doc setContent just applied, not the pre-load
+  // one; a seeded draft's content is already there at mount, so this still
+  // fires on the very first run for that case too.
   const autoplayScannedRef = useRef(false);
   useEffect(() => {
     if (!editor) return;
@@ -331,7 +336,12 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         // later scan.
         if (firstAudioId) {
           autoplayScannedRef.current = true;
-          editor.storage.autoplayFirstAudioId = firstAudioId;
+          const readyTrigger = editor.storage.autoplayReadyAudio?.get(firstAudioId);
+          if (readyTrigger) {
+            readyTrigger();
+          } else {
+            editor.storage.autoplayFirstAudioId = firstAudioId;
+          }
         }
       }
     });

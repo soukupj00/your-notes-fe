@@ -1,6 +1,6 @@
 # M3 Slice 6 - performance & polish closeout
 
-**Status:** in progress (Tasks 1-5 complete).
+**Status:** all 6 tasks implemented and unit-tested; manual browser QA still outstanding (see Verification section and Task 6's note).
 
 **Goal:** Close out M3 with the performance and correctness work that finishes "attachments render fast and don't leak," plus a bounded set of named polish fixes from daily use.
 No new media features - those are earmarked for M4.
@@ -88,12 +88,22 @@ Add `rounded` + `overflow-hidden` to the excalidraw preview container in `NoteBo
 
 > Follow-up (same review): the card **image** preview had the identical gap - `NoteBody`'s `<img data-attachment-id>` had no rounding class, unlike the editor's `ImageNodeView` (`rounded-md`). Fixed alongside this task by adding `rounded-md` to the card `<img>` in `NoteBody`, for parity with the editor.
 
-### Task 6 - Harden autoplay-on-open
+### Task 6 - Harden autoplay-on-open ✅
 
 The autoplay-on-open path (open a note via the card audio chip -> first audio autoplays) has been "fixed twice" and is flagged as fragile/timing-coupled.
 
-Per souki's bug-fix rule: **reproduce end-to-end in the browser first** (systematic-debugging), find the root cause of the fragility, then make the trigger deterministic rather than timing-dependent.
-Do not patch symptoms speculatively.
+**Root cause (found via code-level tracing - no browser automation tool was available in this session, so this was not confirmed with a live repro; see note below):**
+the doc scan (finds the target `attachmentId`, in `editor.tsx`) and the attachment's own blob load (`AudioNodeView` -> `useAttachmentObjectUrl` -> IndexedDB) are two **independent async chains** with no ordering guarantee between them.
+The old code only handled one ordering - doc scan finishes first, sets a one-shot `editor.storage.autoplayFirstAudioId` flag, `AudioNodeView` consumes it once its `<audio>` becomes ready.
+If the attachment happened to become ready *first* (plausible: Dexie's own Promise scheduling doesn't follow native microtask ordering), nothing ever re-checked the flag - the autoplay silently never fired.
+This matches "fixed twice, still fragile" exactly: which order wins isn't guaranteed by the spec, so any fix assuming one ordering will pass most of the time and randomly fail.
+
+**Fix:** made both orderings explicit and deterministic (`AudioNodeView.tsx`, `editor.tsx`).
+`AudioNodeView` now also registers a ready-to-play trigger (keyed by `attachmentId`) into `editor.storage.autoplayReadyAudio` once its element is ready; the doc scan checks that registry first and calls the trigger directly if present, falling back to the old flag only when the attachment isn't ready yet.
+Also fixed a related UI-state bug surfaced by the same code path: autoplay used to call `.play()` without updating the Play/Pause icon, and would show "Play" even while audio was already playing; the new `attemptPlay` helper only flips the icon once `play()` actually resolves (so a browser-rejected autoplay correctly leaves the Play icon showing).
+Covered by new tests for both race directions (`AudioNodeView.test.tsx`, `editor.test.tsx`) that fail against the old code and pass against the fix.
+
+> Manual browser QA for this task is still outstanding - flag to souki to verify audio autoplay-on-open a few times from the card chip (cold IndexedDB cache is the scenario most likely to hit the previously-losing race).
 
 ## Deferred to M4 (earmarked, not dismissed)
 
