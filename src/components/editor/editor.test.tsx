@@ -9,6 +9,10 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+// editor.tsx registers createExcalidraw, which statically imports the real
+// canvas lib - unmocked, it crashes under jsdom (no canvas.getContext()).
+vi.mock('@excalidraw/excalidraw', () => ({ Excalidraw: () => null, exportToSvg: vi.fn() }));
+
 describe('Editor autoplay-on-open', () => {
   it('scans the doc after a later setContent applies the loaded body, not just at mount', async () => {
     // Mirrors NoteEditorDialog opening an existing note: it renders with an

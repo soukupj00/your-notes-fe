@@ -21,6 +21,7 @@ import { BulletList } from '@/components/editor/extensions/BulletList';
 import { Clear } from '@/components/editor/extensions/Clear';
 import { Color } from '@/components/editor/extensions/Color';
 import { ColorPreview } from '@/components/editor/extensions/color-preview';
+import { createExcalidraw } from '@/components/editor/extensions/Excalidraw';
 import { createFile } from '@/components/editor/extensions/File';
 import { FontFamily } from '@/components/editor/extensions/FontFamily';
 import { FontSize } from '@/components/editor/extensions/FontSize';
@@ -44,6 +45,12 @@ import { Separator } from '@/components/ui/separator.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import type { AttachmentErrorCode } from '@/lib/attachments.ts';
 import { cn } from '@/lib/utils.ts';
+
+// Excalidraw resolves its bundled fonts/assets relative to this origin - pin it
+// to the app root so it works the same under the PWA's service-worker scope.
+if (typeof window !== 'undefined') {
+  (window as unknown as { EXCALIDRAW_ASSET_PATH?: string }).EXCALIDRAW_ASSET_PATH = '/';
+}
 
 type EditorProps = {
   content?: string;
@@ -129,6 +136,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       createAudio(getAttachmentDeps),
       createVideo(getAttachmentDeps),
       createFile(getAttachmentDeps),
+      createExcalidraw(getAttachmentDeps),
       BulletList,
       OrderedList,
       ListItem,

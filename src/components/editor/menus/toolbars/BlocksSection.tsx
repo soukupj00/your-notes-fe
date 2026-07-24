@@ -8,7 +8,8 @@ import ExtensionButtonBar from '@/components/editor/menus/ExtensionButtonBar.tsx
  * bundled math extension (inline + block); `imageAttachment` is the custom image
  * node (M3 Slice 1); `audioAttachment` is the custom audio node (M3 Slice 2);
  * `videoAttachment` is the custom video node (M3 Slice 3); `fileAttachment` is
- * the generic file node (M3 Slice 4).
+ * the generic file node (M3 Slice 4); `excalidrawAttachment` is the custom
+ * drawing node (M3 Slice 5).
  * Headings live in their own section at the start of the toolbar.
  */
 export const BLOCK_EXTENSION_NAMES = [
@@ -18,6 +19,7 @@ export const BLOCK_EXTENSION_NAMES = [
   'audioAttachment',
   'videoAttachment',
   'fileAttachment',
+  'excalidrawAttachment',
 ];
 
 interface BlocksSectionProps {
