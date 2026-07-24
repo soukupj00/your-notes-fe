@@ -167,3 +167,113 @@ Creation errors reuse the existing `editor.image.errors.${code}` toast strings v
 - **SVG snapshot is stored, not regenerated per render** (approved: the user wants a home-card preview without the cost of re-mounting the canvas on every feed render).
 - **Scene write-back is decoupled from body autosave** and persists directly to the attachment row; editing a drawing does not mark the note body dirty.
 - **No Dexie migration** is needed for `preview` (non-indexed property).
+
+---
+
+# Rework v2 - Modal editing surface (supersedes the inline-canvas design)
+
+## Why this rework
+
+The v1 design (above) mounts the **live `@excalidraw/excalidraw` canvas inline inside the ProseMirror NodeView**.
+In practice this does not work.
+Two independent causes:
+
+1. **Missing stylesheet (hard bug).**
+   `@excalidraw/excalidraw`'s CSS (`@excalidraw/excalidraw/index.css`, confirmed present in v0.18.1's package `exports`) is never imported anywhere in the app.
+   Without it the canvas renders as an unstyled, collapsed, non-functional element regardless of where it is mounted.
+   The official import example a user would copy includes this CSS import; we dropped it.
+2. **Inline-in-contentEditable (architectural).**
+   Embedding a live, pointer- and keyboard-hungry canvas editor inside a `contentEditable` ProseMirror document fights the host on focus, pointer capture, selection, sizing, and undo-stack ownership.
+   Even with the CSS fixed this is a fragile arrangement.
+
+**Decision:** keep the entire attachment/node/storage design from v1, but move the *editing surface* out of the document into a **modal dialog**, leaving only a **static preview node** in the document.
+This is the arrangement Excalidraw itself recommends and is more robust and maintainable.
+
+This section **supersedes** v1 sections **5 (NodeView)** and **6 (Toolbar button)**, and revises the **Data flow**.
+Everything else in v1 stands unchanged: the `excalidrawAttachment` node on the unchanged `createAttachmentNode` factory, the `<excalidraw-drawing data-attachment-id>` serialization, `scene.ts`, `updateAttachment`, the `Attachment.preview` field, `kind: 'excalidraw'` + validation, GC/dedupe, and the home-card SVG injection in `NoteBody` (§8).
+
+## Decisions (agreed in grilling)
+
+1. **Commit-on-Save.**
+   Clicking the toolbar button opens an *empty* modal.
+   Nothing touches Dexie or the document until the user hits **Save**.
+   Cancel creates no attachment row and no node.
+   (This removes v1's eager "create empty attachment + insert node on button click" model.)
+2. **One shared modal**, owned by `editor.tsx`, opened via a new `deps.openExcalidraw({ attachmentId?, onDelete? })` callback threaded through `AttachmentDeps`.
+   Exactly one `<Excalidraw>` instance is mounted at a time, and only while the modal is open.
+   Each drawing remains its own attachment / scene / preview (many drawings per note); the modal edits one drawing at a time.
+3. **Guarded explicit actions** in the modal - no accidental dismissal:
+   - **Save** - commits (create-or-update). **Disabled when the scene has zero elements** (never deletes).
+   - **Cancel / X** - discard and close. When the scene is *dirty* (Excalidraw's `onChange` has fired since open), show a "Discard drawing?" confirm first; otherwise close silently.
+   - **Delete** - **edit-mode only** (an existing drawing). Confirm-guarded; removes the node + row.
+   - Backdrop click and Escape do **not** dismiss (`onPointerDownOutside` / `onEscapeKeyDown` -> `preventDefault`); the dialog's built-in close-X is disabled (`showCloseButton={false}`) and replaced by our own X that runs the same dirty-guarded Cancel handler.
+   - The three verbs stay distinct: Save never deletes, Delete never saves, Cancel never persists.
+4. **Preview node is passive + interactive.**
+   The editable NodeView renders the **stored SVG preview** (no live canvas).
+   The **whole surface is tap-to-edit** (`openExcalidraw({ attachmentId, onDelete })`).
+   A **delete X is always visible top-right** (shared `ConfirmDeleteButton`), with `stopPropagation` so deleting never also opens the editor.
+   The read-only home-card path (`NoteBody`, §8) is unchanged.
+5. **Live-query preview.**
+   Because a drawing's blob/preview change on every re-edit (unlike immutable image/audio/video), the preview node reads the attachment row via Dexie `useLiveQuery`.
+   A modal Save reactively refreshes the in-editor preview with **zero body churn** (the node's `attachmentId` never changes).
+6. **Scene read on Save via `excalidrawAPI` ref** (`getSceneElements` / `getAppState` / `getFiles`) rather than mirroring every `onChange` into React state.
+   `onChange` is used only as a cheap dirty flag.
+7. **Modal delete reuses existing node-removal.**
+   The preview node passes `onDelete: () => props.deleteNode()` through the open call; both the preview's corner-X and the modal's Delete button funnel through the identical `props.deleteNode()` -> orphan-GC path.
+   No new data-layer deletion primitive.
+8. **Sizing - relative units only (no px, including max/min).**
+   Mobile-first true fullscreen (`w-screen h-[100dvh] max-w-none rounded-none`); `sm:` and up a large centered surface (`sm:w-[92vw] sm:max-w-[75rem] sm:h-[88vh] sm:rounded-lg`), `p-0`, laid out as a flex column: a slim header row holding the actions (**top-right**) and the canvas filling the rest (`flex-1 min-h-0`).
+   Actions are top-right (not a bottom footer) **only** because Excalidraw owns the bottom edge with its own mobile toolbar - a real collision overriding the normal bottom-of-modal convention.
+
+## Component shape
+
+- **`ExcalidrawDialog`** (new, presentational + self-contained editing state) - `src/components/editor/extensions/Excalidraw/ExcalidrawDialog.tsx`.
+  Imports `@excalidraw/excalidraw/index.css` (the CSS fix).
+  Props (controlled by `editor.tsx`): `{ open: boolean; mode: 'new' | 'edit'; initialScene: ExcalidrawScene | null; onSave: (scene: ExcalidrawScene) => Promise<void> | void; onDelete?: () => void; onClose: () => void }`.
+  Holds the `excalidrawAPI` ref, the dirty flag, and the empty/disabled-Save logic; renders the guarded Save / Cancel / Delete controls and the discard-confirm.
+  The dialog is `key`ed by the drawing identity (attachmentId or a "new" sentinel) so it resets cleanly between opens.
+- **`editor.tsx`** owns modal state `{ open, mode, attachmentId | null, initialScene, onDelete }` and renders one `<ExcalidrawDialog>`.
+  It implements `onSave`:
+  - **new** (no attachmentId): `noteId = await getNoteId()` -> `att = await createAttachment(noteId, sceneToFile(scene), 'excalidraw')` (with `preview` via `sceneToSvgString`) -> `editor.chain().focus().insertExcalidrawAttachment({ attachmentId: att.id }).run()`.
+  - **edit** (has attachmentId): `await updateAttachment(attachmentId, { blob: sceneToFile(scene), preview: await sceneToSvgString(scene) })` -> live-query refreshes the preview.
+  `openExcalidraw` reads the current scene (one-shot, via `getAttachment` + `parseScene`) to seed `initialScene` for edit; `new` seeds `emptyScene()`.
+- **`AttachmentDeps`** gains `openExcalidraw: (args: { attachmentId?: string; onDelete?: () => void }) => void`.
+- **`ExcalidrawNodeView`** (rewritten) - preview-only.
+  Live-queries the attachment row (for `.preview`); renders the SVG in a tap-to-edit surface (`onClick` -> `deps.openExcalidraw({ attachmentId, onDelete: () => props.deleteNode() })`), the always-visible corner-X (`ConfirmDeleteButton`, `stopPropagation`), and the missing/loading states.
+  No `<Excalidraw>` import, no debounced write-back.
+- **`ExcalidrawButton`** (rewritten) - `action: () => deps.openExcalidraw({})` (open empty modal; no create, no insert).
+
+## Revised data flow
+
+1. **New drawing:** button -> `openExcalidraw({})` -> modal opens on `emptyScene()`.
+   User draws.
+   **Save** -> `getNoteId()` -> `createAttachment(sceneToFile(scene), 'excalidraw')` (+ `preview`) -> `insertExcalidrawAttachment({ attachmentId })` (this node insertion is the only body change).
+   Cancel -> nothing persisted.
+2. **Edit drawing:** tap the preview -> `openExcalidraw({ attachmentId, onDelete })` -> modal opens on the parsed stored scene.
+   **Save** -> `updateAttachment(attachmentId, { blob, preview })` -> live-query re-renders the preview in place (no body change).
+3. **Delete:** preview corner-X *or* modal Delete -> `props.deleteNode()` -> row unreferenced -> `collectOrphans` reaps it at `NoteEditorDialog` close (unchanged).
+4. **Home card:** `NoteBody` injects the stored `preview` SVG (unchanged from v1 §8).
+
+## What is removed vs v1
+
+- The inline `<Excalidraw>` mount in the NodeView and its 800ms debounced write-back / unmount-flush.
+- Eager attachment creation + node insertion on toolbar-button click (moved to Save).
+- The read-only branch of the NodeView is no longer the only SVG path - the *editable* NodeView is now also SVG-based (the canvas lives solely in the modal).
+
+## What is kept from v1 (unchanged)
+
+`scene.ts` (all helpers), `updateAttachment`, `Attachment.preview`, `kind: 'excalidraw'` + validation, the `excalidrawAttachment` node + factory reuse + `<excalidraw-drawing>` tag + `BlocksSection` registration, `EXCALIDRAW_ASSET_PATH`, `NoteBody` SVG injection (§8), GC/dedupe.
+
+## Testing delta
+
+- **`ExcalidrawDialog.test.tsx`** (Excalidraw + `exportToSvg` mocked): Save disabled on empty scene; drawing enables Save; Save emits the scene to `onSave`; Cancel with a dirty scene shows the discard-confirm; Delete (edit mode) calls `onDelete`; Escape/backdrop do not close.
+- **`ExcalidrawNodeView.test.tsx`** (rewritten): renders the live-queried preview SVG; tapping the surface calls `openExcalidraw({ attachmentId, onDelete })`; the corner-X confirm calls `deleteNode` and does **not** open the editor (`stopPropagation`); missing state.
+- **`ExcalidrawButton.test.tsx`** (rewritten): click calls `openExcalidraw({})` - no `createAttachment`, no insert.
+- **`editor` integration**: `onSave` for a new drawing creates the attachment + inserts the node; for an edit calls `updateAttachment`.
+- Unchanged: `scene.test.ts`, `attachments.test.ts` (validation), `useAttachmentActions.test.ts` (`updateAttachment`), `NoteBody.test.tsx`, `BlocksSection.test.tsx` (button surfaces).
+
+## New assumptions
+
+- **Nested dialogs** (note-editor dialog -> Excalidraw modal -> confirm dialog) are acceptable; Radix supports the depth.
+- **`@excalidraw/excalidraw/index.css` imported once** in `ExcalidrawDialog` (the only place the canvas mounts).
+- **Dirty detection = "onChange fired since open"** (cheap over-approximation); acceptable that Excalidraw may fire an initial onChange - if it proves to over-report dirtiness, compare element count/version instead.
