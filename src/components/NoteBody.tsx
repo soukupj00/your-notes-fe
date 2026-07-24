@@ -38,6 +38,20 @@ export function NoteBody({
         img.src = url;
       });
     });
+    // Excalidraw drawings render as their stored SVG snapshot on the card
+    // (image-like inline resolution) - never re-mounting the canvas on the feed.
+    root.querySelectorAll<HTMLElement>('excalidraw-drawing[data-attachment-id]').forEach((el) => {
+      const id = el.getAttribute('data-attachment-id');
+      if (!id) return;
+      getAttachment(id).then((att) => {
+        if (!active || !att?.preview) return;
+        // Self-generated SVG markup (see sceneToSvgString), same trust model as
+        // the Body HTML this component already sets.
+        el.innerHTML = att.preview;
+        const svg = el.querySelector('svg');
+        if (svg) svg.style.maxWidth = '100%';
+      });
+    });
     // Audio, video, and file attachments have no inline representation on the
     // card - the card renders a dedicated button (see NoteCard). Remove the
     // src-less <audio>/<video>/<a> nodes so they don't show as broken native

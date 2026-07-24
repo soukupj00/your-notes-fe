@@ -51,4 +51,22 @@ describe('NoteBody', () => {
     expect(document.querySelector('audio')).toBeNull();
     expect(document.querySelector('[data-attachment-chip="audio"]')).toBeNull();
   });
+
+  it('injects the stored SVG preview for an excalidraw node (not stripped)', async () => {
+    const now = new Date().toISOString();
+    await db.attachments.put({
+      id: 'draw-1',
+      noteId: 'n1',
+      kind: 'excalidraw',
+      mime: 'application/json',
+      blob: new Blob(['{}'], { type: 'application/json' }),
+      preview: '<svg id="snap"></svg>',
+      createdAt: now,
+      updatedAt: now,
+    });
+    const html = '<excalidraw-drawing data-attachment-id="draw-1"></excalidraw-drawing>';
+    const { container } = render(<NoteBody html={html} />);
+    await waitFor(() => expect(container.querySelector('svg[id="snap"]')).toBeInTheDocument());
+    expect(container.querySelector('excalidraw-drawing')).toBeInTheDocument();
+  });
 });
