@@ -9,7 +9,12 @@ import type { Attachment, AttachmentKind } from '@/models.ts';
 // stable identities (see useNoteActions for the same rationale).
 export function useAttachmentActions() {
   const createAttachment = useCallback(
-    async (noteId: string, file: File, kind: AttachmentKind = 'image'): Promise<Attachment> => {
+    async (
+      noteId: string,
+      file: File,
+      kind: AttachmentKind = 'image',
+      options: { thumbnail?: Blob } = {}
+    ): Promise<Attachment> => {
       const bad = validateAttachmentFile(file, kind);
       if (bad) throw new AttachmentError(bad);
       const now = new Date().toISOString();
@@ -19,6 +24,7 @@ export function useAttachmentActions() {
         kind,
         mime: file.type,
         blob: file, // a File is a Blob; persist directly (ADR 0007)
+        thumbnail: options.thumbnail,
         name: file.name,
         size: file.size,
         createdAt: now,

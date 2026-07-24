@@ -42,7 +42,7 @@ export function NoteBody({
       img.setAttribute('loading', 'lazy');
       getAttachment(id).then((att) => {
         if (!active || !att) return;
-        const url = URL.createObjectURL(att.blob);
+        const url = URL.createObjectURL(att.thumbnail ?? att.blob);
         urls.push(url);
         img.src = url;
       });

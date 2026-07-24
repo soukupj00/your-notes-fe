@@ -43,6 +43,7 @@ import { FontSize } from '@/components/editor/extensions/FontSize';
 import { Heading } from '@/components/editor/extensions/Heading';
 import { Highlight } from '@/components/editor/extensions/Highlight';
 import { createImage } from '@/components/editor/extensions/Image';
+import { insertImageAttachmentFiles } from '@/components/editor/extensions/Image/insert';
 import { Italic } from '@/components/editor/extensions/Italic';
 import { ListItem } from '@/components/editor/extensions/ListItem';
 import { createMathematics } from '@/components/editor/extensions/Mathematics';
@@ -232,7 +233,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         const files = event.clipboardData?.files;
         const ed = editorRef.current;
         if (ed && files && Array.from(files).some((f) => f.type.startsWith('image/'))) {
-          void insertAttachmentFiles(ed, files, 'image', attachmentDepsRef.current, (id) =>
+          void insertImageAttachmentFiles(ed, files, attachmentDepsRef.current, (id) =>
             ed.chain().focus().insertImageAttachment({ attachmentId: id }).run()
           );
           return true;
@@ -261,7 +262,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         const files = (event as DragEvent).dataTransfer?.files;
         const ed = editorRef.current;
         if (ed && files && Array.from(files).some((f) => f.type.startsWith('image/'))) {
-          void insertAttachmentFiles(ed, files, 'image', attachmentDepsRef.current, (id) =>
+          void insertImageAttachmentFiles(ed, files, attachmentDepsRef.current, (id) =>
             ed.chain().focus().insertImageAttachment({ attachmentId: id }).run()
           );
           return true;

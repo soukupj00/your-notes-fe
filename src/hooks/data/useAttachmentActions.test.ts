@@ -26,6 +26,17 @@ describe('useAttachmentActions', () => {
     expect(await db.attachments.get(att.id)).toBeTruthy();
   });
 
+  it('createAttachment stores an image thumbnail in the same row', async () => {
+    const a = actions();
+    const noteId = crypto.randomUUID();
+    const thumbnail = new Blob(['small'], { type: 'image/webp' });
+
+    const att = await a.createAttachment(noteId, pngFile(), 'image', { thumbnail });
+
+    expect(att).toMatchObject({ thumbnail });
+    expect(await db.attachments.get(att.id)).toMatchObject({ thumbnail });
+  });
+
   it('createAttachment rejects a bad type without writing', async () => {
     const a = actions();
     const bad = new File(['x'], 'x.svg', { type: 'image/svg+xml' });

@@ -9,11 +9,13 @@ Domain glossary for the note-taking app. This file defines the **language** of t
 - **Checklist** — The ordered list of to-do items belonging to a Note. Distinct from a bullet/ordered list *inside* the rich-text Body: the checklist is structured Note data, body lists are editor formatting.
 - **Tag** — A user-defined label (e.g. "Work", "Personal") used to group Notes. A Tag exists independently of any Note and can be attached to many Notes.
 - **NoteTag** — The many-to-many association between a Note and a Tag. Attaching or detaching a Tag creates or removes a NoteTag; it never deletes the Tag itself.
-- **Attachment** — Any non-text media belonging to a Note. An Attachment is authored **inside the Body**: the Body holds a lightweight reference to the Attachment (never the media bytes), and the Attachment's bytes and metadata are stored separately. The Body decides *which* Attachments a Note shows and *where*; the Attachment store owns the bytes. Four kinds, each a separate concept:
+- **Attachment** — Any non-text media belonging to a Note. An Attachment is authored **inside the Body**: the Body holds a lightweight reference to the Attachment (never the media bytes), and the Attachment's bytes and metadata are stored separately. The Body decides *which* Attachments a Note shows and *where*; the Attachment store owns the bytes. Five kinds, each a separate concept:
   - **Image** — a picture displayed inline in the Body.
   - **Audio** — a sound recording, optionally with a duration.
   - **Video** — a moving-image clip.
   - **File** — any other attached document, identified by filename, size, and MIME type.
+  - **Drawing** — an Excalidraw scene authored inside the Note (created empty and edited in place, not attached from an existing file).
+- **Preview** — A lightweight stand-in rendered on the note card in place of the full Attachment, so the feed never loads the full bytes. It is a downscaled raster for an Image, and an SVG snapshot for a Drawing. Audio, Video, and File have no Preview; the card shows a control button or icon instead. A Preview is a rendering optimisation, never the source of truth — the full Attachment remains authoritative.
 - **Orphan Attachment** — An Attachment whose Note no longer references it (its reference was removed from the Body, or its Note was discarded/never saved). Orphans are reclaimed by a sweep, not deleted the instant a reference disappears (so an in-editor undo can bring the reference back).
 
 ## Editing

@@ -35,7 +35,8 @@ export interface Attachment {
   noteId: string; // FK to Note.id
   kind: AttachmentKind;
   mime: string; // e.g. 'image/png'
-  blob: Blob; // the bytes
+  blob: Blob; // the authoritative full-size bytes
+  thumbnail?: Blob; // image: downscaled WebP Preview for cheap card rendering
   name?: string; // original filename
   size?: number; // bytes
   width?: number; // image/video (computed in a later processing slice)
