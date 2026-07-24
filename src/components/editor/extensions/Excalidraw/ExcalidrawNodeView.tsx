@@ -23,8 +23,8 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
     [attachmentId]
   );
 
-  // Delete is a *sibling* of the preview surface (absolutely positioned over it),
-  // not a descendant - so a delete tap never reaches the surface's open handler.
+  // Delete is a sibling of the preview surface, positioned inside the same
+  // shrink-wrapped frame. A delete tap never reaches the surface's open handler.
   const deleteButton = editable ? (
     <span className="absolute top-2 right-2 z-10 rounded-full bg-background/80">
       <ConfirmDeleteButton
@@ -55,34 +55,36 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
   }
 
   const surfaceClass =
-    'block min-h-16 w-full max-w-full overflow-hidden rounded-md border [&>svg]:max-w-full';
+    'block max-w-full overflow-hidden rounded-md border [&>svg]:block [&>svg]:h-auto [&>svg]:max-w-full';
   const openEditor = () => {
     if (!attachmentId) return;
     deps.openExcalidraw({ attachmentId, onDelete: () => props.deleteNode() });
   };
 
   return (
-    <NodeViewWrapper as="div" className="relative my-2" data-drag-handle>
-      {/* Passive preview surface (self-generated SVG snapshot). Editable: a real
-          button (tap/keyboard opens the shared modal); read-only: a plain box. */}
-      {editable ? (
-        <button
-          type="button"
-          aria-label={deps.t('editor.excalidraw.edit')}
-          onClick={openEditor}
-          contentEditable={false}
-          className={cn(surfaceClass, 'cursor-pointer text-left')}
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: self-generated SVG snapshot (see sceneToSvgString).
-          dangerouslySetInnerHTML={{ __html: row.preview ?? '' }}
-        />
-      ) : (
-        <div
-          className={surfaceClass}
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: self-generated SVG snapshot (see sceneToSvgString).
-          dangerouslySetInnerHTML={{ __html: row.preview ?? '' }}
-        />
-      )}
-      {deleteButton}
+    <NodeViewWrapper as="div" className="my-2" data-drag-handle>
+      <div className="relative inline-block max-w-full align-top">
+        {/* Passive preview surface (self-generated SVG snapshot). Editable: a real
+            button (tap/keyboard opens the shared modal); read-only: a plain box. */}
+        {editable ? (
+          <button
+            type="button"
+            aria-label={deps.t('editor.excalidraw.edit')}
+            onClick={openEditor}
+            contentEditable={false}
+            className={cn(surfaceClass, 'cursor-pointer text-left')}
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: self-generated SVG snapshot (see sceneToSvgString).
+            dangerouslySetInnerHTML={{ __html: row.preview ?? '' }}
+          />
+        ) : (
+          <div
+            className={surfaceClass}
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: self-generated SVG snapshot (see sceneToSvgString).
+            dangerouslySetInnerHTML={{ __html: row.preview ?? '' }}
+          />
+        )}
+        {deleteButton}
+      </div>
     </NodeViewWrapper>
   );
 }

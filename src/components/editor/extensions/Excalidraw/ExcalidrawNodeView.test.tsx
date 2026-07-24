@@ -40,11 +40,20 @@ afterEach(async () => {
 });
 
 describe('ExcalidrawNodeView (preview)', () => {
-  it('renders the live-queried preview SVG', async () => {
+  it('sizes the border and delete overlay to the preview instead of the editor width', async () => {
     await db.attachments.add(att());
     const { p } = props();
-    const { container } = render(<ExcalidrawNodeView {...p} />);
-    await waitFor(() => expect(container.querySelector('svg#snap')).toBeInTheDocument());
+    render(<ExcalidrawNodeView {...p} />);
+
+    const surface = await screen.findByRole('button', { name: 'editor.excalidraw.edit' });
+    const frame = surface.parentElement;
+
+    expect(frame).toHaveClass('inline-block', 'relative', 'max-w-full');
+    expect(frame).toContainElement(surface.querySelector('svg#snap'));
+    expect(frame).toContainElement(
+      screen.getByRole('button', { name: 'editor.excalidraw.delete' })
+    );
+    expect(surface).not.toHaveClass('w-full');
   });
 
   it('tapping the preview opens the modal with attachmentId + onDelete', async () => {

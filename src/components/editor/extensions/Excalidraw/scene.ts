@@ -11,19 +11,37 @@ export function emptyScene(): ExcalidrawScene {
   return { elements: [], appState: { viewBackgroundColor: '#ffffff' }, files: {} };
 }
 
+/** Collaboration is out of scope and `collaborators` is a runtime Map.
+ *  JSON.stringify turns it into `{}`, which crashes Excalidraw when reopened.
+ *  Omitting it lets Excalidraw restore its default empty Map. */
+function withoutTransientAppState(appState: Record<string, unknown>): Record<string, unknown> {
+  const persistable = { ...appState };
+  delete persistable.collaborators;
+  return persistable;
+}
+
 /** Serialize a scene as a JSON File so it flows through the same createAttachment
  *  path (and the same Blob-based attachments table) as every other media kind. */
 export function sceneToFile(scene: ExcalidrawScene): File {
-  return new File([JSON.stringify(scene)], 'drawing.excalidraw.json', {
+  const persistableScene = {
+    ...scene,
+    appState: withoutTransientAppState(scene.appState),
+  };
+  return new File([JSON.stringify(persistableScene)], 'drawing.excalidraw.json', {
     type: 'application/json',
   });
 }
 
 /** Tolerant parse: returns null on malformed JSON so the NodeView can show the
- *  "unavailable" state instead of throwing. */
+ *  "unavailable" state instead of throwing. Also repairs scenes saved before
+ *  transient collaboration state was excluded. */
 export function parseScene(text: string): ExcalidrawScene | null {
   try {
-    return JSON.parse(text) as ExcalidrawScene;
+    const scene = JSON.parse(text) as ExcalidrawScene;
+    return {
+      ...scene,
+      appState: withoutTransientAppState(scene.appState),
+    };
   } catch {
     return null;
   }
