@@ -40,6 +40,7 @@ export function NoteBody({
       const id = img.getAttribute('data-attachment-id');
       if (!id) return;
       img.setAttribute('loading', 'lazy');
+      img.classList.add('rounded-md');
       getAttachment(id).then((att) => {
         if (!active || !att) return;
         const url = URL.createObjectURL(att.thumbnail ?? att.blob);
@@ -62,6 +63,7 @@ export function NoteBody({
         // drawings. Treat the preview as a normal responsive block image.
         el.style.display = 'block';
         el.style.lineHeight = '0';
+        el.classList.add('overflow-hidden', 'rounded-md');
         const svg = el.querySelector('svg');
         if (svg) {
           svg.style.display = 'block';

@@ -1,6 +1,6 @@
 # M3 Slice 6 - performance & polish closeout
 
-**Status:** in progress (Tasks 1-2 complete).
+**Status:** in progress (Tasks 1-5 complete).
 
 **Goal:** Close out M3 with the performance and correctness work that finishes "attachments render fast and don't leak," plus a bounded set of named polish fixes from daily use.
 No new media features - those are earmarked for M4.
@@ -63,14 +63,14 @@ Safe at startup: no live undo stack, and the on-disk body is the saved truth.
 
 > Note: the async-gliding "design smell" (*no GC when a node is removed from the body*) is **already handled** at dialog close and is not a task here.
 
-### Task 3 - Unify delete-button placement + prominence
+### Task 3 - Unify delete-button placement + prominence ✅
 
 `ConfirmDeleteButton` is already shared, but placement diverges: Excalidraw overlays it (`absolute top-2 right-2`), while Image passes it inline.
 
 - Make **image / video / file** adopt Excalidraw's **corner overlay** (`absolute top-2 right-2`) with a more prominent, always-legible style (semi-opaque background pill so it reads over any content), all via the existing shared component.
 - **Audio** keeps the same shared component but placed **inline at the trailing end of the player row** (audio is a control bar, not a content canvas), so it is "the same button, placed to fit the design."
 
-### Task 4 - Audio recording UI: mobile width + calmer visualizer
+### Task 4 - Audio recording UI: mobile width + calmer visualizer ✅
 
 Two parts (may be two commits):
 
@@ -81,10 +81,12 @@ Two parts (may be two commits):
   Calm and readable instead of jumpy.
   Keep the existing AudioContext teardown discipline (context + RAF torn down with the stream).
 
-### Task 5 - Excalidraw card preview rounded corners
+### Task 5 - Excalidraw card preview rounded corners ✅
 
 The NodeView preview already has `rounded-md`, but the **card path** does not: `NoteBody` injects the stored SVG with `display:block; width:100%` on a container with no rounding/clip, so wide drawings show square corners on the card.
 Add `rounded` + `overflow-hidden` to the excalidraw preview container in `NoteBody`.
+
+> Follow-up (same review): the card **image** preview had the identical gap - `NoteBody`'s `<img data-attachment-id>` had no rounding class, unlike the editor's `ImageNodeView` (`rounded-md`). Fixed alongside this task by adding `rounded-md` to the card `<img>` in `NoteBody`, for parity with the editor.
 
 ### Task 6 - Harden autoplay-on-open
 

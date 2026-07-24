@@ -47,6 +47,7 @@ describe('NoteBody', () => {
     const img = await screen.findByRole('img');
     await waitFor(() => expect(img).toHaveAttribute('src', expect.stringContaining('blob:mock/')));
     expect(img).toHaveAttribute('loading', 'lazy');
+    expect(img).toHaveClass('rounded-md');
   });
 
   it('uses an image thumbnail instead of the full blob when one is stored', async () => {
@@ -109,6 +110,7 @@ describe('NoteBody', () => {
     });
     const drawing = container.querySelector<HTMLElement>('excalidraw-drawing');
     expect(drawing).toHaveStyle({ display: 'block', lineHeight: '0' });
+    expect(drawing).toHaveClass('overflow-hidden', 'rounded-md');
     expect(svg).toHaveStyle({ display: 'block', width: '100%', height: 'auto' });
   });
 });
