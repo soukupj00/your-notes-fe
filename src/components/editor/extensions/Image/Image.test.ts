@@ -18,6 +18,7 @@ function stubDeps(): AttachmentDeps {
     getAttachment: vi.fn(async () => undefined),
     cloneAttachment: vi.fn(),
     updateAttachment: vi.fn(),
+    openExcalidraw: vi.fn(),
     onError: vi.fn(),
     t,
   };

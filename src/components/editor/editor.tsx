@@ -7,7 +7,15 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { EditorContent, useEditor } from '@tiptap/react';
 import 'katex/dist/katex.min.css';
 import type React from 'react';
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { createAudio } from '@/components/editor/extensions/Audio';
@@ -22,6 +30,13 @@ import { Clear } from '@/components/editor/extensions/Clear';
 import { Color } from '@/components/editor/extensions/Color';
 import { ColorPreview } from '@/components/editor/extensions/color-preview';
 import { createExcalidraw } from '@/components/editor/extensions/Excalidraw';
+import { commitExcalidrawScene } from '@/components/editor/extensions/Excalidraw/commit';
+import { ExcalidrawDialog } from '@/components/editor/extensions/Excalidraw/ExcalidrawDialog';
+import {
+  type ExcalidrawScene,
+  emptyScene,
+  parseScene,
+} from '@/components/editor/extensions/Excalidraw/scene';
 import { createFile } from '@/components/editor/extensions/File';
 import { FontFamily } from '@/components/editor/extensions/FontFamily';
 import { FontSize } from '@/components/editor/extensions/FontSize';
@@ -97,6 +112,52 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
 
   const { createAttachment, getAttachment, cloneAttachment, updateAttachment } =
     useAttachmentActions();
+
+  // The single shared Excalidraw editing modal (the live canvas lives here, not
+  // inline in the document). `attachmentId === null` is a new drawing (Save
+  // creates); otherwise we edit that row. `onDelete` funnels the modal's Delete
+  // and the preview's corner-X through the same node removal.
+  const [excalidraw, setExcalidraw] = useState<{
+    open: boolean;
+    attachmentId: string | null;
+    initialScene: ExcalidrawScene | null;
+    onDelete?: () => void;
+    // Bumped on every open so the dialog remounts (fresh dirty/empty state) even
+    // when the same drawing - or another new one - is opened twice in a row.
+    key: number;
+  }>({ open: false, attachmentId: null, initialScene: null, key: 0 });
+  const openSeqRef = useRef(0);
+
+  const openExcalidraw = useCallback(
+    (args: { attachmentId?: string; onDelete?: () => void }) => {
+      const { attachmentId, onDelete } = args;
+      const key = ++openSeqRef.current;
+      if (!attachmentId) {
+        setExcalidraw({
+          open: true,
+          attachmentId: null,
+          initialScene: emptyScene(),
+          onDelete,
+          key,
+        });
+        return;
+      }
+      // One-shot read to seed the editor; the modal edits its own copy and
+      // commits on Save. Fall back to an empty scene if the row is unreadable.
+      void getAttachment(attachmentId).then(async (att) => {
+        const scene = att ? parseScene(await att.blob.text()) : null;
+        setExcalidraw({
+          open: true,
+          attachmentId,
+          initialScene: scene ?? emptyScene(),
+          onDelete,
+          key,
+        });
+      });
+    },
+    [getAttachment]
+  );
+
   const attachmentDeps = useMemo(
     () => ({
       getNoteId:
@@ -108,10 +169,19 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       getAttachment,
       cloneAttachment,
       updateAttachment,
+      openExcalidraw,
       onError: (code: AttachmentErrorCode) => toast(t(`editor.image.errors.${code}`)),
       t,
     }),
-    [getNoteId, createAttachment, getAttachment, cloneAttachment, updateAttachment, t]
+    [
+      getNoteId,
+      createAttachment,
+      getAttachment,
+      cloneAttachment,
+      updateAttachment,
+      openExcalidraw,
+      t,
+    ]
   );
   // useEditor builds the node (and its stored getter) exactly once, so all three
   // entry points must reach the *current* attachmentDeps through a stable getter over
@@ -275,6 +345,32 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     [editor]
   );
 
+  // Commit-on-Save: create+insert for a new drawing, updateAttachment for an
+  // edit. Reads the live deps/editor via refs (the node was built once at mount).
+  const handleExcalidrawSave = useCallback(
+    async (scene: ExcalidrawScene) => {
+      try {
+        await commitExcalidrawScene(
+          attachmentDepsRef.current,
+          excalidraw.attachmentId,
+          scene,
+          (id) =>
+            editorRef.current
+              ?.chain()
+              .focus()
+              .insertExcalidrawAttachment({ attachmentId: id })
+              .run()
+        );
+      } catch (err) {
+        console.error('Editor: excalidraw save failed', err);
+        attachmentDepsRef.current.onError('insert-failed');
+      } finally {
+        setExcalidraw((s) => ({ ...s, open: false }));
+      }
+    },
+    [excalidraw.attachmentId]
+  );
+
   if (!editor) {
     return null;
   }
@@ -291,53 +387,68 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   };
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: click just forwards focus into the editor; keyboard users already reach it via Tab.
-    <div
-      className={cn('relative flex flex-col rounded-xl border p-4', className)}
-      onMouseDown={editable ? focusOnEmptyClick : undefined}
-    >
-      {/* Toolbar. Desktop: on top (DOM order). Mobile + stickyToolbarOnMobile:
+    <>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: click just forwards focus into the editor; keyboard users already reach it via Tab. */}
+      <div
+        className={cn('relative flex flex-col rounded-xl border p-4', className)}
+        onMouseDown={editable ? focusOnEmptyClick : undefined}
+      >
+        {/* Toolbar. Desktop: on top (DOM order). Mobile + stickyToolbarOnMobile:
           ordered last and pinned to the bottom of the scroll container (no
           border; the editor is padding-free on mobile, so no margin cancelling). */}
-      {editable && (
-        <div
-          className={cn(
-            'flex flex-wrap items-center gap-1',
-            stickyToolbarOnMobile &&
-              'sticky bottom-0 z-10 order-last bg-background py-2 sm:static sm:order-none sm:py-0'
-          )}
-        >
-          <HeadingSection editor={editor} />
-          <Separator
-            orientation="vertical"
-            className="mx-1 hidden data-[orientation=vertical]:h-6 sm:block"
-          />
-          <FormatSection editor={editor} />
-          <Separator
-            orientation="vertical"
-            className="mx-1 hidden data-[orientation=vertical]:h-6 sm:block"
-          />
-          <ListSection editor={editor} />
-          <Separator
-            orientation="vertical"
-            className="mx-1 hidden data-[orientation=vertical]:h-6 sm:block"
-          />
-          <BlocksSection editor={editor} />
-          <Separator
-            orientation="vertical"
-            className="mx-1 hidden data-[orientation=vertical]:h-6 sm:block"
-          />
-          <FontSection editor={editor} />
-        </div>
-      )}
+        {editable && (
+          <div
+            className={cn(
+              'flex flex-wrap items-center gap-1',
+              stickyToolbarOnMobile &&
+                'sticky bottom-0 z-10 order-last bg-background py-2 sm:static sm:order-none sm:py-0'
+            )}
+          >
+            <HeadingSection editor={editor} />
+            <Separator
+              orientation="vertical"
+              className="mx-1 hidden data-[orientation=vertical]:h-6 sm:block"
+            />
+            <FormatSection editor={editor} />
+            <Separator
+              orientation="vertical"
+              className="mx-1 hidden data-[orientation=vertical]:h-6 sm:block"
+            />
+            <ListSection editor={editor} />
+            <Separator
+              orientation="vertical"
+              className="mx-1 hidden data-[orientation=vertical]:h-6 sm:block"
+            />
+            <BlocksSection editor={editor} />
+            <Separator
+              orientation="vertical"
+              className="mx-1 hidden data-[orientation=vertical]:h-6 sm:block"
+            />
+            <FontSection editor={editor} />
+          </div>
+        )}
 
-      {/* Editable area. `flex-1` lets it fill a full-screen sheet so a
+        {/* Editable area. `flex-1` lets it fill a full-screen sheet so a
           sticky-bottom toolbar sits at the screen edge even with little text;
           `cursor-text` makes the empty space read as editable. */}
-      <EditorContent
-        editor={editor}
-        className="prose prose-sm min-h-[150px] max-w-none flex-1 cursor-text focus:outline-none"
+        <EditorContent
+          editor={editor}
+          className="prose prose-sm min-h-[150px] max-w-none flex-1 cursor-text focus:outline-none"
+        />
+      </div>
+
+      {/* One shared Excalidraw editing surface for the whole editor. Remounted per
+        open (keyed) so its dirty/empty state is always fresh. */}
+      <ExcalidrawDialog
+        key={excalidraw.key}
+        open={excalidraw.open}
+        mode={excalidraw.attachmentId ? 'edit' : 'new'}
+        initialScene={excalidraw.initialScene}
+        onSave={handleExcalidrawSave}
+        onDelete={excalidraw.onDelete}
+        onClose={() => setExcalidraw((s) => ({ ...s, open: false }))}
+        t={t}
       />
-    </div>
+    </>
   );
 });

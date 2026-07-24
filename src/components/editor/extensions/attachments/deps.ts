@@ -11,6 +11,11 @@ export interface AttachmentDeps {
   getAttachment: (id: string) => Promise<Attachment | undefined>;
   cloneAttachment: (source: Attachment, noteId: string) => Promise<Attachment>;
   updateAttachment: (id: string, changes: { blob?: Blob; preview?: string }) => Promise<void>;
+  /** Open the shared Excalidraw editing modal. No attachmentId = a new drawing
+   *  (commit-on-Save creates the row); with one = edit that drawing. `onDelete`
+   *  (edit only) removes the node so the modal's Delete and the preview's corner-X
+   *  funnel through the same deleteNode() path. */
+  openExcalidraw: (args: { attachmentId?: string; onDelete?: () => void }) => void;
   onError: (code: AttachmentErrorCode) => void;
   t: TFunction;
 }
