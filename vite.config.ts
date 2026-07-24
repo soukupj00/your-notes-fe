@@ -15,6 +15,11 @@ export default defineConfig({
         // Default globPatterns omit .json, which would leave the i18n locale files
         // (dist/locales/<lng>/translation.json) uncached and break translations offline.
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
+        // @excalidraw/excalidraw (M3 Slice 5) pushed the main chunk past workbox's
+        // default 2 MiB precache limit. Dynamic-importing the canvas is an accepted
+        // follow-up (see the Excalidraw design spec), not required for this slice -
+        // raise the cap instead so the app still precaches for offline use.
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
       },
       manifest: {
         name: 'My PWA App',

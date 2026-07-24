@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { v4 as uuid } from 'uuid';
 import { db } from '@/db/db.ts';
-import { AttachmentError, validateImageFile } from '@/lib/attachments.ts';
+import { AttachmentError, validateAttachmentFile } from '@/lib/attachments.ts';
 import type { Attachment, AttachmentKind } from '@/models.ts';
 
 // Mutations close over the stable `db` import only, so they are memoized with
@@ -10,7 +10,7 @@ import type { Attachment, AttachmentKind } from '@/models.ts';
 export function useAttachmentActions() {
   const createAttachment = useCallback(
     async (noteId: string, file: File, kind: AttachmentKind = 'image'): Promise<Attachment> => {
-      const bad = validateImageFile(file);
+      const bad = validateAttachmentFile(file, kind);
       if (bad) throw new AttachmentError(bad);
       const now = new Date().toISOString();
       const att: Attachment = {
@@ -53,6 +53,17 @@ export function useAttachmentActions() {
     []
   );
 
+  // Write-back for interactive attachments (Excalidraw): replace the stored
+  // scene blob and/or refresh the SVG preview in place, on the same row the
+  // Body already references by id. Decoupled from Body autosave (the
+  // attachmentId never changes on an edit).
+  const updateAttachment = useCallback(
+    async (id: string, changes: { blob?: Blob; preview?: string }): Promise<void> => {
+      await db.attachments.update(id, { ...changes, updatedAt: new Date().toISOString() });
+    },
+    []
+  );
+
   // Note-scoped GC: drop this note's rows no longer referenced by the saved Body.
   const collectOrphans = useCallback(async (noteId: string, referencedIds: string[]) => {
     const referenced = new Set(referencedIds);
@@ -81,6 +92,7 @@ export function useAttachmentActions() {
     getAttachment,
     deleteAttachment,
     cloneAttachment,
+    updateAttachment,
     collectOrphans,
     collectMissingNoteOrphans,
   };

@@ -11,7 +11,11 @@ const MASONRY = 'columns-1 gap-4 sm:columns-2 lg:columns-3 xl:columns-4';
 // Single-column reading list, centered and width-capped for comfortable line length.
 const LIST = 'mx-auto flex max-w-2xl flex-col gap-4';
 
-export function NoteContent({ onSelect }: { onSelect: (id: string) => void }) {
+export function NoteContent({
+  onSelect,
+}: {
+  onSelect: (id: string, opts?: { autoplayFirstAudio?: boolean }) => void;
+}) {
   const { notes, query, loading } = useNotes();
   const { viewMode } = useViewMode();
   const { t } = useTranslation();

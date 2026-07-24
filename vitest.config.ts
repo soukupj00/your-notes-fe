@@ -17,5 +17,15 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     css: false,
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    // @excalidraw/excalidraw's dependency roughjs uses extensionless subpath
+    // imports (`roughjs/bin/rough`) that fail under Vitest's default Node-native
+    // module resolution for externalized deps. Inlining routes them through
+    // Vite's own (esbuild-based) resolver instead, which resolves them fine -
+    // the same resolution the app's real Vite build/dev server already uses.
+    server: {
+      deps: {
+        inline: ['@excalidraw/excalidraw', 'roughjs'],
+      },
+    },
   },
 });

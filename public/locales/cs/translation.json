@@ -1,4 +1,15 @@
 {
+  "navbar": {
+    "logo": "Poznámky"
+  },
+  "attachments": {
+    "confirmDelete": {
+      "title": "Odebrat tuto přílohu?",
+      "description": "Bude odebrána z této poznámky. Po zavření poznámky to nelze vrátit zpět.",
+      "confirm": "Odebrat",
+      "cancel": "Zrušit"
+    }
+  },
   "editor": {
     "bold": { "tooltip": "Tučné" },
     "italic": { "tooltip": "Kurzíva" },
@@ -24,11 +35,68 @@
       "tooltip": "Vložit obrázek",
       "unavailable": "Obrázek není k dispozici",
       "fallbackAlt": "Obrázek",
+      "delete": "Smazat obrázek",
       "errors": {
         "unsupported-type": "Tento typ obrázku není podporován",
         "too-large": "Obrázek je příliš velký (max 10 MB)",
         "insert-failed": "Obrázek se nepodařilo přidat"
       }
+    },
+    "audio": {
+      "play": "Přehrát",
+      "pause": "Pozastavit",
+      "seek": "Přetáčet",
+      "unavailable": "Zvuk není k dispozici",
+      "tooltip": "Nahrát zvuk",
+      "delete": "Smazat zvuk",
+      "stop": "Zastavit",
+      "cancel": "Zrušit",
+      "errors": {
+        "permission": "Přístup k mikrofonu byl odepřen",
+        "unsupported": "Nahrávání zvuku není v tomto prohlížeči podporováno",
+        "no-device": "Nebyl nalezen žádný mikrofon",
+        "in-use": "Mikrofon používá jiná aplikace",
+        "failed": "Nahrávání se nepodařilo spustit"
+      }
+    },
+    "video": {
+      "tooltip": "Připojit video",
+      "delete": "Smazat video",
+      "unavailable": "Video není k dispozici"
+    },
+    "file": {
+      "tooltip": "Připojit soubor",
+      "open": "Otevřít soubor",
+      "delete": "Smazat soubor",
+      "unavailable": "Soubor není k dispozici",
+      "fallbackName": "Soubor"
+    },
+    "excalidraw": {
+      "tooltip": "Vložit kresbu",
+      "delete": "Smazat kresbu",
+      "edit": "Upravit kresbu",
+      "unavailable": "Kresba není k dispozici",
+      "title": "Kresba",
+      "save": "Uložit",
+      "cancel": "Zrušit",
+      "deleteModal": "Smazat kresbu",
+      "deleteAction": "Smazat",
+      "discardTitle": "Zahodit kresbu?",
+      "discardDescription": "Vaše změny budou ztraceny.",
+      "discardConfirm": "Zahodit",
+      "discardCancel": "Pokračovat v úpravách"
+    }
+  },
+  "settings": {
+    "title": "Nastavení",
+    "locale": {
+      "label": "Jazyk"
+    },
+    "theme": {
+      "label": "Motiv",
+      "system": "Systém",
+      "light": "Světlý",
+      "dark": "Tmavý"
     }
   },
   "notes": {
@@ -44,6 +112,9 @@
     },
     "noResults": "Žádné poznámky neodpovídají hledání.",
     "menu": "Možnosti poznámky",
+    "playAudio": "Přehrát zvuk",
+    "playVideo": "Přehrát video",
+    "openFile": "Otevřít soubor",
     "delete": "Smazat",
     "deleted": "Poznámka smazána",
     "undo": "Zpět",

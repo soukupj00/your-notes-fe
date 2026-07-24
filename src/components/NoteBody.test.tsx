@@ -39,8 +39,43 @@ describe('NoteBody', () => {
     expect(img).toHaveAttribute('loading', 'lazy');
   });
 
-  it('renders plain HTML with no attachments unchanged', () => {
-    render(<NoteBody html="<p>just text</p>" />);
+  it('renders plain HTML while removing unsafe pasted attributes', () => {
+    const { container } = render(
+      <NoteBody html='<p>just text</p><img src="x" onerror="alert(1)">' />
+    );
     expect(screen.getByText('just text')).toBeInTheDocument();
+    expect(container.querySelector('img')).not.toHaveAttribute('onerror');
+  });
+
+  it('strips src-less audio attachment nodes (card shows a play button instead)', () => {
+    render(<NoteBody html='<p>hi</p><audio data-attachment-id="au1"></audio>' />);
+    expect(screen.getByText('hi')).toBeInTheDocument();
+    // The audio node is removed, not rendered as a broken native player or chip.
+    expect(document.querySelector('audio')).toBeNull();
+    expect(document.querySelector('[data-attachment-chip="audio"]')).toBeNull();
+  });
+
+  it('injects the stored SVG preview for an excalidraw node (not stripped)', async () => {
+    const now = new Date().toISOString();
+    await db.attachments.put({
+      id: 'draw-1',
+      noteId: 'n1',
+      kind: 'excalidraw',
+      mime: 'application/json',
+      blob: new Blob(['{}'], { type: 'application/json' }),
+      preview: '<svg id="snap" width="400" height="100" viewBox="0 0 400 100"></svg>',
+      createdAt: now,
+      updatedAt: now,
+    });
+    const html = '<excalidraw-drawing data-attachment-id="draw-1"></excalidraw-drawing>';
+    const { container } = render(<NoteBody html={html} />);
+    const svg = await waitFor(() => {
+      const resolved = container.querySelector<SVGElement>('svg[id="snap"]');
+      expect(resolved).toBeInTheDocument();
+      return resolved as SVGElement;
+    });
+    const drawing = container.querySelector<HTMLElement>('excalidraw-drawing');
+    expect(drawing).toHaveStyle({ display: 'block', lineHeight: '0' });
+    expect(svg).toHaveStyle({ display: 'block', width: '100%', height: 'auto' });
   });
 });

@@ -1,4 +1,15 @@
 {
+  "navbar": {
+    "logo": "Notes"
+  },
+  "attachments": {
+    "confirmDelete": {
+      "title": "Remove this attachment?",
+      "description": "It will be removed from this note. This cannot be undone once you close the note.",
+      "confirm": "Remove",
+      "cancel": "Cancel"
+    }
+  },
   "editor": {
     "bold": { "tooltip": "Bold" },
     "italic": { "tooltip": "Italic" },
@@ -24,11 +35,68 @@
       "tooltip": "Insert image",
       "unavailable": "Image unavailable",
       "fallbackAlt": "Image",
+      "delete": "Delete image",
       "errors": {
         "unsupported-type": "That image type is not supported",
         "too-large": "Image is too large (max 10 MB)",
         "insert-failed": "Could not add the image"
       }
+    },
+    "audio": {
+      "play": "Play",
+      "pause": "Pause",
+      "seek": "Seek",
+      "unavailable": "Audio unavailable",
+      "tooltip": "Record audio",
+      "delete": "Delete audio",
+      "stop": "Stop",
+      "cancel": "Cancel",
+      "errors": {
+        "permission": "Microphone access was denied",
+        "unsupported": "Audio recording is not supported in this browser",
+        "no-device": "No microphone was found",
+        "in-use": "The microphone is being used by another app",
+        "failed": "Could not start recording"
+      }
+    },
+    "video": {
+      "tooltip": "Attach video",
+      "delete": "Delete video",
+      "unavailable": "Video unavailable"
+    },
+    "file": {
+      "tooltip": "Attach file",
+      "open": "Open file",
+      "delete": "Delete file",
+      "unavailable": "File unavailable",
+      "fallbackName": "File"
+    },
+    "excalidraw": {
+      "tooltip": "Insert drawing",
+      "delete": "Delete drawing",
+      "edit": "Edit drawing",
+      "unavailable": "Drawing unavailable",
+      "title": "Drawing",
+      "save": "Save",
+      "cancel": "Cancel",
+      "deleteModal": "Delete drawing",
+      "deleteAction": "Delete",
+      "discardTitle": "Discard drawing?",
+      "discardDescription": "Your changes will be lost.",
+      "discardConfirm": "Discard",
+      "discardCancel": "Keep editing"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "locale": {
+      "label": "Language"
+    },
+    "theme": {
+      "label": "Theme",
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
     }
   },
   "notes": {
@@ -44,6 +112,9 @@
     },
     "noResults": "No notes match your search.",
     "menu": "Note options",
+    "playAudio": "Play audio",
+    "playVideo": "Play video",
+    "openFile": "Open file",
     "delete": "Delete",
     "deleted": "Note deleted",
     "undo": "Undo",

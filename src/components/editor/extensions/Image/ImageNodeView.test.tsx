@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Attachment } from '@/models.ts';
@@ -37,6 +38,18 @@ function fakeProps(getAttachment: (id: string) => Promise<Attachment | undefined
   } as unknown as ReactNodeViewProps;
 }
 
+function editableProps(
+  deleteNode: () => void,
+  getAttachment: (id: string) => Promise<Attachment | undefined>
+) {
+  return {
+    node: { attrs: { attachmentId: 'a1' } },
+    deleteNode,
+    editor: { isEditable: true },
+    extension: { options: { getDeps: () => ({ getAttachment, t: (key: string) => key }) } },
+  } as unknown as ReactNodeViewProps;
+}
+
 describe('ImageNodeView', () => {
   it('resolves the attachment Blob to an <img> src', async () => {
     render(<ImageNodeView {...fakeProps(async () => makeAtt())} />);
@@ -60,5 +73,38 @@ describe('ImageNodeView', () => {
     await screen.findByRole('img');
     unmount();
     await waitFor(() => expect(revoke).toHaveBeenCalled());
+  });
+});
+
+describe('ImageNodeView delete', () => {
+  it('shows a confirm-guarded delete button when editable', async () => {
+    const deleteNode = vi.fn();
+    render(<ImageNodeView {...editableProps(deleteNode, async () => makeAtt())} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'editor.image.delete' }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'attachments.confirmDelete.confirm' })
+    );
+    expect(deleteNode).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not delete when the confirm dialog is cancelled', async () => {
+    const deleteNode = vi.fn();
+    render(<ImageNodeView {...editableProps(deleteNode, async () => makeAtt())} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'editor.image.delete' }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'attachments.confirmDelete.cancel' })
+    );
+    expect(deleteNode).not.toHaveBeenCalled();
+  });
+
+  it('renders no delete button when the editor is not editable', async () => {
+    render(
+      <ImageNodeView
+        {...editableProps(vi.fn(), async () => makeAtt())}
+        editor={{ isEditable: false } as ReactNodeViewProps['editor']}
+      />
+    );
+    await screen.findByRole('img');
+    expect(screen.queryByRole('button', { name: 'editor.image.delete' })).not.toBeInTheDocument();
   });
 });

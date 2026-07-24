@@ -216,6 +216,25 @@ describe('NoteEditorDialog', () => {
     });
   });
 
+  it('keeps an audio-only note (no text) instead of discarding it on close', async () => {
+    const user = userEvent.setup();
+    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+
+    // An audio-only body: no header, no text, just an attachment node.
+    fireEvent.change(editorTextarea(), {
+      target: { value: '<audio data-attachment-id="au1"></audio>' },
+    });
+
+    // Close the dialog (flushes the final save + runs the empty-note check).
+    await user.click(closeButton());
+
+    await waitFor(async () => {
+      const notes = await db.notes.toArray();
+      expect(notes).toHaveLength(1); // kept, not discarded
+      expect(notes[0].body).toContain('data-attachment-id="au1"');
+    });
+  });
+
   it('does not create two notes when an attach and a save race on a new draft', async () => {
     render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
 

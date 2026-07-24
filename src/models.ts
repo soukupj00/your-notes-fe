@@ -23,7 +23,7 @@ export interface NoteTag {
   updatedAt: string; // Timestamp
 }
 
-export type AttachmentKind = 'image' | 'audio' | 'video' | 'file'; // grows per slice
+export type AttachmentKind = 'image' | 'audio' | 'video' | 'file' | 'excalidraw'; // grows per slice
 
 /**
  * A binary attachment (starting with inline images in M3 Slice 1). Bytes live
@@ -41,6 +41,7 @@ export interface Attachment {
   width?: number; // image/video (computed in a later processing slice)
   height?: number; // image/video
   duration?: number; // audio/video (later slices)
+  preview?: string; // excalidraw: rendered SVG snapshot of the scene, stored at save-time for cheap card rendering (no canvas re-mount)
   createdAt: string; // ISO
   updatedAt: string; // ISO
 }
