@@ -99,6 +99,7 @@ Do not patch symptoms speculatively.
 - Unified mobile quick-capture bar (photo/mic buttons).
 - Image resize / alignment controls.
 - Recording trim/edit + playback speed.
+- **Click-to-zoom image lightbox** (raised during Task 3 review, 2026-07-24): tap/click an image to view it enlarged. Recommended approach when picked up: a native Radix `Dialog` (already in use for `ConfirmDeleteButton`) showing the image near full-viewport size - no new dependency, free accessibility (focus trap, Esc, ARIA). Real pinch-to-zoom/pan is a bigger step up (likely needs a small gesture library) and should be scoped separately if wanted.
 
 ## Verification (per task and at slice close)
 
