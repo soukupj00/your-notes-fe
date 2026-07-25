@@ -50,11 +50,14 @@ Decisions (ADR 0008): file-based routing; typed search params via Zod `validateS
 
 Decisions: Dexie key-value `settings` store, Zod schema + version + defaults, async hydration.
 
-- [ ] `src/db/db.ts`: add a `settings` key-value table (or a single-row prefs blob).
-- [ ] `src/context/PreferencesProvider.tsx`: Zod schema (with `version`, and fields we already know we'll need - `toolbar: string[]`, `noteButtonAlignment`, `quickCaptureButtons`, `colorBlind`, `density`, `reducedMotion`, `onboardingSeenAt`), defaults, graceful fallback on parse failure, `usePreferences()` hook, `setPreference` writer. Render children against defaults until hydrated (loading-tolerant, like the feed).
-- [ ] Mount the provider in `App.tsx`. Leave `ThemeProvider`/`ViewModeProvider` on localStorage (future consolidation, noted).
-- [ ] Settings page shell (`src/pages/settings.tsx`, routed at `/settings`): section scaffold only here; individual toggles land in their owning phases (toolbar in D, colour-blind/density/reduced-motion in D, language switcher in D). Wire theme switcher + a placeholder here.
-- [ ] Tests: schema round-trip, corrupt blob → defaults, write→read.
+- [x] `src/db/db.ts`: add a `settings` key-value table (or a single-row prefs blob). **Implemented as** the generic key-value table (Dexie v4, `settings: 'key'`, model `Setting<T>`) holding one `preferences` row - the blob versions itself, so future preferences cost no Dexie bump.
+- [x] `src/context/PreferencesProvider.tsx`: Zod schema (with `version`, and fields we already know we'll need - `toolbar: string[]`, `noteButtonAlignment`, `quickCaptureButtons`, `colorBlind`, `density`, `reducedMotion`, `onboardingSeenAt`), defaults, graceful fallback on parse failure, `usePreferences()` hook, `setPreference` writer. Render children against defaults until hydrated (loading-tolerant, like the feed).
+  - **Decision - `toolbar` defaults to `[]`**, meaning "never customised, render the toolbar's own default set". Slice 4 owns the button registry; hardcoding ids here would only give it something to drift from.
+  - **Decision - `reducedMotion` is tri-state** (`system | always | never`) rather than a boolean, because `prefers-reduced-motion` already exists and the pref has to be able to *not* override it.
+  - Also exposes `hydrated`, so Slice 5's onboarding tour can avoid firing before we know whether `onboardingSeenAt` is set.
+- [x] Mount the provider in `App.tsx`. Leave `ThemeProvider`/`ViewModeProvider` on localStorage (future consolidation, noted in `src/context/CLAUDE.md`).
+- [x] Settings page shell (`src/pages/settings.tsx`, routed at `/settings`): section scaffold only here; individual toggles land in their owning phases (toolbar in D, colour-blind/density/reduced-motion in D, language switcher in D). Wire theme switcher + a placeholder here. **Implemented as** `SettingsSection`/`SettingsRow` primitives with two real sections (Appearance → theme segmented control; Labels → link to `/settings/labels`). **No dead "coming soon" placeholder** - an empty section is worse UI than an absent one; Task 6 adds the Backup section.
+- [x] Tests: schema round-trip, corrupt blob → defaults, write→read.
 
 ### Task 5 - Tags end-to-end
 

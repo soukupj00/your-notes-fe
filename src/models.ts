@@ -34,6 +34,17 @@ export interface NoteTag {
   updatedAt: string; // Timestamp
 }
 
+/**
+ * A row in the generic `settings` key-value store: app-level state that is not
+ * a domain entity. Currently one row, the user preferences blob (see
+ * `context/PreferencesProvider.tsx`), whose shape is owned by a Zod schema
+ * rather than by this file - hence the caller-supplied `T`.
+ */
+export interface Setting<T = unknown> {
+  key: string;
+  value: T;
+}
+
 export type AttachmentKind = 'image' | 'audio' | 'video' | 'file' | 'excalidraw'; // grows per slice
 
 /**

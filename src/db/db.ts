@@ -1,11 +1,12 @@
 import Dexie, { type Table } from 'dexie';
-import type { Attachment, Note, NoteTag, Tag } from '@/models.ts';
+import type { Attachment, Note, NoteTag, Setting, Tag } from '@/models.ts';
 
 export class NotesDB extends Dexie {
   notes!: Table<Note, string>;
   attachments!: Table<Attachment, string>;
   tags!: Table<Tag, string>;
   noteTags!: Table<NoteTag, [string, string]>; // composite key
+  settings!: Table<Setting, string>;
 
   // The name is a parameter only so migration tests can spin up a throwaway
   // database; the app always uses the default singleton below.
@@ -50,6 +51,12 @@ export class NotesDB extends Dexie {
             delete note.checklist;
           })
       );
+    // v4: a generic key-value `settings` store. Only the value is versioned
+    // (the preferences blob carries its own schema `version`), so adding a
+    // preference never costs a Dexie bump - no migration needed here.
+    this.version(4).stores({
+      settings: 'key',
+    });
   }
 }
 

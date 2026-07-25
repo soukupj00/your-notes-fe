@@ -151,6 +151,30 @@ describe('nav shell', () => {
   });
 });
 
+describe('settings page', () => {
+  afterEach(() => localStorage.clear());
+
+  it('switches the theme from the appearance section', async () => {
+    renderAt('/settings');
+
+    const themes = await screen.findByRole('group', { name: 'settings.theme.label' });
+    await userEvent.click(within(themes).getByRole('radio', { name: 'settings.theme.light' }));
+
+    await waitFor(() => expect(document.documentElement).toHaveClass('light'));
+    expect(localStorage.getItem('vite-ui-theme')).toBe('light');
+  });
+
+  it('links to the manage-labels view', async () => {
+    renderAt('/settings');
+
+    // Scoped to the page: the sidebar carries its own "Edit labels" link.
+    const link = await within(await screen.findByRole('main')).findByRole('link', {
+      name: 'nav.editLabels',
+    });
+    expect(link).toHaveAttribute('href', '/settings/labels');
+  });
+});
+
 describe('trash view', () => {
   it('empties the trash without touching the other views', async () => {
     await seed();
