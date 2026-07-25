@@ -28,11 +28,11 @@ Decisions (ADR 0009): `state` enum + orthogonal `pinnedAt` + `color` token + `tr
 
 ### Task 2 - Lifecycle actions + purge + undo
 
-- [ ] `src/hooks/data/useNoteActions.ts`: add `pinNote`/`unpinNote` (set/clear `pinnedAt`), `archiveNote` (state→archived, clear `pinnedAt`), `trashNote` (state→trashed, set `trashedAt`, clear `pinnedAt`), `restoreNote` (state→active), `purgeNote` (hard delete + attachment cascade - reuse the existing delete cascade).
-- [ ] **Undo toasts** for archive/trash/pin, matching the existing delete-undo pattern (sonner): "Note moved to trash - Undo", etc.
-- [ ] Purge sweep: extend `collectStartupOrphans` (`src/hooks/data/useAttachmentActions.ts`, called at `NotesHome` mount) to also purge notes with `state==='trashed'` and `trashedAt` older than **30 days**, cascading their attachments via the existing orphan path.
-- [ ] Manual "Empty trash" action (used by the Trash view in A3).
-- [ ] Tests: each transition; pin cleared on archive/trash; purge respects the 30-day boundary; undo restores prior state.
+- [x] `src/hooks/data/useNoteActions.ts`: `pinNote`/`unpinNote`, `archiveNote`, `trashNote`, `purgeNote`. **Naming correction:** the lifecycle state→active action is `restoreToActive`, not `restoreNote` - `restoreNote` already existed as the lossless purge-undo, and it covers un-archive as well as un-trash. `deleteNote` was renamed to `purgeNote` to match CONTEXT.md.
+- [x] **Undo toasts** for archive/trash/pin, matching the existing delete-undo pattern (sonner): "Note moved to trash - Undo", etc.
+- [x] Purge sweep. **Placement correction:** rather than bolting note-purging onto `collectStartupOrphans` (which is attachment GC), this is a separate `purgeExpiredTrash(graceDays = 30)` in `useNoteActions`, run *before* the orphan sweep at `NotesHome` mount so the orphan pass sees a settled attachments table.
+- [x] Manual "Empty trash" action (used by the Trash view in A3).
+- [x] Tests: each transition; pin cleared on archive/trash; purge respects the 30-day boundary; undo restores prior state.
 
 ### Task 3 - TanStack Router + nav shell
 

@@ -11,26 +11,55 @@
     }
   },
   "editor": {
-    "bold": { "tooltip": "Bold" },
-    "italic": { "tooltip": "Italic" },
-    "strike": { "tooltip": "Strikethrough" },
-    "underline": { "tooltip": "Underline" },
+    "bold": {
+      "tooltip": "Bold"
+    },
+    "italic": {
+      "tooltip": "Italic"
+    },
+    "strike": {
+      "tooltip": "Strikethrough"
+    },
+    "underline": {
+      "tooltip": "Underline"
+    },
     "undo": "Undo",
     "redo": "Redo",
     "heading": {
       "tooltip": "Heading",
       "level": "Heading {{level}}"
     },
-    "bulletList": { "tooltip": "Bullet list" },
-    "orderedList": { "tooltip": "Numbered list" },
-    "taskList": { "tooltip": "Task list" },
-    "blockquote": { "tooltip": "Quote" },
-    "math": { "tooltip": "Math (LaTeX)", "prompt": "Enter LaTeX" },
-    "clearFormatting": { "tooltip": "Clear formatting" },
-    "textColor": { "tooltip": "Text color" },
-    "highlight": { "tooltip": "Highlight" },
-    "fontFamily": { "tooltip": "Font family" },
-    "fontSize": { "tooltip": "Font size" },
+    "bulletList": {
+      "tooltip": "Bullet list"
+    },
+    "orderedList": {
+      "tooltip": "Numbered list"
+    },
+    "taskList": {
+      "tooltip": "Task list"
+    },
+    "blockquote": {
+      "tooltip": "Quote"
+    },
+    "math": {
+      "tooltip": "Math (LaTeX)",
+      "prompt": "Enter LaTeX"
+    },
+    "clearFormatting": {
+      "tooltip": "Clear formatting"
+    },
+    "textColor": {
+      "tooltip": "Text color"
+    },
+    "highlight": {
+      "tooltip": "Highlight"
+    },
+    "fontFamily": {
+      "tooltip": "Font family"
+    },
+    "fontSize": {
+      "tooltip": "Font size"
+    },
     "image": {
       "tooltip": "Insert image",
       "unavailable": "Image unavailable",
@@ -115,8 +144,21 @@
     "playAudio": "Play audio",
     "playVideo": "Play video",
     "openFile": "Open file",
-    "delete": "Delete",
-    "deleted": "Note deleted",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "pinned": "Note pinned",
+    "unpinned": "Note unpinned",
+    "archive": "Archive",
+    "archived": "Note archived",
+    "moveToTrash": "Move to trash",
+    "movedToTrash": "Note moved to trash",
+    "restore": "Restore",
+    "restored": "Note restored",
+    "deleteForever": "Delete forever",
+    "deletedForever": "Note deleted forever",
+    "emptyTrash": "Empty trash",
+    "trashEmptied_one": "Deleted {{count}} note",
+    "trashEmptied_other": "Deleted {{count}} notes",
     "undo": "Undo",
     "view": {
       "toggle": "Toggle layout",

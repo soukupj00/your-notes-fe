@@ -6,6 +6,7 @@ import { EMPTY_CHECKLIST_BODY, NoteEditorDialog } from '@/components/notes/NoteE
 import { ViewModeToggle } from '@/components/notes/ViewModeToggle.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
+import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 
 // `null` = closed. Otherwise: `id` is the note being edited (null = new draft);
 // `initialBody` seeds a new draft (e.g. a checklist from quick-capture);
@@ -21,12 +22,17 @@ export function NotesHome() {
   const { t } = useTranslation();
   const [editing, setEditing] = useState<EditingState>(null);
   const { collectStartupOrphans } = useAttachmentActions();
+  const { purgeExpiredTrash } = useNoteActions();
 
-  // Reconcile attachment ownership and every saved Body after a reload, when
-  // no live editor undo stack remains. The action is stable, so this runs once.
+  // Startup sweeps, in order: purge trashed notes past their grace period, then
+  // reconcile attachment ownership against every saved Body. Purging first
+  // matters - it cascades its own attachments, so the orphan pass afterwards
+  // sees a settled table. Both actions are stable, so this runs once.
   useEffect(() => {
-    collectStartupOrphans().catch(console.error);
-  }, [collectStartupOrphans]);
+    purgeExpiredTrash()
+      .then(() => collectStartupOrphans())
+      .catch(console.error);
+  }, [purgeExpiredTrash, collectStartupOrphans]);
 
   const startNote = () => setEditing({ id: null });
   const startChecklist = () => setEditing({ id: null, initialBody: EMPTY_CHECKLIST_BODY });

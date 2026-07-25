@@ -11,26 +11,55 @@
     }
   },
   "editor": {
-    "bold": { "tooltip": "Tučné" },
-    "italic": { "tooltip": "Kurzíva" },
-    "strike": { "tooltip": "Přeškrtnuté" },
-    "underline": { "tooltip": "Podtržené" },
+    "bold": {
+      "tooltip": "Tučné"
+    },
+    "italic": {
+      "tooltip": "Kurzíva"
+    },
+    "strike": {
+      "tooltip": "Přeškrtnuté"
+    },
+    "underline": {
+      "tooltip": "Podtržené"
+    },
     "undo": "Zpět",
     "redo": "Znovu",
     "heading": {
       "tooltip": "Nadpis",
       "level": "Nadpis {{level}}"
     },
-    "bulletList": { "tooltip": "Odrážkový seznam" },
-    "orderedList": { "tooltip": "Číslovaný seznam" },
-    "taskList": { "tooltip": "Seznam úkolů" },
-    "blockquote": { "tooltip": "Citace" },
-    "math": { "tooltip": "Vzorec (LaTeX)", "prompt": "Zadejte LaTeX" },
-    "clearFormatting": { "tooltip": "Zrušit formátování" },
-    "textColor": { "tooltip": "Barva textu" },
-    "highlight": { "tooltip": "Zvýraznění" },
-    "fontFamily": { "tooltip": "Písmo" },
-    "fontSize": { "tooltip": "Velikost písma" },
+    "bulletList": {
+      "tooltip": "Odrážkový seznam"
+    },
+    "orderedList": {
+      "tooltip": "Číslovaný seznam"
+    },
+    "taskList": {
+      "tooltip": "Seznam úkolů"
+    },
+    "blockquote": {
+      "tooltip": "Citace"
+    },
+    "math": {
+      "tooltip": "Vzorec (LaTeX)",
+      "prompt": "Zadejte LaTeX"
+    },
+    "clearFormatting": {
+      "tooltip": "Zrušit formátování"
+    },
+    "textColor": {
+      "tooltip": "Barva textu"
+    },
+    "highlight": {
+      "tooltip": "Zvýraznění"
+    },
+    "fontFamily": {
+      "tooltip": "Písmo"
+    },
+    "fontSize": {
+      "tooltip": "Velikost písma"
+    },
     "image": {
       "tooltip": "Vložit obrázek",
       "unavailable": "Obrázek není k dispozici",
@@ -115,8 +144,22 @@
     "playAudio": "Přehrát zvuk",
     "playVideo": "Přehrát video",
     "openFile": "Otevřít soubor",
-    "delete": "Smazat",
-    "deleted": "Poznámka smazána",
+    "pin": "Připnout",
+    "unpin": "Odepnout",
+    "pinned": "Poznámka připnuta",
+    "unpinned": "Poznámka odepnuta",
+    "archive": "Archivovat",
+    "archived": "Poznámka archivována",
+    "moveToTrash": "Přesunout do koše",
+    "movedToTrash": "Poznámka přesunuta do koše",
+    "restore": "Obnovit",
+    "restored": "Poznámka obnovena",
+    "deleteForever": "Smazat navždy",
+    "deletedForever": "Poznámka trvale smazána",
+    "emptyTrash": "Vysypat koš",
+    "trashEmptied_one": "Smazána {{count}} poznámka",
+    "trashEmptied_few": "Smazány {{count}} poznámky",
+    "trashEmptied_other": "Smazáno {{count}} poznámek",
     "undo": "Zpět",
     "view": {
       "toggle": "Přepnout rozvržení",

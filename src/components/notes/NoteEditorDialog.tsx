@@ -49,7 +49,7 @@ export function NoteEditorDialog({
   onClose,
 }: NoteEditorDialogProps) {
   const { t } = useTranslation();
-  const { createNote, updateNote, deleteNote } = useNoteActions();
+  const { createNote, updateNote, purgeNote } = useNoteActions();
   const { collectOrphans } = useAttachmentActions();
 
   const [header, setHeader] = useState('');
@@ -155,7 +155,7 @@ export function NoteEditorDialog({
     await enqueueSave(header, body); // flush the latest edit
     // Discard a note that ended up empty (covers a draft typed then cleared).
     if (idRef.current != null && isEmpty(header, body)) {
-      await deleteNote(idRef.current); // cascade-deletes its attachments (Task 4)
+      await purgeNote(idRef.current); // cascade-deletes its attachments (Task 4)
       idRef.current = null;
     } else if (idRef.current != null) {
       // Reclaim attachment rows no longer referenced by the saved Body. Safe now:
@@ -163,7 +163,7 @@ export function NoteEditorDialog({
       await collectOrphans(idRef.current, extractAttachmentIds(body));
     }
     onClose();
-  }, [enqueueSave, header, body, deleteNote, collectOrphans, onClose]);
+  }, [enqueueSave, header, body, purgeNote, collectOrphans, onClose]);
 
   return (
     <Dialog

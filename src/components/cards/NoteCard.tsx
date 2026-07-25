@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx';
-import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
+import { type LifecycleSnapshot, useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import {
   bodyHasAttachment,
   bodyHasAudio,
@@ -27,7 +27,16 @@ interface NoteCardProps {
 
 export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
   const { t } = useTranslation();
-  const { deleteNote, restoreNote } = useNoteActions();
+  const {
+    purgeNote,
+    restoreNote,
+    revertLifecycle,
+    pinNote,
+    unpinNote,
+    archiveNote,
+    trashNote,
+    restoreToActive,
+  } = useNoteActions();
 
   // stripHtml drops the <img data-attachment-id> tag along with the rest of the
   // markup, so an image-only Body (no text) needs the attachment check too -
@@ -37,13 +46,30 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
   const hasVideo = bodyHasVideo(note.body);
   const hasFile = bodyHasFile(note.body);
 
-  const handleDelete = async () => {
-    const removed = await deleteNote(note.id);
-    toast(t('notes.deleted'), {
-      action: {
-        label: t('notes.undo'),
-        onClick: () => restoreNote(note, removed),
-      },
+  // Every lifecycle action follows the same contract: run the transition, then
+  // offer its snapshot back as a one-click undo. Sharing the wrapper keeps a
+  // new action from shipping without an undo.
+  const withUndo =
+    (run: (id: string) => Promise<LifecycleSnapshot | null>, message: string) => async () => {
+      const before = await run(note.id);
+      if (!before) return;
+      toast(message, {
+        action: { label: t('notes.undo'), onClick: () => revertLifecycle(note.id, before) },
+      });
+    };
+
+  const handlePin = withUndo(pinNote, t('notes.pinned'));
+  const handleUnpin = withUndo(unpinNote, t('notes.unpinned'));
+  const handleArchive = withUndo(archiveNote, t('notes.archived'));
+  const handleTrash = withUndo(trashNote, t('notes.movedToTrash'));
+  const handleRestore = withUndo(restoreToActive, t('notes.restored'));
+
+  // Purge is the one irreversible action, so its undo works differently: it
+  // re-puts the captured note plus the rows the cascade removed.
+  const handlePurge = async () => {
+    const removed = await purgeNote(note.id);
+    toast(t('notes.deletedForever'), {
+      action: { label: t('notes.undo'), onClick: () => restoreNote(note, removed) },
     });
   };
 
@@ -61,7 +87,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
         // Only activate when the key originated on the card itself. React
         // synthetic events bubble through the portalled dropdown menu, so
         // without this an Enter/Space on the menu trigger or a menu item (e.g.
-        // Delete) would also open the editor.
+        // Move to trash) would also open the editor.
         if (e.target !== e.currentTarget) return;
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -84,13 +110,40 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
           >
             <MoreVertical className="size-4" />
           </DropdownMenuTrigger>
+          {/* The menu is state-aware: a trashed note offers recovery and
+              permanent deletion, everything else offers the forward moves. */}
           <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-            <DropdownMenuItem
-              onClick={handleDelete}
-              className="text-destructive focus:text-destructive"
-            >
-              {t('notes.delete')}
-            </DropdownMenuItem>
+            {note.state === 'trashed' ? (
+              <>
+                <DropdownMenuItem onClick={handleRestore}>{t('notes.restore')}</DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handlePurge}
+                  className="text-destructive focus:text-destructive"
+                >
+                  {t('notes.deleteForever')}
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                {note.state === 'active' &&
+                  (note.pinnedAt ? (
+                    <DropdownMenuItem onClick={handleUnpin}>{t('notes.unpin')}</DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem onClick={handlePin}>{t('notes.pin')}</DropdownMenuItem>
+                  ))}
+                {note.state === 'archived' ? (
+                  <DropdownMenuItem onClick={handleRestore}>{t('notes.restore')}</DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onClick={handleArchive}>{t('notes.archive')}</DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  onClick={handleTrash}
+                  className="text-destructive focus:text-destructive"
+                >
+                  {t('notes.moveToTrash')}
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </CardHeader>
