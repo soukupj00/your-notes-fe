@@ -34,7 +34,7 @@ function note(id: string): Note {
     header: id,
     description: '',
     body: '',
-    checklist: [],
+    state: 'active',
     createdAt: now,
     updatedAt: now,
   };

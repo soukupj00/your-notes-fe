@@ -57,7 +57,7 @@ function makeNote(overrides: Partial<Note> = {}): Note {
     header: 'Original header',
     description: '',
     body: 'Original body',
-    checklist: [],
+    state: 'active',
     createdAt: now,
     updatedAt: now,
     ...overrides,

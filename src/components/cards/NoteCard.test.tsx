@@ -29,7 +29,7 @@ function makeNote(overrides: Partial<Note> = {}): Note {
     header: 'My note',
     description: '',
     body: '<p>hello</p>',
-    checklist: [],
+    state: 'active',
     createdAt: now,
     updatedAt: now,
     ...overrides,
@@ -108,7 +108,6 @@ describe('NoteCard', () => {
     const note = makeNote({
       header: '',
       body: '<img data-attachment-id="x1">',
-      checklist: [],
     });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
@@ -124,7 +123,6 @@ describe('NoteCard', () => {
     const note = makeNote({
       header: '',
       body: '<audio data-attachment-id="au1"></audio>',
-      checklist: [],
     });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
@@ -158,7 +156,6 @@ describe('NoteCard', () => {
     const note = makeNote({
       header: '',
       body: '<video data-attachment-id="v1"></video>',
-      checklist: [],
     });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
@@ -179,7 +176,6 @@ describe('NoteCard', () => {
     const note = makeNote({
       header: '',
       body: '<audio data-attachment-id="au1"></audio><video data-attachment-id="v1"></video>',
-      checklist: [],
     });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
@@ -191,7 +187,6 @@ describe('NoteCard', () => {
     const note = makeNote({
       header: '',
       body: '<a data-attachment-id="f1">report.pdf</a>',
-      checklist: [],
     });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
@@ -212,7 +207,6 @@ describe('NoteCard', () => {
     const note = makeNote({
       header: '',
       body: '<audio data-attachment-id="a1"></audio><video data-attachment-id="v1"></video><a data-attachment-id="f1">x</a>',
-      checklist: [],
     });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 

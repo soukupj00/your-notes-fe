@@ -18,7 +18,9 @@ export function useNoteActions() {
       header: data.header ?? '',
       description: data.description ?? '',
       body: data.body ?? '',
-      checklist: data.checklist ?? [],
+      state: data.state ?? 'active',
+      pinnedAt: data.pinnedAt,
+      color: data.color,
       createdAt: now,
       updatedAt: now,
     };

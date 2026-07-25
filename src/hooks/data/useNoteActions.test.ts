@@ -17,7 +17,7 @@ function makeNote(overrides: Partial<Note> = {}): Note {
     header: 'h',
     description: '',
     body: '',
-    checklist: [],
+    state: 'active',
     createdAt: now,
     updatedAt: now,
     ...overrides,
@@ -44,6 +44,20 @@ afterEach(async () => {
 });
 
 describe('useNoteActions', () => {
+  it("creates notes 'active' and unpinned, and lets callers seed lifecycle fields", async () => {
+    const { createNote } = actions();
+
+    const plain = await createNote({ header: 'Plain' });
+    expect(plain.state).toBe('active');
+    expect(plain.pinnedAt).toBeUndefined();
+    expect(plain.color).toBeUndefined();
+    // The indexed state query is what the feed uses - a created note must land in it.
+    expect(await db.notes.where('state').equals('active').count()).toBe(1);
+
+    const seeded = await createNote({ header: 'Seeded', state: 'archived', color: 'teal' });
+    expect(await db.notes.get(seeded.id)).toMatchObject({ state: 'archived', color: 'teal' });
+  });
+
   it('persists the rich-text body through create and round-trips it via Dexie', async () => {
     const { createNote } = actions();
     const html = '<p>Hello <strong>world</strong></p>';

@@ -15,14 +15,11 @@ export function useSearchNotes(query: string) {
       const matchesHeader = note.header?.toLowerCase().includes(lowerQuery);
       const matchesDescription = note.description?.toLowerCase().includes(lowerQuery);
       const matchesBody = stripHtml(note.body).toLowerCase().includes(lowerQuery);
-      const matchesChecklist = note.checklist?.some((item) =>
-        item.toLowerCase().includes(lowerQuery)
-      );
       const matchesDates =
         note.createdAt.toLowerCase().includes(lowerQuery) ||
         note.updatedAt.toLowerCase().includes(lowerQuery);
 
-      return matchesHeader || matchesDescription || matchesBody || matchesChecklist || matchesDates;
+      return matchesHeader || matchesDescription || matchesBody || matchesDates;
     });
 
     // 2. Search tags

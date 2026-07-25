@@ -20,11 +20,11 @@ Ground truth from code exploration: Tags have a full data layer (`useTags`/`useT
 
 Decisions (ADR 0009): `state` enum + orthogonal `pinnedAt` + `color` token + `trashedAt`; remove dead `checklist`; add `Tag.color`. One version bump, no migration (all optional/defaulted).
 
-- [ ] `src/models.ts`: add to `Note` - `state: 'active' | 'archived' | 'trashed'`, `pinnedAt?: string`, `color?: string` (palette token key), `trashedAt?: string`. **Remove** `checklist: string[]`. Add `color?: string` to `Tag`.
-- [ ] `src/db/db.ts`: bump the Dexie version; index `state` (and `pinnedAt` if it helps feed queries). No `.upgrade()` data migration needed; confirm existing seeded rows read back with `state` defaulting to `'active'` (default at read/normalise time if absent).
-- [ ] Grep + remove all `checklist` reads/writes (`useNoteActions.ts`, `NoteCard.tsx`, `NoteEditorDialog.tsx`, tests, seeders). The quick-capture checklist path (`EMPTY_CHECKLIST_BODY`) stays - it's body content, unaffected.
-- [ ] Seeders (`pnpm seed`): give some notes `state`/`pinnedAt`/`color` so the new UI has data.
-- [ ] Tests: model defaults, Dexie round-trip of the new fields, checklist removal doesn't break note create/update.
+- [x] `src/models.ts`: add to `Note` - `state: 'active' | 'archived' | 'trashed'`, `pinnedAt?: string`, `color?: string` (palette token key), `trashedAt?: string`. **Remove** `checklist: string[]`. Add `color?: string` to `Tag`.
+- [x] `src/db/db.ts`: bump the Dexie version; index `state`, `pinnedAt`, `trashedAt`. **Correction to the original plan:** an `.upgrade()` *is* needed - `state` is indexed and IndexedDB skips rows whose indexed property is `undefined`, so pre-v3 notes would vanish from `where('state')`. The v3 upgrade stamps `state: 'active'` and deletes `checklist`. ADR 0009 updated to match.
+- [x] Grep + remove all `checklist` reads/writes (`useNoteActions.ts`, `NoteCard.tsx`, `NoteEditorDialog.tsx`, tests, seeders). The quick-capture checklist path (`EMPTY_CHECKLIST_BODY`) stays - it's body content, unaffected.
+- [x] Seeders (`pnpm seed`): give some notes `state`/`pinnedAt`/`color` so the new UI has data.
+- [x] Tests: model defaults, Dexie round-trip of the new fields, checklist removal doesn't break note create/update.
 
 ### Task 2 - Lifecycle actions + purge + undo
 

@@ -1,9 +1,19 @@
+/**
+ * The single lifecycle stage a Note occupies (ADR 0009). Mutually exclusive -
+ * a Note is never two of these at once. Pinning is modelled separately
+ * (`Note.pinnedAt`) because it is orthogonal to the stage.
+ */
+export type NoteState = 'active' | 'archived' | 'trashed';
+
 export interface Note {
   id: string; // Unique ID (UUID or nanoid)
   header?: string; // Optional title
   description?: string; // Optional plaintext subtitle (dormant until a later milestone gives it UI)
   body?: string; // Rich-text HTML from the editor (see "Body" in CONTEXT.md)
-  checklist: string[]; // Checklist items
+  state: NoteState; // Lifecycle stage; every row carries one (Dexie v3 stamps legacy rows 'active')
+  pinnedAt?: string; // ISO; presence = pinned, value orders pinned notes. Cleared on archive/trash
+  color?: string; // NoteColor token key (see lib/note-colors.ts), never a raw color value
+  trashedAt?: string; // ISO; set on entry to trash, drives the 30-day purge sweep
   tags?: Tag[]; // Array of tags
   createdAt: string; // Timestamp
   updatedAt: string; // Timestamp
@@ -12,6 +22,7 @@ export interface Note {
 export interface Tag {
   id: string; // Unique ID for tag
   name: string; // Tag name (e.g., "Work", "Personal")
+  color?: string; // NoteColor token key, shared palette with Note.color
   createdAt: string; // Timestamp
   updatedAt: string; // Timestamp
 }

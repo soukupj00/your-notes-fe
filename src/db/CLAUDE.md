@@ -6,20 +6,22 @@ How the local persistence layer works. See [`PLAN.md`](./PLAN.md) for upcoming w
 
 - `db.ts` — the Dexie database (`NotesDB`) and the exported singleton `db`.
 - `models.ts` (in `src/`, not here) — the TypeScript interfaces for every entity. The Dexie tables are typed against these.
-- `dummyNotes.ts` — static sample notes used for seeding.
-- `seeder.ts` — Node/`ts-node` seeder (`pnpm seed`); imports `fake-indexeddb/auto` so it runs outside a browser.
-- `browserSeeder.ts` — `seedBrowserData()` called from the running app (a "Seed Notes" button in `App.tsx`) to populate the real browser IndexedDB.
+- `dummyNotes.ts` — static sample notes used for seeding; covers every lifecycle state (active/pinned/coloured, archived, recently trashed, and one back-dated past the purge window).
+- `seed.ts` — `seedDummyData()`, the single shared wipe-and-repopulate routine.
+- `seeder.ts` — Node/`ts-node` entry point (`pnpm seed`); imports `fake-indexeddb/auto` so it runs outside a browser.
+- `browserSeeder.ts` — `seedBrowserData()`, the in-app entry point for populating the real browser IndexedDB. Currently unwired (there is no "Seed Notes" button any more).
 
-## Schema (`NotesDB`, version 2)
+## Schema (`NotesDB`, version 3)
 
 | Table         | Primary key            | Indexes                          | Model        |
 |---------------|------------------------|-----------------------------------|--------------|
-| `notes`       | `id`                   | `header`, `createdAt`, `updatedAt` | `Note`      |
+| `notes`       | `id`                   | `header`, `createdAt`, `updatedAt`, `state`, `pinnedAt`, `trashedAt` | `Note` |
 | `attachments` | `id`                   | `noteId`, `kind`                   | `Attachment` |
 | `tags`        | `id`                   | `name`                            | `Tag`        |
 | `noteTags`    | `[noteId+tagId]` (composite) | `noteId`, `tagId`           | `NoteTag`    |
 
 - **Attachments** are a single generic table, 1:N with a Note via `noteId`. The `kind` discriminator (`'image' | 'audio' | 'video' | 'file'`) distinguishes attachment types instead of separate per-type tables; bytes are stored as a native `Blob` (see [ADR 0007](../../docs/adr/0007-blob-over-base64-for-attachment-payloads.md)). The Note body references an attachment by id (`<img data-attachment-id>`); `Note` no longer carries embedded media arrays.
+- **Note lifecycle** (v3, [ADR 0009](../../docs/adr/0009-note-lifecycle-model.md)): `state` (`'active' | 'archived' | 'trashed'`) is the mutually-exclusive stage; `pinnedAt`, `color` (a palette token from `lib/note-colors.ts`, never a raw colour), and `trashedAt` are orthogonal optional fields. v3 carries the one `.upgrade()` in the schema's history: it backfills `state: 'active'` and deletes the retired `checklist` array. The upgrade is **not** optional — `state` is indexed, and IndexedDB skips rows whose indexed property is `undefined`, so un-stamped rows would be invisible to `where('state')`.
 - **Tags** are many-to-many with Notes through the `noteTags` join table, keyed by the composite `[noteId+tagId]`.
 
 ## Conventions
@@ -31,5 +33,4 @@ How the local persistence layer works. See [`PLAN.md`](./PLAN.md) for upcoming w
 
 ## Gotchas
 
-- Both seeders duplicate the same logic; keep them in sync or factor the shared bit out.
 - The `seeder.ts` path uses `fake-indexeddb`, so `pnpm seed` populates an in-memory DB (useful for tests/CI), **not** your browser. Use the in-app "Seed Notes" button (`browserSeeder.ts`) to populate real browser data.

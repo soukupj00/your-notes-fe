@@ -4,14 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { NoteBody } from '@/components/NoteBody.tsx';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.tsx';
-import { Checkbox } from '@/components/ui/checkbox.tsx';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx';
-import { Separator } from '@/components/ui/separator.tsx';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import {
   bodyHasAttachment,
@@ -27,21 +25,17 @@ interface NoteCardProps {
   onSelect: (id: string, opts?: { autoplayFirstAudio?: boolean }) => void;
 }
 
-// How many checklist items to preview on a card before we stop.
-const CHECKLIST_PREVIEW_LIMIT = 4;
-
 export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
   const { t } = useTranslation();
   const { deleteNote, restoreNote } = useNoteActions();
 
   // stripHtml drops the <img data-attachment-id> tag along with the rest of the
   // markup, so an image-only Body (no text) needs the attachment check too -
-  // otherwise the card renders blank (no header, no NoteBody, no checklist).
+  // otherwise the card renders blank (no header, no NoteBody).
   const hasBody = stripHtml(note.body).trim().length > 0 || bodyHasAttachment(note.body);
   const hasAudio = bodyHasAudio(note.body);
   const hasVideo = bodyHasVideo(note.body);
   const hasFile = bodyHasFile(note.body);
-  const checklist = note.checklist ?? [];
 
   const handleDelete = async () => {
     const removed = await deleteNote(note.id);
@@ -103,26 +97,6 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
 
       <CardContent className="space-y-3">
         {hasBody && <NoteBody html={note.body} className="line-clamp-6" />}
-
-        {checklist.length > 0 && (
-          <div>
-            {hasBody && <Separator className="my-2" />}
-            <ul className="space-y-1">
-              {checklist.slice(0, CHECKLIST_PREVIEW_LIMIT).map((item, index) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: read-only, unreordered preview; checklist items are plain strings with no stable id (revisit when checklist editing lands)
-                <li key={index} className="flex items-center gap-2">
-                  <Checkbox disabled aria-hidden />
-                  <span className="text-sm">{item}</span>
-                </li>
-              ))}
-              {checklist.length > CHECKLIST_PREVIEW_LIMIT && (
-                <li className="text-muted-foreground text-xs">
-                  +{checklist.length - CHECKLIST_PREVIEW_LIMIT}
-                </li>
-              )}
-            </ul>
-          </div>
-        )}
       </CardContent>
 
       {/* Always-visible audio/video/file affordances: pinned bottom-right, in a

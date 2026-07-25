@@ -12,7 +12,7 @@ function makeNote(overrides: Partial<Note>): Note {
     header: '',
     description: '',
     body: '',
-    checklist: [],
+    state: 'active',
     createdAt: now,
     updatedAt: now,
     ...overrides,
