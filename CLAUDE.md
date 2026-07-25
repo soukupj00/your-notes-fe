@@ -96,6 +96,10 @@ Keep pattern: a persistent left sidebar on desktop, the same `SideNav` inside a 
 
 A11y: every view renders an `<h1 tabIndex={-1}>` and calls `useFocusOnMount` on it, so a navigation moves focus to the destination heading instead of stranding it on the link.
 
+### Tags / labels (`src/components/tags/`, `src/pages/labels.tsx`)
+
+`NoteTagsBar` (pills + the "＋ Label" popover) is the one place labels are assigned; it resolves an unsaved draft's id lazily through the editor's `ensureNoteId`, the same queue attachments use. `TagPills` renders a note's labels read-only on `NoteCard`, tinted from the shared Note/Tag palette (`lib/note-colors.ts`) via `NoteColorPicker`. `/settings/labels` (`src/pages/labels.tsx`) is the manage view: create, inline rename, colour, merge-into, delete.
+
 ### Theming (`src/themes.ts`, `src/context/themeProvider.tsx`)
 
 Colors use **OKLCH** values defined in `src/themes.ts` for `light` and `dark` tokens. `ThemeProvider` (`src/context/themeProvider.tsx`) is a **custom** provider (not `next-themes`, despite that package being installed): it persists the choice to `localStorage` and toggles the `light`/`dark` class on `<html>`, supporting a `system` mode via `prefers-color-scheme`. Theme switching is done at the provider level — no per-component theme logic.

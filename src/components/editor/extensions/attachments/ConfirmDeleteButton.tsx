@@ -1,16 +1,4 @@
-import { useState } from 'react';
-import { icons } from '@/components/icons';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { cn } from '@/lib/utils.ts';
+import { ConfirmDeleteButton as BaseConfirmDeleteButton } from '@/components/ui/ConfirmDeleteButton';
 import type { TFunction } from '../button-types';
 
 export interface ConfirmDeleteButtonProps {
@@ -27,55 +15,19 @@ export interface ConfirmDeleteButtonProps {
   iconClassName?: string;
 }
 
-/** Shared confirm-before-delete control for media NodeViews (image/audio/video,
- *  and later file/Excalidraw). Renders the Trash2 icon-button trigger and a
- *  confirm dialog; calls onConfirm only on confirm. Node removal stays
- *  editor-only - blob GC still happens at dialog close (collectOrphans). */
-export function ConfirmDeleteButton({
-  onConfirm,
-  label,
-  t,
-  triggerClassName,
-  iconClassName,
-}: ConfirmDeleteButtonProps) {
-  const [open, setOpen] = useState(false);
-  const Trash = icons.Trash2;
-
+/** The shared `ConfirmDeleteButton` bound to the attachment copy, so every media
+ *  NodeView (image/audio/video/file/Excalidraw) asks the same question. Node
+ *  removal stays editor-only - blob GC still happens at dialog close
+ *  (collectOrphans). */
+export function ConfirmDeleteButton({ t, ...props }: ConfirmDeleteButtonProps) {
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button
-          type="button"
-          aria-label={label}
-          className={cn(
-            'flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive',
-            triggerClassName
-          )}
-        >
-          <Trash className={cn('size-4', iconClassName)} />
-        </button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>{t('attachments.confirmDelete.title')}</DialogTitle>
-          <DialogDescription>{t('attachments.confirmDelete.description')}</DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            {t('attachments.confirmDelete.cancel')}
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={() => {
-              setOpen(false);
-              onConfirm();
-            }}
-          >
-            {t('attachments.confirmDelete.confirm')}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <BaseConfirmDeleteButton
+      {...props}
+      title={t('attachments.confirmDelete.title')}
+      description={t('attachments.confirmDelete.description')}
+      confirmLabel={t('attachments.confirmDelete.confirm')}
+      cancelLabel={t('attachments.confirmDelete.cancel')}
+    />
   );
 }
 

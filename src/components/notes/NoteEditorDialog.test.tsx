@@ -71,6 +71,7 @@ const closeButton = () => screen.getByRole('button', { name: 'Close' });
 afterEach(async () => {
   await db.notes.clear();
   await db.noteTags.clear();
+  await db.tags.clear();
   await db.attachments.clear();
 });
 
@@ -280,5 +281,20 @@ describe('NoteEditorDialog', () => {
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect((await db.notes.get(note.id))?.header).toBe('Edited header');
+  });
+
+  it('labels an unsaved draft, persisting it through the same ensureNoteId queue', async () => {
+    const now = new Date().toISOString();
+    await db.tags.put({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
+
+    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'tags.add' }));
+    await userEvent.click(await screen.findByRole('checkbox', { name: 'Work' }));
+
+    // The draft became a real note, and the label landed on that same note.
+    await waitFor(async () => expect(await db.noteTags.count()).toBe(1));
+    const link = (await db.noteTags.toArray())[0];
+    expect(await db.notes.get(link.noteId)).toBeDefined();
   });
 });

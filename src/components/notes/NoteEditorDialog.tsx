@@ -2,6 +2,7 @@ import { Check, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Editor, type EditorHandle } from '@/components/editor/editor.tsx';
+import { NoteTagsBar } from '@/components/tags/NoteTagsBar.tsx';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog.tsx';
 import { db } from '@/db/db.ts';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
@@ -230,6 +231,11 @@ export function NoteEditorDialog({
             setBody(html);
           }}
         />
+
+        {/* Labels sit below the body, where Slice 4's action bar will join them.
+            A draft is persisted on the first label through the same
+            ensureNoteId queue attachments use. */}
+        <NoteTagsBar noteId={noteId} ensureNoteId={ensureNoteId} />
       </DialogContent>
     </Dialog>
   );

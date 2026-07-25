@@ -20,7 +20,7 @@ The React interface to the Dexie layer. Components use these hooks; they should 
 | Hook | Functions |
 | ------ | ----------- |
 | `useNoteActions()` | `createNote(partial)`, `updateNote(id, updates)`, `purgeNote(id)`, `restoreNote(note, removed)` — plus the lifecycle set: `pinNote`/`unpinNote`, `archiveNote`, `trashNote`, `restoreToActive`, `revertLifecycle(id, snapshot)`, `purgeExpiredTrash(graceDays?)`, `emptyTrash()` |
-| `useTagActions()` | `createTag(name)`, `updateTag(id, name)`, `deleteTag(id)`, `addTagToNote(noteId, tagId)`, `removeTagFromNote(noteId, tagId)` |
+| `useTagActions()` | `createTag(name, color?)`, `updateTag(id, changes)`, `deleteTag(id)`, `mergeTags(sourceId, targetId)`, `addTagToNote(noteId, tagId)`, `removeTagFromNote(noteId, tagId)` |
 | `useAttachmentActions()` | `createAttachment(noteId, file, kind?)`, `getAttachment(id)`, `deleteAttachment(id)`, `cloneAttachment(source, noteId)`, `collectOrphans(noteId, referencedIds)`, `collectMissingNoteOrphans()`, `collectStartupOrphans()` |
 
 ## Conventions & behaviors
@@ -29,9 +29,12 @@ The React interface to the Dexie layer. Components use these hooks; they should 
 - Relationship-aware deletes run in a `db.transaction('rw', ...)`: `purgeNote` also clears the note's `noteTags` and `attachments`, returning `{ removedTags, removedAttachments }` so callers can pass them (with the captured note) to `restoreNote` for a lossless undo; `deleteTag` clears the tag's `noteTags`.
 - **Lifecycle** ([ADR 0009](../../../docs/adr/0009-note-lifecycle-model.md)): the user-facing "delete" is `trashNote`, not `purgeNote`. Every transition returns a `LifecycleSnapshot` of the fields it was about to overwrite (including `updatedAt`); hand that back to `revertLifecycle` to undo it without a trace. `purgeNote` is the irreversible one and undoes via `restoreNote` instead. `purgeExpiredTrash` runs at app start and reclaims trashed notes older than `TRASH_GRACE_DAYS` (30), cascading their attachments.
 - `addTagToNote` is idempotent — it checks for an existing `[noteId+tagId]` before inserting.
+- **Tags**: `createTag` is idempotent by name, case-insensitively — it returns the existing tag rather than minting a case-variant duplicate, because create-on-the-fly runs from a free-text field.
+`updateTag` takes a `{ name?, color? }` patch; a *present* `color: undefined` clears the colour, an absent key leaves it alone.
+`mergeTags` reassigns the source's `noteTags` to the target (filtering out notes that already carry the target, since `[noteId+tagId]` is the primary key), then deletes the source — all in one transaction, since a half-merge would drop notes off both tags.
 - Search is **client-side and linear** (filter over the scoped candidate set), fine for local-first scale. The `state` index cuts the candidates first; the text match itself is not indexed.
 - Search runs *within* the current scope, so trashed notes are unreachable from any view but `/trash` (ADR 0009).
 
 ## Known inconsistencies (see PLAN)
 
-- `useTagActions.createTag` and `addTagToNote` create rows **without** `createdAt`/`updatedAt`, which the `Tag`/`NoteTag` models declare as required. `useNoteActions` does set them. This should be unified.
+- None outstanding. (The old note about `useTagActions` skipping `createdAt`/`updatedAt` no longer applies: every tag write stamps both.)

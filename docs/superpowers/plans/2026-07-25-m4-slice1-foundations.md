@@ -63,12 +63,16 @@ Decisions: Dexie key-value `settings` store, Zod schema + version + defaults, as
 
 Decisions: label popover + create-on-the-fly; rename/delete(confirm)/merge; optional tag colour from the shared palette; inline `#hashtags` deferred.
 
-- [ ] `useTagActions.ts`: add `mergeTags(sourceId, targetId)` (reassign `noteTags` source→target, dedupe, delete source). Tag colour: extend `createTag`/`updateTag` to carry `color?`.
-- [ ] **"＋ Label" popover** (Radix `Popover`, already a dep) in `NoteEditorDialog`: current tags as removable chips + filter input + existing-tags checkbox list + "Create '<query>'" row (create-on-the-fly = `createTag`→`addTagToNote`). Same popover from the card `⋮` menu (built in Slice 3, but expose the component now).
-- [ ] `NoteCard.tsx`: render the note's tags as read-only pills (colour from `Tag.color`), using `useTagsForNote`.
-- [ ] **Manage labels view** at `/settings/labels`: list tags with rename (inline), delete (via shared `ConfirmDeleteButton` - detach warning), merge (pick source+target), colour picker.
-- [ ] Sidebar "Labels" section lists tags → each links to `/tag/:id`.
-- [ ] Tests: assign/create-on-the-fly, `mergeTags` reassignment+dedupe, delete detaches, pills render.
+- [x] `useTagActions.ts`: add `mergeTags(sourceId, targetId)` (reassign `noteTags` source→target, dedupe, delete source). Tag colour: extend `createTag`/`updateTag` to carry `color?`. **Also**: `updateTag` now takes a `{ name?, color? }` patch (was `(id, newName)`) and stamps `updatedAt`, which it previously didn't; `createTag` is idempotent by name, case-insensitively, so create-on-the-fly can't mint "work" next to "Work". Nothing consumed the old signatures - the tag layer had no UI.
+- [x] **"＋ Label" popover** (Radix `Popover`, already a dep) in `NoteEditorDialog`: current tags as removable chips + filter input + existing-tags checkbox list + "Create '<query>'" row (create-on-the-fly = `createTag`→`addTagToNote`). Same popover from the card `⋮` menu (built in Slice 3, but expose the component now).
+  - **Deviation:** the removable chips sit *next to* the trigger (in `NoteTagsBar`), not inside the popover - the checkbox list already shows what's assigned, so chips inside it would be the same information twice. `TagPopover` stays presentational, so Slice 3's card menu can mount it against the same handlers.
+  - The rows are a real `<input type="checkbox">` inside its `<label>`, not the shared `ui/checkbox`: Radix renders that as a `<button>`, which a `<label>` cannot activate, so the row's text would be dead to clicks.
+- [x] `NoteCard.tsx`: render the note's tags as read-only pills (colour from `Tag.color`), using `useTagsForNote`.
+- [x] **Manage labels view** at `/settings/labels`: list tags with rename (inline), delete (via shared `ConfirmDeleteButton` - detach warning), merge (pick source+target), colour picker. Also gained a create-label row - a manage view with no way to add a label is a dead end.
+  - `ConfirmDeleteButton` was attachment-specific and lived under `editor/extensions/attachments/`. Split: `ui/ConfirmDialog.tsx` (the app's one confirm dialog, controlled - merge needs it without a trigger) → `ui/ConfirmDeleteButton.tsx` (generic) → the attachments file is now a thin binding supplying its own copy, so no NodeView call site changed.
+  - Colour uses a new `color-picker/NoteColorPicker.tsx` over the palette *tokens* (not the hex-based `ColorPickerPanel` used for text colour). Slice 4's note-colour picker should reuse it.
+- [x] Sidebar "Labels" section lists tags → each links to `/tag/:id`. (Landed in Task 3.)
+- [x] Tests: assign/create-on-the-fly, `mergeTags` reassignment+dedupe, delete detaches, pills render.
 
 ### Task 6 - Export / import backup
 

@@ -187,5 +187,44 @@
     },
     "searchPlaceholder": "Search notes…",
     "trashNotice": "Notes in the trash are deleted after {{days}} days."
+  },
+  "tags": {
+    "add": "Label",
+    "filterPlaceholder": "Filter labels",
+    "create": "Create \"{{name}}\"",
+    "remove": "Remove label {{name}}"
+  },
+  "labels": {
+    "empty": "No labels yet.",
+    "create": "Create label",
+    "namePlaceholder": "Label name",
+    "rename": "Rename label {{name}}",
+    "color": "Colour of label {{name}}",
+    "delete": "Delete label {{name}}",
+    "merge": "Merge into",
+    "confirmMerge": {
+      "title": "Merge labels?",
+      "description": "Notes labelled \"{{source}}\" will be labelled \"{{target}}\" instead, and \"{{source}}\" is deleted.",
+      "confirm": "Merge",
+      "cancel": "Cancel"
+    },
+    "confirmDelete": {
+      "title": "Delete this label?",
+      "description": "It is removed from every note that carries it. The notes themselves stay.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    }
+  },
+  "colors": {
+    "default": "No colour",
+    "red": "Red",
+    "orange": "Orange",
+    "yellow": "Yellow",
+    "green": "Green",
+    "teal": "Teal",
+    "blue": "Blue",
+    "purple": "Purple",
+    "pink": "Pink",
+    "gray": "Grey"
   }
 }

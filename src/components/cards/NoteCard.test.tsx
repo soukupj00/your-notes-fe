@@ -40,6 +40,7 @@ afterEach(async () => {
   toastMock.mockReset();
   await db.notes.clear();
   await db.noteTags.clear();
+  await db.tags.clear();
   await db.attachments.clear();
 });
 
@@ -287,5 +288,27 @@ describe('NoteCard', () => {
     expect(screen.getByRole('button', { name: 'notes.playAudio' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'notes.playVideo' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'notes.openFile' })).toBeInTheDocument();
+  });
+
+  it('renders the note’s labels as read-only pills', async () => {
+    const note = makeNote();
+    const now = new Date().toISOString();
+    await db.tags.bulkPut([
+      { id: 't1', name: 'Work', color: 'blue', createdAt: now, updatedAt: now },
+      { id: 't2', name: 'Ideas', createdAt: now, updatedAt: now },
+      { id: 't3', name: 'Elsewhere', createdAt: now, updatedAt: now },
+    ]);
+    await db.noteTags.bulkPut([
+      { noteId: note.id, tagId: 't1', createdAt: now, updatedAt: now },
+      { noteId: note.id, tagId: 't2', createdAt: now, updatedAt: now },
+    ]);
+
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    expect(await screen.findByText('Work')).toBeInTheDocument();
+    expect(screen.getByText('Ideas')).toBeInTheDocument();
+    // Only this note's labels, and no remove affordance on a card.
+    expect(screen.queryByText('Elsewhere')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /tags.remove/ })).not.toBeInTheDocument();
   });
 });

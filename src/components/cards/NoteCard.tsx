@@ -3,6 +3,7 @@ import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { NoteBody } from '@/components/NoteBody.tsx';
+import { TagPills } from '@/components/tags/TagPills.tsx';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.tsx';
 import {
   DropdownMenu,
@@ -11,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx';
 import { type LifecycleSnapshot, useNoteActions } from '@/hooks/data/useNoteActions.ts';
+import { useTagsForNote } from '@/hooks/data/useTagsForNote.ts';
 import {
   bodyHasAttachment,
   bodyHasAudio,
@@ -37,6 +39,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
     trashNote,
     restoreToActive,
   } = useNoteActions();
+  const tags = useTagsForNote(note.id);
 
   // stripHtml drops the <img data-attachment-id> tag along with the rest of the
   // markup, so an image-only Body (no text) needs the attachment check too -
@@ -150,6 +153,9 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
 
       <CardContent className="space-y-3">
         {hasBody && <NoteBody html={note.body} className="line-clamp-6" />}
+        {/* Read-only here: labels are changed from the editor (and, in Slice 4,
+            the card's own overflow menu). */}
+        <TagPills tags={tags} />
       </CardContent>
 
       {/* Always-visible audio/video/file affordances: pinned bottom-right, in a

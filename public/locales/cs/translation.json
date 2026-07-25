@@ -188,5 +188,44 @@
     },
     "searchPlaceholder": "Hledat poznámky…",
     "trashNotice": "Poznámky v koši se po {{days}} dnech smažou."
+  },
+  "tags": {
+    "add": "Štítek",
+    "filterPlaceholder": "Filtrovat štítky",
+    "create": "Vytvořit „{{name}}“",
+    "remove": "Odebrat štítek {{name}}"
+  },
+  "labels": {
+    "empty": "Zatím žádné štítky.",
+    "create": "Vytvořit štítek",
+    "namePlaceholder": "Název štítku",
+    "rename": "Přejmenovat štítek {{name}}",
+    "color": "Barva štítku {{name}}",
+    "delete": "Smazat štítek {{name}}",
+    "merge": "Sloučit do",
+    "confirmMerge": {
+      "title": "Sloučit štítky?",
+      "description": "Poznámky se štítkem „{{source}}“ dostanou místo něj štítek „{{target}}“ a štítek „{{source}}“ bude smazán.",
+      "confirm": "Sloučit",
+      "cancel": "Zrušit"
+    },
+    "confirmDelete": {
+      "title": "Smazat tento štítek?",
+      "description": "Bude odebrán ze všech poznámek, které ho nesou. Samotné poznámky zůstanou.",
+      "confirm": "Smazat",
+      "cancel": "Zrušit"
+    }
+  },
+  "colors": {
+    "default": "Bez barvy",
+    "red": "Červená",
+    "orange": "Oranžová",
+    "yellow": "Žlutá",
+    "green": "Zelená",
+    "teal": "Modrozelená",
+    "blue": "Modrá",
+    "purple": "Fialová",
+    "pink": "Růžová",
+    "gray": "Šedá"
   }
 }
