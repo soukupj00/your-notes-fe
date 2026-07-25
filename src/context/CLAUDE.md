@@ -4,15 +4,14 @@ App-wide React context providers. See [`PLAN.md`](./PLAN.md) for upcoming work.
 
 ## `NotesProvider.tsx`
 
-Combines the global note list with search and exposes it via the `useNotes()` hook.
+Holds the app-wide search text and nothing else.
 
-- State: `query` (search string).
-- Reads: `useSearchNotes(query)` for results when `query` is non-empty; a live `db.notes.toArray()` query otherwise.
-- Exposes `{ query, setQuery, notes }`. `notes` switches between search results and all notes based on whether `query.trim()` is set.
+- State: `query` (search string), exposed as `{ query, setQuery }` via `useNotes()`.
+- The search box lives in the `Navbar`, above the router outlet, so the query cannot belong to any single view. The note **list**, however, does: each route calls `useNoteFeed(scope, query)` with its own scope (`/` → active, `/archive` → archived, `/trash` → trashed, `/tag/$id` → active + tag). That is why this provider no longer queries notes.
 - `useNotes()` throws if used outside the provider.
-- Wrapped around the app in `App.tsx`.
+- Wrapped around the router in `App.tsx`.
 
-> Note: there is also a standalone `useNotes()` **hook** in `src/hooks/data/useNotes.ts` (returns all notes). The context's `useNotes()` is search-aware and is the one components should use for the list view. Don't confuse the two.
+> Note: there is also a standalone `useNotes()` **hook** in `src/hooks/data/useNotes.ts` (returns all notes). Don't confuse the two.
 
 ## `themeProvider.tsx`
 

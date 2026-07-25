@@ -1,4 +1,14 @@
 {
+  "nav": {
+    "primary": "Main navigation",
+    "open": "Open navigation",
+    "notes": "Notes",
+    "labels": "Labels",
+    "editLabels": "Edit labels",
+    "archive": "Archive",
+    "trash": "Trash",
+    "settings": "Settings"
+  },
   "navbar": {
     "logo": "Notes"
   },
@@ -168,6 +178,8 @@
     "saveStatus": {
       "saving": "Saving…",
       "saved": "Saved"
-    }
+    },
+    "searchPlaceholder": "Search notes…",
+    "trashNotice": "Notes in the trash are deleted after {{days}} days."
   }
 }

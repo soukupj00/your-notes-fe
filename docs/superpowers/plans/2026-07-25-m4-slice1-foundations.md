@@ -38,13 +38,13 @@ Decisions (ADR 0009): `state` enum + orthogonal `pinnedAt` + `color` token + `tr
 
 Decisions (ADR 0008): file-based routing; typed search params via Zod `validateSearch`.
 
-- [ ] Add deps: `@tanstack/react-router` + its Vite plugin; wire the plugin in `vite.config`, add the generated `routeTree.gen.ts` to gitignore/biome-ignore as appropriate.
-- [ ] Routes: `/` (feed, active), `/archive`, `/trash`, `/settings`, `/settings/labels`, `/tag/:id`. (`/note/:id` optional - defer unless cheap.)
-- [ ] Rework `src/App.tsx` into the router root; providers (Theme/ViewMode/Notes/Preferences/Tooltip) wrap the router outlet.
-- [ ] Nav shell (Keep pattern): persistent left **sidebar** on desktop / slide-in **drawer** (hamburger in `Navbar`) on mobile, hosting All notes / Archive / Trash / Labels / Settings. Keep the existing bottom nav for create actions.
-- [ ] Feed reads `state` per route: `/` shows active, `/archive` archived, `/trash` trashed (with restore + Empty trash). Wire `useNotes`/`NotesProvider` (or the feed query) to filter by route state.
-- [ ] A11y: on route change move focus to the view's `<h1>`; each view has a heading.
-- [ ] Tests: route renders the right note set; sidebar/drawer nav; focus moves on navigation.
+- [x] Add deps: `@tanstack/react-router` + its Vite plugin; wire the plugin in `vite.config`, add the generated `routeTree.gen.ts` to gitignore/biome-ignore as appropriate.
+- [x] Routes: `/` (feed, active), `/archive`, `/trash`, `/settings`, `/settings/labels`, `/tag/:id`. (`/note/:id` optional - defer unless cheap.)
+- [x] Rework `src/App.tsx` into the router root; providers (Theme/ViewMode/Notes/Preferences/Tooltip) wrap the router outlet.
+- [x] Nav shell (Keep pattern): persistent left **sidebar** on desktop / slide-in **drawer** (hamburger in `Navbar`) on mobile, hosting All notes / Archive / Trash / Labels / Settings. Keep the existing bottom nav for create actions.
+- [x] Feed reads `state` per route. **Implemented as** a new `useNoteFeed(scope, query)` hook that owns scoping + search + ordering; `NotesProvider` is now just the search-text holder and `useSearchNotes` was folded into the new hook and deleted. `/note/:id` deferred as the plan allows.
+- [x] A11y: on route change move focus to the view's `<h1>`; each view has a heading.
+- [x] Tests: route renders the right note set; sidebar/drawer nav; focus moves on navigation.
 
 ### Task 4 - PreferencesProvider
 

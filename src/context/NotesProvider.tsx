@@ -1,40 +1,23 @@
-import { useLiveQuery } from 'dexie-react-hooks';
-import { createContext, type ReactNode, useContext, useState } from 'react';
-import { db } from '@/db/db';
-import { useSearchNotes } from '@/hooks/data/useSearchNotes.ts';
-import type { Note } from '@/models';
+import { createContext, type ReactNode, useContext, useMemo, useState } from 'react';
 
 type NotesContextType = {
   query: string;
   setQuery: (value: string) => void;
-  notes: Note[];
-  loading: boolean;
 };
 
 const NotesContext = createContext<NotesContextType | undefined>(undefined);
 
+/**
+ * Holds the app-wide search text. The search box lives in the Navbar, above the
+ * router outlet, so the query cannot belong to any one view - but the note list
+ * itself does: each route runs its own scoped `useNoteFeed(scope, query)`. That
+ * split is why this provider no longer queries notes at all.
+ */
 export function NotesProvider({ children }: { children: ReactNode }) {
   const [query, setQuery] = useState('');
+  const value = useMemo(() => ({ query, setQuery }), [query]);
 
-  const searchResults = useSearchNotes(query);
-
-  const allNotes = useLiveQuery(async () => {
-    return db.notes.toArray();
-  }, []);
-
-  const notes = (query.trim() ? searchResults : (allNotes ?? [])).filter(
-    (n): n is Note => n !== undefined
-  );
-
-  // The all-notes live query is `undefined` until it first resolves; surface
-  // that so the list can show skeletons instead of a false empty state.
-  const loading = !query.trim() && allNotes === undefined;
-
-  return (
-    <NotesContext.Provider value={{ query, setQuery, notes, loading }}>
-      {children}
-    </NotesContext.Provider>
-  );
+  return <NotesContext.Provider value={value}>{children}</NotesContext.Provider>;
 }
 
 export function useNotes() {

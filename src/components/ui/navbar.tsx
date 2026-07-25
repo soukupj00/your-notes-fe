@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import * as FlagIcons from 'country-flag-icons/react/3x2';
 import { Check, Globe, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -41,7 +42,8 @@ function LocaleFlag({ locale }: { locale: string }) {
   return <FlagIcon className="h-3.5 w-5 rounded-xs object-cover" />;
 }
 
-function Navbar(_props: React.ComponentProps<'header'>) {
+/** `leading` is the slot the layout uses for the mobile drawer trigger. */
+function Navbar({ leading }: { leading?: React.ReactNode }) {
   const { t } = useTranslation();
   // supportedLngs is the source of truth for which locales ship; 'cimode' is
   // i18next's debug pseudo-locale and isn't a real one to offer users.
@@ -88,14 +90,17 @@ function Navbar(_props: React.ComponentProps<'header'>) {
             </DropdownMenuContent>
           </DropdownMenu>
           <ThemeModeToggleButton />
-          <Button variant="ghost" size="icon">
-            <Settings />
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/settings" aria-label={t('nav.settings')}>
+              <Settings />
+            </Link>
           </Button>
         </div>
       </div>
 
       {/* Mobile Navbar */}
       <div className="flex items-center justify-between gap-2 px-4 py-2 sm:hidden">
+        {leading}
         <div className="font-bold text-lg">{t('navbar.logo')}</div>
         <SearchInput className="max-w-1/2" />
         <Dialog>

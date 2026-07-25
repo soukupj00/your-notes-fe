@@ -1,4 +1,14 @@
 {
+  "nav": {
+    "primary": "Hlavní navigace",
+    "open": "Otevřít navigaci",
+    "notes": "Poznámky",
+    "labels": "Štítky",
+    "editLabels": "Upravit štítky",
+    "archive": "Archiv",
+    "trash": "Koš",
+    "settings": "Nastavení"
+  },
   "navbar": {
     "logo": "Poznámky"
   },
@@ -169,6 +179,8 @@
     "saveStatus": {
       "saving": "Ukládání…",
       "saved": "Uloženo"
-    }
+    },
+    "searchPlaceholder": "Hledat poznámky…",
+    "trashNotice": "Poznámky v koši se po {{days}} dnech smažou."
   }
 }

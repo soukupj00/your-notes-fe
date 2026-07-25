@@ -13,7 +13,12 @@ const notesState = {
   loading: false,
 };
 vi.mock('@/context/NotesProvider.tsx', () => ({
-  useNotes: () => notesState,
+  useNotes: () => ({ query: notesState.query, setQuery: vi.fn() }),
+}));
+
+// The feed query has its own suite; stub it so this test stays about layout.
+vi.mock('@/hooks/data/useNoteFeed.ts', () => ({
+  useNoteFeed: () => ({ notes: notesState.notes, loading: notesState.loading }),
 }));
 
 const viewModeState = { viewMode: 'masonry' as 'masonry' | 'list' };
@@ -50,7 +55,7 @@ afterEach(() => {
 describe('NoteContent layout', () => {
   it('uses the masonry (columns) layout by default', () => {
     notesState.notes = [note('a'), note('b')];
-    const { container } = render(<NoteContent onSelect={vi.fn()} />);
+    const { container } = render(<NoteContent scope={{ state: 'active' }} onSelect={vi.fn()} />);
 
     const grid = container.querySelector('[data-testid="note-card"]')?.parentElement;
     expect(grid?.className).toContain('columns-1');
@@ -60,7 +65,7 @@ describe('NoteContent layout', () => {
   it('uses a single-column list layout when viewMode is list', () => {
     notesState.notes = [note('a'), note('b')];
     viewModeState.viewMode = 'list';
-    const { container } = render(<NoteContent onSelect={vi.fn()} />);
+    const { container } = render(<NoteContent scope={{ state: 'active' }} onSelect={vi.fn()} />);
 
     const grid = container.querySelector('[data-testid="note-card"]')?.parentElement;
     expect(grid?.className).toContain('flex-col');
@@ -70,7 +75,7 @@ describe('NoteContent layout', () => {
   it('renders one card per note regardless of layout', () => {
     notesState.notes = [note('a'), note('b'), note('c')];
     viewModeState.viewMode = 'list';
-    render(<NoteContent onSelect={vi.fn()} />);
+    render(<NoteContent scope={{ state: 'active' }} onSelect={vi.fn()} />);
     expect(screen.getAllByTestId('note-card')).toHaveLength(3);
   });
 });

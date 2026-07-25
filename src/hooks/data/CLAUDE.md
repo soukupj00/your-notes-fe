@@ -11,7 +11,7 @@ The React interface to the Dexie layer. Components use these hooks; they should 
 | `useNotes()` | `Note[]` | all notes |
 | `useNote(id)` | `Note \| null \| undefined` | single note by id |
 | `useTags()` | `Tag[]` | all tags |
-| `useSearchNotes(query)` | `Note[]` | case-insensitive in-memory filter over header/description/body/dates **plus** notes whose tags match; de-duplicates results |
+| `useNoteFeed(scope, query?)` | `{ notes, loading }` | **the** feed query: filters by `scope.state` (indexed) and optional `scope.tagId`, applies the search text within that scope, and orders pinned-first then by recency. Replaced `useSearchNotes`. |
 | `useNotesByTag(tagId)` | `Note[]` | notes linked to a tag via `noteTags` |
 | `useTagsForNote(noteId)` | `Tag[]` | tags linked to a note via `noteTags` |
 
@@ -29,7 +29,8 @@ The React interface to the Dexie layer. Components use these hooks; they should 
 - Relationship-aware deletes run in a `db.transaction('rw', ...)`: `purgeNote` also clears the note's `noteTags` and `attachments`, returning `{ removedTags, removedAttachments }` so callers can pass them (with the captured note) to `restoreNote` for a lossless undo; `deleteTag` clears the tag's `noteTags`.
 - **Lifecycle** ([ADR 0009](../../../docs/adr/0009-note-lifecycle-model.md)): the user-facing "delete" is `trashNote`, not `purgeNote`. Every transition returns a `LifecycleSnapshot` of the fields it was about to overwrite (including `updatedAt`); hand that back to `revertLifecycle` to undo it without a trace. `purgeNote` is the irreversible one and undoes via `restoreNote` instead. `purgeExpiredTrash` runs at app start and reclaims trashed notes older than `TRASH_GRACE_DAYS` (30), cascading their attachments.
 - `addTagToNote` is idempotent — it checks for an existing `[noteId+tagId]` before inserting.
-- Search is **client-side and linear** (`db.notes.toArray()` then `.filter`), fine for local-first scale but not indexed.
+- Search is **client-side and linear** (filter over the scoped candidate set), fine for local-first scale. The `state` index cuts the candidates first; the text match itself is not indexed.
+- Search runs *within* the current scope, so trashed notes are unreachable from any view but `/trash` (ADR 0009).
 
 ## Known inconsistencies (see PLAN)
 
