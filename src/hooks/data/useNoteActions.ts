@@ -21,6 +21,9 @@ export function useNoteActions() {
       state: data.state ?? 'active',
       pinnedAt: data.pinnedAt,
       color: data.color,
+      // Carried through so a note seeded straight into the trash still has the
+      // timestamp the purge sweep keys off; without it such a note is immortal.
+      trashedAt: data.trashedAt,
       createdAt: now,
       updatedAt: now,
     };

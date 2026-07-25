@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 /**
  * The shared Note/Tag colour palette (ADR 0009, "Color" in CONTEXT.md).
  *
@@ -42,7 +44,7 @@ export function isNoteColor(value: unknown): value is NoteColor {
  * Unknown or absent tokens fall through to the default card surface, so a note
  * carrying a token from a future palette never renders as a broken colour.
  */
-export function noteColorStyle(token: string | undefined): React.CSSProperties | undefined {
+export function noteColorStyle(token: string | undefined): CSSProperties | undefined {
   if (!token || !isNoteColor(token) || token === 'default') return undefined;
   return {
     backgroundColor: `var(--note-${token})`,
