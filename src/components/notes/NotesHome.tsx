@@ -20,14 +20,13 @@ type EditingState = {
 export function NotesHome() {
   const { t } = useTranslation();
   const [editing, setEditing] = useState<EditingState>(null);
-  const { collectMissingNoteOrphans } = useAttachmentActions();
+  const { collectStartupOrphans } = useAttachmentActions();
 
-  // Global safety net: reclaim attachment rows whose owning Note vanished
-  // (crash / discarded-draft), beyond the dialog's own note-scoped sweep.
-  // `collectMissingNoteOrphans` is memoized, so this runs once on mount.
+  // Reconcile attachment ownership and every saved Body after a reload, when
+  // no live editor undo stack remains. The action is stable, so this runs once.
   useEffect(() => {
-    collectMissingNoteOrphans().catch(console.error);
-  }, [collectMissingNoteOrphans]);
+    collectStartupOrphans().catch(console.error);
+  }, [collectStartupOrphans]);
 
   const startNote = () => setEditing({ id: null });
   const startChecklist = () => setEditing({ id: null, initialBody: EMPTY_CHECKLIST_BODY });

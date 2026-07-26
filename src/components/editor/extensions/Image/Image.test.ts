@@ -3,9 +3,14 @@ import Document from '@tiptap/extension-document';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { generateImageThumbnail } from '@/lib/image-thumbnail.ts';
 import type { AttachmentDeps } from '../attachments/deps';
-import { insertAttachmentFiles } from '../attachments/insert';
 import { createImage } from './Image';
+import { insertImageAttachmentFiles } from './insert.ts';
+
+vi.mock('@/lib/image-thumbnail.ts', () => ({
+  generateImageThumbnail: vi.fn(async () => undefined),
+}));
 
 const t = ((key: string) => key) as AttachmentDeps['t'];
 
@@ -34,6 +39,7 @@ function createEditor(deps = stubDeps()) {
 describe('imageAttachment node', () => {
   let editor: Editor;
   beforeEach(() => {
+    vi.mocked(generateImageThumbnail).mockResolvedValue(undefined);
     editor = createEditor();
   });
   afterEach(() => editor.destroy());
@@ -73,9 +79,9 @@ describe('imageAttachment node', () => {
   });
 });
 
-describe('insertAttachmentFiles (image)', () => {
+describe('insertImageAttachmentFiles', () => {
   function insertImage(editor: Editor, files: FileList | File[], deps: AttachmentDeps) {
-    return insertAttachmentFiles(editor, files, 'image', deps, (id) =>
+    return insertImageAttachmentFiles(editor, files, deps, (id: string) =>
       editor.chain().focus().insertImageAttachment({ attachmentId: id }).run()
     );
   }
@@ -99,6 +105,31 @@ describe('insertAttachmentFiles (image)', () => {
     expect(deps.getNoteId).toHaveBeenCalledOnce();
     expect(deps.createAttachment).toHaveBeenCalledWith('note-1', png, 'image');
     expect(editor.getHTML()).toContain('data-attachment-id="att-a.png"');
+    editor.destroy();
+  });
+
+  it('stores a generated thumbnail with the full image attachment', async () => {
+    const deps = stubDeps();
+    const thumbnail = new Blob(['small'], { type: 'image/webp' });
+    vi.mocked(generateImageThumbnail).mockResolvedValue(thumbnail);
+    deps.createAttachment = vi.fn(async (_noteId, file) => ({
+      id: 'att-with-thumbnail',
+      noteId: 'note-1',
+      kind: 'image' as const,
+      mime: file.type,
+      blob: file,
+      thumbnail,
+      createdAt: '',
+      updatedAt: '',
+    }));
+    const editor = createEditor(deps);
+    const png = new File([new Uint8Array(4)], 'large.png', { type: 'image/png' });
+
+    await insertImage(editor, [png], deps);
+
+    expect(generateImageThumbnail).toHaveBeenCalledWith(png);
+    expect(deps.createAttachment).toHaveBeenCalledWith('note-1', png, 'image', { thumbnail });
+    expect(editor.getHTML()).toContain('data-attachment-id="att-with-thumbnail"');
     editor.destroy();
   });
 

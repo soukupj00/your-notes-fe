@@ -55,4 +55,32 @@ describe('Editor autoplay-on-open', () => {
       expect(ref.current?.getEditor()?.storage.autoplayFirstAudioId).toBe('au2');
     });
   });
+
+  it('plays immediately via a registered trigger when the attachment is already ready before the scan runs', async () => {
+    // Mirrors the OTHER race direction from the first test: the attachment's
+    // blob load (and its AudioNodeView becoming ready) can finish before the
+    // note body's own async load feeds the real content in - the two loads
+    // are independent. Simulate that by pre-registering a ready trigger.
+    const ref = createRef<EditorHandle>();
+    const { rerender } = render(
+      <Editor ref={ref} content="" autoplayFirstAudio getNoteId={vi.fn()} />
+    );
+
+    const trigger = vi.fn();
+    const editor = ref.current?.getEditor();
+    if (!editor) throw new Error('editor not initialised');
+    editor.storage.autoplayReadyAudio = new Map([['au1', trigger]]);
+
+    rerender(
+      <Editor
+        ref={ref}
+        content='<p>hi</p><audio data-attachment-id="au1"></audio>'
+        autoplayFirstAudio
+        getNoteId={vi.fn()}
+      />
+    );
+
+    await waitFor(() => expect(trigger).toHaveBeenCalledTimes(1));
+    expect(editor.storage.autoplayFirstAudioId).toBeUndefined();
+  });
 });

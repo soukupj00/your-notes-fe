@@ -18,21 +18,28 @@ export function FileNodeView(props: ReactNodeViewProps) {
   const DownloadIcon = icons.Download;
   const canDelete = props.editor?.isEditable ?? false;
 
+  // Corner overlay, matching Excalidraw/Image/Video's delete placement (Task
+  // 3): a semi-opaque pill sits atop the row instead of taking flex space
+  // next to the download link.
   const deleteButton = canDelete ? (
-    <ConfirmDeleteButton
-      onConfirm={() => props.deleteNode()}
-      label={deps.t('editor.file.delete')}
-      t={deps.t}
-    />
+    <span className="absolute top-2 right-2 z-10">
+      <ConfirmDeleteButton
+        onConfirm={() => props.deleteNode()}
+        label={deps.t('editor.file.delete')}
+        t={deps.t}
+        triggerClassName="size-9 bg-destructive text-white shadow-sm hover:bg-destructive/90 hover:text-white"
+        iconClassName="size-5"
+      />
+    </span>
   ) : null;
 
   if (state.status === 'missing') {
     return (
-      <NodeViewWrapper as="div" className="my-2" data-drag-handle>
+      <NodeViewWrapper as="div" className="relative my-2" data-drag-handle>
         <div className="flex items-center gap-3 rounded-md border border-dashed p-4 text-muted-foreground text-sm">
           <span className="flex-1 text-center">{deps.t('editor.file.unavailable')}</span>
-          {deleteButton}
         </div>
+        {deleteButton}
       </NodeViewWrapper>
     );
   }
@@ -40,8 +47,8 @@ export function FileNodeView(props: ReactNodeViewProps) {
   const name = (state.status === 'ready' && state.name) || deps.t('editor.file.fallbackName');
 
   return (
-    <NodeViewWrapper as="div" className="my-2" data-drag-handle>
-      <div className="flex items-center gap-3 rounded-md border bg-muted/40 px-3 py-2">
+    <NodeViewWrapper as="div" className="relative my-2" data-drag-handle>
+      <div className="flex items-center gap-3 rounded-md border bg-muted/40 py-2 pr-12 pl-3">
         <FileIcon className="size-5 shrink-0 text-muted-foreground" />
         <span className="flex-1 truncate text-sm">{name}</span>
         {state.status === 'ready' && (
@@ -56,8 +63,8 @@ export function FileNodeView(props: ReactNodeViewProps) {
             <DownloadIcon className="size-4" />
           </a>
         )}
-        {deleteButton}
       </div>
+      {deleteButton}
     </NodeViewWrapper>
   );
 }

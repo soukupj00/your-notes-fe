@@ -127,6 +127,68 @@ describe('AudioNodeView', () => {
     expect(screen.queryByRole('button', { name: 'editor.audio.delete' })).not.toBeInTheDocument();
   });
 
+  type MockEditor = {
+    isEditable: boolean;
+    storage: { autoplayFirstAudioId?: string | null; autoplayReadyAudio?: Map<string, () => void> };
+  };
+
+  // Race direction 1: the editor's doc scan finds this attachment's id and
+  // sets the storage flag BEFORE this element becomes ready.
+  it('consumes a pre-set autoplay flag once its element becomes ready', async () => {
+    const editor: MockEditor = { isEditable: true, storage: { autoplayFirstAudioId: 'a1' } };
+    render(
+      <AudioNodeView
+        {...({
+          ...props(async () => att()),
+          editor,
+        } as Parameters<typeof AudioNodeView>[0])}
+      />
+    );
+    await waitFor(() => expect(HTMLMediaElement.prototype.play).toHaveBeenCalled());
+    expect(await screen.findByRole('button', { name: /pause/i })).toBeInTheDocument();
+    expect(editor.storage.autoplayFirstAudioId).toBeUndefined();
+  });
+
+  // Race direction 2: this element is already ready by the time the editor's
+  // doc scan runs. AudioNodeView must have registered a trigger the scan can
+  // call directly, since nothing re-checks the flag after the fact.
+  it('registers a ready-to-play trigger a late doc scan can call directly', async () => {
+    const editor: MockEditor = { isEditable: true, storage: {} };
+    render(
+      <AudioNodeView
+        {...({
+          ...props(async () => att()),
+          editor,
+        } as Parameters<typeof AudioNodeView>[0])}
+      />
+    );
+    await waitFor(() => expect(document.querySelector('audio')).not.toBeNull());
+
+    const trigger = editor.storage.autoplayReadyAudio?.get('a1');
+    expect(trigger).toBeInstanceOf(Function);
+    trigger?.();
+
+    await waitFor(() => expect(HTMLMediaElement.prototype.play).toHaveBeenCalled());
+    expect(await screen.findByRole('button', { name: /pause/i })).toBeInTheDocument();
+  });
+
+  it('unregisters its ready-to-play trigger on unmount', async () => {
+    const editor: MockEditor = { isEditable: true, storage: {} };
+    const { unmount } = render(
+      <AudioNodeView
+        {...({
+          ...props(async () => att()),
+          editor,
+        } as Parameters<typeof AudioNodeView>[0])}
+      />
+    );
+    await waitFor(() =>
+      expect(editor.storage.autoplayReadyAudio?.get('a1')).toBeInstanceOf(Function)
+    );
+    unmount();
+    expect(editor.storage.autoplayReadyAudio?.get('a1')).toBeUndefined();
+  });
+
   it('flips the button back to play when playback ends', async () => {
     render(<AudioNodeView {...props(async () => att())} />);
     await waitFor(() => expect(document.querySelector('audio')).not.toBeNull());

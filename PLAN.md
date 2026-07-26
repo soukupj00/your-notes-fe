@@ -25,15 +25,15 @@ See [`CONTEXT.md`](./CONTEXT.md) for the domain glossary and [`docs/adr/`](./doc
 
 ## Milestones
 
-### M0 — Tooling & CI/CD  (prerequisite)
-Decisions: [ADR 0005](./docs/adr/0005-biome-replaces-eslint-prettier.md) (Biome), [ADR 0006](./docs/adr/0006-ci-cd-and-container-image-distribution.md) (pipeline).
+### M0 — Tooling & CI/CD  (prerequisite)  ✅ done
+Decisions: [ADR 0005](./docs/adr/0005-biome-replaces-eslint-prettier.md) (Biome), [ADR 0006](./docs/adr/0006-ci-cd-and-container-image-distribution.md) (pipeline). Retro plan: [`docs/superpowers/plans/2026-06-17-m0-slice1-tooling-and-cicd.md`](./docs/superpowers/plans/2026-06-17-m0-slice1-tooling-and-cicd.md).
 
 - **Migrate to Biome** (replaces ESLint + Prettier):
   - Add `biome.json` (recommended rules + `organizeImports` + formatter; nursery `useSortedClasses` configured for `className`/`cn`/`clsx`/`cva`).
   - Remove `eslint*` + `prettier*` deps, `eslint.config.ts`, and Prettier configs.
   - Add scripts `check` (`biome check --write`), `check:ci` (`biome ci .`), `format`; drop `lint`.
   - Repoint `lint-staged` to `biome check --write --no-errors-on-unmatched` (apply safe fixes + re-stage; block on the rest). Keep husky `pre-commit`.
-- **Pin the toolchain:** add `packageManager: "pnpm@<lockfile-version>"` + `.nvmrc` (Node 20); change `Dockerfile` from `npm i -g pnpm` to `corepack enable` + `pnpm install --frozen-lockfile`.
+- **Pin the toolchain:** add `packageManager: "pnpm@<lockfile-version>"` + `.nvmrc` (Node 22); change `Dockerfile` from `npm i -g pnpm` to `corepack enable` + `pnpm install --frozen-lockfile`.
 - **GitLab pipeline** (`.gitlab-ci.yml`): keep the SAST + secret-detection templates; add stages `quality → test → build → publish`:
   - `quality` — `corepack enable && pnpm install --frozen-lockfile`, then `pnpm check:ci` + `pnpm tsc -b --noEmit` (pnpm store cached).
   - `test:unit` — `pnpm test` (Vitest); enabled once M1 adds tests.
@@ -51,10 +51,11 @@ Decisions: [ADR 0005](./docs/adr/0005-biome-replaces-eslint-prettier.md) (Biome)
 - Detail: [`src/components/editor/PLAN.md`](./src/components/editor/PLAN.md).
 
 ### M2 — Real notes CRUD UI  ✅ done
+Retro plan: [`docs/superpowers/plans/2026-07-21-m2-slice1-notes-crud-ui.md`](./docs/superpowers/plans/2026-07-21-m2-slice1-notes-crud-ui.md).
 - Replaced the `App.tsx` demo with the note list + create/edit flow, wiring `NoteCard` / `NoteContent` / `NotesHome` / `NoteEditorDialog` to the data hooks. Mobile-first, offline-first usable. Landed with tests (card click/keyboard, dialog autosave/draft/discard, delete/restore, search-by-body).
 
 ### M2.5 — Notes UX polish  ✅ done
-Keep-simple friction-reducers layered on M2 (detailed slice plan lived in a planning session, not the repo):
+Keep-simple friction-reducers layered on M2. Retro plan: [`docs/superpowers/plans/2026-07-21-m2.5-slice1-ux-polish.md`](./docs/superpowers/plans/2026-07-21-m2.5-slice1-ux-polish.md).
 - [x] Feed layout toggle (masonry ↔ single-column list), persisted to localStorage via `ViewModeProvider`.
 - [x] Mobile quick-capture bar (note + checklist) replacing the FAB; checklist smart-init opens the editor with an empty task list ready + focused. Mobile search moved to the top bar.
 - [x] Sticky-bottom mobile editor toolbar (rides above the keyboard via `interactive-widget=resizes-content`); desktop unchanged.
@@ -68,11 +69,23 @@ Keep-simple friction-reducers layered on M2 (detailed slice plan lived in a plan
 - ✅ **Slice 3 - inline video end to end**: `videoAttachment` node built on the same `attachments/` core (mirrors audio's node/insertion wiring); `VideoNodeView` uses a native `<video controls playsInline>` (no custom player skin needed); delete button on the node (`props.deleteNode()`, no confirmation yet); home card gets a pinned video play button next to the audio one (`NoteCard`'s bottom-right control is now a flex row, not a single button).
 - ✅ **Slice 3.5 - confirm-before-delete retrofit** (plan: [`docs/superpowers/plans/2026-07-23-m3-slice3.5-delete-confirm.md`](./docs/superpowers/plans/2026-07-23-m3-slice3.5-delete-confirm.md)): one shared confirm dialog (`ConfirmDeleteButton`), wired onto Audio's and Video's existing delete buttons and added to Image. Node deletion stays editor-only (no Dexie write); the existing deferred-GC behavior (`collectOrphans` at `NoteEditorDialog` close) already defers the actual blob delete until the user leaves the note. File and Excalidraw (Slices 4-5) consume this shared component from day one instead of copying the bare `deleteNode()` pattern.
 - ✅ **Slice 4 - generic file attachments** (plan: [`docs/superpowers/plans/2026-07-23-m3-slice4-file-attachments.md`](./docs/superpowers/plans/2026-07-23-m3-slice4-file-attachments.md)): a `fileAttachment` node/kind for arbitrary files (PDF and others) on the same `attachments/` core; toolbar-picker-only insertion (no MIME whitelist, size cap only - paste/drop deferred, since `file` has no MIME prefix to disambiguate from media in the shared router); the home card shows a generic file icon only (no thumbnail - too heavy to render a PDF first page just to signal "there's a file here"); delete button reuses the Slice 3.5 confirm component.
-- 🔧 **Slice 5 - Excalidraw attachments** (plan: [`docs/superpowers/plans/2026-07-23-m3-slice5-excalidraw.md`](./docs/superpowers/plans/2026-07-23-m3-slice5-excalidraw.md)): embeds the Excalidraw canvas as its own node (not a picked file - a created/edited scene); JSON scene + rendered SVG snapshot stored via the `attachments` core (`kind: 'excalidraw'`); card shows the SVG snapshot; delete reuses the Slice 3.5 confirm component. Architecturally distinct from Slices 1-4 (embeds an editor, not just an attach-existing-blob flow), so it stays its own slice rather than folding into Slice 4. **Phase 1 (inline canvas) shipped but did not work** (missing `@excalidraw/excalidraw/index.css` import + the canvas fighting `contentEditable`); **Phase 2 reworks the editing surface into a shared modal** with a passive live-queried SVG preview node (commit-on-Save; guarded Save/Cancel/Delete). See the plan's **"Phase 2 - Modal rework"** section and the design doc's **"Rework v2"** section.
-- Deferred sub-slices (build on the `attachments/` core, no slice assigned yet): image/audio/video processing (re-compression + thumbnails for the note-card feed, to cut load time - PDFs/files stay icon-only per Slice 4; waveform/level-meter via `wavesurfer.js`); mobile quick-capture-bar photo/mic buttons (unified capture bar, once all media types exist); image resize/alignment controls; recording trim/edit + playback speed; startup GC sweep for crash/hard-close orphans (carried forward from Slice 1).
+- ✅ **Slice 5 - Excalidraw attachments** (plan: [`docs/superpowers/plans/2026-07-23-m3-slice5-excalidraw.md`](./docs/superpowers/plans/2026-07-23-m3-slice5-excalidraw.md)): embeds the Excalidraw canvas as its own node (not a picked file - a created/edited scene); JSON scene + rendered SVG snapshot stored via the `attachments` core (`kind: 'excalidraw'`); card shows the SVG snapshot; delete reuses the Slice 3.5 confirm component. Architecturally distinct from Slices 1-4 (embeds an editor, not just an attach-existing-blob flow), so it stays its own slice rather than folding into Slice 4. Phase 1 (inline canvas) did not work (missing CSS import + the canvas fighting `contentEditable`); **Phase 2 (shipped)** reworked the editing surface into a shared modal (`ExcalidrawDialog`) with a passive live-queried SVG preview node (commit-on-Save; guarded Save/Cancel/Delete).
+- ✅ **Slice 6 - performance & polish closeout** (plan: [`docs/superpowers/plans/2026-07-24-m3-slice6-perf-polish-closeout.md`](./docs/superpowers/plans/2026-07-24-m3-slice6-perf-polish-closeout.md)): the perf + correctness work that finishes M3, plus a bounded set of named polish fixes. Six small tasks: (1) **image thumbnails** for the card feed (new `Attachment.thumbnail?: Blob`, no migration; WebP <=512px generated at insert; card falls back to the full blob when absent) + a `CONTEXT.md` **Preview** glossary entry; (2) **comprehensive startup GC sweep** (per-note reference reconciliation at `NotesHome` mount, closing the crash/hard-close orphan leak); (3) **unify the delete button** placement/prominence (corner overlay for image/video/file, inline-trailing for audio, all via the shared `ConfirmDeleteButton`); (4) **audio recording UI** - full-width on mobile + a calmer scrolling amplitude-bar visualizer (replacing the jumpy oscilloscope); (5) **Excalidraw card preview rounded corners** (card path in `NoteBody`); (6) **harden autoplay-on-open**. Closes M3.
+- Deferred to M4 (earmarked, not dismissed): **video poster thumbnails** (the one useful media preview beyond images, but heavier + a new inline card preview); mobile quick-capture-bar photo/mic buttons (unified capture bar); image resize/alignment controls; recording trim/edit + playback speed; audio/video waveform/level-meter as a feature (`wavesurfer.js`).
 
-### M4 — Accessibility & polish
-- Color-blindness / low-vision theme variants, descriptive icons, full i18n coverage, optional Motion/GSAP animations.
+### M4 — Accessibility, polish & feature completion
+The last frontend-only milestone (M5 is sync). Scoped from [`M4.md`](./M4.md) via a `/grill-with-docs` session that surfaced net-new features hiding inside "polish" (Tags had no UI, Settings was empty, the checklist was a dead field, there was no note lifecycle). Brings the app to Google-Keep parity with a distinctive, accessible, customisable identity.
+
+Key decisions: [ADR 0008](./docs/adr/0008-tanstack-router-over-react-router.md) (TanStack Router), [ADR 0009](./docs/adr/0009-note-lifecycle-model.md) (note lifecycle model), and the `CONTEXT.md` glossary (lifecycle; checklist redefined as a body task list; tag colour). New deps: `@tanstack/react-router`, `fuse.js`, `fflate`, `motion`, `react-hotkeys-hook`, `driver.js`, `@tiptap/extension-text-align`, `@dnd-kit/*`. One Dexie bump (lifecycle fields + `Tag.color`, remove dead `checklist`; no migration).
+
+Five slices, each a checkable plan doc:
+- **Slice 1 — Foundations** ([plan](./docs/superpowers/plans/2026-07-25-m4-slice1-foundations.md)): lifecycle data model + actions/purge/undo, TanStack Router + nav shell, Dexie-backed `PreferencesProvider`, Tags end-to-end, zip export/import.
+- **Slice 2 — Search & capture** ([plan](./docs/superpowers/plans/2026-07-25-m4-slice2-search-and-capture.md)): Fuse.js fuzzy search, sort + AND tag-pill filters in typed URL params, Keep-style creation speed-dial with auto-capture.
+- **Slice 3 — Polish sweep** ([plan](./docs/superpowers/plans/2026-07-25-m4-slice3-polish-sweep.md)): hover states, missing colour tokens, de-purple, skeletons/empty states, semantics + tab order + error boundary, `mod+K`, editor nodes (Link/HR/code/text-align/code-block) + slash menu.
+- **Slice 4 — Identity & motion** ([plan](./docs/superpowers/plans/2026-07-25-m4-slice4-identity-and-motion.md)): "tactile paper" redesign (prototype-first), Motion animations, full-card colour system, data-driven customisable toolbar, checklist polish, complete Settings.
+- **Slice 5 — Onboarding** ([plan](./docs/superpowers/plans/2026-07-25-m4-slice5-onboarding.md)): themed `driver.js` tour, first-load + Settings replay.
+
+Deferred to pre-release/M5: `navigator.storage.persist()`; single-key power shortcuts + `?` cheat sheet; merge-style import.
 
 ### M5 — Sync (client-side)
 - Local-account/auth context, REST/HATEOAS API client, response caching, offline mutation queue, conflict resolution against Dexie. Backend lives in the separate repo.

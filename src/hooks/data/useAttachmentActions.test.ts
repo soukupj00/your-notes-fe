@@ -26,6 +26,17 @@ describe('useAttachmentActions', () => {
     expect(await db.attachments.get(att.id)).toBeTruthy();
   });
 
+  it('createAttachment stores an image thumbnail in the same row', async () => {
+    const a = actions();
+    const noteId = crypto.randomUUID();
+    const thumbnail = new Blob(['small'], { type: 'image/webp' });
+
+    const att = await a.createAttachment(noteId, pngFile(), 'image', { thumbnail });
+
+    expect(att).toMatchObject({ thumbnail });
+    expect(await db.attachments.get(att.id)).toMatchObject({ thumbnail });
+  });
+
   it('createAttachment rejects a bad type without writing', async () => {
     const a = actions();
     const bad = new File(['x'], 'x.svg', { type: 'image/svg+xml' });
@@ -82,5 +93,30 @@ describe('useAttachmentActions', () => {
     await a.createAttachment(liveNote, pngFile());
     const removed = await a.collectMissingNoteOrphans();
     expect(removed).toBe(1);
+  });
+
+  it('collectStartupOrphans reconciles every saved note and missing note owner', async () => {
+    const a = actions();
+    const liveNote = crypto.randomUUID();
+    const keep = await a.createAttachment(liveNote, pngFile());
+    const drop = await a.createAttachment(liveNote, pngFile());
+    const missingOwner = await a.createAttachment(crypto.randomUUID(), pngFile());
+    const now = new Date().toISOString();
+    await db.notes.put({
+      id: liveNote,
+      header: '',
+      description: '',
+      body: `<img data-attachment-id="${keep.id}">`,
+      checklist: [],
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const removed = await a.collectStartupOrphans();
+
+    expect(removed).toBe(2);
+    expect(await a.getAttachment(keep.id)).toBeTruthy();
+    expect(await a.getAttachment(drop.id)).toBeUndefined();
+    expect(await a.getAttachment(missingOwner.id)).toBeUndefined();
   });
 });

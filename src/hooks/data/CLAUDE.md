@@ -7,7 +7,7 @@ The React interface to the Dexie layer. Components use these hooks; they should 
 **Reactive reads** — wrap `useLiveQuery` (from `dexie-react-hooks`); the component re-renders automatically when the underlying data changes. They return `[]`/`undefined` until the query resolves.
 
 | Hook | Returns | Notes |
-|------|---------|-------|
+| ------ | --------- | ------- |
 | `useNotes()` | `Note[]` | all notes |
 | `useNote(id)` | `Note \| null \| undefined` | single note by id |
 | `useTags()` | `Tag[]` | all tags |
@@ -18,10 +18,10 @@ The React interface to the Dexie layer. Components use these hooks; they should 
 **Mutations** — plain async functions returned from a hook (no live query):
 
 | Hook | Functions |
-|------|-----------|
+| ------ | ----------- |
 | `useNoteActions()` | `createNote(partial)`, `updateNote(id, updates)`, `deleteNote(id)` |
 | `useTagActions()` | `createTag(name)`, `updateTag(id, name)`, `deleteTag(id)`, `addTagToNote(noteId, tagId)`, `removeTagFromNote(noteId, tagId)` |
-| `useAttachmentActions()` | `createAttachment(noteId, file, kind?)`, `getAttachment(id)`, `deleteAttachment(id)`, `cloneAttachment(source, noteId)`, `collectOrphans(noteId, referencedIds)`, `collectMissingNoteOrphans()` |
+| `useAttachmentActions()` | `createAttachment(noteId, file, kind?)`, `getAttachment(id)`, `deleteAttachment(id)`, `cloneAttachment(source, noteId)`, `collectOrphans(noteId, referencedIds)`, `collectMissingNoteOrphans()`, `collectStartupOrphans()` |
 
 ## Conventions & behaviors
 

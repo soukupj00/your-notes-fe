@@ -5,18 +5,27 @@ import { db } from '@/db/db.ts';
 import type { Attachment } from '@/models.ts';
 import { NoteBody } from './NoteBody.tsx';
 
+const { getAttachment } = vi.hoisted(() => ({
+  getAttachment: vi.fn<(id: string) => Promise<Attachment | undefined>>(),
+}));
+vi.mock('@/hooks/data/useAttachmentActions.ts', () => ({
+  useAttachmentActions: () => ({ getAttachment }),
+}));
+
 const revoke = vi.fn();
 beforeEach(() => {
   let n = 0;
   globalThis.URL.createObjectURL = vi.fn(() => `blob:mock/${n++}`);
   globalThis.URL.revokeObjectURL = revoke;
+  getAttachment.mockReset();
+  getAttachment.mockImplementation((id) => db.attachments.get(id));
 });
 afterEach(async () => {
   revoke.mockReset();
   await db.attachments.clear();
 });
 
-function putAtt(id: string): Promise<string> {
+function putAtt(id: string, overrides: Partial<Attachment> = {}): Promise<string> {
   const now = new Date().toISOString();
   const att: Attachment = {
     id,
@@ -26,6 +35,7 @@ function putAtt(id: string): Promise<string> {
     blob: new Blob(['x'], { type: 'image/png' }),
     createdAt: now,
     updatedAt: now,
+    ...overrides,
   };
   return db.attachments.put(att);
 }
@@ -37,6 +47,30 @@ describe('NoteBody', () => {
     const img = await screen.findByRole('img');
     await waitFor(() => expect(img).toHaveAttribute('src', expect.stringContaining('blob:mock/')));
     expect(img).toHaveAttribute('loading', 'lazy');
+    expect(img).toHaveClass('rounded-md');
+  });
+
+  it('uses an image thumbnail instead of the full blob when one is stored', async () => {
+    const full = new Blob(['full'], { type: 'image/png' });
+    const thumbnail = new Blob(['small'], { type: 'image/webp' });
+    const now = new Date().toISOString();
+    getAttachment.mockResolvedValue({
+      id: 'a-thumb',
+      noteId: 'n1',
+      kind: 'image',
+      mime: 'image/png',
+      blob: full,
+      thumbnail,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    render(<NoteBody html='<img data-attachment-id="a-thumb">' />);
+    await waitFor(() => expect(URL.createObjectURL).toHaveBeenCalledOnce());
+
+    const objectUrlSource = vi.mocked(URL.createObjectURL).mock.calls[0]?.[0];
+    expect(objectUrlSource).toBe(thumbnail);
+    expect(objectUrlSource).not.toBe(full);
   });
 
   it('renders plain HTML while removing unsafe pasted attributes', () => {
@@ -76,6 +110,7 @@ describe('NoteBody', () => {
     });
     const drawing = container.querySelector<HTMLElement>('excalidraw-drawing');
     expect(drawing).toHaveStyle({ display: 'block', lineHeight: '0' });
+    expect(drawing).toHaveClass('overflow-hidden', 'rounded-md');
     expect(svg).toHaveStyle({ display: 'block', width: '100%', height: 'auto' });
   });
 });

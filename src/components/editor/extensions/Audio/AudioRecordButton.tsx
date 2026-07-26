@@ -90,7 +90,12 @@ export function AudioRecordButton({ editor, getDeps, tooltip }: AudioRecordButto
           action={() => void rec.start()}
         />
       </PopoverAnchor>
-      <PopoverContent align="start" className="w-64" onOpenAutoFocus={(e) => e.preventDefault()}>
+      <PopoverContent
+        align="start"
+        collisionPadding={16}
+        className="w-[calc(100vw-2rem)] sm:w-64"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <span className="size-2 animate-pulse rounded-full bg-destructive" aria-hidden />
