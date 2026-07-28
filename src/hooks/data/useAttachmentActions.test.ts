@@ -1,5 +1,4 @@
 import { renderHook } from '@testing-library/react';
-import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '@/db/db.ts';
 import { useAttachmentActions } from './useAttachmentActions.ts';

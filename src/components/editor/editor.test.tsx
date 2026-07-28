@@ -1,4 +1,3 @@
-import 'fake-indexeddb/auto';
 import { render, waitFor } from '@testing-library/react';
 import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';

@@ -1,9 +1,9 @@
-import 'fake-indexeddb/auto';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '@/db/db.ts';
 import type { Note } from '@/models.ts';
+import { clearNotesDb } from '@/test/db.ts';
 import { NoteCard } from './NoteCard.tsx';
 
 // Keys pass through untranslated so assertions are stable.
@@ -15,12 +15,6 @@ const toastMock = vi.fn();
 vi.mock('sonner', () => ({
   toast: (...args: unknown[]) => toastMock(...args),
 }));
-
-// Radix menus rely on APIs jsdom lacks.
-beforeAll(() => {
-  Element.prototype.hasPointerCapture = vi.fn();
-  Element.prototype.scrollIntoView = vi.fn();
-});
 
 function makeNote(overrides: Partial<Note> = {}): Note {
   const now = new Date().toISOString();
@@ -38,10 +32,7 @@ function makeNote(overrides: Partial<Note> = {}): Note {
 
 afterEach(async () => {
   toastMock.mockReset();
-  await db.notes.clear();
-  await db.noteTags.clear();
-  await db.tags.clear();
-  await db.attachments.clear();
+  await clearNotesDb();
 });
 
 beforeEach(() => {

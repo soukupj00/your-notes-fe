@@ -1,7 +1,7 @@
 import { Slot } from '@radix-ui/react-slot';
 import type { TooltipContentProps } from '@radix-ui/react-tooltip';
 import * as React from 'react';
-import { icons } from '@/components/icons';
+import { type IconName, icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -27,7 +27,7 @@ export interface ActionButtonProps {
   /** Active state checker */
   isActive?: ButtonViewReturnComponentProps['isActive'];
   /** Icon name */
-  icon?: string;
+  icon?: IconName;
   /** Child elements (icon + text) */
   children?: React.ReactNode;
   /** Render as child */
@@ -57,7 +57,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
   ) => {
     const Comp = asChild ? Slot : toggle ? Toggle : Button;
 
-    const Icon = icons[icon as string];
+    const Icon = icon ? icons[icon] : undefined;
 
     return (
       <Tooltip>

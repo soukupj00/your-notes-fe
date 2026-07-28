@@ -1,6 +1,21 @@
+import 'fake-indexeddb/auto';
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
-import { afterEach } from 'vitest';
+import { afterEach, vi } from 'vitest';
+
+// Stable browser API shims shared by Radix-based component tests.
+if (typeof Element !== 'undefined' && typeof window !== 'undefined') {
+  Element.prototype.hasPointerCapture = vi.fn(() => false);
+  Element.prototype.setPointerCapture = vi.fn();
+  Element.prototype.releasePointerCapture = vi.fn();
+  Element.prototype.scrollIntoView = vi.fn();
+  window.scrollTo = vi.fn();
+  window.matchMedia ??= vi.fn().mockReturnValue({
+    matches: false,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }) as unknown as typeof window.matchMedia;
+}
 
 // React Testing Library does not auto-clean between tests under Vitest globals,
 // so unmount and remove rendered trees after every test to avoid cross-test leakage.

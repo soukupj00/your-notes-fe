@@ -1,21 +1,22 @@
 import type { HistoryOptions as TiptapHistoryOptions } from '@tiptap/extension-history';
 import { History as TiptapHistory } from '@tiptap/extension-history';
-import type React from 'react';
-import HistoryActionButton from '@/components/editor/extensions/history/HistoryActionButton.tsx';
-import type { ButtonContext } from '../button-types';
+import { ActionButton } from '@/components/ui/ActionButton.tsx';
+import type { ButtonContext, ButtonView } from '../button-types';
 
-type HistoryItem = 'undo' | 'redo';
-
-interface HistoryButtonView {
-  component: typeof HistoryActionButton;
-  componentProps: React.ComponentProps<typeof HistoryActionButton>;
+interface HistoryItem {
+  command: 'undo' | 'redo';
+  icon: 'Undo2' | 'Redo2';
+  shortcutKeys: string[];
 }
 
 export interface HistoryOptions extends TiptapHistoryOptions {
-  button: (context: ButtonContext) => HistoryButtonView[];
+  button: (context: ButtonContext) => ButtonView[];
 }
 
-const historyItems: HistoryItem[] = ['undo', 'redo'];
+const HISTORY_ITEMS: HistoryItem[] = [
+  { command: 'undo', icon: 'Undo2', shortcutKeys: ['Mod', 'Z'] },
+  { command: 'redo', icon: 'Redo2', shortcutKeys: ['Mod', 'Shift', 'Z'] },
+];
 
 export const History = TiptapHistory.extend<HistoryOptions>({
   addOptions() {
@@ -24,20 +25,18 @@ export const History = TiptapHistory.extend<HistoryOptions>({
       depth: 100,
       newGroupDelay: 500,
       button: ({ editor, t }: ButtonContext) =>
-        historyItems.map((item) => ({
-          component: HistoryActionButton,
+        HISTORY_ITEMS.map(({ command, icon, shortcutKeys }) => ({
+          component: ActionButton,
           componentProps: {
             action: () => {
-              if (item === 'undo') {
-                editor.chain().focus().undo().run();
-              } else {
-                editor.chain().focus().redo().run();
-              }
+              const chain = editor.chain().focus();
+              if (command === 'undo') chain.undo().run();
+              else chain.redo().run();
             },
-            shortcutKeys: item === 'undo' ? ['Mod', 'Z'] : ['Mod', 'Shift', 'Z'],
-            disabled: item === 'undo' ? !editor.can().undo() : !editor.can().redo(),
-            isActive: item === 'undo' ? !editor.can().undo() : !editor.can().redo(),
-            tooltip: t(`editor.${item}`),
+            shortcutKeys,
+            disabled: command === 'undo' ? !editor.can().undo() : !editor.can().redo(),
+            icon,
+            tooltip: t(`editor.${command}`),
           },
         })),
     } as unknown as HistoryOptions;

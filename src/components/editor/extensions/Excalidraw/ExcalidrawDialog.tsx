@@ -3,11 +3,11 @@ import { Excalidraw } from '@excalidraw/excalidraw';
 import { XIcon } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -172,61 +172,32 @@ export function ExcalidrawDialog({
         </DialogContent>
       </Dialog>
 
-      {/* Discard-confirm: shown when cancelling a dirty scene. */}
-      <Dialog
-        open={confirm === 'discard'}
+      <ConfirmDialog
+        open={confirm !== null}
         onOpenChange={(next) => {
           if (!next) setConfirm(null);
         }}
-      >
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{t('editor.excalidraw.discardTitle')}</DialogTitle>
-            <DialogDescription>{t('editor.excalidraw.discardDescription')}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirm(null)}>
-              {t('editor.excalidraw.discardCancel')}
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                setConfirm(null);
-                onClose();
-              }}
-            >
-              {t('editor.excalidraw.discardConfirm')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete-confirm: edit mode only. */}
-      <Dialog
-        open={confirm === 'delete'}
-        onOpenChange={(next) => {
-          if (!next) setConfirm(null);
+        title={
+          confirm === 'delete'
+            ? t('editor.excalidraw.deleteModal')
+            : t('editor.excalidraw.discardTitle')
+        }
+        description={
+          confirm === 'delete'
+            ? t('attachments.confirmDelete.description')
+            : t('editor.excalidraw.discardDescription')
+        }
+        confirmLabel={
+          confirm === 'delete'
+            ? t('editor.excalidraw.deleteAction')
+            : t('editor.excalidraw.discardConfirm')
+        }
+        cancelLabel={t('editor.excalidraw.discardCancel')}
+        onConfirm={() => {
+          if (confirm === 'delete') onDelete?.();
+          else onClose();
         }}
-      >
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{t('editor.excalidraw.deleteModal')}</DialogTitle>
-            <DialogDescription>{t('attachments.confirmDelete.description')}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirm(null)}>
-              {t('editor.excalidraw.discardCancel')}
-            </Button>
-            <DeleteButton
-              label={t('editor.excalidraw.deleteAction')}
-              onClick={() => {
-                setConfirm(null);
-                onDelete?.();
-              }}
-            />
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      />
     </>
   );
 }

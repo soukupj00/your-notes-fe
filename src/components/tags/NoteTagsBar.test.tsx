@@ -1,9 +1,9 @@
-import 'fake-indexeddb/auto';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { db } from '@/db/db.ts';
 import type { Tag } from '@/models.ts';
+import { clearNotesDb } from '@/test/db.ts';
 import { NoteTagsBar } from './NoteTagsBar.tsx';
 
 vi.mock('react-i18next', () => ({
@@ -12,12 +12,6 @@ vi.mock('react-i18next', () => ({
     t: (key: string, opts?: { name?: string }) => (opts?.name ? `${key}:${opts.name}` : key),
   }),
 }));
-
-beforeAll(() => {
-  // Radix Popover needs these; jsdom implements neither.
-  Element.prototype.hasPointerCapture = vi.fn();
-  Element.prototype.scrollIntoView = vi.fn();
-});
 
 async function putTag(id: string, name: string): Promise<Tag> {
   const now = new Date().toISOString();
@@ -35,11 +29,7 @@ async function openPopover() {
   return screen.findByRole('dialog');
 }
 
-afterEach(async () => {
-  await db.tags.clear();
-  await db.noteTags.clear();
-  await db.notes.clear();
-});
+afterEach(clearNotesDb);
 
 describe('assigning labels', () => {
   it('ticks an existing label onto the note', async () => {

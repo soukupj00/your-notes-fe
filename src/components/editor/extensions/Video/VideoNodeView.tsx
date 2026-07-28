@@ -1,6 +1,6 @@
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
-import { ConfirmDeleteButton } from '../attachments/ConfirmDeleteButton';
+import { AttachmentDeleteButton } from '../attachments/AttachmentDeleteButton';
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
 
@@ -17,15 +17,12 @@ export function VideoNodeView(props: ReactNodeViewProps) {
   // semi-opaque pill sits atop the content surface instead of taking flex
   // space next to it, so it stays legible over any video frame.
   const deleteButton = canDelete ? (
-    <span className="absolute top-2 right-2 z-10">
-      <ConfirmDeleteButton
-        onConfirm={() => props.deleteNode()}
-        label={deps.t('editor.video.delete')}
-        t={deps.t}
-        triggerClassName="size-9 bg-destructive text-white shadow-sm hover:bg-destructive/90 hover:text-white"
-        iconClassName="size-5"
-      />
-    </span>
+    <AttachmentDeleteButton
+      onConfirm={() => props.deleteNode()}
+      label={deps.t('editor.video.delete')}
+      t={deps.t}
+      overlay
+    />
   ) : null;
 
   if (state.status === 'missing') {

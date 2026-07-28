@@ -1,9 +1,9 @@
-import 'fake-indexeddb/auto';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { db } from '@/db/db.ts';
 import type { Note } from '@/models.ts';
+import { clearNotesDb } from '@/test/db.ts';
 import { EMPTY_CHECKLIST_BODY, NoteEditorDialog } from './NoteEditorDialog.tsx';
 
 // Keys pass through untranslated so assertions are stable.
@@ -44,12 +44,6 @@ vi.mock('@/components/editor/editor.tsx', () => ({
   ),
 }));
 
-// Radix Dialog relies on APIs jsdom lacks.
-beforeAll(() => {
-  Element.prototype.hasPointerCapture = vi.fn();
-  Element.prototype.scrollIntoView = vi.fn();
-});
-
 function makeNote(overrides: Partial<Note> = {}): Note {
   const now = new Date().toISOString();
   return {
@@ -68,12 +62,7 @@ const headerInput = () => screen.getByLabelText('notes.titlePlaceholder');
 const editorTextarea = () => screen.getByTestId('editor') as HTMLTextAreaElement;
 const closeButton = () => screen.getByRole('button', { name: 'Close' });
 
-afterEach(async () => {
-  await db.notes.clear();
-  await db.noteTags.clear();
-  await db.tags.clear();
-  await db.attachments.clear();
-});
+afterEach(clearNotesDb);
 
 describe('NoteEditorDialog', () => {
   it('loads an existing note once and ignores later external writes (no live query)', async () => {

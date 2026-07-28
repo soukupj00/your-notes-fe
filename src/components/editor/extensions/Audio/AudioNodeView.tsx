@@ -2,7 +2,7 @@ import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { icons } from '@/components/icons';
-import { ConfirmDeleteButton } from '../attachments/ConfirmDeleteButton';
+import { AttachmentDeleteButton } from '../attachments/AttachmentDeleteButton';
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
 
@@ -45,7 +45,7 @@ export function AudioNodeView(props: ReactNodeViewProps) {
   const canDelete = props.editor?.isEditable ?? false;
 
   const deleteButton = canDelete ? (
-    <ConfirmDeleteButton
+    <AttachmentDeleteButton
       onConfirm={() => props.deleteNode()}
       label={deps.t('editor.audio.delete')}
       t={deps.t}

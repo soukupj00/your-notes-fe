@@ -1,8 +1,8 @@
-import 'fake-indexeddb/auto';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { db } from '@/db/db.ts';
+import { clearNotesDb } from '@/test/db.ts';
 import LabelsPage from './labels.tsx';
 
 vi.mock('react-i18next', () => ({
@@ -10,13 +10,6 @@ vi.mock('react-i18next', () => ({
     t: (key: string, opts?: { name?: string }) => (opts?.name ? `${key}:${opts.name}` : key),
   }),
 }));
-
-beforeAll(() => {
-  // Radix Popover/DropdownMenu/Dialog need these; jsdom implements none of them.
-  Element.prototype.hasPointerCapture = vi.fn();
-  Element.prototype.releasePointerCapture = vi.fn();
-  Element.prototype.scrollIntoView = vi.fn();
-});
 
 async function putTag(id: string, name: string, color?: string) {
   const now = new Date().toISOString();
@@ -31,10 +24,7 @@ const link = async (noteId: string, tagId: string) => {
 const linkedNoteIds = async (tagId: string) =>
   (await db.noteTags.where('tagId').equals(tagId).toArray()).map((l) => l.noteId).sort();
 
-afterEach(async () => {
-  await db.tags.clear();
-  await db.noteTags.clear();
-});
+afterEach(clearNotesDb);
 
 describe('listing', () => {
   it('says so when there are no labels', async () => {

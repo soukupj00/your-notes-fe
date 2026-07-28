@@ -1,7 +1,7 @@
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
 import { icons } from '@/components/icons';
-import { ConfirmDeleteButton } from '../attachments/ConfirmDeleteButton';
+import { AttachmentDeleteButton } from '../attachments/AttachmentDeleteButton';
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
 
@@ -9,7 +9,7 @@ import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
  *  this shows a generic file icon, the original filename, and an open/download
  *  link (opens the Blob object URL in a new tab; non-viewable types download).
  *  Object-URL lifecycle handled by the shared hook. Delete is guarded by the
- *  shared ConfirmDeleteButton (editor-only, same as audio/video/image). */
+ *  shared AttachmentDeleteButton (editor-only, same as audio/video/image). */
 export function FileNodeView(props: ReactNodeViewProps) {
   const attachmentId = props.node.attrs.attachmentId as string | null;
   const deps = (props.extension.options.getDeps as () => AttachmentDeps)();
@@ -22,15 +22,12 @@ export function FileNodeView(props: ReactNodeViewProps) {
   // 3): a semi-opaque pill sits atop the row instead of taking flex space
   // next to the download link.
   const deleteButton = canDelete ? (
-    <span className="absolute top-2 right-2 z-10">
-      <ConfirmDeleteButton
-        onConfirm={() => props.deleteNode()}
-        label={deps.t('editor.file.delete')}
-        t={deps.t}
-        triggerClassName="size-9 bg-destructive text-white shadow-sm hover:bg-destructive/90 hover:text-white"
-        iconClassName="size-5"
-      />
-    </span>
+    <AttachmentDeleteButton
+      onConfirm={() => props.deleteNode()}
+      label={deps.t('editor.file.delete')}
+      t={deps.t}
+      overlay
+    />
   ) : null;
 
   if (state.status === 'missing') {

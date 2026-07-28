@@ -9,7 +9,6 @@
 // render is enough to read their return value.
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '@/db/db.ts';
 import { useAttachmentActions } from './useAttachmentActions.ts';

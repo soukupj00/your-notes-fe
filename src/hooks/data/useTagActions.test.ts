@@ -1,4 +1,3 @@
-import 'fake-indexeddb/auto';
 import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { db } from '@/db/db.ts';

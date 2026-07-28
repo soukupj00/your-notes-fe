@@ -27,6 +27,29 @@ interface NoteCardProps {
   onSelect: (id: string, opts?: { autoplayFirstAudio?: boolean }) => void;
 }
 
+interface NoteCardAttachmentButtonProps {
+  label: string;
+  onActivate: () => void;
+  children: React.ReactNode;
+}
+
+/** A media affordance nested inside the clickable card surface. */
+function NoteCardAttachmentButton({ label, onActivate, children }: NoteCardAttachmentButtonProps) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={(event) => {
+        event.stopPropagation();
+        onActivate();
+      }}
+      className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      {children}
+    </button>
+  );
+}
+
 export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
   const { t } = useTranslation();
   const {
@@ -166,43 +189,28 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
       {(hasAudio || hasVideo || hasFile) && (
         <div className="absolute right-2 bottom-2 z-10 flex gap-2">
           {hasAudio && (
-            <button
-              type="button"
-              aria-label={t('notes.playAudio')}
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect(note.id, { autoplayFirstAudio: true });
-              }}
-              className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            <NoteCardAttachmentButton
+              label={t('notes.playAudio')}
+              onActivate={() => onSelect(note.id, { autoplayFirstAudio: true })}
             >
               <Play className="size-5 translate-x-px" />
-            </button>
+            </NoteCardAttachmentButton>
           )}
           {hasVideo && (
-            <button
-              type="button"
-              aria-label={t('notes.playVideo')}
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect(note.id);
-              }}
-              className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            <NoteCardAttachmentButton
+              label={t('notes.playVideo')}
+              onActivate={() => onSelect(note.id)}
             >
               <Video className="size-5" />
-            </button>
+            </NoteCardAttachmentButton>
           )}
           {hasFile && (
-            <button
-              type="button"
-              aria-label={t('notes.openFile')}
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect(note.id);
-              }}
-              className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            <NoteCardAttachmentButton
+              label={t('notes.openFile')}
+              onActivate={() => onSelect(note.id)}
             >
               <FileText className="size-5" />
-            </button>
+            </NoteCardAttachmentButton>
           )}
         </div>
       )}

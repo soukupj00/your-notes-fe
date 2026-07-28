@@ -1,14 +1,14 @@
-import 'fake-indexeddb/auto';
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NotesProvider } from '@/context/NotesProvider.tsx';
 import { ThemeProvider } from '@/context/themeProvider.tsx';
 import { ViewModeProvider } from '@/context/viewModeProvider.tsx';
 import { db } from '@/db/db.ts';
 import type { Note } from '@/models.ts';
 import { routeTree } from '@/routeTree.gen';
+import { clearNotesDb } from '@/test/db.ts';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -30,16 +30,6 @@ vi.mock('@/components/notes/NoteEditorDialog.tsx', () => ({
 vi.mock('@/components/cards/NoteCard.tsx', () => ({
   NoteCard: ({ note }: { note: Note }) => <div data-testid="note-card">{note.header}</div>,
 }));
-
-beforeAll(() => {
-  Element.prototype.hasPointerCapture = vi.fn();
-  Element.prototype.scrollIntoView = vi.fn();
-  window.matchMedia ??= vi.fn().mockReturnValue({
-    matches: false,
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-  }) as unknown as typeof window.matchMedia;
-});
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString();
 
@@ -71,11 +61,7 @@ function renderAt(path: string) {
   return router;
 }
 
-afterEach(async () => {
-  await db.notes.clear();
-  await db.tags.clear();
-  await db.noteTags.clear();
-});
+afterEach(clearNotesDb);
 
 describe('route -> note set', () => {
   it.each([
