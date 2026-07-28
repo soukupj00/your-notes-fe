@@ -293,13 +293,10 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     editorRef.current = editor;
   }, [editor]);
 
-  // Best-effort autoplay-on-open: find the first audioAttachment node, then
-  // either play it immediately (if its AudioNodeView already registered a
-  // ready-to-play trigger) or stash its id on editor storage for AudioNodeView
-  // to consume once its <audio> element becomes ready. Both paths are needed:
-  // the note body and the target attachment's blob load via two independent
-  // async chains (IndexedDB reads with no ordering guarantee between them), so
-  // this scan can run either before or after the attachment is ready.
+  // Best-effort autoplay-on-open: find the first audioAttachment node and ask
+  // the audio extension's coordinator to play it. The coordinator handles both
+  // load orderings because the note body and attachment blob are independent
+  // IndexedDB reads.
   // Guarded by a ref (not just the effect's deps) so it fires at most once per
   // editor instance - an existing note's real body only lands via the
   // setContent below (it's loaded async and seeded as '' at mount), so the
@@ -335,12 +332,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         // later scan.
         if (firstAudioId) {
           autoplayScannedRef.current = true;
-          const readyTrigger = editor.storage.autoplayReadyAudio?.get(firstAudioId);
-          if (readyTrigger) {
-            readyTrigger();
-          } else {
-            editor.storage.autoplayFirstAudioId = firstAudioId;
-          }
+          editor.storage.audioAttachment.autoplay.requestAutoplay(firstAudioId);
         }
       }
     });
