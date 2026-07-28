@@ -157,7 +157,9 @@ describe('settings page', () => {
   it('switches the theme from the appearance section', async () => {
     renderAt('/settings');
 
-    const themes = await screen.findByRole('group', { name: 'settings.theme.label' });
+    // Radix ToggleGroup 1.1.19 exposes a single-select root as `radiogroup`
+    // (it was `group` before), which matches the `radio` items queried below.
+    const themes = await screen.findByRole('radiogroup', { name: 'settings.theme.label' });
     await userEvent.click(within(themes).getByRole('radio', { name: 'settings.theme.light' }));
 
     await waitFor(() => expect(document.documentElement).toHaveClass('light'));
