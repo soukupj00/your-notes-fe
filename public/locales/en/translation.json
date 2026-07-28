@@ -142,6 +142,38 @@
       "system": "System",
       "light": "Light",
       "dark": "Dark"
+    },
+    "backup": {
+      "title": "Backup",
+      "working": "Working...",
+      "exported": "Backup saved.",
+      "imported": "Backup restored.",
+      "export": {
+        "label": "Export a backup",
+        "description": "Downloads a .zip with every note, label and attachment.",
+        "action": "Export"
+      },
+      "import": {
+        "label": "Restore from a backup",
+        "description": "Replaces everything currently stored. You can save a backup of it first.",
+        "action": "Import"
+      },
+      "confirmImport": {
+        "title": "Replace all your data?",
+        "description": "This backup holds {{notes}} notes, {{tags}} labels and {{attachments}} attachments. Everything stored now is deleted and replaced.",
+        "confirm": "Replace everything",
+        "cancel": "Cancel",
+        "backupFirst": "Save a backup of my current data first"
+      },
+      "error": {
+        "invalid-zip": "That file is not a readable backup archive.",
+        "missing-manifest": "That archive is missing its backup manifest.",
+        "invalid-manifest": "That backup is damaged and cannot be read.",
+        "unsupported-version": "That backup was made by a newer version of the app.",
+        "missing-attachment": "That backup is incomplete - some attachment files are missing.",
+        "unknown": "Something went wrong. Nothing was changed."
+      },
+      "importCancelled": "Import cancelled. Nothing was changed."
     }
   },
   "notes": {

@@ -21,6 +21,9 @@ export interface ConfirmDialogProps {
   onConfirm: () => void;
   /** Style the confirm button as destructive (default: true - most uses delete something). */
   destructive?: boolean;
+  /** Optional content between the description and the buttons, for a choice
+   *  that belongs to the confirmation itself (e.g. "back up first"). */
+  body?: ReactNode;
   /** Optional trigger rendered inside the dialog, for the uncontrolled-feeling cases. */
   children?: ReactNode;
 }
@@ -39,6 +42,7 @@ export function ConfirmDialog({
   cancelLabel,
   onConfirm,
   destructive = true,
+  body,
   children,
 }: ConfirmDialogProps) {
   return (
@@ -49,6 +53,7 @@ export function ConfirmDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
+        {body}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {cancelLabel}

@@ -1,6 +1,6 @@
 # M4 Slice 1 - Foundations
 
-**Status:** not started.
+**Status:** all six tasks landed. Automated gates green (`pnpm test`, `pnpm tsc -b --noEmit`, `pnpm check:ci`, `pnpm build`); the manual pass in Verification below is still owed.
 
 **Goal:** Put the four load-bearing pieces in place that every later M4 slice reads from - the note lifecycle data model, the router + nav shell, the preferences store, and the Tags feature - plus the zip backup safety net.
 
@@ -78,10 +78,21 @@ Decisions: label popover + create-on-the-fly; rename/delete(confirm)/merge; opti
 
 Decisions: `.zip` via `fflate`; replace-all restore with auto-backup-before-import.
 
-- [ ] Add dep `fflate`.
-- [ ] Export: build `manifest.json` (notes, tags, noteTags, optional preferences) + `attachments/<id>` blob files → zip → download. Lives in Settings.
-- [ ] Import: file picker → unzip → **Zod-validate** manifest → confirm dialog → **auto-export current DB first** → wipe all tables → restore. Surface progress + a clear success/failure toast.
-- [ ] Tests: export→import round-trip (notes + a binary attachment) restores byte-identical; invalid manifest is rejected before any wipe.
+- [x] Add dep `fflate`.
+- [x] Export: build `manifest.json` (notes, tags, noteTags, optional preferences) + `attachments/<id>` blob files → zip → download. Lives in Settings.
+  - **Implemented as** `src/lib/backup.ts`: `buildBackupZip` / `parseBackupZip` / `restoreBackup` / `backupFilename` / `downloadBlob`, all DB-facing but UI-free, so the flow is testable without rendering Settings.
+  - **Decision - the whole `settings` table goes in the manifest, not just preferences.** It is a generic key-value store; exporting the table means anything a later slice puts there is backed up without touching this code.
+  - **Decision - thumbnails get their own entry** (`attachments/<id>.thumb`), flagged by `hasThumbnail` in the metadata so a truncated archive is *detectable* rather than silently degrading card rendering. Attachment entries are stored at `level: 0` - PNG/WebM bytes are already compressed, so deflating them again only burns CPU.
+  - **Decision - rows are validated loosely** (`z.looseObject`, only keys/`state`/timestamps required). A backup taken after the model gains a field still restores that field instead of the schema quietly dropping it. Consequence: `BackupManifest` describes the *parsed* shape and is deliberately wider than `Note`/`Tag`.
+- [x] Import: file picker → unzip → **Zod-validate** manifest → confirm dialog → **auto-export current DB first** → wipe all tables → restore. Surface progress + a clear success/failure toast.
+  - `parseBackupZip` is the whole validation gate and never writes; the confirm dialog only appears for an archive that is already known to be restorable, and it names the counts the user is about to trade for. The wipe + writes are one `rw` transaction, so a mid-restore failure rolls back.
+  - **Correction to the plan - the auto-export is not automatic.** As first built it fired *after* the user confirmed, so a second save dialog ambushed them, and cancelling it wiped the database anyway: the safety net silently did not exist. It is now a checked-by-default "Save a backup of my current data first" **inside** the confirm dialog, so the choice and the destructive decision sit on one screen. Cancelling that save, or failing to write it, abandons the import - restoring anyway would destroy exactly the data the user declined to lose. Asking *before* the file picker (the other option considered) was rejected: it spends a user decision on an archive that may turn out to be corrupt.
+  - **Decision - saving goes through `requestSaveTarget`, not an anchor download.** An anchor is fire-and-forget, so the original "Backup downloaded" toast fired while the browser's save dialog was still open - a claim we had no way to make. `showSaveFilePicker` gives a real completion signal, and it is called *before* the zip is built (awaiting multi-second work would spend the click's user activation). Firefox/Safari fall back to the anchor and the target reports `confirmed: false`, on which the success toast is suppressed rather than guessed.
+  - **Deviation - no progress bar.** The zip work is async (fflate's worker path) and the buttons carry a "Working…" busy state; a percentage would need fflate's streaming API for a bar that is empty for 99% of realistic databases.
+  - `ConfirmDialog` gained an optional `body` slot for the checkbox - a choice that belongs to the confirmation itself, rather than a third dialog.
+- [x] Tests: export→import round-trip (notes + a binary attachment) restores byte-identical; invalid manifest is rejected before any wipe.
+  - `src/lib/backup.test.ts` runs under `// @vitest-environment node` (jsdom reads a stored Blob back as a plain object), and every validation case asserts the database is *still intact* after the rejection. `src/components/settings/BackupSection.test.tsx` covers the flow with the lib mocked, including that the safety export is called before `restoreBackup`.
+  - `SettingsSection`/`SettingsRow` moved out of `src/pages/settings.tsx` into `src/components/settings/SettingsSection.tsx` so the backup section composes them; `SettingsRow` gained an optional `description` line, because "Restore from a backup" needs to say that it replaces everything.
 
 ## Deferred / not here
 

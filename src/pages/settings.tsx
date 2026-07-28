@@ -1,34 +1,11 @@
 import { Link } from '@tanstack/react-router';
-import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BackupSection } from '@/components/settings/BackupSection.tsx';
+import { SettingsRow, SettingsSection } from '@/components/settings/SettingsSection.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx';
 import { type Theme, useTheme } from '@/context/themeProvider.tsx';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
-
-/**
- * One titled group of settings. Sections are the page's only structure - each
- * later slice drops its controls into an existing section (or adds one) rather
- * than inventing its own layout.
- */
-function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="mb-8">
-      <h2 className="mb-2 font-medium text-muted-foreground text-sm">{title}</h2>
-      <div className="divide-y rounded-lg border bg-card">{children}</div>
-    </section>
-  );
-}
-
-/** A labelled row inside a section: what it does on the left, the control on the right. */
-function SettingsRow({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-      <span className="text-sm">{label}</span>
-      {children}
-    </div>
-  );
-}
 
 const THEMES: Theme[] = ['system', 'light', 'dark'];
 
@@ -88,6 +65,8 @@ export default function SettingsPage() {
           </Button>
         </SettingsRow>
       </SettingsSection>
+
+      <BackupSection />
     </div>
   );
 }

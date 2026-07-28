@@ -142,6 +142,38 @@
       "system": "Systém",
       "light": "Světlý",
       "dark": "Tmavý"
+    },
+    "backup": {
+      "title": "Záloha",
+      "working": "Pracuji...",
+      "exported": "Záloha uložena.",
+      "imported": "Záloha obnovena.",
+      "export": {
+        "label": "Exportovat zálohu",
+        "description": "Stáhne .zip se všemi poznámkami, štítky a přílohami.",
+        "action": "Exportovat"
+      },
+      "import": {
+        "label": "Obnovit ze zálohy",
+        "description": "Nahradí vše, co je nyní uloženo. Nejprve si můžete uložit jeho zálohu.",
+        "action": "Importovat"
+      },
+      "confirmImport": {
+        "title": "Nahradit všechna vaše data?",
+        "description": "Tato záloha obsahuje {{notes}} poznámek, {{tags}} štítků a {{attachments}} příloh. Vše, co je nyní uloženo, bude smazáno a nahrazeno.",
+        "confirm": "Nahradit vše",
+        "cancel": "Zrušit",
+        "backupFirst": "Nejprve uložit zálohu mých současných dat"
+      },
+      "error": {
+        "invalid-zip": "Tento soubor není čitelný archiv zálohy.",
+        "missing-manifest": "V archivu chybí manifest zálohy.",
+        "invalid-manifest": "Tato záloha je poškozená a nelze ji přečíst.",
+        "unsupported-version": "Tato záloha byla vytvořena novější verzí aplikace.",
+        "missing-attachment": "Tato záloha je neúplná - chybí některé soubory příloh.",
+        "unknown": "Něco se pokazilo. Nic nebylo změněno."
+      },
+      "importCancelled": "Import zrušen. Nic nebylo změněno."
     }
   },
   "notes": {
