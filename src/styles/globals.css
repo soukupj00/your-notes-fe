@@ -8,6 +8,18 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+
+  /* Native buttons otherwise keep the platform's default arrow cursor. Keep
+     this at the shared base seam so Radix toggles and bespoke media controls
+     behave consistently without every component carrying the same utility. */
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
   :root {
     --background: oklch(98% 0.01 250);
     --foreground: oklch(20% 0.05 250);
