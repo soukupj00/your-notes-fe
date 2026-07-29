@@ -98,7 +98,7 @@ Keep pattern: a persistent left sidebar on desktop, the same `SideNav` inside a 
 
 Quick capture is one list of five starts (`src/components/notes/quickCaptureActions.ts`) rendered two ways so they cannot drift: a `＋` speed-dial FAB on mobile (`QuickCaptureBar`) and inline icons on the desktop "Take a note" bar. Media starts carry a `capture` intent that the editor auto-runs on open.
 
-A11y: every view renders an `<h1 tabIndex={-1}>` and calls `useFocusOnMount` on it, so a navigation moves focus to the destination heading instead of stranding it on the link.
+A11y: every view renders an `<h1 tabIndex={-1}>` and calls `useFocusOnMount` on it, so a navigation moves focus to the destination heading instead of stranding it on the link. In the feed views that heading is `sr-only` - the visible title row was dropped in favour of the search bar's controls, but the focus target and the document outline remain.
 
 ### Tags / labels (`src/components/tags/`, `src/pages/labels.tsx`)
 

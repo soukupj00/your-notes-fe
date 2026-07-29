@@ -6,7 +6,6 @@ import { NoteContent } from '@/components/NoteContent.tsx';
 import { NoteEditorDialog } from '@/components/notes/NoteEditorDialog.tsx';
 import { QuickCaptureBar } from '@/components/notes/QuickCaptureBar.tsx';
 import { DESKTOP_QUICK_CAPTURE_ACTIONS } from '@/components/notes/quickCaptureActions.ts';
-import { ViewModeToggle } from '@/components/notes/ViewModeToggle.tsx';
 import { TagFilterBar } from '@/components/tags/TagFilterBar.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import type { NoteFeedScope } from '@/hooks/data/useNoteFeed.ts';
@@ -26,8 +25,9 @@ export type EditingState = {
 
 /**
  * The shared feed view behind `/`, `/archive`, `/trash` and `/tag/$id`. The
- * route supplies the scope and the heading; everything else - layout toggle,
- * card list, editor dialog - is identical, so the views cannot drift.
+ * route supplies the scope and the (screen-reader-only) title; everything else
+ * - card list, quick capture, editor dialog - is identical, so the views cannot
+ * drift. The layout toggle and sort control live in the Navbar's search bar.
  */
 export function NotesView({
   scope,
@@ -37,7 +37,8 @@ export function NotesView({
 }: {
   scope: NoteFeedScope;
   title: string;
-  /** View-specific actions rendered beside the heading (e.g. Empty trash). */
+  /** View-specific actions (e.g. Empty trash): a row on desktop, a floating
+   *  pill in the quick-capture slot on mobile. */
   toolbar?: ReactNode;
   showCapture?: boolean;
 }) {
@@ -47,19 +48,24 @@ export function NotesView({
 
   return (
     <div className="relative">
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <h1
-          ref={headingRef}
-          tabIndex={-1}
-          className="font-semibold text-2xl focus-visible:outline-none"
-        >
-          {title}
-        </h1>
-        <div className="flex items-center gap-2">
-          {toolbar}
-          <ViewModeToggle />
+      {/* The heading is visually gone but still the route's focus target: a
+          navigation has to land somewhere, and stranding focus on the link that
+          was clicked is what `useFocusOnMount` exists to prevent. */}
+      <h1 ref={headingRef} tabIndex={-1} className="sr-only">
+        {title}
+      </h1>
+
+      {/* View-specific actions (e.g. Empty trash). One node, two positions: a
+          right-aligned row above the feed on desktop, and the quick-capture
+          bar's floating pill on mobile, where there is no longer a title row to
+          hang it from. Rendering it twice would duplicate the controls. */}
+      {toolbar && (
+        <div className="fixed inset-x-0 bottom-0 z-40 flex justify-center pb-[env(safe-area-inset-bottom)] sm:static sm:mb-4 sm:justify-end sm:pb-0">
+          <div className="mb-3 flex items-center gap-2 rounded-full border bg-background px-2 py-1.5 shadow-lg sm:mb-0 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+            {toolbar}
+          </div>
         </div>
-      </div>
+      )}
 
       {showCapture && (
         <div className="mx-auto mb-6 hidden max-w-lg items-center gap-1 rounded-lg border bg-background pr-2 shadow-sm transition-shadow hover:shadow sm:flex">
