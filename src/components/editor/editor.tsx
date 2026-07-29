@@ -19,6 +19,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { createAudio } from '@/components/editor/extensions/Audio';
+import type { AttachmentDeps } from '@/components/editor/extensions/attachments/deps';
 import {
   dedupeForeignAttachments,
   insertAttachmentFiles,
@@ -92,6 +93,35 @@ type EditorProps = {
 /** Imperative handle so a parent (e.g. a dialog) can drop the cursor into the body,
  *  or (e.g. a test) reach the live TipTap editor instance. */
 export type EditorHandle = { focus: () => void; getEditor: () => TiptapEditor | null };
+
+/** Route pasted or dropped media files through the matching attachment insertion flow. */
+function insertTransferredAttachments(
+  editor: TiptapEditor,
+  files: FileList,
+  deps: AttachmentDeps
+): boolean {
+  const transferredFiles = Array.from(files);
+
+  if (transferredFiles.some((file) => file.type.startsWith('image/'))) {
+    void insertImageAttachmentFiles(editor, files, deps, (id) =>
+      editor.chain().focus().insertImageAttachment({ attachmentId: id }).run()
+    );
+    return true;
+  }
+  if (transferredFiles.some((file) => file.type.startsWith('audio/'))) {
+    void insertAttachmentFiles(editor, files, 'audio', deps, (id) =>
+      editor.chain().focus().insertAudioAttachment({ attachmentId: id }).run()
+    );
+    return true;
+  }
+  if (transferredFiles.some((file) => file.type.startsWith('video/'))) {
+    void insertAttachmentFiles(editor, files, 'video', deps, (id) =>
+      editor.chain().focus().insertVideoAttachment({ attachmentId: id }).run()
+    );
+    return true;
+  }
+  return false;
+}
 
 export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   {
@@ -232,22 +262,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       handlePaste: (_view, event) => {
         const files = event.clipboardData?.files;
         const ed = editorRef.current;
-        if (ed && files && Array.from(files).some((f) => f.type.startsWith('image/'))) {
-          void insertImageAttachmentFiles(ed, files, attachmentDepsRef.current, (id) =>
-            ed.chain().focus().insertImageAttachment({ attachmentId: id }).run()
-          );
-          return true;
-        }
-        if (ed && files && Array.from(files).some((f) => f.type.startsWith('audio/'))) {
-          void insertAttachmentFiles(ed, files, 'audio', attachmentDepsRef.current, (id) =>
-            ed.chain().focus().insertAudioAttachment({ attachmentId: id }).run()
-          );
-          return true;
-        }
-        if (ed && files && Array.from(files).some((f) => f.type.startsWith('video/'))) {
-          void insertAttachmentFiles(ed, files, 'video', attachmentDepsRef.current, (id) =>
-            ed.chain().focus().insertVideoAttachment({ attachmentId: id }).run()
-          );
+        if (ed && files && insertTransferredAttachments(ed, files, attachmentDepsRef.current)) {
           return true;
         }
         // Cross-note HTML paste with existing attachment nodes: let the default
@@ -261,25 +276,9 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       handleDrop: (_view, event) => {
         const files = (event as DragEvent).dataTransfer?.files;
         const ed = editorRef.current;
-        if (ed && files && Array.from(files).some((f) => f.type.startsWith('image/'))) {
-          void insertImageAttachmentFiles(ed, files, attachmentDepsRef.current, (id) =>
-            ed.chain().focus().insertImageAttachment({ attachmentId: id }).run()
-          );
-          return true;
-        }
-        if (ed && files && Array.from(files).some((f) => f.type.startsWith('audio/'))) {
-          void insertAttachmentFiles(ed, files, 'audio', attachmentDepsRef.current, (id) =>
-            ed.chain().focus().insertAudioAttachment({ attachmentId: id }).run()
-          );
-          return true;
-        }
-        if (ed && files && Array.from(files).some((f) => f.type.startsWith('video/'))) {
-          void insertAttachmentFiles(ed, files, 'video', attachmentDepsRef.current, (id) =>
-            ed.chain().focus().insertVideoAttachment({ attachmentId: id }).run()
-          );
-          return true;
-        }
-        return false;
+        return Boolean(
+          ed && files && insertTransferredAttachments(ed, files, attachmentDepsRef.current)
+        );
       },
     },
     shouldRerenderOnTransaction: true,
@@ -294,13 +293,10 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     editorRef.current = editor;
   }, [editor]);
 
-  // Best-effort autoplay-on-open: find the first audioAttachment node, then
-  // either play it immediately (if its AudioNodeView already registered a
-  // ready-to-play trigger) or stash its id on editor storage for AudioNodeView
-  // to consume once its <audio> element becomes ready. Both paths are needed:
-  // the note body and the target attachment's blob load via two independent
-  // async chains (IndexedDB reads with no ordering guarantee between them), so
-  // this scan can run either before or after the attachment is ready.
+  // Best-effort autoplay-on-open: find the first audioAttachment node and ask
+  // the audio extension's coordinator to play it. The coordinator handles both
+  // load orderings because the note body and attachment blob are independent
+  // IndexedDB reads.
   // Guarded by a ref (not just the effect's deps) so it fires at most once per
   // editor instance - an existing note's real body only lands via the
   // setContent below (it's loaded async and seeded as '' at mount), so the
@@ -336,12 +332,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         // later scan.
         if (firstAudioId) {
           autoplayScannedRef.current = true;
-          const readyTrigger = editor.storage.autoplayReadyAudio?.get(firstAudioId);
-          if (readyTrigger) {
-            readyTrigger();
-          } else {
-            editor.storage.autoplayFirstAudioId = firstAudioId;
-          }
+          editor.storage.audioAttachment.autoplay.requestAutoplay(firstAudioId);
         }
       }
     });

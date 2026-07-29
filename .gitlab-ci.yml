@@ -8,14 +8,13 @@ stages:
 variables:
   PNPM_STORE_PATH: .pnpm-store
   NODE_VERSION: "22"
+  SECRET_DETECTION_ENABLED: "true"
+
 
 # ─── Security (keep existing templates) ───────────────────────────────────────
 include:
   - template: Security/SAST.gitlab-ci.yml
   - template: Security/Secret-Detection.gitlab-ci.yml
-
-variables:
-  SECRET_DETECTION_ENABLED: "true"
 
 sast:
   stage: quality
@@ -44,6 +43,15 @@ lint:
   stage: quality
   script:
     - pnpm check:ci
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+eslint:
+  <<: *pnpm-setup
+  stage: quality
+  script:
+    - pnpm lint
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH

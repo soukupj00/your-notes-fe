@@ -1,9 +1,9 @@
-import 'fake-indexeddb/auto';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '@/db/db.ts';
 import type { Note } from '@/models.ts';
+import { clearNotesDb } from '@/test/db.ts';
 import { NoteCard } from './NoteCard.tsx';
 
 // Keys pass through untranslated so assertions are stable.
@@ -16,12 +16,6 @@ vi.mock('sonner', () => ({
   toast: (...args: unknown[]) => toastMock(...args),
 }));
 
-// Radix menus rely on APIs jsdom lacks.
-beforeAll(() => {
-  Element.prototype.hasPointerCapture = vi.fn();
-  Element.prototype.scrollIntoView = vi.fn();
-});
-
 function makeNote(overrides: Partial<Note> = {}): Note {
   const now = new Date().toISOString();
   return {
@@ -29,7 +23,7 @@ function makeNote(overrides: Partial<Note> = {}): Note {
     header: 'My note',
     description: '',
     body: '<p>hello</p>',
-    checklist: [],
+    state: 'active',
     createdAt: now,
     updatedAt: now,
     ...overrides,
@@ -38,9 +32,7 @@ function makeNote(overrides: Partial<Note> = {}): Note {
 
 afterEach(async () => {
   toastMock.mockReset();
-  await db.notes.clear();
-  await db.noteTags.clear();
-  await db.attachments.clear();
+  await clearNotesDb();
 });
 
 beforeEach(() => {
@@ -86,29 +78,102 @@ describe('NoteCard', () => {
     expect(onSelect).not.toHaveBeenCalled();
   });
 
-  it('deletes the note and offers an undo that restores it', async () => {
+  async function chooseMenuItem(label: string) {
+    await userEvent.click(screen.getByRole('button', { name: 'notes.menu' }));
+    await userEvent.click(await screen.findByText(label));
+  }
+
+  /** Fire the undo action from the most recent toast. */
+  async function undoLastToast() {
+    const opts = toastMock.mock.calls.at(-1)?.[1] as { action: { onClick: () => void } };
+    await opts.action.onClick();
+  }
+
+  it('moves the note to trash rather than deleting it, and offers an undo', async () => {
+    const note = makeNote({ pinnedAt: new Date().toISOString() });
+    await db.notes.add(note);
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    await chooseMenuItem('notes.moveToTrash');
+
+    await waitFor(async () => expect((await db.notes.get(note.id))?.state).toBe('trashed'));
+    // Trashing is recoverable - the row must still be there.
+    expect(await db.notes.get(note.id)).toBeTruthy();
+    expect(toastMock).toHaveBeenCalledWith('notes.movedToTrash', expect.anything());
+
+    await undoLastToast();
+
+    await waitFor(async () =>
+      expect(await db.notes.get(note.id)).toMatchObject({
+        state: 'active',
+        pinnedAt: note.pinnedAt,
+      })
+    );
+  });
+
+  it('pins an active note and offers an undo that unpins it', async () => {
     const note = makeNote();
     await db.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
+    await chooseMenuItem('notes.pin');
+
+    await waitFor(async () =>
+      expect((await db.notes.get(note.id))?.pinnedAt).toEqual(expect.any(String))
+    );
+
+    await undoLastToast();
+    await waitFor(async () => expect((await db.notes.get(note.id))?.pinnedAt).toBeUndefined());
+  });
+
+  it('archives an active note', async () => {
+    const note = makeNote();
+    await db.notes.add(note);
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    await chooseMenuItem('notes.archive');
+
+    await waitFor(async () => expect((await db.notes.get(note.id))?.state).toBe('archived'));
+    expect(toastMock).toHaveBeenCalledWith('notes.archived', expect.anything());
+  });
+
+  it('offers restore and permanent deletion for a trashed note, and nothing else', async () => {
+    const note = makeNote({ state: 'trashed', trashedAt: new Date().toISOString() });
+    await db.notes.add(note);
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
     await userEvent.click(screen.getByRole('button', { name: 'notes.menu' }));
-    await userEvent.click(await screen.findByText('notes.delete'));
+
+    expect(await screen.findByText('notes.restore')).toBeInTheDocument();
+    expect(screen.getByText('notes.deleteForever')).toBeInTheDocument();
+    // Trashing or pinning something already in the trash is meaningless.
+    expect(screen.queryByText('notes.moveToTrash')).not.toBeInTheDocument();
+    expect(screen.queryByText('notes.pin')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByText('notes.deleteForever'));
 
     await waitFor(async () => expect(await db.notes.get(note.id)).toBeUndefined());
-    expect(toastMock).toHaveBeenCalledWith('notes.deleted', expect.anything());
+    expect(toastMock).toHaveBeenCalledWith('notes.deletedForever', expect.anything());
 
-    // Invoke the toast's undo action and confirm the note comes back verbatim.
-    const opts = toastMock.mock.calls[0][1] as { action: { onClick: () => void } };
-    await opts.action.onClick();
-
+    // Purge is irreversible, so its undo re-puts the captured note verbatim.
+    await undoLastToast();
     await waitFor(async () => expect(await db.notes.get(note.id)).toEqual(note));
+  });
+
+  it('offers restore instead of archive for an archived note', async () => {
+    const note = makeNote({ state: 'archived' });
+    await db.notes.add(note);
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    await chooseMenuItem('notes.restore');
+
+    await waitFor(async () => expect((await db.notes.get(note.id))?.state).toBe('active'));
   });
 
   it('renders the body for an image-only note (no header, no checklist text)', async () => {
     const note = makeNote({
       header: '',
       body: '<img data-attachment-id="x1">',
-      checklist: [],
     });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
@@ -124,7 +189,6 @@ describe('NoteCard', () => {
     const note = makeNote({
       header: '',
       body: '<audio data-attachment-id="au1"></audio>',
-      checklist: [],
     });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
@@ -158,7 +222,6 @@ describe('NoteCard', () => {
     const note = makeNote({
       header: '',
       body: '<video data-attachment-id="v1"></video>',
-      checklist: [],
     });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
@@ -179,7 +242,6 @@ describe('NoteCard', () => {
     const note = makeNote({
       header: '',
       body: '<audio data-attachment-id="au1"></audio><video data-attachment-id="v1"></video>',
-      checklist: [],
     });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
@@ -191,7 +253,6 @@ describe('NoteCard', () => {
     const note = makeNote({
       header: '',
       body: '<a data-attachment-id="f1">report.pdf</a>',
-      checklist: [],
     });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
@@ -212,12 +273,33 @@ describe('NoteCard', () => {
     const note = makeNote({
       header: '',
       body: '<audio data-attachment-id="a1"></audio><video data-attachment-id="v1"></video><a data-attachment-id="f1">x</a>',
-      checklist: [],
     });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
     expect(screen.getByRole('button', { name: 'notes.playAudio' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'notes.playVideo' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'notes.openFile' })).toBeInTheDocument();
+  });
+
+  it('renders the note’s labels as read-only pills', async () => {
+    const note = makeNote();
+    const now = new Date().toISOString();
+    await db.tags.bulkPut([
+      { id: 't1', name: 'Work', color: 'blue', createdAt: now, updatedAt: now },
+      { id: 't2', name: 'Ideas', createdAt: now, updatedAt: now },
+      { id: 't3', name: 'Elsewhere', createdAt: now, updatedAt: now },
+    ]);
+    await db.noteTags.bulkPut([
+      { noteId: note.id, tagId: 't1', createdAt: now, updatedAt: now },
+      { noteId: note.id, tagId: 't2', createdAt: now, updatedAt: now },
+    ]);
+
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    expect(await screen.findByText('Work')).toBeInTheDocument();
+    expect(screen.getByText('Ideas')).toBeInTheDocument();
+    // Only this note's labels, and no remove affordance on a card.
+    expect(screen.queryByText('Elsewhere')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /tags.remove/ })).not.toBeInTheDocument();
   });
 });

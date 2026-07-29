@@ -21,8 +21,11 @@ Model lifecycle on the Note as:
 
 Visibility: **Active** → feed + search; **Archived** → search (badged) + the Archive view, but not the feed; **Trashed** → the Trash view only, out of feed and search.
 The dead, unused `checklist: string[]` field is removed in the same schema bump.
-All new fields are optional or defaulted, so no data migration is required.
 A `Tag.color?` token is added by the same bump (tags share the note-colour palette).
+
+`pinnedAt`, `color`, and `trashedAt` are optional and need no migration, but `state` does: it is indexed, and IndexedDB does not index a row whose indexed property is `undefined`.
+Without stamping existing rows, every pre-v3 Note would be invisible to `where('state')` and would silently disappear from the feed.
+The v3 bump therefore carries a one-shot `.upgrade()` that sets `state: 'active'` on existing rows and deletes `checklist`.
 
 ## Considered options
 
@@ -34,5 +37,5 @@ A `Tag.color?` token is added by the same bump (tags share the note-colour palet
 
 - Feed, search, and view queries filter on a single `state` field plus `pinnedAt` - simple and index-friendly.
 - The grace-period purge introduces a background deletion the user does not trigger directly - mitigated by the 30-day window, a visible Trash view, and manual empty.
-- One Dexie version bump adds four optional Note fields and an optional `Tag.color`, and removes `checklist`; no migration needed.
+- One Dexie version bump adds the four Note lifecycle fields and an optional `Tag.color`, removes `checklist`, and carries a small `.upgrade()` to backfill the indexed `state`.
 - Glossary terms are recorded in `CONTEXT.md` (State / Active / Archived / Trashed / Pinned / Color / Purge).

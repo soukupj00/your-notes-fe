@@ -5,7 +5,6 @@
 // Node's native structuredClone, which fake-indexeddb relies on to persist
 // values. Under jsdom, a stored Blob comes back as a plain `{}`. Node's
 // native Blob round-trips correctly and matches what a real browser does.
-import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
 import { db } from '@/db/db.ts';
 import type { Attachment } from '@/models.ts';

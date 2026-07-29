@@ -3,6 +3,7 @@ import { NoteCard } from '@/components/cards/NoteCard.tsx';
 import { Skeleton } from '@/components/ui/skeleton.tsx';
 import { useNotes } from '@/context/NotesProvider.tsx';
 import { useViewMode } from '@/context/viewModeProvider.tsx';
+import { type NoteFeedScope, useNoteFeed } from '@/hooks/data/useNoteFeed.ts';
 
 // Responsive masonry via CSS `columns` (no JS lib). Cards must not split across
 // columns, so each carries `break-inside-avoid` (see NoteCard). Note: CSS
@@ -12,11 +13,14 @@ const MASONRY = 'columns-1 gap-4 sm:columns-2 lg:columns-3 xl:columns-4';
 const LIST = 'mx-auto flex max-w-2xl flex-col gap-4';
 
 export function NoteContent({
+  scope,
   onSelect,
 }: {
+  scope: NoteFeedScope;
   onSelect: (id: string, opts?: { autoplayFirstAudio?: boolean }) => void;
 }) {
-  const { notes, query, loading } = useNotes();
+  const { query } = useNotes();
+  const { notes, loading } = useNoteFeed(scope, query);
   const { viewMode } = useViewMode();
   const { t } = useTranslation();
   const layout = viewMode === 'list' ? LIST : MASONRY;

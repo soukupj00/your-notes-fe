@@ -61,7 +61,7 @@ export function useWindowSize(
   const debouncedSetWindowSize = useDebounceCallback(setWindowSize, options.debounceDelay);
 
   function handleSize() {
-    const setSize = options.debounceDelay ? debouncedSetWindowSize : setWindowSize;
+    const setSize = options.debounceDelay ? debouncedSetWindowSize.invoke : setWindowSize;
 
     setSize({
       width: window.innerWidth,

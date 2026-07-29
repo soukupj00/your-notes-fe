@@ -1,4 +1,14 @@
 {
+  "nav": {
+    "primary": "Main navigation",
+    "open": "Open navigation",
+    "notes": "Notes",
+    "labels": "Labels",
+    "editLabels": "Edit labels",
+    "archive": "Archive",
+    "trash": "Trash",
+    "settings": "Settings"
+  },
   "navbar": {
     "logo": "Notes"
   },
@@ -11,26 +21,55 @@
     }
   },
   "editor": {
-    "bold": { "tooltip": "Bold" },
-    "italic": { "tooltip": "Italic" },
-    "strike": { "tooltip": "Strikethrough" },
-    "underline": { "tooltip": "Underline" },
+    "bold": {
+      "tooltip": "Bold"
+    },
+    "italic": {
+      "tooltip": "Italic"
+    },
+    "strike": {
+      "tooltip": "Strikethrough"
+    },
+    "underline": {
+      "tooltip": "Underline"
+    },
     "undo": "Undo",
     "redo": "Redo",
     "heading": {
       "tooltip": "Heading",
       "level": "Heading {{level}}"
     },
-    "bulletList": { "tooltip": "Bullet list" },
-    "orderedList": { "tooltip": "Numbered list" },
-    "taskList": { "tooltip": "Task list" },
-    "blockquote": { "tooltip": "Quote" },
-    "math": { "tooltip": "Math (LaTeX)", "prompt": "Enter LaTeX" },
-    "clearFormatting": { "tooltip": "Clear formatting" },
-    "textColor": { "tooltip": "Text color" },
-    "highlight": { "tooltip": "Highlight" },
-    "fontFamily": { "tooltip": "Font family" },
-    "fontSize": { "tooltip": "Font size" },
+    "bulletList": {
+      "tooltip": "Bullet list"
+    },
+    "orderedList": {
+      "tooltip": "Numbered list"
+    },
+    "taskList": {
+      "tooltip": "Task list"
+    },
+    "blockquote": {
+      "tooltip": "Quote"
+    },
+    "math": {
+      "tooltip": "Math (LaTeX)",
+      "prompt": "Enter LaTeX"
+    },
+    "clearFormatting": {
+      "tooltip": "Clear formatting"
+    },
+    "textColor": {
+      "tooltip": "Text color"
+    },
+    "highlight": {
+      "tooltip": "Highlight"
+    },
+    "fontFamily": {
+      "tooltip": "Font family"
+    },
+    "fontSize": {
+      "tooltip": "Font size"
+    },
     "image": {
       "tooltip": "Insert image",
       "unavailable": "Image unavailable",
@@ -89,6 +128,12 @@
   },
   "settings": {
     "title": "Settings",
+    "appearance": {
+      "title": "Appearance"
+    },
+    "labels": {
+      "description": "Rename, merge, colour and delete your labels."
+    },
     "locale": {
       "label": "Language"
     },
@@ -97,6 +142,38 @@
       "system": "System",
       "light": "Light",
       "dark": "Dark"
+    },
+    "backup": {
+      "title": "Backup",
+      "working": "Working...",
+      "exported": "Backup saved.",
+      "imported": "Backup restored.",
+      "export": {
+        "label": "Export a backup",
+        "description": "Downloads a .zip with every note, label and attachment.",
+        "action": "Export"
+      },
+      "import": {
+        "label": "Restore from a backup",
+        "description": "Replaces everything currently stored. You can save a backup of it first.",
+        "action": "Import"
+      },
+      "confirmImport": {
+        "title": "Replace all your data?",
+        "description": "This backup holds {{notes}} notes, {{tags}} labels and {{attachments}} attachments. Everything stored now is deleted and replaced.",
+        "confirm": "Replace everything",
+        "cancel": "Cancel",
+        "backupFirst": "Save a backup of my current data first"
+      },
+      "error": {
+        "invalid-zip": "That file is not a readable backup archive.",
+        "missing-manifest": "That archive is missing its backup manifest.",
+        "invalid-manifest": "That backup is damaged and cannot be read.",
+        "unsupported-version": "That backup was made by a newer version of the app.",
+        "missing-attachment": "That backup is incomplete - some attachment files are missing.",
+        "unknown": "Something went wrong. Nothing was changed."
+      },
+      "importCancelled": "Import cancelled. Nothing was changed."
     }
   },
   "notes": {
@@ -115,8 +192,21 @@
     "playAudio": "Play audio",
     "playVideo": "Play video",
     "openFile": "Open file",
-    "delete": "Delete",
-    "deleted": "Note deleted",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "pinned": "Note pinned",
+    "unpinned": "Note unpinned",
+    "archive": "Archive",
+    "archived": "Note archived",
+    "moveToTrash": "Move to trash",
+    "movedToTrash": "Note moved to trash",
+    "restore": "Restore",
+    "restored": "Note restored",
+    "deleteForever": "Delete forever",
+    "deletedForever": "Note deleted forever",
+    "emptyTrash": "Empty trash",
+    "trashEmptied_one": "Deleted {{count}} note",
+    "trashEmptied_other": "Deleted {{count}} notes",
     "undo": "Undo",
     "view": {
       "toggle": "Toggle layout",
@@ -126,6 +216,47 @@
     "saveStatus": {
       "saving": "Saving…",
       "saved": "Saved"
+    },
+    "searchPlaceholder": "Search notes…",
+    "trashNotice": "Notes in the trash are deleted after {{days}} days."
+  },
+  "tags": {
+    "add": "Label",
+    "filterPlaceholder": "Filter labels",
+    "create": "Create \"{{name}}\"",
+    "remove": "Remove label {{name}}"
+  },
+  "labels": {
+    "empty": "No labels yet.",
+    "create": "Create label",
+    "namePlaceholder": "Label name",
+    "rename": "Rename label {{name}}",
+    "color": "Colour of label {{name}}",
+    "delete": "Delete label {{name}}",
+    "merge": "Merge into",
+    "confirmMerge": {
+      "title": "Merge labels?",
+      "description": "Notes labelled \"{{source}}\" will be labelled \"{{target}}\" instead, and \"{{source}}\" is deleted.",
+      "confirm": "Merge",
+      "cancel": "Cancel"
+    },
+    "confirmDelete": {
+      "title": "Delete this label?",
+      "description": "It is removed from every note that carries it. The notes themselves stay.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
     }
+  },
+  "colors": {
+    "default": "No colour",
+    "red": "Red",
+    "orange": "Orange",
+    "yellow": "Yellow",
+    "green": "Green",
+    "teal": "Teal",
+    "blue": "Blue",
+    "purple": "Purple",
+    "pink": "Pink",
+    "gray": "Grey"
   }
 }

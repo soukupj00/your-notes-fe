@@ -1,18 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { ConfirmDeleteButton } from './ConfirmDeleteButton';
+import { AttachmentDeleteButton } from './AttachmentDeleteButton';
 
 const t = (key: string) => key;
 
-describe('ConfirmDeleteButton', () => {
+describe('AttachmentDeleteButton', () => {
   it('renders a trigger with the given label as its accessible name', () => {
-    render(<ConfirmDeleteButton onConfirm={vi.fn()} label="Delete video" t={t} />);
+    render(<AttachmentDeleteButton onConfirm={vi.fn()} label="Delete video" t={t} />);
     expect(screen.getByRole('button', { name: 'Delete video' })).toBeInTheDocument();
   });
 
   it('opens the confirm dialog on trigger click', async () => {
-    render(<ConfirmDeleteButton onConfirm={vi.fn()} label="Delete video" t={t} />);
+    render(<AttachmentDeleteButton onConfirm={vi.fn()} label="Delete video" t={t} />);
     await userEvent.click(screen.getByRole('button', { name: 'Delete video' }));
     expect(await screen.findByText('attachments.confirmDelete.title')).toBeInTheDocument();
     expect(screen.getByText('attachments.confirmDelete.description')).toBeInTheDocument();
@@ -20,7 +20,7 @@ describe('ConfirmDeleteButton', () => {
 
   it('calls onConfirm once and closes when Remove is clicked', async () => {
     const onConfirm = vi.fn();
-    render(<ConfirmDeleteButton onConfirm={onConfirm} label="Delete video" t={t} />);
+    render(<AttachmentDeleteButton onConfirm={onConfirm} label="Delete video" t={t} />);
     await userEvent.click(screen.getByRole('button', { name: 'Delete video' }));
     await userEvent.click(
       await screen.findByRole('button', { name: 'attachments.confirmDelete.confirm' })
@@ -31,7 +31,7 @@ describe('ConfirmDeleteButton', () => {
 
   it('does not call onConfirm when Cancel is clicked', async () => {
     const onConfirm = vi.fn();
-    render(<ConfirmDeleteButton onConfirm={onConfirm} label="Delete video" t={t} />);
+    render(<AttachmentDeleteButton onConfirm={onConfirm} label="Delete video" t={t} />);
     await userEvent.click(screen.getByRole('button', { name: 'Delete video' }));
     await userEvent.click(
       await screen.findByRole('button', { name: 'attachments.confirmDelete.cancel' })

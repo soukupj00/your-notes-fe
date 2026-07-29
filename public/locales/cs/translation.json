@@ -1,4 +1,14 @@
 {
+  "nav": {
+    "primary": "Hlavní navigace",
+    "open": "Otevřít navigaci",
+    "notes": "Poznámky",
+    "labels": "Štítky",
+    "editLabels": "Upravit štítky",
+    "archive": "Archiv",
+    "trash": "Koš",
+    "settings": "Nastavení"
+  },
   "navbar": {
     "logo": "Poznámky"
   },
@@ -11,26 +21,55 @@
     }
   },
   "editor": {
-    "bold": { "tooltip": "Tučné" },
-    "italic": { "tooltip": "Kurzíva" },
-    "strike": { "tooltip": "Přeškrtnuté" },
-    "underline": { "tooltip": "Podtržené" },
+    "bold": {
+      "tooltip": "Tučné"
+    },
+    "italic": {
+      "tooltip": "Kurzíva"
+    },
+    "strike": {
+      "tooltip": "Přeškrtnuté"
+    },
+    "underline": {
+      "tooltip": "Podtržené"
+    },
     "undo": "Zpět",
     "redo": "Znovu",
     "heading": {
       "tooltip": "Nadpis",
       "level": "Nadpis {{level}}"
     },
-    "bulletList": { "tooltip": "Odrážkový seznam" },
-    "orderedList": { "tooltip": "Číslovaný seznam" },
-    "taskList": { "tooltip": "Seznam úkolů" },
-    "blockquote": { "tooltip": "Citace" },
-    "math": { "tooltip": "Vzorec (LaTeX)", "prompt": "Zadejte LaTeX" },
-    "clearFormatting": { "tooltip": "Zrušit formátování" },
-    "textColor": { "tooltip": "Barva textu" },
-    "highlight": { "tooltip": "Zvýraznění" },
-    "fontFamily": { "tooltip": "Písmo" },
-    "fontSize": { "tooltip": "Velikost písma" },
+    "bulletList": {
+      "tooltip": "Odrážkový seznam"
+    },
+    "orderedList": {
+      "tooltip": "Číslovaný seznam"
+    },
+    "taskList": {
+      "tooltip": "Seznam úkolů"
+    },
+    "blockquote": {
+      "tooltip": "Citace"
+    },
+    "math": {
+      "tooltip": "Vzorec (LaTeX)",
+      "prompt": "Zadejte LaTeX"
+    },
+    "clearFormatting": {
+      "tooltip": "Zrušit formátování"
+    },
+    "textColor": {
+      "tooltip": "Barva textu"
+    },
+    "highlight": {
+      "tooltip": "Zvýraznění"
+    },
+    "fontFamily": {
+      "tooltip": "Písmo"
+    },
+    "fontSize": {
+      "tooltip": "Velikost písma"
+    },
     "image": {
       "tooltip": "Vložit obrázek",
       "unavailable": "Obrázek není k dispozici",
@@ -89,6 +128,12 @@
   },
   "settings": {
     "title": "Nastavení",
+    "appearance": {
+      "title": "Vzhled"
+    },
+    "labels": {
+      "description": "Přejmenujte, sloučte, obarvěte a mažte své štítky."
+    },
     "locale": {
       "label": "Jazyk"
     },
@@ -97,6 +142,38 @@
       "system": "Systém",
       "light": "Světlý",
       "dark": "Tmavý"
+    },
+    "backup": {
+      "title": "Záloha",
+      "working": "Pracuji...",
+      "exported": "Záloha uložena.",
+      "imported": "Záloha obnovena.",
+      "export": {
+        "label": "Exportovat zálohu",
+        "description": "Stáhne .zip se všemi poznámkami, štítky a přílohami.",
+        "action": "Exportovat"
+      },
+      "import": {
+        "label": "Obnovit ze zálohy",
+        "description": "Nahradí vše, co je nyní uloženo. Nejprve si můžete uložit jeho zálohu.",
+        "action": "Importovat"
+      },
+      "confirmImport": {
+        "title": "Nahradit všechna vaše data?",
+        "description": "Tato záloha obsahuje {{notes}} poznámek, {{tags}} štítků a {{attachments}} příloh. Vše, co je nyní uloženo, bude smazáno a nahrazeno.",
+        "confirm": "Nahradit vše",
+        "cancel": "Zrušit",
+        "backupFirst": "Nejprve uložit zálohu mých současných dat"
+      },
+      "error": {
+        "invalid-zip": "Tento soubor není čitelný archiv zálohy.",
+        "missing-manifest": "V archivu chybí manifest zálohy.",
+        "invalid-manifest": "Tato záloha je poškozená a nelze ji přečíst.",
+        "unsupported-version": "Tato záloha byla vytvořena novější verzí aplikace.",
+        "missing-attachment": "Tato záloha je neúplná - chybí některé soubory příloh.",
+        "unknown": "Něco se pokazilo. Nic nebylo změněno."
+      },
+      "importCancelled": "Import zrušen. Nic nebylo změněno."
     }
   },
   "notes": {
@@ -115,8 +192,22 @@
     "playAudio": "Přehrát zvuk",
     "playVideo": "Přehrát video",
     "openFile": "Otevřít soubor",
-    "delete": "Smazat",
-    "deleted": "Poznámka smazána",
+    "pin": "Připnout",
+    "unpin": "Odepnout",
+    "pinned": "Poznámka připnuta",
+    "unpinned": "Poznámka odepnuta",
+    "archive": "Archivovat",
+    "archived": "Poznámka archivována",
+    "moveToTrash": "Přesunout do koše",
+    "movedToTrash": "Poznámka přesunuta do koše",
+    "restore": "Obnovit",
+    "restored": "Poznámka obnovena",
+    "deleteForever": "Smazat navždy",
+    "deletedForever": "Poznámka trvale smazána",
+    "emptyTrash": "Vysypat koš",
+    "trashEmptied_one": "Smazána {{count}} poznámka",
+    "trashEmptied_few": "Smazány {{count}} poznámky",
+    "trashEmptied_other": "Smazáno {{count}} poznámek",
     "undo": "Zpět",
     "view": {
       "toggle": "Přepnout rozvržení",
@@ -126,6 +217,47 @@
     "saveStatus": {
       "saving": "Ukládání…",
       "saved": "Uloženo"
+    },
+    "searchPlaceholder": "Hledat poznámky…",
+    "trashNotice": "Poznámky v koši se po {{days}} dnech smažou."
+  },
+  "tags": {
+    "add": "Štítek",
+    "filterPlaceholder": "Filtrovat štítky",
+    "create": "Vytvořit „{{name}}“",
+    "remove": "Odebrat štítek {{name}}"
+  },
+  "labels": {
+    "empty": "Zatím žádné štítky.",
+    "create": "Vytvořit štítek",
+    "namePlaceholder": "Název štítku",
+    "rename": "Přejmenovat štítek {{name}}",
+    "color": "Barva štítku {{name}}",
+    "delete": "Smazat štítek {{name}}",
+    "merge": "Sloučit do",
+    "confirmMerge": {
+      "title": "Sloučit štítky?",
+      "description": "Poznámky se štítkem „{{source}}“ dostanou místo něj štítek „{{target}}“ a štítek „{{source}}“ bude smazán.",
+      "confirm": "Sloučit",
+      "cancel": "Zrušit"
+    },
+    "confirmDelete": {
+      "title": "Smazat tento štítek?",
+      "description": "Bude odebrán ze všech poznámek, které ho nesou. Samotné poznámky zůstanou.",
+      "confirm": "Smazat",
+      "cancel": "Zrušit"
     }
+  },
+  "colors": {
+    "default": "Bez barvy",
+    "red": "Červená",
+    "orange": "Oranžová",
+    "yellow": "Žlutá",
+    "green": "Zelená",
+    "teal": "Modrozelená",
+    "blue": "Modrá",
+    "purple": "Fialová",
+    "pink": "Růžová",
+    "gray": "Šedá"
   }
 }

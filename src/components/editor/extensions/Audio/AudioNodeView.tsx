@@ -2,24 +2,9 @@ import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { icons } from '@/components/icons';
-import { ConfirmDeleteButton } from '../attachments/ConfirmDeleteButton';
+import { AttachmentDeleteButton } from '../attachments/AttachmentDeleteButton';
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
-
-declare module '@tiptap/core' {
-  interface Storage {
-    /** One-shot "autoplay this attachment once its <audio> is ready" flag, set
-     *  by the editor when the note was opened via its card's audio chip. Used
-     *  when the doc scan runs BEFORE the target attachment's blob has loaded. */
-    autoplayFirstAudioId?: string | null;
-    /** Registry of ready-to-play triggers keyed by attachmentId, populated by
-     *  each AudioNodeView once its <audio> element is ready. Used when the doc
-     *  scan runs AFTER the target attachment is already ready - the two attachment
-     *  loads (note body, attachment blob) race independently, so either can
-     *  finish first; this registry plus the flag above cover both orderings. */
-    autoplayReadyAudio?: Map<string, () => void>;
-  }
-}
 
 /** Seconds -> "m:ss". */
 export function formatTime(seconds: number): string {
@@ -45,7 +30,7 @@ export function AudioNodeView(props: ReactNodeViewProps) {
   const canDelete = props.editor?.isEditable ?? false;
 
   const deleteButton = canDelete ? (
-    <ConfirmDeleteButton
+    <AttachmentDeleteButton
       onConfirm={() => props.deleteNode()}
       label={deps.t('editor.audio.delete')}
       t={deps.t}
@@ -61,76 +46,53 @@ export function AudioNodeView(props: ReactNodeViewProps) {
     if (!el) return;
     const onTime = () => setCurrent(el.currentTime);
     const onMeta = () => setDuration(Number.isFinite(el.duration) ? el.duration : 0);
-    const onEnd = () => setPlaying(false);
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
     el.addEventListener('timeupdate', onTime);
     el.addEventListener('loadedmetadata', onMeta);
-    el.addEventListener('ended', onEnd);
+    el.addEventListener('play', onPlay);
+    el.addEventListener('pause', onPause);
+    el.addEventListener('ended', onPause);
     return () => {
       audioRef.current = null;
       el.removeEventListener('timeupdate', onTime);
       el.removeEventListener('loadedmetadata', onMeta);
-      el.removeEventListener('ended', onEnd);
+      el.removeEventListener('play', onPlay);
+      el.removeEventListener('pause', onPause);
+      el.removeEventListener('ended', onPause);
     };
   }, []);
 
-  // Best-effort autoplay: attempt play() and only reflect it in the UI once
-  // playback actually starts - a rejected play() (mobile autoplay policy) must
-  // leave the Play icon showing, not flip to Pause.
+  // Best-effort autoplay: the browser's native media events are the only
+  // source of truth for the control state. A rejected play() therefore leaves
+  // the Play icon showing instead of reporting playback that never started.
   const attemptPlay = useCallback(() => {
     const el = audioRef.current;
     if (!el) return;
     try {
-      const result = el.play();
-      if (result && typeof result.then === 'function') {
-        result.then(() => setPlaying(true)).catch(() => {});
-      } else {
-        setPlaying(true);
-      }
+      void el.play().catch(() => {});
     } catch {
       // Ignore - autoplay can be rejected by the browser's mobile policy.
     }
   }, []);
 
-  // Best-effort autoplay-on-open: consume the one-shot storage flag exactly
-  // when this attachment's <audio> element becomes available. Covers the case
-  // where the editor's doc scan (finding the target attachmentId) finishes
-  // BEFORE this element is ready.
-  useEffect(() => {
-    if (state.status !== 'ready') return;
-    const storage = props.editor?.storage;
-    if (!storage || storage.autoplayFirstAudioId !== attachmentId) return;
-    delete storage.autoplayFirstAudioId;
-    attemptPlay();
-  }, [state.status, attachmentId, props.editor, attemptPlay]);
+  const autoplay = props.editor.storage.audioAttachment.autoplay;
 
-  // The other race direction: this element may already be ready by the time
-  // the editor's doc scan runs (the note-body load and the attachment-blob
-  // load are two independent async chains with no ordering guarantee between
-  // them). Register a trigger the scan can call directly instead of relying
-  // on the flag above, which nothing re-checks once this effect has already
-  // run once.
+  // Synchronize this mounted media element with the external TipTap autoplay
+  // coordinator. Registration covers both load orderings and unregisters when
+  // the node view is no longer ready or unmounts.
   useEffect(() => {
     if (state.status !== 'ready' || !attachmentId) return;
-    const storage = props.editor?.storage;
-    if (!storage) return;
-    if (!storage.autoplayReadyAudio) storage.autoplayReadyAudio = new Map();
-    storage.autoplayReadyAudio.set(attachmentId, attemptPlay);
-    return () => {
-      if (storage.autoplayReadyAudio?.get(attachmentId) === attemptPlay) {
-        storage.autoplayReadyAudio.delete(attachmentId);
-      }
-    };
-  }, [state.status, attachmentId, props.editor, attemptPlay]);
+    return autoplay.registerReadyAudio(attachmentId, attemptPlay);
+  }, [state.status, attachmentId, autoplay, attemptPlay]);
 
   const toggle = () => {
     const el = audioRef.current;
     if (!el) return;
     if (playing) {
       el.pause();
-      setPlaying(false);
     } else {
-      void el.play();
-      setPlaying(true);
+      attemptPlay();
     }
   };
 

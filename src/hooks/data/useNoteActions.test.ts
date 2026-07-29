@@ -1,4 +1,3 @@
-import 'fake-indexeddb/auto';
 import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { db } from '@/db/db.ts';
@@ -17,7 +16,7 @@ function makeNote(overrides: Partial<Note> = {}): Note {
     header: 'h',
     description: '',
     body: '',
-    checklist: [],
+    state: 'active',
     createdAt: now,
     updatedAt: now,
     ...overrides,
@@ -44,6 +43,20 @@ afterEach(async () => {
 });
 
 describe('useNoteActions', () => {
+  it("creates notes 'active' and unpinned, and lets callers seed lifecycle fields", async () => {
+    const { createNote } = actions();
+
+    const plain = await createNote({ header: 'Plain' });
+    expect(plain.state).toBe('active');
+    expect(plain.pinnedAt).toBeUndefined();
+    expect(plain.color).toBeUndefined();
+    // The indexed state query is what the feed uses - a created note must land in it.
+    expect(await db.notes.where('state').equals('active').count()).toBe(1);
+
+    const seeded = await createNote({ header: 'Seeded', state: 'archived', color: 'teal' });
+    expect(await db.notes.get(seeded.id)).toMatchObject({ state: 'archived', color: 'teal' });
+  });
+
   it('persists the rich-text body through create and round-trips it via Dexie', async () => {
     const { createNote } = actions();
     const html = '<p>Hello <strong>world</strong></p>';
@@ -64,8 +77,8 @@ describe('useNoteActions', () => {
     expect((await db.notes.get(created.id))?.body).toBe('<p>new</p>');
   });
 
-  it('deleteNote returns the removed noteTags and restoreNote reproduces the exact prior state', async () => {
-    const { createNote, deleteNote, restoreNote } = actions();
+  it('purgeNote returns the removed noteTags and restoreNote reproduces the exact prior state', async () => {
+    const { createNote, purgeNote, restoreNote } = actions();
     const created = await createNote({ header: 'Tagged', body: '<p>x</p>' });
     const tag: NoteTag = {
       noteId: created.id,
@@ -75,7 +88,7 @@ describe('useNoteActions', () => {
     };
     await db.noteTags.put(tag);
 
-    const removed = await deleteNote(created.id);
+    const removed = await purgeNote(created.id);
     expect(await db.notes.get(created.id)).toBeUndefined();
     expect(await db.noteTags.where('noteId').equals(created.id).count()).toBe(0);
     expect(removed.removedTags).toEqual([tag]);
@@ -88,15 +101,15 @@ describe('useNoteActions', () => {
   });
 });
 
-describe('deleteNote / restoreNote cascade attachments', () => {
-  it('deleteNote removes + returns the note attachments', async () => {
+describe('purgeNote / restoreNote cascade attachments', () => {
+  it('purgeNote removes + returns the note attachments', async () => {
     const a = actions();
     const note = makeNote();
     await db.notes.put(note);
     const att = makeAtt(note.id);
     await db.attachments.put(att);
 
-    const removed = await a.deleteNote(note.id);
+    const removed = await a.purgeNote(note.id);
     expect(removed.removedAttachments.map((r) => r.id)).toEqual([att.id]);
     expect(await db.attachments.get(att.id)).toBeUndefined();
   });
@@ -108,7 +121,7 @@ describe('deleteNote / restoreNote cascade attachments', () => {
     const att = makeAtt(note.id);
     await db.attachments.put(att);
 
-    const removed = await a.deleteNote(note.id);
+    const removed = await a.purgeNote(note.id);
     await a.restoreNote(note, removed);
     expect(await db.notes.get(note.id)).toBeTruthy();
     expect(await db.attachments.get(att.id)).toBeTruthy();

@@ -1,3 +1,4 @@
+import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vitest/config';
@@ -5,7 +6,16 @@ import { defineConfig } from 'vitest/config';
 // Standalone Vitest config (does not load the PWA plugin from vite.config.ts).
 // Keeps the `@/` alias so tests import the same modules the app does.
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    tanstackRouter({
+      target: 'react',
+      autoCodeSplitting: false,
+      // Colocated tests live in src/routes too; without this the generator
+      // would register routes.test.tsx as a route.
+      routeFileIgnorePattern: '\\.test\\.tsx?$',
+    }),
+    react(),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

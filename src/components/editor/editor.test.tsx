@@ -1,4 +1,3 @@
-import 'fake-indexeddb/auto';
 import { render, waitFor } from '@testing-library/react';
 import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -26,6 +25,11 @@ describe('Editor autoplay-on-open', () => {
       <Editor ref={ref} content="" autoplayFirstAudio getNoteId={vi.fn()} />
     );
 
+    const play = vi.fn();
+    const editor = ref.current?.getEditor();
+    if (!editor) throw new Error('editor not initialised');
+    editor.storage.audioAttachment.autoplay.registerReadyAudio('au1', play);
+
     rerender(
       <Editor
         ref={ref}
@@ -35,9 +39,7 @@ describe('Editor autoplay-on-open', () => {
       />
     );
 
-    await waitFor(() => {
-      expect(ref.current?.getEditor()?.storage.autoplayFirstAudioId).toBe('au1');
-    });
+    await waitFor(() => expect(play).toHaveBeenCalledTimes(1));
   });
 
   it('still autoplays a seeded draft populated at creation (already-working case)', async () => {
@@ -51,9 +53,12 @@ describe('Editor autoplay-on-open', () => {
       />
     );
 
-    await waitFor(() => {
-      expect(ref.current?.getEditor()?.storage.autoplayFirstAudioId).toBe('au2');
-    });
+    const play = vi.fn();
+    const editor = ref.current?.getEditor();
+    if (!editor) throw new Error('editor not initialised');
+    editor.storage.audioAttachment.autoplay.registerReadyAudio('au2', play);
+
+    await waitFor(() => expect(play).toHaveBeenCalledTimes(1));
   });
 
   it('plays immediately via a registered trigger when the attachment is already ready before the scan runs', async () => {
@@ -69,7 +74,7 @@ describe('Editor autoplay-on-open', () => {
     const trigger = vi.fn();
     const editor = ref.current?.getEditor();
     if (!editor) throw new Error('editor not initialised');
-    editor.storage.autoplayReadyAudio = new Map([['au1', trigger]]);
+    editor.storage.audioAttachment.autoplay.registerReadyAudio('au1', trigger);
 
     rerender(
       <Editor
@@ -81,6 +86,5 @@ describe('Editor autoplay-on-open', () => {
     );
 
     await waitFor(() => expect(trigger).toHaveBeenCalledTimes(1));
-    expect(editor.storage.autoplayFirstAudioId).toBeUndefined();
   });
 });

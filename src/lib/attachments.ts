@@ -70,6 +70,20 @@ export const EXCALIDRAW_MIME = 'application/json';
 /** Per-scene size cap: 25 MB. Enforced at creation only. */
 export const MAX_EXCALIDRAW_BYTES = 25 * 1024 * 1024;
 
+function baseMimeType(file: File): string {
+  return file.type.split(';')[0].trim();
+}
+
+function validateWhitelistedFile(
+  file: File,
+  allowedMimeTypes: readonly string[],
+  maxBytes: number
+): AttachmentErrorCode | null {
+  if (!allowedMimeTypes.includes(baseMimeType(file))) return 'unsupported-type';
+  if (file.size > maxBytes) return 'too-large';
+  return null;
+}
+
 /** Kind-dispatched file validation. Returns the failure code or null. Pure. */
 export function validateAttachmentFile(
   file: File,
@@ -79,24 +93,11 @@ export function validateAttachmentFile(
     return validateImageFile(file);
   }
   if (kind === 'audio') {
-    // MediaRecorder output (recorder output is always allowed) carries a codec
-    // param, e.g. 'audio/webm;codecs=opus' - strip it before the whitelist
-    // check so an exact-match comparison doesn't reject a valid base type.
-    const baseType = file.type.split(';')[0].trim();
-    if (!ALLOWED_AUDIO_MIME.includes(baseType as (typeof ALLOWED_AUDIO_MIME)[number])) {
-      return 'unsupported-type';
-    }
-    if (file.size > MAX_AUDIO_BYTES) return 'too-large';
-    return null;
+    // Recorder output may carry a codec parameter, e.g. audio/webm;codecs=opus.
+    return validateWhitelistedFile(file, ALLOWED_AUDIO_MIME, MAX_AUDIO_BYTES);
   }
   if (kind === 'video') {
-    // Same codec-suffix stripping as audio, e.g. 'video/mp4;codecs=avc1'.
-    const baseType = file.type.split(';')[0].trim();
-    if (!ALLOWED_VIDEO_MIME.includes(baseType as (typeof ALLOWED_VIDEO_MIME)[number])) {
-      return 'unsupported-type';
-    }
-    if (file.size > MAX_VIDEO_BYTES) return 'too-large';
-    return null;
+    return validateWhitelistedFile(file, ALLOWED_VIDEO_MIME, MAX_VIDEO_BYTES);
   }
   if (kind === 'file') {
     // No MIME whitelist: a file attachment accepts any type. Only the size cap
@@ -105,10 +106,8 @@ export function validateAttachmentFile(
     return null;
   }
   if (kind === 'excalidraw') {
-    if (file.type.split(';')[0].trim() !== EXCALIDRAW_MIME) return 'unsupported-type';
-    if (file.size > MAX_EXCALIDRAW_BYTES) return 'too-large';
-    return null;
+    return validateWhitelistedFile(file, [EXCALIDRAW_MIME], MAX_EXCALIDRAW_BYTES);
   }
-  // file kind lands in a later slice; reject until then.
+  // Reject unknown future kinds until their validation contract is defined.
   return 'unsupported-type';
 }

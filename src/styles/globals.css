@@ -41,6 +41,29 @@
     --danger: oklch(60% 0.18 30);
     --warning: oklch(70% 0.2 80);
     --info: oklch(65% 0.15 240);
+
+    /* Note/Tag colour palette (ADR 0009). A Note stores only the token name
+       (`red`, `teal`, …); the shade resolves here, per theme. Kept low-chroma
+       so a coloured card still reads as a surface, not as a control, and the
+       foreground token keeps contrast without a per-colour text colour. */
+    --note-red: oklch(94% 0.04 25);
+    --note-red-border: oklch(84% 0.08 25);
+    --note-orange: oklch(94% 0.05 55);
+    --note-orange-border: oklch(84% 0.09 55);
+    --note-yellow: oklch(96% 0.06 95);
+    --note-yellow-border: oklch(86% 0.1 95);
+    --note-green: oklch(94% 0.05 145);
+    --note-green-border: oklch(84% 0.09 145);
+    --note-teal: oklch(94% 0.04 190);
+    --note-teal-border: oklch(84% 0.08 190);
+    --note-blue: oklch(94% 0.04 250);
+    --note-blue-border: oklch(84% 0.08 250);
+    --note-purple: oklch(94% 0.04 295);
+    --note-purple-border: oklch(84% 0.08 295);
+    --note-pink: oklch(94% 0.04 350);
+    --note-pink-border: oklch(84% 0.08 350);
+    --note-gray: oklch(93% 0.01 250);
+    --note-gray-border: oklch(83% 0.02 250);
   }
 
   .dark {
@@ -76,6 +99,26 @@
     --danger: oklch(65% 0.2 30);
     --warning: oklch(75% 0.2 80);
     --info: oklch(70% 0.15 240);
+
+    /* Same tokens, dark shades - see the light block for the rationale. */
+    --note-red: oklch(32% 0.06 25);
+    --note-red-border: oklch(42% 0.09 25);
+    --note-orange: oklch(32% 0.06 55);
+    --note-orange-border: oklch(42% 0.09 55);
+    --note-yellow: oklch(33% 0.06 95);
+    --note-yellow-border: oklch(43% 0.09 95);
+    --note-green: oklch(32% 0.06 145);
+    --note-green-border: oklch(42% 0.09 145);
+    --note-teal: oklch(32% 0.05 190);
+    --note-teal-border: oklch(42% 0.08 190);
+    --note-blue: oklch(32% 0.06 250);
+    --note-blue-border: oklch(42% 0.09 250);
+    --note-purple: oklch(32% 0.06 295);
+    --note-purple-border: oklch(42% 0.09 295);
+    --note-pink: oklch(32% 0.06 350);
+    --note-pink-border: oklch(42% 0.09 350);
+    --note-gray: oklch(30% 0.01 270);
+    --note-gray-border: oklch(40% 0.02 270);
   }
 }
 

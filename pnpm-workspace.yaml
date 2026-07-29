@@ -1,0 +1,13 @@
+# Which dependencies may run install-time build scripts (pnpm 11 `allowBuilds`).
+# Left as an unfilled scaffold until now, which made any commit touching
+# package.json fail the husky hook.
+allowBuilds:
+  # Real build-time native deps: the Tailwind oxide engine and esbuild both
+  # need their platform binary in place for `vite build` to work.
+  '@tailwindcss/oxide': true
+  esbuild: true
+  # Transitive test-tooling only (canvas via jsdom, sqlite3 via indexeddbshim).
+  # Neither is built today and the whole suite passes, so compiling them on
+  # every install would buy nothing.
+  canvas: false
+  sqlite3: false

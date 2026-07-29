@@ -18,12 +18,14 @@ import {
   PenTool,
   Play,
   Quote,
+  Redo2,
   RemoveFormatting,
   Save,
   Square,
   Strikethrough,
   Trash2,
   Underline,
+  Undo2,
   Video,
 } from 'lucide-react';
 import { LatexIcon } from './LatexIcon';
@@ -55,5 +57,9 @@ export const icons = {
   Video,
   FileText,
   Download,
+  Undo2,
+  Redo2,
   Latex: LatexIcon,
-} as any;
+};
+
+export type IconName = keyof typeof icons;

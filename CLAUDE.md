@@ -82,6 +82,33 @@ The `icon` prop is a **string key** resolved via `src/components/icons/icons.ts`
 
 > **Canonical vs. legacy.** This per-extension pattern (Pattern A) is the **canonical** one — see [ADR 0004](./docs/adr/0004-canonical-editor-toolbar-pattern.md). So far `Bold`, `BulletList`, `Heading`, `Blockquote`, `Mathematics`, and `history` use it (each with a headless Vitest test) and are registered as the wrapped versions in `editor.tsx`; the remaining extension folders are still stubs or upstream registrations. The legacy toolbars (`menus/toolbars/FormatSection.tsx`, `ListSection.tsx`) use a centralized `formatActions` array with inline Lucide imports; they are being migrated to consume extension-provided buttons. See [`src/components/editor/PLAN.md`](./src/components/editor/PLAN.md).
 
+### Routing (`src/routes/`, `src/routeTree.gen.ts`)
+
+**TanStack Router** with file-based routing ([ADR 0008](./docs/adr/0008-tanstack-router-over-react-router.md)). Route modules live in `src/routes/`; the `@tanstack/router-plugin` Vite plugin (wired in both `vite.config.ts` and `vitest.config.ts`) regenerates `src/routeTree.gen.ts` from them. That file is **generated and committed** — never edit it; it is excluded from Biome and `tsc` reads it directly. Colocated `*.test.tsx` files inside `src/routes/` are excluded from generation via `routeFileIgnorePattern`.
+
+Routes: `/` (active feed), `/archive`, `/trash`, `/tag/$id`, `/settings`, `/settings/labels`. Route modules stay thin — they pick a scope and a title and delegate to a view (`NotesView`, or a page in `src/pages/`).
+
+`App.tsx` is the composition root: providers (Theme → Tooltip → ViewMode → Notes) wrap `<RouterProvider>`, and the `declare module '@tanstack/react-router'` block registers the router's types so `<Link to>` and params are type-checked.
+
+### Nav shell (`src/components/layout.tsx`, `src/components/nav/`)
+
+Keep pattern: a persistent left sidebar on desktop, the same `SideNav` inside a left-anchored drawer (hamburger in the `Navbar`) on mobile. `navItems.ts` is the single source of destinations so the two can't drift. Below the fixed destinations, `SideNav` lists every tag as a link to `/tag/$id`.
+
+A11y: every view renders an `<h1 tabIndex={-1}>` and calls `useFocusOnMount` on it, so a navigation moves focus to the destination heading instead of stranding it on the link.
+
+### Tags / labels (`src/components/tags/`, `src/pages/labels.tsx`)
+
+`NoteTagsBar` (pills + the "＋ Label" popover) is the one place labels are assigned; it resolves an unsaved draft's id lazily through the editor's `ensureNoteId`, the same queue attachments use. `TagPills` renders a note's labels read-only on `NoteCard`, tinted from the shared Note/Tag palette (`lib/note-colors.ts`) via `NoteColorPicker`. `/settings/labels` (`src/pages/labels.tsx`) is the manage view: create, inline rename, colour, merge-into, delete.
+
+### Backup (`src/lib/backup.ts`, `src/components/settings/`)
+
+The whole database exports to a `.zip`: `manifest.json` (notes, tags, noteTags, attachment metadata, the `settings` table) plus one entry per attachment blob at `attachments/<id>` (and `attachments/<id>.thumb`).
+Zipping is `fflate`.
+`parseBackupZip` is the only validation gate and never writes - restore is replace-all, so an unreadable archive must be rejected while the user's data is still intact.
+`restoreBackup` wipes and rewrites in one Dexie transaction, and the UI (`BackupSection`) offers a checked-by-default "save my current data first" inside the confirm dialog - cancelling or failing that save abandons the import.
+Saving always goes through `requestSaveTarget`, which asks for the destination *before* the bytes are built (`showSaveFilePicker` needs the click's user activation) and reports `confirmed: false` on the Firefox/Safari anchor fallback, where we must not claim the file landed.
+Manifest rows are validated with `z.looseObject`, so unknown (future) fields survive a round-trip.
+
 ### Theming (`src/themes.ts`, `src/context/themeProvider.tsx`)
 
 Colors use **OKLCH** values defined in `src/themes.ts` for `light` and `dark` tokens. `ThemeProvider` (`src/context/themeProvider.tsx`) is a **custom** provider (not `next-themes`, despite that package being installed): it persists the choice to `localStorage` and toggles the `light`/`dark` class on `<html>`, supporting a `system` mode via `prefers-color-scheme`. Theme switching is done at the provider level — no per-component theme logic.
@@ -89,10 +116,6 @@ Colors use **OKLCH** values defined in `src/themes.ts` for `light` and `dark` to
 ### i18n (`src/i18n.ts`)
 
 Uses **i18next** with browser language detection. Translations are loaded from `/public/locales/<lng>/translation.json`. Fallback language is `en`. The `t()` function is passed into extension button factories for tooltip translations.
-
-### Layout (`src/components/layout.tsx`)
-
-Mobile-first layout: top `Navbar` + main `<main>` content + fixed bottom `<nav>` visible only on mobile (`sm:hidden`). Desktop hides the bottom nav.
 
 ### Path alias
 

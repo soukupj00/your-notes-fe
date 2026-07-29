@@ -3,16 +3,16 @@ import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { NoteBody } from '@/components/NoteBody.tsx';
+import { TagPills } from '@/components/tags/TagPills.tsx';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.tsx';
-import { Checkbox } from '@/components/ui/checkbox.tsx';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx';
-import { Separator } from '@/components/ui/separator.tsx';
-import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
+import { type LifecycleSnapshot, useNoteActions } from '@/hooks/data/useNoteActions.ts';
+import { useTagsForNote } from '@/hooks/data/useTagsForNote.ts';
 import {
   bodyHasAttachment,
   bodyHasAudio,
@@ -27,29 +27,75 @@ interface NoteCardProps {
   onSelect: (id: string, opts?: { autoplayFirstAudio?: boolean }) => void;
 }
 
-// How many checklist items to preview on a card before we stop.
-const CHECKLIST_PREVIEW_LIMIT = 4;
+interface NoteCardAttachmentButtonProps {
+  label: string;
+  onActivate: () => void;
+  children: React.ReactNode;
+}
+
+/** A media affordance nested inside the clickable card surface. */
+function NoteCardAttachmentButton({ label, onActivate, children }: NoteCardAttachmentButtonProps) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={(event) => {
+        event.stopPropagation();
+        onActivate();
+      }}
+      className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      {children}
+    </button>
+  );
+}
 
 export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
   const { t } = useTranslation();
-  const { deleteNote, restoreNote } = useNoteActions();
+  const {
+    purgeNote,
+    restoreNote,
+    revertLifecycle,
+    pinNote,
+    unpinNote,
+    archiveNote,
+    trashNote,
+    restoreToActive,
+  } = useNoteActions();
+  const tags = useTagsForNote(note.id);
 
   // stripHtml drops the <img data-attachment-id> tag along with the rest of the
   // markup, so an image-only Body (no text) needs the attachment check too -
-  // otherwise the card renders blank (no header, no NoteBody, no checklist).
+  // otherwise the card renders blank (no header, no NoteBody).
   const hasBody = stripHtml(note.body).trim().length > 0 || bodyHasAttachment(note.body);
   const hasAudio = bodyHasAudio(note.body);
   const hasVideo = bodyHasVideo(note.body);
   const hasFile = bodyHasFile(note.body);
-  const checklist = note.checklist ?? [];
 
-  const handleDelete = async () => {
-    const removed = await deleteNote(note.id);
-    toast(t('notes.deleted'), {
-      action: {
-        label: t('notes.undo'),
-        onClick: () => restoreNote(note, removed),
-      },
+  // Every lifecycle action follows the same contract: run the transition, then
+  // offer its snapshot back as a one-click undo. Sharing the wrapper keeps a
+  // new action from shipping without an undo.
+  const withUndo =
+    (run: (id: string) => Promise<LifecycleSnapshot | null>, message: string) => async () => {
+      const before = await run(note.id);
+      if (!before) return;
+      toast(message, {
+        action: { label: t('notes.undo'), onClick: () => revertLifecycle(note.id, before) },
+      });
+    };
+
+  const handlePin = withUndo(pinNote, t('notes.pinned'));
+  const handleUnpin = withUndo(unpinNote, t('notes.unpinned'));
+  const handleArchive = withUndo(archiveNote, t('notes.archived'));
+  const handleTrash = withUndo(trashNote, t('notes.movedToTrash'));
+  const handleRestore = withUndo(restoreToActive, t('notes.restored'));
+
+  // Purge is the one irreversible action, so its undo works differently: it
+  // re-puts the captured note plus the rows the cascade removed.
+  const handlePurge = async () => {
+    const removed = await purgeNote(note.id);
+    toast(t('notes.deletedForever'), {
+      action: { label: t('notes.undo'), onClick: () => restoreNote(note, removed) },
     });
   };
 
@@ -67,7 +113,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
         // Only activate when the key originated on the card itself. React
         // synthetic events bubble through the portalled dropdown menu, so
         // without this an Enter/Space on the menu trigger or a menu item (e.g.
-        // Delete) would also open the editor.
+        // Move to trash) would also open the editor.
         if (e.target !== e.currentTarget) return;
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -90,39 +136,49 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
           >
             <MoreVertical className="size-4" />
           </DropdownMenuTrigger>
+          {/* The menu is state-aware: a trashed note offers recovery and
+              permanent deletion, everything else offers the forward moves. */}
           <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-            <DropdownMenuItem
-              onClick={handleDelete}
-              className="text-destructive focus:text-destructive"
-            >
-              {t('notes.delete')}
-            </DropdownMenuItem>
+            {note.state === 'trashed' ? (
+              <>
+                <DropdownMenuItem onClick={handleRestore}>{t('notes.restore')}</DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handlePurge}
+                  className="text-destructive focus:text-destructive"
+                >
+                  {t('notes.deleteForever')}
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                {note.state === 'active' &&
+                  (note.pinnedAt ? (
+                    <DropdownMenuItem onClick={handleUnpin}>{t('notes.unpin')}</DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem onClick={handlePin}>{t('notes.pin')}</DropdownMenuItem>
+                  ))}
+                {note.state === 'archived' ? (
+                  <DropdownMenuItem onClick={handleRestore}>{t('notes.restore')}</DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onClick={handleArchive}>{t('notes.archive')}</DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  onClick={handleTrash}
+                  className="text-destructive focus:text-destructive"
+                >
+                  {t('notes.moveToTrash')}
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </CardHeader>
 
       <CardContent className="space-y-3">
         {hasBody && <NoteBody html={note.body} className="line-clamp-6" />}
-
-        {checklist.length > 0 && (
-          <div>
-            {hasBody && <Separator className="my-2" />}
-            <ul className="space-y-1">
-              {checklist.slice(0, CHECKLIST_PREVIEW_LIMIT).map((item, index) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: read-only, unreordered preview; checklist items are plain strings with no stable id (revisit when checklist editing lands)
-                <li key={index} className="flex items-center gap-2">
-                  <Checkbox disabled aria-hidden />
-                  <span className="text-sm">{item}</span>
-                </li>
-              ))}
-              {checklist.length > CHECKLIST_PREVIEW_LIMIT && (
-                <li className="text-muted-foreground text-xs">
-                  +{checklist.length - CHECKLIST_PREVIEW_LIMIT}
-                </li>
-              )}
-            </ul>
-          </div>
-        )}
+        {/* Read-only here: labels are changed from the editor (and, in Slice 4,
+            the card's own overflow menu). */}
+        <TagPills tags={tags} />
       </CardContent>
 
       {/* Always-visible audio/video/file affordances: pinned bottom-right, in a
@@ -133,43 +189,28 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
       {(hasAudio || hasVideo || hasFile) && (
         <div className="absolute right-2 bottom-2 z-10 flex gap-2">
           {hasAudio && (
-            <button
-              type="button"
-              aria-label={t('notes.playAudio')}
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect(note.id, { autoplayFirstAudio: true });
-              }}
-              className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            <NoteCardAttachmentButton
+              label={t('notes.playAudio')}
+              onActivate={() => onSelect(note.id, { autoplayFirstAudio: true })}
             >
               <Play className="size-5 translate-x-px" />
-            </button>
+            </NoteCardAttachmentButton>
           )}
           {hasVideo && (
-            <button
-              type="button"
-              aria-label={t('notes.playVideo')}
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect(note.id);
-              }}
-              className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            <NoteCardAttachmentButton
+              label={t('notes.playVideo')}
+              onActivate={() => onSelect(note.id)}
             >
               <Video className="size-5" />
-            </button>
+            </NoteCardAttachmentButton>
           )}
           {hasFile && (
-            <button
-              type="button"
-              aria-label={t('notes.openFile')}
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect(note.id);
-              }}
-              className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            <NoteCardAttachmentButton
+              label={t('notes.openFile')}
+              onActivate={() => onSelect(note.id)}
             >
               <FileText className="size-5" />
-            </button>
+            </NoteCardAttachmentButton>
           )}
         </div>
       )}

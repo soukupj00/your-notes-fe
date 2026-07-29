@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Attachment } from '@/models.ts';
 import { AudioNodeView, formatTime } from './AudioNodeView';
+import { createAudioAutoplayCoordinator } from './audioAutoplay';
 
 beforeEach(() => {
   let n = 0;
@@ -34,7 +35,10 @@ function props(
 ) {
   return {
     node: { attrs: { attachmentId: 'a1' } },
-    editor: { isEditable: opts.isEditable ?? true, storage: {} },
+    editor: {
+      isEditable: opts.isEditable ?? true,
+      storage: { audioAttachment: { autoplay: createAudioAutoplayCoordinator() } },
+    },
     deleteNode: opts.deleteNode ?? vi.fn(),
     extension: { options: { getDeps: () => ({ getAttachment: get, t: (k: string) => k }) } },
   } as unknown as Parameters<typeof AudioNodeView>[0];
@@ -64,6 +68,18 @@ describe('AudioNodeView', () => {
     const btn = await screen.findByRole('button', { name: /play/i });
     await userEvent.click(btn);
     expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
+  });
+
+  it('reflects native play and pause events in the control', async () => {
+    render(<AudioNodeView {...props(async () => att())} />);
+    await waitFor(() => expect(document.querySelector('audio')).not.toBeNull());
+    const audio = document.querySelector('audio') as HTMLAudioElement;
+
+    fireEvent(audio, new Event('play'));
+    expect(await screen.findByRole('button', { name: /pause/i })).toBeInTheDocument();
+
+    fireEvent(audio, new Event('pause'));
+    expect(await screen.findByRole('button', { name: /play/i })).toBeInTheDocument();
   });
 
   it('shows an unavailable state when the row is missing', async () => {
@@ -129,13 +145,15 @@ describe('AudioNodeView', () => {
 
   type MockEditor = {
     isEditable: boolean;
-    storage: { autoplayFirstAudioId?: string | null; autoplayReadyAudio?: Map<string, () => void> };
+    storage: { audioAttachment: { autoplay: ReturnType<typeof createAudioAutoplayCoordinator> } };
   };
 
-  // Race direction 1: the editor's doc scan finds this attachment's id and
-  // sets the storage flag BEFORE this element becomes ready.
-  it('consumes a pre-set autoplay flag once its element becomes ready', async () => {
-    const editor: MockEditor = { isEditable: true, storage: { autoplayFirstAudioId: 'a1' } };
+  // Race direction 1: the editor's doc scan requests this attachment BEFORE
+  // its media element becomes ready.
+  it('plays a pending autoplay request once its element becomes ready', async () => {
+    const autoplay = createAudioAutoplayCoordinator();
+    autoplay.requestAutoplay('a1');
+    const editor: MockEditor = { isEditable: true, storage: { audioAttachment: { autoplay } } };
     render(
       <AudioNodeView
         {...({
@@ -145,15 +163,15 @@ describe('AudioNodeView', () => {
       />
     );
     await waitFor(() => expect(HTMLMediaElement.prototype.play).toHaveBeenCalled());
+    fireEvent(document.querySelector('audio') as HTMLAudioElement, new Event('play'));
     expect(await screen.findByRole('button', { name: /pause/i })).toBeInTheDocument();
-    expect(editor.storage.autoplayFirstAudioId).toBeUndefined();
   });
 
   // Race direction 2: this element is already ready by the time the editor's
-  // doc scan runs. AudioNodeView must have registered a trigger the scan can
-  // call directly, since nothing re-checks the flag after the fact.
-  it('registers a ready-to-play trigger a late doc scan can call directly', async () => {
-    const editor: MockEditor = { isEditable: true, storage: {} };
+  // doc scan requests autoplay.
+  it('plays when autoplay is requested after its element becomes ready', async () => {
+    const autoplay = createAudioAutoplayCoordinator();
+    const editor: MockEditor = { isEditable: true, storage: { audioAttachment: { autoplay } } };
     render(
       <AudioNodeView
         {...({
@@ -164,16 +182,14 @@ describe('AudioNodeView', () => {
     );
     await waitFor(() => expect(document.querySelector('audio')).not.toBeNull());
 
-    const trigger = editor.storage.autoplayReadyAudio?.get('a1');
-    expect(trigger).toBeInstanceOf(Function);
-    trigger?.();
+    autoplay.requestAutoplay('a1');
 
     await waitFor(() => expect(HTMLMediaElement.prototype.play).toHaveBeenCalled());
-    expect(await screen.findByRole('button', { name: /pause/i })).toBeInTheDocument();
   });
 
-  it('unregisters its ready-to-play trigger on unmount', async () => {
-    const editor: MockEditor = { isEditable: true, storage: {} };
+  it('unregisters from autoplay coordination on unmount', async () => {
+    const autoplay = createAudioAutoplayCoordinator();
+    const editor: MockEditor = { isEditable: true, storage: { audioAttachment: { autoplay } } };
     const { unmount } = render(
       <AudioNodeView
         {...({
@@ -182,11 +198,13 @@ describe('AudioNodeView', () => {
         } as Parameters<typeof AudioNodeView>[0])}
       />
     );
-    await waitFor(() =>
-      expect(editor.storage.autoplayReadyAudio?.get('a1')).toBeInstanceOf(Function)
-    );
+    await waitFor(() => expect(document.querySelector('audio')).not.toBeNull());
     unmount();
-    expect(editor.storage.autoplayReadyAudio?.get('a1')).toBeUndefined();
+    vi.mocked(HTMLMediaElement.prototype.play).mockClear();
+
+    autoplay.requestAutoplay('a1');
+
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
   });
 
   it('flips the button back to play when playback ends', async () => {
@@ -194,9 +212,11 @@ describe('AudioNodeView', () => {
     await waitFor(() => expect(document.querySelector('audio')).not.toBeNull());
     const btn = screen.getByRole('button', { name: /play/i });
     await userEvent.click(btn);
-    expect(screen.getByRole('button', { name: /pause/i })).toBeInTheDocument();
 
     const audio = document.querySelector('audio') as HTMLAudioElement;
+    fireEvent(audio, new Event('play'));
+    expect(screen.getByRole('button', { name: /pause/i })).toBeInTheDocument();
+
     fireEvent(audio, new Event('ended'));
 
     expect(await screen.findByRole('button', { name: /play/i })).toBeInTheDocument();

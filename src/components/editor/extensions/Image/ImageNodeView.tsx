@@ -1,12 +1,12 @@
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
-import { ConfirmDeleteButton } from '../attachments/ConfirmDeleteButton';
+import { AttachmentDeleteButton } from '../attachments/AttachmentDeleteButton';
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
 
 /** Editor render path for imageAttachment. Object-URL lifecycle lives in the
  *  shared useAttachmentObjectUrl hook; delete is guarded by the shared
- *  ConfirmDeleteButton (editor-only, same as audio/video). */
+ *  AttachmentDeleteButton (editor-only, same as audio/video). */
 export function ImageNodeView(props: ReactNodeViewProps) {
   const attachmentId = props.node.attrs.attachmentId as string | null;
   const deps = (props.extension.options.getDeps as () => AttachmentDeps)();
@@ -17,15 +17,12 @@ export function ImageNodeView(props: ReactNodeViewProps) {
   // semi-opaque pill sits atop the content surface instead of taking flex
   // space next to it, so it stays legible over any image.
   const deleteButton = canDelete ? (
-    <span className="absolute top-2 right-2 z-10">
-      <ConfirmDeleteButton
-        onConfirm={() => props.deleteNode()}
-        label={deps.t('editor.image.delete')}
-        t={deps.t}
-        triggerClassName="size-9 bg-destructive text-white shadow-sm hover:bg-destructive/90 hover:text-white"
-        iconClassName="size-5"
-      />
-    </span>
+    <AttachmentDeleteButton
+      onConfirm={() => props.deleteNode()}
+      label={deps.t('editor.image.delete')}
+      t={deps.t}
+      overlay
+    />
   ) : null;
 
   if (state.status === 'missing') {

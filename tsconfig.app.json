@@ -23,8 +23,8 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
-    /* Shadcn UI */
-    "baseUrl": ".",
+    /* Shadcn UI - `baseUrl` is deprecated as of TS 6 and removed in TS 7;
+       `paths` resolve relative to this file, so the `@/` alias needs no baseUrl. */
     "paths": {
       "@/*": ["./src/*"]
     }

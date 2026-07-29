@@ -1,9 +1,9 @@
-import 'fake-indexeddb/auto';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { db } from '@/db/db.ts';
 import type { Note } from '@/models.ts';
+import { clearNotesDb } from '@/test/db.ts';
 import { EMPTY_CHECKLIST_BODY, NoteEditorDialog } from './NoteEditorDialog.tsx';
 
 // Keys pass through untranslated so assertions are stable.
@@ -44,12 +44,6 @@ vi.mock('@/components/editor/editor.tsx', () => ({
   ),
 }));
 
-// Radix Dialog relies on APIs jsdom lacks.
-beforeAll(() => {
-  Element.prototype.hasPointerCapture = vi.fn();
-  Element.prototype.scrollIntoView = vi.fn();
-});
-
 function makeNote(overrides: Partial<Note> = {}): Note {
   const now = new Date().toISOString();
   return {
@@ -57,7 +51,7 @@ function makeNote(overrides: Partial<Note> = {}): Note {
     header: 'Original header',
     description: '',
     body: 'Original body',
-    checklist: [],
+    state: 'active',
     createdAt: now,
     updatedAt: now,
     ...overrides,
@@ -68,11 +62,7 @@ const headerInput = () => screen.getByLabelText('notes.titlePlaceholder');
 const editorTextarea = () => screen.getByTestId('editor') as HTMLTextAreaElement;
 const closeButton = () => screen.getByRole('button', { name: 'Close' });
 
-afterEach(async () => {
-  await db.notes.clear();
-  await db.noteTags.clear();
-  await db.attachments.clear();
-});
+afterEach(clearNotesDb);
 
 describe('NoteEditorDialog', () => {
   it('loads an existing note once and ignores later external writes (no live query)', async () => {
@@ -280,5 +270,20 @@ describe('NoteEditorDialog', () => {
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect((await db.notes.get(note.id))?.header).toBe('Edited header');
+  });
+
+  it('labels an unsaved draft, persisting it through the same ensureNoteId queue', async () => {
+    const now = new Date().toISOString();
+    await db.tags.put({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
+
+    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'tags.add' }));
+    await userEvent.click(await screen.findByRole('checkbox', { name: 'Work' }));
+
+    // The draft became a real note, and the label landed on that same note.
+    await waitFor(async () => expect(await db.noteTags.count()).toBe(1));
+    const link = (await db.noteTags.toArray())[0];
+    expect(await db.notes.get(link.noteId)).toBeDefined();
   });
 });

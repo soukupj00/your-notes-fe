@@ -1,14 +1,17 @@
 import Dexie, { type Table } from 'dexie';
-import type { Attachment, Note, NoteTag, Tag } from '@/models.ts';
+import type { Attachment, Note, NoteTag, Setting, Tag } from '@/models.ts';
 
 export class NotesDB extends Dexie {
   notes!: Table<Note, string>;
   attachments!: Table<Attachment, string>;
   tags!: Table<Tag, string>;
   noteTags!: Table<NoteTag, [string, string]>; // composite key
+  settings!: Table<Setting, string>;
 
-  constructor() {
-    super('NotesDB');
+  // The name is a parameter only so migration tests can spin up a throwaway
+  // database; the app always uses the default singleton below.
+  constructor(name = 'NotesDB') {
+    super(name);
     this.version(1).stores({
       notes: 'id, header, createdAt, updatedAt',
       images: 'id, noteId',
@@ -26,6 +29,33 @@ export class NotesDB extends Dexie {
       images: null,
       audios: null,
       files: null,
+    });
+    // v3: note lifecycle (ADR 0009). Adds the `state` enum plus the orthogonal
+    // `pinnedAt`/`color`/`trashedAt`, and retires the never-used `checklist`
+    // (the real checklist is a TipTap TaskList inside the Body).
+    //
+    // This one *does* need an `.upgrade()`, unlike the other optional fields:
+    // `state` is indexed, and IndexedDB skips rows whose indexed property is
+    // `undefined`. Without stamping existing rows, every pre-v3 note would be
+    // invisible to `where('state')` - i.e. would silently vanish from the feed.
+    this.version(3)
+      .stores({
+        notes: 'id, header, createdAt, updatedAt, state, pinnedAt, trashedAt',
+      })
+      .upgrade((tx) =>
+        tx
+          .table('notes')
+          .toCollection()
+          .modify((note) => {
+            note.state ??= 'active';
+            delete note.checklist;
+          })
+      );
+    // v4: a generic key-value `settings` store. Only the value is versioned
+    // (the preferences blob carries its own schema `version`), so adding a
+    // preference never costs a Dexie bump - no migration needed here.
+    this.version(4).stores({
+      settings: 'key',
     });
   }
 }

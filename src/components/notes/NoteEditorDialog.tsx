@@ -2,6 +2,7 @@ import { Check, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Editor, type EditorHandle } from '@/components/editor/editor.tsx';
+import { NoteTagsBar } from '@/components/tags/NoteTagsBar.tsx';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog.tsx';
 import { db } from '@/db/db.ts';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
@@ -49,7 +50,7 @@ export function NoteEditorDialog({
   onClose,
 }: NoteEditorDialogProps) {
   const { t } = useTranslation();
-  const { createNote, updateNote, deleteNote } = useNoteActions();
+  const { createNote, updateNote, purgeNote } = useNoteActions();
   const { collectOrphans } = useAttachmentActions();
 
   const [header, setHeader] = useState('');
@@ -155,7 +156,7 @@ export function NoteEditorDialog({
     await enqueueSave(header, body); // flush the latest edit
     // Discard a note that ended up empty (covers a draft typed then cleared).
     if (idRef.current != null && isEmpty(header, body)) {
-      await deleteNote(idRef.current); // cascade-deletes its attachments (Task 4)
+      await purgeNote(idRef.current); // cascade-deletes its attachments (Task 4)
       idRef.current = null;
     } else if (idRef.current != null) {
       // Reclaim attachment rows no longer referenced by the saved Body. Safe now:
@@ -163,7 +164,7 @@ export function NoteEditorDialog({
       await collectOrphans(idRef.current, extractAttachmentIds(body));
     }
     onClose();
-  }, [enqueueSave, header, body, deleteNote, collectOrphans, onClose]);
+  }, [enqueueSave, header, body, purgeNote, collectOrphans, onClose]);
 
   return (
     <Dialog
@@ -230,6 +231,11 @@ export function NoteEditorDialog({
             setBody(html);
           }}
         />
+
+        {/* Labels sit below the body, where Slice 4's action bar will join them.
+            A draft is persisted on the first label through the same
+            ensureNoteId queue attachments use. */}
+        <NoteTagsBar noteId={noteId} ensureNoteId={ensureNoteId} />
       </DialogContent>
     </Dialog>
   );

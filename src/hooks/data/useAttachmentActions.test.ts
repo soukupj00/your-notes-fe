@@ -1,5 +1,4 @@
 import { renderHook } from '@testing-library/react';
-import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '@/db/db.ts';
 import { useAttachmentActions } from './useAttachmentActions.ts';
@@ -86,7 +85,7 @@ describe('useAttachmentActions', () => {
       header: '',
       description: '',
       body: '',
-      checklist: [],
+      state: 'active',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
@@ -107,7 +106,7 @@ describe('useAttachmentActions', () => {
       header: '',
       description: '',
       body: `<img data-attachment-id="${keep.id}">`,
-      checklist: [],
+      state: 'active',
       createdAt: now,
       updatedAt: now,
     });

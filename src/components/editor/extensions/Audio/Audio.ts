@@ -3,12 +3,21 @@ import { createAttachmentNode } from '../attachments/createAttachmentNode';
 import type { AttachmentDeps } from '../attachments/deps';
 import { AudioNodeView } from './AudioNodeView';
 import { AudioRecordButton } from './AudioRecordButton';
+import { type AudioAutoplayCoordinator, createAudioAutoplayCoordinator } from './audioAutoplay';
+
+export interface AudioAttachmentStorage {
+  autoplay: AudioAutoplayCoordinator;
+}
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     audioAttachment: {
       insertAudioAttachment: (attrs: { attachmentId: string }) => ReturnType;
     };
+  }
+
+  interface Storage {
+    audioAttachment: AudioAttachmentStorage;
   }
 }
 
@@ -33,5 +42,11 @@ export function createAudio(getDeps: () => AttachmentDeps) {
       component: AudioRecordButton,
       componentProps: { editor, getDeps, tooltip: t('editor.audio.tooltip') },
     }),
+  }).extend({
+    addStorage() {
+      return {
+        autoplay: createAudioAutoplayCoordinator(),
+      };
+    },
   });
 }

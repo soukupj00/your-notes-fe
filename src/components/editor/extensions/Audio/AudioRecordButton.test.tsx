@@ -2,18 +2,12 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Editor } from '@tiptap/core';
 import { toast } from 'sonner';
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { AttachmentDeps } from '../attachments/deps';
 import { AudioRecordButton } from './AudioRecordButton';
 
 vi.mock('sonner', () => ({ toast: vi.fn() }));
-
-// Radix Popover relies on pointer-capture / scroll APIs jsdom lacks.
-beforeAll(() => {
-  Element.prototype.hasPointerCapture = vi.fn();
-  Element.prototype.scrollIntoView = vi.fn();
-});
 
 const recorder = {
   status: 'idle' as string,
