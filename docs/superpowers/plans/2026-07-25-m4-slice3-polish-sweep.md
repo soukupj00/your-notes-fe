@@ -30,7 +30,8 @@ These are the M4.md polish items with no design forks left - pure execution. Gro
 
 ### Task 3 - Desktop note-bar affordance (item 6)
 
-- [ ] Desktop "Take a note" bar: text cursor on hover; gently rotating placeholder ("Capture a thought…", "Add a to-do…", …) with reduced-motion respected.
+- [x] Desktop "Take a note" bar: text cursor on hover; gently rotating placeholder ("Capture a thought…", "Add a to-do…", …) with reduced-motion respected.
+      Extracted to `components/notes/DesktopCaptureBar.tsx`; the new `useReducedMotion()` hook is what finally gives the declared `reducedMotion` preference a consumer.
 
 ### Task 4 - Semantics, tab order, screen readers (item 16)
 

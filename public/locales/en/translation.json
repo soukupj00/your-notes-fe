@@ -271,7 +271,14 @@
       "drawing": "Drawing",
       "picture": "Photo"
     },
-    "emptyingTrash": "Emptying trash…"
+    "emptyingTrash": "Emptying trash…",
+    "placeholders": {
+      "default": "Take a note…",
+      "thought": "Capture a thought…",
+      "todo": "Add a to-do…",
+      "idea": "Jot down an idea…",
+      "remember": "Remember something…"
+    }
   },
   "tags": {
     "add": "Label",

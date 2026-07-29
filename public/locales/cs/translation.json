@@ -272,7 +272,14 @@
       "drawing": "Kresba",
       "picture": "Fotka"
     },
-    "emptyingTrash": "Vyprazdňuji koš…"
+    "emptyingTrash": "Vyprazdňuji koš…",
+    "placeholders": {
+      "default": "Napsat poznámku…",
+      "thought": "Zachyťte myšlenku…",
+      "todo": "Přidejte úkol…",
+      "idea": "Poznamenejte si nápad…",
+      "remember": "Zapamatujte si něco…"
+    }
   },
   "tags": {
     "add": "Štítek",

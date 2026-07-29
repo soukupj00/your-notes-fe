@@ -1,5 +1,6 @@
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router';
 import { render } from '@testing-library/react';
+import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { ThemeProvider } from '@/context/themeProvider.tsx';
 import { ViewModeProvider } from '@/context/viewModeProvider.tsx';
 import { routeTree } from '@/routeTree.gen';
@@ -18,11 +19,15 @@ export function renderRoute(path: string) {
     history: createMemoryHistory({ initialEntries: [path] }),
   });
   render(
+    // Same provider stack as `App.tsx`, so a component that reads preferences
+    // (e.g. reduced motion) behaves here the way it does in the real app.
     <ThemeProvider>
-      <ViewModeProvider>
-        {/* biome-ignore lint/suspicious/noExplicitAny: the test router is not the app's registered one */}
-        <RouterProvider router={router as any} />
-      </ViewModeProvider>
+      <PreferencesProvider>
+        <ViewModeProvider>
+          {/* biome-ignore lint/suspicious/noExplicitAny: the test router is not the app's registered one */}
+          <RouterProvider router={router as any} />
+        </ViewModeProvider>
+      </PreferencesProvider>
     </ThemeProvider>
   );
   return router;
