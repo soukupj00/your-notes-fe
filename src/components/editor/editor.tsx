@@ -88,7 +88,12 @@ type EditorProps = {
   /** Best-effort: autoplay the first audioAttachment node once the editor is
    *  ready (set when the note was opened via its card's audio chip). */
   autoplayFirstAudio?: boolean;
+  /** Start a capture as soon as the editor is ready (quick-capture speed-dial). */
+  initialCapture?: CaptureKind;
 };
+
+/** A capture the speed-dial can hand straight to the editor. */
+export type CaptureKind = 'audio' | 'drawing' | 'picture';
 
 /** Imperative handle so a parent (e.g. a dialog) can drop the cursor into the body,
  *  or (e.g. a test) reach the live TipTap editor instance. */
@@ -133,6 +138,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     className,
     getNoteId,
     autoplayFirstAudio,
+    initialCapture,
   },
   ref
 ) {
@@ -140,6 +146,9 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   // Math node onClick handlers need the live editor, which does not exist yet when
   // the extensions array is built; a ref lets those closures reach it at click time.
   const editorRef = useRef<TiptapEditor | null>(null);
+  // Only rendered for an auto-started picture capture; the toolbar's own
+  // picker button keeps its own input.
+  const pictureInputRef = useRef<HTMLInputElement>(null);
 
   const { createAttachment, getAttachment, cloneAttachment, updateAttachment } =
     useAttachmentActions();
@@ -338,6 +347,24 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     });
   }, [content, editor, autoplayFirstAudio]);
 
+  // One-shot auto-capture: the speed-dial picked a medium, so open straight
+  // into it instead of making the user hunt for the same button in the toolbar.
+  // Best-effort by nature - the picture picker needs the tap's user activation
+  // to still be live, and a browser that has let it lapse simply shows the
+  // editor with its toolbar, which is the same place the user was heading.
+  const captureStartedRef = useRef(false);
+  useEffect(() => {
+    if (!editor || !initialCapture || captureStartedRef.current) return;
+    captureStartedRef.current = true;
+    if (initialCapture === 'drawing') {
+      openExcalidraw({});
+    } else if (initialCapture === 'audio') {
+      editor.storage.audioAttachment.capture.requestRecording();
+    } else {
+      pictureInputRef.current?.click();
+    }
+  }, [editor, initialCapture, openExcalidraw]);
+
   useImperativeHandle(
     ref,
     () => ({
@@ -438,6 +465,31 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
           className="prose prose-sm min-h-[150px] max-w-none flex-1 cursor-text focus:outline-none"
         />
       </div>
+
+      {/* Auto-started picture capture. `accept="image/*"` with no `capture`
+        attribute: the mobile sheet then offers camera *and* gallery, and Linux
+        Chrome does not grey out the selection the way a narrow MIME list makes
+        it. */}
+      {initialCapture === 'picture' && (
+        <input
+          ref={pictureInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          data-testid="auto-capture-picture-input"
+          onChange={(event) => {
+            const files = event.target.files;
+            const ed = editorRef.current;
+            if (files?.length && ed) {
+              void insertImageAttachmentFiles(ed, files, attachmentDepsRef.current, (id) =>
+                ed.chain().focus().insertImageAttachment({ attachmentId: id }).run()
+              );
+            }
+            event.target.value = '';
+          }}
+        />
+      )}
 
       {/* One shared Excalidraw editing surface for the whole editor. Remounted per
         open (keyed) so its dirty/empty state is always fresh. */}

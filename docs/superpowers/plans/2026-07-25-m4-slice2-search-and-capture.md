@@ -1,6 +1,6 @@
 # M4 Slice 2 - Search & capture
 
-**Status:** in progress - Tasks 1-2 done.
+**Status:** complete - Tasks 1-3 done.
 
 **Goal:** Turn the substring search into a real advanced search (fuzzy + sort + tag filters, all in typed URL state), and turn note creation into the Keep-style speed-dial with auto-starting media capture.
 
@@ -41,16 +41,17 @@ Decisions: state in TanStack search params (Zod `validateSearch`); sort created/
 
 Decisions: mobile `＋` FAB → 5 actions replacing the pill; desktop inline icons; auto-start capture on select; Permissions-API pre-check; picture = `image/*` no `capture`.
 
-- [ ] `NotesHome.tsx` mobile: replace the two-button pill with a single `＋` FAB that expands (Motion once Slice 4 lands; plain state until then) into labelled actions: **text / checklist / audio / drawing / picture**. Tap-outside collapses.
-- [ ] Deep-link each into the editor with initial state + **auto-start capture**:
-  - [ ] text → blank; checklist → `EMPTY_CHECKLIST_BODY` (existing).
-  - [ ] audio → open + auto-start `useAudioRecorder`.
-  - [ ] drawing → open + auto-open the Excalidraw dialog.
-  - [ ] picture → open + auto-trigger the image picker.
-- [ ] Desktop: keep the "Take a note" bar; add inline quick-action icons (checklist/picture/drawing/audio) on its right edge.
-- [ ] **Permissions API** pre-check in `useAudioRecorder`: `navigator.permissions.query({name:'microphone'})` → only prompt when `'prompt'`; show a helpful hint on `'denied'`.
-- [ ] Picture input: `accept="image/*"` with **no** `capture` (mobile sheet offers camera + gallery). `image/*` avoids the Linux-Chrome narrow-MIME grey-out.
-- [ ] Tests: each action opens the editor in the right state; permission pre-check branches; picker attributes.
+- [x] Mobile: the two-button pill is now a single `＋` FAB that expands into **text / checklist / audio / drawing / picture** (`QuickCaptureBar.tsx`). **Correction:** built on the existing Radix `Popover` rather than hand-rolled open state - tap-outside, Esc, and focus management come free and are the parts a hand-rolled dial gets wrong. (`NotesHome.tsx` is gone; Slice 1 split it into `NotesView` + `QuickCaptureBar`.) Motion lands in Slice 4.
+- [x] The five starts live in one list (`quickCaptureActions.ts`) that both the mobile dial and the desktop row render, so they cannot drift.
+- [x] Deep-link each into the editor: text → blank; checklist → `EMPTY_CHECKLIST_BODY`; audio/drawing/picture carry a `capture` intent through `EditingState` → `NoteEditorDialog` → `Editor`'s new `initialCapture` prop, which runs it once the editor is ready.
+  - [x] audio → `editor.storage.audioAttachment.capture` (`audioCapture.ts`), a pending-then-fire coordinator mirroring `audioAutoplay`. **Needed because** the recorder is owned by `AudioRecordButton`, which mounts independently of the editor - the request has to survive arriving early.
+  - [x] drawing → the editor's own shared Excalidraw dialog (`openExcalidraw`).
+  - [x] picture → a hidden `accept="image/*"` input the editor renders only for this case.
+- [x] Desktop: the "Take a note" bar keeps its place and grows the four media icons on its right edge.
+- [x] **Permissions API** pre-check in `useAudioRecorder` (`queryMicrophonePermission`). **Narrowed from the plan:** only `'denied'` short-circuits. `'granted'` and `'prompt'` both end in the same `getUserMedia` call, so branching on them would add a code path with no behaviour, and Firefox/Safari reject the `microphone` descriptor outright - an unanswerable query must fall through, not fail.
+- [x] Picture input: `accept="image/*"`, no `capture` attribute (mobile sheet offers camera *and* gallery; also dodges the Linux-Chrome narrow-MIME grey-out).
+- [x] **Known limit:** auto-capture is best-effort. The picture picker needs the originating tap's transient user activation to still be live once the editor has mounted; if the browser has let it lapse, the note simply opens with its toolbar - the same place the user was heading.
+- [x] Tests: `audioCapture.test.ts` (both orderings, one-shot, unregister), `AudioRecordButton` auto-start, `useAudioRecorder` permission branches (denied fails without asking; unanswerable still records), `QuickCaptureBar.test.tsx` (collapsed → five actions → right editor state → collapses), `editor.test.tsx` (audio requests the recorder, drawing opens the canvas, picture clicks an `image/*` picker, nothing fires unasked), `routes.test.tsx` (desktop icons present on `/`, absent on `/archive`).
 
 ## Verification
 

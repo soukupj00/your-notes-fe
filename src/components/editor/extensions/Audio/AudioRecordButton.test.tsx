@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { AttachmentDeps } from '../attachments/deps';
 import { AudioRecordButton } from './AudioRecordButton';
+import { createAudioCaptureCoordinator } from './audioCapture';
 
 vi.mock('sonner', () => ({ toast: vi.fn() }));
 
@@ -30,10 +31,12 @@ vi.mock('./useAudioRecorder', () => ({
 
 let insertAudioAttachmentMock: ReturnType<typeof vi.fn>;
 
-function makeEditor() {
+function makeEditor(capture = createAudioCaptureCoordinator()) {
   insertAudioAttachmentMock = vi.fn(() => ({ run: vi.fn() }));
   return {
     chain: () => ({ focus: () => ({ insertAudioAttachment: insertAudioAttachmentMock }) }),
+    // The button registers itself as the editor's recorder (auto-capture).
+    storage: { audioAttachment: { capture } },
   } as unknown as Editor;
 }
 
@@ -149,5 +152,20 @@ describe('AudioRecordButton', () => {
       </TooltipProvider>
     );
     expect(toast).toHaveBeenCalledWith('editor.audio.errors.unsupported');
+  });
+
+  it('starts recording when the editor requests an auto-capture', () => {
+    // "New voice note" opens the editor already recording, so the request may
+    // land before or after this button mounts; either way it must start once.
+    const capture = createAudioCaptureCoordinator();
+    capture.requestRecording();
+
+    render(
+      <TooltipProvider>
+        <AudioRecordButton editor={makeEditor(capture)} getDeps={() => deps} tooltip="rec" />
+      </TooltipProvider>
+    );
+
+    expect(recorder.start).toHaveBeenCalledTimes(1);
   });
 });

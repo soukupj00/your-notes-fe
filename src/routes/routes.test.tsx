@@ -175,6 +175,25 @@ describe('search state in the URL', () => {
   });
 });
 
+describe('quick capture', () => {
+  it('offers a media start for each capture kind beside the note bar', async () => {
+    renderAt('/');
+
+    await screen.findByRole('heading', { level: 1, name: 'nav.notes' });
+    // Plain text is the bar itself; the icons cover the four media starts.
+    for (const key of ['checklist', 'audio', 'drawing', 'picture']) {
+      expect(screen.getByRole('button', { name: `notes.capture.${key}` })).toBeInTheDocument();
+    }
+  });
+
+  it('does not offer quick capture in the archive or the trash', async () => {
+    renderAt('/archive');
+
+    await screen.findByRole('heading', { level: 1, name: 'nav.archive' });
+    expect(screen.queryByRole('button', { name: 'notes.capture.audio' })).not.toBeInTheDocument();
+  });
+});
+
 describe('nav shell', () => {
   it('navigates between views from the sidebar', async () => {
     await seed();

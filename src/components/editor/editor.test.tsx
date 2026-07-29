@@ -88,3 +88,53 @@ describe('Editor autoplay-on-open', () => {
     await waitFor(() => expect(trigger).toHaveBeenCalledTimes(1));
   });
 });
+
+describe('Editor auto-capture', () => {
+  it('asks the audio recorder to start when opened for a voice note', async () => {
+    const ref = createRef<EditorHandle>();
+    render(<Editor ref={ref} content="" initialCapture="audio" getNoteId={vi.fn()} />);
+
+    const editor = ref.current?.getEditor();
+    if (!editor) throw new Error('editor not initialised');
+    // The mic button (toolbar) mounts separately, so the request is held for it.
+    const start = vi.fn();
+    editor.storage.audioAttachment.capture.registerRecorder(start);
+
+    await waitFor(() => expect(start).toHaveBeenCalledTimes(1));
+  });
+
+  it('opens the drawing canvas when opened for a drawing', async () => {
+    const { findByRole } = render(
+      <Editor content="" initialCapture="drawing" getNoteId={vi.fn()} />
+    );
+
+    // The shared Excalidraw dialog is the editor's own, so it can be asserted
+    // without a toolbar click.
+    expect(await findByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('opens a camera-and-gallery picker when opened for a photo', async () => {
+    const click = vi.spyOn(HTMLInputElement.prototype, 'click');
+    const { findByTestId } = render(
+      <Editor content="" initialCapture="picture" getNoteId={vi.fn()} />
+    );
+
+    const input = await findByTestId('auto-capture-picture-input');
+    // `image/*` (not a narrow MIME list) so the mobile sheet offers the camera
+    // and Linux Chrome does not grey out the selection; no `capture` attribute,
+    // which would force the camera and hide the gallery.
+    expect(input).toHaveAttribute('accept', 'image/*');
+    expect(input).not.toHaveAttribute('capture');
+    // Best-effort, but it must at least be attempted without a toolbar click.
+    await waitFor(() => expect(click).toHaveBeenCalled());
+    click.mockRestore();
+  });
+
+  it('does not start a capture that was never asked for', async () => {
+    const ref = createRef<EditorHandle>();
+    const { queryByRole } = render(<Editor ref={ref} content="" getNoteId={vi.fn()} />);
+
+    await waitFor(() => expect(ref.current?.getEditor()).toBeTruthy());
+    expect(queryByRole('dialog')).not.toBeInTheDocument();
+  });
+});

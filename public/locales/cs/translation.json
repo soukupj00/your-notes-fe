@@ -242,6 +242,14 @@
     },
     "filters": {
       "byLabel": "Filtrovat podle štítku"
+    },
+    "capture": {
+      "open": "Nová poznámka",
+      "text": "Poznámka",
+      "checklist": "Seznam úkolů",
+      "audio": "Hlasová poznámka",
+      "drawing": "Kresba",
+      "picture": "Fotka"
     }
   },
   "tags": {

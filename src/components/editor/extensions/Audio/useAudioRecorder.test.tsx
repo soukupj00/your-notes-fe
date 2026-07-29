@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useAudioRecorder } from './useAudioRecorder';
+import { MAX_RECORDING_MS, useAudioRecorder } from './useAudioRecorder';
 
 class FakeRecorder {
   static isTypeSupported = vi.fn(() => true);
@@ -138,5 +138,61 @@ describe('useAudioRecorder', () => {
     });
     await waitFor(() => expect(result.current.status).toBe('error'));
     expect(result.current.error).toBe(code);
+  });
+
+  it('fails fast with a denial instead of asking a browser that already said no', async () => {
+    const query = vi.fn(async () => ({ state: 'denied' }));
+    Object.defineProperty(globalThis.navigator, 'permissions', {
+      configurable: true,
+      value: { query },
+    });
+    const { result } = renderHook(() => useAudioRecorder());
+
+    await act(async () => {
+      await result.current.start();
+    });
+
+    expect(result.current.status).toBe('error');
+    expect(result.current.error).toBe('denied');
+    // The whole point of the pre-check: no silent no-op getUserMedia call.
+    expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+  });
+
+  it('still records when the browser cannot answer the permission query', async () => {
+    // Firefox/Safari reject the 'microphone' descriptor; asking for the stream
+    // is then the only way to find out.
+    const query = vi.fn(async () => {
+      throw new TypeError('unsupported descriptor');
+    });
+    Object.defineProperty(globalThis.navigator, 'permissions', {
+      configurable: true,
+      value: { query },
+    });
+    const { result } = renderHook(() => useAudioRecorder());
+
+    await act(async () => {
+      await result.current.start();
+    });
+
+    await waitFor(() => expect(result.current.status).toBe('recording'));
+  });
+
+  it('caps a take at MAX_RECORDING_MS and releases the mic', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const { result } = renderHook(() => useAudioRecorder());
+
+    await act(async () => {
+      await result.current.start();
+    });
+    await waitFor(() => expect(result.current.status).toBe('recording'));
+
+    await act(async () => {
+      vi.advanceTimersByTime(MAX_RECORDING_MS);
+      await Promise.resolve();
+    });
+
+    await waitFor(() => expect(result.current.status).toBe('idle'));
+    expect(track.stop).toHaveBeenCalled();
+    vi.useRealTimers();
   });
 });

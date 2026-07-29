@@ -241,6 +241,14 @@
     },
     "filters": {
       "byLabel": "Filter by label"
+    },
+    "capture": {
+      "open": "New note",
+      "text": "Note",
+      "checklist": "Checklist",
+      "audio": "Voice note",
+      "drawing": "Drawing",
+      "picture": "Photo"
     }
   },
   "tags": {

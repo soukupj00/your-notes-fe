@@ -1,6 +1,7 @@
 import { Check, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { CaptureKind } from '@/components/editor/editor.tsx';
 import { Editor, type EditorHandle } from '@/components/editor/editor.tsx';
 import { NoteTagsBar } from '@/components/tags/NoteTagsBar.tsx';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog.tsx';
@@ -32,6 +33,8 @@ type NoteEditorDialogProps = {
   /** Best-effort: autoplay the note's first audio attachment on open (set when
    *  the note was opened via its card's audio chip). */
   autoplayFirstAudio?: boolean;
+  /** Capture to start as soon as the editor is ready (from the speed-dial). */
+  initialCapture?: CaptureKind;
   onClose: () => void;
 };
 
@@ -47,6 +50,7 @@ export function NoteEditorDialog({
   noteId,
   initialBody,
   autoplayFirstAudio,
+  initialCapture,
   onClose,
 }: NoteEditorDialogProps) {
   const { t } = useTranslation();
@@ -70,19 +74,24 @@ export function NoteEditorDialog({
   // across keystrokes (it's read by the Image extension's deps, and a new
   // identity there would mint a new imageDeps object on every render).
   const headerRef = useRef(header);
-  headerRef.current = header;
   const bodyRef = useRef(body);
-  bodyRef.current = body;
   const dirtyRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Serialize saves so a draft is created exactly once, then updated.
   const saveChainRef = useRef<Promise<unknown>>(Promise.resolve());
 
+  // Keep the mirrors current after each commit. ensureNoteId only reads them
+  // from async work (an attachment insert, a label), which is always later.
+  useEffect(() => {
+    headerRef.current = header;
+    bodyRef.current = body;
+  }, [header, body]);
+
   // Load an existing note's content once on mount (not via a live query).
   useEffect(() => {
     if (!noteId) return;
     let active = true;
-    db.notes.get(noteId).then((n) => {
+    void db.notes.get(noteId).then((n) => {
       if (active && n) {
         setHeader(n.header ?? '');
         setBody(n.body ?? '');
@@ -144,7 +153,7 @@ export function NoteEditorDialog({
       // Skip the status flicker when there's nothing to persist (empty draft).
       if (idRef.current == null && isEmpty(header, body)) return;
       setSaveStatus('saving');
-      enqueueSave(header, body).then(() => setSaveStatus('saved'));
+      void enqueueSave(header, body).then(() => setSaveStatus('saved'));
     }, AUTOSAVE_DELAY_MS);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -222,6 +231,7 @@ export function NoteEditorDialog({
           getNoteId={ensureNoteId}
           autoFocus={focusBody}
           autoplayFirstAudio={autoplayFirstAudio}
+          initialCapture={initialCapture}
           stickyToolbarOnMobile
           // Mobile: no bordered box, so the dialog's own padding is the only
           // spacing around the title + content. Desktop keeps the framed editor.

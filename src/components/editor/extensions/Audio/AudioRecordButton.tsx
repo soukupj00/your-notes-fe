@@ -49,6 +49,14 @@ export function AudioRecordButton({ editor, getDeps, tooltip }: AudioRecordButto
     }
   }, [rec.status, rec.error, getDeps]);
 
+  // "New audio note" opens the editor and expects the mic to be live already.
+  // The editor asks; this button owns the recorder, so it answers - through the
+  // storage coordinator, since the two mount independently.
+  const start = rec.start;
+  useEffect(() => {
+    return editor.storage.audioAttachment.capture.registerRecorder(() => void start());
+  }, [editor, start]);
+
   const insert = (id: string) =>
     editor.chain().focus().insertAudioAttachment({ attachmentId: id }).run();
 

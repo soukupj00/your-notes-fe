@@ -13,6 +13,26 @@ export function pickAudioMimeType(): string | null {
   return null;
 }
 
+/**
+ * Ask the Permissions API whether the mic is already settled, so an
+ * auto-started recording can fail fast with a real explanation instead of
+ * calling `getUserMedia` and getting a silent no-op where the browser
+ * remembers a past refusal. Returns `null` when the browser cannot answer
+ * (Firefox and Safari do not expose the `microphone` descriptor), in which
+ * case the only way to find out is to ask for the stream.
+ */
+export async function queryMicrophonePermission(): Promise<PermissionState | null> {
+  try {
+    if (typeof navigator === 'undefined' || !navigator.permissions?.query) return null;
+    const status = await navigator.permissions.query({
+      name: 'microphone' as PermissionName,
+    });
+    return status.state;
+  } catch {
+    return null;
+  }
+}
+
 export type RecorderStatus = 'idle' | 'requesting' | 'recording' | 'error';
 
 /** Why start() failed. Distinct codes so the UI can tell a genuine refusal
@@ -68,7 +88,6 @@ export function useAudioRecorder(): AudioRecorder {
   const chunksRef = useRef<BlobPart[]>([]);
   const startedAtRef = useRef(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const autoStopRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Bumped by cleanup() to invalidate any in-flight start() (e.g. unmount or
    *  cancel() while getUserMedia is still pending). */
   const startGenerationRef = useRef(0);
@@ -76,7 +95,6 @@ export function useAudioRecorder(): AudioRecorder {
   const cleanup = useCallback(() => {
     startGenerationRef.current += 1;
     if (tickRef.current) clearInterval(tickRef.current);
-    if (autoStopRef.current) clearTimeout(autoStopRef.current);
     streamRef.current?.getTracks().forEach((t) => {
       t.stop();
     });
@@ -98,6 +116,14 @@ export function useAudioRecorder(): AudioRecorder {
     setStatus('requesting');
     setError(null);
     try {
+      // Only 'denied' is actionable up front: 'granted' and 'prompt' both end
+      // in a getUserMedia call, and a browser that cannot answer just falls
+      // through to it.
+      if ((await queryMicrophonePermission()) === 'denied') {
+        setStatus('error');
+        setError('denied');
+        return;
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (startGenerationRef.current !== myGeneration) {
         // Unmounted or cancelled while permission was pending: release the
@@ -123,19 +149,12 @@ export function useAudioRecorder(): AudioRecorder {
       setElapsedMs(0);
       setStatus('recording');
       tickRef.current = setInterval(() => setElapsedMs(Date.now() - startedAtRef.current), 200);
-      autoStopRef.current = setTimeout(() => {
-        void stopInternalRef.current?.();
-      }, MAX_RECORDING_MS);
     } catch (err) {
       cleanup();
       setStatus('error');
       setError(mapGetUserMediaError(err));
     }
   }, [supported, cleanup]);
-
-  const stopInternalRef = useRef<
-    (() => Promise<{ blob: Blob; mime: string; durationMs: number } | null>) | null
-  >(null);
 
   const stop = useCallback(async () => {
     const recorder = recorderRef.current;
@@ -154,7 +173,14 @@ export function useAudioRecorder(): AudioRecorder {
     return { ...result, durationMs };
   }, [status, cleanup]);
 
-  stopInternalRef.current = stop;
+  // Cap the take. Owned by an effect keyed on the recording state rather than a
+  // timer set inside start(), so stop() needs no back-reference into start()
+  // and the timer is cancelled by the same state change that ends the take.
+  useEffect(() => {
+    if (status !== 'recording') return;
+    const timer = setTimeout(() => void stop(), MAX_RECORDING_MS);
+    return () => clearTimeout(timer);
+  }, [status, stop]);
 
   const cancel = useCallback(() => {
     const recorder = recorderRef.current;
