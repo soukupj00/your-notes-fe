@@ -2,7 +2,6 @@ stages:
   - quality
   - test
   - build
-  - publish
   - secret-detection
 
 variables:
@@ -65,7 +64,7 @@ typecheck:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
 
-# ─── Tests (enabled as suites land in M1) ─────────────────────────────────────
+# ─── Tests ────────────────────────────────────────────────────────────────────
 test:unit:
   <<: *pnpm-setup
   stage: test
@@ -73,31 +72,9 @@ test:unit:
     - pnpm test --run
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      allow_failure: true
     - if: $CI_COMMIT_BRANCH
-      allow_failure: true
 
-test:e2e:
-  image: mcr.microsoft.com/playwright:v1.52.0-noble
-  stage: test
-  before_script:
-    - corepack enable
-    - pnpm config set store-dir "$PNPM_STORE_PATH"
-    - pnpm install --frozen-lockfile
-  script:
-    - pnpm test:e2e
-  cache:
-    key:
-      files:
-        - pnpm-lock.yaml
-    paths:
-      - .pnpm-store/
-    policy: pull-push
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      allow_failure: true
-    - if: $CI_COMMIT_BRANCH
-      allow_failure: true
+# Playwright remains deferred until the project has an E2E suite and test:e2e script.
 
 # ─── Build ────────────────────────────────────────────────────────────────────
 build:
@@ -110,29 +87,8 @@ build:
       - dist/
     expire_in: 1 week
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
     - if: $CI_COMMIT_TAG
 
-# ─── Publish (Docker image → GitLab Container Registry) ───────────────────────
-publish:image:
-  stage: publish
-  image:
-    name: gcr.io/kaniko-project/executor:v1.23.2-debug
-    entrypoint: [""]
-  variables:
-    # Empty by default; the tag rule below sets it to also push a :<git-tag> image.
-    EXTRA_DESTINATION: ""
-  script:
-    - /kaniko/executor
-      --context "${CI_PROJECT_DIR}"
-      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}"
-      --destination "${CI_REGISTRY_IMAGE}:latest"
-      ${EXTRA_DESTINATION}
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $CI_COMMIT_TAG
-      variables:
-        EXTRA_DESTINATION: "--destination ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}"
-  needs:
-    - build
+# Container publishing remains deferred until the app has a deployment target.
