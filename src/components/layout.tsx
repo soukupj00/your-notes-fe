@@ -21,6 +21,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider open={open} onOpenChange={setOpen}>
+      {/* First thing in the tab order, visible only once focused: the sidebar
+          lists every destination plus every label, so a keyboard user would
+          otherwise tab through the whole nav on every page. */}
+      <a
+        href="#main-content"
+        className="sr-only fixed top-2 left-2 z-50 -translate-y-full rounded-md bg-primary px-3 py-2 text-primary-foreground text-sm shadow-lg transition-transform focus:not-sr-only focus:translate-y-0"
+      >
+        {t('nav.skipToContent')}
+      </a>
+
       <Sidebar collapsible="icon">
         <SidebarHeader>
           {/* Keep the wordmark in the collapsed rail until the planned logo
@@ -42,7 +52,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <Navbar />
         {/* Extra bottom padding on mobile so the fixed quick-capture bar
             (rendered by the notes feed) never covers content. */}
-        <div className="min-w-0 flex-1 px-4 pt-6 pb-24 sm:pb-6">{children}</div>
+        {/* `tabIndex={-1}` so the skip link can actually move focus here -
+            a plain anchor target is not focusable on its own. */}
+        <div
+          id="main-content"
+          tabIndex={-1}
+          className="min-w-0 flex-1 px-4 pt-6 pb-24 outline-none sm:pb-6"
+        >
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

@@ -199,19 +199,24 @@ export function NoteEditorDialog({
 
         {/* Quiet local autosave indicator (icon only), tucked left of the close
             button. M5 can extend this to Syncing/Offline states. */}
-        {saveStatus !== 'idle' && (
-          <div
-            aria-live="polite"
-            className="absolute top-4 right-12 flex items-center text-muted-foreground"
-          >
-            {saveStatus === 'saving' ? (
-              <Loader2 className="size-4 animate-spin" aria-hidden />
-            ) : (
-              <Check className="size-4" aria-hidden />
-            )}
-            <span className="sr-only">{t(`notes.saveStatus.${saveStatus}`)}</span>
-          </div>
-        )}
+        {/* The live region is always mounted: a screen reader only announces
+            changes *inside* a region it was already observing, so one that
+            appears together with its first message is silent. */}
+        <div
+          aria-live="polite"
+          className="absolute top-4 right-12 flex items-center text-muted-foreground"
+        >
+          {saveStatus !== 'idle' && (
+            <>
+              {saveStatus === 'saving' ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <Check className="size-4" aria-hidden />
+              )}
+              <span className="sr-only">{t(`notes.saveStatus.${saveStatus}`)}</span>
+            </>
+          )}
+        </div>
 
         <input
           value={header}

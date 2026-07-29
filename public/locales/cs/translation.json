@@ -10,7 +10,8 @@
     "settings": "Nastavení",
     "allSettings": "Všechna nastavení",
     "toggle": "Přepnout navigaci",
-    "drawerDescription": "Odkazy na poznámky, štítky, archiv a koš."
+    "drawerDescription": "Odkazy na poznámky, štítky, archiv a koš.",
+    "skipToContent": "Přejít na obsah"
   },
   "navbar": {
     "logo": "Poznámky"
@@ -144,7 +145,8 @@
       "label": "Motiv",
       "system": "Systém",
       "light": "Světlý",
-      "dark": "Tmavý"
+      "dark": "Tmavý",
+      "toggle": "Přepnout motiv"
     },
     "backup": {
       "title": "Záloha",
@@ -279,7 +281,9 @@
       "todo": "Přidejte úkol…",
       "idea": "Poznamenejte si nápad…",
       "remember": "Zapamatujte si něco…"
-    }
+    },
+    "feed": "Poznámky",
+    "loading": "Načítám poznámky…"
   },
   "tags": {
     "add": "Štítek",
@@ -320,5 +324,12 @@
     "purple": "Fialová",
     "pink": "Růžová",
     "gray": "Šedá"
+  },
+  "errors": {
+    "crash": {
+      "title": "Něco se pokazilo",
+      "description": "Aplikace narazila na neočekávanou chybu. Vaše poznámky jsou v tomto zařízení v bezpečí - znovunačtení by mělo pomoct.",
+      "reload": "Znovu načíst aplikaci"
+    }
   }
 }

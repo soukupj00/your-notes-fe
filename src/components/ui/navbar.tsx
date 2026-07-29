@@ -72,7 +72,7 @@ function Navbar() {
         <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" aria-label={t('settings.locale.label')}>
                 <Globe />
               </Button>
             </DropdownMenuTrigger>

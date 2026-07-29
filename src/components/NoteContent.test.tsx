@@ -63,7 +63,8 @@ describe('NoteContent layout', () => {
     notesState.notes = [note('a'), note('b')];
     const { container } = render(<NoteContent scope={{ state: 'active' }} onSelect={vi.fn()} />);
 
-    const grid = container.querySelector('[data-testid="note-card"]')?.parentElement;
+    // card -> its <li> -> the list that carries the layout classes
+    const grid = container.querySelector('[data-testid="note-card"]')?.parentElement?.parentElement;
     expect(grid?.className).toContain('columns-1');
     expect(grid?.className).not.toContain('flex-col');
   });
@@ -73,7 +74,8 @@ describe('NoteContent layout', () => {
     viewModeState.viewMode = 'list';
     const { container } = render(<NoteContent scope={{ state: 'active' }} onSelect={vi.fn()} />);
 
-    const grid = container.querySelector('[data-testid="note-card"]')?.parentElement;
+    // card -> its <li> -> the list that carries the layout classes
+    const grid = container.querySelector('[data-testid="note-card"]')?.parentElement?.parentElement;
     expect(grid?.className).toContain('flex-col');
     expect(grid?.className).not.toContain('columns-1');
   });

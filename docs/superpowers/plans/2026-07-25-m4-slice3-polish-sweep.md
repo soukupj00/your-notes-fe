@@ -35,10 +35,13 @@ These are the M4.md polish items with no design forks left - pure execution. Gro
 
 ### Task 4 - Semantics, tab order, screen readers (item 16)
 
-- [ ] Replace decorative `div`s with semantic elements (`section`/`nav`/`header`/`main`/`ul`/`button`); move styling to parent/child selectors where it removes wrapper divs.
-- [ ] Ensure the most important controls come first in DOM/tab order; add a skip-to-content link.
-- [ ] Route-change **focus-to-heading** (verify from Slice 1); ARIA labels on icon-only buttons; live-region for save-status/undo toasts.
-- [ ] Top-level React **error boundary** so a crash shows a recoverable "something went wrong - reload" screen instead of white-screening the PWA.
+- [x] Replace decorative `div`s with semantic elements (`section`/`nav`/`header`/`main`/`ul`/`button`); move styling to parent/child selectors where it removes wrapper divs.
+      The feed is now a `<ul>`/`<li>`; settings/nav/header were already semantic.
+- [x] Ensure the most important controls come first in DOM/tab order; add a skip-to-content link.
+- [x] Route-change **focus-to-heading** (verified: `useFocusOnMount`, covered in `layout.test.tsx`); ARIA labels on icon-only buttons (the locale button had none); live-region for save-status (it was mounted together with its first message, so it never announced) - undo toasts ride Sonner's own region.
+- [x] Top-level React **error boundary** so a crash shows a recoverable "something went wrong - reload" screen instead of white-screening the PWA.
+
+> Found during the sweep: `src/components/ColorPicker.tsx` is dead code (nothing imports it) and carries hardcoded English strings. Left in place - deleting it is a separate call.
 
 ### Task 5 - Keyboard shortcuts (item 17)
 

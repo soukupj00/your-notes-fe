@@ -1,4 +1,5 @@
 import { createRouter, RouterProvider } from '@tanstack/react-router';
+import { ErrorBoundary } from '@/components/ErrorBoundary.tsx';
 import { Toaster } from '@/components/ui/sonner.tsx';
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
@@ -18,15 +19,20 @@ declare module '@tanstack/react-router' {
 
 function App() {
   return (
+    // The boundary sits inside ThemeProvider so its fallback is themed, but
+    // outside everything else: a crash in any provider or route still lands on
+    // a recoverable screen rather than a white page.
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <PreferencesProvider>
-        <TooltipProvider>
-          <ViewModeProvider>
-            <RouterProvider router={router} />
-            <Toaster />
-          </ViewModeProvider>
-        </TooltipProvider>
-      </PreferencesProvider>
+      <ErrorBoundary>
+        <PreferencesProvider>
+          <TooltipProvider>
+            <ViewModeProvider>
+              <RouterProvider router={router} />
+              <Toaster />
+            </ViewModeProvider>
+          </TooltipProvider>
+        </PreferencesProvider>
+      </ErrorBoundary>
     </ThemeProvider>
   );
 }

@@ -10,7 +10,8 @@
     "settings": "Settings",
     "allSettings": "All settings",
     "toggle": "Toggle navigation",
-    "drawerDescription": "Links to your notes, labels, archive and trash."
+    "drawerDescription": "Links to your notes, labels, archive and trash.",
+    "skipToContent": "Skip to content"
   },
   "navbar": {
     "logo": "Notes"
@@ -144,7 +145,8 @@
       "label": "Theme",
       "system": "System",
       "light": "Light",
-      "dark": "Dark"
+      "dark": "Dark",
+      "toggle": "Toggle theme"
     },
     "backup": {
       "title": "Backup",
@@ -278,7 +280,9 @@
       "todo": "Add a to-do…",
       "idea": "Jot down an idea…",
       "remember": "Remember something…"
-    }
+    },
+    "feed": "Notes",
+    "loading": "Loading notes…"
   },
   "tags": {
     "add": "Label",
@@ -319,5 +323,12 @@
     "purple": "Purple",
     "pink": "Pink",
     "gray": "Grey"
+  },
+  "errors": {
+    "crash": {
+      "title": "Something went wrong",
+      "description": "The app hit an unexpected error. Your notes are safe on this device - reloading should get you back.",
+      "reload": "Reload the app"
+    }
   }
 }

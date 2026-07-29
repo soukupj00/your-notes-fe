@@ -34,7 +34,9 @@ export function NoteContent({
 
   if (loading) {
     return (
-      <div className={layout}>
+      // `role="status"`: the skeletons are decoration, so the wait needs a name
+      // of its own or a screen reader hears nothing at all while the feed loads.
+      <div className={layout} role="status" aria-busy aria-label={t('notes.loading')}>
         {['a', 'b', 'c', 'd', 'e', 'f'].map((k) => (
           <Skeleton key={k} className="mb-4 h-32 w-full break-inside-avoid" />
         ))}
@@ -57,11 +59,15 @@ export function NoteContent({
     );
   }
 
+  // A list, not a stack of divs: the feed is a countable collection, so screen
+  // readers should be able to announce its size and let the user step through it.
   return (
-    <div className={layout}>
+    <ul className={layout} aria-label={t('notes.feed')}>
       {notes.map((note) => (
-        <NoteCard key={note.id} note={note} onSelect={onSelect} />
+        <li key={note.id} className="break-inside-avoid">
+          <NoteCard note={note} onSelect={onSelect} />
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }

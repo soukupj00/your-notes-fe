@@ -77,6 +77,34 @@ describe('nav shell contents', () => {
   });
 });
 
+// The sidebar lists every destination *and* every label, so without this a
+// keyboard user tabs through the whole nav on every single page.
+describe('skip to content', () => {
+  it('is the first thing in the tab order and targets the content region', async () => {
+    renderRoute('/');
+    // A route mount lands focus on its <h1> (useFocusOnMount), which is already
+    // past the nav. The skip link is for the other entry point: a fresh tab out
+    // of the browser chrome, i.e. focus starting at the top of the document.
+    await screen.findByRole('heading', { level: 1, name: 'nav.notes' });
+    (document.activeElement as HTMLElement | null)?.blur();
+
+    await userEvent.tab();
+    const skip = screen.getByRole('link', { name: 'nav.skipToContent' });
+    expect(skip).toHaveFocus();
+    expect(skip).toHaveAttribute('href', '#main-content');
+  });
+
+  it('points at a region that can actually take focus', async () => {
+    renderRoute('/');
+    await screen.findByRole('heading', { level: 1, name: 'nav.notes' });
+
+    const main = document.getElementById('main-content');
+    expect(main).not.toBeNull();
+    // A plain anchor target is not focusable; without this the jump is silent.
+    expect(main).toHaveAttribute('tabindex', '-1');
+  });
+});
+
 describe('collapse persistence', () => {
   it('survives a remount', async () => {
     await seedTag();

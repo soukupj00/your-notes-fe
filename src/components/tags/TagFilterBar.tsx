@@ -22,7 +22,7 @@ export function TagFilterBar() {
   return (
     <div className="mb-4">
       <p className="mb-1 text-muted-foreground text-xs">{t('notes.filters.byLabel')}</p>
-      <ul className="flex flex-wrap items-center gap-1.5">
+      <ul className="flex flex-wrap items-center gap-1.5" aria-label={t('notes.filters.byLabel')}>
         {tags.map((tag) => {
           const selected = search.tags.includes(tag.id);
           return (
