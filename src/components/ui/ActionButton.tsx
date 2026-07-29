@@ -57,6 +57,14 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
   ) => {
     const Comp = asChild ? Slot : toggle ? Toggle : Button;
 
+    // Non-toggle toolbar buttons (media pickers, undo/redo, the mic) fall through
+    // to Button's `default` variant, which is what made them read as filled purple
+    // slabs beside the flat toggle buttons. Neutralise it here rather than passing
+    // `variant`: `Comp` is a union, and only `Toggle`'s narrower variant type is
+    // visible to TS at the call site. These classes win via tailwind-merge and
+    // give the same rest/hover treatment as a Toggle in its off state.
+    const flatButton = !toggle && 'bg-transparent text-foreground shadow-none';
+
     const Icon = icon ? icons[icon] : undefined;
 
     return (
@@ -70,7 +78,12 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
             size="sm"
             // Icon-only buttons need an accessible name; the visual tooltip is not exposed to AT.
             aria-label={tooltip}
-            className={cn('flex h-8 w-8 items-center justify-center p-0', className)}
+            className={cn(
+              'flex h-8 w-8 items-center justify-center p-0',
+              flatButton,
+              'hover:bg-muted hover:text-foreground',
+              className
+            )}
             {...rest}
           >
             {Icon && <Icon className="h-4 w-4" />}

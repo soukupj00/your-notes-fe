@@ -121,7 +121,7 @@ export function AudioNodeView(props: ReactNodeViewProps) {
           onClick={toggle}
           disabled={state.status !== 'ready'}
           aria-label={deps.t(playing ? 'editor.audio.pause' : 'editor.audio.play')}
-          className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-50"
+          className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:hover:bg-primary"
         >
           {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
         </button>

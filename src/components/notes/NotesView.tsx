@@ -72,7 +72,7 @@ export function NotesView({
           <button
             type="button"
             onClick={() => setEditing({ id: null })}
-            className="flex-1 px-4 py-3 text-left text-muted-foreground"
+            className="flex-1 px-4 py-3 text-left text-muted-foreground transition-colors hover:text-foreground"
           >
             {t('notes.createPlaceholder')}
           </button>

@@ -1,6 +1,6 @@
 import Color from 'color';
 import { Check, Pipette } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { HexColorPicker } from 'react-colorful';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -35,6 +35,7 @@ function Swatch({ color, selected, onSelect }: SwatchProps) {
           onClick={() => onSelect(color.cssValue)}
           className={cn(
             'relative size-6 overflow-hidden rounded-md border border-border transition-shadow',
+            'hover:ring-2 hover:ring-ring/50 hover:ring-offset-1 hover:ring-offset-background',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             selected && 'ring-2 ring-ring ring-offset-1 ring-offset-background'
           )}
@@ -95,12 +96,19 @@ export function ColorPickerPanel({
   // The custom picker previews into `draft` while dragging and commits on pointer release.
   // A ref mirrors `draft` so the pointer-up handler reads the latest value, not a stale closure.
   const [draft, setDraft] = useState(value || '#000000');
+  const [syncedValue, setSyncedValue] = useState(value);
   const draftRef = useRef(draft);
-  useEffect(() => {
-    const next = value || '#000000';
-    setDraft(next);
-    draftRef.current = next;
-  }, [value]);
+
+  // Follow `value` when it changes from outside the picker (a swatch was clicked,
+  // or the caller reset the colour). Adjusting state during render is React's
+  // sanctioned alternative to a sync effect, which re-rendered twice per change.
+  // `draftRef` is deliberately not touched here: it is only ever read on
+  // pointer-up, and every pointer-up in the custom picker is preceded by a
+  // `handlePickerChange` from the same gesture, so it cannot be stale there.
+  if (value !== syncedValue) {
+    setSyncedValue(value);
+    setDraft(value || '#000000');
+  }
 
   const handlePickerChange = (color: string) => {
     setDraft(color);

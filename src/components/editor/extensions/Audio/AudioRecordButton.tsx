@@ -121,7 +121,7 @@ export function AudioRecordButton({ editor, getDeps, tooltip }: AudioRecordButto
             <button
               type="button"
               onClick={() => void onStop()}
-              className="flex items-center gap-1 rounded-md bg-primary px-2 py-1 text-primary-foreground text-xs"
+              className="flex items-center gap-1 rounded-md bg-primary px-2 py-1 text-primary-foreground text-xs transition-colors hover:bg-primary/90"
             >
               <Square className="size-3.5" />
               {t('editor.audio.stop')}

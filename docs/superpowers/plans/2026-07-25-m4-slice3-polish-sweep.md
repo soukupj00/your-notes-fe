@@ -16,9 +16,9 @@ These are the M4.md polish items with no design forks left - pure execution. Gro
 
 ### Task 1 - Hover states + missing colour tokens + de-purple (items 2, 3, 4)
 
-- [ ] Audit every button/icon for a hover state; add consistent hover treatment (final look reconciled with Slice 4, but no dead/no-feedback controls).
-- [ ] Fix components missing theme colour changes: **Dialog close button**, **Select** preview/trigger, and sweep for others (grep for hardcoded colours / missing `text-*`/`bg-*` token usage).
-- [ ] **De-purple** the attachment/audio toolbar buttons - remove the purple background so they match the other toolbar options (`src/components/editor/extensions/*` NodeViews / toolbar buttons + `AudioRecordButton`).
+- [x] Audit every button/icon for a hover state; add consistent hover treatment (final look reconciled with Slice 4, but no dead/no-feedback controls).
+- [x] Fix components missing theme colour changes: **Dialog close button**, **Select** preview/trigger, and sweep for others (grep for hardcoded colours / missing `text-*`/`bg-*` token usage).
+- [x] **De-purple** the attachment/audio toolbar buttons - remove the purple background so they match the other toolbar options (`src/components/editor/extensions/*` NodeViews / toolbar buttons + `AudioRecordButton`).
 
 ### Task 2 - Skeletons & loading states (item 5)
 
