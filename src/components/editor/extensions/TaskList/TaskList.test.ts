@@ -36,10 +36,12 @@ describe('TaskList extension', () => {
     expect(editor.getHTML()).toContain('data-type="taskList"');
   });
 
-  it('button props have correct icon, tooltip and no shortcutKeys', () => {
+  // The upstream extension binds Mod-Shift-9; the tooltip is where a user can
+  // discover that, so the hint has to match the binding that actually exists.
+  it('button props have correct icon, tooltip and shortcut hint', () => {
     const props = getButtonProps(editor);
     expect(props.icon).toBe('ListTodo');
     expect(props.tooltip).toBe('editor.taskList.tooltip');
-    expect(props.shortcutKeys).toBeUndefined();
+    expect(props.shortcutKeys).toEqual(['Mod', 'Shift', '9']);
   });
 });

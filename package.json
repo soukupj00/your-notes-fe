@@ -78,6 +78,7 @@
     "react": "^19.2.8",
     "react-colorful": "^5.8.0",
     "react-dom": "^19.2.8",
+    "react-hotkeys-hook": "^5.3.3",
     "react-i18next": "^15.7.4",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",

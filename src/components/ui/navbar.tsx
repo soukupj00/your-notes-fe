@@ -66,7 +66,7 @@ function Navbar() {
         <SidebarTrigger />
 
         {/* Center: Search */}
-        <div className="max-w-md flex-1 px-4">{searchable && <SearchInput />}</div>
+        <div className="max-w-md flex-1 px-4">{searchable && <SearchInput enableShortcut />}</div>
 
         {/* Right: Icons */}
         <div className="flex items-center gap-3">

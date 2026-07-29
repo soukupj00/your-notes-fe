@@ -47,10 +47,13 @@ These are the M4.md polish items with no design forks left - pure execution. Gro
 
 Decisions: `react-hotkeys-hook`; `mod+K` search only for now; verify editor undo/redo incl. attachments.
 
-- [ ] Add dep `react-hotkeys-hook`.
-- [ ] `mod+K` → focus/open search (fires even while typing). Show a platform-aware `⌘K` / `Ctrl K` hint chip in the desktop search input.
-- [ ] **Verify + test** editor undo/redo restores a deleted attachment node (already works via `history` + deferred GC; lock it with a test in `AudioNodeView`/`editor` tests style).
-- [ ] Surface shortcut hints in `ActionButton` tooltips (`shortcutKeys` exists).
+- [x] Add dep `react-hotkeys-hook`.
+- [x] `mod+K` → focus/open search (fires even while typing). Show a platform-aware `⌘K` / `Ctrl K` hint chip in the desktop search input.
+      The Navbar renders two `SearchInput`s (desktop + mobile), so the binding is opt-in via `enableShortcut` - both binding it raced and could focus the hidden one.
+- [x] **Verify + test** editor undo/redo restores a deleted attachment node (already works via `history` + deferred GC; lock it with a test in `AudioNodeView`/`editor` tests style).
+      `extensions/history/attachment-undo.test.ts`. Note the test must force a history group boundary (`closeHistory`), or the insert and delete collapse into one undo step and the test passes for the wrong reason.
+- [x] Surface shortcut hints in `ActionButton` tooltips (`shortcutKeys` exists).
+      Already wired; TaskList was the one button missing its hint (upstream `Mod-Shift-9`).
 - [ ] (Deferred, infra kept) single-key creators `c`/`l`/`p`/`d`/`r`; `?` cheat-sheet overlay.
 
 ### Task 6 - Editor insert nodes & slash menu (item's TipTap asks)

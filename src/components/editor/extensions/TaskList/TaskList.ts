@@ -17,6 +17,7 @@ export const TaskList = TiptapTaskList.extend<TaskListExtensionOptions>({
           action: () => toggleWholeList(editor, (chain) => chain.toggleTaskList()),
           isActive: () => editor.isActive('taskList'),
           icon: 'ListTodo',
+          shortcutKeys: ['Mod', 'Shift', '9'],
           tooltip: t('editor.taskList.tooltip'),
           toggle: true,
         },
