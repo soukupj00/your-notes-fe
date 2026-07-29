@@ -1,6 +1,6 @@
 # M4 Slice 2 - Search & capture
 
-**Status:** in progress - Task 1 done.
+**Status:** in progress - Tasks 1-2 done.
 
 **Goal:** Turn the substring search into a real advanced search (fuzzy + sort + tag filters, all in typed URL state), and turn note creation into the Keep-style speed-dial with auto-starting media capture.
 
@@ -29,11 +29,13 @@ Decisions: `Fuse.js`; index header/bodyText/checklistText/tagNames weighted head
 
 Decisions: state in TanStack search params (Zod `validateSearch`); sort created/updated/title × dir (default updated-desc), pinned float first; multi-tag = AND.
 
-- [ ] Define the search-params Zod schema for `/` (and `/tag/:id`): `q?`, `sort` (enum), `dir`, `tags: string[]`. Wire `validateSearch`.
-- [ ] **Sort control** in the search bar's right corner → popover (created/updated/title, asc/desc). Writes the `sort`/`dir` params. Pinned notes always float to the top of the feed regardless of sort.
-- [ ] **Tag-pill filters:** when search is active, show all tags as clickable pills (colour from `Tag.color`); clicking toggles the tag in `tags`. Multiple tags = **AND** (note must have all). Use `useNotesByTag`/`noteTags`.
-- [ ] Combine: text (Fuse) ∩ tag-AND, then sort, respecting lifecycle scope (active/archived per route; trashed excluded from search).
-- [ ] Tests: params round-trip through the URL; AND filtering; sort order incl. pinned-first; archived included in search, trashed excluded.
+- [x] Search-params Zod schema in `src/lib/note-search-params.ts` (`q?`, `sort`, `dir`, `tags`), wired as `validateSearch` on **all four feed routes** - `/`, `/archive`, `/trash` *and* `/tag/$id`, not just the two the plan named, because the search box is in the Navbar and would otherwise be live on routes that cannot honour it. Every field is optional and `.catch()`es individually: an untouched feed keeps a clean `/`, and `?sort=banana` loses only that field.
+- [x] **`NotesProvider` deleted.** With the URL as the source of truth, the search context was a second, unshareable copy of the same state. `useNoteSearchState()` (`src/hooks/useNoteSearchState.ts`) replaces it; typing uses `replace: true` (a nine-character query is not nine history entries) while sort/tag changes push, so back undoes them. The Navbar hides the search box entirely off feed routes.
+- [x] **Sort control** in the search bar's right corner → popover (`SortMenu.tsx`), field × direction. **Correction:** built on the existing single-select `ToggleGroup` (same primitive as the theme switcher, exposed by Radix as a radiogroup) rather than hand-rolled `menuitemradio` buttons - Biome's `useSemanticElements` was right that the hand-rolled ARIA was wrong (a `menuitemradio` needs a `menu` parent). Direction labels follow the field: "Newest first" for dates, "A to Z" for titles.
+- [x] **Tag-pill filters** (`TagFilterBar.tsx`): shown only once a search is under way, tinted from `Tag.color`, toggling into `tags`; multiple tags = **AND**.
+- [x] Combine: text (Fuse) ∩ tag-AND, then sort, within the lifecycle scope. Tag filtering runs over the *results* rather than the candidates, so a pill toggle never rebuilds the Fuse index and relevance order survives.
+- [x] **Decision - pinned notes head the feed under search too**, not just under sort, and keep pin order (newest pin first) instead of adopting the sort: a pin shelf is arranged by hand, and sorting by title should not reshuffle it. This matches Keep, which shows a pinned section in search results.
+- [x] Tests: `note-search-params.test.ts` (validation, defaults, round-trip), `useNoteFeed.test.ts` (every sort × direction, pinned-first under sort *and* search, tag AND, tags ∩ text), `routes.test.tsx` (URL → results, typing → URL, sort → URL + reorder, pill → URL + narrowing, no pills before searching, no search box on `/settings`).
 
 ### Task 3 - Creation speed-dial + auto-capture
 

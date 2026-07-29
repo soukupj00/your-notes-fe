@@ -53,7 +53,8 @@ Data access uses dedicated hooks in `src/hooks/data/`:
 - `useNoteFeed` — the one feed query: lifecycle/tag scoping plus fuzzy ranked search (Fuse.js, `src/lib/note-search.ts`)
 - `useNotesByTag`, `useTagsForNote` — relationship queries via the `noteTags` join table
 
-`NotesProvider` (`src/context/NotesProvider.tsx`) combines search + live query and exposes `{ notes, query, setQuery }` via `useNotes()` context hook.
+Search/filter state is **not** in a context - it lives in the URL as typed TanStack search params (`q`, `sort`, `dir`, `tags`), validated by `src/lib/note-search-params.ts` and read through `useNoteSearchState()`.
+The `NotesProvider` that used to hold the query is gone: a searched feed is now shareable, refresh-proof, and steppable with the back button.
 
 ### Editor (`src/components/editor/`)
 
@@ -86,9 +87,10 @@ The `icon` prop is a **string key** resolved via `src/components/icons/icons.ts`
 
 **TanStack Router** with file-based routing ([ADR 0008](./docs/adr/0008-tanstack-router-over-react-router.md)). Route modules live in `src/routes/`; the `@tanstack/router-plugin` Vite plugin (wired in both `vite.config.ts` and `vitest.config.ts`) regenerates `src/routeTree.gen.ts` from them. That file is **generated and committed** — never edit it; it is excluded from Biome and `tsc` reads it directly. Colocated `*.test.tsx` files inside `src/routes/` are excluded from generation via `routeFileIgnorePattern`.
 
-Routes: `/` (active feed), `/archive`, `/trash`, `/tag/$id`, `/settings`, `/settings/labels`. Route modules stay thin — they pick a scope and a title and delegate to a view (`NotesView`, or a page in `src/pages/`).
+Routes: `/` (active feed), `/archive`, `/trash`, `/tag/$id`, `/settings`, `/settings/labels`.
+The four feed routes share one `validateSearch` (`validateNoteSearch`), which is what makes the search box, sort menu, and label filters URL-driven; the Navbar hides the search box on routes without a feed. Route modules stay thin — they pick a scope and a title and delegate to a view (`NotesView`, or a page in `src/pages/`).
 
-`App.tsx` is the composition root: providers (Theme → Tooltip → ViewMode → Notes) wrap `<RouterProvider>`, and the `declare module '@tanstack/react-router'` block registers the router's types so `<Link to>` and params are type-checked.
+`App.tsx` is the composition root: providers (Theme → Preferences → Tooltip → ViewMode) wrap `<RouterProvider>`, and the `declare module '@tanstack/react-router'` block registers the router's types so `<Link to>` and params are type-checked.
 
 ### Nav shell (`src/components/layout.tsx`, `src/components/nav/`)
 

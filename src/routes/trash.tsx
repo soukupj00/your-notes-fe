@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { NotesView } from '@/components/notes/NotesView.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { TRASH_GRACE_DAYS, useNoteActions } from '@/hooks/data/useNoteActions.ts';
+import { validateNoteSearch } from '@/lib/note-search-params.ts';
 
 function EmptyTrashButton() {
   const { t } = useTranslation();
@@ -41,4 +42,7 @@ function TrashRoute() {
   );
 }
 
-export const Route = createFileRoute('/trash')({ component: TrashRoute });
+export const Route = createFileRoute('/trash')({
+  component: TrashRoute,
+  validateSearch: validateNoteSearch,
+});

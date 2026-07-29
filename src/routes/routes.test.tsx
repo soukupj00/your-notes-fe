@@ -2,7 +2,6 @@ import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/rea
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { NotesProvider } from '@/context/NotesProvider.tsx';
 import { ThemeProvider } from '@/context/themeProvider.tsx';
 import { ViewModeProvider } from '@/context/viewModeProvider.tsx';
 import { db } from '@/db/db.ts';
@@ -51,10 +50,8 @@ function renderAt(path: string) {
   render(
     <ThemeProvider>
       <ViewModeProvider>
-        <NotesProvider>
-          {/* biome-ignore lint/suspicious/noExplicitAny: the test router is not the app's registered one */}
-          <RouterProvider router={router as any} />
-        </NotesProvider>
+        {/* biome-ignore lint/suspicious/noExplicitAny: the test router is not the app's registered one */}
+        <RouterProvider router={router as any} />
       </ViewModeProvider>
     </ThemeProvider>
   );
@@ -96,6 +93,85 @@ describe('route -> note set', () => {
     expect(screen.getByTestId('note-card')).toHaveTextContent('Tagged note');
     // The tag name is the page heading.
     expect(await screen.findByRole('heading', { level: 1, name: 'Work' })).toBeInTheDocument();
+  });
+});
+
+describe('search state in the URL', () => {
+  async function seedSearchable() {
+    const now = new Date().toISOString();
+    const base = { body: '', state: 'active' as const, createdAt: now, updatedAt: now };
+    await db.notes.bulkPut([
+      { id: 'n-cake', header: 'Cake recipe', ...base },
+      { id: 'n-car', header: 'Car service', ...base },
+    ]);
+    await db.tags.put({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
+    await db.noteTags.put({ noteId: 'n-car', tagId: 't1', createdAt: now, updatedAt: now });
+  }
+
+  it('applies a query taken straight from the address bar', async () => {
+    await seedSearchable();
+    renderAt('/?q=cake');
+
+    await waitFor(() => expect(screen.getAllByTestId('note-card')).toHaveLength(1));
+    expect(screen.getByTestId('note-card')).toHaveTextContent('Cake recipe');
+    // The box is populated from the URL, so a refresh keeps the search visible.
+    // Two of them: the Navbar renders a desktop and a mobile variant.
+    for (const box of await screen.findAllByRole('searchbox')) {
+      expect(box).toHaveValue('cake');
+    }
+  });
+
+  it('writes what the user types into the URL', async () => {
+    await seedSearchable();
+    const router = renderAt('/');
+
+    await userEvent.type((await screen.findAllByRole('searchbox'))[0], 'cake');
+
+    await waitFor(() => expect(router.state.location.search).toEqual({ q: 'cake' }));
+    await waitFor(() => expect(screen.getAllByTestId('note-card')).toHaveLength(1));
+  });
+
+  it('writes the chosen sort order into the URL and reorders the feed', async () => {
+    await seedSearchable();
+    const router = renderAt('/');
+
+    await userEvent.click((await screen.findAllByRole('button', { name: 'notes.sort.label' }))[0]);
+    const fields = await screen.findByRole('radiogroup', { name: 'notes.sort.byLabel' });
+    await userEvent.click(within(fields).getByRole('radio', { name: 'notes.sort.field.title' }));
+
+    await waitFor(() => expect(router.state.location.search).toEqual({ sort: 'title' }));
+    await waitFor(() =>
+      expect(screen.getAllByTestId('note-card').map((el) => el.textContent)).toEqual([
+        'Car service',
+        'Cake recipe',
+      ])
+    );
+  });
+
+  it('toggles a tag pill into the URL and narrows the results', async () => {
+    await seedSearchable();
+    const router = renderAt('/?q=ca');
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Work', pressed: false }));
+
+    await waitFor(() => expect(router.state.location.search).toEqual({ q: 'ca', tags: ['t1'] }));
+    await waitFor(() => expect(screen.getAllByTestId('note-card')).toHaveLength(1));
+    expect(screen.getByTestId('note-card')).toHaveTextContent('Car service');
+  });
+
+  it('offers no label filters until a search is under way', async () => {
+    await seedSearchable();
+    renderAt('/');
+
+    await screen.findAllByTestId('note-card');
+    expect(screen.queryByRole('button', { name: 'Work' })).not.toBeInTheDocument();
+  });
+
+  it('hides the search box on a route with no feed to search', async () => {
+    renderAt('/settings');
+
+    await screen.findByRole('heading', { level: 1, name: 'nav.settings' });
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
   });
 });
 

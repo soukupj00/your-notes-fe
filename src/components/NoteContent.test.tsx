@@ -12,8 +12,14 @@ const notesState = {
   query: '',
   loading: false,
 };
-vi.mock('@/context/NotesProvider.tsx', () => ({
-  useNotes: () => ({ query: notesState.query, setQuery: vi.fn() }),
+// Search state comes from the URL; this suite is about layout, so stub the
+// router-backed hook rather than mounting a router.
+vi.mock('@/hooks/useNoteSearchState.ts', () => ({
+  useNoteSearchState: () => ({
+    search: { q: notesState.query, sort: 'updated', dir: 'desc', tags: [] },
+    setSearch: vi.fn(),
+    toggleTag: vi.fn(),
+  }),
 }));
 
 // The feed query has its own suite; stub it so this test stays about layout.

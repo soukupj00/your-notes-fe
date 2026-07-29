@@ -219,7 +219,30 @@
       "saved": "Uloženo"
     },
     "searchPlaceholder": "Hledat poznámky…",
-    "trashNotice": "Poznámky v koši se po {{days}} dnech smažou."
+    "trashNotice": "Poznámky v koši se po {{days}} dnech smažou.",
+    "sort": {
+      "label": "Seřadit poznámky",
+      "byLabel": "Seřadit podle",
+      "orderLabel": "Pořadí",
+      "field": {
+        "updated": "Poslední úprava",
+        "created": "Datum vytvoření",
+        "title": "Název"
+      },
+      "dir": {
+        "date": {
+          "desc": "Nejnovější první",
+          "asc": "Nejstarší první"
+        },
+        "title": {
+          "asc": "A až Z",
+          "desc": "Z až A"
+        }
+      }
+    },
+    "filters": {
+      "byLabel": "Filtrovat podle štítku"
+    }
   },
   "tags": {
     "add": "Štítek",

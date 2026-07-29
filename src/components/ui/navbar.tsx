@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useIsFeedRoute } from '@/hooks/useNoteSearchState.ts';
 import i18n from '@/i18n';
 
 // Flag icons are keyed by ISO 3166-1 country code, not language code, so a
@@ -45,6 +46,9 @@ function LocaleFlag({ locale }: { locale: string }) {
 /** `leading` is the slot the layout uses for the mobile drawer trigger. */
 function Navbar({ leading }: { leading?: React.ReactNode }) {
   const { t } = useTranslation();
+  // Settings has no feed, so it gets no search box: a control that silently
+  // does nothing is worse than an absent one.
+  const searchable = useIsFeedRoute();
   // supportedLngs is the source of truth for which locales ship; 'cimode' is
   // i18next's debug pseudo-locale and isn't a real one to offer users.
   const locales = (i18n.options.supportedLngs || []).filter((locale) => locale !== 'cimode');
@@ -57,9 +61,7 @@ function Navbar({ leading }: { leading?: React.ReactNode }) {
         <div className="font-bold text-xl">{t('navbar.logo')}</div>
 
         {/* Center: Search */}
-        <div className="max-w-md flex-1 px-4">
-          <SearchInput />
-        </div>
+        <div className="max-w-md flex-1 px-4">{searchable && <SearchInput />}</div>
 
         {/* Right: Icons */}
         <div className="flex items-center gap-3">
@@ -77,7 +79,7 @@ function Navbar({ leading }: { leading?: React.ReactNode }) {
                     <DropdownMenuItem
                       key={locale}
                       onClick={() => {
-                        i18n.changeLanguage(locale);
+                        void i18n.changeLanguage(locale);
                       }}
                     >
                       <Check className={isActive ? 'opacity-100' : 'opacity-0'} />
@@ -102,7 +104,7 @@ function Navbar({ leading }: { leading?: React.ReactNode }) {
       <div className="flex items-center justify-between gap-2 px-4 py-2 sm:hidden">
         {leading}
         <div className="font-bold text-lg">{t('navbar.logo')}</div>
-        <SearchInput className="max-w-1/2" />
+        {searchable && <SearchInput className="max-w-1/2" />}
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -119,7 +121,7 @@ function Navbar({ leading }: { leading?: React.ReactNode }) {
                 <Select
                   value={i18n.resolvedLanguage}
                   onValueChange={(code) => {
-                    i18n.changeLanguage(code);
+                    void i18n.changeLanguage(code);
                   }}
                 >
                   <SelectTrigger className="w-32">

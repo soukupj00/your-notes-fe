@@ -5,6 +5,7 @@ import { NoteContent } from '@/components/NoteContent.tsx';
 import { NoteEditorDialog } from '@/components/notes/NoteEditorDialog.tsx';
 import { QuickCaptureBar } from '@/components/notes/QuickCaptureBar.tsx';
 import { ViewModeToggle } from '@/components/notes/ViewModeToggle.tsx';
+import { TagFilterBar } from '@/components/tags/TagFilterBar.tsx';
 import type { NoteFeedScope } from '@/hooks/data/useNoteFeed.ts';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
 
@@ -66,6 +67,8 @@ export function NotesView({
           </button>
         </div>
       )}
+
+      <TagFilterBar />
 
       <NoteContent
         scope={scope}

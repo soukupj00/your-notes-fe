@@ -11,7 +11,7 @@ The React interface to the Dexie layer. Components use these hooks; they should 
 | `useNotes()` | `Note[]` | all notes |
 | `useNote(id)` | `Note \| null \| undefined` | single note by id |
 | `useTags()` | `Tag[]` | all tags |
-| `useNoteFeed(scope, query?)` | `{ notes, loading }` | **the** feed query: filters by `scope.state` (indexed) and optional `scope.tagId`, applies the search text within that scope, and orders pinned-first then by recency. Replaced `useSearchNotes`. |
+| `useNoteFeed(scope, search?)` | `{ notes, loading }` | **the** feed query: filters by `scope.state` (indexed) and optional `scope.tagId`, then applies the URL search state (`q`, `sort`, `dir`, `tags`) within that scope. Replaced `useSearchNotes`. |
 | `useNotesByTag(tagId)` | `Note[]` | notes linked to a tag via `noteTags` |
 | `useTagsForNote(noteId)` | `Tag[]` | tags linked to a note via `noteTags` |
 
@@ -37,6 +37,10 @@ The `state` index cuts the candidates first; the text match itself is not a Dexi
 `useNoteFeed`'s live query depends on the **scope only** - the query text is applied afterwards against a `useMemo`'d Fuse index, so typing re-scores in memory rather than re-reading IndexedDB per keystroke.
 Results come back **relevance-ranked** (header hits beat body hits, typos still match); the pinned-first/recency ordering applies to the *unsearched* feed.
 Fuzzy search dropped the old `createdAt`/`updatedAt` substring matching - fuzzy-matching ISO timestamps is noise, and no UI offered date search.
+- **Sort and filters** come from the URL (`src/lib/note-search-params.ts`, via `useNoteSearchState`), so the hook takes a `NoteSearchParams` rather than a bare query string.
+Sort is field × direction (`updated`/`created`/`title` × `desc`/`asc`, default `updated`/`desc`); multiple `tags` narrow with **AND**.
+Tag filtering is applied to the *results*, not the candidates, so toggling a pill never rebuilds the Fuse index and relevance order survives.
+- **Pinned notes always head the feed** - under any sort *and* under a search ranking - and keep their own order (newest pin first) rather than adopting the sort, because a pin shelf is arranged by hand.
 - Search runs *within* the current scope, so trashed notes are unreachable from any view but `/trash` (ADR 0009).
 
 ## Known inconsistencies (see PLAN)

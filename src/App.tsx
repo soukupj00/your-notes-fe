@@ -1,7 +1,6 @@
 import { createRouter, RouterProvider } from '@tanstack/react-router';
 import { Toaster } from '@/components/ui/sonner.tsx';
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
-import { NotesProvider } from '@/context/NotesProvider.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { ThemeProvider } from '@/context/themeProvider.tsx';
 import { ViewModeProvider } from '@/context/viewModeProvider.tsx';
@@ -23,10 +22,8 @@ function App() {
       <PreferencesProvider>
         <TooltipProvider>
           <ViewModeProvider>
-            <NotesProvider>
-              <RouterProvider router={router} />
-              <Toaster />
-            </NotesProvider>
+            <RouterProvider router={router} />
+            <Toaster />
           </ViewModeProvider>
         </TooltipProvider>
       </PreferencesProvider>

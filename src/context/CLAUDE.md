@@ -2,16 +2,9 @@
 
 App-wide React context providers. See [`PLAN.md`](./PLAN.md) for upcoming work.
 
-## `NotesProvider.tsx`
-
-Holds the app-wide search text and nothing else.
-
-- State: `query` (search string), exposed as `{ query, setQuery }` via `useNotes()`.
-- The search box lives in the `Navbar`, above the router outlet, so the query cannot belong to any single view. The note **list**, however, does: each route calls `useNoteFeed(scope, query)` with its own scope (`/` → active, `/archive` → archived, `/trash` → trashed, `/tag/$id` → active + tag). That is why this provider no longer queries notes.
-- `useNotes()` throws if used outside the provider.
-- Wrapped around the router in `App.tsx`.
-
-> Note: there is also a standalone `useNotes()` **hook** in `src/hooks/data/useNotes.ts` (returns all notes). Don't confuse the two.
+> **`NotesProvider` is gone** (M4 Slice 2). The app-wide search text it held now lives in the URL as typed TanStack search params, read and written through `useNoteSearchState()` (`src/hooks/useNoteSearchState.ts`); the feed itself is `useNoteFeed(scope, search)` per route.
+> A context would have made the same state unshareable and invisible to the back button.
+> Note the standalone `useNotes()` **hook** in `src/hooks/data/useNotes.ts` (returns all notes) is unrelated and still there.
 
 ## `PreferencesProvider.tsx`
 

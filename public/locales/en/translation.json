@@ -218,7 +218,30 @@
       "saved": "Saved"
     },
     "searchPlaceholder": "Search notes…",
-    "trashNotice": "Notes in the trash are deleted after {{days}} days."
+    "trashNotice": "Notes in the trash are deleted after {{days}} days.",
+    "sort": {
+      "label": "Sort notes",
+      "byLabel": "Sort by",
+      "orderLabel": "Order",
+      "field": {
+        "updated": "Last edited",
+        "created": "Date created",
+        "title": "Title"
+      },
+      "dir": {
+        "date": {
+          "desc": "Newest first",
+          "asc": "Oldest first"
+        },
+        "title": {
+          "asc": "A to Z",
+          "desc": "Z to A"
+        }
+      }
+    },
+    "filters": {
+      "byLabel": "Filter by label"
+    }
   },
   "tags": {
     "add": "Label",

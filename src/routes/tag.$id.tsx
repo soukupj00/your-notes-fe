@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useTranslation } from 'react-i18next';
 import { NotesView } from '@/components/notes/NotesView.tsx';
 import { db } from '@/db/db.ts';
+import { validateNoteSearch } from '@/lib/note-search-params.ts';
 
 function TagRoute() {
   const { id } = Route.useParams();
@@ -14,4 +15,7 @@ function TagRoute() {
   return <NotesView scope={{ state: 'active', tagId: id }} title={tag?.name ?? t('nav.labels')} />;
 }
 
-export const Route = createFileRoute('/tag/$id')({ component: TagRoute });
+export const Route = createFileRoute('/tag/$id')({
+  component: TagRoute,
+  validateSearch: validateNoteSearch,
+});

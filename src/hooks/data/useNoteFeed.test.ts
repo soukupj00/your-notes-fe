@@ -1,6 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { db } from '@/db/db.ts';
+import type { NoteSearchParams } from '@/lib/note-search-params.ts';
 import type { Note, NoteState } from '@/models.ts';
 import { type NoteFeedScope, useNoteFeed } from './useNoteFeed.ts';
 
@@ -21,10 +22,19 @@ async function putNote(overrides: Partial<Note> & { id: string }): Promise<Note>
 }
 
 /** Render the hook and wait for the live query to settle. */
-async function feed(scope: NoteFeedScope, query?: string) {
-  const { result } = renderHook(() => useNoteFeed(scope, query));
+async function feed(scope: NoteFeedScope, search?: NoteSearchParams | string) {
+  const params = typeof search === 'string' ? { q: search } : search;
+  const { result } = renderHook(() => useNoteFeed(scope, params));
   await waitFor(() => expect(result.current.loading).toBe(false));
   return result;
+}
+
+async function putTag(id: string, noteIds: string[]) {
+  const now = new Date().toISOString();
+  await db.tags.put({ id, name: id, createdAt: now, updatedAt: now });
+  for (const noteId of noteIds) {
+    await db.noteTags.put({ noteId, tagId: id, createdAt: now, updatedAt: now });
+  }
 }
 
 const ids = (notes: Note[]) => notes.map((n) => n.id);
@@ -73,6 +83,72 @@ describe('ordering', () => {
     const result = await feed({ state: 'active' });
 
     expect(ids(result.current.notes)).toEqual(['pinned-later', 'pinned-earlier', 'recent', 'old']);
+  });
+});
+
+describe('sorting', () => {
+  it.each<[NoteSearchParams, string[]]>([
+    [{ sort: 'updated', dir: 'desc' }, ['b', 'a', 'c']],
+    [{ sort: 'updated', dir: 'asc' }, ['c', 'a', 'b']],
+    [{ sort: 'created', dir: 'desc' }, ['c', 'b', 'a']],
+    [{ sort: 'created', dir: 'asc' }, ['a', 'b', 'c']],
+    [{ sort: 'title', dir: 'asc' }, ['a', 'b', 'c']],
+    [{ sort: 'title', dir: 'desc' }, ['c', 'b', 'a']],
+  ])('orders by %o', async (search, expected) => {
+    await putNote({ id: 'a', header: 'Apples', createdAt: daysAgo(9), updatedAt: daysAgo(5) });
+    await putNote({ id: 'b', header: 'Bread', createdAt: daysAgo(5), updatedAt: daysAgo(1) });
+    await putNote({ id: 'c', header: 'Cheese', createdAt: daysAgo(1), updatedAt: daysAgo(9) });
+
+    const result = await feed({ state: 'active' }, search);
+
+    expect(ids(result.current.notes)).toEqual(expected);
+  });
+
+  it('keeps pinned notes on top whatever the sort', async () => {
+    await putNote({ id: 'a', header: 'Apples', updatedAt: daysAgo(1) });
+    await putNote({ id: 'z', header: 'Zebra', updatedAt: daysAgo(9), pinnedAt: daysAgo(2) });
+
+    const byTitle = await feed({ state: 'active' }, { sort: 'title', dir: 'asc' });
+    expect(ids(byTitle.current.notes)).toEqual(['z', 'a']);
+
+    const byUpdated = await feed({ state: 'active' }, { sort: 'updated', dir: 'desc' });
+    expect(ids(byUpdated.current.notes)).toEqual(['z', 'a']);
+  });
+
+  it('keeps pinned notes on top of search results too', async () => {
+    await putNote({ id: 'best', header: 'Pancakes' });
+    await putNote({ id: 'pinned', header: 'Pancake pan', pinnedAt: daysAgo(1) });
+
+    const result = await feed({ state: 'active' }, 'pancakes');
+
+    expect(ids(result.current.notes)[0]).toBe('pinned');
+  });
+});
+
+describe('tag filters', () => {
+  it('requires every selected tag (AND), not any of them', async () => {
+    await putNote({ id: 'both' });
+    await putNote({ id: 'only-work' });
+    await putNote({ id: 'untagged' });
+    await putTag('work', ['both', 'only-work']);
+    await putTag('urgent', ['both']);
+
+    const single = await feed({ state: 'active' }, { tags: ['work'] });
+    expect(ids(single.current.notes).sort()).toEqual(['both', 'only-work']);
+
+    const both = await feed({ state: 'active' }, { tags: ['work', 'urgent'] });
+    expect(ids(both.current.notes)).toEqual(['both']);
+  });
+
+  it('narrows the text search rather than replacing it', async () => {
+    await putNote({ id: 'match', header: 'Pancakes' });
+    await putNote({ id: 'tag-only', header: 'Waffles' });
+    await putTag('work', ['match', 'tag-only']);
+    await putNote({ id: 'text-only', header: 'Pancakes elsewhere' });
+
+    const result = await feed({ state: 'active' }, { q: 'pancakes', tags: ['work'] });
+
+    expect(ids(result.current.notes)).toEqual(['match']);
   });
 });
 

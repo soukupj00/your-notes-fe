@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { NoteCard } from '@/components/cards/NoteCard.tsx';
 import { Skeleton } from '@/components/ui/skeleton.tsx';
-import { useNotes } from '@/context/NotesProvider.tsx';
 import { useViewMode } from '@/context/viewModeProvider.tsx';
 import { type NoteFeedScope, useNoteFeed } from '@/hooks/data/useNoteFeed.ts';
+import { useNoteSearchState } from '@/hooks/useNoteSearchState.ts';
 
 // Responsive masonry via CSS `columns` (no JS lib). Cards must not split across
 // columns, so each carries `break-inside-avoid` (see NoteCard). Note: CSS
@@ -19,8 +19,8 @@ export function NoteContent({
   scope: NoteFeedScope;
   onSelect: (id: string, opts?: { autoplayFirstAudio?: boolean }) => void;
 }) {
-  const { query } = useNotes();
-  const { notes, loading } = useNoteFeed(scope, query);
+  const { search } = useNoteSearchState();
+  const { notes, loading } = useNoteFeed(scope, search);
   const { viewMode } = useViewMode();
   const { t } = useTranslation();
   const layout = viewMode === 'list' ? LIST : MASONRY;
@@ -38,7 +38,7 @@ export function NoteContent({
   if (notes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-24 text-center text-muted-foreground">
-        {query.trim() ? (
+        {search.q.trim() || search.tags.length > 0 ? (
           <p>{t('notes.noResults')}</p>
         ) : (
           <>
