@@ -72,6 +72,33 @@ describe('NoteBody', () => {
     expect(objectUrlSource).not.toBe(full);
   });
 
+  // A src-less <img> measures zero high, so the card used to jump by the full
+  // image height the moment the blob resolved. The reserved box is released on
+  // `load`, not when `src` is assigned - otherwise it collapses during decode.
+  it('reserves a skeleton box for an image until its bytes decode', async () => {
+    await putAtt('a1');
+    const { container } = render(<NoteBody html='<img data-attachment-id="a1">' />);
+
+    const img = container.querySelector('img') as HTMLImageElement;
+    expect(img).toHaveClass('animate-pulse');
+    expect(img.style.aspectRatio).not.toBe('');
+
+    await waitFor(() => expect(img).toHaveAttribute('src', expect.stringContaining('blob:mock/')));
+    expect(img).toHaveClass('animate-pulse');
+
+    img.dispatchEvent(new Event('load'));
+    expect(img).not.toHaveClass('animate-pulse');
+    expect(img.style.aspectRatio).toBe('');
+  });
+
+  it('drops the skeleton box when the attachment row is missing', async () => {
+    const { container } = render(<NoteBody html='<img data-attachment-id="gone">' />);
+    const img = container.querySelector('img') as HTMLImageElement;
+
+    await waitFor(() => expect(img).not.toHaveClass('animate-pulse'));
+    expect(img.style.aspectRatio).toBe('');
+  });
+
   it('renders plain HTML while removing unsafe pasted attributes', () => {
     const { container } = render(
       <NoteBody html='<p>just text</p><img src="x" onerror="alert(1)">' />

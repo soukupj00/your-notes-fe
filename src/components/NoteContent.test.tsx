@@ -85,3 +85,25 @@ describe('NoteContent layout', () => {
     expect(screen.getAllByTestId('note-card')).toHaveLength(3);
   });
 });
+
+// Each view says what *it* is empty of: "No notes yet" is the wrong sentence
+// for an empty trash or a label nothing is filed under.
+describe('NoteContent empty states', () => {
+  it.each([
+    [{ state: 'active' } as const, 'notes.empty.active.title'],
+    [{ state: 'archived' } as const, 'notes.empty.archived.title'],
+    [{ state: 'trashed' } as const, 'notes.empty.trashed.title'],
+    [{ state: 'active', tagId: 'tag-1' } as const, 'notes.empty.tag.title'],
+  ])('describes an empty %o feed with its own copy', (scope, key) => {
+    render(<NoteContent scope={scope} onSelect={vi.fn()} />);
+    expect(screen.getByText(key)).toBeInTheDocument();
+  });
+
+  it('reports a filtered-to-nothing feed separately from an empty one', () => {
+    notesState.query = 'nothing matches this';
+    render(<NoteContent scope={{ state: 'trashed' }} onSelect={vi.fn()} />);
+
+    expect(screen.getByText('notes.empty.filtered.title')).toBeInTheDocument();
+    expect(screen.queryByText('notes.empty.trashed.title')).not.toBeInTheDocument();
+  });
+});

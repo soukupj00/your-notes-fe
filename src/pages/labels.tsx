@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
+import { Spinner } from '@/components/ui/Spinner.tsx';
 import { useTagActions } from '@/hooks/data/useTagActions.ts';
 import { useTags } from '@/hooks/data/useTags.ts';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
@@ -55,6 +56,9 @@ function LabelRow({ tag, tags }: { tag: Tag; tags: Tag[] }) {
   const { updateTag, deleteTag, mergeTags } = useTagActions();
   const [name, setName] = useState(tag.name);
   const [mergeTarget, setMergeTarget] = useState<Tag | null>(null);
+  // A merge rewrites every note link for the label, so it is the one action here
+  // that can visibly take a moment on a large database.
+  const [merging, setMerging] = useState(false);
 
   const others = tags.filter((other) => other.id !== tag.id);
 
@@ -104,8 +108,15 @@ function LabelRow({ tag, tags }: { tag: Tag; tags: Tag[] }) {
       {others.length > 0 && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button type="button" variant="ghost" size="sm" className="shrink-0">
-              {t('labels.merge')}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={merging}
+              className="shrink-0 gap-1"
+            >
+              {merging && <Spinner />}
+              {merging ? t('labels.merging') : t('labels.merge')}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -142,7 +153,9 @@ function LabelRow({ tag, tags }: { tag: Tag; tags: Tag[] }) {
         confirmLabel={t('labels.confirmMerge.confirm')}
         cancelLabel={t('labels.confirmMerge.cancel')}
         onConfirm={() => {
-          if (mergeTarget) void mergeTags(tag.id, mergeTarget.id);
+          if (!mergeTarget) return;
+          setMerging(true);
+          void mergeTags(tag.id, mergeTarget.id).finally(() => setMerging(false));
         }}
       />
     </li>

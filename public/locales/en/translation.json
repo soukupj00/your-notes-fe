@@ -148,7 +148,6 @@
     },
     "backup": {
       "title": "Backup",
-      "working": "Working...",
       "exported": "Backup saved.",
       "imported": "Backup restored.",
       "export": {
@@ -176,7 +175,9 @@
         "missing-attachment": "That backup is incomplete - some attachment files are missing.",
         "unknown": "Something went wrong. Nothing was changed."
       },
-      "importCancelled": "Import cancelled. Nothing was changed."
+      "importCancelled": "Import cancelled. Nothing was changed.",
+      "exporting": "Building your backup…",
+      "importing": "Reading the backup…"
     }
   },
   "notes": {
@@ -187,10 +188,27 @@
     "create": "Create note",
     "newChecklist": "New checklist",
     "empty": {
-      "title": "No notes yet",
-      "subtitle": "Your notes will show up here. Tap the button to write your first one."
+      "active": {
+        "title": "No notes yet",
+        "subtitle": "Your notes will show up here. Tap the button to write your first one."
+      },
+      "archived": {
+        "title": "Nothing archived",
+        "subtitle": "Notes you archive are kept here, out of the way but not deleted."
+      },
+      "trashed": {
+        "title": "Trash is empty",
+        "subtitle": "Notes you delete land here first, so you can still change your mind."
+      },
+      "tag": {
+        "title": "No notes with this label",
+        "subtitle": "Open a note and add this label to see it here."
+      },
+      "filtered": {
+        "title": "No matches",
+        "subtitle": "Try a different search, or clear the label filters."
+      }
     },
-    "noResults": "No notes match your search.",
     "menu": "Note options",
     "playAudio": "Play audio",
     "playVideo": "Play video",
@@ -252,7 +270,8 @@
       "audio": "Voice note",
       "drawing": "Drawing",
       "picture": "Photo"
-    }
+    },
+    "emptyingTrash": "Emptying trash…"
   },
   "tags": {
     "add": "Label",
@@ -279,7 +298,8 @@
       "description": "It is removed from every note that carries it. The notes themselves stay.",
       "confirm": "Delete",
       "cancel": "Cancel"
-    }
+    },
+    "merging": "Merging labels…"
   },
   "colors": {
     "default": "No colour",

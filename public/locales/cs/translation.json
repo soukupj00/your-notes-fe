@@ -148,7 +148,6 @@
     },
     "backup": {
       "title": "Záloha",
-      "working": "Pracuji...",
       "exported": "Záloha uložena.",
       "imported": "Záloha obnovena.",
       "export": {
@@ -176,7 +175,9 @@
         "missing-attachment": "Tato záloha je neúplná - chybí některé soubory příloh.",
         "unknown": "Něco se pokazilo. Nic nebylo změněno."
       },
-      "importCancelled": "Import zrušen. Nic nebylo změněno."
+      "importCancelled": "Import zrušen. Nic nebylo změněno.",
+      "exporting": "Vytvářím zálohu…",
+      "importing": "Načítám zálohu…"
     }
   },
   "notes": {
@@ -187,10 +188,27 @@
     "create": "Vytvořit poznámku",
     "newChecklist": "Nový seznam úkolů",
     "empty": {
-      "title": "Zatím žádné poznámky",
-      "subtitle": "Vaše poznámky se zobrazí zde. Klepnutím na tlačítko napíšete první."
+      "active": {
+        "title": "Zatím žádné poznámky",
+        "subtitle": "Vaše poznámky se objeví tady. Klepnutím na tlačítko napíšete první."
+      },
+      "archived": {
+        "title": "Archiv je prázdný",
+        "subtitle": "Archivované poznámky zůstanou tady - z cesty, ale nesmazané."
+      },
+      "trashed": {
+        "title": "Koš je prázdný",
+        "subtitle": "Smazané poznámky nejdřív skončí tady, takže si to můžete rozmyslet."
+      },
+      "tag": {
+        "title": "Žádné poznámky s tímto štítkem",
+        "subtitle": "Otevřete poznámku a přidejte jí tento štítek, aby se tu objevila."
+      },
+      "filtered": {
+        "title": "Žádné výsledky",
+        "subtitle": "Zkuste jiné hledání nebo zrušte filtry štítků."
+      }
     },
-    "noResults": "Žádné poznámky neodpovídají hledání.",
     "menu": "Možnosti poznámky",
     "playAudio": "Přehrát zvuk",
     "playVideo": "Přehrát video",
@@ -253,7 +271,8 @@
       "audio": "Hlasová poznámka",
       "drawing": "Kresba",
       "picture": "Fotka"
-    }
+    },
+    "emptyingTrash": "Vyprazdňuji koš…"
   },
   "tags": {
     "add": "Štítek",
@@ -280,7 +299,8 @@
       "description": "Bude odebrán ze všech poznámek, které ho nesou. Samotné poznámky zůstanou.",
       "confirm": "Smazat",
       "cancel": "Zrušit"
-    }
+    },
+    "merging": "Slučuji štítky…"
   },
   "colors": {
     "default": "Bez barvy",

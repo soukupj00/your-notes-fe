@@ -22,9 +22,11 @@ These are the M4.md polish items with no design forks left - pure execution. Gro
 
 ### Task 2 - Skeletons & loading states (item 5)
 
-- [ ] Extend the existing `NoteContent` skeleton to **attachments** (image thumbnails, excalidraw previews) so cards don't pop in.
-- [ ] Add loading affordances where an operation is non-instant (import/export, tag merge, purge): spinner + text describing what's loading.
-- [ ] Empty states + copy for the new views: Archive ("Nothing archived"), Trash ("Trash is empty"), no-tag-match - invitation-to-act tone, not blank.
+- [x] Extend the existing `NoteContent` skeleton to **attachments** (image thumbnails, excalidraw previews) so cards don't pop in.
+      Note: attachments do not persist intrinsic `width`/`height`, so the reserved box uses a fixed 16/10 guess.
+      Populating those (already-declared) `Attachment` fields at create time would make the reservation exact - deferred, flagged as a follow-up.
+- [x] Add loading affordances where an operation is non-instant (import/export, tag merge, purge): spinner + text describing what's loading.
+- [x] Empty states + copy for the new views: Archive ("Nothing archived"), Trash ("Trash is empty"), no-tag-match - invitation-to-act tone, not blank.
 
 ### Task 3 - Desktop note-bar affordance (item 6)
 

@@ -12,6 +12,13 @@ const MASONRY = 'columns-1 gap-4 sm:columns-2 lg:columns-3 xl:columns-4';
 // Single-column reading list, centered and width-capped for comfortable line length.
 const LIST = 'mx-auto flex max-w-2xl flex-col gap-4';
 
+/** Which `notes.empty.*` copy block describes an empty feed in this scope. */
+function emptyKeyFor(scope: NoteFeedScope): string {
+  if (scope.state === 'archived') return 'archived';
+  if (scope.state === 'trashed') return 'trashed';
+  return scope.tagId ? 'tag' : 'active';
+}
+
 export function NoteContent({
   scope,
   onSelect,
@@ -36,16 +43,16 @@ export function NoteContent({
   }
 
   if (notes.length === 0) {
+    // A filtered-to-nothing feed is a different message from a genuinely empty
+    // one, and each lifecycle view says what *it* is empty of - "No notes yet"
+    // is wrong copy for an empty trash.
+    const filtered = search.q.trim().length > 0 || search.tags.length > 0;
+    const key = filtered ? 'filtered' : emptyKeyFor(scope);
+
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-24 text-center text-muted-foreground">
-        {search.q.trim() || search.tags.length > 0 ? (
-          <p>{t('notes.noResults')}</p>
-        ) : (
-          <>
-            <p className="font-medium text-foreground text-lg">{t('notes.empty.title')}</p>
-            <p className="max-w-xs text-sm">{t('notes.empty.subtitle')}</p>
-          </>
-        )}
+        <p className="font-medium text-foreground text-lg">{t(`notes.empty.${key}.title`)}</p>
+        <p className="max-w-xs text-sm">{t(`notes.empty.${key}.subtitle`)}</p>
       </div>
     );
   }

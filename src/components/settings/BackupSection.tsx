@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { icons } from '@/components/icons';
 import { Button } from '@/components/ui/button.tsx';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog.tsx';
+import { Spinner } from '@/components/ui/Spinner.tsx';
 import {
   BackupError,
   backupFilename,
@@ -157,8 +158,8 @@ export function BackupSection() {
           disabled={busy !== null}
           onClick={() => void handleExport()}
         >
-          <Download className="size-4" aria-hidden />
-          {busy === 'export' ? t('settings.backup.working') : t('settings.backup.export.action')}
+          {busy === 'export' ? <Spinner /> : <Download className="size-4" aria-hidden />}
+          {busy === 'export' ? t('settings.backup.exporting') : t('settings.backup.export.action')}
         </Button>
       </SettingsRow>
 
@@ -173,8 +174,8 @@ export function BackupSection() {
           disabled={busy !== null}
           onClick={() => inputRef.current?.click()}
         >
-          <Download className="size-4 rotate-180" aria-hidden />
-          {busy === 'import' ? t('settings.backup.working') : t('settings.backup.import.action')}
+          {busy === 'import' ? <Spinner /> : <Download className="size-4 rotate-180" aria-hidden />}
+          {busy === 'import' ? t('settings.backup.importing') : t('settings.backup.import.action')}
         </Button>
         <input
           ref={inputRef}
