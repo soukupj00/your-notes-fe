@@ -50,7 +50,7 @@ All persistence is via **Dexie** (IndexedDB wrapper). The schema lives in `src/d
 Data access uses dedicated hooks in `src/hooks/data/`:
 - `useNotes` / `useNote` — live queries via `useLiveQuery` from `dexie-react-hooks`
 - `useNoteActions` / `useTagActions` — CRUD mutations (create/update/delete)
-- `useSearchNotes` — full-text search over notes
+- `useNoteFeed` — the one feed query: lifecycle/tag scoping plus fuzzy ranked search (Fuse.js, `src/lib/note-search.ts`)
 - `useNotesByTag`, `useTagsForNote` — relationship queries via the `noteTags` join table
 
 `NotesProvider` (`src/context/NotesProvider.tsx`) combines search + live query and exposes `{ notes, query, setQuery }` via `useNotes()` context hook.

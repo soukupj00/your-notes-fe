@@ -1,6 +1,6 @@
 # M4 Slice 2 - Search & capture
 
-**Status:** not started.
+**Status:** in progress - Task 1 done.
 
 **Goal:** Turn the substring search into a real advanced search (fuzzy + sort + tag filters, all in typed URL state), and turn note creation into the Keep-style speed-dial with auto-starting media capture.
 
@@ -18,11 +18,12 @@ Today `useSearchNotes` does `String.includes()` over header/description/body/che
 
 Decisions: `Fuse.js`; index header/bodyText/checklistText/tagNames weighted header>body; single relevance-ranked list that naturally includes close matches.
 
-- [ ] Add dep `fuse.js`.
-- [ ] Build a memoised search index: `{ id, header, bodyText (stripHtml(body)), checklistText, tagNames }`, rebuilt from the live notes+tags query. Reuse `stripHtml` (`src/lib/utils.ts`).
-- [ ] Replace `useSearchNotes` internals with Fuse (weights: header highest, then body/checklist/tags; threshold tuned so typos surface). Return ranked results.
-- [ ] Optionally highlight matched terms in card results (Fuse `includeMatches`).
-- [ ] Tests: exact match ranks first; a typo'd query still returns the note; ranking is stable.
+- [x] Add dep `fuse.js`.
+- [x] Build a memoised search index in `src/lib/note-search.ts` (`createNoteSearchIndex` / `searchNotes`, a pure module the hook memoises), rebuilt from the live notes+tags query. Reuses `stripHtml`. **Correction:** no separate `checklistText` - Slice 1 removed `Note.checklist`, so checklist items *are* body HTML and `stripHtml(body)` already covers them. `description` is indexed at the lowest weight instead.
+- [x] Replaced `useSearchNotes`' successor - the text-matching half of `useNoteFeed` - with Fuse (weights header .5 / body .25 / tagNames .15 / description .1, `threshold: 0.35`, `ignoreLocation: true`). Returns ranked results. **Placement correction:** the live query now depends on the **scope only**; the query text is applied after it against the memoised index, so a keystroke re-scores in memory instead of re-reading IndexedDB and rebuilding the index.
+- [x] **Dropped, not deferred:** `createdAt`/`updatedAt` substring matching. Fuzzy-matching ISO timestamps is pure noise and no UI ever offered date search.
+- [ ] ~~Optionally highlight matched terms in card results (Fuse `includeMatches`).~~ Skipped (explicitly optional): highlighting a *fuzzy* match means painting near-miss substrings, which reads as a rendering bug more than a hint. Revisit only if user testing asks for it.
+- [x] Tests: `src/lib/note-search.test.ts` (exact-over-incidental ranking, typo tolerance, HTML never matches, tag-name match, stability) + a feed-level ranking/typo test in `useNoteFeed.test.ts`.
 
 ### Task 2 - Sort + tag-pill filters in typed URL state
 

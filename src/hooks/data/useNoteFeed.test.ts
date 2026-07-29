@@ -112,6 +112,16 @@ describe('search within a scope', () => {
     expect(ids(result.current.notes)).toEqual(['archived-hit']);
   });
 
+  it('tolerates a typo and ranks the header match first', async () => {
+    await putNote({ id: 'body-hit', header: 'Weekend', body: '<p>buy groceries today</p>' });
+    await putNote({ id: 'header-hit', header: 'Groceries' });
+    await putNote({ id: 'no-match', header: 'Car service' });
+
+    const result = await feed({ state: 'active' }, 'grocerise');
+
+    expect(ids(result.current.notes)).toEqual(['header-hit', 'body-hit']);
+  });
+
   it('a blank query is not a filter', async () => {
     await putNote({ id: 'a' });
     await putNote({ id: 'b' });

@@ -32,7 +32,11 @@ The React interface to the Dexie layer. Components use these hooks; they should 
 - **Tags**: `createTag` is idempotent by name, case-insensitively — it returns the existing tag rather than minting a case-variant duplicate, because create-on-the-fly runs from a free-text field.
 `updateTag` takes a `{ name?, color? }` patch; a *present* `color: undefined` clears the colour, an absent key leaves it alone.
 `mergeTags` reassigns the source's `noteTags` to the target (filtering out notes that already carry the target, since `[noteId+tagId]` is the primary key), then deletes the source — all in one transaction, since a half-merge would drop notes off both tags.
-- Search is **client-side and linear** (filter over the scoped candidate set), fine for local-first scale. The `state` index cuts the candidates first; the text match itself is not indexed.
+- Search is **client-side and fuzzy** (`src/lib/note-search.ts`, Fuse.js) over the scoped candidate set, fine for local-first scale.
+The `state` index cuts the candidates first; the text match itself is not a Dexie index.
+`useNoteFeed`'s live query depends on the **scope only** - the query text is applied afterwards against a `useMemo`'d Fuse index, so typing re-scores in memory rather than re-reading IndexedDB per keystroke.
+Results come back **relevance-ranked** (header hits beat body hits, typos still match); the pinned-first/recency ordering applies to the *unsearched* feed.
+Fuzzy search dropped the old `createdAt`/`updatedAt` substring matching - fuzzy-matching ISO timestamps is noise, and no UI offered date search.
 - Search runs *within* the current scope, so trashed notes are unreachable from any view but `/trash` (ADR 0009).
 
 ## Known inconsistencies (see PLAN)
