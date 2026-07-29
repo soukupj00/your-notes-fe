@@ -4,6 +4,8 @@ import { TaskItem } from '@tiptap/extension-list';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { TextStyle } from '@tiptap/extension-text-style';
+import { Typography } from '@tiptap/extension-typography';
+import { Placeholder } from '@tiptap/extensions';
 import { EditorContent, useEditor } from '@tiptap/react';
 import 'katex/dist/katex.min.css';
 import type React from 'react';
@@ -28,6 +30,8 @@ import { Blockquote } from '@/components/editor/extensions/Blockquote';
 import { Bold } from '@/components/editor/extensions/Bold';
 import { BulletList } from '@/components/editor/extensions/BulletList';
 import { Clear } from '@/components/editor/extensions/Clear';
+import { Code } from '@/components/editor/extensions/Code';
+import { CodeBlock } from '@/components/editor/extensions/CodeBlock';
 import { Color } from '@/components/editor/extensions/Color';
 import { ColorPreview } from '@/components/editor/extensions/color-preview';
 import { createExcalidraw } from '@/components/editor/extensions/Excalidraw';
@@ -43,14 +47,18 @@ import { FontFamily } from '@/components/editor/extensions/FontFamily';
 import { FontSize } from '@/components/editor/extensions/FontSize';
 import { Heading } from '@/components/editor/extensions/Heading';
 import { Highlight } from '@/components/editor/extensions/Highlight';
+import { HorizontalRule } from '@/components/editor/extensions/HorizontalRule';
 import { createImage } from '@/components/editor/extensions/Image';
 import { insertImageAttachmentFiles } from '@/components/editor/extensions/Image/insert';
 import { Italic } from '@/components/editor/extensions/Italic';
+import { Link, LinkBubbleMenu } from '@/components/editor/extensions/Link';
 import { ListItem } from '@/components/editor/extensions/ListItem';
 import { createMathematics } from '@/components/editor/extensions/Mathematics';
 import { OrderedList } from '@/components/editor/extensions/OrderedList';
+import { createSlashMenu } from '@/components/editor/extensions/SlashMenu';
 import { Strike } from '@/components/editor/extensions/Strike';
 import { TaskList } from '@/components/editor/extensions/TaskList';
+import { TextAlign } from '@/components/editor/extensions/TextAlign';
 import { Underline } from '@/components/editor/extensions/Underline';
 import { createVideo } from '@/components/editor/extensions/Video';
 import BlocksSection from '@/components/editor/menus/toolbars/BlocksSection.tsx';
@@ -253,6 +261,19 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       TaskList,
       TaskItem,
       Clear,
+      Code,
+      CodeBlock,
+      HorizontalRule,
+      TextAlign,
+      Link,
+      Typography,
+      createSlashMenu(getAttachmentDeps, t),
+      // Only the body gets a placeholder - the title input has its own, and a
+      // second prompt on every empty paragraph would be noise.
+      Placeholder.configure({
+        placeholder: ({ node }) => (node.type.name === 'paragraph' ? t('editor.placeholder') : ''),
+        showOnlyWhenEditable: true,
+      }),
       createMathematics(() => editorRef.current, t),
       Color,
       Highlight,
@@ -464,6 +485,10 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
           editor={editor}
           className="prose prose-sm min-h-[150px] max-w-none flex-1 cursor-text focus:outline-none"
         />
+
+        {/* A link's own controls belong on the link: `openOnClick` is off inside
+            the editor, so this is the only way to see where one points. */}
+        {editable && <LinkBubbleMenu editor={editor} t={t} />}
       </div>
 
       {/* Auto-started picture capture. `accept="image/*"` with no `capture`

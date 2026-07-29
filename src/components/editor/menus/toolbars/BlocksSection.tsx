@@ -14,6 +14,9 @@ import ExtensionButtonBar from '@/components/editor/menus/ExtensionButtonBar.tsx
  */
 export const BLOCK_EXTENSION_NAMES = [
   'blockquote',
+  'codeBlock',
+  'horizontalRule',
+  'textAlign',
   'Mathematics',
   'imageAttachment',
   'audioAttachment',

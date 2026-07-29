@@ -128,6 +128,45 @@
       "discardDescription": "Your changes will be lost.",
       "discardConfirm": "Discard",
       "discardCancel": "Keep editing"
+    },
+    "placeholder": "Write something, or press '/' for commands…",
+    "code": {
+      "tooltip": "Inline code"
+    },
+    "codeBlock": {
+      "tooltip": "Code block"
+    },
+    "horizontalRule": {
+      "tooltip": "Divider"
+    },
+    "textAlign": {
+      "left": "Align left",
+      "center": "Align center",
+      "right": "Align right"
+    },
+    "link": {
+      "tooltip": "Link",
+      "url": "Link URL",
+      "apply": "Apply",
+      "edit": "Edit link",
+      "remove": "Remove link"
+    },
+    "slash": {
+      "noResults": "Nothing matches",
+      "heading1": "Heading 1",
+      "heading2": "Heading 2",
+      "heading3": "Heading 3",
+      "bulletList": "Bulleted list",
+      "orderedList": "Numbered list",
+      "taskList": "Checklist",
+      "blockquote": "Quote",
+      "codeBlock": "Code block",
+      "horizontalRule": "Divider",
+      "image": "Image",
+      "audio": "Voice recording",
+      "video": "Video",
+      "file": "File",
+      "drawing": "Drawing"
     }
   },
   "settings": {

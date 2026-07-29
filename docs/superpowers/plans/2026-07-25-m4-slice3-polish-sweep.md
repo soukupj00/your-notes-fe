@@ -60,12 +60,23 @@ Decisions: `react-hotkeys-hook`; `mod+K` search only for now; verify editor undo
 
 Decisions: Link (+ bubble-menu), HR, inline code, text-align (+dep), **plain** code block, slash menu (blocks + media). Wire latent placeholder/typography/autolink.
 
-- [ ] Add dep `@tiptap/extension-text-align`. Wire already-installed `@tiptap/extension-link`, `-placeholder`, `-bubble-menu`, `-floating-menu`, `-typography`.
-- [ ] Pattern A extensions (folder + `index.ts` + icon-registry button + Vitest, per `CLAUDE.md`/ADR 0004): **Link** (toolbar popover to enter/edit URL; edit/unlink via bubble menu; autolink on paste), **horizontal rule**, **inline code**, **text-align** (L/C/R), **plain code block**.
-- [ ] **Slash menu**: TipTap `Suggestion` util triggered by `/` at the start of an empty line; filtered floating list of **blocks + media** (heading/lists/checklist/quote/code/HR + image/audio/video/file/drawing) → inserts the node. This is the unified keyboard insertion surface (pairs with the hideable toolbar in Slice 4).
-- [ ] **Body placeholder** when empty; **markdown input rules** (`# `→heading, `[] `→task, `- `→list).
-- [ ] Register new buttons in the relevant `*Section` (and note them for the Slice 4 data-driven toolbar).
-- [ ] Tests: one per extension (Pattern A); slash menu filters + inserts; undo restores.
+- [x] Add dep `@tiptap/extension-text-align`. Wire already-installed `@tiptap/extension-link`, `-placeholder`, `-bubble-menu`, `-typography`.
+      Also needed `@tiptap/extension-code`, `-code-block`, `-horizontal-rule` and `@tiptap/suggestion`: StarterKit bundles those but re-exports only `StarterKit`, so importing them without declaring them would be a phantom dependency.
+      `-floating-menu` is still unused - the slash menu covers what it would have.
+- [x] Pattern A extensions (folder + `index.ts` + icon-registry button + Vitest, per `CLAUDE.md`/ADR 0004): **Link** (toolbar popover to enter/edit URL; edit/unlink via bubble menu; autolink on paste), **horizontal rule**, **inline code**, **text-align** (L/C/R), **plain code block**.
+- [x] **Slash menu**: TipTap `Suggestion` util triggered by `/` at the start of an empty line; filtered floating list of **blocks + media** (heading/lists/checklist/quote/code/HR + image/audio/video/file/drawing) → inserts the node. This is the unified keyboard insertion surface (pairs with the hideable toolbar in Slice 4).
+      Media items reuse the existing insertion pipeline; image/video/file open a throwaway `<input type=file>` created inside the activation, since a menu row has no element to hang a persistent hidden input on.
+- [x] **Body placeholder** when empty; **markdown input rules** (`# `→heading, `[] `→task, `- `→list).
+      The rules come from upstream; `markdown-input-rules.test.ts` proves they survive our wrappers (a wrapper missing `...this.parent?.()` drops them silently).
+- [x] Register new buttons in the relevant `*Section` (and note them for the Slice 4 data-driven toolbar).
+      `code` + `link` in FormatSection; `codeBlock`, `horizontalRule`, `textAlign` in BlocksSection.
+- [x] Tests: one per extension (Pattern A); slash menu filters + inserts; undo restores.
+
+> **Trap worth remembering.** `BubbleMenu`'s update effect lists `shouldShow` and `options` in its dependencies and dispatches a transaction when either changes identity.
+> The editor runs with `shouldRerenderOnTransaction: true`, so passing inline literals is an infinite render loop: every note click died with "Maximum update depth exceeded".
+> Both props are module-level constants in `LinkBubbleMenu.tsx` - do not inline them back.
+> This reached the app because every editor suite rendered *without* `editable` and `NoteEditorDialog.test.tsx` mocks the editor out, so nothing ever mounted the toolbar or the plugin views.
+> `NoteEditorDialog.realEditor.test.tsx` closes that gap and is verified to fail if the literals come back.
 
 ### Task 7 - PWA install + update UX
 

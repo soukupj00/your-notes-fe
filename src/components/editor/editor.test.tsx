@@ -1,6 +1,7 @@
 import { render, waitFor } from '@testing-library/react';
 import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { TooltipProvider } from '@/components/ui/tooltip.tsx';
 import { Editor, type EditorHandle } from './editor.tsx';
 
 // Keys pass through untranslated so assertions are stable.
@@ -136,5 +137,30 @@ describe('Editor auto-capture', () => {
 
     await waitFor(() => expect(ref.current?.getEditor()).toBeTruthy());
     expect(queryByRole('dialog')).not.toBeInTheDocument();
+  });
+});
+
+/**
+ * The suites above deliberately render without `editable`, so they never mount
+ * the toolbar. See `NoteEditorDialog.realEditor.test.tsx` for the render-loop
+ * regression - that needs the dialog's own state updates to reproduce.
+ */
+describe('Editor in editable mode', () => {
+  it('renders the toolbar buttons the new extensions contribute', async () => {
+    const { findByRole } = render(
+      <TooltipProvider>
+        <Editor editable content="<p>hi</p>" getNoteId={vi.fn()} />
+      </TooltipProvider>
+    );
+
+    for (const name of [
+      'editor.code.tooltip',
+      'editor.link.tooltip',
+      'editor.codeBlock.tooltip',
+      'editor.horizontalRule.tooltip',
+      'editor.textAlign.left',
+    ]) {
+      expect(await findByRole('button', { name })).toBeInTheDocument();
+    }
   });
 });

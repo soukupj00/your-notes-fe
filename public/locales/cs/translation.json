@@ -128,6 +128,45 @@
       "discardDescription": "Vaše změny budou ztraceny.",
       "discardConfirm": "Zahodit",
       "discardCancel": "Pokračovat v úpravách"
+    },
+    "placeholder": "Začněte psát, nebo stiskněte „/“ pro příkazy…",
+    "code": {
+      "tooltip": "Kód v řádku"
+    },
+    "codeBlock": {
+      "tooltip": "Blok kódu"
+    },
+    "horizontalRule": {
+      "tooltip": "Oddělovač"
+    },
+    "textAlign": {
+      "left": "Zarovnat vlevo",
+      "center": "Zarovnat na střed",
+      "right": "Zarovnat vpravo"
+    },
+    "link": {
+      "tooltip": "Odkaz",
+      "url": "Adresa odkazu",
+      "apply": "Použít",
+      "edit": "Upravit odkaz",
+      "remove": "Odebrat odkaz"
+    },
+    "slash": {
+      "noResults": "Nic neodpovídá",
+      "heading1": "Nadpis 1",
+      "heading2": "Nadpis 2",
+      "heading3": "Nadpis 3",
+      "bulletList": "Odrážkový seznam",
+      "orderedList": "Číslovaný seznam",
+      "taskList": "Zaškrtávací seznam",
+      "blockquote": "Citace",
+      "codeBlock": "Blok kódu",
+      "horizontalRule": "Oddělovač",
+      "image": "Obrázek",
+      "audio": "Hlasová nahrávka",
+      "video": "Video",
+      "file": "Soubor",
+      "drawing": "Kresba"
     }
   },
   "settings": {

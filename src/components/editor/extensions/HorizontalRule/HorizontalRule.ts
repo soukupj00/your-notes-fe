@@ -1,0 +1,31 @@
+import {
+  type HorizontalRuleOptions,
+  HorizontalRule as TiptapHorizontalRule,
+} from '@tiptap/extension-horizontal-rule';
+import { ActionButton } from '@/components/ui/ActionButton.tsx';
+import type { ButtonContext, ButtonView } from '../button-types';
+
+export interface HorizontalRuleExtensionOptions extends HorizontalRuleOptions {
+  button: (context: ButtonContext) => ButtonView;
+}
+
+/**
+ * A thematic break. It is an insert, not a toggle, so the button is a plain
+ * action with no active state - there is no "cursor is inside a rule".
+ */
+export const HorizontalRule = TiptapHorizontalRule.extend<HorizontalRuleExtensionOptions>({
+  addOptions() {
+    return {
+      ...this.parent?.(),
+      button: ({ editor, t }: ButtonContext) => ({
+        component: ActionButton,
+        componentProps: {
+          action: () => editor.commands.setHorizontalRule(),
+          icon: 'Minus',
+          tooltip: t('editor.horizontalRule.tooltip'),
+        },
+        hideOnMobile: true,
+      }),
+    } as unknown as HorizontalRuleExtensionOptions;
+  },
+});

@@ -9,6 +9,8 @@ const FORMAT_EXTENSION_NAMES = [
   'underline',
   'strike',
   'clear',
+  'code',
+  'link',
   'color',
   'backgroundColor',
 ];
