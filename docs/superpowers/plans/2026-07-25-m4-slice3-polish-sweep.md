@@ -66,7 +66,7 @@ Decisions: Link (+ bubble-menu), HR, inline code, text-align (+dep), **plain** c
 - [x] Pattern A extensions (folder + `index.ts` + icon-registry button + Vitest, per `CLAUDE.md`/ADR 0004): **Link** (toolbar popover to enter/edit URL; edit/unlink via bubble menu; autolink on paste), **horizontal rule**, **inline code**, **text-align** (L/C/R), **plain code block**.
 - [x] **Slash menu**: TipTap `Suggestion` util triggered by `/` at the start of an empty line; filtered floating list of **blocks + media** (heading/lists/checklist/quote/code/HR + image/audio/video/file/drawing) → inserts the node. This is the unified keyboard insertion surface (pairs with the hideable toolbar in Slice 4).
       Media items reuse the existing insertion pipeline; image/video/file open a throwaway `<input type=file>` created inside the activation, since a menu row has no element to hang a persistent hidden input on.
-- [x] **Body placeholder** when empty; **markdown input rules** (`# `→heading, `[] `→task, `- `→list).
+- [x] **Body placeholder** when empty; **markdown input rules** (`#` + Space → heading, `[]` + Space → task, `-` + Space → list).
       The rules come from upstream; `markdown-input-rules.test.ts` proves they survive our wrappers (a wrapper missing `...this.parent?.()` drops them silently).
 - [x] Register new buttons in the relevant `*Section` (and note them for the Slice 4 data-driven toolbar).
       `code` + `link` in FormatSection; `codeBlock`, `horizontalRule`, `textAlign` in BlocksSection.
@@ -86,6 +86,11 @@ Decision (late M4 addition): VitePWA is configured but has no user-facing instal
 - [x] **"New version available - reload" prompt**: use VitePWA's `registerSW` `onNeedRefresh` (autoUpdate/prompt) to show a toast/banner that reloads to the new service worker on confirm - otherwise users keep running stale cached assets after a deploy.
 - [x] Respect that both are best-effort/browser-gated (no `beforeinstallprompt` on iOS Safari - degrade gracefully).
 - [x] Tests: update-available handler shows the prompt and reload wiring fires on confirm (mock the SW registration).
+
+> **Bundle follow-up.** TanStack route splitting, a lazy `NoteEditorDialog`, and a second lazy boundary around `ExcalidrawDialog` reduced the initial application JavaScript from about 2.78 MB to 0.85 MB (887 KB to 270 KB gzip).
+> Opening a normal note loads TipTap but not Excalidraw; the drawing engine loads only when a drawing opens.
+> Excalidraw's dependency-owned Mermaid and font-subsetting chunks remain large, and Workbox still precaches the full roughly 9.1 MB asset set so those features remain available offline.
+> Brave's "Banner not shown" console message is expected because the app suppresses the native install banner with `preventDefault()` and calls the one-shot `prompt()` from Settings instead; cancelling consumes that prompt until the browser offers it again.
 
 ## Verification
 
