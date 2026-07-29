@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { icons } from '@/components/icons';
 import { cn } from '@/lib/utils.ts';
 import type { TFunction } from '../button-types';
@@ -25,6 +25,7 @@ export const SlashMenuList = forwardRef<SlashMenuListHandle, SlashMenuListProps>
   function SlashMenuList({ items, command, t }, ref) {
     const [selected, setSelected] = useState(0);
     const [syncedItems, setSyncedItems] = useState(items);
+    const listRef = useRef<HTMLUListElement>(null);
 
     // Every keystroke hands down a freshly filtered array, so this resets the
     // highlight to the top as the query narrows - which is what the user
@@ -35,6 +36,16 @@ export const SlashMenuList = forwardRef<SlashMenuListHandle, SlashMenuListProps>
       setSyncedItems(items);
       setSelected(0);
     }
+
+    // The list scrolls (more items than fit) but never holds focus, so the
+    // browser will not follow the highlight for us - without this, arrowing past
+    // the eighth item moves an indicator the user can no longer see.
+    // `block: 'nearest'` scrolls only when the row is actually out of view, so
+    // moving within the visible window does not jerk the list around.
+    useEffect(() => {
+      const row = listRef.current?.children[selected];
+      row?.scrollIntoView?.({ block: 'nearest' });
+    }, [selected]);
 
     useImperativeHandle(ref, () => ({
       onKeyDown: ({ event }) => {
@@ -64,7 +75,10 @@ export const SlashMenuList = forwardRef<SlashMenuListHandle, SlashMenuListProps>
     }
 
     return (
-      <ul className="max-h-72 w-60 overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+      <ul
+        ref={listRef}
+        className="max-h-72 w-60 overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+      >
         {items.map((item, index) => {
           const Icon = icons[item.icon];
           return (

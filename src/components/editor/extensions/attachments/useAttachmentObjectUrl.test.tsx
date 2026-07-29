@@ -48,6 +48,19 @@ describe('useAttachmentObjectUrl', () => {
     await waitFor(() => expect(screen.getByTestId('s').textContent).toBe('missing'));
   });
 
+  // A rejected lookup used to be an unhandled rejection that also pinned the
+  // node view on 'loading' forever - a broken attachment showed as a permanent
+  // spinner rather than as missing.
+  it('reports missing when the lookup fails', async () => {
+    render(<Probe id="a1" get={() => Promise.reject(new Error('db is gone'))} />);
+    await waitFor(() => expect(screen.getByTestId('s').textContent).toBe('missing'));
+  });
+
+  it('reports missing without a round trip when there is no id to resolve', () => {
+    render(<Probe id={null} get={async () => att()} />);
+    expect(screen.getByTestId('s').textContent).toBe('missing');
+  });
+
   it('revokes the url on unmount', async () => {
     const { unmount } = render(<Probe id="a1" get={async () => att()} />);
     await waitFor(() => expect(screen.getByTestId('s').textContent).toContain('blob:mock/'));

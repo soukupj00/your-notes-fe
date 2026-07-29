@@ -17,6 +17,12 @@ i18n
     backend: {
       loadPath: '/locales/{{lng}}/translation.json',
     },
+  })
+  // Translations are fetched over HTTP, so init can reject (offline on a cold
+  // load, a bad deploy). i18next still renders keys via the fallback, so this
+  // must not be fatal - but it must not be a silent unhandled rejection either.
+  .catch((error) => {
+    console.error('i18n: failed to initialise', error);
   });
 
 export default i18n;

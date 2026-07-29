@@ -66,6 +66,22 @@ describe('SlashMenuList', () => {
     expect(press(ref, 'a')).toBe(false);
   });
 
+  // The list scrolls but never holds focus, so the browser will not follow the
+  // highlight on its own: arrowing past the visible rows moved an indicator the
+  // user could no longer see.
+  it('scrolls the highlighted row into view as the selection moves', () => {
+    const scrollIntoView = vi.fn();
+    // jsdom implements no layout, so this method does not exist there at all.
+    Element.prototype.scrollIntoView = scrollIntoView;
+
+    const { ref } = renderList();
+    scrollIntoView.mockClear();
+
+    press(ref, 'ArrowDown');
+
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' });
+  });
+
   it('says so when a query matches nothing, rather than showing an empty box', () => {
     render(<SlashMenuList items={[]} command={vi.fn()} t={t} />);
     expect(screen.getByText('editor.slash.noResults')).toBeInTheDocument();
