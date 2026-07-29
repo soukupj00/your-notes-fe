@@ -72,7 +72,6 @@ export function LinkButton({ editor, t, tooltip }: LinkButtonProps) {
           }}
         >
           <Input
-            // biome-ignore lint/a11y/noAutofocus: the popover exists only to take this one value
             autoFocus
             type="url"
             inputMode="url"

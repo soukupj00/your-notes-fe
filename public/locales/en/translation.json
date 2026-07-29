@@ -14,7 +14,7 @@
     "skipToContent": "Skip to content"
   },
   "navbar": {
-    "logo": "Notes"
+    "logo": "YouNotes"
   },
   "attachments": {
     "confirmDelete": {
@@ -221,11 +221,25 @@
       "importing": "Reading the backup…"
     }
   },
+  "pwa": {
+    "install": {
+      "title": "App",
+      "label": "Install YouNotes",
+      "description": "Add YouNotes to your device for quick access in its own window.",
+      "action": "Install"
+    },
+    "update": {
+      "available": "A new version of YouNotes is available.",
+      "reload": "Reload",
+      "later": "Not now"
+    }
+  },
   "notes": {
     "createPlaceholder": "Take a note…",
     "titlePlaceholder": "Title",
     "newNoteTitle": "New note",
     "editNoteTitle": "Edit note",
+    "loadingEditor": "Loading editor…",
     "create": "Create note",
     "newChecklist": "New checklist",
     "empty": {

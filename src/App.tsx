@@ -1,8 +1,10 @@
 import { createRouter, RouterProvider } from '@tanstack/react-router';
 import { ErrorBoundary } from '@/components/ErrorBoundary.tsx';
+import { PwaUpdatePrompt } from '@/components/pwa/PwaUpdatePrompt.tsx';
 import { Toaster } from '@/components/ui/sonner.tsx';
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import { PwaInstallProvider } from '@/context/PwaInstallProvider.tsx';
 import { ThemeProvider } from '@/context/themeProvider.tsx';
 import { ViewModeProvider } from '@/context/viewModeProvider.tsx';
 import { routeTree } from './routeTree.gen';
@@ -25,12 +27,15 @@ function App() {
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <ErrorBoundary>
         <PreferencesProvider>
-          <TooltipProvider>
-            <ViewModeProvider>
-              <RouterProvider router={router} />
-              <Toaster />
-            </ViewModeProvider>
-          </TooltipProvider>
+          <PwaInstallProvider>
+            <TooltipProvider>
+              <ViewModeProvider>
+                <RouterProvider router={router} />
+                <PwaUpdatePrompt />
+                <Toaster />
+              </ViewModeProvider>
+            </TooltipProvider>
+          </PwaInstallProvider>
         </PreferencesProvider>
       </ErrorBoundary>
     </ThemeProvider>

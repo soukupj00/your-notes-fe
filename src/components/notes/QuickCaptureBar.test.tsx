@@ -7,12 +7,6 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-// The editor pulls in TipTap/Excalidraw; only its checklist constant is needed.
-vi.mock('@/components/notes/NoteEditorDialog.tsx', () => ({
-  NoteEditorDialog: () => null,
-  EMPTY_CHECKLIST_BODY: '<ul data-type="taskList"></ul>',
-}));
-
 async function openDial() {
   const onStart = vi.fn();
   render(<QuickCaptureBar onStart={onStart} />);
@@ -38,7 +32,14 @@ describe('QuickCaptureBar', () => {
 
   it.each([
     ['text', { id: null }],
-    ['checklist', { id: null, initialBody: '<ul data-type="taskList"></ul>' }],
+    [
+      'checklist',
+      {
+        id: null,
+        initialBody:
+          '<ul data-type="taskList"><li data-type="taskItem" data-checked="false"><p></p></li></ul>',
+      },
+    ],
     ['audio', { id: null, capture: 'audio' }],
     ['drawing', { id: null, capture: 'drawing' }],
     ['picture', { id: null, capture: 'picture' }],

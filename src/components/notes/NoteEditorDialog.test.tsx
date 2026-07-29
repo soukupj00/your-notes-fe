@@ -4,7 +4,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { db } from '@/db/db.ts';
 import type { Note } from '@/models.ts';
 import { clearNotesDb } from '@/test/db.ts';
-import { EMPTY_CHECKLIST_BODY, NoteEditorDialog } from './NoteEditorDialog.tsx';
+import { NoteEditorDialog } from './NoteEditorDialog.tsx';
+import { EMPTY_CHECKLIST_BODY } from './noteDrafts.ts';
 
 // Keys pass through untranslated so assertions are stable.
 vi.mock('react-i18next', () => ({

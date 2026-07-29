@@ -1,13 +1,20 @@
-import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { lazy, type ReactNode, Suspense, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CaptureKind } from '@/components/editor/editor.tsx';
 import { NoteContent } from '@/components/NoteContent.tsx';
 import { DesktopCaptureBar } from '@/components/notes/DesktopCaptureBar.tsx';
-import { NoteEditorDialog } from '@/components/notes/NoteEditorDialog.tsx';
 import { QuickCaptureBar } from '@/components/notes/QuickCaptureBar.tsx';
 import { TagFilterBar } from '@/components/tags/TagFilterBar.tsx';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog.tsx';
+import { Spinner } from '@/components/ui/Spinner.tsx';
 import type { NoteFeedScope } from '@/hooks/data/useNoteFeed.ts';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
+
+const NoteEditorDialog = lazy(() =>
+  import('@/components/notes/NoteEditorDialog.tsx').then((module) => ({
+    default: module.NoteEditorDialog,
+  }))
+);
 
 // `null` = closed. Otherwise: `id` is the note being edited (null = new draft);
 // `initialBody` seeds a new draft (e.g. a checklist from quick-capture);
@@ -40,6 +47,7 @@ export function NotesView({
   toolbar?: ReactNode;
   showCapture?: boolean;
 }) {
+  const { t } = useTranslation();
   const [editing, setEditing] = useState<EditingState>(null);
   const headingRef = useFocusOnMount<HTMLHeadingElement>();
 
@@ -76,14 +84,31 @@ export function NotesView({
       {showCapture && <QuickCaptureBar onStart={setEditing} />}
 
       {editing && (
-        <NoteEditorDialog
-          key={editing.id ?? 'new'}
-          noteId={editing.id}
-          initialBody={editing.initialBody}
-          autoplayFirstAudio={editing.autoplayFirstAudio}
-          initialCapture={editing.capture}
-          onClose={() => setEditing(null)}
-        />
+        <Suspense
+          fallback={
+            <Dialog open>
+              <DialogContent showCloseButton={false} className="flex items-center justify-center">
+                <DialogTitle className="sr-only">{t('notes.loadingEditor')}</DialogTitle>
+                <DialogDescription className="sr-only">
+                  {t('notes.loadingEditor')}
+                </DialogDescription>
+                <div className="flex items-center gap-2" role="status" aria-busy>
+                  <Spinner className="size-6" />
+                  <span>{t('notes.loadingEditor')}</span>
+                </div>
+              </DialogContent>
+            </Dialog>
+          }
+        >
+          <NoteEditorDialog
+            key={editing.id ?? 'new'}
+            noteId={editing.id}
+            initialBody={editing.initialBody}
+            autoplayFirstAudio={editing.autoplayFirstAudio}
+            initialCapture={editing.capture}
+            onClose={() => setEditing(null)}
+          />
+        </Suspense>
       )}
     </div>
   );

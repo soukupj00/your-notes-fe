@@ -6,13 +6,6 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-// The quick-capture list pulls its checklist seed from the editor dialog, which
-// drags in TipTap/Excalidraw. This suite does not exercise either.
-vi.mock('@/components/notes/NoteEditorDialog.tsx', () => ({
-  NoteEditorDialog: () => null,
-  EMPTY_CHECKLIST_BODY: '',
-}));
-
 const motion = { reduced: false };
 vi.mock('@/hooks/useReducedMotion.ts', () => ({
   useReducedMotion: () => motion.reduced,

@@ -14,7 +14,7 @@
     "skipToContent": "Přejít na obsah"
   },
   "navbar": {
-    "logo": "Poznámky"
+    "logo": "YouNotes"
   },
   "attachments": {
     "confirmDelete": {
@@ -221,11 +221,25 @@
       "importing": "Načítám zálohu…"
     }
   },
+  "pwa": {
+    "install": {
+      "title": "Aplikace",
+      "label": "Nainstalovat YouNotes",
+      "description": "Přidejte si YouNotes do zařízení pro rychlý přístup v samostatném okně.",
+      "action": "Nainstalovat"
+    },
+    "update": {
+      "available": "Je k dispozici nová verze aplikace YouNotes.",
+      "reload": "Znovu načíst",
+      "later": "Teď ne"
+    }
+  },
   "notes": {
     "createPlaceholder": "Napsat poznámku…",
     "titlePlaceholder": "Název",
     "newNoteTitle": "Nová poznámka",
     "editNoteTitle": "Upravit poznámku",
+    "loadingEditor": "Načítám editor…",
     "create": "Vytvořit poznámku",
     "newChecklist": "Nový seznam úkolů",
     "empty": {

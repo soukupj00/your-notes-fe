@@ -68,10 +68,12 @@ Pattern A is partly adopted:
   It serializes as body `<excalidraw-drawing data-attachment-id>` with no payload; the scene itself is stored as an `application/json` blob in the Dexie `attachments` table (`kind: 'excalidraw'`), with a self-generated SVG snapshot cached in `Attachment.preview`.
   `ExcalidrawNodeView` is a passive, live-queried SVG preview with tap-to-edit and an overlaid confirm-before-delete control.
   One shared `ExcalidrawDialog`, owned by `editor.tsx` and opened through `AttachmentDeps.openExcalidraw`, contains the live canvas and imports Excalidraw's stylesheet.
+  `NotesView` lazy-loads `NoteEditorDialog`, and the editor lazy-loads `ExcalidrawDialog` only when a drawing opens, so neither TipTap nor the drawing engine is part of the initial feed download.
   Persistence is commit-on-Save: a new drawing creates its attachment and inserts its node only after Save, while editing updates the existing blob and preview without changing the body.
   Cancel discards changes, Delete removes the node through orphan GC, and both actions reuse the shared `ConfirmDialog`.
   `scene.ts` holds JSON serialization helpers and removes transient collaboration state that cannot survive JSON serialization.
   `sceneToSvgString` dynamically imports `@excalidraw/excalidraw` because eagerly importing the package touches `canvas.getContext()` at module scope, which crashes under jsdom without the native `canvas` package.
+  The dialog and exporter share Vite's cached Excalidraw chunk.
 - **Text styling via `@tiptap/extension-text-style`.** Four Pattern A extensions ride on the `textStyle` mark (registered once as `TextStyle` in `editor.tsx`); each wraps an upstream helper from that single package and returns a **custom-component** button:
   - **Text color** (`extensions/Color/`, name `color`) and **Highlight** (`extensions/Highlight/`, name `backgroundColor`, wraps `BackgroundColor`) use thin Pattern A adapters over `extensions/EditorColorPickerButton.tsx`.
     The shared module owns selection capture, live preview, the `ColorPickerPanel` popover, and mark commits; its `text` and `highlight` variants select the icon, palette, preview CSS property, and TipTap commands.

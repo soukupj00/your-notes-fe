@@ -9,7 +9,9 @@ import { renderRoute } from '@/test/renderRoute.tsx';
 // Vitest hoists `vi.mock`, so these cannot come from a shared helper - they have
 // to be declared in every file that needs them.
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({
+    t: (key: string) => (key === 'navbar.logo' ? 'YouNotes' : key),
+  }),
   // The Navbar reads i18n directly for the locale switcher.
   default: {},
 }));
@@ -45,6 +47,16 @@ afterEach(async () => {
 });
 
 describe('nav shell contents', () => {
+  it('renders the YouNotes brand and app icon', async () => {
+    renderRoute('/');
+
+    expect(await screen.findByRole('img', { name: 'YouNotes' })).toHaveAttribute(
+      'src',
+      '/note-128.png'
+    );
+    expect(screen.getByText('YouNotes')).toBeInTheDocument();
+  });
+
   it('renders every destination and every tag as a link', async () => {
     await seedTag();
     renderRoute('/');

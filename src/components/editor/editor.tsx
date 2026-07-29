@@ -11,6 +11,8 @@ import 'katex/dist/katex.min.css';
 import type React from 'react';
 import {
   forwardRef,
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -36,7 +38,6 @@ import { Color } from '@/components/editor/extensions/Color';
 import { ColorPreview } from '@/components/editor/extensions/color-preview';
 import { createExcalidraw } from '@/components/editor/extensions/Excalidraw';
 import { commitExcalidrawScene } from '@/components/editor/extensions/Excalidraw/commit';
-import { ExcalidrawDialog } from '@/components/editor/extensions/Excalidraw/ExcalidrawDialog';
 import {
   type ExcalidrawScene,
   emptyScene,
@@ -66,10 +67,15 @@ import FontSection from '@/components/editor/menus/toolbars/FontSection.tsx';
 import FormatSection from '@/components/editor/menus/toolbars/FormatSection.tsx';
 import HeadingSection from '@/components/editor/menus/toolbars/HeadingSection.tsx';
 import ListSection from '@/components/editor/menus/toolbars/ListSection.tsx';
+import { Spinner } from '@/components/ui/Spinner.tsx';
 import { Separator } from '@/components/ui/separator.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import type { AttachmentErrorCode } from '@/lib/attachments.ts';
 import { cn } from '@/lib/utils.ts';
+
+const ExcalidrawDialog = lazy(
+  () => import('@/components/editor/extensions/Excalidraw/ExcalidrawDialog')
+);
 
 // Excalidraw resolves its bundled fonts/assets relative to this origin - pin it
 // to the app root so it works the same under the PWA's service-worker scope.
@@ -516,18 +522,32 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         />
       )}
 
-      {/* One shared Excalidraw editing surface for the whole editor. Remounted per
-        open (keyed) so its dirty/empty state is always fresh. */}
-      <ExcalidrawDialog
-        key={excalidraw.key}
-        open={excalidraw.open}
-        mode={excalidraw.attachmentId ? 'edit' : 'new'}
-        initialScene={excalidraw.initialScene}
-        onSave={handleExcalidrawSave}
-        onDelete={excalidraw.onDelete}
-        onClose={() => setExcalidraw((s) => ({ ...s, open: false }))}
-        t={t}
-      />
+      {/* One shared Excalidraw editing surface for the whole editor. The canvas
+        is loaded only when opened, then cached by React for later opens. */}
+      {excalidraw.open && (
+        <Suspense
+          fallback={
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center gap-2 bg-background/80"
+              role="status"
+              aria-label={t('editor.excalidraw.title')}
+            >
+              <Spinner className="size-6" />
+            </div>
+          }
+        >
+          <ExcalidrawDialog
+            key={excalidraw.key}
+            open
+            mode={excalidraw.attachmentId ? 'edit' : 'new'}
+            initialScene={excalidraw.initialScene}
+            onSave={handleExcalidrawSave}
+            onDelete={excalidraw.onDelete}
+            onClose={() => setExcalidraw((s) => ({ ...s, open: false }))}
+            t={t}
+          />
+        </Suspense>
+      )}
     </>
   );
 });

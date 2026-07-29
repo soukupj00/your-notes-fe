@@ -82,10 +82,10 @@ Decisions: Link (+ bubble-menu), HR, inline code, text-align (+dep), **plain** c
 
 Decision (late M4 addition): VitePWA is configured but has no user-facing install/update story. Give it one so the installed app feels real and users don't get stuck on stale cached JS.
 
-- [ ] **"Install app" affordance** (A2HS): capture the `beforeinstallprompt` event and surface an install action (e.g. in Settings or a dismissible hint), calling `prompt()` on click; hide it when already installed (`display-mode: standalone`).
-- [ ] **"New version available - reload" prompt**: use VitePWA's `registerSW` `onNeedRefresh` (autoUpdate/prompt) to show a toast/banner that reloads to the new service worker on confirm - otherwise users keep running stale cached assets after a deploy.
-- [ ] Respect that both are best-effort/browser-gated (no `beforeinstallprompt` on iOS Safari - degrade gracefully).
-- [ ] Tests: update-available handler shows the prompt and reload wiring fires on confirm (mock the SW registration).
+- [x] **"Install app" affordance** (A2HS): capture the `beforeinstallprompt` event and surface an install action (e.g. in Settings or a dismissible hint), calling `prompt()` on click; hide it when already installed (`display-mode: standalone`).
+- [x] **"New version available - reload" prompt**: use VitePWA's `registerSW` `onNeedRefresh` (autoUpdate/prompt) to show a toast/banner that reloads to the new service worker on confirm - otherwise users keep running stale cached assets after a deploy.
+- [x] Respect that both are best-effort/browser-gated (no `beforeinstallprompt` on iOS Safari - degrade gracefully).
+- [x] Tests: update-available handler shows the prompt and reload wiring fires on confirm (mock the SW registration).
 
 ## Verification
 

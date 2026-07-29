@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import { Image, ListChecks, Mic, PencilRuler, SquarePen } from 'lucide-react';
-import { EMPTY_CHECKLIST_BODY } from '@/components/notes/NoteEditorDialog.tsx';
 import type { EditingState } from '@/components/notes/NotesView.tsx';
+import { EMPTY_CHECKLIST_BODY } from '@/components/notes/noteDrafts.ts';
 
 export type QuickCaptureActionKey = 'text' | 'checklist' | 'audio' | 'drawing' | 'picture';
 

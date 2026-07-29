@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { BackupSection } from '@/components/settings/BackupSection.tsx';
+import { PwaInstallSection } from '@/components/settings/PwaInstallSection.tsx';
 import { SettingsRow, SettingsSection } from '@/components/settings/SettingsSection.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx';
@@ -65,6 +66,8 @@ export default function SettingsPage() {
           </Button>
         </SettingsRow>
       </SettingsSection>
+
+      <PwaInstallSection />
 
       <BackupSection />
     </div>
