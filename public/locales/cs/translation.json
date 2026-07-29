@@ -7,7 +7,10 @@
     "editLabels": "Upravit štítky",
     "archive": "Archiv",
     "trash": "Koš",
-    "settings": "Nastavení"
+    "settings": "Nastavení",
+    "allSettings": "Všechna nastavení",
+    "toggle": "Přepnout navigaci",
+    "drawerDescription": "Odkazy na poznámky, štítky, archiv a koš."
   },
   "navbar": {
     "logo": "Poznámky"

@@ -1,13 +1,10 @@
-import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ThemeProvider } from '@/context/themeProvider.tsx';
-import { ViewModeProvider } from '@/context/viewModeProvider.tsx';
 import { db } from '@/db/db.ts';
 import type { Note } from '@/models.ts';
-import { routeTree } from '@/routeTree.gen';
 import { clearNotesDb } from '@/test/db.ts';
+import { renderRoute as renderAt } from '@/test/renderRoute.tsx';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -40,22 +37,6 @@ async function seed() {
     { id: 'n-archived', header: 'Archived note', state: 'archived', ...base },
     { id: 'n-trashed', header: 'Trashed note', state: 'trashed', trashedAt: daysAgo(1), ...base },
   ]);
-}
-
-function renderAt(path: string) {
-  const router = createRouter({
-    routeTree,
-    history: createMemoryHistory({ initialEntries: [path] }),
-  });
-  render(
-    <ThemeProvider>
-      <ViewModeProvider>
-        {/* biome-ignore lint/suspicious/noExplicitAny: the test router is not the app's registered one */}
-        <RouterProvider router={router as any} />
-      </ViewModeProvider>
-    </ThemeProvider>
-  );
-  return router;
 }
 
 afterEach(clearNotesDb);

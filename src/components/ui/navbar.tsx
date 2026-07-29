@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import * as FlagIcons from 'country-flag-icons/react/3x2';
+import { CZ, GB } from 'country-flag-icons/react/3x2';
 import { Check, Globe, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -8,6 +8,7 @@ import { ThemeModeToggleButton } from '@/components/themeModeToggleButton';
 import { Button } from '@/components/ui/button.tsx';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -27,24 +28,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { SidebarTrigger } from '@/components/ui/sidebar.tsx';
 import { useIsFeedRoute } from '@/hooks/useNoteSearchState.ts';
 import i18n from '@/i18n';
 
-// Flag icons are keyed by ISO 3166-1 country code, not language code, so a
-// locale still needs a mapping to the country whose flag represents it.
-const LOCALE_FLAG_COUNTRY: Record<string, keyof typeof FlagIcons> = {
-  en: 'GB',
-  cs: 'CZ',
+// Flags are keyed by ISO 3166-1 country code, not language code, so locales
+// map to named imports. Keeping this static also lets the bundler omit the
+// package's hundreds of unused flag components.
+const LOCALE_FLAGS: Record<string, typeof GB> = {
+  en: GB,
+  cs: CZ,
 };
 
 function LocaleFlag({ locale }: { locale: string }) {
-  const FlagIcon = LOCALE_FLAG_COUNTRY[locale] && FlagIcons[LOCALE_FLAG_COUNTRY[locale]];
+  const FlagIcon = LOCALE_FLAGS[locale];
   if (!FlagIcon) return null;
   return <FlagIcon className="h-3.5 w-5 rounded-xs object-cover" />;
 }
 
-/** `leading` is the slot the layout uses for the mobile drawer trigger. */
-function Navbar({ leading }: { leading?: React.ReactNode }) {
+function Navbar() {
   const { t } = useTranslation();
   // Settings has no feed, so it gets no search box: a control that silently
   // does nothing is worse than an absent one.
@@ -54,11 +56,14 @@ function Navbar({ leading }: { leading?: React.ReactNode }) {
   const locales = (i18n.options.supportedLngs || []).filter((locale) => locale !== 'cimode');
 
   return (
-    <header className="border-b bg-background">
+    // Sticky so the search box, sort menu and label filters stay reachable in a
+    // long feed - the feed's visible title row was dropped in favour of them.
+    // z-10 matches the sidebar panel and stays under QuickCaptureBar's z-40.
+    <header className="nav-scroll-shadow sticky top-0 z-10 border-b bg-background">
       {/* Web Navbar */}
       <div className="hidden items-center justify-between px-4 py-2 sm:flex">
-        {/* Left: Logo */}
-        <div className="font-bold text-xl">{t('navbar.logo')}</div>
+        {/* Left: the sidebar toggle. The brand lives in SidebarHeader now. */}
+        <SidebarTrigger />
 
         {/* Center: Search */}
         <div className="max-w-md flex-1 px-4">{searchable && <SearchInput />}</div>
@@ -101,13 +106,14 @@ function Navbar({ leading }: { leading?: React.ReactNode }) {
       </div>
 
       {/* Mobile Navbar */}
-      <div className="flex items-center justify-between gap-2 px-4 py-2 sm:hidden">
-        {leading}
-        <div className="font-bold text-lg">{t('navbar.logo')}</div>
-        {searchable && <SearchInput className="max-w-1/2" />}
+      <div className="flex items-center gap-4 px-4 py-2 sm:hidden">
+        {/* No logo here: it clutters the top bar and now lives in SidebarHeader,
+            so it still shows inside the drawer this trigger opens. */}
+        <SidebarTrigger />
+        {searchable && <SearchInput />}
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" aria-label={t('nav.settings')}>
               <Settings />
             </Button>
           </DialogTrigger>
@@ -141,6 +147,11 @@ function Navbar({ leading }: { leading?: React.ReactNode }) {
                 <span className="font-medium text-sm">{t('settings.theme.label')}</span>
                 <ThemeModeToggleButton />
               </div>
+              <DialogClose asChild>
+                <Button asChild>
+                  <Link to="/settings">{t('nav.allSettings')}</Link>
+                </Button>
+              </DialogClose>
             </div>
           </DialogContent>
         </Dialog>

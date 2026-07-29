@@ -52,6 +52,12 @@ describe('NoteCard', () => {
     expect(onSelect).toHaveBeenCalledWith(note.id);
   });
 
+  it('keeps the options trigger right-aligned when the title is empty', () => {
+    render(<NoteCard note={makeNote({ header: '' })} onSelect={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: 'notes.menu' })).toHaveClass('ml-auto');
+  });
+
   it('opens the editor when the card itself is keyboard-activated', async () => {
     const note = makeNote();
     const onSelect = vi.fn();

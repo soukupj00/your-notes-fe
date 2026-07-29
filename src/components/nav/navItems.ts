@@ -1,4 +1,4 @@
-import { Archive, Lightbulb, type LucideIcon, Settings, Tag, Trash2 } from 'lucide-react';
+import { Archive, Lightbulb, type LucideIcon, Tag, Trash2 } from 'lucide-react';
 
 /**
  * The destinations in the nav shell, in display order. Shared by the desktop
@@ -15,5 +15,4 @@ export const NAV_ITEMS: { to: string; icon: LucideIcon; labelKey: string }[] = [
   { to: '/settings/labels', icon: Tag, labelKey: 'nav.editLabels' },
   { to: '/archive', icon: Archive, labelKey: 'nav.archive' },
   { to: '/trash', icon: Trash2, labelKey: 'nav.trash' },
-  { to: '/settings', icon: Settings, labelKey: 'nav.settings' },
 ];

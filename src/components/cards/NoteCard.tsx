@@ -132,7 +132,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
           <DropdownMenuTrigger
             aria-label={t('notes.menu')}
             onClick={(e) => e.stopPropagation()}
-            className="-mt-1 -mr-1 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="-mt-1 -mr-1 ml-auto shrink-0 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <MoreVertical className="size-4" />
           </DropdownMenuTrigger>

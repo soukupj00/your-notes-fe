@@ -94,11 +94,20 @@ The four feed routes share one `validateSearch` (`validateNoteSearch`), which is
 
 ### Nav shell (`src/components/layout.tsx`, `src/components/nav/`)
 
-Keep pattern: a persistent left sidebar on desktop, the same `SideNav` inside a left-anchored drawer (hamburger in the `Navbar`) on mobile. `navItems.ts` is the single source of destinations so the two can't drift. Below the fixed destinations, `SideNav` lists every tag as a link to `/tag/$id`.
+The shell uses the vendored shadcn `Sidebar` as decided in [ADR 0010](./docs/adr/0010-shadcn-sidebar-as-nav-shell.md).
+From `sm:` upward it is a full-height, icon-collapsible sidebar, with `SidebarInset` reserving the sidebar's expanded or collapsed width for both the sticky `Navbar` and page content.
+Below `sm:` the same sidebar content renders in a wider left-anchored `Sheet` drawer.
+`navItems.ts` is the single source of fixed destinations so the desktop rail and mobile drawer cannot drift.
+`SideNav` also lists every tag as a link to `/tag/$id`; tags are hidden in the collapsed desktop rail but remain visible in the mobile drawer.
+Desktop collapse state is persisted per device in `localStorage` through `useSidebarOpen`.
+Settings is intentionally not a sidebar destination: the topbar gear is the single entry point, and its mobile quick-settings dialog links to the full settings page.
 
-Quick capture is one list of five starts (`src/components/notes/quickCaptureActions.ts`) rendered two ways so they cannot drift: a `＋` speed-dial FAB on mobile (`QuickCaptureBar`) and inline icons on the desktop "Take a note" bar. Media starts carry a `capture` intent that the editor auto-runs on open.
+Quick capture is one list of five starts (`src/components/notes/quickCaptureActions.ts`) rendered two ways so they cannot drift: a `＋` speed-dial FAB on mobile (`QuickCaptureBar`) and inline icons on the desktop "Take a note" bar.
+Media starts carry a `capture` intent that the editor auto-runs on open.
 
-A11y: every view renders an `<h1 tabIndex={-1}>` and calls `useFocusOnMount` on it, so a navigation moves focus to the destination heading instead of stranding it on the link. In the feed views that heading is `sr-only` - the visible title row was dropped in favour of the search bar's controls, but the focus target and the document outline remain.
+A11y: every view renders an `<h1 tabIndex={-1}>` and calls `useFocusOnMount` on it, so a navigation moves focus to the destination heading instead of stranding it on the link.
+The mobile drawer suppresses Radix's close-focus restoration so navigation focus remains on that destination heading.
+In the feed views that heading is `sr-only` - the visible title row was dropped in favour of the search bar's controls, but the focus target and the document outline remain.
 
 ### Tags / labels (`src/components/tags/`, `src/pages/labels.tsx`)
 
