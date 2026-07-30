@@ -39,7 +39,9 @@ Reflow fixes therefore land with Task 3's packed feed, and the backed pin lands 
 - [x] **Day accent.** Replace the failing `oklch(58% 0.14 68)` with the resolved `oklch(54% 0.15 80)`. See *The Two-Constraint Rule* - an accent must clear 4.5:1 on its own text **and** 3:1 against the canvas, and brightening to yellow fails the second at 1.58:1.
 - [ ] **Touch targets.** Audit the real production sites rather than porting the prototype list. Foundation + card + chrome gives card controls, colour swatches, search controls, and touch-mode shared chrome a real 44px box; checklist and later action surfaces remain with their owning tasks.
 - [x] **FAB fill.** Production already uses the filled 56px primary Button; the implementation only replaces its generic elevation with the named token.
-- [ ] **Pin in front.** Deferred to Task 4 because production does not have a card pin control yet. Per *The Pin-Is-Always-In-Front Rule* the new control must sit above every card layer with its own filled backing.
+- [x] **Pin in front.** `CardPin` mounts as a child of the card rather than of the content layer, so it stacks above the media at `z-30`, and it carries its own filled disc - the card surface when idle, the accent when pinned.
+  Verified on screen against a pure-white and a pure-black attachment in both themes.
+  Its 44px touch box is *invisible padding* (a `::before` at `-5px`, which is what reaches 44px once the disc's 1px border is accounted for) rather than a 44px disc: a disc that large hangs into the first line of the note's own text on every card without media, which is the one thing this corner may not do.
 - [ ] **Reflow responsiveness.** Task 3 replaced CSS columns with one attribute-registered, `ResizeObserver`-driven placement hook whose observer lifecycle is independent of `measure`. Layout-switch sampling now follows the overdamped spring without a corrective jump. The final click-to-first-frame gate stays open until Task 4 supplies the direct card pin control and its optimistic state.
 - [x] **Wire the reflow transition.** Task 3 now gives both Masonry and Stack real Motion layout projection with the named Nightshift spring; packed x/y/width changes no longer fall through to Motion defaults.
 - [x] **Prune `@fontsource`** down to Bricolage Grotesque + Work Sans now that `nightshift` won (souki asked for this explicitly; bundle size matters).
@@ -78,8 +80,11 @@ Decisions: `motion` (not GSAP); `useReducedMotion` ← reduced-motion pref.
 Decisions (Q15): editor bottom action bar; card pin corner; desktop hover row / mobile `⋮`; fallback to `⋮`-everywhere if cluttered.
 
 - [ ] `NoteEditorDialog`: persistent **bottom action bar** - pin, colour swatch, ＋Label (Slice 1 popover), archive, trash.
-- [ ] `NoteCard`: **pin** as a corner toggle (top-left/right, whichever fits the redesign; also the pinned indicator). **Desktop** = hover-revealed bottom action row (colour, archive, trash, `⋮` more for tags/duplicate), placed to avoid the existing bottom-right media buttons. **Mobile** = always-visible `⋮` overflow menu (same actions).
-- [ ] Tests: actions fire the Slice 1 mutations; hover row / `⋮` render per breakpoint.
+- [x] `NoteCard`: **pin** as a top-right corner toggle (`CardPin`, also the pinned indicator) and a **foot rail** (`CardActions`) carrying the one lifecycle move for the note's state, the colour swatch and `⋮`.
+  The rail slides in on hover with a mouse and is always visible on a coarse pointer, which is *The Foot rail (A)* anatomy rather than the planned "mobile = `⋮` only": the row is laid out at rest either way, so revealing it never changes a card's height.
+  It also stays open while its own menu or popover is (`has-[[data-state=open]]`), and reduced motion drops the reveal entirely rather than leaving the controls unreachable.
+  The pin is shown only on an Active note - pinning is meaningless in the archive and the trash - and `⋮` keeps only what the rail does not already carry.
+- [x] Tests: pin/unpin, archive and recolour fire the Slice 1 mutations from the card; the pin is asserted to mount outside the content layer; hover reveal and its reduced-motion fallback are asserted on the rail's classes.
 
 ### Task 5 - Data-driven customisable toolbar + checklist polish
 

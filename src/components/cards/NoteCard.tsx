@@ -1,17 +1,12 @@
-import { MoreVertical } from 'lucide-react';
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { CardActions } from '@/components/cards/CardActions.tsx';
 import { CardMedia } from '@/components/cards/CardMedia.tsx';
+import { CardPin } from '@/components/cards/CardPin.tsx';
 import { NoteBody } from '@/components/NoteBody.tsx';
 import { TagPills } from '@/components/tags/TagPills.tsx';
 import { Card } from '@/components/ui/card.tsx';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu.tsx';
 import { type LifecycleSnapshot, useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { useTagsForNote } from '@/hooks/data/useTagsForNote.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
@@ -31,6 +26,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
   const {
     purgeNote,
     restoreNote,
+    updateNote,
     revertLifecycle,
     pinNote,
     unpinNote,
@@ -113,13 +109,13 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
 
       {/* Outside the content layer so it stacks above the media too - the pin is
           never occluded by an attachment. Only shown for a note that can be
-          pinned: pinning is meaningless in the archive and the trash.
+          pinned: pinning is meaningless in the archive and the trash. */}
       {note.state === 'active' && (
         <CardPin
           pinned={Boolean(note.pinnedAt)}
           onToggle={note.pinnedAt ? handleUnpin : handlePin}
         />
-      )}*/}
+      )}
 
       <div className="relative z-10 p-[0.9rem_1rem_0.85rem]">
         {/* Above the title, as in the lab: what a note *looks* like is the
@@ -129,10 +125,10 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
         {note.header ? (
           <h2
             dir="auto"
-            /* pe-8 reserves the pin's corner so a long title never runs under
+            /* pe-9 reserves the pin's corner so a long title never runs under
                it. Reserved rather than revealed: the card's height must not
                change when the pointer arrives. */
-            className="mb-1.5 line-clamp-3 min-w-0 max-w-full text-pretty break-words pe-8 font-display text-foreground text-title [overflow-wrap:anywhere]"
+            className="mb-1.5 line-clamp-3 min-w-0 max-w-full text-pretty break-words pe-9 font-display text-foreground text-title [overflow-wrap:anywhere]"
           >
             {note.header}
           </h2>
@@ -153,56 +149,14 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
         <div className="mt-3 flex flex-wrap items-end gap-2">
           <TagPills tags={tags} maxVisible={3} className="mr-auto min-w-0" />
 
-          <div className="ml-auto flex shrink-0 items-center gap-0.5">
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                aria-label={t('notes.menu')}
-                onClick={(e) => e.stopPropagation()}
-                className={cn(
-                  'flex size-11 shrink-0 items-center justify-center rounded-control text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:shadow-rest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                  !reducedMotion &&
-                    'transition-[background-color,color,box-shadow,transform] hover:scale-[1.04]'
-                )}
-              >
-                <MoreVertical className="size-4" />
-              </DropdownMenuTrigger>
-              {/* The menu is state-aware: a trashed note offers recovery and
-                  permanent deletion, everything else offers the forward moves. */}
-              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                {note.state === 'trashed' ? (
-                  <>
-                    <DropdownMenuItem onClick={handleRestore}>
-                      {t('notes.restore')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={handlePurge}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      {t('notes.deleteForever')}
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <>
-                    {note.state === 'archived' ? (
-                      <DropdownMenuItem onClick={handleRestore}>
-                        {t('notes.restore')}
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenuItem onClick={handleArchive}>
-                        {t('notes.archive')}
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem
-                      onClick={handleTrash}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      {t('notes.moveToTrash')}
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <CardActions
+            note={note}
+            onArchive={handleArchive}
+            onRestore={handleRestore}
+            onTrash={handleTrash}
+            onPurge={handlePurge}
+            onColorChange={(color) => void updateNote(note.id, { color })}
+          />
         </div>
       </div>
     </Card>

@@ -144,12 +144,12 @@ describe('NoteCard', () => {
     );
   });
 
-  it('pins an active note and offers an undo that unpins it', async () => {
+  it('pins an active note from the corner control, and offers an undo that unpins it', async () => {
     const note = makeNote();
     await db.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    await chooseMenuItem('notes.pin');
+    await userEvent.click(screen.getByRole('button', { name: 'notes.pin' }));
 
     await waitFor(async () =>
       expect((await db.notes.get(note.id))?.pinnedAt).toEqual(expect.any(String))
@@ -159,15 +159,96 @@ describe('NoteCard', () => {
     await waitFor(async () => expect((await db.notes.get(note.id))?.pinnedAt).toBeUndefined());
   });
 
-  it('archives an active note', async () => {
+  it('offers unpin on an already pinned note', async () => {
+    const note = makeNote({ pinnedAt: new Date().toISOString() });
+    await db.notes.add(note);
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    const pin = screen.getByRole('button', { name: 'notes.unpin' });
+    expect(pin).toHaveAttribute('aria-pressed', 'true');
+
+    await userEvent.click(pin);
+
+    await waitFor(async () => expect((await db.notes.get(note.id))?.pinnedAt).toBeUndefined());
+  });
+
+  // The Pin-Is-Always-In-Front Rule: the pin is a child of the card itself, not
+  // of the content layer, so no attachment, scrim or action row can occlude it.
+  it('mounts the pin outside the content layer so nothing can cover it', () => {
+    const note = makeNote({ body: '<img data-attachment-id="x1">' });
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    const card = screen.getByRole('heading', { name: 'My note' }).closest('[role="button"]');
+    const pin = screen.getByRole('button', { name: 'notes.pin' });
+    expect(pin.parentElement).toBe(card);
+  });
+
+  it('does not open the editor when the pin is clicked', async () => {
+    const note = makeNote();
+    await db.notes.add(note);
+    const onSelect = vi.fn();
+    render(<NoteCard note={note} onSelect={onSelect} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'notes.pin' }));
+
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it('hides the pin where pinning is meaningless', () => {
+    render(<NoteCard note={makeNote({ state: 'archived' })} onSelect={vi.fn()} />);
+
+    expect(screen.queryByRole('button', { name: 'notes.pin' })).not.toBeInTheDocument();
+  });
+
+  it('archives an active note from the foot rail', async () => {
     const note = makeNote();
     await db.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    await chooseMenuItem('notes.archive');
+    await userEvent.click(screen.getByRole('button', { name: 'notes.archive' }));
 
     await waitFor(async () => expect((await db.notes.get(note.id))?.state).toBe('archived'));
     expect(toastMock).toHaveBeenCalledWith('notes.archived', expect.anything());
+  });
+
+  it('recolours the card from the foot rail swatch', async () => {
+    const note = makeNote();
+    await db.notes.add(note);
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'notes.color' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'colors.blue' }));
+
+    await waitFor(async () => expect((await db.notes.get(note.id))?.color).toBe('blue'));
+  });
+
+  it('does not open the editor when a foot rail control is used', async () => {
+    const note = makeNote();
+    await db.notes.add(note);
+    const onSelect = vi.fn();
+    render(<NoteCard note={note} onSelect={onSelect} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'notes.color' }));
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it('keeps the foot rail controls always visible', () => {
+    render(<NoteCard note={makeNote()} onSelect={vi.fn()} />);
+
+    const rail = document.querySelector('[data-slot="note-card-actions"]');
+    expect(rail).not.toHaveClass('opacity-0');
+    expect(rail).not.toHaveClass('group-hover:opacity-100');
+  });
+
+  it('offers restore instead of archive on the foot rail of an archived note', async () => {
+    const note = makeNote({ state: 'archived' });
+    await db.notes.add(note);
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    expect(screen.queryByRole('button', { name: 'notes.archive' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'notes.restore' }));
+
+    await waitFor(async () => expect((await db.notes.get(note.id))?.state).toBe('active'));
   });
 
   it('offers restore and permanent deletion for a trashed note, and nothing else', async () => {
@@ -191,16 +272,6 @@ describe('NoteCard', () => {
     // Purge is irreversible, so its undo re-puts the captured note verbatim.
     await undoLastToast();
     await waitFor(async () => expect(await db.notes.get(note.id)).toEqual(note));
-  });
-
-  it('offers restore instead of archive for an archived note', async () => {
-    const note = makeNote({ state: 'archived' });
-    await db.notes.add(note);
-    render(<NoteCard note={note} onSelect={vi.fn()} />);
-
-    await chooseMenuItem('notes.restore');
-
-    await waitFor(async () => expect((await db.notes.get(note.id))?.state).toBe('active'));
   });
 
   // Attachments are summarised by CardMedia rather than rendered inline, so

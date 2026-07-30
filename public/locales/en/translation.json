@@ -277,6 +277,7 @@
     "unpin": "Unpin",
     "pinned": "Note pinned",
     "unpinned": "Note unpinned",
+    "color": "Card colour",
     "archive": "Archive",
     "archived": "Note archived",
     "moveToTrash": "Move to trash",
