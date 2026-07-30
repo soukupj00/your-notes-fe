@@ -33,8 +33,13 @@ export function TagPills({ tags, onRemove, maxVisible, className }: TagPillsProp
           {...noteColorAttrs(tag.color)}
           /* The chip form from DESIGN.md: pill, uppercase label at the 11px
              floor, filled from the label's own identity with identity-derived
-             text. `text-label` carries the tracking and weight with it. */
-          className="flex items-center gap-1 rounded-full bg-note-chip px-2 py-0.5 text-label text-note-on-chip uppercase"
+             text. `text-label` carries the tracking and weight with it.
+
+             `min-w-0` is load-bearing: a flex item's default `min-width: auto`
+             refuses to shrink below its content, so without it the `truncate`
+             below never engages and one long label ("Personalfinanceand-
+             budgeting2026") runs straight past the card's edge. */
+          className="flex min-w-0 max-w-full items-center gap-1 rounded-full bg-note-chip px-2 py-0.5 text-label text-note-on-chip uppercase"
         >
           <span className="truncate">{tag.name}</span>
           {onRemove && (
