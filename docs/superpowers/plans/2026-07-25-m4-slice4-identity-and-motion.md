@@ -1,6 +1,6 @@
 # M4 Slice 4 - Identity & motion
 
-**Status:** not started.
+**Status:** Task 1 complete; Task 1b foundation + card + chrome implementation in progress.
 
 **Goal:** Give the app a distinctive "tactile paper" identity, add purposeful Motion animation, ship the full-card colour system, and make the toolbar user-customisable - turning a competent app into one that feels intentional and personal.
 
@@ -32,22 +32,24 @@ Item 14: components currently look "straight out of the box" (shadcn defaults). 
 
 ### Task 1b - Carry the direction into production
 
-The design contract is [`DESIGN.md`](../../../DESIGN.md); its Named Rules are binding. The lab measured six concrete defects that must be **fixed rather than ported**:
+The design contract is [`DESIGN.md`](../../../DESIGN.md); its Named Rules are binding.
+A production audit corrected the lab-only assumptions before implementation: production has no JS masonry hook, Motion dependency, or card pin control yet; its FAB is already a filled 56px Button; and the persisted palette has nine assignable keys plus default rather than the lab's six identities.
+Reflow fixes therefore land with Task 3's packed feed, and the backed pin lands when Task 4 adds the card pin control.
 
-- [ ] **Day accent.** Replace the failing `oklch(58% 0.14 68)` with the resolved `oklch(54% 0.15 80)`. See *The Two-Constraint Rule* - an accent must clear 4.5:1 on its own text **and** 3:1 against the canvas, and brightening to yellow fails the second at 1.58:1.
-- [ ] **Touch targets.** Everything except the FAB is under 44px in touch mode (pin 27, action buttons 30, checklist boxes 15). Invisible padding, real hit area.
-- [ ] **FAB fill.** It has no background in either theme - only a shadow. Fill it with the accent; a shadow is depth, not a shape.
-- [ ] **Pin in front.** 7 of 11 cards place an unbacked pin over media. Per *The Pin-Is-Always-In-Front Rule* the pin sits above every card layer with its own filled backing, in both layouts and both themes.
-- [ ] **Reflow responsiveness.** Pinning currently takes 115ms to its first frame, then jumps 21px discontinuously. Cause: the masonry hook's `ResizeObserver` effect depends on the `measure` callback, so every re-pack re-observes every node and fires a late second measurement. Observe once, call the latest `measure` through a ref. Ship gate: first frame within ~16ms **and** no frame moving further than the spring's own step.
-- [ ] **Wire the reflow transition.** It is expressed as `{ layout: {...} }` but the packed feed sets `layout={false}` and animates `x`/`y`, so it silently falls back to Motion's default spring. Fix the wiring, then choose the value, then re-measure.
-- [ ] **Prune `@fontsource`** down to Bricolage Grotesque + Work Sans now that `nightshift` won (souki asked for this explicitly; bundle size matters).
+- [x] **Day accent.** Replace the failing `oklch(58% 0.14 68)` with the resolved `oklch(54% 0.15 80)`. See *The Two-Constraint Rule* - an accent must clear 4.5:1 on its own text **and** 3:1 against the canvas, and brightening to yellow fails the second at 1.58:1.
+- [ ] **Touch targets.** Audit the real production sites rather than porting the prototype list. Foundation + card + chrome gives card controls, colour swatches, search controls, and touch-mode shared chrome a real 44px box; checklist and later action surfaces remain with their owning tasks.
+- [x] **FAB fill.** Production already uses the filled 56px primary Button; the implementation only replaces its generic elevation with the named token.
+- [ ] **Pin in front.** Deferred to Task 4 because production does not have a card pin control yet. Per *The Pin-Is-Always-In-Front Rule* the new control must sit above every card layer with its own filled backing.
+- [ ] **Reflow responsiveness.** Deferred to Task 3, which introduces the JS masonry hook that this measured lab defect refers to. Observe once, call the latest `measure` through a ref. Ship gate: first frame within ~16ms **and** no frame moving further than the spring's own step.
+- [ ] **Wire the reflow transition.** Deferred to Task 3 because production currently uses CSS columns and has no x/y Motion placement path.
+- [x] **Prune `@fontsource`** down to Bricolage Grotesque + Work Sans now that `nightshift` won (souki asked for this explicitly; bundle size matters).
 - [ ] Decide whether the `/prototype/identity` lab stays in the repo as a reference or is removed once production CSS lands.
 
 ### Task 2 - Colour system (full-card tint)
 
-Decisions: full-card tint; palette tokens as `{light, dark}` OKLCH pairs in `themes.ts`; colour is decorative; colour-blind theme re-values the same tokens.
+Decisions: full-card tint; keep the nine persisted colour keys plus default and re-value them; `src/styles/globals.css` is the live token source; colour is decorative; colour-blind mode re-values the same selectors.
 
-- [ ] Define the palette in `src/themes.ts`: ~8-10 named tokens + default, each a `{ light, dark }` OKLCH pair (structure matches existing theme tokens). Add colour-blind-theme values for the same tokens.
+- [ ] Define the nine-key palette plus default in `src/styles/globals.css`, with day pigment and night light values under the same `data-note-color` selector. Add colour-blind values for the same tokens.
 - [ ] `NoteCard` reads `Note.color` → full-card tint that resolves per active theme. Tag pills read `Tag.color` from the same tokens.
 - [ ] Colour **palette popover** (swatch grid) shared by: editor action bar, card hover row, card `⋮`, tag manager, tag popover.
 - [ ] Tests: token resolves per theme; card tint + tag pill colour render; default = neutral surface.

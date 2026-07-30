@@ -11,6 +11,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar.tsx';
 import { useTags } from '@/hooks/data/useTags.ts';
+import { noteColorAttrs } from '@/lib/note-colors.ts';
 
 /**
  * The nav link list, rendered by both the desktop sidebar and the mobile
@@ -27,7 +28,9 @@ export function SideNav() {
   // desktop rail, so the drawer must not inherit a collapse chosen on a laptop.
   const showLabels = tags.length > 0 && (isMobile || state === 'expanded');
 
-  const activeProps = { className: 'bg-sidebar-accent font-medium text-sidebar-accent-foreground' };
+  const activeProps = {
+    className: 'bg-sidebar-primary font-medium text-sidebar-primary-foreground',
+  };
 
   return (
     <nav aria-label={t('nav.primary')}>
@@ -70,16 +73,15 @@ export function SideNav() {
                       onClick={closeDrawer}
                       activeProps={activeProps}
                     >
+                      {/* The dot is the *only* carrier of a label's identity in
+                          the rail, so it must not be the palest thing on the
+                          surface - which is what it was, filled with the card
+                          tint. It takes the identity's strongest value instead
+                          (the day edge, the night neon) over a control-grade
+                          boundary that gives the shape its own 3:1. */}
                       <span
-                        className="size-3 shrink-0 rounded-full border"
-                        style={
-                          tag.color
-                            ? {
-                                backgroundColor: `var(--note-${tag.color})`,
-                                borderColor: `var(--note-${tag.color}-border)`,
-                              }
-                            : undefined
-                        }
+                        {...noteColorAttrs(tag.color)}
+                        className="size-3 shrink-0 rounded-full border border-input bg-note-swatch-ring"
                         aria-hidden
                       />
                       <span className="truncate">{tag.name}</span>

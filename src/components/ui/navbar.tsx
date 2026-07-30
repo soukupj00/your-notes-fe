@@ -59,7 +59,7 @@ function Navbar() {
     // Sticky so the search box, sort menu and label filters stay reachable in a
     // long feed - the feed's visible title row was dropped in favour of them.
     // z-10 matches the sidebar panel and stays under QuickCaptureBar's z-40.
-    <header className="nav-scroll-shadow sticky top-0 z-10 border-b bg-background">
+    <header className="nav-scroll-shadow sticky top-0 z-10 border-b bg-chrome">
       {/* Web Navbar */}
       <div className="hidden items-center justify-between px-4 py-2 sm:flex">
         {/* Left: the sidebar toggle. The brand lives in SidebarHeader now. */}
@@ -72,7 +72,12 @@ function Navbar() {
         <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label={t('settings.locale.label')}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="touch-target rounded-control focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-chrome"
+                aria-label={t('settings.locale.label')}
+              >
                 <Globe />
               </Button>
             </DropdownMenuTrigger>
@@ -97,7 +102,12 @@ function Navbar() {
             </DropdownMenuContent>
           </DropdownMenu>
           <ThemeModeToggleButton />
-          <Button variant="ghost" size="icon" asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="touch-target rounded-control focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-chrome"
+            asChild
+          >
             <Link to="/settings" aria-label={t('nav.settings')}>
               <Settings />
             </Link>
@@ -113,7 +123,12 @@ function Navbar() {
         {searchable && <SearchInput />}
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label={t('nav.settings')}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="touch-target rounded-control focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-chrome"
+              aria-label={t('nav.settings')}
+            >
               <Settings />
             </Button>
           </DialogTrigger>

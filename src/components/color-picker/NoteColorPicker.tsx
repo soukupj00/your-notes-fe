@@ -1,6 +1,6 @@
 import { Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { NOTE_COLORS, noteColorStyle } from '@/lib/note-colors.ts';
+import { NOTE_COLORS, noteColorAttrs } from '@/lib/note-colors.ts';
 import { cn } from '@/lib/utils.ts';
 
 type NoteColorPickerProps = {
@@ -33,9 +33,9 @@ export function NoteColorPicker({ value, onChange, className }: NoteColorPickerP
             aria-label={t(`colors.${token}`)}
             aria-pressed={selected}
             onClick={() => onChange(isNone ? undefined : token)}
-            style={noteColorStyle(token)}
+            {...noteColorAttrs(token)}
             className={cn(
-              'relative size-6 rounded-full border border-border transition-shadow',
+              'relative size-11 rounded-full border border-note-swatch-ring bg-note-swatch transition-shadow',
               'hover:ring-2 hover:ring-ring/50 hover:ring-offset-1 hover:ring-offset-background',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               selected && 'ring-2 ring-ring ring-offset-1 ring-offset-background'

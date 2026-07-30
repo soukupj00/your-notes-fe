@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { NoteBody } from '@/components/NoteBody.tsx';
 import { TagPills } from '@/components/tags/TagPills.tsx';
-import { Card, CardContent, CardHeader } from '@/components/ui/card.tsx';
+import { Card } from '@/components/ui/card.tsx';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,13 +13,15 @@ import {
 } from '@/components/ui/dropdown-menu.tsx';
 import { type LifecycleSnapshot, useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { useTagsForNote } from '@/hooks/data/useTagsForNote.ts';
+import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import {
   bodyHasAttachment,
   bodyHasAudio,
   bodyHasFile,
   bodyHasVideo,
 } from '@/lib/attachment-html.ts';
-import { stripHtml } from '@/lib/utils.ts';
+import { noteColorAttrs } from '@/lib/note-colors.ts';
+import { cn, stripHtml } from '@/lib/utils.ts';
 import type { Note } from '@/models.ts';
 
 interface NoteCardProps {
@@ -35,6 +37,8 @@ interface NoteCardAttachmentButtonProps {
 
 /** A media affordance nested inside the clickable card surface. */
 function NoteCardAttachmentButton({ label, onActivate, children }: NoteCardAttachmentButtonProps) {
+  const reducedMotion = useReducedMotion();
+
   return (
     <button
       type="button"
@@ -43,7 +47,11 @@ function NoteCardAttachmentButton({ label, onActivate, children }: NoteCardAttac
         event.stopPropagation();
         onActivate();
       }}
-      className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className={cn(
+        'flex size-11 items-center justify-center rounded-control bg-note-chip text-note-on-chip shadow-rest hover:shadow-note-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+        !reducedMotion &&
+          'transition-[background-color,color,box-shadow,transform] hover:scale-[1.04]'
+      )}
     >
       {children}
     </button>
@@ -52,6 +60,7 @@ function NoteCardAttachmentButton({ label, onActivate, children }: NoteCardAttac
 
 export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
   const { t } = useTranslation();
+  const reducedMotion = useReducedMotion();
   const {
     purgeNote,
     restoreNote,
@@ -103,6 +112,8 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
 
   return (
     <Card
+      {...noteColorAttrs(note.color)}
+      data-pinned={note.pinnedAt ? '' : undefined}
       // Not a <button>: the card contains a menu trigger, and nesting
       // interactive elements is invalid/inaccessible. A role="button" div with
       // keyboard handling keeps the whole card clickable without the nesting.
@@ -120,100 +131,127 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
           open();
         }
       }}
-      className="relative mb-4 w-full cursor-pointer break-inside-avoid shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group relative isolate w-full cursor-pointer break-inside-avoid gap-0 rounded-card border-0 bg-transparent py-0 text-card-foreground shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
-      <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
+      {/* Only this material layer scales. Keeping text and media off the
+          transformed layer prevents Chromium from bitmap-stretching them. */}
+      <div
+        data-slot="note-card-surface"
+        aria-hidden
+        className={cn(
+          'pointer-events-none absolute inset-0 z-0 rounded-card border border-note-border bg-note-surface shadow-note group-hover:border-note-border-hover group-hover:shadow-note-lift',
+          !reducedMotion &&
+            'transition-[transform,border-color,box-shadow] duration-200 group-hover:scale-[1.02]'
+        )}
+      />
+
+      <div className="relative z-10 p-[0.9rem_1rem_0.85rem]">
         {note.header ? (
-          <h2 className="font-semibold text-lg leading-tight">{note.header}</h2>
+          <h2 dir="auto" className="mb-1.5 font-display text-foreground text-title">
+            {note.header}
+          </h2>
         ) : (
           <span className="sr-only">{t('notes.editNoteTitle')}</span>
         )}
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            aria-label={t('notes.menu')}
-            onClick={(e) => e.stopPropagation()}
-            className="-mt-1 -mr-1 ml-auto shrink-0 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <MoreVertical className="size-4" />
-          </DropdownMenuTrigger>
-          {/* The menu is state-aware: a trashed note offers recovery and
-              permanent deletion, everything else offers the forward moves. */}
-          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-            {note.state === 'trashed' ? (
-              <>
-                <DropdownMenuItem onClick={handleRestore}>{t('notes.restore')}</DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={handlePurge}
-                  className="text-destructive focus:text-destructive"
-                >
-                  {t('notes.deleteForever')}
-                </DropdownMenuItem>
-              </>
-            ) : (
-              <>
-                {note.state === 'active' &&
-                  (note.pinnedAt ? (
-                    <DropdownMenuItem onClick={handleUnpin}>{t('notes.unpin')}</DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem onClick={handlePin}>{t('notes.pin')}</DropdownMenuItem>
-                  ))}
-                {note.state === 'archived' ? (
-                  <DropdownMenuItem onClick={handleRestore}>{t('notes.restore')}</DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem onClick={handleArchive}>{t('notes.archive')}</DropdownMenuItem>
-                )}
-                <DropdownMenuItem
-                  onClick={handleTrash}
-                  className="text-destructive focus:text-destructive"
-                >
-                  {t('notes.moveToTrash')}
-                </DropdownMenuItem>
-              </>
+
+        {hasBody && (
+          <NoteBody
+            html={note.body}
+            className="line-clamp-6 text-body text-foreground [&_li]:text-body [&_p]:text-body"
+          />
+        )}
+
+        {/* Foot rail A from DESIGN.md. Labels get the flexible side; controls
+            keep their real 44px hit areas and wrap below rather than squeezing
+            the note's scarce horizontal axis. */}
+        <div className="mt-3 flex flex-wrap items-end gap-2">
+          <TagPills tags={tags} className="mr-auto min-w-0" />
+
+          <div className="ml-auto flex shrink-0 items-center gap-0.5">
+            {hasAudio && (
+              <NoteCardAttachmentButton
+                label={t('notes.playAudio')}
+                onActivate={() => onSelect(note.id, { autoplayFirstAudio: true })}
+              >
+                <Play className="size-5 translate-x-px" />
+              </NoteCardAttachmentButton>
             )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </CardHeader>
+            {hasVideo && (
+              <NoteCardAttachmentButton
+                label={t('notes.playVideo')}
+                onActivate={() => onSelect(note.id)}
+              >
+                <Video className="size-5" />
+              </NoteCardAttachmentButton>
+            )}
+            {hasFile && (
+              <NoteCardAttachmentButton
+                label={t('notes.openFile')}
+                onActivate={() => onSelect(note.id)}
+              >
+                <FileText className="size-5" />
+              </NoteCardAttachmentButton>
+            )}
 
-      <CardContent className="space-y-3">
-        {hasBody && <NoteBody html={note.body} className="line-clamp-6" />}
-        {/* Read-only here: labels are changed from the editor (and, in Slice 4,
-            the card's own overflow menu). */}
-        <TagPills tags={tags} />
-      </CardContent>
-
-      {/* Always-visible audio/video/file affordances: pinned bottom-right, in a
-          flex row so all three coexist without overlapping. They survive the
-          card's line-clamp even on long notes. Audio opens the note and
-          autoplays its first audio (same intent the old inline chip carried);
-          video and file just open the note - no autoplay. */}
-      {(hasAudio || hasVideo || hasFile) && (
-        <div className="absolute right-2 bottom-2 z-10 flex gap-2">
-          {hasAudio && (
-            <NoteCardAttachmentButton
-              label={t('notes.playAudio')}
-              onActivate={() => onSelect(note.id, { autoplayFirstAudio: true })}
-            >
-              <Play className="size-5 translate-x-px" />
-            </NoteCardAttachmentButton>
-          )}
-          {hasVideo && (
-            <NoteCardAttachmentButton
-              label={t('notes.playVideo')}
-              onActivate={() => onSelect(note.id)}
-            >
-              <Video className="size-5" />
-            </NoteCardAttachmentButton>
-          )}
-          {hasFile && (
-            <NoteCardAttachmentButton
-              label={t('notes.openFile')}
-              onActivate={() => onSelect(note.id)}
-            >
-              <FileText className="size-5" />
-            </NoteCardAttachmentButton>
-          )}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                aria-label={t('notes.menu')}
+                onClick={(e) => e.stopPropagation()}
+                className={cn(
+                  'flex size-11 shrink-0 items-center justify-center rounded-control text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:shadow-rest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                  !reducedMotion &&
+                    'transition-[background-color,color,box-shadow,transform] hover:scale-[1.04]'
+                )}
+              >
+                <MoreVertical className="size-4" />
+              </DropdownMenuTrigger>
+              {/* The menu is state-aware: a trashed note offers recovery and
+                  permanent deletion, everything else offers the forward moves. */}
+              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                {note.state === 'trashed' ? (
+                  <>
+                    <DropdownMenuItem onClick={handleRestore}>
+                      {t('notes.restore')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handlePurge}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      {t('notes.deleteForever')}
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    {note.state === 'active' &&
+                      (note.pinnedAt ? (
+                        <DropdownMenuItem onClick={handleUnpin}>
+                          {t('notes.unpin')}
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem onClick={handlePin}>{t('notes.pin')}</DropdownMenuItem>
+                      ))}
+                    {note.state === 'archived' ? (
+                      <DropdownMenuItem onClick={handleRestore}>
+                        {t('notes.restore')}
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem onClick={handleArchive}>
+                        {t('notes.archive')}
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                      onClick={handleTrash}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      {t('notes.moveToTrash')}
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-      )}
+      </div>
     </Card>
   );
 };

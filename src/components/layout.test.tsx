@@ -47,13 +47,10 @@ afterEach(async () => {
 });
 
 describe('nav shell contents', () => {
-  it('renders the YouNotes brand and app icon', async () => {
+  it('renders the YouNotes brand with a themeable accent mark', async () => {
     renderRoute('/');
 
-    expect(await screen.findByRole('img', { name: 'YouNotes' })).toHaveAttribute(
-      'src',
-      '/note-128.png'
-    );
+    expect(await screen.findByRole('img', { name: 'YouNotes' })).toHaveClass('bg-primary');
     expect(screen.getByText('YouNotes')).toBeInTheDocument();
   });
 

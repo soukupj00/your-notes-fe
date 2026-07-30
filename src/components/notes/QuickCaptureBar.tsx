@@ -23,7 +23,7 @@ export function QuickCaptureBar({ onStart }: { onStart: (editing: EditingState) 
             type="button"
             size="icon"
             aria-label={t('notes.capture.open')}
-            className="mb-3 size-14 rounded-full shadow-lg"
+            className="mb-3 size-14 rounded-full bg-primary text-primary-foreground shadow-lift hover:bg-primary/90 hover:shadow-lift"
           >
             <Plus className="size-6" />
           </Button>
@@ -43,7 +43,7 @@ export function QuickCaptureBar({ onStart }: { onStart: (editing: EditingState) 
                     setOpen(false);
                     onStart(editing);
                   }}
-                  className="rounded-full shadow-md"
+                  className="min-h-11 rounded-full border border-input bg-card shadow-rest hover:bg-accent hover:shadow-lift"
                 >
                   <Icon className="size-5" aria-hidden />
                   {t(labelKey)}

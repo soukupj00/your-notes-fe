@@ -38,13 +38,13 @@ export function DesktopCaptureBar({ onStart }: { onStart: (state: EditingState) 
   const placeholder = t(PLACEHOLDER_KEYS[reducedMotion ? 0 : index]);
 
   return (
-    <div className="mx-auto mb-6 hidden max-w-lg items-center gap-1 rounded-lg border bg-background pr-2 shadow-sm transition-shadow hover:shadow sm:flex">
+    <div className="mx-auto mb-6 hidden max-w-lg items-center gap-1 rounded-card border bg-card pr-2 shadow-rest transition-shadow hover:shadow-lift sm:flex">
       <button
         type="button"
         onClick={() => onStart({ id: null })}
         // `cursor-text`: the bar looks like a text field and opens straight into
         // one, so the pointer should promise typing, not a navigation.
-        className="flex-1 cursor-text px-4 py-3 text-left text-muted-foreground transition-colors hover:text-foreground"
+        className="min-h-11 flex-1 cursor-text px-4 py-3 text-left text-body text-muted-foreground transition-colors hover:text-foreground"
       >
         {/* The rotation is cosmetic: assistive tech gets the one stable label
             rather than a prompt that renames itself every five seconds. */}

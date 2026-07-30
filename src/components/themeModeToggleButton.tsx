@@ -18,6 +18,7 @@ export function ThemeModeToggleButton() {
     <Button
       variant="ghost"
       size="icon"
+      className="touch-target rounded-control focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-chrome"
       onClick={handleToggle}
       aria-label={t('settings.theme.toggle')}
       title={t('settings.theme.toggle')}

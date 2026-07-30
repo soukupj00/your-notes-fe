@@ -4,13 +4,14 @@ import { Skeleton } from '@/components/ui/skeleton.tsx';
 import { useViewMode } from '@/context/viewModeProvider.tsx';
 import { type NoteFeedScope, useNoteFeed } from '@/hooks/data/useNoteFeed.ts';
 import { useNoteSearchState } from '@/hooks/useNoteSearchState.ts';
+import { cn } from '@/lib/utils.ts';
 
 // Responsive masonry via CSS `columns` (no JS lib). Cards must not split across
 // columns, so each carries `break-inside-avoid` (see NoteCard). Note: CSS
 // columns fill column-major, so ordering is top-of-column-1 down, not row-major.
-const MASONRY = 'columns-1 gap-4 sm:columns-2 lg:columns-3 xl:columns-4';
+const MASONRY = 'columns-1 gap-[0.85rem] sm:columns-2 lg:columns-3 xl:columns-4';
 // Single-column reading list, centered and width-capped for comfortable line length.
-const LIST = 'mx-auto flex max-w-2xl flex-col gap-4';
+const LIST = 'mx-auto flex max-w-2xl flex-col gap-[0.85rem]';
 
 /** Which `notes.empty.*` copy block describes an empty feed in this scope. */
 function emptyKeyFor(scope: NoteFeedScope): string {
@@ -30,7 +31,8 @@ export function NoteContent({
   const { notes, loading } = useNoteFeed(scope, search);
   const { viewMode } = useViewMode();
   const { t } = useTranslation();
-  const layout = viewMode === 'list' ? LIST : MASONRY;
+  const masonry = viewMode === 'masonry';
+  const layout = masonry ? MASONRY : LIST;
 
   if (loading) {
     return (
@@ -38,7 +40,10 @@ export function NoteContent({
       // of its own or a screen reader hears nothing at all while the feed loads.
       <div className={layout} role="status" aria-busy aria-label={t('notes.loading')}>
         {['a', 'b', 'c', 'd', 'e', 'f'].map((k) => (
-          <Skeleton key={k} className="mb-4 h-32 w-full break-inside-avoid" />
+          <Skeleton
+            key={k}
+            className={cn('h-32 w-full break-inside-avoid', masonry && 'mb-[0.85rem]')}
+          />
         ))}
       </div>
     );
@@ -64,7 +69,7 @@ export function NoteContent({
   return (
     <ul className={layout} aria-label={t('notes.feed')}>
       {notes.map((note) => (
-        <li key={note.id} className="break-inside-avoid">
+        <li key={note.id} className={cn('break-inside-avoid', masonry && 'mb-[0.85rem]')}>
           <NoteCard note={note} onSelect={onSelect} />
         </li>
       ))}

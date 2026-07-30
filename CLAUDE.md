@@ -50,6 +50,7 @@ pnpm test:e2e     # Playwright — not yet added
 All persistence is via **Dexie** (IndexedDB wrapper). The schema lives in `src/db/db.ts` as `NotesDB extends Dexie`. Domain models are in `src/models.ts` (`Note`, `Tag`, `NoteTag`, `NoteImage`, `NoteAudio`, `NoteFile`).
 
 Data access uses dedicated hooks in `src/hooks/data/`:
+
 - `useNotes` / `useNote` — live queries via `useLiveQuery` from `dexie-react-hooks`
 - `useNoteActions` / `useTagActions` — CRUD mutations (create/update/delete)
 - `useNoteFeed` — the one feed query: lifecycle/tag scoping plus fuzzy ranked search (Fuse.js, `src/lib/note-search.ts`)
@@ -63,7 +64,9 @@ The `NotesProvider` that used to hold the query is gone: a searched feed is now 
 Built on **TipTap v3**. The core `Editor` component (`editor.tsx`) composes extensions and renders `EditorContent`.
 
 Each editor extension lives in its own folder under `src/components/editor/extensions/<ExtensionName>/`. The pattern is:
+
 1. A TypeScript file that extends the upstream TipTap extension and adds a `button` option:
+
    ```ts
    export const Bold = TiptapBold.extend<BoldOptions>({
      addOptions() {
@@ -77,6 +80,7 @@ Each editor extension lives in its own folder under `src/components/editor/exten
      },
    });
    ```
+
 2. An `index.ts` that re-exports it.
 
 The `icon` prop is a **string key** resolved via `src/components/icons/icons.ts`, which maps names to Lucide icon components. When adding a new icon for a toolbar button, add it to that registry.
@@ -124,9 +128,11 @@ Zipping is `fflate`.
 Saving always goes through `requestSaveTarget`, which asks for the destination *before* the bytes are built (`showSaveFilePicker` needs the click's user activation) and reports `confirmed: false` on the Firefox/Safari anchor fallback, where we must not claim the file landed.
 Manifest rows are validated with `z.looseObject`, so unknown (future) fields survive a round-trip.
 
-### Theming (`src/themes.ts`, `src/context/themeProvider.tsx`)
+### Theming (`src/styles/globals.css`, `src/context/themeProvider.tsx`)
 
-Colors use **OKLCH** values defined in `src/themes.ts` for `light` and `dark` tokens. `ThemeProvider` (`src/context/themeProvider.tsx`) is a **custom** provider (not `next-themes`, despite that package being installed): it persists the choice to `localStorage` and toggles the `light`/`dark` class on `<html>`, supporting a `system` mode via `prefers-color-scheme`. Theme switching is done at the provider level — no per-component theme logic.
+Colors use **OKLCH** custom properties defined in `src/styles/globals.css`; this is the live token source for both light and dark.
+`ThemeProvider` (`src/context/themeProvider.tsx`) is a **custom** provider (not `next-themes`, despite that package being installed): it persists the choice to `localStorage` and toggles the `light`/`dark` class on `<html>`, supporting a `system` mode via `prefers-color-scheme`.
+Theme switching is done at the provider level - no per-component theme logic.
 
 ### i18n (`src/i18n.ts`)
 

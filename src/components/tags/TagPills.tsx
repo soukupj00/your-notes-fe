@@ -1,6 +1,6 @@
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { noteColorStyle } from '@/lib/note-colors.ts';
+import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { cn } from '@/lib/utils.ts';
 import type { Tag } from '@/models.ts';
 
@@ -25,8 +25,11 @@ export function TagPills({ tags, onRemove, className }: TagPillsProps) {
       {tags.map((tag) => (
         <li
           key={tag.id}
-          style={noteColorStyle(tag.color)}
-          className="flex items-center gap-1 rounded-full border bg-muted px-2 py-0.5 text-xs"
+          {...noteColorAttrs(tag.color)}
+          /* The chip form from DESIGN.md: pill, uppercase label at the 11px
+             floor, filled from the label's own identity with identity-derived
+             text. `text-label` carries the tracking and weight with it. */
+          className="flex items-center gap-1 rounded-full bg-note-chip px-2 py-0.5 text-label text-note-on-chip uppercase"
         >
           <span className="truncate">{tag.name}</span>
           {onRemove && (

@@ -40,14 +40,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <div className="flex h-10 w-full items-center justify-center gap-2 overflow-hidden">
-            <img
-              src="/note-128.png"
-              alt={t('navbar.logo')}
-              className="size-9 shrink-0 object-contain group-data-[collapsible=icon]:size-8"
+            <span
+              role="img"
+              aria-label={t('navbar.logo')}
+              className="size-9 shrink-0 bg-primary [mask-image:url('/note-128.png')] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain] group-data-[collapsible=icon]:size-8"
             />
             <span
               aria-hidden="true"
-              className="truncate font-bold text-xl group-data-[collapsible=icon]:hidden"
+              className="truncate font-display text-primary text-title group-data-[collapsible=icon]:hidden"
             >
               {t('navbar.logo')}
             </span>

@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils.ts';
 // skeleton box up front instead. The ratio is a guess (attachments do not
 // persist their intrinsic dimensions), so this trades a jarring pop-in for a
 // small settle - see the note in the slice plan about storing width/height.
-const PLACEHOLDER_CLASSES = ['w-full', 'animate-pulse', 'rounded-md', 'bg-primary/10'];
+const PLACEHOLDER_CLASSES = ['w-full', 'animate-pulse', 'rounded-md', 'bg-muted'];
 const PLACEHOLDER_RATIO = '16 / 10';
 
 function markAsPlaceholder(el: HTMLElement): void {
@@ -17,7 +17,7 @@ function markAsPlaceholder(el: HTMLElement): void {
 }
 
 function clearPlaceholder(el: HTMLElement): void {
-  el.classList.remove('animate-pulse', 'bg-primary/10');
+  el.classList.remove('animate-pulse', 'bg-muted');
   el.style.aspectRatio = '';
 }
 

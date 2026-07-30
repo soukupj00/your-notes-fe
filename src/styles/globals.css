@@ -19,6 +19,39 @@
    follow the in-app theme toggle rather than the OS setting. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Note identities are element-scoped: the `data-note-color` element defines
+   these values, not `:root`. They therefore cannot be aliases in `@theme` -
+   colour theme variables are resolved at the root and would freeze before the
+   per-element identity exists. Custom utilities keep evaluation on the element
+   while retaining readable Tailwind class names and variant support. */
+@utility bg-note-surface {
+  background-color: var(--note-surface);
+}
+@utility border-note-border {
+  border-color: var(--note-border);
+}
+@utility border-note-border-hover {
+  border-color: var(--note-border-hover);
+}
+@utility bg-note-chip {
+  background-color: var(--note-chip);
+}
+@utility text-note-on-chip {
+  color: var(--note-on-chip);
+}
+@utility bg-note-swatch {
+  background-color: var(--note-swatch);
+}
+@utility border-note-swatch-ring {
+  border-color: var(--note-swatch-ring);
+}
+@utility bg-note-swatch-ring {
+  background-color: var(--note-swatch-ring);
+}
+@utility ring-note-swatch-ring {
+  --tw-ring-color: var(--note-swatch-ring);
+}
+
 @layer base {
   body {
     background-color: var(--background);
@@ -128,28 +161,12 @@
     --sidebar-border: var(--border);
     --sidebar-ring: var(--ring);
 
-    /* Note/Tag colour palette (ADR 0009). A Note stores only the token name
-       (`red`, `teal`, …); the shade resolves here, per theme. Kept low-chroma
-       so a coloured card still reads as a surface, not as a control, and the
-       foreground token keeps contrast without a per-colour text colour. */
-    --note-red: oklch(94% 0.04 25);
-    --note-red-border: oklch(84% 0.08 25);
-    --note-orange: oklch(94% 0.05 55);
-    --note-orange-border: oklch(84% 0.09 55);
-    --note-yellow: oklch(96% 0.06 95);
-    --note-yellow-border: oklch(86% 0.1 95);
-    --note-green: oklch(94% 0.05 145);
-    --note-green-border: oklch(84% 0.09 145);
-    --note-teal: oklch(94% 0.04 190);
-    --note-teal-border: oklch(84% 0.08 190);
-    --note-blue: oklch(94% 0.04 250);
-    --note-blue-border: oklch(84% 0.08 250);
-    --note-purple: oklch(94% 0.04 295);
-    --note-purple-border: oklch(84% 0.08 295);
-    --note-pink: oklch(94% 0.04 350);
-    --note-pink-border: oklch(84% 0.08 350);
-    --note-gray: oklch(93% 0.01 250);
-    --note-gray-border: oklch(83% 0.02 250);
+    /* The uncoloured note, so a card can always read `--note-*` whether or not
+       an identity is assigned. Per-identity values and the derivation that turns
+       them into a surface, an edge, a chip and a glow are below the two theme
+       blocks, because they are selectors rather than variables. */
+    --note-tint: var(--canvas-raised);
+    --note-edge: var(--rule);
   }
 
   /*
@@ -193,26 +210,196 @@
 
     --success: oklch(80% 0.155 155);
     --info: oklch(80% 0.135 195);
+  }
 
-    /* Same tokens, dark shades - see the light block for the rationale. */
-    --note-red: oklch(32% 0.06 25);
-    --note-red-border: oklch(42% 0.09 25);
-    --note-orange: oklch(32% 0.06 55);
-    --note-orange-border: oklch(42% 0.09 55);
-    --note-yellow: oklch(33% 0.06 95);
-    --note-yellow-border: oklch(43% 0.09 95);
-    --note-green: oklch(32% 0.06 145);
-    --note-green-border: oklch(42% 0.09 145);
-    --note-teal: oklch(32% 0.05 190);
-    --note-teal-border: oklch(42% 0.08 190);
-    --note-blue: oklch(32% 0.06 250);
-    --note-blue-border: oklch(42% 0.09 250);
-    --note-purple: oklch(32% 0.06 295);
-    --note-purple-border: oklch(42% 0.09 295);
-    --note-pink: oklch(32% 0.06 350);
-    --note-pink-border: oklch(42% 0.09 350);
-    --note-gray: oklch(30% 0.01 270);
-    --note-gray-border: oklch(40% 0.02 270);
+  /*
+   * ── Note and Tag identities (ADR 0009) ────────────────────────────────────
+   *
+   * A Note stores only a token name (`red`, `teal`, …) and everything visual
+   * resolves from CSS, per theme, so a colour-blind variant can re-value the
+   * whole palette by overriding this block alone.
+   *
+   * The selector is `data-note-color` on the element rather than an inline
+   * style, and that is load-bearing: the two themes derive *different things*
+   * from an identity - a flooding tint by day, an edge and a glow by night -
+   * which an inline `background-color` cannot express. One attribute in, five
+   * theme-correct values out.
+   *
+   * Each identity therefore declares the minimum: two values by day (the tint
+   * that floods the card and the deeper edge around it) and *one* by night (the
+   * neon), because at night the surface, border, chip and glow are all mixes of
+   * that single value. Colour is an index, not decoration - a person finds a
+   * note again by remembering it was the green one.
+   */
+
+  /* Day: the identity is pigment. Soft tints on warm paper. */
+  [data-note-color="red"] {
+    --note-tint: oklch(94.6% 0.056 24);
+    --note-edge: oklch(82% 0.095 24);
+  }
+  [data-note-color="orange"] {
+    --note-tint: oklch(95% 0.058 52);
+    --note-edge: oklch(82.5% 0.098 52);
+  }
+  [data-note-color="yellow"] {
+    --note-tint: oklch(95.6% 0.062 95);
+    --note-edge: oklch(82% 0.1 95);
+  }
+  [data-note-color="green"] {
+    --note-tint: oklch(94.6% 0.05 152);
+    --note-edge: oklch(80% 0.078 152);
+  }
+  [data-note-color="teal"] {
+    --note-tint: oklch(94.8% 0.048 195);
+    --note-edge: oklch(80.5% 0.075 195);
+  }
+  [data-note-color="blue"] {
+    --note-tint: oklch(95% 0.045 250);
+    --note-edge: oklch(81% 0.072 250);
+  }
+  [data-note-color="purple"] {
+    --note-tint: oklch(94.6% 0.048 300);
+    --note-edge: oklch(80% 0.078 300);
+  }
+  [data-note-color="pink"] {
+    --note-tint: oklch(94.6% 0.05 352);
+    --note-edge: oklch(81% 0.085 352);
+  }
+  /* `gray` is a chosen warm-grey paper, while `default` is the absence of an
+     assigned colour. They stay close by day and diverge at night, where gray
+     becomes warm silver and default becomes the Base blue-grey light. */
+  [data-note-color="gray"] {
+    --note-tint: oklch(97.4% 0.008 84);
+    --note-edge: oklch(82% 0.016 80);
+  }
+
+  /*
+   * Night: the identity stops being pigment and becomes light. One neon value
+   * per identity, at a shared lightness of 76% with chroma at the sRGB maximum
+   * for that hue - so the nine read as one strip light rather than nine
+   * unrelated brightnesses, and so what is specified is what the browser
+   * actually paints (the lab's values sat outside sRGB and were quietly
+   * chroma-reduced, which is how two of them came to fail their chip-text floor).
+   */
+  .dark [data-note-color="red"] {
+    --note-neon: oklch(76% 0.143 24);
+  }
+  .dark [data-note-color="orange"] {
+    --note-neon: oklch(76% 0.16 52);
+  }
+  .dark [data-note-color="yellow"] {
+    --note-neon: oklch(76% 0.156 95);
+  }
+  .dark [data-note-color="green"] {
+    --note-neon: oklch(76% 0.199 152);
+  }
+  .dark [data-note-color="teal"] {
+    --note-neon: oklch(76% 0.129 195);
+  }
+  .dark [data-note-color="blue"] {
+    --note-neon: oklch(76% 0.128 250);
+  }
+  .dark [data-note-color="purple"] {
+    --note-neon: oklch(76% 0.145 300);
+  }
+  .dark [data-note-color="pink"] {
+    --note-neon: oklch(76% 0.168 352);
+  }
+  /* A warm silver, kept deliberately distinct from the uncoloured Base's cool
+     blue-grey light. */
+  .dark [data-note-color="gray"] {
+    --note-neon: oklch(76% 0.025 84);
+  }
+
+  /*
+   * The day derivation. The tint floods the card, the edge draws it, and the
+   * chip is that edge at 48% over the tint. Text stays ink: colour touches the
+   * card's surface, border, chip and edge and stops there.
+   */
+  [data-note-color] {
+    --note-surface: var(--note-tint);
+    --note-border: var(--note-edge);
+    --note-chip: color-mix(in oklab, var(--note-edge) 48%, var(--note-tint));
+    --note-on-chip: var(--ink);
+    --note-elevation: var(--elevation-rest);
+    --note-elevation-lift: var(--elevation-lift);
+    /* Hover warms the edge toward the accent - a material change, so the
+       affordance survives reduced motion with the scale switched off. */
+    --note-border-hover: color-mix(in oklab, var(--note-edge) 88%, var(--accent-tone));
+
+    /* A swatch is not a small card. The card's night surface is a 7% wash, so
+       nine cards differ by a whisper and read as identical at swatch size - the
+       dot in a picker or a rail has to show the identity itself. By day it can
+       simply be the card's own paint. */
+    --note-swatch: var(--note-tint);
+    --note-swatch-ring: var(--note-edge);
+  }
+
+  /*
+   * The night derivation. Everything is a mix of the one neon: the surface is a
+   * 7% wash of it into the raised plane (so the card stays near-black), the
+   * border 52%, the chip 18% with the neon itself as the chip's text, and the
+   * card emits a glow because a black shadow on a near-black room is invisible.
+   *
+   * Measured after the nine-key reconciliation: ink remains about 13.1:1 on
+   * every surface and neon-on-chip ranges from 5.77:1 to 6.54:1.
+   */
+  .dark [data-note-color] {
+    --note-surface: color-mix(in oklch, var(--note-neon) 7%, var(--canvas-raised));
+    --note-border: color-mix(in oklch, var(--note-neon) 52%, transparent);
+    --note-chip: color-mix(in oklab, var(--note-neon) 18%, var(--canvas-raised));
+    --note-on-chip: var(--note-neon);
+    --note-elevation:
+      var(--elevation-rest), 0 0 18px -4px color-mix(in oklch, var(--note-neon) 60%, transparent);
+    --note-elevation-lift:
+      var(--elevation-lift), 0 0 34px -6px color-mix(in oklch, var(--note-neon) 72%, transparent);
+    --note-border-hover: color-mix(in oklch, var(--note-neon) 78%, transparent);
+
+    --note-swatch: color-mix(in oklch, var(--note-neon) 30%, transparent);
+    --note-swatch-ring: var(--note-neon);
+  }
+
+  /* The uncoloured note is DESIGN.md's Base identity: neutral paper by day and
+     a cool blue-grey edge and glow by night. `gray` remains a separate persisted
+     choice and takes a warmer silver light above. */
+  [data-note-color="default"] {
+    --note-tint: var(--canvas-raised);
+    --note-edge: var(--rule);
+  }
+  .dark [data-note-color="default"] {
+    --note-neon: oklch(74% 0.05 250);
+  }
+  /* The "no colour" swatch is a control, so its ring has to be the boundary that
+     clears 3:1 rather than the card hairline. */
+  [data-note-color="default"] {
+    --note-swatch: var(--canvas-raised);
+    --note-swatch-ring: var(--rule-control);
+  }
+
+  /* Pinned is a stronger version of the same material, not a new colour. The
+     corner control itself lands with Task 4; this lets today's menu-based pin
+     state remain visible without inventing a temporary card anatomy. */
+  [data-note-color][data-pinned] {
+    --note-border: color-mix(in oklab, var(--note-edge) 70%, var(--ink));
+  }
+  .dark [data-note-color][data-pinned] {
+    --note-border: var(--note-neon);
+    --note-elevation:
+      var(--elevation-rest), 0 0 26px -5px color-mix(in oklch, var(--note-neon) 80%, transparent);
+  }
+
+  /* The 44px floor applies to touch input, not to every mouse-sized desktop
+     control. Shared controls expose stable data slots; bespoke controls opt in
+     with `.touch-target`. Layout stays compact with a mouse while a coarse
+     pointer always receives a real, measurable hit box. */
+  @media (pointer: coarse) {
+    [data-slot="button"],
+    [data-sidebar="menu-button"],
+    [data-sidebar="trigger"],
+    .touch-target {
+      min-width: 44px;
+      min-height: 44px;
+    }
   }
 }
 
@@ -259,6 +446,12 @@
      mechanism the current light uses. */
   --shadow-rest: var(--elevation-rest);
   --shadow-lift: var(--elevation-lift);
+
+  /* A card or pill carrying `data-note-color` reaches its identity through
+     these, so a component never names a colour or knows which theme is on:
+     `bg-note-surface border-note-border shadow-note`. */
+  --shadow-note: var(--note-elevation);
+  --shadow-note-lift: var(--note-elevation-lift);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -320,7 +513,9 @@
   --tw-prose-body: var(--foreground);
   --tw-prose-headings: var(--foreground);
   --tw-prose-lead: var(--muted-foreground);
-  --tw-prose-links: var(--primary);
+  /* Links remain neutral ink. Underline supplies the affordance without leaking
+     the chrome-only accent into running text (The One Accent Rule). */
+  --tw-prose-links: var(--foreground);
   --tw-prose-bold: var(--foreground);
   --tw-prose-counters: var(--muted-foreground);
   --tw-prose-bullets: var(--muted-foreground);

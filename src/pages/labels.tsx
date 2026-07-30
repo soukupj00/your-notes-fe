@@ -18,7 +18,7 @@ import { Spinner } from '@/components/ui/Spinner.tsx';
 import { useTagActions } from '@/hooks/data/useTagActions.ts';
 import { useTags } from '@/hooks/data/useTags.ts';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
-import { noteColorStyle } from '@/lib/note-colors.ts';
+import { noteColorAttrs } from '@/lib/note-colors.ts';
 import type { Tag } from '@/models.ts';
 
 /** New-label row: the only place a label is created without going through a note. */
@@ -79,8 +79,8 @@ function LabelRow({ tag, tags }: { tag: Tag; tags: Tag[] }) {
           <button
             type="button"
             aria-label={t('labels.color', { name: tag.name })}
-            style={noteColorStyle(tag.color)}
-            className="flex size-7 shrink-0 items-center justify-center rounded-full border text-muted-foreground transition-shadow hover:ring-2 hover:ring-ring/50 hover:ring-offset-1 hover:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            {...noteColorAttrs(tag.color)}
+            className="flex size-11 shrink-0 items-center justify-center rounded-full border border-note-swatch-ring bg-note-swatch text-muted-foreground transition-shadow hover:ring-2 hover:ring-ring/50 hover:ring-offset-1 hover:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {!tag.color && <Palette className="size-4" aria-hidden />}
           </button>

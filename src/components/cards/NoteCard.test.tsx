@@ -11,6 +11,11 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+const motion = { reduced: false };
+vi.mock('@/hooks/useReducedMotion.ts', () => ({
+  useReducedMotion: () => motion.reduced,
+}));
+
 const toastMock = vi.fn();
 vi.mock('sonner', () => ({
   toast: (...args: unknown[]) => toastMock(...args),
@@ -36,6 +41,7 @@ afterEach(async () => {
 });
 
 beforeEach(() => {
+  motion.reduced = false;
   // jsdom lacks object-URL APIs; NoteBody resolves attachments to blob URLs.
   globalThis.URL.createObjectURL = vi.fn(() => 'blob:mock/0');
   globalThis.URL.revokeObjectURL = vi.fn();
@@ -52,10 +58,29 @@ describe('NoteCard', () => {
     expect(onSelect).toHaveBeenCalledWith(note.id);
   });
 
-  it('keeps the options trigger right-aligned when the title is empty', () => {
-    render(<NoteCard note={makeNote({ header: '' })} onSelect={vi.fn()} />);
+  it('carries the stored colour token on the card identity surface', () => {
+    render(<NoteCard note={makeNote({ color: 'blue' })} onSelect={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'notes.menu' })).toHaveClass('ml-auto');
+    const card = screen.getByRole('heading', { name: 'My note' }).closest('[role="button"]');
+    expect(card).toHaveAttribute('data-note-color', 'blue');
+    expect(card?.querySelector('[data-slot="note-card-surface"]')).toBeInTheDocument();
+  });
+
+  it('uses the default identity for an uncoloured card', () => {
+    render(<NoteCard note={makeNote()} onSelect={vi.fn()} />);
+
+    expect(
+      screen.getByRole('heading', { name: 'My note' }).closest('[role="button"]')
+    ).toHaveAttribute('data-note-color', 'default');
+  });
+
+  it('removes hover movement but keeps the material change under reduced motion', () => {
+    motion.reduced = true;
+    render(<NoteCard note={makeNote()} onSelect={vi.fn()} />);
+
+    const surface = document.querySelector('[data-slot="note-card-surface"]');
+    expect(surface).not.toHaveClass('group-hover:scale-[1.02]');
+    expect(surface).toHaveClass('group-hover:border-note-border-hover');
   });
 
   it('opens the editor when the card itself is keyboard-activated', async () => {
