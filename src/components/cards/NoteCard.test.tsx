@@ -203,31 +203,52 @@ describe('NoteCard', () => {
     await waitFor(async () => expect((await db.notes.get(note.id))?.state).toBe('active'));
   });
 
-  it('renders the body for an image-only note (no header, no checklist text)', async () => {
-    const note = makeNote({
-      header: '',
-      body: '<img data-attachment-id="x1">',
-    });
+  // Attachments are summarised by CardMedia rather than rendered inline, so
+  // these assert the *grouping* contract: one block per kind, each standing in
+  // for its siblings, so a card's height follows the layout and not what the
+  // user happened to attach.
+  const mediaSlots = (slot: string) =>
+    document.querySelectorAll(`[data-slot="card-media-${slot}"]`);
+
+  it('summarises an image-only note so the card is not blank', () => {
+    const note = makeNote({ header: '', body: '<img data-attachment-id="x1">' });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    // The attachment row is not stored, so NoteBody's async blob resolution
-    // never completes - but the <img> node itself must still mount (proving
-    // NoteBody rendered), so the card is not blank.
-    await waitFor(() => {
-      expect(document.querySelector('img[data-attachment-id="x1"]')).toBeInTheDocument();
-    });
+    expect(mediaSlots('visual')).toHaveLength(1);
   });
 
-  it('renders a play button for an audio-only note (no header, no checklist text)', () => {
+  it('does not render an attachment a second time inside the text preview', () => {
+    const note = makeNote({ body: '<img data-attachment-id="x1"><p>hello</p>' });
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    expect(screen.getByText('hello')).toBeInTheDocument();
+    expect(document.querySelector('img[data-attachment-id="x1"]')).not.toBeInTheDocument();
+  });
+
+  it('collapses several pictures into one capped wall with a +N tile', () => {
+    const body = Array.from({ length: 6 }, (_, i) => `<img data-attachment-id="i${i}">`).join('');
+    render(<NoteCard note={makeNote({ body })} onSelect={vi.fn()} />);
+
+    expect(mediaSlots('grid')).toHaveLength(1);
+    expect(mediaSlots('tile')).toHaveLength(4);
+    expect(screen.getByText('+2')).toBeInTheDocument();
+  });
+
+  it('renders a play button for an audio-only note', () => {
+    const note = makeNote({ header: '', body: '<audio data-attachment-id="au1"></audio>' });
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: 'notes.playAudio' })).toBeInTheDocument();
+  });
+
+  it('collapses several voice notes into one player carrying a +N', () => {
     const note = makeNote({
-      header: '',
-      body: '<audio data-attachment-id="au1"></audio>',
+      body: '<audio data-attachment-id="a1"></audio><audio data-attachment-id="a2"></audio><audio data-attachment-id="a3"></audio>',
     });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    // An audio-only body (stripHtml drops the <audio> tag) would otherwise be a
-    // blank card. The always-visible play button keeps it non-blank.
-    expect(screen.getByRole('button', { name: 'notes.playAudio' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'notes.playAudio' })).toHaveLength(1);
+    expect(screen.getByText('+2')).toBeInTheDocument();
   });
 
   it('opens the editor with autoplay intent when the audio play button is clicked', async () => {
@@ -246,72 +267,70 @@ describe('NoteCard', () => {
     expect(onSelect).toHaveBeenCalledTimes(1);
   });
 
-  it('renders no play button when the note has no audio', () => {
+  it('renders no media summary at all when the note has no attachments', () => {
     render(<NoteCard note={makeNote()} onSelect={vi.fn()} />);
+
     expect(screen.queryByRole('button', { name: 'notes.playAudio' })).not.toBeInTheDocument();
+    expect(document.querySelector('[data-slot="card-media"]')).not.toBeInTheDocument();
   });
 
-  it('renders a play button for a video-only note (no header, no checklist text)', () => {
+  it('summarises a video-only note as a video preview, not as a bare chip', () => {
+    const note = makeNote({ header: '', body: '<video data-attachment-id="v1"></video>' });
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    expect(
+      document.querySelector('[data-slot="card-media-visual"][data-kind="video"]')
+    ).toBeTruthy();
+  });
+
+  it('summarises a drawing as its own preview kind', () => {
     const note = makeNote({
       header: '',
-      body: '<video data-attachment-id="v1"></video>',
+      body: '<excalidraw-drawing data-attachment-id="d1"></excalidraw-drawing>',
     });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'notes.playVideo' })).toBeInTheDocument();
+    expect(
+      document.querySelector('[data-slot="card-media-visual"][data-kind="excalidraw"]')
+    ).toBeTruthy();
   });
 
-  it('opens the note (no autoplay) when the video play button is clicked', async () => {
+  it('opens the note when a video preview is clicked, like any other part of the card', async () => {
     const note = makeNote({ body: '<p>hello</p><video data-attachment-id="v1"></video>' });
     const onSelect = vi.fn();
     render(<NoteCard note={note} onSelect={onSelect} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'notes.playVideo' }));
+    await userEvent.click(screen.getByText('hello'));
     expect(onSelect).toHaveBeenCalledWith(note.id);
-    expect(onSelect).toHaveBeenCalledTimes(1);
   });
 
-  it('renders both audio and video play buttons when a note has both', () => {
+  it('shows a file row for a file-only body', () => {
+    const note = makeNote({ header: '', body: '<a data-attachment-id="f1">report.pdf</a>' });
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    expect(mediaSlots('file')).toHaveLength(1);
+  });
+
+  it('collapses several files into one row carrying a +N', () => {
     const note = makeNote({
-      header: '',
-      body: '<audio data-attachment-id="au1"></audio><video data-attachment-id="v1"></video>',
+      body: '<a data-attachment-id="f1">a</a><a data-attachment-id="f2">b</a>',
     });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'notes.playAudio' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'notes.playVideo' })).toBeInTheDocument();
+    expect(mediaSlots('file')).toHaveLength(1);
+    expect(screen.getByText('+1')).toBeInTheDocument();
   });
 
-  it('shows a file button for a file-only body', () => {
-    const note = makeNote({
-      header: '',
-      body: '<a data-attachment-id="f1">report.pdf</a>',
-    });
-    render(<NoteCard note={note} onSelect={vi.fn()} />);
-
-    expect(screen.getByRole('button', { name: 'notes.openFile' })).toBeInTheDocument();
-  });
-
-  it('opens the note when the file button is clicked', async () => {
-    const note = makeNote({ body: '<p>hello</p><a data-attachment-id="f1">report.pdf</a>' });
-    const onSelect = vi.fn();
-    render(<NoteCard note={note} onSelect={onSelect} />);
-
-    await userEvent.click(screen.getByRole('button', { name: 'notes.openFile' }));
-    expect(onSelect).toHaveBeenCalledWith(note.id);
-    expect(onSelect).toHaveBeenCalledTimes(1);
-  });
-
-  it('shows audio, video, and file buttons together', () => {
+  it('gives each kind its own block when a note carries all three', () => {
     const note = makeNote({
       header: '',
       body: '<audio data-attachment-id="a1"></audio><video data-attachment-id="v1"></video><a data-attachment-id="f1">x</a>',
     });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'notes.playAudio' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'notes.playVideo' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'notes.openFile' })).toBeInTheDocument();
+    expect(mediaSlots('visual')).toHaveLength(1);
+    expect(mediaSlots('audio')).toHaveLength(1);
+    expect(mediaSlots('file')).toHaveLength(1);
   });
 
   it('caps card labels at three pills followed by one +N pill', async () => {

@@ -36,6 +36,9 @@
 @utility bg-note-chip {
   background-color: var(--note-chip);
 }
+@utility bg-note-media {
+  background-color: var(--note-media);
+}
 @utility text-note-on-chip {
   color: var(--note-on-chip);
 }
@@ -321,6 +324,9 @@
     --note-border: var(--note-edge);
     --note-chip: color-mix(in oklab, var(--note-edge) 48%, var(--note-tint));
     --note-on-chip: var(--ink);
+    /* The recessed plane an attachment preview sits on: a deeper patch of the
+       card's own paint, so a thumbnail never introduces a colour of its own. */
+    --note-media: color-mix(in oklab, var(--note-edge) 26%, var(--note-tint));
     --note-elevation: var(--elevation-rest);
     --note-elevation-lift: var(--elevation-lift);
     /* Hover warms the edge toward the accent - a material change, so the

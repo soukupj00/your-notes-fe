@@ -1,7 +1,8 @@
-import { FileText, MoreVertical, Play, Video } from 'lucide-react';
+import { MoreVertical } from 'lucide-react';
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { CardMedia } from '@/components/cards/CardMedia.tsx';
 import { NoteBody } from '@/components/NoteBody.tsx';
 import { TagPills } from '@/components/tags/TagPills.tsx';
 import { Card } from '@/components/ui/card.tsx';
@@ -14,12 +15,7 @@ import {
 import { type LifecycleSnapshot, useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { useTagsForNote } from '@/hooks/data/useTagsForNote.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
-import {
-  bodyHasAttachment,
-  bodyHasAudio,
-  bodyHasFile,
-  bodyHasVideo,
-} from '@/lib/attachment-html.ts';
+import { stripAttachmentNodes } from '@/lib/note-attachments.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { cn, stripHtml } from '@/lib/utils.ts';
 import type { Note } from '@/models.ts';
@@ -27,35 +23,6 @@ import type { Note } from '@/models.ts';
 interface NoteCardProps {
   note: Note;
   onSelect: (id: string, opts?: { autoplayFirstAudio?: boolean }) => void;
-}
-
-interface NoteCardAttachmentButtonProps {
-  label: string;
-  onActivate: () => void;
-  children: React.ReactNode;
-}
-
-/** A media affordance nested inside the clickable card surface. */
-function NoteCardAttachmentButton({ label, onActivate, children }: NoteCardAttachmentButtonProps) {
-  const reducedMotion = useReducedMotion();
-
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={(event) => {
-        event.stopPropagation();
-        onActivate();
-      }}
-      className={cn(
-        'flex size-11 items-center justify-center rounded-control bg-note-chip text-note-on-chip shadow-rest hover:shadow-note-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-        !reducedMotion &&
-          'transition-[background-color,color,box-shadow,transform] hover:scale-[1.04]'
-      )}
-    >
-      {children}
-    </button>
-  );
 }
 
 export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
@@ -74,13 +41,11 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
   const liveTags = useTagsForNote(note.id);
   const tags = note.tags ?? liveTags;
 
-  // stripHtml drops the <img data-attachment-id> tag along with the rest of the
-  // markup, so an image-only Body (no text) needs the attachment check too -
-  // otherwise the card renders blank (no header, no NoteBody).
-  const hasBody = stripHtml(note.body).trim().length > 0 || bodyHasAttachment(note.body);
-  const hasAudio = bodyHasAudio(note.body);
-  const hasVideo = bodyHasVideo(note.body);
-  const hasFile = bodyHasFile(note.body);
+  // Attachments are summarised by CardMedia, so the text preview renders the
+  // prose only - otherwise an image-heavy note would show each attachment twice
+  // and push its own words off the bottom of the clamp.
+  const prose = stripAttachmentNodes(note.body);
+  const hasProse = stripHtml(prose).trim().length > 0;
 
   // Every lifecycle action follows the same contract: run the transition, then
   // offer its snapshot back as a one-click undo. Sharing the wrapper keeps a
@@ -147,6 +112,10 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
       />
 
       <div className="relative z-10 p-[0.9rem_1rem_0.85rem]">
+        {/* Above the title, as in the lab: what a note *looks* like is the
+            fastest way to recognise it again in a wall. */}
+        <CardMedia noteId={note.id} body={note.body} onOpen={(opts) => onSelect(note.id, opts)} />
+
         {note.header ? (
           <h2
             dir="auto"
@@ -158,9 +127,9 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
           <span className="sr-only">{t('notes.editNoteTitle')}</span>
         )}
 
-        {hasBody && (
+        {hasProse && (
           <NoteBody
-            html={note.body}
+            html={prose}
             className="line-clamp-6 min-w-0 max-w-full break-words text-body text-foreground [overflow-wrap:anywhere] [&_*]:max-w-full [&_li]:text-body [&_p]:text-body"
           />
         )}
@@ -172,31 +141,6 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
           <TagPills tags={tags} maxVisible={3} className="mr-auto min-w-0" />
 
           <div className="ml-auto flex shrink-0 items-center gap-0.5">
-            {hasAudio && (
-              <NoteCardAttachmentButton
-                label={t('notes.playAudio')}
-                onActivate={() => onSelect(note.id, { autoplayFirstAudio: true })}
-              >
-                <Play className="size-5 translate-x-px" />
-              </NoteCardAttachmentButton>
-            )}
-            {hasVideo && (
-              <NoteCardAttachmentButton
-                label={t('notes.playVideo')}
-                onActivate={() => onSelect(note.id)}
-              >
-                <Video className="size-5" />
-              </NoteCardAttachmentButton>
-            )}
-            {hasFile && (
-              <NoteCardAttachmentButton
-                label={t('notes.openFile')}
-                onActivate={() => onSelect(note.id)}
-              >
-                <FileText className="size-5" />
-              </NoteCardAttachmentButton>
-            )}
-
             <DropdownMenu>
               <DropdownMenuTrigger
                 aria-label={t('notes.menu')}
