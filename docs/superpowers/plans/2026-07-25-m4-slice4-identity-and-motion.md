@@ -1,6 +1,6 @@
 # M4 Slice 4 - Identity & motion
 
-**Status:** Tasks 1 and 1b complete; Task 2 core palette complete; Task 3 motion and feed layouts in progress.
+**Status:** Tasks 1 and 1b complete; Task 2 core palette and card content complete; Task 3 motion and feed layouts in progress.
 
 **Goal:** Give the app a distinctive "tactile paper" identity, add purposeful Motion animation, ship the full-card colour system, and make the toolbar user-customisable - turning a competent app into one that feels intentional and personal.
 
@@ -51,6 +51,13 @@ Decisions: full-card tint; keep the nine persisted colour keys plus default and 
 
 - [ ] Define the nine-key palette plus default in `src/styles/globals.css`, with day pigment and night light values under the same `data-note-color` selector. Add colour-blind values for the same tokens.
 - [x] `NoteCard` reads `Note.color` → full-card tint that resolves per active theme. Tag pills read `Tag.color` from the same tokens.
+- [x] **Card attachment previews** (`CardMedia`).
+  Attachments are *grouped* rather than listed in document order, per the lab decision: visuals (image, video, drawing) collapse into one hero or one capped 2x2 wall with a `+N` tile, voice notes into one player with a `+N`, files into one row with a `+N`.
+  A single visual keeps its own aspect ratio clamped at 4:3 of the card, so a landscape photo shows uncropped while a portrait can never run away with a column.
+  The Body stays the authority on which attachments exist, in what order and of what kind (`lib/note-attachments.ts`); the Dexie row supplies only bytes and metadata.
+  Attachment nodes are stripped out of the text preview so nothing renders twice, and the old foot-rail video/file chips are gone because they duplicated the card's own click target.
+- [x] **Night depth re-cut.** The shipped values contradicted DESIGN.md's own Elevation section: a 52% identity border over a glow whose negative spread ate its radius read as a hot ring with no visible glow. Resting edge now 34%, glow `0 0 30px -8px` at 70%, hover `0 0 46px -10px` at 82%, pinned `0 0 38px -8px` at 88% behind the full-identity edge. Recorded in DESIGN.md as *The Glow-Carries-Depth-Not-The-Edge Rule*.
+- [x] **Label overflow.** Cards cap at three pills then one `+N` that differs by fill. Fixed a real overflow: a flex item's default `min-width: auto` blocked the pill's own `truncate`, so a long single-word label drew through the card's border.
 - [ ] Colour **palette popover** (swatch grid) shared by: editor action bar, card hover row, card `⋮`, tag manager, tag popover.
 - [ ] Tests: token resolves per theme; card tint + tag pill colour render; default = neutral surface.
 
