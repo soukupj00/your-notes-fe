@@ -1,12 +1,14 @@
 import DOMPurify from 'dompurify';
-import { FileText, PenLine, Play, Video } from 'lucide-react';
+import { FileText, Play } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useNoteAttachments } from '@/hooks/data/useNoteAttachments.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { formatBytes, formatDuration, formatFileType } from '@/lib/format-attachment.ts';
 import { type BodyAttachment, extractBodyAttachments } from '@/lib/note-attachments.ts';
 import { cn } from '@/lib/utils.ts';
+import { generateVideoPoster } from '@/lib/video-poster.ts';
 import type { Attachment, AttachmentKind } from '@/models.ts';
 
 /** Kinds whose whole point is the picture, so they share one thumbnail wall. */
@@ -61,7 +63,7 @@ function More({ count, className }: { count: number; className?: string }) {
   return (
     <span
       className={cn(
-        'rounded-full bg-foreground/10 px-2 py-0.5 text-label text-muted-foreground tabular-nums',
+        'rounded-full bg-note-chip px-2.5 py-1 text-label text-note-on-chip tabular-nums',
         className
       )}
     >
@@ -83,6 +85,14 @@ function VisualArt({
   className?: string;
 }) {
   const { t } = useTranslation();
+
+  // A video's bytes are a container, not an image: handing them to an <img>
+  // produces a broken-image glyph. Only a captured poster is renderable here,
+  // and a clip stored before posters existed correctly falls through to the
+  // neutral plane below (see useVideoPosterBackfill).
+  if (visual.kind === 'video' && !visual.row?.thumbnail) {
+    return <span className={cn('block size-full bg-note-media', className)} aria-hidden />;
+  }
 
   if (visual.kind === 'excalidraw') {
     const preview = visual.row?.preview;
@@ -127,35 +137,34 @@ function VisualArt({
  * portrait can never turn one card into three cards' worth of column.
  */
 function VisualHero({ visual, url }: { visual: Resolved; url?: string }) {
-  const { t } = useTranslation();
   const duration = formatDuration(visual.row?.duration);
-  const loaded = visual.kind === 'excalidraw' ? Boolean(visual.row?.preview) : Boolean(url);
+  // A poster-less video reserves the box rather than collapsing to nothing; a
+  // picture or drawing releases the reserve once it has something to draw.
+  const reserve =
+    visual.kind === 'excalidraw'
+      ? !visual.row?.preview
+      : visual.kind === 'video'
+        ? !visual.row?.thumbnail
+        : !url;
 
   return (
     <div
       data-slot="card-media-visual"
       data-kind={visual.kind}
-      className={cn(BLOCK, !loaded && 'aspect-[4/3]')}
+      className={cn(BLOCK, reserve && 'aspect-[4/3]')}
     >
       <VisualArt visual={visual} url={url} className="max-h-[min(14rem,75cqw)] w-full" />
 
+      {/* No kind label. The play badge already says "video" and a drawing shows
+          itself; a word printed over the artwork is chrome on the one part of
+          the card that was carrying meaning on its own. Duration stays, because
+          length is information the picture cannot give. */}
       {visual.kind === 'video' && (
         <span
           aria-hidden
           className="absolute top-1/2 left-1/2 flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-note-surface/90 text-foreground shadow-rest"
         >
           <Play className="size-5 translate-x-px" />
-        </span>
-      )}
-
-      {visual.kind !== 'image' && (
-        <span className="absolute top-1.5 left-1.5 flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-label text-white uppercase">
-          {visual.kind === 'video' ? (
-            <Video className="size-3" aria-hidden />
-          ) : (
-            <PenLine className="size-3" aria-hidden />
-          )}
-          {visual.kind === 'video' ? t('notes.attachmentVideo') : t('notes.attachmentDrawing')}
         </span>
       )}
 
@@ -166,6 +175,49 @@ function VisualHero({ visual, url }: { visual: Resolved; url?: string }) {
       )}
     </div>
   );
+}
+
+// Ids already attempted this session. A poster is generated at most once per
+// video ever (the result is persisted) and at most once per session when the
+// browser cannot decode the clip at all, so a broken codec never becomes a loop.
+const posterAttempts = new Set<string>();
+
+/**
+ * Captures a poster for any video stored before posters were captured at insert.
+ *
+ * Videos added from now on arrive with one (see `Video/insert.ts`), so this only
+ * ever runs for pre-existing data, once, and then persists itself out of
+ * existence. That is the whole reason it is acceptable here: the feed must not
+ * decode video on every render, but decoding each clip exactly once - after
+ * which the card reads a stored WebP like any photo - is not a per-render cost.
+ */
+function useVideoPosterBackfill(visuals: Resolved[]) {
+  const { updateAttachment } = useAttachmentActions();
+
+  useEffect(() => {
+    let active = true;
+    const pending = visuals.filter(
+      (visual) => visual.kind === 'video' && visual.row && !visual.row.thumbnail
+    );
+
+    for (const visual of pending) {
+      const row = visual.row;
+      if (!row || posterAttempts.has(row.id)) continue;
+      posterAttempts.add(row.id);
+
+      void generateVideoPoster(row.blob).then(({ poster, duration }) => {
+        if (!active || (!poster && duration === undefined)) return;
+        return updateAttachment(row.id, {
+          ...(poster ? { thumbnail: poster } : {}),
+          ...(duration !== undefined && row.duration === undefined ? { duration } : {}),
+        });
+      });
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [visuals, updateAttachment]);
 }
 
 /** Several pictures collapse into one capped wall of equal tiles. */
@@ -331,6 +383,7 @@ export function CardMedia({ noteId, body, onOpen }: CardMediaProps) {
   }, [refs, rows]);
 
   const urls = useVisualUrls(visuals);
+  useVideoPosterBackfill(visuals);
 
   if (refs.length === 0) return null;
 

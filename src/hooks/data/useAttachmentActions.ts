@@ -14,7 +14,7 @@ export function useAttachmentActions() {
       noteId: string,
       file: File,
       kind: AttachmentKind = 'image',
-      options: { thumbnail?: Blob } = {}
+      options: { thumbnail?: Blob; duration?: number } = {}
     ): Promise<Attachment> => {
       const bad = validateAttachmentFile(file, kind);
       if (bad) throw new AttachmentError(bad);
@@ -26,6 +26,7 @@ export function useAttachmentActions() {
         mime: file.type,
         blob: file, // a File is a Blob; persist directly (ADR 0007)
         thumbnail: options.thumbnail,
+        duration: options.duration,
         name: file.name,
         size: file.size,
         createdAt: now,
@@ -60,12 +61,16 @@ export function useAttachmentActions() {
     []
   );
 
-  // Write-back for interactive attachments (Excalidraw): replace the stored
-  // scene blob and/or refresh the SVG preview in place, on the same row the
-  // Body already references by id. Decoupled from Body autosave (the
-  // attachmentId never changes on an edit).
+  // Write-back for an attachment's derived data, on the same row the Body
+  // already references by id. Decoupled from Body autosave (the attachmentId
+  // never changes on an edit). Two callers: Excalidraw replaces the stored
+  // scene blob and refreshes its SVG preview; the card backfills a poster and
+  // duration onto a video stored before posters were captured at insert.
   const updateAttachment = useCallback(
-    async (id: string, changes: { blob?: Blob; preview?: string }): Promise<void> => {
+    async (
+      id: string,
+      changes: { blob?: Blob; preview?: string; thumbnail?: Blob; duration?: number }
+    ): Promise<void> => {
       await db.attachments.update(id, { ...changes, updatedAt: new Date().toISOString() });
     },
     []

@@ -355,6 +355,19 @@
    * behind it - narrow, with a -4px spread eating most of its radius - was
    * effectively invisible. Depth in the night theme is supposed to be light
    * *around* a card, so the edge steps back and the glow steps forward.
+   *
+   * The glow is then *directional and gutter-bound*, which is the second re-cut.
+   * A symmetric glow big enough to read at rest was, on hover, wider than the
+   * 0.85rem (13.6px) feed gutter, so a lit card bled over its neighbours. Two
+   * shadows now do the work: a stronger one lifting off the top edge, and a
+   * faint one below, both with a spread that eats most of their blur.
+   *
+   * The budget, since it is not obvious from the values: visible extent on a
+   * side is `blur / 2 + spread ± offset`. Rest reaches 7px up, 3px sideways,
+   * 2px down; hover 8px / 4px / 3.5px, plus ~3px from the surface's own 1.02
+   * hover scale. Worst case is a hovered card against a resting neighbour:
+   * 8 + 3 + 2 = 13px, inside the 13.6px gutter. Anything larger overlaps, so
+   * these numbers are a ceiling, not a preference.
    */
   .dark [data-note-color] {
     --note-surface: color-mix(in oklch, var(--note-neon) 7%, var(--canvas-raised));
@@ -363,9 +376,13 @@
     --note-on-chip: var(--note-neon);
     --note-media: color-mix(in oklch, var(--note-neon) 9%, var(--canvas-chrome));
     --note-elevation:
-      var(--elevation-rest), 0 0 30px -8px color-mix(in oklch, var(--note-neon) 70%, transparent);
+      var(--elevation-rest),
+      0 -4px 20px -7px color-mix(in oklch, var(--note-neon) 58%, transparent),
+      0 3px 10px -6px color-mix(in oklch, var(--note-neon) 30%, transparent);
     --note-elevation-lift:
-      var(--elevation-lift), 0 0 46px -10px color-mix(in oklch, var(--note-neon) 82%, transparent);
+      var(--elevation-lift),
+      0 -4px 24px -8px color-mix(in oklch, var(--note-neon) 72%, transparent),
+      0 4px 13px -7px color-mix(in oklch, var(--note-neon) 40%, transparent);
     --note-border-hover: color-mix(in oklch, var(--note-neon) 58%, transparent);
 
     --note-swatch: color-mix(in oklch, var(--note-neon) 30%, transparent);
@@ -399,8 +416,13 @@
     /* Pinned is the one card allowed a full-identity edge, which is what makes
        it separable now that the resting edge has stepped back. */
     --note-border: var(--note-neon);
+    /* Same geometry as rest - and therefore the same gutter budget - lit
+       harder. Pinned separates by brightness and by its full-identity edge,
+       never by reaching further into its neighbours. */
     --note-elevation:
-      var(--elevation-rest), 0 0 38px -8px color-mix(in oklch, var(--note-neon) 88%, transparent);
+      var(--elevation-rest),
+      0 -4px 20px -7px color-mix(in oklch, var(--note-neon) 85%, transparent),
+      0 3px 10px -6px color-mix(in oklch, var(--note-neon) 45%, transparent);
   }
 
   /* The 44px floor applies to touch input, not to every mouse-sized desktop

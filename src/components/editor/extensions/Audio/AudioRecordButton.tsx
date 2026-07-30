@@ -68,7 +68,11 @@ export function AudioRecordButton({ editor, getDeps, tooltip }: AudioRecordButto
       const noteId = await deps.getNoteId();
       const ext = EXT[out.mime.split(';')[0]] ?? 'webm';
       const file = new File([out.blob], `recording.${ext}`, { type: out.mime });
-      const att = await deps.createAttachment(noteId, file, 'audio');
+      // The recorder already measured this; persisting it is what lets a card
+      // show a clip's length without decoding the audio on the feed.
+      const att = await deps.createAttachment(noteId, file, 'audio', {
+        duration: out.durationMs / 1000,
+      });
       insert(att.id);
     } catch {
       deps.onError('insert-failed');

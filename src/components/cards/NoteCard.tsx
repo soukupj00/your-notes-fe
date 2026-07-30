@@ -3,6 +3,7 @@ import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { CardMedia } from '@/components/cards/CardMedia.tsx';
+import { CardPin } from '@/components/cards/CardPin.tsx';
 import { NoteBody } from '@/components/NoteBody.tsx';
 import { TagPills } from '@/components/tags/TagPills.tsx';
 import { Card } from '@/components/ui/card.tsx';
@@ -111,6 +112,16 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
         )}
       />
 
+      {/* Outside the content layer so it stacks above the media too - the pin is
+          never occluded by an attachment. Only shown for a note that can be
+          pinned: pinning is meaningless in the archive and the trash. */}
+      {note.state === 'active' && (
+        <CardPin
+          pinned={Boolean(note.pinnedAt)}
+          onToggle={note.pinnedAt ? handleUnpin : handlePin}
+        />
+      )}
+
       <div className="relative z-10 p-[0.9rem_1rem_0.85rem]">
         {/* Above the title, as in the lab: what a note *looks* like is the
             fastest way to recognise it again in a wall. */}
@@ -119,7 +130,10 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
         {note.header ? (
           <h2
             dir="auto"
-            className="mb-1.5 line-clamp-3 min-w-0 max-w-full text-pretty break-words font-display text-foreground text-title [overflow-wrap:anywhere]"
+            /* pe-8 reserves the pin's corner so a long title never runs under
+               it. Reserved rather than revealed: the card's height must not
+               change when the pointer arrives. */
+            className="mb-1.5 line-clamp-3 min-w-0 max-w-full text-pretty break-words pe-8 font-display text-foreground text-title [overflow-wrap:anywhere]"
           >
             {note.header}
           </h2>
@@ -170,14 +184,6 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
                   </>
                 ) : (
                   <>
-                    {note.state === 'active' &&
-                      (note.pinnedAt ? (
-                        <DropdownMenuItem onClick={handleUnpin}>
-                          {t('notes.unpin')}
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem onClick={handlePin}>{t('notes.pin')}</DropdownMenuItem>
-                      ))}
                     {note.state === 'archived' ? (
                       <DropdownMenuItem onClick={handleRestore}>
                         {t('notes.restore')}

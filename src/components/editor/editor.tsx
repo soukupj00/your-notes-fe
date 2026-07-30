@@ -62,6 +62,7 @@ import { TaskList } from '@/components/editor/extensions/TaskList';
 import { TextAlign } from '@/components/editor/extensions/TextAlign';
 import { Underline } from '@/components/editor/extensions/Underline';
 import { createVideo } from '@/components/editor/extensions/Video';
+import { insertVideoAttachmentFiles } from '@/components/editor/extensions/Video/insert.ts';
 import BlocksSection from '@/components/editor/menus/toolbars/BlocksSection.tsx';
 import FontSection from '@/components/editor/menus/toolbars/FontSection.tsx';
 import FormatSection from '@/components/editor/menus/toolbars/FormatSection.tsx';
@@ -134,7 +135,7 @@ function insertTransferredAttachments(
     return true;
   }
   if (transferredFiles.some((file) => file.type.startsWith('video/'))) {
-    void insertAttachmentFiles(editor, files, 'video', deps, (id) =>
+    void insertVideoAttachmentFiles(editor, files, deps, (id) =>
       editor.chain().focus().insertVideoAttachment({ attachmentId: id }).run()
     );
     return true;

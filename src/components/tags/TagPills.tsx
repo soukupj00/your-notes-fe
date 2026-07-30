@@ -39,9 +39,13 @@ export function TagPills({ tags, onRemove, maxVisible, className }: TagPillsProp
              refuses to shrink below its content, so without it the `truncate`
              below never engages and one long label ("Personalfinanceand-
              budgeting2026") runs straight past the card's edge. */
-          className="flex min-w-0 max-w-full items-center gap-1 rounded-full bg-note-chip px-2 py-0.5 text-label text-note-on-chip uppercase"
+          className="flex min-w-0 max-w-full items-center gap-1 rounded-full bg-note-chip py-1 pr-2 pl-2.5 text-label text-note-on-chip uppercase"
         >
-          <span className="truncate">{tag.name}</span>
+          {/* `text-label` carries 0.1em tracking, which CSS adds *after* the
+              last glyph too. Left unbalanced that reads as a chip padded wider
+              on the right than the left, so the trailing space is pulled back
+              and the left padding carries the difference instead. */}
+          <span className="-me-[0.1em] truncate">{tag.name}</span>
           {onRemove && (
             <button
               type="button"
@@ -58,8 +62,11 @@ export function TagPills({ tags, onRemove, maxVisible, className }: TagPillsProp
           )}
         </li>
       ))}
+      {/* The overflow chip differs by fill, never by a dashed border (DESIGN.md
+          → Chips), and takes the card's own chip identity so it reads as part of
+          the label row rather than as a grey control dropped into it. */}
       {hiddenCount > 0 && (
-        <li className="rounded-full bg-foreground/10 px-2 py-0.5 text-label text-muted-foreground">
+        <li className="shrink-0 rounded-full bg-note-chip px-2.5 py-1 text-label text-note-on-chip tabular-nums">
           +{hiddenCount}
         </li>
       )}
