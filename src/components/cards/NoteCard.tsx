@@ -3,7 +3,6 @@ import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { CardMedia } from '@/components/cards/CardMedia.tsx';
-import { CardPin } from '@/components/cards/CardPin.tsx';
 import { NoteBody } from '@/components/NoteBody.tsx';
 import { TagPills } from '@/components/tags/TagPills.tsx';
 import { Card } from '@/components/ui/card.tsx';
@@ -114,13 +113,13 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
 
       {/* Outside the content layer so it stacks above the media too - the pin is
           never occluded by an attachment. Only shown for a note that can be
-          pinned: pinning is meaningless in the archive and the trash. */}
+          pinned: pinning is meaningless in the archive and the trash.
       {note.state === 'active' && (
         <CardPin
           pinned={Boolean(note.pinnedAt)}
           onToggle={note.pinnedAt ? handleUnpin : handlePin}
         />
-      )}
+      )}*/}
 
       <div className="relative z-10 p-[0.9rem_1rem_0.85rem]">
         {/* Above the title, as in the lab: what a note *looks* like is the
