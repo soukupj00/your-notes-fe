@@ -192,7 +192,8 @@ Bricolage's negative tracking and heavy display weight give a note title the den
 
 ### Hierarchy
 
-- **Title** (700, `1.04rem`, 1.2, `-0.015em`): Note card titles and section headings. Optical sizing is on. Drops to `0.94rem` in compact density.
+- **Title** (700, `1.04rem`, 1.2, `-0.015em`): Note card titles and section headings. Drops to `0.94rem` in compact density.
+  Optical sizing is *not* on, and the lab's claim that it was has been corrected: the shipped Bricolage cut is the `wght`-only variable file, which carries no `opsz` axis, so `font-optical-sizing: auto` was always a no-op. The three-axis cut is 131KB for the Latin subset against 41KB, and its optical-size axis defaults to 14 against our 16.6px title - the difference is not visible and the weight is not worth it.
 - **Body** (400, `0.855rem`, ~1.45): Note excerpts, checklist rows, all running text. Drops to `0.8rem` in compact density.
 - **Label** (500, `0.6875rem`, `0.1em`, uppercase): Tag chips, media kind badges, relative time, section eyebrows.
 

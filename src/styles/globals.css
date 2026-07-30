@@ -1,5 +1,17 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+
+/* The `nightshift` typefaces (DESIGN.md → Typography): a tight display grotesque
+   for titles against a calm workhorse for body. Self-hosted via @fontsource, not
+   a CDN, because the app has to render the same offline as online.
+   Both packages are the `wght`-only variable cut, split by unicode-range, so a
+   Latin user downloads ~41KB + ~50KB and nothing else. The three-axis
+   (`opsz`+`wdth`+`wght`) cut of Bricolage is 131KB for the Latin subset alone,
+   and its optical-size axis defaults to 14 against our 16.6px title - not a
+   90KB difference anyone can see. */
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/work-sans";
+
 @plugin "@tailwindcss/typography";
 
 /* Bind Tailwind's `dark:` variant to the app's `.dark` class (set by ThemeProvider)
@@ -149,6 +161,36 @@
 }
 
 @theme {
+  /* Typography (DESIGN.md → Typography). `--font-sans` is the Tailwind default
+     family, so setting it re-faces the whole app in one line; `font-display` is
+     opt-in and belongs only on titles and the brand mark. */
+  --font-sans: "Work Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+
+  /* Three roles, not a ramp. Each carries its own leading, tracking and weight
+     so `text-title` is the whole treatment rather than a size that then needs
+     three more utilities to finish it.
+
+     Hierarchy deliberately rests on size + weight + colour together, never on
+     the display face alone: Bricolage covers Latin only, so a Cyrillic or Greek
+     title renders in the fallback face without its tight tracking and heavy
+     display weight and must still read as the most important thing on its card
+     (The Fallback-Survives Rule). */
+  --text-title: 1.04rem;
+  --text-title--line-height: 1.2;
+  --text-title--letter-spacing: -0.015em;
+  --text-title--font-weight: 700;
+
+  --text-body: 0.855rem;
+  --text-body--line-height: 1.45;
+
+  /* 11px, and this is the floor - The Label Floor Rule. The lab rendered
+     metadata at 9.92px, which is unscannable on a phone even at 7.45:1. */
+  --text-label: 0.6875rem;
+  --text-label--line-height: 1.2;
+  --text-label--letter-spacing: 0.1em;
+  --text-label--font-weight: 500;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
