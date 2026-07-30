@@ -32,46 +32,94 @@
     cursor: pointer;
   }
 
+  /*
+   * ── nightshift: the day desk ──────────────────────────────────────────────
+   *
+   * DESIGN.md is the contract; this block is its light half. The primitives
+   * come first and the semantic tokens are mapped onto them, so the two themes
+   * differ only in the primitives - which is what makes the toggle read as dusk
+   * falling on a room you already know rather than as a second product.
+   *
+   * Day is warm parchment (hue ~72-84) and surfaces get *lighter* to come
+   * forward. Depth is a hairline plus a barely-there drop shadow; glow does not
+   * exist here (The Glow-Is-Night-Only Rule).
+   */
   :root {
-    --background: oklch(98% 0.01 250);
-    --foreground: oklch(20% 0.05 250);
+    /* Three surface planes. `canvas` is the wall, `chrome` is the topbar and
+       rail, `raised` is anything lifted off the wall: cards, popovers, inputs,
+       the capture bar. By day chrome and raised both sit *above* the canvas. */
+    --canvas: oklch(96% 0.015 84);
+    --canvas-chrome: oklch(97.6% 0.011 84);
+    --canvas-raised: oklch(99.2% 0.006 84);
 
-    --card: oklch(96% 0.02 250);
-    --card-foreground: oklch(20% 0.05 250);
+    /* Hairlines. `rule` is for dividers and card edges, which are never the
+       sole carrier of a shape. `rule-control` is for a control whose border
+       *is* its shape - a text input, a segmented track - and is sized to clear
+       1.4.11's 3:1 non-text floor against both canvas (3.25:1) and raised
+       (3.56:1), which `rule` at 1.32:1 does not. */
+    --rule: oklch(87% 0.018 80);
+    --rule-control: oklch(62% 0.025 80);
 
-    --popover: oklch(98% 0.01 250);
-    --popover-foreground: oklch(20% 0.05 250);
+    --ink: oklch(26% 0.02 72);
+    --ink-soft: oklch(50% 0.02 72);
 
-    --primary: oklch(60% 0.18 280);
-    --primary-foreground: oklch(98% 0.02 250);
+    /* The one accent, and it is chrome only: brand mark, active rail item, FAB,
+       focus ring (The One Accent Rule). Deep rather than bright, because it has
+       to clear 4.5:1 on its own label (4.98:1) *and* 3:1 against the parchment
+       behind it (4.56:1) - brightening it to a yellow-amber solves the first
+       and fails the second at 1.58:1 (The Two-Constraint Rule). */
+    --accent-tone: oklch(54% 0.15 80);
+    --on-accent-tone: oklch(99% 0.008 84);
 
-    --secondary: oklch(65% 0.15 190);
-    --secondary-foreground: oklch(98% 0.02 250);
+    /* Depth is material and it reverses with the light. Day lifts with shadow. */
+    --elevation-rest: 0 1px 2px oklch(40% 0.03 70 / 0.09);
+    --elevation-lift: 0 10px 26px oklch(40% 0.03 70 / 0.16);
 
-    --muted: oklch(90% 0.02 250);
-    --muted-foreground: oklch(40% 0.03 250);
+    --background: var(--canvas);
+    --foreground: var(--ink);
 
-    --accent: oklch(92% 0.03 280);
-    --accent-foreground: oklch(20% 0.05 250);
+    --card: var(--canvas-raised);
+    --card-foreground: var(--ink);
 
-    --destructive: oklch(60% 0.18 30);
-    --destructive-foreground: oklch(98% 0.02 250);
+    --popover: var(--canvas-raised);
+    --popover-foreground: var(--ink);
 
-    --border: oklch(88% 0.02 250);
-    --input: oklch(94% 0.02 250);
-    --ring: oklch(60% 0.18 280);
+    --primary: var(--accent-tone);
+    --primary-foreground: var(--on-accent-tone);
 
-    --success: oklch(65% 0.14 140);
-    --danger: oklch(60% 0.18 30);
-    --warning: oklch(70% 0.2 80);
-    --info: oklch(65% 0.15 240);
+    /* shadcn's `secondary` is the fill of a secondary *button*, so it must not
+       take the accent - carrying the accent is what marks something as chrome.
+       It is lifted paper with ink on it instead. */
+    --secondary: var(--canvas-raised);
+    --secondary-foreground: var(--ink);
+
+    --muted: color-mix(in oklab, var(--ink) 7%, var(--canvas));
+    --muted-foreground: var(--ink-soft);
+
+    /* shadcn's `accent` is the hover/active wash, not the brand accent. Nine
+       percent of ink, per the material change that every hover owes alongside
+       its scale so the affordance survives reduced motion. */
+    --accent: color-mix(in oklab, var(--ink) 9%, transparent);
+    --accent-foreground: var(--ink);
+
+    --destructive: oklch(48% 0.18 28);
+    --destructive-foreground: var(--on-accent-tone);
+
+    --border: var(--rule);
+    --input: var(--rule-control);
+    --ring: var(--accent-tone);
+
+    --success: oklch(51% 0.13 150);
+    --danger: var(--destructive);
+    --warning: var(--accent-tone);
+    --info: oklch(51% 0.115 208);
 
     /* The vendored shadcn Sidebar styles itself off its own `--sidebar-*` set.
        These alias the semantic tokens above rather than introducing a second
-       palette (ADR 0010): the nav shell reproduces the old `<aside>`'s plain
-       background + border exactly, and the colour-blind variants will reach it
-       for free. Tinting is the Slice 3 colour pass, one line per alias. */
-    --sidebar: var(--background);
+       palette (ADR 0010). The rail is chrome, so it takes the chrome plane -
+       lighter than the wall by day, darker by night - and the colour-blind
+       variants will reach it for free. */
+    --sidebar: var(--canvas-chrome);
     --sidebar-foreground: var(--foreground);
     --sidebar-primary: var(--primary);
     --sidebar-primary-foreground: var(--primary-foreground);
@@ -104,39 +152,47 @@
     --note-gray-border: oklch(83% 0.02 250);
   }
 
+  /*
+   * ── nightshift: the same desk, lit ────────────────────────────────────────
+   *
+   * Only the primitives move. Every semantic mapping above is inherited, so a
+   * component cannot be styled correctly in one theme and wrong in the other.
+   *
+   * Night is a cool near-black room (hue ~250-265) and depth reverses: surfaces
+   * get *darker* to recede, and a card's identity colour becomes an outer glow,
+   * because a black shadow on a near-black room is invisible.
+   */
   .dark {
-    --background: oklch(20% 0.05 270);
-    --foreground: oklch(95% 0.02 250);
+    --canvas: oklch(17% 0.012 265);
+    --canvas-chrome: oklch(13% 0.014 265);
+    --canvas-raised: oklch(21% 0.012 265);
 
-    --card: oklch(22% 0.04 280);
-    --card-foreground: oklch(95% 0.02 250);
+    --rule: oklch(30% 0.018 265);
+    --rule-control: oklch(52% 0.022 265);
 
-    --popover: oklch(25% 0.04 280);
-    --popover-foreground: oklch(95% 0.02 250);
+    --ink: oklch(93% 0.006 250);
+    --ink-soft: oklch(68% 0.01 250);
 
-    --primary: oklch(65% 0.18 280);
-    --primary-foreground: oklch(98% 0.02 250);
+    /* Same hue as the day amber, four steps up in lightness. Night has no
+       two-constraint tension - a bright accent on a near-black room clears both
+       floors trivially (10.16:1 on its label, 9.99:1 against canvas) - and that
+       asymmetry *is* the measured justification for "changes its light": the day
+       accent must be deep and the night one bright because the canvas beneath
+       them is inverted. */
+    --accent-tone: oklch(80% 0.17 75);
+    --on-accent-tone: oklch(16% 0.03 75);
 
-    --secondary: oklch(70% 0.15 190);
-    --secondary-foreground: oklch(98% 0.02 250);
+    --elevation-rest: 0 2px 6px oklch(0% 0 0 / 0.5);
+    --elevation-lift: 0 14px 32px oklch(0% 0 0 / 0.6);
 
-    --muted: oklch(30% 0.03 270);
-    --muted-foreground: oklch(80% 0.03 250);
+    --muted: color-mix(in oklab, var(--ink) 12%, var(--canvas));
+    --accent: color-mix(in oklab, var(--ink) 12%, transparent);
 
-    --accent: oklch(35% 0.05 280);
-    --accent-foreground: oklch(95% 0.02 250);
+    --destructive: oklch(76% 0.18 25);
+    --destructive-foreground: oklch(16% 0.03 25);
 
-    --destructive: oklch(65% 0.2 30);
-    --destructive-foreground: oklch(98% 0.02 250);
-
-    --border: oklch(28% 0.04 270);
-    --input: oklch(32% 0.05 270);
-    --ring: oklch(70% 0.18 280);
-
-    --success: oklch(70% 0.15 140);
-    --danger: oklch(65% 0.2 30);
-    --warning: oklch(75% 0.2 80);
-    --info: oklch(70% 0.15 240);
+    --success: oklch(80% 0.155 155);
+    --info: oklch(80% 0.135 195);
 
     /* Same tokens, dark shades - see the light block for the rationale. */
     --note-red: oklch(32% 0.06 25);
@@ -191,8 +247,25 @@
   --text-label--letter-spacing: 0.1em;
   --text-label--font-weight: 500;
 
+  /* One radius across the whole system, and it is identical in both themes -
+     the single strongest signal that day and night are the same skeleton.
+     `pill` is Tailwind's own `rounded-full`, so it needs no token. */
+  --radius-card: 16px;
+  --radius-control: 10px;
+
+  /* Depth, as two named steps rather than shadcn's `shadow-sm`/`shadow-md`
+     ladder. The values switch with the theme (drop shadow by day, deeper black
+     by night), so a component asks for "at rest" or "lifted" and gets whichever
+     mechanism the current light uses. */
+  --shadow-rest: var(--elevation-rest);
+  --shadow-lift: var(--elevation-lift);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  /* The chrome plane - topbar and rail. The only surface plane the semantic set
+     above cannot already name; `canvas` is `background` and `raised` is `card`. */
+  --color-chrome: var(--canvas-chrome);
 
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
