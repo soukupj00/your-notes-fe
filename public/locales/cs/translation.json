@@ -287,8 +287,8 @@
     "undo": "Zpět",
     "view": {
       "toggle": "Přepnout rozvržení",
-      "masonry": "Mřížka",
-      "list": "Seznam"
+      "masonry": "Mřížkové zobrazení",
+      "stack": "Zobrazení v jednom sloupci"
     },
     "saveStatus": {
       "saving": "Ukládání…",

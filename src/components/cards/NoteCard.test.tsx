@@ -116,7 +116,9 @@ describe('NoteCard', () => {
 
   /** Fire the undo action from the most recent toast. */
   async function undoLastToast() {
-    const opts = toastMock.mock.calls.at(-1)?.[1] as { action: { onClick: () => void } };
+    const opts = toastMock.mock.calls.at(-1)?.[1] as {
+      action: { onClick: () => void | Promise<void> };
+    };
     await opts.action.onClick();
   }
 
@@ -310,6 +312,35 @@ describe('NoteCard', () => {
     expect(screen.getByRole('button', { name: 'notes.playAudio' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'notes.playVideo' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'notes.openFile' })).toBeInTheDocument();
+  });
+
+  it('caps card labels at three pills followed by one +N pill', async () => {
+    const note = makeNote();
+    const now = new Date().toISOString();
+    const tags = Array.from({ length: 5 }, (_, index) => ({
+      id: `t${index + 1}`,
+      name: `Label ${index + 1}`,
+      createdAt: now,
+      updatedAt: now,
+    }));
+    await db.tags.bulkPut(tags);
+    await db.noteTags.bulkPut(
+      tags.map((tag) => ({
+        noteId: note.id,
+        tagId: tag.id,
+        createdAt: now,
+        updatedAt: now,
+      }))
+    );
+
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    expect(await screen.findByText('Label 1')).toBeInTheDocument();
+    expect(screen.getByText('Label 2')).toBeInTheDocument();
+    expect(screen.getByText('Label 3')).toBeInTheDocument();
+    expect(screen.queryByText('Label 4')).not.toBeInTheDocument();
+    expect(screen.queryByText('Label 5')).not.toBeInTheDocument();
+    expect(screen.getByText('+2')).toBeInTheDocument();
   });
 
   it('renders the note’s labels as read-only pills', async () => {

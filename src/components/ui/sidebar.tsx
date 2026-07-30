@@ -18,6 +18,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
 const SIDEBAR_WIDTH = '16rem';
+const SIDEBAR_WIDTH_MOBILE = '70vw';
 // Until the wordmark is replaced by a logo mark, the collapsed rail needs
 // enough room for both the wordmark and menu buttons with `px-4` gutters.
 const SIDEBAR_WIDTH_ICON = '4rem';
@@ -177,10 +178,12 @@ const Sidebar = React.forwardRef<
       return (
         <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
           <SheetContent
+            // ADR 0010: the overlay is the mobile boundary, so the drawer uses
+            // 70vw without the bright inherited border or browser focus seam.
             data-sidebar="sidebar"
             data-mobile="true"
-            className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
-            style={{ '--sidebar-width': SIDEBAR_WIDTH } as React.CSSProperties}
+            className="w-(--sidebar-width) border-r-0 bg-sidebar p-0 text-sidebar-foreground outline-none [&>button]:hidden"
+            style={{ '--sidebar-width': SIDEBAR_WIDTH_MOBILE } as React.CSSProperties}
             side={side}
             // ADR 0010: Radix would restore focus to the trigger on close, which
             // yanks it back off the destination heading `useFocusOnMount` just

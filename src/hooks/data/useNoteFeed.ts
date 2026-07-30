@@ -93,10 +93,10 @@ export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
     // A note's tags ride along with it: the index needs their names at build
     // time, and the pill filters need their ids.
     const [allTags, links] = await Promise.all([db.tags.toArray(), db.noteTags.toArray()]);
-    const nameById = new Map(allTags.map((tag) => [tag.id, tag.name]));
+    const tagById = new Map(allTags.map((tag) => [tag.id, tag]));
     const linksByNote = new Map<string, string[]>();
     for (const link of links) {
-      if (!nameById.has(link.tagId)) continue;
+      if (!tagById.has(link.tagId)) continue;
       const existing = linksByNote.get(link.noteId);
       if (existing) existing.push(link.tagId);
       else linksByNote.set(link.noteId, [link.tagId]);
@@ -104,7 +104,15 @@ export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
 
     return candidates.map<FeedEntry>((note) => {
       const tagIds = linksByNote.get(note.id) ?? [];
-      return { note, tagIds, tagNames: tagIds.map((id) => nameById.get(id) ?? '') };
+      const tags = tagIds.flatMap((id) => {
+        const tag = tagById.get(id);
+        return tag ? [tag] : [];
+      });
+      return {
+        note: { ...note, tags },
+        tagIds,
+        tagNames: tags.map((tag) => tag.name),
+      };
     });
   }, [scope.state, scope.tagId]);
 
@@ -119,9 +127,9 @@ export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
     if (!entries || required.length === 0) return null;
     // Multi-tag is AND: the note must carry every selected label.
     return new Set(
-      entries
-        .filter((entry) => required.every((tagId) => entry.tagIds.includes(tagId)))
-        .map((entry) => entry.note.id)
+      entries.flatMap((entry) =>
+        required.every((tagId) => entry.tagIds.includes(tagId)) ? [entry.note.id] : []
+      )
     );
   }, [entries, required]);
 

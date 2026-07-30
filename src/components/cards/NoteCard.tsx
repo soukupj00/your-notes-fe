@@ -71,7 +71,8 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
     trashNote,
     restoreToActive,
   } = useNoteActions();
-  const tags = useTagsForNote(note.id);
+  const liveTags = useTagsForNote(note.id);
+  const tags = note.tags ?? liveTags;
 
   // stripHtml drops the <img data-attachment-id> tag along with the rest of the
   // markup, so an image-only Body (no text) needs the attachment check too -
@@ -147,7 +148,10 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
 
       <div className="relative z-10 p-[0.9rem_1rem_0.85rem]">
         {note.header ? (
-          <h2 dir="auto" className="mb-1.5 font-display text-foreground text-title">
+          <h2
+            dir="auto"
+            className="mb-1.5 line-clamp-3 min-w-0 max-w-full text-pretty break-words font-display text-foreground text-title [overflow-wrap:anywhere]"
+          >
             {note.header}
           </h2>
         ) : (
@@ -157,7 +161,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
         {hasBody && (
           <NoteBody
             html={note.body}
-            className="line-clamp-6 text-body text-foreground [&_li]:text-body [&_p]:text-body"
+            className="line-clamp-6 min-w-0 max-w-full break-words text-body text-foreground [overflow-wrap:anywhere] [&_*]:max-w-full [&_li]:text-body [&_p]:text-body"
           />
         )}
 
@@ -165,7 +169,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
             keep their real 44px hit areas and wrap below rather than squeezing
             the note's scarce horizontal axis. */}
         <div className="mt-3 flex flex-wrap items-end gap-2">
-          <TagPills tags={tags} className="mr-auto min-w-0" />
+          <TagPills tags={tags} maxVisible={3} className="mr-auto min-w-0" />
 
           <div className="ml-auto flex shrink-0 items-center gap-0.5">
             {hasAudio && (

@@ -7,6 +7,11 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+// Motion preference is orthogonal to this interaction suite.
+vi.mock('@/hooks/useReducedMotion.ts', () => ({
+  useReducedMotion: () => true,
+}));
+
 async function openDial() {
   const onStart = vi.fn();
   render(<QuickCaptureBar onStart={onStart} />);

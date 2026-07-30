@@ -5,13 +5,13 @@ import { useViewMode } from '@/context/viewModeProvider.tsx';
 import { cn } from '@/lib/utils.ts';
 
 /**
- * Flips the note feed between masonry and single-column list. The icon shows the
+ * Flips the note feed between Masonry and single-column Stack. The icon shows the
  * layout you'll switch *to* (Keep-style), and the accessible label names it.
  */
 export function ViewModeToggle({ className }: { className?: string }) {
   const { t } = useTranslation();
   const { viewMode, setViewMode } = useViewMode();
-  const next = viewMode === 'masonry' ? 'list' : 'masonry';
+  const next = viewMode === 'masonry' ? 'stack' : 'masonry';
 
   return (
     <Button

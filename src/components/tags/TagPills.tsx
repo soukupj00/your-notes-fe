@@ -8,6 +8,8 @@ type TagPillsProps = {
   tags: Tag[];
   /** When given, each pill grows a remove button. Omit for a read-only row. */
   onRemove?: (tag: Tag) => void;
+  /** Caps read-only card rows without hiding labels in the editor. */
+  maxVisible?: number;
   className?: string;
 };
 
@@ -16,13 +18,16 @@ type TagPillsProps = {
  * reads the same wherever it appears. Read-only on cards, removable in the
  * editor.
  */
-export function TagPills({ tags, onRemove, className }: TagPillsProps) {
+export function TagPills({ tags, onRemove, maxVisible, className }: TagPillsProps) {
   const { t } = useTranslation();
   if (tags.length === 0) return null;
 
+  const shown = maxVisible === undefined ? tags : tags.slice(0, Math.max(0, maxVisible));
+  const hiddenCount = tags.length - shown.length;
+
   return (
     <ul className={cn('flex flex-wrap items-center gap-1', className)}>
-      {tags.map((tag) => (
+      {shown.map((tag) => (
         <li
           key={tag.id}
           {...noteColorAttrs(tag.color)}
@@ -48,6 +53,11 @@ export function TagPills({ tags, onRemove, className }: TagPillsProps) {
           )}
         </li>
       ))}
+      {hiddenCount > 0 && (
+        <li className="rounded-full bg-foreground/10 px-2 py-0.5 text-label text-muted-foreground">
+          +{hiddenCount}
+        </li>
+      )}
     </ul>
   );
 }

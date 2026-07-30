@@ -126,6 +126,17 @@ describe('sorting', () => {
 });
 
 describe('tag filters', () => {
+  it('carries complete tag data with each note so cards mount at their final height', async () => {
+    await putNote({ id: 'tagged' });
+    await putTag('work', ['tagged']);
+
+    const result = await feed({ state: 'active' });
+
+    expect(result.current.notes[0]?.tags).toEqual([
+      expect.objectContaining({ id: 'work', name: 'work' }),
+    ]);
+  });
+
   it('requires every selected tag (AND), not any of them', async () => {
     await putNote({ id: 'both' });
     await putNote({ id: 'only-work' });

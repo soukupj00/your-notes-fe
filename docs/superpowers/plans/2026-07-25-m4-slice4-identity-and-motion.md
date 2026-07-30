@@ -1,6 +1,6 @@
 # M4 Slice 4 - Identity & motion
 
-**Status:** Task 1 complete; Task 1b foundation + card + chrome implementation in progress.
+**Status:** Tasks 1 and 1b complete; Task 2 core palette complete; Task 3 motion and feed layouts in progress.
 
 **Goal:** Give the app a distinctive "tactile paper" identity, add purposeful Motion animation, ship the full-card colour system, and make the toolbar user-customisable - turning a competent app into one that feels intentional and personal.
 
@@ -40,17 +40,17 @@ Reflow fixes therefore land with Task 3's packed feed, and the backed pin lands 
 - [ ] **Touch targets.** Audit the real production sites rather than porting the prototype list. Foundation + card + chrome gives card controls, colour swatches, search controls, and touch-mode shared chrome a real 44px box; checklist and later action surfaces remain with their owning tasks.
 - [x] **FAB fill.** Production already uses the filled 56px primary Button; the implementation only replaces its generic elevation with the named token.
 - [ ] **Pin in front.** Deferred to Task 4 because production does not have a card pin control yet. Per *The Pin-Is-Always-In-Front Rule* the new control must sit above every card layer with its own filled backing.
-- [ ] **Reflow responsiveness.** Deferred to Task 3, which introduces the JS masonry hook that this measured lab defect refers to. Observe once, call the latest `measure` through a ref. Ship gate: first frame within ~16ms **and** no frame moving further than the spring's own step.
-- [ ] **Wire the reflow transition.** Deferred to Task 3 because production currently uses CSS columns and has no x/y Motion placement path.
+- [ ] **Reflow responsiveness.** Task 3 replaced CSS columns with one attribute-registered, `ResizeObserver`-driven placement hook whose observer lifecycle is independent of `measure`. Layout-switch sampling now follows the overdamped spring without a corrective jump. The final click-to-first-frame gate stays open until Task 4 supplies the direct card pin control and its optimistic state.
+- [x] **Wire the reflow transition.** Task 3 now gives both Masonry and Stack real Motion layout projection with the named Nightshift spring; packed x/y/width changes no longer fall through to Motion defaults.
 - [x] **Prune `@fontsource`** down to Bricolage Grotesque + Work Sans now that `nightshift` won (souki asked for this explicitly; bundle size matters).
-- [ ] Decide whether the `/prototype/identity` lab stays in the repo as a reference or is removed once production CSS lands.
+- [x] Keep the `/prototype/identity` lab as a reference on the dedicated `design/identity-lab` branch rather than shipping it in the production branch.
 
 ### Task 2 - Colour system (full-card tint)
 
 Decisions: full-card tint; keep the nine persisted colour keys plus default and re-value them; `src/styles/globals.css` is the live token source; colour is decorative; colour-blind mode re-values the same selectors.
 
 - [ ] Define the nine-key palette plus default in `src/styles/globals.css`, with day pigment and night light values under the same `data-note-color` selector. Add colour-blind values for the same tokens.
-- [ ] `NoteCard` reads `Note.color` → full-card tint that resolves per active theme. Tag pills read `Tag.color` from the same tokens.
+- [x] `NoteCard` reads `Note.color` → full-card tint that resolves per active theme. Tag pills read `Tag.color` from the same tokens.
 - [ ] Colour **palette popover** (swatch grid) shared by: editor action bar, card hover row, card `⋮`, tag manager, tag popover.
 - [ ] Tests: token resolves per theme; card tint + tag pill colour render; default = neutral surface.
 
@@ -58,12 +58,12 @@ Decisions: full-card tint; keep the nine persisted colour keys plus default and 
 
 Decisions: `motion` (not GSAP); `useReducedMotion` ← reduced-motion pref.
 
-- [ ] Add dep `motion`.
-- [ ] `AnimatePresence` for enter/exit on lifecycle + filter changes (pin/archive/trash, tag-filter toggles).
-- [ ] **Layout animations** for feed reflow/reorder: pinned float-to-top, feed reflow, checklist checked-sink.
-- [ ] **Two feed layouts, and an animated switch between them** (decided 2026-07-30): **Masonry** (default, JS-placed column packing) and **Stack** (every card full container width, one per row; also the no-JS fallback). Both must resolve to per-card `x`/`y`/`width` targets through the *same* placement path - a layout that renders through a different code path cannot animate into one that doesn't. Note this transition changes card **width**, which the pin reflow never does, so it is the more expensive of the two. See *The Two-Layouts Rule* and *The Layout-Switch Is Animated Rule* in `DESIGN.md`.
-- [ ] Speed-dial expand/collapse (Slice 2 FAB), dialog transitions, tag-pill toggles.
-- [ ] Gate all motion on `useReducedMotion()` wired to `prefs.reducedMotion`.
+- [x] Add dep `motion`.
+- [x] `AnimatePresence` for feed entry/exit on lifecycle and filter changes (pin/archive/trash, tag-filter toggles).
+- [ ] **Layout animations** for feed reflow/reorder: pinned float-to-top and feed reflow are wired; checklist checked-sink remains with Task 5.
+- [x] **Two feed layouts, and an animated switch between them** (decided 2026-07-30): **Masonry** (default, JS-placed column packing) and **Stack** (every card full container width, one per row; also the no-JS fallback). Both resolve through one pure per-card `x`/`y`/`width` placement module and one DOM-ordered Motion feed. The legacy persisted `list` value migrates to `stack`.
+- [ ] Speed-dial expansion and tag-filter pill toggles use the Nightshift motion contract. Dialog transition consolidation remains.
+- [x] Gate Motion globally and feed presence/layout locally on `useReducedMotion()` wired to `prefs.reducedMotion`.
 - [ ] Tests: reduced-motion disables animation; presence/layout wrappers don't break existing interactions.
 
 ### Task 4 - Note action surfacing (lifecycle controls)

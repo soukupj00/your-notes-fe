@@ -286,8 +286,8 @@
     "undo": "Undo",
     "view": {
       "toggle": "Toggle layout",
-      "masonry": "Grid view",
-      "list": "List view"
+      "masonry": "Masonry view",
+      "stack": "Stack view"
     },
     "saveStatus": {
       "saving": "Saving…",
