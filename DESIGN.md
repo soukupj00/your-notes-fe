@@ -246,7 +246,9 @@ Depth is **material, and it reverses with the light**.
 
 By day the system is a soft-shadow one: a hairline `1px` border plus a barely-there drop shadow (`0 1px 2px oklch(40% 0.03 70 / 0.09)`) lifts a card off the parchment, deepening to `0 10px 26px .../0.16` on hover. Surfaces get *lighter* to come forward.
 
-By night shadow stops working, because a black shadow on a near-black room is invisible. Depth is carried by **glow** instead: a card's identity colour emits `0 0 18px -4px` at 60% mix, and surfaces get *darker* to recede (the recessed night canvas is darker than the base, where the raised day canvas is lighter than the base). Hover intensifies the glow to `0 0 34px -6px` at 72%.
+By night shadow stops working, because a black shadow on a near-black room is invisible. Depth is carried by **glow** instead: a card's identity colour emits `0 0 30px -8px` at 70% mix, and surfaces get *darker* to recede (the recessed night canvas is darker than the base, where the raised day canvas is lighter than the base). Hover intensifies the glow to `0 0 46px -10px` at 82%.
+
+**The Glow-Carries-Depth-Not-The-Edge Rule.** The night identity is light *around* a card, not a line drawn on it. The first production wall shipped a 52% identity border over a narrow `0 0 18px -4px` glow whose negative spread ate most of its own radius; measured on screen, the edge read as a hot ring and the glow was effectively invisible, which is the opposite of what this section describes. The resting edge sits at 34% and the glow carries the depth. Pinned is the one card allowed a full-identity edge, and that is what makes it separable now that the resting edge has stepped back.
 
 This is the one place the two themes legitimately diverge in mechanism, and it is why the theme toggle reads as a change of light rather than a change of product.
 
@@ -254,9 +256,9 @@ This is the one place the two themes legitimately diverge in mechanism, and it i
 
 - **Rest, day** (`0 1px 2px oklch(40% 0.03 70 / 0.09)`): Every card and raised surface at rest.
 - **Hover, day** (`0 10px 26px oklch(40% 0.03 70 / 0.16)`): Card hover, FAB.
-- **Rest, night** (`0 2px 6px oklch(0% 0 0 / 0.5)` + identity glow): Every card at rest.
-- **Hover, night** (`0 14px 32px oklch(0% 0 0 / 0.6)` + `0 0 34px -6px` identity glow): Card hover.
-- **Pinned, night** (`0 0 26px -5px` identity glow at 80%, border at full identity): Pinned state.
+- **Rest, night** (`0 2px 6px oklch(0% 0 0 / 0.5)` + `0 0 30px -8px` identity glow at 70%, border at 34% identity): Every card at rest.
+- **Hover, night** (`0 14px 32px oklch(0% 0 0 / 0.6)` + `0 0 46px -10px` identity glow at 82%, border at 58% identity): Card hover.
+- **Pinned, night** (`0 0 38px -8px` identity glow at 88%, border at full identity): Pinned state.
 
 ### Named Rules
 
@@ -267,7 +269,7 @@ This is the one place the two themes legitimately diverge in mechanism, and it i
 One corner radius across the entire system: **16px on cards and containers** (`{rounded.card}`), **10px on controls** (`{rounded.control}`), **999px on chips and the FAB** (`{rounded.pill}`).
 The radius is identical in both themes and is the single strongest signal that day and night are the same skeleton.
 
-Borders are always hairline (`1px`). By day the border is a slightly deepened version of the card's own tint; by night it is the card's identity colour at 52% mix, rising to full identity when pinned.
+Borders are always hairline (`1px`). By day the border is a slightly deepened version of the card's own tint; by night it is the card's identity colour at 34% mix, rising to full identity when pinned. See *The Glow-Carries-Depth-Not-The-Edge Rule* for why the night edge is deliberately quiet.
 There is no second border weight and no dashed or dotted variant - a chip that needs to read as incomplete (an overflow `+N`) should differ by fill, not by border style.
 
 Focus is a `2px` solid outline in the accent colour at `2px` offset, on every focusable element, in both themes.

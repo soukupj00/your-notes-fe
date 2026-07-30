@@ -282,17 +282,17 @@
       },
       {
         "name": "glow-rest",
-        "value": "0 0 18px -4px color-mix(in oklch, var(--n) 60%, transparent)",
+        "value": "0 0 30px -8px color-mix(in oklch, var(--n) 70%, transparent)",
         "purpose": "Night-only. The card's identity colour as emitted light. Carries depth where shadow cannot."
       },
       {
         "name": "glow-hover",
-        "value": "0 0 34px -6px color-mix(in oklch, var(--n) 72%, transparent)",
+        "value": "0 0 46px -10px color-mix(in oklch, var(--n) 82%, transparent)",
         "purpose": "Night-only card hover."
       },
       {
         "name": "glow-pinned",
-        "value": "0 0 26px -5px color-mix(in oklch, var(--n) 80%, transparent)",
+        "value": "0 0 38px -8px color-mix(in oklch, var(--n) 88%, transparent)",
         "purpose": "Night-only pinned state, with the border at full identity colour."
       }
     ],
@@ -372,7 +372,7 @@
       "refersTo": "card",
       "description": "The same card at midnight. Identity colour leaves the surface and becomes border, chip and glow; text stays near-white.",
       "html": "<article class=\"ds-card-n\"><div class=\"ds-card-n-surface\"></div><div class=\"ds-card-n-body\"><h3 class=\"ds-card-n-title\">A slow Saturday</h3><p class=\"ds-card-n-text\">Leave the morning unplanned. Good coffee, the market by the river, then make something with no useful outcome.</p><div class=\"ds-card-n-foot\"><span class=\"ds-chip-n\">Personal</span><span class=\"ds-when-n\">2h</span></div></div></article>",
-      "css": ".ds-card-n { position: relative; isolation: isolate; max-width: 260px; padding: 1px; font-family: 'Work Sans Variable', ui-sans-serif, system-ui, sans-serif; } .ds-card-n-surface { position: absolute; inset: 0; z-index: -1; border-radius: 16px; background: color-mix(in oklch, oklch(82% 0.16 78) 7%, oklch(20% 0.012 265)); border: 1px solid color-mix(in oklch, oklch(82% 0.16 78) 52%, transparent); box-shadow: 0 2px 6px oklch(0% 0 0 / 0.5), 0 0 18px -4px color-mix(in oklch, oklch(82% 0.16 78) 60%, transparent); transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; } .ds-card-n:hover .ds-card-n-surface { transform: scale(1.02); border-color: color-mix(in oklch, oklch(82% 0.16 78) 78%, transparent); box-shadow: 0 14px 32px oklch(0% 0 0 / 0.6), 0 0 34px -6px color-mix(in oklch, oklch(82% 0.16 78) 72%, transparent); } .ds-card-n-body { padding: 0.9rem 1rem 0.85rem; color: oklch(94% 0.005 250); } .ds-card-n-title { margin: 0 0 0.35rem; font-family: 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif; font-size: 1.04rem; font-weight: 700; line-height: 1.2; letter-spacing: -0.015em; color: oklch(94% 0.005 250); } .ds-card-n-text { margin: 0; font-size: 0.855rem; line-height: 1.45; color: oklch(71% 0.008 250); } .ds-card-n-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 0.7rem; } .ds-chip-n { border-radius: 999px; padding: 2px 8px; font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; background: color-mix(in oklch, oklch(82% 0.16 78) 18%, transparent); color: oklch(82% 0.16 78); } .ds-when-n { font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; color: oklch(71% 0.008 250); }"
+      "css": ".ds-card-n { position: relative; isolation: isolate; max-width: 260px; padding: 1px; font-family: 'Work Sans Variable', ui-sans-serif, system-ui, sans-serif; } .ds-card-n-surface { position: absolute; inset: 0; z-index: -1; border-radius: 16px; background: color-mix(in oklch, oklch(82% 0.16 78) 7%, oklch(20% 0.012 265)); border: 1px solid color-mix(in oklch, oklch(82% 0.16 78) 34%, transparent); box-shadow: 0 2px 6px oklch(0% 0 0 / 0.5), 0 0 30px -8px color-mix(in oklch, oklch(82% 0.16 78) 70%, transparent); transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; } .ds-card-n:hover .ds-card-n-surface { transform: scale(1.02); border-color: color-mix(in oklch, oklch(82% 0.16 78) 58%, transparent); box-shadow: 0 14px 32px oklch(0% 0 0 / 0.6), 0 0 46px -10px color-mix(in oklch, oklch(82% 0.16 78) 82%, transparent); } .ds-card-n-body { padding: 0.9rem 1rem 0.85rem; color: oklch(94% 0.005 250); } .ds-card-n-title { margin: 0 0 0.35rem; font-family: 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif; font-size: 1.04rem; font-weight: 700; line-height: 1.2; letter-spacing: -0.015em; color: oklch(94% 0.005 250); } .ds-card-n-text { margin: 0; font-size: 0.855rem; line-height: 1.45; color: oklch(71% 0.008 250); } .ds-card-n-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 0.7rem; } .ds-chip-n { border-radius: 999px; padding: 2px 8px; font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; background: color-mix(in oklch, oklch(82% 0.16 78) 18%, transparent); color: oklch(82% 0.16 78); } .ds-when-n { font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; color: oklch(71% 0.008 250); }"
     },
     {
       "name": "Label Chip",

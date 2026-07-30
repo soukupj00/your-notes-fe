@@ -349,17 +349,24 @@
    *
    * Measured after the nine-key reconciliation: ink remains about 13.1:1 on
    * every surface and neon-on-chip ranges from 5.77:1 to 6.54:1.
+   *
+   * The border/glow balance was re-cut after the first production wall: at a
+   * 52% edge the identity read as a hot *ring* drawn on the card, and the glow
+   * behind it - narrow, with a -4px spread eating most of its radius - was
+   * effectively invisible. Depth in the night theme is supposed to be light
+   * *around* a card, so the edge steps back and the glow steps forward.
    */
   .dark [data-note-color] {
     --note-surface: color-mix(in oklch, var(--note-neon) 7%, var(--canvas-raised));
-    --note-border: color-mix(in oklch, var(--note-neon) 52%, transparent);
+    --note-border: color-mix(in oklch, var(--note-neon) 34%, transparent);
     --note-chip: color-mix(in oklab, var(--note-neon) 18%, var(--canvas-raised));
     --note-on-chip: var(--note-neon);
+    --note-media: color-mix(in oklch, var(--note-neon) 9%, var(--canvas-chrome));
     --note-elevation:
-      var(--elevation-rest), 0 0 18px -4px color-mix(in oklch, var(--note-neon) 60%, transparent);
+      var(--elevation-rest), 0 0 30px -8px color-mix(in oklch, var(--note-neon) 70%, transparent);
     --note-elevation-lift:
-      var(--elevation-lift), 0 0 34px -6px color-mix(in oklch, var(--note-neon) 72%, transparent);
-    --note-border-hover: color-mix(in oklch, var(--note-neon) 78%, transparent);
+      var(--elevation-lift), 0 0 46px -10px color-mix(in oklch, var(--note-neon) 82%, transparent);
+    --note-border-hover: color-mix(in oklch, var(--note-neon) 58%, transparent);
 
     --note-swatch: color-mix(in oklch, var(--note-neon) 30%, transparent);
     --note-swatch-ring: var(--note-neon);
@@ -389,9 +396,11 @@
     --note-border: color-mix(in oklab, var(--note-edge) 70%, var(--ink));
   }
   .dark [data-note-color][data-pinned] {
+    /* Pinned is the one card allowed a full-identity edge, which is what makes
+       it separable now that the resting edge has stepped back. */
     --note-border: var(--note-neon);
     --note-elevation:
-      var(--elevation-rest), 0 0 26px -5px color-mix(in oklch, var(--note-neon) 80%, transparent);
+      var(--elevation-rest), 0 0 38px -8px color-mix(in oklch, var(--note-neon) 88%, transparent);
   }
 
   /* The 44px floor applies to touch input, not to every mouse-sized desktop
