@@ -6,7 +6,15 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!node_modules", "!dist", "!public", "!**/*.d.ts", "!src/routeTree.gen.ts"]
+    "includes": [
+      "**",
+      "!node_modules",
+      "!dist",
+      "!public",
+      "!.claude",
+      "!**/*.d.ts",
+      "!src/routeTree.gen.ts"
+    ]
   },
   "formatter": {
     "enabled": true,

@@ -28,3 +28,6 @@ dist-ssr
 .claude-flow/
 .ai/
 .playwright-mcp/
+
+# Per-machine Claude Code permissions, not shared
+.claude/settings.local.json

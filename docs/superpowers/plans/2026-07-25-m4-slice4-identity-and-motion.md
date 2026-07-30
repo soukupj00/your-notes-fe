@@ -16,7 +16,32 @@ Item 14: components currently look "straight out of the box" (shadcn defaults). 
 
 ### Task 1 - Redesign prototype (validate first)
 
-- [ ] Build a small **Artifact** prototype: one note card + a short feed in the "tactile paper" direction (layered shadows, spring pop-forward on hover, whisper of paper grain, refined colour tints, pin/tape affordance, humanist display face for titles + clean body face). Get sign-off before committing production code. This can change - it's the north star, not a contract.
+- [x] Build a prototype in the real app shell at `/prototype/identity` (dev-only route, redirects in prod). First pass explored "tactile paper" as three variants of one material system.
+- [x] **Widened to five committed directions** (2026-07-29), because the first pass converged on warm paper - which is the aesthetic every model reaches for by default, not a choice. `stationery` is kept unchanged as the control; four new worlds replace the rest, each with its own palette, typefaces, geometry, material and ornament rather than being knob combinations of one system:
+  - `enamel` - "Plate & ticket". Fired enamel plates, white keyline, monumental index numerals, ticket punch for pinned. Archivo / Archivo Black.
+  - `riso` - "Duplicator". Two-ink overprint with deliberate misregistration and paper grain. Bricolage Grotesque / Work Sans.
+  - `olivetti` - "Personal machine". Flat laminate colour fields, geometric marks, one quarter-round cut, zero shadow. Jost.
+  - `videostore` - "Friday night". Dark-first, clamshell cases under a strip light, yellow reserved for state. Anton / Caveat / Barlow Semi Condensed.
+- [x] Each direction renders a full fake app shell (topbar, rail with labels, capture bar, FAB, feed) rather than a lone card, so identity can be judged as an app.
+- [x] Inspector reduced to the axes that stay meaningful in every world (theme, radius, featured colour, spring feel, card hover, button hover, reflow speed). Everything else is world-owned and locked, so comparisons are between decided designs rather than mixtures.
+- [x] **Fixed the card-preview blur** seen on the 2% hover pop: the scale now runs on a dedicated `.proto-card-surface` layer carrying only background/border/shadow, while content never transforms. Chrome was rasterising text once and bitmap-stretching it. Locked by a test.
+- [x] Typefaces are self-hosted `@fontsource` packages (no CDN - offline-first). Scoped to the dev-only chunk: main CSS has zero `@font-face`, and the prototype chunk is excluded from the PWA precache. **Prune the unused families once a direction wins.**
+- [x] **Added a sixth world, `nightshift`** ("Day desk, night shop") - souki's directed merge of `stationery` and `videostore`. Warm parchment by day, a near-black room by night where each card's colour becomes a neon edge, chip and glow. One skeleton in both themes: 16px corners, one type system, one motion contract. Bricolage Grotesque / Work Sans.
+- [x] **`nightshift` signed off** (2026-07-30) as the direction.
+- [x] **`DESIGN.md` + `.impeccable/design.json` written** at repo root, from a measured browser pass over ~15 lab states (both themes, all five accents, all five card anatomies, touch, the narrow breakpoint, the script sampler, and the pin reflow) rather than from reasoning.
+
+### Task 1b - Carry the direction into production
+
+The design contract is [`DESIGN.md`](../../../DESIGN.md); its Named Rules are binding. The lab measured six concrete defects that must be **fixed rather than ported**:
+
+- [ ] **Day accent.** Replace the failing `oklch(58% 0.14 68)` with the resolved `oklch(54% 0.15 80)`. See *The Two-Constraint Rule* - an accent must clear 4.5:1 on its own text **and** 3:1 against the canvas, and brightening to yellow fails the second at 1.58:1.
+- [ ] **Touch targets.** Everything except the FAB is under 44px in touch mode (pin 27, action buttons 30, checklist boxes 15). Invisible padding, real hit area.
+- [ ] **FAB fill.** It has no background in either theme - only a shadow. Fill it with the accent; a shadow is depth, not a shape.
+- [ ] **Pin in front.** 7 of 11 cards place an unbacked pin over media. Per *The Pin-Is-Always-In-Front Rule* the pin sits above every card layer with its own filled backing, in both layouts and both themes.
+- [ ] **Reflow responsiveness.** Pinning currently takes 115ms to its first frame, then jumps 21px discontinuously. Cause: the masonry hook's `ResizeObserver` effect depends on the `measure` callback, so every re-pack re-observes every node and fires a late second measurement. Observe once, call the latest `measure` through a ref. Ship gate: first frame within ~16ms **and** no frame moving further than the spring's own step.
+- [ ] **Wire the reflow transition.** It is expressed as `{ layout: {...} }` but the packed feed sets `layout={false}` and animates `x`/`y`, so it silently falls back to Motion's default spring. Fix the wiring, then choose the value, then re-measure.
+- [ ] **Prune `@fontsource`** down to Bricolage Grotesque + Work Sans now that `nightshift` won (souki asked for this explicitly; bundle size matters).
+- [ ] Decide whether the `/prototype/identity` lab stays in the repo as a reference or is removed once production CSS lands.
 
 ### Task 2 - Colour system (full-card tint)
 
@@ -33,7 +58,8 @@ Decisions: `motion` (not GSAP); `useReducedMotion` ← reduced-motion pref.
 
 - [ ] Add dep `motion`.
 - [ ] `AnimatePresence` for enter/exit on lifecycle + filter changes (pin/archive/trash, tag-filter toggles).
-- [ ] **Layout animations** for feed reflow/reorder: pinned float-to-top, masonry/list reflow, checklist checked-sink.
+- [ ] **Layout animations** for feed reflow/reorder: pinned float-to-top, feed reflow, checklist checked-sink.
+- [ ] **Two feed layouts, and an animated switch between them** (decided 2026-07-30): **Masonry** (default, JS-placed column packing) and **Stack** (every card full container width, one per row; also the no-JS fallback). Both must resolve to per-card `x`/`y`/`width` targets through the *same* placement path - a layout that renders through a different code path cannot animate into one that doesn't. Note this transition changes card **width**, which the pin reflow never does, so it is the more expensive of the two. See *The Two-Layouts Rule* and *The Layout-Switch Is Animated Rule* in `DESIGN.md`.
 - [ ] Speed-dial expand/collapse (Slice 2 FAB), dialog transitions, tag-pill toggles.
 - [ ] Gate all motion on `useReducedMotion()` wired to `prefs.reducedMotion`.
 - [ ] Tests: reduced-motion disables animation; presence/layout wrappers don't break existing interactions.
@@ -70,4 +96,5 @@ Decisions (Q11): flat ordered list `prefs.toolbar: string[]`; toggle now, drag-r
 ## Verification
 
 - `pnpm test`, `pnpm tsc -b --noEmit`, `pnpm check:ci`.
-- Manual: prototype signed off before production CSS; cards lift on hover; colour tints correct in light/dark/colour-blind; pin float + reflow animate (and stop under reduced-motion); toolbar toggle + reorder persist; checklist reorder + checked-sink; every Settings switch persists and applies.
+- Manual: prototype signed off before production CSS; cards lift on hover; colour tints correct in light/dark/colour-blind; pin float + reflow animate (and stop under reduced-motion); Masonry↔Stack switch animates rather than re-rendering; toolbar toggle + reorder persist; checklist reorder + checked-sink; every Settings switch persists and applies.
+- Measured gates from `DESIGN.md` (numbers, not impressions): every accent clears 4.5:1 on its own text **and** 3:1 against its canvas, in both themes; no touch target under 44×44; pin legible over a dark video thumbnail and a white photo; pin reflow's first frame within ~16ms of the click with no frame exceeding the spring's own step.
