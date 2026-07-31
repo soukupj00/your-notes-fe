@@ -299,7 +299,7 @@ function AudioRow({
 
       <span className="flex h-6 min-w-0 flex-1 items-center gap-px" aria-hidden>
         {WAVE.map((height, index) => (
-          <i
+          <span
             // Position is the identity: this is one fixed decorative envelope.
             // biome-ignore lint/suspicious/noArrayIndexKey: positional waveform bar
             key={index}

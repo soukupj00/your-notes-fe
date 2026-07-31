@@ -264,7 +264,6 @@
         "subtitle": "Try a different search, or clear the label filters."
       }
     },
-    "menu": "Note options",
     "playAudio": "Play audio",
     "playVideo": "Play video",
     "openFile": "Open file",
@@ -284,8 +283,6 @@
     "movedToTrash": "Note moved to trash",
     "restore": "Restore",
     "restored": "Note restored",
-    "deleteForever": "Delete forever",
-    "deletedForever": "Note deleted forever",
     "emptyTrash": "Empty trash",
     "trashEmptied_one": "Deleted {{count}} note",
     "trashEmptied_other": "Deleted {{count}} notes",

@@ -95,24 +95,19 @@ describe('NoteCard', () => {
     expect(onSelect).toHaveBeenCalledWith(note.id);
   });
 
-  it('does not open the editor when the overflow menu is keyboard-activated', async () => {
+  it('does not open the editor when a rail control is keyboard-activated', async () => {
     const note = makeNote();
     const onSelect = vi.fn();
     render(<NoteCard note={note} onSelect={onSelect} />);
 
-    // Focus the "⋮" trigger and press Enter: the menu opens, but the card's
-    // keydown handler must not also fire onSelect (guards against the portalled
-    // synthetic-event bubble reopening the editor - including from Delete).
-    screen.getByRole('button', { name: 'notes.menu' }).focus();
+    // Focus a rail control and press Enter: it runs its own action, but the
+    // card's keydown handler must not also fire onSelect (guards against a
+    // portalled synthetic-event bubble reopening the editor).
+    screen.getByRole('button', { name: 'notes.color' }).focus();
     await userEvent.keyboard('{Enter}');
 
     expect(onSelect).not.toHaveBeenCalled();
   });
-
-  async function chooseMenuItem(label: string) {
-    await userEvent.click(screen.getByRole('button', { name: 'notes.menu' }));
-    await userEvent.click(await screen.findByText(label));
-  }
 
   /** Fire the undo action from the most recent toast. */
   async function undoLastToast() {
@@ -127,7 +122,7 @@ describe('NoteCard', () => {
     await db.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    await chooseMenuItem('notes.moveToTrash');
+    await userEvent.click(screen.getByRole('button', { name: 'notes.moveToTrash' }));
 
     await waitFor(async () => expect((await db.notes.get(note.id))?.state).toBe('trashed'));
     // Trashing is recoverable - the row must still be there.
@@ -251,27 +246,27 @@ describe('NoteCard', () => {
     await waitFor(async () => expect((await db.notes.get(note.id))?.state).toBe('active'));
   });
 
-  it('offers restore and permanent deletion for a trashed note, and nothing else', async () => {
+  it('offers only restore for a trashed note, and never permanent deletion', async () => {
     const note = makeNote({ state: 'trashed', trashedAt: new Date().toISOString() });
     await db.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'notes.menu' }));
+    // Trashing or pinning something already in the trash is meaningless, and
+    // purging is not a card action at all - the trash itself is the
+    // confirmation, so a note only leaves for good from /trash or by expiring.
+    expect(screen.queryByRole('button', { name: 'notes.moveToTrash' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'notes.pin' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'notes.deleteForever' })).not.toBeInTheDocument();
 
-    expect(await screen.findByText('notes.restore')).toBeInTheDocument();
-    expect(screen.getByText('notes.deleteForever')).toBeInTheDocument();
-    // Trashing or pinning something already in the trash is meaningless.
-    expect(screen.queryByText('notes.moveToTrash')).not.toBeInTheDocument();
-    expect(screen.queryByText('notes.pin')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'notes.restore' }));
 
-    await userEvent.click(screen.getByText('notes.deleteForever'));
+    await waitFor(async () => expect((await db.notes.get(note.id))?.state).toBe('active'));
+  });
 
-    await waitFor(async () => expect(await db.notes.get(note.id)).toBeUndefined());
-    expect(toastMock).toHaveBeenCalledWith('notes.deletedForever', expect.anything());
+  it('never puts an overflow menu on the rail: every control is a direct button', () => {
+    render(<NoteCard note={makeNote()} onSelect={vi.fn()} />);
 
-    // Purge is irreversible, so its undo re-puts the captured note verbatim.
-    await undoLastToast();
-    await waitFor(async () => expect(await db.notes.get(note.id)).toEqual(note));
+    expect(screen.queryByRole('button', { name: 'notes.menu' })).not.toBeInTheDocument();
   });
 
   // Attachments are summarised by CardMedia rather than rendered inline, so

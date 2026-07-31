@@ -1,12 +1,6 @@
-import { Archive, ArchiveRestore, MoreVertical, Palette } from 'lucide-react';
+import { Archive, ArchiveRestore, Palette, RotateCcw, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { NoteColorPicker } from '@/components/color-picker/NoteColorPicker.tsx';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { cn } from '@/lib/utils.ts';
@@ -17,7 +11,6 @@ interface CardActionsProps {
   onArchive: () => void;
   onRestore: () => void;
   onTrash: () => void;
-  onPurge: () => void;
   onColorChange: (color?: string) => void;
 }
 
@@ -28,16 +21,26 @@ const RAIL_BUTTON =
 /**
  * The card's foot rail (DESIGN.md → Card anatomy, "Foot rail (A)").
  *
- * The one lifecycle move for the note's current state, the colour swatch and
- * the `⋮` overflow, bottom-right. The strip is always visible so every action
- * is immediately discoverable and available on every input type.
+ * Every control is a direct icon: the note's one lifecycle move *out* of its
+ * current state, the move *down* to the trash where one exists, and the colour
+ * swatch. The strip is always visible so every action is immediately
+ * discoverable and available on every input type.
+ *
+ * There is no `⋮`. An overflow menu that holds a single item is a click in
+ * front of a button, and the actions here are all recoverable through the undo
+ * toast the card offers on every transition - so none of them needs the extra
+ * step a menu implies.
+ *
+ * Permanent deletion is deliberately *not* here. The trash is the confirmation:
+ * a note sits there until it expires or the user empties it from `/trash`, and
+ * a one-click purge on a card in a wall is a different risk from an explicit
+ * "empty the trash".
  */
 export function CardActions({
   note,
   onArchive,
   onRestore,
   onTrash,
-  onPurge,
   onColorChange,
 }: CardActionsProps) {
   const { t } = useTranslation();
@@ -50,27 +53,14 @@ export function CardActions({
     !reducedMotion && 'transition-[background-color,color,box-shadow,transform] hover:scale-[1.06]'
   );
 
+  // Archived and trashed both leave by the same door (`restoreToActive`) but
+  // read as different moves, so each takes its own icon: putting a note back on
+  // the desk is not the same gesture as pulling it out of the bin.
+  const isActive = note.state === 'active';
+  const LeaveIcon = isActive ? Archive : note.state === 'archived' ? ArchiveRestore : RotateCcw;
+
   return (
     <div data-slot="note-card-actions" className="ml-auto flex shrink-0 items-center gap-0.5">
-      {note.state !== 'trashed' && (
-        <button
-          type="button"
-          aria-label={t(note.state === 'archived' ? 'notes.restore' : 'notes.archive')}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (note.state === 'archived') onRestore();
-            else onArchive();
-          }}
-          className={railButton}
-        >
-          {note.state === 'archived' ? (
-            <ArchiveRestore className="size-4" aria-hidden />
-          ) : (
-            <Archive className="size-4" aria-hidden />
-          )}
-        </button>
-      )}
-
       <Popover>
         <PopoverTrigger
           aria-label={t('notes.color')}
@@ -84,34 +74,33 @@ export function CardActions({
         </PopoverContent>
       </Popover>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          aria-label={t('notes.menu')}
-          onClick={(e) => e.stopPropagation()}
+      <button
+        type="button"
+        aria-label={t(isActive ? 'notes.archive' : 'notes.restore')}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (isActive) onArchive();
+          else onRestore();
+        }}
+        className={railButton}
+      >
+        <LeaveIcon className="size-4" aria-hidden />
+      </button>
+
+      {/* Trashing something already in the trash is meaningless. */}
+      {note.state !== 'trashed' && (
+        <button
+          type="button"
+          aria-label={t('notes.moveToTrash')}
+          onClick={(e) => {
+            e.stopPropagation();
+            onTrash();
+          }}
           className={railButton}
         >
-          <MoreVertical className="size-4" aria-hidden />
-        </DropdownMenuTrigger>
-        {/* State-aware: a trashed note offers recovery and permanent deletion,
-            everything else offers the move the rail does not already carry. */}
-        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-          {note.state === 'trashed' ? (
-            <>
-              <DropdownMenuItem onClick={onRestore}>{t('notes.restore')}</DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={onPurge}
-                className="text-destructive focus:text-destructive"
-              >
-                {t('notes.deleteForever')}
-              </DropdownMenuItem>
-            </>
-          ) : (
-            <DropdownMenuItem onClick={onTrash} className="text-destructive focus:text-destructive">
-              {t('notes.moveToTrash')}
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+          <Trash2 className="size-4" aria-hidden />
+        </button>
+      )}
     </div>
   );
 }

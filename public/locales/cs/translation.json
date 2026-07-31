@@ -264,7 +264,6 @@
         "subtitle": "Zkuste jiné hledání nebo zrušte filtry štítků."
       }
     },
-    "menu": "Možnosti poznámky",
     "playAudio": "Přehrát zvuk",
     "playVideo": "Přehrát video",
     "openFile": "Otevřít soubor",
@@ -284,8 +283,6 @@
     "movedToTrash": "Poznámka přesunuta do koše",
     "restore": "Obnovit",
     "restored": "Poznámka obnovena",
-    "deleteForever": "Smazat navždy",
-    "deletedForever": "Poznámka trvale smazána",
     "emptyTrash": "Vysypat koš",
     "trashEmptied_one": "Smazána {{count}} poznámka",
     "trashEmptied_few": "Smazány {{count}} poznámky",

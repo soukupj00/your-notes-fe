@@ -24,8 +24,6 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
   const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const {
-    purgeNote,
-    restoreNote,
     updateNote,
     revertLifecycle,
     pinNote,
@@ -60,15 +58,6 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
   const handleArchive = withUndo(archiveNote, t('notes.archived'));
   const handleTrash = withUndo(trashNote, t('notes.movedToTrash'));
   const handleRestore = withUndo(restoreToActive, t('notes.restored'));
-
-  // Purge is the one irreversible action, so its undo works differently: it
-  // re-puts the captured note plus the rows the cascade removed.
-  const handlePurge = async () => {
-    const removed = await purgeNote(note.id);
-    toast(t('notes.deletedForever'), {
-      action: { label: t('notes.undo'), onClick: () => restoreNote(note, removed) },
-    });
-  };
 
   const open = () => onSelect(note.id);
 
@@ -128,7 +117,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
             /* pe-9 reserves the pin's corner so a long title never runs under
                it. Reserved rather than revealed: the card's height must not
                change when the pointer arrives. */
-            className="mb-1.5 line-clamp-3 min-w-0 max-w-full text-pretty break-words pe-9 font-display text-foreground text-title [overflow-wrap:anywhere]"
+            className="wrap-break-word mb-1.5 line-clamp-3 min-w-0 max-w-full text-pretty pe-9 font-display text-foreground text-title"
           >
             {note.header}
           </h2>
@@ -139,22 +128,23 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
         {hasProse && (
           <NoteBody
             html={prose}
-            className="line-clamp-6 min-w-0 max-w-full break-words text-body text-foreground [overflow-wrap:anywhere] [&_*]:max-w-full [&_li]:text-body [&_p]:text-body"
+            className="wrap-anywhere line-clamp-6 min-w-0 max-w-full text-body text-foreground [&_*]:max-w-full [&_li]:text-body [&_p]:text-body"
           />
         )}
 
         {/* Foot rail A from DESIGN.md. Labels get the flexible side; controls
             keep their real 44px hit areas and wrap below rather than squeezing
-            the note's scarce horizontal axis. */}
+            the note's scarce horizontal axis. The rail owns its own `ml-auto`,
+            which is what keeps it right-aligned on a note with no labels at
+            all, so the pills do not need a matching `mr-auto`. */}
         <div className="mt-3 flex flex-wrap items-end gap-2">
-          <TagPills tags={tags} maxVisible={3} className="mr-auto min-w-0" />
+          <TagPills tags={tags} maxVisible={3} className="min-w-0" />
 
           <CardActions
             note={note}
             onArchive={handleArchive}
             onRestore={handleRestore}
             onTrash={handleTrash}
-            onPurge={handlePurge}
             onColorChange={(color) => void updateNote(note.id, { color })}
           />
         </div>
