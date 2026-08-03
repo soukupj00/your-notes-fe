@@ -27,7 +27,7 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
   - **Archived** — The user is done with the Note but wants to keep it. Hidden from the main feed to reduce clutter, never auto-deleted, still reachable and still found by Search. Distinct from Trashed: archiving is *keeping*, not *discarding*.
   - **Trashed** — The Note is on its way out. Held for a grace period during which it can be restored, then permanently purged by a sweep. Distinct from Archived: trashing is *discarding with an undo window*.
 - **Pinned** — A flag, orthogonal to State, marking a Note the user wants surfaced at the top of the feed. Only meaningful while Active. Archiving or trashing a Note clears its Pinned status.
-- **Color** — An optional label color a user assigns to a Note for visual grouping. Stored as a palette *token* (a named entry), never a raw color value, so the concrete shade resolves from the active Theme (including light, dark, and color-blind variants). A Note has at most one Color; the absence of one is the default surface.
+- **Color** — An optional label color a user assigns to a Note for visual grouping. Stored as a palette *token* (a named entry), never a raw color value, so the concrete shade resolves from the active Theme and Vision Mode. A Note has at most one Color; the absence of one is the default surface.
 - **Purge** — The permanent, irreversible removal of a Trashed Note (and its Attachments) once its grace period elapses. Performed by a sweep, the same way Orphan Attachments are reclaimed.
 
 ## Editing
@@ -39,7 +39,8 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
 
 ## Presentation & accessibility
 
-- **Theme** — A complete set of colors applied to the whole app. Includes light and dark, and accessibility variants tuned for color-blindness and other vision conditions. A user has exactly one active Theme at a time.
+- **Theme** — The light the whole app is rendered in: light or dark. A user has exactly one active Theme at a time.
+- **Vision Mode** — An accessibility modifier that composes *with* a Theme rather than replacing it, re-valuing the Note identity colors so they carry identity on lightness first and hue second. It is independent of Theme: a user may have dark and a Vision Mode at once, because color vision and a preference for a dark room are unrelated. Distinct from a Theme: a Theme re-lights everything, a Vision Mode re-values only the Note identity colors.
 - **Locale** — The language the UI is presented in (e.g. `en`, `cs`).
 - **Fallback** — The Locale used when the active Locale lacks a translation for a given string. The Fallback is always English (`en`).
 

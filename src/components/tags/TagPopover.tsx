@@ -80,7 +80,15 @@ export function TagPopover({ tags, assignedIds, onToggle, onCreate, trigger }: T
   };
 
   return (
-    <Popover>
+    /*
+     * `modal` is load-bearing, not a behaviour choice: this popover's usual home
+     * is inside the note editor's Dialog, which mounts `react-remove-scroll`.
+     * That blocks wheel events for every node outside the dialog's own subtree,
+     * and the popover portals to `body` - so a non-modal one renders its
+     * scrollable tag list and then ignores the mouse wheel entirely. A modal
+     * popover registers its own content as the scrollable shard.
+     */
+    <Popover modal>
       <PopoverTrigger asChild>
         {trigger ?? (
           <Button type="button" variant="ghost" size="sm" className="gap-1 text-muted-foreground">

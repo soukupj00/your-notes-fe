@@ -12,6 +12,12 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+// The note bar's controls pair a scale with a material change; the hook behind
+// that reads the preferences context, which this suite renders without.
+vi.mock('@/hooks/useReducedMotion.ts', () => ({
+  useReducedMotion: () => false,
+}));
+
 // The real Editor is a heavy TipTap/ProseMirror component that is unreliable
 // to drive in jsdom; swap it for a plain textarea that forwards onUpdate.
 vi.mock('@/components/editor/editor.tsx', () => ({
@@ -62,6 +68,9 @@ function makeNote(overrides: Partial<Note> = {}): Note {
 const headerInput = () => screen.getByLabelText('notes.titlePlaceholder');
 const editorTextarea = () => screen.getByTestId('editor') as HTMLTextAreaElement;
 const closeButton = () => screen.getByRole('button', { name: 'Close' });
+// By slot, not by role: an open Radix popover is also a `dialog`.
+const dialogSurface = () =>
+  document.querySelector('[data-slot="dialog-content"]') as HTMLElement | null;
 
 afterEach(clearNotesDb);
 
@@ -286,5 +295,80 @@ describe('NoteEditorDialog', () => {
     await waitFor(async () => expect(await db.noteTags.count()).toBe(1));
     const link = (await db.noteTags.toArray())[0];
     expect(await db.notes.get(link.noteId)).toBeDefined();
+  });
+
+  // ---- Note bar (colour / pin) ---------------------------------------------
+  // The editor bar carries only the moves that apply to a note with no card
+  // yet: colour, labels and pin. Archive and trash live on the card's foot
+  // rail, which is visible at rest on every input type.
+
+  it('colours an unsaved draft through the same ensureNoteId queue', async () => {
+    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'notes.color' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'colors.blue' }));
+
+    await waitFor(async () => expect(await db.notes.count()).toBe(1));
+    const [saved] = await db.notes.toArray();
+    expect(saved.color).toBe('blue');
+  });
+
+  it('writes a colour change to an existing note and tints the dialog with it', async () => {
+    const note = makeNote({ color: 'green' });
+    await db.notes.add(note);
+
+    render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
+
+    // The dialog is the note's own card held open, so it carries the identity.
+    await waitFor(() => expect(dialogSurface()).toHaveAttribute('data-note-color', 'green'));
+
+    await userEvent.click(screen.getByRole('button', { name: 'notes.color' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'colors.red' }));
+
+    await waitFor(async () => expect((await db.notes.get(note.id))?.color).toBe('red'));
+    // The tint is the picker's feedback, so it must move with the choice.
+    expect(dialogSurface()).toHaveAttribute('data-note-color', 'red');
+  });
+
+  it('pins and unpins an existing note from the bar', async () => {
+    const note = makeNote();
+    await db.notes.add(note);
+
+    render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
+
+    const pin = screen.getByRole('button', { name: 'notes.pin' });
+    expect(pin).toHaveAttribute('aria-pressed', 'false');
+
+    await userEvent.click(pin);
+
+    await waitFor(async () => expect((await db.notes.get(note.id))?.pinnedAt).toBeDefined());
+    const unpin = await screen.findByRole('button', { name: 'notes.unpin' });
+    expect(unpin).toHaveAttribute('aria-pressed', 'true');
+
+    await userEvent.click(unpin);
+    await waitFor(async () => expect((await db.notes.get(note.id))?.pinnedAt).toBeUndefined());
+  });
+
+  it('pins an unsaved draft through the same ensureNoteId queue', async () => {
+    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'notes.pin' }));
+
+    await waitFor(async () => expect(await db.notes.count()).toBe(1));
+    const [saved] = await db.notes.toArray();
+    expect(saved.pinnedAt).toBeDefined();
+  });
+
+  it('offers no pin for an archived note, since pinning is meaningless there', async () => {
+    const note = makeNote({ state: 'archived' });
+    await db.notes.add(note);
+
+    render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
+    await screen.findByDisplayValue(note.header as string);
+
+    expect(screen.queryByRole('button', { name: 'notes.pin' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'notes.unpin' })).not.toBeInTheDocument();
+    // Colour and labels are authoring moves and stay available.
+    expect(screen.getByRole('button', { name: 'notes.color' })).toBeInTheDocument();
   });
 });

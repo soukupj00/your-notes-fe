@@ -457,8 +457,12 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
           <div
             className={cn(
               'flex flex-wrap items-center gap-1',
+              // The sticky bar needs an opaque background to cover the text
+              // scrolling under it, and it takes the note's own surface rather
+              // than the app background - the editor sits inside a note-tinted
+              // dialog, where a neutral band would read as a foreign element.
               stickyToolbarOnMobile &&
-                'sticky bottom-0 z-10 order-last bg-background py-2 sm:static sm:order-none sm:py-0'
+                'sticky bottom-0 z-10 order-last bg-note-surface py-2 sm:static sm:order-none sm:py-0'
             )}
           >
             <HeadingSection editor={editor} />

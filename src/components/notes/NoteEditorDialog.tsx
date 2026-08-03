@@ -3,13 +3,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CaptureKind } from '@/components/editor/editor.tsx';
 import { Editor, type EditorHandle } from '@/components/editor/editor.tsx';
-import { NoteTagsBar } from '@/components/tags/NoteTagsBar.tsx';
+import { NoteEditorBar } from '@/components/notes/NoteEditorBar.tsx';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog.tsx';
 import { db } from '@/db/db.ts';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { bodyHasAttachment, extractAttachmentIds } from '@/lib/attachment-html.ts';
+import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { stripHtml } from '@/lib/utils.ts';
+import type { NoteState } from '@/models.ts';
 
 const AUTOSAVE_DELAY_MS = 600;
 
@@ -50,13 +52,20 @@ export function NoteEditorDialog({
   onClose,
 }: NoteEditorDialogProps) {
   const { t } = useTranslation();
-  const { createNote, updateNote, purgeNote } = useNoteActions();
+  const { createNote, updateNote, purgeNote, pinNote, unpinNote } = useNoteActions();
   const { collectOrphans } = useAttachmentActions();
 
   const [header, setHeader] = useState('');
   // New drafts may seed a body (e.g. checklist); existing notes load below.
   const [body, setBody] = useState(noteId ? '' : (initialBody ?? ''));
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+
+  // The note-bar fields. Held locally and written through immediately (unlike
+  // header/body, which are debounced): a colour or a pin is one deliberate tap,
+  // not a stream of keystrokes. A draft starts uncoloured, unpinned and Active.
+  const [color, setColor] = useState<string | undefined>(undefined);
+  const [pinnedAt, setPinnedAt] = useState<string | undefined>(undefined);
+  const [state, setState] = useState<NoteState>('active');
 
   // A checklist draft opens focused in the body so the first item is ready.
   const focusBody = !noteId && !!initialBody;
@@ -91,6 +100,9 @@ export function NoteEditorDialog({
       if (active && n) {
         setHeader(n.header ?? '');
         setBody(n.body ?? '');
+        setColor(n.color);
+        setPinnedAt(n.pinnedAt);
+        setState(n.state);
       }
     });
     return () => {
@@ -141,6 +153,30 @@ export function NoteEditorDialog({
     [persist]
   );
 
+  // Colour and pin on a not-yet-saved draft go through the same ensureNoteId
+  // queue labels and attachments use, so a draft is still created exactly once
+  // whichever control the user reaches for first. Local state is set up front so
+  // the tint and the pin respond on the tap rather than on the write; an empty
+  // draft that was only coloured is still `isEmpty`, so closing discards it.
+  const handleColorChange = useCallback(
+    async (next?: string) => {
+      setColor(next);
+      const id = await ensureNoteId();
+      await updateNote(id, { color: next });
+    },
+    [ensureNoteId, updateNote]
+  );
+
+  const handlePinToggle = useCallback(async () => {
+    const next = pinnedAt ? undefined : new Date().toISOString();
+    setPinnedAt(next);
+    const id = await ensureNoteId();
+    // The lifecycle transitions own the pin field (ADR 0009) rather than a raw
+    // updateNote, so the editor and the card write it the same way.
+    if (next) await pinNote(id);
+    else await unpinNote(id);
+  }, [pinnedAt, ensureNoteId, pinNote, unpinNote]);
+
   // Debounced autosave whenever the user has actually edited something.
   useEffect(() => {
     if (!dirtyRef.current) return;
@@ -179,6 +215,14 @@ export function NoteEditorDialog({
       }}
     >
       <DialogContent
+        // The dialog is the note's own card held open, so it takes the note's
+        // identity: a parchment tint by day, near-black with the identity edge
+        // by night. That is also what makes the colour picker honest - without
+        // it, choosing a colour changes nothing but a checkmark in the grid.
+        // `bg-note-surface!` because the vendored DialogContent carries its own
+        // `bg-background`, and between two background utilities the winner is
+        // decided by stylesheet order, not by class order.
+        {...noteColorAttrs(color)}
         // Clicking the dialog's own padding/gaps (not a child element) drops the
         // cursor into the body, so tapping the margins feels editable too.
         onMouseDown={(e) => {
@@ -187,7 +231,7 @@ export function NoteEditorDialog({
             editorRef.current?.focus();
           }
         }}
-        className="top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-3 overflow-y-auto rounded-none border-0 sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-lg sm:border"
+        className="top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-3 overflow-y-auto rounded-none border-0 bg-note-surface! sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-card sm:border sm:border-note-border"
       >
         <DialogTitle className="sr-only">
           {noteId ? t('notes.editNoteTitle') : t('notes.newNoteTitle')}
@@ -235,18 +279,27 @@ export function NoteEditorDialog({
           initialCapture={initialCapture}
           stickyToolbarOnMobile
           // Mobile: no bordered box, so the dialog's own padding is the only
-          // spacing around the title + content. Desktop keeps the framed editor.
-          className="flex-1 rounded-none border-0 p-0 sm:rounded-xl sm:border sm:px-4"
+          // spacing around the title + content. Desktop keeps the framed editor,
+          // whose frame follows the note's identity like the dialog's own.
+          className="flex-1 rounded-none border-0 p-0 sm:rounded-card sm:border sm:border-note-border sm:px-4"
           onUpdate={(html) => {
             dirtyRef.current = true;
             setBody(html);
           }}
         />
 
-        {/* Labels sit below the body, where Slice 4's action bar will join them.
-            A draft is persisted on the first label through the same
-            ensureNoteId queue attachments use. */}
-        <NoteTagsBar noteId={noteId} ensureNoteId={ensureNoteId} />
+        {/* The note bar: labels, colour and pin, in the scroll flow at the end
+            of the content rather than pinned to the bottom edge - the format
+            toolbar is the only chrome that has to stay above the keyboard. */}
+        <NoteEditorBar
+          noteId={noteId}
+          ensureNoteId={ensureNoteId}
+          color={color}
+          pinned={Boolean(pinnedAt)}
+          pinnable={state === 'active'}
+          onColorChange={(next) => void handleColorChange(next)}
+          onPinToggle={() => void handlePinToggle()}
+        />
       </DialogContent>
     </Dialog>
   );

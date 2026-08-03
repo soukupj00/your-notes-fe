@@ -24,11 +24,15 @@
    colour theme variables are resolved at the root and would freeze before the
    per-element identity exists. Custom utilities keep evaluation on the element
    while retaining readable Tailwind class names and variant support. */
+/* The fallbacks matter for the editor, which is note-tinted inside its dialog
+   but may be mounted anywhere: without them a surface outside a
+   `[data-note-color]` subtree would resolve to nothing and render transparent
+   rather than simply uncoloured. */
 @utility bg-note-surface {
-  background-color: var(--note-surface);
+  background-color: var(--note-surface, var(--background));
 }
 @utility border-note-border {
-  border-color: var(--note-border);
+  border-color: var(--note-border, var(--border));
 }
 @utility border-note-border-hover {
   border-color: var(--note-border-hover);

@@ -1,9 +1,8 @@
-import { Archive, ArchiveRestore, Palette, RotateCcw, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, RotateCcw, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { NoteColorPicker } from '@/components/color-picker/NoteColorPicker.tsx';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
+import { NoteColorButton } from '@/components/color-picker/NoteColorButton.tsx';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
-import { cn } from '@/lib/utils.ts';
+import { noteControlButton } from '@/lib/note-controls.ts';
 import type { Note } from '@/models.ts';
 
 interface CardActionsProps {
@@ -13,10 +12,6 @@ interface CardActionsProps {
   onTrash: () => void;
   onColorChange: (color?: string) => void;
 }
-
-/** Every rail control is the same icon button, so the row reads as one strip. */
-const RAIL_BUTTON =
-  'touch-target flex size-9 shrink-0 items-center justify-center rounded-control text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:shadow-rest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background';
 
 /**
  * The card's foot rail (DESIGN.md → Card anatomy, "Foot rail (A)").
@@ -46,12 +41,9 @@ export function CardActions({
   const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
 
-  // A hover carries both a material change and a scale; the material is what
-  // survives when the scale is switched off (DESIGN.md → Buttons).
-  const railButton = cn(
-    RAIL_BUTTON,
-    !reducedMotion && 'transition-[background-color,color,box-shadow,transform] hover:scale-[1.06]'
-  );
+  // The same icon button the editor's note bar uses, so the two surfaces
+  // cannot drift apart (`lib/note-controls.ts`).
+  const railButton = noteControlButton(reducedMotion);
 
   // Archived and trashed both leave by the same door (`restoreToActive`) but
   // read as different moves, so each takes its own icon: putting a note back on
@@ -61,18 +53,7 @@ export function CardActions({
 
   return (
     <div data-slot="note-card-actions" className="ml-auto flex shrink-0 items-center gap-0.5">
-      <Popover>
-        <PopoverTrigger
-          aria-label={t('notes.color')}
-          onClick={(e) => e.stopPropagation()}
-          className={railButton}
-        >
-          <Palette className="size-4" aria-hidden />
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-auto p-2" onClick={(e) => e.stopPropagation()}>
-          <NoteColorPicker value={note.color} onChange={onColorChange} />
-        </PopoverContent>
-      </Popover>
+      <NoteColorButton value={note.color} onChange={onColorChange} className={railButton} />
 
       <button
         type="button"

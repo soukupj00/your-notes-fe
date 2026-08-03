@@ -25,6 +25,12 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+// The note bar's controls pair a scale with a material change; the hook behind
+// that reads the preferences context, which this suite renders without.
+vi.mock('@/hooks/useReducedMotion.ts', () => ({
+  useReducedMotion: () => false,
+}));
+
 // The real canvas lib crashes under jsdom (no canvas.getContext()).
 vi.mock('@excalidraw/excalidraw', () => ({ Excalidraw: () => null, exportToSvg: vi.fn() }));
 
