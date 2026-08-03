@@ -7,7 +7,7 @@
       "amber-day": {
         "role": "primary",
         "displayName": "Lamplight Amber (day, resolved)",
-        "canonical": "oklch(54% 0.15 80)",
+        "canonical": "oklch(54% 0.112 80)",
         "tonalRamp": [
           "oklch(20% 0.06 80)",
           "oklch(30% 0.09 80)",
@@ -22,7 +22,7 @@
       "amber-night": {
         "role": "primary",
         "displayName": "Lamplight Amber (night)",
-        "canonical": "oklch(80% 0.17 75)",
+        "canonical": "oklch(80% 0.169 75)",
         "tonalRamp": [
           "oklch(22% 0.07 75)",
           "oklch(33% 0.10 75)",
@@ -127,7 +127,7 @@
       "lagoon-day": {
         "role": "secondary",
         "displayName": "Lagoon",
-        "canonical": "oklch(51% 0.115 208)",
+        "canonical": "oklch(51% 0.088 208)",
         "tonalRamp": [
           "oklch(20% 0.05 208)",
           "oklch(30% 0.07 208)",
@@ -364,7 +364,7 @@
       "refersTo": "card",
       "description": "The signature surface. Identity colour floods the card by day and becomes its edge and glow by night.",
       "html": "<article class=\"ds-card\"><div class=\"ds-card-surface\"></div><div class=\"ds-card-body\"><h3 class=\"ds-card-title\">A slow Saturday</h3><p class=\"ds-card-text\">Leave the morning unplanned. Good coffee, the market by the river, then make something with no useful outcome.</p><div class=\"ds-card-foot\"><span class=\"ds-chip\">Personal</span><span class=\"ds-when\">2h</span></div></div></article>",
-      "css": ".ds-card { position: relative; isolation: isolate; max-width: 260px; font-family: 'Work Sans Variable', ui-sans-serif, system-ui, sans-serif; } .ds-card-surface { position: absolute; inset: 0; z-index: -1; border-radius: 16px; background: oklch(95.6% 0.062 88); border: 1px solid oklch(84% 0.095 84); box-shadow: 0 1px 2px oklch(40% 0.03 70 / 0.09); transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; } .ds-card:hover .ds-card-surface { transform: scale(1.02); border-color: oklch(82% 0.1 78); box-shadow: 0 10px 26px oklch(40% 0.03 70 / 0.16); } .ds-card-body { padding: 0.9rem 1rem 0.85rem; color: oklch(26% 0.02 72); } .ds-card-title { margin: 0 0 0.35rem; font-family: 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif; font-size: 1.04rem; font-weight: 700; line-height: 1.2; letter-spacing: -0.015em; font-optical-sizing: auto; } .ds-card-text { margin: 0; font-size: 0.855rem; line-height: 1.45; color: oklch(50% 0.02 72); } .ds-card-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 0.7rem; } .ds-when { font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; color: oklch(50% 0.02 72); }"
+      "css": ".ds-card { position: relative; isolation: isolate; max-width: 260px; font-family: 'Work Sans Variable', ui-sans-serif, system-ui, sans-serif; } .ds-card-surface { position: absolute; inset: 0; z-index: -1; border-radius: 16px; background: oklch(91.5% 0.0427 88); border: 1px solid oklch(84% 0.095 84); box-shadow: 0 1px 2px oklch(40% 0.03 70 / 0.09); transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; } .ds-card:hover .ds-card-surface { transform: scale(1.02); border-color: oklch(82% 0.1 78); box-shadow: 0 10px 26px oklch(40% 0.03 70 / 0.16); } .ds-card-body { padding: 0.9rem 1rem 0.85rem; color: oklch(26% 0.02 72); } .ds-card-title { margin: 0 0 0.35rem; font-family: 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif; font-size: 1.04rem; font-weight: 700; line-height: 1.2; letter-spacing: -0.015em; font-optical-sizing: auto; } .ds-card-text { margin: 0; font-size: 0.855rem; line-height: 1.45; color: oklch(50% 0.02 72); } .ds-card-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 0.7rem; } .ds-when { font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; color: oklch(50% 0.02 72); }"
     },
     {
       "name": "Note Card (night)",

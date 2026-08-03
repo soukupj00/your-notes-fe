@@ -68,6 +68,27 @@ describe('graceful fallback', () => {
     await prefs();
     expect(await stored()).toBe('not-an-object');
   });
+
+  it('absorbs the old enum shape of colorBlind without resetting its neighbours', async () => {
+    // `colorBlind` shipped as an enum before the single-mode decision. A stored
+    // string must not take the whole blob down with it: falling back to
+    // defaults here would silently wipe the user's toolbar and density too,
+    // which is a far worse outcome than losing a setting nothing ever read.
+    await store({
+      version: PREFERENCES_VERSION,
+      colorBlind: 'deuteranopia',
+      density: 'compact',
+      reducedMotion: 'always',
+      toolbar: ['bold', 'italic'],
+    });
+
+    const result = await prefs();
+
+    expect(result.current.preferences.colorBlind).toBe(false);
+    expect(result.current.preferences.density).toBe('compact');
+    expect(result.current.preferences.reducedMotion).toBe('always');
+    expect(result.current.preferences.toolbar).toEqual(['bold', 'italic']);
+  });
 });
 
 describe('setPreference', () => {

@@ -14,28 +14,28 @@ colors:
   rule-night: "oklch(30% 0.018 265)"
   ink-night: "oklch(93% 0.006 250)"
   ink-night-soft: "oklch(68% 0.01 250)"
-  amber-day: "oklch(54% 0.15 80)"
-  amber-night: "oklch(80% 0.17 75)"
+  amber-day: "oklch(54% 0.112 80)"
+  amber-night: "oklch(80% 0.169 75)"
   ember-day: "oklch(55% 0.165 38)"
-  ember-night: "oklch(76% 0.18 40)"
+  ember-night: "oklch(76% 0.148 40)"
   iris-day: "oklch(52% 0.16 295)"
-  iris-night: "oklch(78% 0.16 300)"
-  lagoon-day: "oklch(51% 0.115 208)"
+  iris-night: "oklch(78% 0.131 300)"
+  lagoon-day: "oklch(51% 0.088 208)"
   lagoon-night: "oklch(80% 0.135 195)"
   signal-day: "oklch(51% 0.13 150)"
   signal-night: "oklch(80% 0.155 155)"
   swatch-base-day: "oklch(98.6% 0.009 84)"
-  swatch-warm-day: "oklch(95.6% 0.062 88)"
-  swatch-hot-day: "oklch(94.6% 0.056 32)"
-  swatch-cool-day: "oklch(94.6% 0.05 150)"
-  swatch-deep-day: "oklch(94.6% 0.048 300)"
-  swatch-bright-day: "oklch(95% 0.045 228)"
+  swatch-warm-day: "oklch(91.5% 0.0427 88)"
+  swatch-hot-day: "oklch(91.5% 0.0427 32)"
+  swatch-cool-day: "oklch(91.5% 0.0427 150)"
+  swatch-deep-day: "oklch(91.5% 0.0427 300)"
+  swatch-bright-day: "oklch(91.5% 0.0427 228)"
   swatch-base-night: "oklch(74% 0.05 250)"
   swatch-warm-night: "oklch(82% 0.16 78)"
-  swatch-hot-night: "oklch(72% 0.2 20)"
+  swatch-hot-night: "oklch(72% 0.174 20)"
   swatch-cool-night: "oklch(80% 0.16 160)"
-  swatch-deep-night: "oklch(72% 0.2 300)"
-  swatch-bright-night: "oklch(82% 0.16 205)"
+  swatch-deep-night: "oklch(72% 0.172 300)"
+  swatch-bright-night: "oklch(82% 0.14 205)"
 typography:
   title:
     fontFamily: "Bricolage Grotesque Variable, ui-sans-serif, system-ui, sans-serif"
@@ -130,7 +130,7 @@ A warm parchment neutral by day and a cool near-black by night, with a single ac
 
 ### Primary
 
-- **Lamplight Amber** (`{colors.amber-day}` / `{colors.amber-night}`): The default accent and the brand's one voice. Used strictly for chrome: the brand mark, the active rail item, the capture FAB, and the focus ring. The hue is held at 75-80deg across both themes so the accent changes its light with everything else rather than becoming a different colour at night. The day value is a deep gold and the night value a bright one; the day tone was resolved to `oklch(54% 0.15 80)` - see The Two-Constraint Rule below for why it cannot simply be brightened.
+- **Lamplight Amber** (`{colors.amber-day}` / `{colors.amber-night}`): The default accent and the brand's one voice. Used strictly for chrome: the brand mark, the active rail item, the capture FAB, and the focus ring. The hue is held at 75-80deg across both themes so the accent changes its light with everything else rather than becoming a different colour at night. The day value is a deep gold and the night value a bright one; the day tone was resolved to `oklch(54% 0.112 80)` - see The Two-Constraint Rule below for why it cannot simply be brightened.
 
 ### Secondary
 
@@ -145,6 +145,9 @@ Four alternate accents, user-selectable under the customisability commitment. Ea
 
 The six note identities. These are the per-note and per-label colours, and they are the only colours that touch a card.
 By day each is a soft tint flooding the card surface with a slightly deeper edge.
+Every day identity shares one lightness and one chroma - `91.5%` and `0.0427` - and differs only in hue, which is what lets them read as one paper stock in nine colours rather than nine unrelated papers.
+Both numbers are the strongest the whole set can reach inside sRGB (the binding hue is blue), and `91.5%` is also the floor at which `{colors.ink-day-soft}` still clears 4.5:1 on the tint, measuring 4.60:1.
+The tints therefore sit below the paper around them: at the parchment's own lightness the honest ceiling is `0.0248`, which is not a tint anyone would see.
 By night the same identity survives as a single neon value that drives the card's border, chip fill, chip text and outer glow, while the card surface stays near-black (a 7% mix into the night canvas).
 
 - **Base** (`{colors.swatch-base-day}` / `{colors.swatch-base-night}`): The uncoloured note. Neutral paper by day, a cool blue-grey edge by night.
@@ -178,9 +181,35 @@ Brightening it to a yellow-amber is the intuitive fix and it *does* solve constr
 
 The night theme has no such tension, because a bright accent on a near-black room clears both trivially (10.82:1 against canvas, 10.15:1 on text). **This is the measured justification for the "changes its light" thesis:** the day accent must be deep and the night accent bright, because the canvas underneath them is inverted.
 
-Resolved day tone: **`oklch(54% 0.15 80)`** - the hue moved from 68 to 80 so it reads as gold rather than brown, while the lightness stays low enough to hold its edge. Measures 4.96:1 on white text and 4.55:1 against the canvas. Signal (`oklch(51% 0.13 150)`) also passes both (5.24 / 4.81) and remains available as an accent choice, but amber stays the default because it carries the lamplight metaphor.
+Resolved day tone: **`oklch(54% 0.112 80)`** - the hue moved from 68 to 80 so it reads as gold rather than brown, while the lightness stays low enough to hold its edge. Measures 4.96:1 on white text and 4.55:1 against the canvas. Signal (`oklch(51% 0.13 150)`) also passes both (5.24 / 4.81) and remains available as an accent choice, but amber stays the default because it carries the lamplight metaphor.
 
 Audit test for any new accent: measure it against **both** its on-accent text and its canvas, in **both** themes. Four numbers, all of them above their floor.
+
+**The Constant-Lightness-Is-A-Choice-With-A-Bill Rule.** The nine note identities deliberately hold lightness almost constant - a 1% window by day (94.6-95.6%) and a flat 76% at night - so they read as one paper stock and one strip light rather than nine unrelated colours.
+That cohesion is real and worth keeping, but it has a measurable cost: with lightness fixed, **hue is the only channel carrying identity**.
+
+Measured on the shipping palette by simulating dichromacy and scoring the *closest colliding pair* in Oklab: the worst pair sits at dE **0.0022** by day and **0.0032** at night under deuteranopia - which is to say blue and purple are the same colour. In greyscale the worst pair measures **0.0016** and **0.0000**.
+Nine identities cannot survive that, because dichromacy erases most of the hue axis and there is nothing else left to separate them.
+
+So the colour-blind palette is not a re-tint of the default one. It is the same nine identities re-valued to carry identity on **lightness first and hue second**, which necessarily breaks the cohesion above. Its numbers: worst dichromatic pair dE **0.0345** by day and **0.0784** at night, greyscale **0.0110**.
+
+Two consequences that are binding on anyone touching this:
+
+1. **The colour-blind palette is a modifier, not a theme.** `.cvd` composes with `light`/`dark` on `<html>`; it never replaces them. Colour vision and a preference for a dark room are independent, and a third theme would force a user to trade one for the other. It re-values exactly three primitives (`--note-tint`, `--note-edge`, `--note-neon`) and nothing else, because everything downstream already derives from them.
+2. **Spreading lightness moves text backgrounds.** Widening the day tints to an 11% band drags the darkest of them under the muted-text floor: `--ink-soft` at 50% measures **3.83:1** on the new red where the default palette clears 5.2:1. The mode therefore deepens muted ink to **43%**, restoring the worst case to 5.17:1. Any future change to a tint's lightness has to re-check `--ink` *and* `--ink-soft` against it, not just `--ink`.
+
+Audit test for any palette change: simulate deuteranopia, protanopia and tritanopia, score the minimum pairwise distance across all nine, and confirm the darkest resulting tint still clears 4.5:1 against `--ink-soft`.
+
+**The Authored-Value-Is-The-Rendered-Value Rule.** Every colour in the system must be reachable in sRGB.
+
+OKLCH can express colours no sRGB display can show, and CSS does not error on those - it silently gamut-maps them, pulling chroma down until the colour fits. Two consequences make this fatal to a contract written from measurement:
+
+1. **The authored number stops being the shipped number.** `--accent-tone` was written `oklch(54% 0.15 80)` but sits 34% outside sRGB, so it rendered as roughly `oklch(54% 0.112 80)`. The Two-Constraint Rule above was resolved against a colour the stylesheet never actually produced. (Its measured ratios still hold, because they were taken in a browser and therefore on the mapped colour - but that was luck, not method.)
+2. **It renders differently per display.** A P3 laptop lands closer to the authored value than an sRGB monitor does, so the same build is two different palettes depending on the hardware.
+
+The failure is also *uneven*, which is worse than being uniformly wrong: of the nine day tints, four are inside sRGB and render at full strength while five are outside and render at roughly half their authored chroma. Yellow ends up more than twice as tinted as red from authored values that differ by 0.006. Any claim that the identities are a matched set is false on an sRGB display.
+
+This is enforced, not remembered: `src/styles/globals.test.ts` parses every `oklch()` literal in the stylesheet and fails on any that falls outside sRGB.
 
 ## Typography
 

@@ -104,7 +104,7 @@
        to clear 4.5:1 on its own label (4.98:1) *and* 3:1 against the parchment
        behind it (4.56:1) - brightening it to a yellow-amber solves the first
        and fails the second at 1.58:1 (The Two-Constraint Rule). */
-    --accent-tone: oklch(54% 0.15 80);
+    --accent-tone: oklch(54% 0.112 80);
     --on-accent-tone: oklch(99% 0.008 84);
 
     /* Depth is material and it reverses with the light. Day lifts with shadow. */
@@ -148,7 +148,7 @@
     --success: oklch(51% 0.13 150);
     --danger: var(--destructive);
     --warning: var(--accent-tone);
-    --info: oklch(51% 0.115 208);
+    --info: oklch(51% 0.088 208);
 
     /* The vendored shadcn Sidebar styles itself off its own `--sidebar-*` set.
        These alias the semantic tokens above rather than introducing a second
@@ -199,7 +199,7 @@
        asymmetry *is* the measured justification for "changes its light": the day
        accent must be deep and the night one bright because the canvas beneath
        them is inverted. */
-    --accent-tone: oklch(80% 0.17 75);
+    --accent-tone: oklch(80% 0.169 75);
     --on-accent-tone: oklch(16% 0.03 75);
 
     --elevation-rest: 0 2px 6px oklch(0% 0 0 / 0.5);
@@ -208,7 +208,7 @@
     --muted: color-mix(in oklab, var(--ink) 12%, var(--canvas));
     --accent: color-mix(in oklab, var(--ink) 12%, transparent);
 
-    --destructive: oklch(76% 0.18 25);
+    --destructive: oklch(76% 0.143 25);
     --destructive-foreground: oklch(16% 0.03 25);
 
     --success: oklch(80% 0.155 155);
@@ -235,38 +235,50 @@
    * note again by remembering it was the green one.
    */
 
-  /* Day: the identity is pigment. Soft tints on warm paper. */
+  /* Day: the identity is pigment. Soft tints on warm paper.
+     Every identity shares one lightness and one chroma, differing only in hue,
+     which is what lets them read as one paper stock in nine colours.
+     Both numbers are the strongest the *whole set* can reach inside sRGB: at
+     91.5% every hue can hold 0.0427, and the binding hue is blue. That is why
+     the tints sit lower than the surrounding paper - at the old 94.6% the
+     honest ceiling is 0.0248, which is barely a tint at all.
+     They previously declared per-identity values up to 0.062, but five of the
+     nine were outside sRGB and were being silently gamut-mapped, so yellow
+     rendered at more than twice red's chroma from authored values 0.006 apart.
+     See DESIGN.md, The Authored-Value-Is-The-Rendered-Value Rule.
+     91.5% is also the floor: one step deeper and `--ink-soft` drops under
+     4.5:1 on the tint (4.45:1 at 90.5%). It measures 4.60:1 here. */
   [data-note-color="red"] {
-    --note-tint: oklch(94.6% 0.056 24);
-    --note-edge: oklch(82% 0.095 24);
+    --note-tint: oklch(91.5% 0.0427 24);
+    --note-edge: oklch(78.5% 0.1135 24);
   }
   [data-note-color="orange"] {
-    --note-tint: oklch(95% 0.058 52);
-    --note-edge: oklch(82.5% 0.098 52);
+    --note-tint: oklch(91.5% 0.0427 52);
+    --note-edge: oklch(78.5% 0.1135 52);
   }
   [data-note-color="yellow"] {
-    --note-tint: oklch(95.6% 0.062 95);
-    --note-edge: oklch(82% 0.1 95);
+    --note-tint: oklch(91.5% 0.0427 95);
+    --note-edge: oklch(78.5% 0.1135 95);
   }
   [data-note-color="green"] {
-    --note-tint: oklch(94.6% 0.05 152);
-    --note-edge: oklch(80% 0.078 152);
+    --note-tint: oklch(91.5% 0.0427 152);
+    --note-edge: oklch(78.5% 0.1135 152);
   }
   [data-note-color="teal"] {
-    --note-tint: oklch(94.8% 0.048 195);
-    --note-edge: oklch(80.5% 0.075 195);
+    --note-tint: oklch(91.5% 0.0427 195);
+    --note-edge: oklch(78.5% 0.1135 195);
   }
   [data-note-color="blue"] {
-    --note-tint: oklch(95% 0.045 250);
-    --note-edge: oklch(81% 0.072 250);
+    --note-tint: oklch(91.5% 0.0427 250);
+    --note-edge: oklch(78.5% 0.1135 250);
   }
   [data-note-color="purple"] {
-    --note-tint: oklch(94.6% 0.048 300);
-    --note-edge: oklch(80% 0.078 300);
+    --note-tint: oklch(91.5% 0.0427 300);
+    --note-edge: oklch(78.5% 0.1135 300);
   }
   [data-note-color="pink"] {
-    --note-tint: oklch(94.6% 0.05 352);
-    --note-edge: oklch(81% 0.085 352);
+    --note-tint: oklch(91.5% 0.0427 352);
+    --note-edge: oklch(78.5% 0.1135 352);
   }
   /* `gray` is a chosen warm-grey paper, while `default` is the absence of an
      assigned colour. They stay close by day and diverge at night, where gray
@@ -300,13 +312,13 @@
     --note-neon: oklch(76% 0.129 195);
   }
   .dark [data-note-color="blue"] {
-    --note-neon: oklch(76% 0.128 250);
+    --note-neon: oklch(76% 0.127 250);
   }
   .dark [data-note-color="purple"] {
     --note-neon: oklch(76% 0.145 300);
   }
   .dark [data-note-color="pink"] {
-    --note-neon: oklch(76% 0.168 352);
+    --note-neon: oklch(76% 0.167 352);
   }
   /* A warm silver, kept deliberately distinct from the uncoloured Base's cool
      blue-grey light. */
@@ -423,6 +435,105 @@
       var(--elevation-rest),
       0 -4px 20px -7px color-mix(in oklch, var(--note-neon) 85%, transparent),
       0 3px 10px -6px color-mix(in oklch, var(--note-neon) 45%, transparent);
+  }
+
+  /*
+   * ── The colour-blind palette ──────────────────────────────────────────────
+   *
+   * `.cvd` on <html> composes with `light`/`dark` rather than replacing them:
+   * colour vision and a preference for a dark room are independent, so making
+   * this a third theme would force a user to trade one for the other.
+   *
+   * It re-values only the three identity primitives. Everything downstream -
+   * surface, border, chip, media plane, swatch, glow, and the tag pills - is
+   * already derived from them, so nine identities change without a single
+   * component knowing this mode exists.
+   *
+   * The values are not hand-picked. They come from a search that maximised the
+   * *closest colliding pair* under simulated deuteranopia, protanopia and
+   * tritanopia, constrained to stay inside sRGB, to hold each hue within 12° of
+   * its name, and to keep chroma even enough that the nine still read as one
+   * set. Measured against the default palette, the worst dichromatic pair
+   * improves from dE 0.0022 to 0.0345 by day and 0.0032 to 0.0784 by night.
+   *
+   * What it costs: the default palette holds lightness almost constant (a 1%
+   * window by day, flat 76% at night) so the nine read as one paper stock and
+   * one strip light. Dichromacy erases most of the hue axis, so hue alone
+   * cannot carry nine identities - lightness has to do the work instead, and
+   * the cards visibly stop matching. That trade is the mode.
+   */
+  .cvd [data-note-color="red"] {
+    --note-tint: oklch(86% 0.072 25);
+    --note-edge: oklch(73% 0.129 25);
+  }
+  .cvd [data-note-color="orange"] {
+    --note-tint: oklch(92.8% 0.042 54);
+    --note-edge: oklch(79.8% 0.075 54);
+  }
+  .cvd [data-note-color="yellow"] {
+    --note-tint: oklch(89% 0.069 103);
+    --note-edge: oklch(76% 0.124 103);
+  }
+  .cvd [data-note-color="green"] {
+    --note-tint: oklch(97.4% 0.044 142);
+    --note-edge: oklch(84.4% 0.079 142);
+  }
+  .cvd [data-note-color="teal"] {
+    --note-tint: oklch(94.8% 0.067 199);
+    --note-edge: oklch(81.8% 0.12 199);
+  }
+  .cvd [data-note-color="blue"] {
+    --note-tint: oklch(86.3% 0.071 248);
+    --note-edge: oklch(73.3% 0.127 248);
+  }
+  .cvd [data-note-color="purple"] {
+    --note-tint: oklch(91.6% 0.042 288);
+    --note-edge: oklch(78.6% 0.075 288);
+  }
+  .cvd [data-note-color="pink"] {
+    --note-tint: oklch(89% 0.07 347);
+    --note-edge: oklch(76% 0.126 347);
+  }
+  .cvd [data-note-color="gray"] {
+    --note-tint: oklch(94.5% 0.007 84);
+    --note-edge: oklch(81.5% 0.012 84);
+  }
+
+  .dark.cvd [data-note-color="red"] {
+    --note-neon: oklch(71% 0.183 13);
+  }
+  .dark.cvd [data-note-color="orange"] {
+    --note-neon: oklch(77.9% 0.131 42);
+  }
+  .dark.cvd [data-note-color="yellow"] {
+    --note-neon: oklch(72.9% 0.156 107);
+  }
+  .dark.cvd [data-note-color="green"] {
+    --note-neon: oklch(86% 0.139 144);
+  }
+  .dark.cvd [data-note-color="teal"] {
+    --note-neon: oklch(84.9% 0.139 205);
+  }
+  .dark.cvd [data-note-color="blue"] {
+    --note-neon: oklch(78.2% 0.113 253);
+  }
+  .dark.cvd [data-note-color="purple"] {
+    --note-neon: oklch(70.8% 0.162 288);
+  }
+  .dark.cvd [data-note-color="pink"] {
+    --note-neon: oklch(70% 0.151 340);
+  }
+  .dark.cvd [data-note-color="gray"] {
+    --note-neon: oklch(81% 0.004 84);
+  }
+
+  /* Spreading the day tints across an 11% lightness band drags the darkest of
+     them under the muted-text floor: `--ink-soft` at 50% measures 3.83:1 on the
+     new red, where the default palette clears 5.2:1. The mode therefore deepens
+     muted ink to 43%, which restores the worst case to 5.17:1. Night needs no
+     equivalent - its neons never become a text background. */
+  .cvd:not(.dark) {
+    --ink-soft: oklch(43% 0.02 72);
   }
 
   /* The 44px floor applies to touch input, not to every mouse-sized desktop

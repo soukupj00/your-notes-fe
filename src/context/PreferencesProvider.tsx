@@ -26,8 +26,19 @@ export const preferencesSchema = z.object({
   noteButtonAlignment: z.enum(['left', 'right']).default('right'),
   /** Which capture shortcuts the mobile quick-capture bar shows, in order. */
   quickCaptureButtons: z.array(z.string()).default(['note', 'checklist']),
-  /** Colour-vision palette variant applied on top of light/dark. */
-  colorBlind: z.enum(['none', 'deuteranopia', 'protanopia', 'tritanopia']).default('none'),
+  /**
+   * Colour-vision palette variant, applied on top of light/dark rather than
+   * replacing it. One mode, not one per condition: deuteranopia and protanopia
+   * are both red-green and differ marginally, so three palettes would be three
+   * times the values to hand-tune and verify for a distinction two of them
+   * barely make. The single palette is optimised against all three at once.
+   *
+   * The `.catch` is load-bearing. This field used to be an enum, and a stored
+   * `'deuteranopia'` failing a bare boolean would reject the *whole* blob and
+   * silently reset the user's toolbar, density and reduced-motion along with
+   * it. Absorbing it at the field keeps the blast radius to this one setting.
+   */
+  colorBlind: z.boolean().catch(false).default(false),
   density: z.enum(['comfortable', 'compact']).default('comfortable'),
   /** `system` follows `prefers-reduced-motion`; the others override it. */
   reducedMotion: z.enum(['system', 'always', 'never']).default('system'),

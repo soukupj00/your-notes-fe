@@ -187,6 +187,10 @@
       "dark": "Tmavý",
       "toggle": "Přepnout motiv"
     },
+    "colorBlind": {
+      "label": "Paleta pro barvoslepé",
+      "description": "Přebarví barvy poznámek a štítků tak, aby šlo všech devět rozlišit. Funguje s oběma motivy."
+    },
     "backup": {
       "title": "Záloha",
       "exported": "Záloha uložena.",

@@ -187,6 +187,10 @@
       "dark": "Dark",
       "toggle": "Toggle theme"
     },
+    "colorBlind": {
+      "label": "Colour-blind palette",
+      "description": "Re-tints note and label colours so the nine stay distinguishable. Works with either theme."
+    },
     "backup": {
       "title": "Backup",
       "exported": "Backup saved.",

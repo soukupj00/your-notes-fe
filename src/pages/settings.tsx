@@ -4,7 +4,9 @@ import { BackupSection } from '@/components/settings/BackupSection.tsx';
 import { PwaInstallSection } from '@/components/settings/PwaInstallSection.tsx';
 import { SettingsRow, SettingsSection } from '@/components/settings/SettingsSection.tsx';
 import { Button } from '@/components/ui/button.tsx';
+import { Switch } from '@/components/ui/switch.tsx';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx';
+import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { type Theme, useTheme } from '@/context/themeProvider.tsx';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
 
@@ -36,10 +38,28 @@ function ThemeSetting() {
   );
 }
 
+function ColorBlindSetting() {
+  const { t } = useTranslation();
+  const { preferences, setPreference } = usePreferences();
+
+  return (
+    <SettingsRow
+      label={t('settings.colorBlind.label')}
+      description={t('settings.colorBlind.description')}
+    >
+      <Switch
+        checked={preferences.colorBlind}
+        onCheckedChange={(next) => setPreference('colorBlind', next)}
+        aria-label={t('settings.colorBlind.label')}
+      />
+    </SettingsRow>
+  );
+}
+
 /**
  * Settings shell. Appearance and Labels are wired; the remaining controls
- * (toolbar, colour-blind/density/reduced-motion, language, backup) land with
- * the tasks that own them and slot into sections here.
+ * (toolbar, density/reduced-motion, language, backup) land with the tasks that
+ * own them and slot into sections here.
  */
 export default function SettingsPage() {
   const { t } = useTranslation();
@@ -57,6 +77,7 @@ export default function SettingsPage() {
 
       <SettingsSection title={t('settings.appearance.title')}>
         <ThemeSetting />
+        <ColorBlindSetting />
       </SettingsSection>
 
       <SettingsSection title={t('nav.labels')}>
