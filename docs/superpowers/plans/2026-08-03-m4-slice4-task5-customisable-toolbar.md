@@ -1,6 +1,6 @@
 # M4 Slice 4 Task 5 - Customisable toolbar
 
-**Status:** in progress. Steps 1-4 and 4b done (2026-08-04); Step 4c awaits sign-off; Steps 5-7 open.
+**Status:** in progress. Steps 1-4, 4b and 4c done (2026-08-04); Steps 5-7 open.
 
 **Goal:** Make the editor toolbar the user's own.
 Which controls exist, in what order, grouped or collapsed, separately for a phone and a desktop, plus the same treatment for the quick-capture actions.
@@ -177,25 +177,23 @@ Raised after Step 4, from actually driving the bar rather than reading it.
 - [x] **A family the editor cannot draw is dropped before it can be positioned.** `resolveLayout` is pure and knows nothing about which extensions are mounted, so an unmountable family used to render as an empty box - and could be the one that got pinned.
 - [ ] **Keyboard shortcuts for the actions that have none.** Split out below as Step 4c; it needs sign-off on the bindings, not just code.
 
-### Step 4c - Keyboard shortcut audit - **not started**
+### Step 4c - Keyboard shortcut audit - **done** (2026-08-04)
 
-Two separate problems, found while checking what the toolbar advertises:
+Confirmed first, then fixed. `Clear` did indeed advertise `Mod+\\` and bind nothing - it is our own `Extension.create` and TipTap has no default for clearing formatting. `textAlign` did indeed already bind `Mod-Shift-l/e/r/j` upstream.
 
-1. **Bindings that exist but are never advertised.** `textAlign` binds `Mod+Shift+L/E/R/J` upstream, and the registry shows no hint for any of them.
-2. **Actions with no binding at all:** `link`, `highlight`, `text-color`, `math`, `divider`, the five media inserts, and both font selects.
-3. **A hint that may be a lie:** `Clear` displays `Mod+\` but is our own `Extension.create` with no `addKeyboardShortcuts`, and TipTap binds nothing there. Verify before doing anything else - a shortcut shown but not bound is worse than none.
-
-Proposed bindings, for sign-off:
-
-| Action | Binding | Why |
+| Action | Binding | What changed |
 | --- | --- | --- |
-| `link` | `Mod+K` | The universal one. TipTap does not bind it, and ProseMirror's `preventDefault` keeps the browser's own `Ctrl+K` out of the way inside the editor. |
-| `highlight` | `Mod+Shift+H` | What upstream's own Highlight extension uses. |
-| `math` | `Mod+Shift+M` | Free in TipTap and in every major browser. |
-| `align-*` | `Mod+Shift+L/E/R` | Already bound upstream - this is a **display** fix, not a new binding. |
-| `clear` | `Mod+\` | Already displayed; bind it, or drop the hint. |
+| `clear` | `Mod+\\` | **Bound.** It was advertised from the start and did nothing. |
+| `link` | `Mod+K` | New. Opens the URL popover when its button is mounted, and falls back to a prompt when it is not - the whole `format` family can be collapsed, and a shortcut that silently does nothing is worse than an ugly prompt. |
+| `highlight` | `Mod+Shift+H` | New, and it **toggles the default yellow** rather than opening the picker: a popover cannot be opened from a key when its button lives inside a closed menu, and "highlight this" is what the key is reached for. |
+| `math` | `Mod+Shift+M` | New. Same prompt the button uses. |
+| `align-left/center/right` | `Mod+Shift+L/E/R` | **Display only** - already bound upstream, just never shown. Three working shortcuts were invisible. |
 
-**Deliberately not bound:** the five media inserts. They open a file picker, which browsers gate on a live user activation, and the memorable candidates (`Mod+Shift+I`, `Mod+Shift+P`) are devtools and print. A shortcut nobody can remember for an action nobody repeats is cost without benefit.
+**Not bound, deliberately:** the five media inserts. They open a file picker, which browsers gate on a live user activation, and the memorable candidates (`Mod+Shift+I`, `Mod+Shift+P`) are devtools and print.
+
+Also: `Link` became `createLink(t)` (the `createMathematics` shape), because the fallback prompt needs a translated label and an extension is built once, outside React. `EditorColorPickerButton` gained a shortcut line so a custom-component button describes itself the same way a plain one does.
+
+The guard against a repeat is `toolbar/shortcuts.test.ts`: it walks every registry Item, reads what its button advertises, and fails if the extension manager has no handler for it. **A shortcut shown and not bound cannot ship again.**
 
 ### Step 5 - Settings editor
 

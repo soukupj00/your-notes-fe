@@ -11,6 +11,17 @@ const ICONS: Record<Alignment, ButtonView['componentProps']['icon']> = {
   right: 'AlignRight',
 };
 
+/**
+ * Upstream binds these already (`Mod-Shift-l/e/r`); we simply never showed them,
+ * so three working shortcuts were invisible. No new bindings here - just the
+ * hints for the ones that exist.
+ */
+const SHORTCUTS: Record<Alignment, string[]> = {
+  left: ['Mod', 'Shift', 'L'],
+  center: ['Mod', 'Shift', 'E'],
+  right: ['Mod', 'Shift', 'R'],
+};
+
 export interface TextAlignExtensionOptions extends TextAlignOptions {
   button: (context: ButtonContext) => ButtonView[];
 }
@@ -36,6 +47,7 @@ export const TextAlign = TiptapTextAlign.extend<TextAlignExtensionOptions>({
             action: () => editor.chain().focus().toggleTextAlign(alignment).run(),
             isActive: () => editor.isActive({ textAlign: alignment }),
             icon: ICONS[alignment],
+            shortcutKeys: SHORTCUTS[alignment],
             tooltip: t(`editor.textAlign.${alignment}`),
             toggle: true,
           },

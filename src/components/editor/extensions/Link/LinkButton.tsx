@@ -1,5 +1,5 @@
 import type { Editor } from '@tiptap/core';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActionButton } from '@/components/ui/ActionButton.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Input } from '@/components/ui/input.tsx';
@@ -24,11 +24,22 @@ export function LinkButton({ editor, t, tooltip }: LinkButtonProps) {
   const [open, setOpen] = useState(false);
   const [href, setHref] = useState('');
 
-  const openPopover = (next: boolean) => {
-    // Seed from the link under the cursor so re-opening it is an edit, not a retype.
-    if (next) setHref((editor.getAttributes('link').href as string | undefined) ?? '');
-    setOpen(next);
-  };
+  const openPopover = useCallback(
+    (next: boolean) => {
+      // Seed from the link under the cursor so re-opening it is an edit, not a retype.
+      if (next) setHref((editor.getAttributes('link').href as string | undefined) ?? '');
+      setOpen(next);
+    },
+    [editor]
+  );
+
+  // `Mod+K` opens this popover rather than a second, different link UI. The
+  // extension falls back to a prompt when no button is mounted, so the shortcut
+  // still works when the whole format family is collapsed.
+  useEffect(
+    () => editor.storage.link.prompt.registerButton(() => openPopover(true)),
+    [editor, openPopover]
+  );
 
   const apply = () => {
     const url = href.trim();
@@ -57,6 +68,7 @@ export function LinkButton({ editor, t, tooltip }: LinkButtonProps) {
     <Popover open={open} onOpenChange={openPopover}>
       <PopoverTrigger asChild>
         <ActionButton
+          shortcutKeys={['Mod', 'K']}
           icon="Link2"
           tooltip={tooltip}
           toggle

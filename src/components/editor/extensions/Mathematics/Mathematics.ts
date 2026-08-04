@@ -53,6 +53,7 @@ export const Mathematics = TiptapMathematics.extend({
           action: () => insertMath(editor, t),
           isActive: () => editor.isActive('inlineMath') || editor.isActive('blockMath'),
           icon: 'Latex',
+          shortcutKeys: ['Mod', 'Shift', 'M'],
           tooltip: t('editor.math.tooltip'),
           toggle: true,
         },
@@ -68,7 +69,19 @@ export const Mathematics = TiptapMathematics.extend({
  * invalid LaTeX renders as an error instead of throwing (`throwOnError: false`).
  */
 export function createMathematics(getEditor: () => Editor | null, t: TFunction) {
-  return Mathematics.configure({
+  return Mathematics.extend({
+    // Bound here rather than on the base extension because inserting math needs
+    // the translated prompt, and the base has no `t`. The button advertises
+    // `Mod+Shift+M`; this is what makes that true.
+    addKeyboardShortcuts() {
+      return {
+        'Mod-Shift-m': () => {
+          insertMath(this.editor, t);
+          return true;
+        },
+      };
+    },
+  }).configure({
     katexOptions: { throwOnError: false },
     inlineOptions: {
       onClick: (node, pos) => {

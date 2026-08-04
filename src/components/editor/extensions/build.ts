@@ -27,7 +27,7 @@ import { HorizontalRule } from './HorizontalRule';
 import { History } from './history';
 import { createImage } from './Image';
 import { Italic } from './Italic';
-import { Link } from './Link';
+import { createLink } from './Link';
 import { ListItem } from './ListItem';
 import { createMathematics } from './Mathematics';
 import { OrderedList } from './OrderedList';
@@ -81,7 +81,7 @@ export function buildEditorExtensions({ getDeps, getEditor, t }: BuildOptions) {
     CodeBlock,
     HorizontalRule,
     TextAlign,
-    Link,
+    createLink(t),
     Typography,
     // Undo/redo. Registered for its commands *and* its buttons: without it a
     // phone, which has no Ctrl+Z, has no way to undo at all.

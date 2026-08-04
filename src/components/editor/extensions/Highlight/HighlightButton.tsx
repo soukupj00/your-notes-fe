@@ -4,6 +4,7 @@ import { EditorColorPickerButton } from '@/components/editor/extensions/EditorCo
 interface HighlightButtonProps {
   editor: Editor;
   tooltip?: string;
+  shortcutKeys?: string[];
 }
 
 /** Pattern A adapter for the shared editor color-mark picker. */

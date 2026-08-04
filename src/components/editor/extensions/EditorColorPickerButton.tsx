@@ -16,12 +16,15 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { toggleVariants } from '@/components/ui/toggle';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { getShortcutKeys } from '@/utils/platform.ts';
 
 export type EditorColorPickerVariant = 'text' | 'highlight';
 
 interface EditorColorPickerButtonProps {
   editor: Editor;
   tooltip?: string;
+  /** Keyboard shortcut hint, shown under the tooltip text. */
+  shortcutKeys?: string[];
   variant: EditorColorPickerVariant;
 }
 
@@ -85,6 +88,7 @@ function commitColor(
 export function EditorColorPickerButton({
   editor,
   tooltip,
+  shortcutKeys,
   variant,
 }: EditorColorPickerButtonProps) {
   const config = VARIANT_CONFIG[variant];
@@ -148,7 +152,18 @@ export function EditorColorPickerButton({
         </TooltipTrigger>
         {tooltip && (
           <TooltipContent side="top" align="center">
-            {tooltip}
+            {/* Same two-line shape as `ActionButton`, so a custom-component
+                button and a plain one describe themselves identically. */}
+            <div className="flex max-w-[200px] flex-col items-center gap-1 text-center">
+              <span>{tooltip}</span>
+              {!!shortcutKeys?.length && (
+                <span className="text-muted-foreground text-xs">
+                  {getShortcutKeys(shortcutKeys)
+                    .map((key) => key.symbol)
+                    .join(' + ')}
+                </span>
+              )}
+            </div>
           </TooltipContent>
         )}
       </Tooltip>
