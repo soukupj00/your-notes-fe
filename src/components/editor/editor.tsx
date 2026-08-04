@@ -30,13 +30,8 @@ import {
 import { insertImageAttachmentFiles } from '@/components/editor/extensions/Image/insert';
 import { LinkBubbleMenu } from '@/components/editor/extensions/Link';
 import { insertVideoAttachmentFiles } from '@/components/editor/extensions/Video/insert.ts';
-import BlocksSection from '@/components/editor/menus/toolbars/BlocksSection.tsx';
-import FontSection from '@/components/editor/menus/toolbars/FontSection.tsx';
-import FormatSection from '@/components/editor/menus/toolbars/FormatSection.tsx';
-import HeadingSection from '@/components/editor/menus/toolbars/HeadingSection.tsx';
-import ListSection from '@/components/editor/menus/toolbars/ListSection.tsx';
+import EditorToolbar from '@/components/editor/toolbar/EditorToolbar.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
-import { Separator } from '@/components/ui/separator.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import type { AttachmentErrorCode } from '@/lib/attachments.ts';
 import { cn } from '@/lib/utils.ts';
@@ -381,43 +376,10 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         onMouseDown={editable ? focusOnEmptyClick : undefined}
       >
         {/* Toolbar. Desktop: on top (DOM order). Mobile + stickyToolbarOnMobile:
-          ordered last and pinned to the bottom of the scroll container (no
-          border; the editor is padding-free on mobile, so no margin cancelling). */}
-        {editable && (
-          <div
-            className={cn(
-              'flex flex-wrap items-center gap-1',
-              // The sticky bar needs an opaque background to cover the text
-              // scrolling under it, and it takes the note's own surface rather
-              // than the app background - the editor sits inside a note-tinted
-              // dialog, where a neutral band would read as a foreign element.
-              stickyToolbarOnMobile &&
-                'sticky bottom-0 z-10 order-last bg-note-surface py-2 sm:static sm:order-none sm:py-0'
-            )}
-          >
-            <HeadingSection editor={editor} />
-            <Separator
-              orientation="vertical"
-              className="mx-1 hidden data-[orientation=vertical]:h-6 sm:block"
-            />
-            <FormatSection editor={editor} />
-            <Separator
-              orientation="vertical"
-              className="mx-1 hidden data-[orientation=vertical]:h-6 sm:block"
-            />
-            <ListSection editor={editor} />
-            <Separator
-              orientation="vertical"
-              className="mx-1 hidden data-[orientation=vertical]:h-6 sm:block"
-            />
-            <BlocksSection editor={editor} />
-            <Separator
-              orientation="vertical"
-              className="mx-1 hidden data-[orientation=vertical]:h-6 sm:block"
-            />
-            <FontSection editor={editor} />
-          </div>
-        )}
+          ordered last and pinned to the bottom of the scroll container. Which
+          buttons it holds is the user's stored Layout, not a hardcoded list -
+          see `toolbar/EditorToolbar.tsx` and ADR 0011. */}
+        {editable && <EditorToolbar editor={editor} stickyOnMobile={stickyToolbarOnMobile} />}
 
         {/* Editable area. `flex-1` lets it fill a full-screen sheet so a
           sticky-bottom toolbar sits at the screen edge even with little text;

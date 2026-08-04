@@ -24,7 +24,6 @@ export const HorizontalRule = TiptapHorizontalRule.extend<HorizontalRuleExtensio
           icon: 'Minus',
           tooltip: t('editor.horizontalRule.tooltip'),
         },
-        hideOnMobile: true,
       }),
     } as unknown as HorizontalRuleExtensionOptions;
   },

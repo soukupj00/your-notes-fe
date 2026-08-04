@@ -39,9 +39,6 @@ export const TextAlign = TiptapTextAlign.extend<TextAlignExtensionOptions>({
             tooltip: t(`editor.textAlign.${alignment}`),
             toggle: true,
           },
-          // Three alignment buttons would eat the mobile toolbar; left is the
-          // default anyway, so the whole group waits for `sm`+.
-          hideOnMobile: true,
         })),
     } as unknown as TextAlignExtensionOptions;
   },

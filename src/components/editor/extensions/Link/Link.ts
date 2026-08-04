@@ -6,7 +6,6 @@ import { LinkButton } from './LinkButton';
 interface LinkButtonView {
   component: typeof LinkButton;
   componentProps: ComponentProps<typeof LinkButton>;
-  hideOnMobile?: boolean;
 }
 
 export interface LinkExtensionOptions extends LinkOptions {

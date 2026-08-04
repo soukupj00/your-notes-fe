@@ -1,6 +1,6 @@
 # M4 Slice 4 Task 5 - Customisable toolbar
 
-**Status:** in progress. Step 1 done (2026-08-04); Steps 2-7 open.
+**Status:** in progress. Steps 1-2 done (2026-08-04); Steps 3-7 open.
 
 **Goal:** Make the editor toolbar the user's own.
 Which controls exist, in what order, grouped or collapsed, separately for a phone and a desktop, plus the same treatment for the quick-capture actions.
@@ -126,14 +126,18 @@ Also in this step, because the tests could not be honest without them:
 
 **Open, for Step 5's tuning pass:** the Compact/Balanced preset as built is 12 items, not the 10 listed above - it keeps `redo` and adds `align` collapsed, which is what the prose promise ("adds undo, redo, Blockquote, Math, the divider and every alignment") requires. Confirm against a real 360px device.
 
-### Step 2 - Toolbar renders from a resolved Layout
+### Step 2 - Toolbar renders from a resolved Layout - **done** (2026-08-04)
 
-- [ ] `resolveLayout(stored, registry, widthClass)`: reconciliation per decision 8, returning a flat list of Items to render.
-- [ ] The toolbar renders from that list. The five `*Section` files and their separator markup are deleted; grouping becomes implicit in family order.
-- [ ] **Delete `hideOnMobile`** from `button-types.ts`, `ExtensionButtonBar` and all twelve leaves that set it.
-- [ ] Width Class from a single `sm` breakpoint hook, so a resized desktop window switches Layout.
-- [ ] At this step the stored blob is still empty, so both Layouts are the built-in defaults. Wide should look like today's bar plus undo/redo; Compact changes to the collapsed default.
-- [ ] Tests: `resolveLayout` appends unknown-to-blob registry ids at their default position, preserves blob-only ids without rendering them, and honours order, `on` and `collapsed`; the toolbar renders the resolved ids in order.
+- [x] `resolveLayout.ts`: `reconcileLayout` is decision 8 (storage-shaped, keeps unknown ids, inserts new registry ids at their registry position with their default state) and `resolveLayout` turns the result into the render list.
+- [x] The toolbar renders from that list (`toolbar/EditorToolbar.tsx`). The five `*Section` files and their separator markup are deleted; grouping is implicit in family order.
+      **Deviation:** `ExtensionButtonBar` is deleted too, not just stripped of `hideOnMobile` - the sections were its only callers, and the registry's resolver replaces it. The whole `menus/` folder is gone.
+- [x] **Deleted `hideOnMobile`** from `button-types.ts` and all twelve leaves that set it.
+- [x] Width Class from `useWidthClass()` over the app's single `sm` hook (`useIsMobile`), so a resized desktop window switches Layout.
+- [x] Both Layouts are still the built-in defaults (the prefs shape is Step 4). `EditorToolbar` takes an optional `layout` prop that Step 4 fills in.
+- [x] Tests: 11 in `resolveLayout.test.ts`, 3 in `EditorToolbar.test.tsx`.
+
+**Known intermediate state, closed by Step 3:** a `collapsed` family still draws its leaves inline, because `ToolbarFamilyMenu` does not exist yet.
+So the Compact default currently shows every leaf of style/list/colour/block/align/media on one scrolling row instead of six triggers.
 
 ### Step 3 - Collapsed family control and the compact bar
 

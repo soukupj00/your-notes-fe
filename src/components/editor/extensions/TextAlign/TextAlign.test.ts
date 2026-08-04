@@ -41,8 +41,6 @@ describe('TextAlign extension', () => {
       'AlignCenter',
       'AlignRight',
     ]);
-    // Three of them would crowd the mobile bar, and left is the default anyway.
-    expect(buttons.every((b) => b.hideOnMobile)).toBe(true);
   });
 
   it('each button toggles its own alignment', () => {

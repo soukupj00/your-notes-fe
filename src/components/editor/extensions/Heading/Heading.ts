@@ -24,8 +24,6 @@ export const Heading = TiptapHeading.extend<HeadingExtensionOptions>({
             tooltip: t('editor.heading.level', { level }),
             toggle: true,
           },
-          // Mobile-first: keep only H1 on small screens; H2/H3 appear at `sm`+.
-          hideOnMobile: level !== 1,
         })),
     } as unknown as HeadingExtensionOptions;
   },

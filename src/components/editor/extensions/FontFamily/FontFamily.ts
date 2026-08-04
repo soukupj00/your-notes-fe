@@ -9,7 +9,6 @@ import { FontFamilyButton } from './FontFamilyButton';
 interface FontFamilyButtonView {
   component: typeof FontFamilyButton;
   componentProps: ComponentProps<typeof FontFamilyButton>;
-  hideOnMobile?: boolean;
 }
 
 export interface FontFamilyExtensionOptions extends FontFamilyOptions {
@@ -29,8 +28,6 @@ export const FontFamily = TiptapFontFamily.extend<FontFamilyExtensionOptions>({
       button: ({ editor, t }: ButtonContext) => ({
         component: FontFamilyButton,
         componentProps: { editor, tooltip: t('editor.fontFamily.tooltip') },
-        // Mobile-first: hidden below `sm` to keep the mobile toolbar lean (Balanced preset).
-        hideOnMobile: true,
       }),
     } as unknown as FontFamilyExtensionOptions;
   },
