@@ -1,6 +1,6 @@
 # M4 Slice 4 Task 5 - Customisable toolbar
 
-**Status:** in progress. Steps 1-2 done (2026-08-04); Steps 3-7 open.
+**Status:** in progress. Steps 1-3 done (2026-08-04); Steps 4-7 open.
 
 **Goal:** Make the editor toolbar the user's own.
 Which controls exist, in what order, grouped or collapsed, separately for a phone and a desktop, plus the same treatment for the quick-capture actions.
@@ -139,12 +139,20 @@ Also in this step, because the tests could not be honest without them:
 **Known intermediate state, closed by Step 3:** a `collapsed` family still draws its leaves inline, because `ToolbarFamilyMenu` does not exist yet.
 So the Compact default currently shows every leaf of style/list/colour/block/align/media on one scrolling row instead of six triggers.
 
-### Step 3 - Collapsed family control and the compact bar
+### Step 3 - Collapsed family control and the compact bar - **done** (2026-08-04)
 
-- [ ] `ToolbarFamilyMenu`: state-reporting trigger plus a popover containing the family's real leaf buttons. Active-state highlighting comes free from the leaves' own `isActive`.
-- [ ] A family whose leaves are all off does not render.
-- [ ] Compact bar becomes a single non-wrapping row with horizontal scroll and an edge fade. Verify it does not fight the sticky-above-keyboard positioning.
-- [ ] Tests: a collapsed family renders one trigger; the trigger reports the active leaf; leaf `on: false` removes it from inside the popover; an all-off family renders nothing; the compact bar carries no wrapping class.
+- [x] `ToolbarFamilyMenu`: state-reporting trigger (`triggerIcon`) plus a popover containing the family's real leaf buttons. Active-state highlighting comes free from the leaves' own `isActive`. A chevron marks it as a menu rather than a button whose icon keeps changing under the user.
+- [x] A family whose leaves are all off does not render (`resolveLayout`), **and** one whose leaves cannot resolve does not render either (`ToolbarFamilyMenu`) - an unmounted extension must not leave a trigger that opens an empty popover.
+- [x] Compact bar is a single non-wrapping row with horizontal scroll and an edge fade. The fade is scroll-aware (`useEdgeFade`): it appears only on an end that is actually hiding something, so a bar that fits is not dimmed into implying more.
+- [x] `ToolbarLeaf` extracted so the bar and the popover render a leaf identically.
+- [x] Tests: 6 in `ToolbarFamilyMenu.test.tsx`, plus the collapsed-family case in `EditorToolbar.test.tsx`.
+
+Two test-suite changes this forced, both of them the behaviour change showing up where it should:
+
+- `src/test/setup.ts` now stubs `ResizeObserver`, which jsdom does not ship.
+- `editor.test.tsx` no longer expects the three alignment buttons on the bar - the Wide default collapses `align`, so it asserts the trigger and their *absence* from the bar instead.
+
+**Still to verify manually** (needs a real device, not jsdom): that the scrolling row does not fight the sticky-above-keyboard positioning.
 
 ### Step 4 - Prefs shape
 

@@ -112,6 +112,16 @@ describe('EditorToolbar', () => {
     expect(renderedNames()).not.toContain('editor.math.tooltip');
   });
 
+  it('draws a collapsed family as one trigger instead of its leaves', () => {
+    renderToolbar([{ ...LAYOUT[0], collapsed: true }, LAYOUT[1]]);
+    // The two list leaves become one trigger; format stays expanded.
+    expect(renderedNames()).toEqual([
+      'editor.toolbar.family.list',
+      'editor.italic.tooltip',
+      'editor.bold.tooltip',
+    ]);
+  });
+
   it('wraps on a wide window and scrolls on a compact one, never wrapping there', () => {
     setWidth(1024);
     renderToolbar(LAYOUT);

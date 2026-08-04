@@ -146,7 +146,7 @@ describe('Editor auto-capture', () => {
  * regression - that needs the dialog's own state updates to reproduce.
  */
 describe('Editor in editable mode', () => {
-  it('renders the toolbar buttons the new extensions contribute', async () => {
+  it('renders the toolbar buttons the Wide default puts on the bar', async () => {
     const { findByRole } = render(
       <TooltipProvider>
         <Editor editable content="<p>hi</p>" getNoteId={vi.fn()} />
@@ -158,9 +158,23 @@ describe('Editor in editable mode', () => {
       'editor.link.tooltip',
       'editor.codeBlock.tooltip',
       'editor.horizontalRule.tooltip',
-      'editor.textAlign.left',
+      // Undo/redo reach the bar for the first time with the registry.
+      'editor.undo',
     ]) {
       expect(await findByRole('button', { name })).toBeInTheDocument();
     }
+  });
+
+  it('puts the alignment buttons behind their family trigger, not on the bar', async () => {
+    const { findByTestId, queryByRole } = render(
+      <TooltipProvider>
+        <Editor editable content="<p>hi</p>" getNoteId={vi.fn()} />
+      </TooltipProvider>
+    );
+
+    // `align` is collapsed in the Wide default, so its three leaves are one tap
+    // away rather than three slots of bar.
+    expect(await findByTestId('toolbar-family-align')).toBeInTheDocument();
+    expect(queryByRole('button', { name: 'editor.textAlign.left' })).not.toBeInTheDocument();
   });
 });
