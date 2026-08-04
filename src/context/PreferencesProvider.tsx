@@ -13,19 +13,60 @@ export const PREFERENCES_KEY = 'preferences';
  */
 export const PREFERENCES_VERSION = 1;
 
+/** One leaf inside a stored family: array position is its order on the bar. */
+const toolbarMemberSchema = z.object({ id: z.string(), on: z.boolean() });
+
+/**
+ * One family. `id` and the member ids are plain strings, not the registry's
+ * unions: a blob written by a later release may name Items this build has never
+ * heard of, and those must survive a round-trip rather than fail validation
+ * (ADR 0011, decision 8).
+ */
+const toolbarFamilySchema = z.object({
+  id: z.string(),
+  on: z.boolean(),
+  collapsed: z.boolean(),
+  members: z.array(toolbarMemberSchema),
+});
+
+const toolbarLayoutSchema = z.array(toolbarFamilySchema);
+
 export const preferencesSchema = z.object({
   version: z.literal(PREFERENCES_VERSION),
   /**
-   * Editor toolbar buttons: membership = visible, position = order. Empty means
-   * "never customised" and the toolbar renders its own default set - the button
-   * registry lands with the customisable toolbar (M4 Slice 4), so freezing a
-   * list of ids here would only give it something to drift from.
+   * The editor toolbar, one Toolbar Layout per Width Class (ADR 0011). An empty
+   * array means "never customised" and the toolbar renders that width's default.
+   *
+   * The `.catch` is the same load-bearing absorber as `colorBlind` below: this
+   * field used to be a flat `string[]` of extension names, and a stored array
+   * failing an object schema would reject the *whole* blob and take the user's
+   * density and reduced-motion down with a setting nothing ever wrote. No
+   * `PREFERENCES_VERSION` bump for the same reason - a field-level absorber is
+   * enough, and a version bump would discard the neighbours it is protecting.
    */
-  toolbar: z.array(z.string()).default([]),
+  toolbar: z
+    .object({
+      compact: toolbarLayoutSchema.catch([]).default([]),
+      wide: toolbarLayoutSchema.catch([]).default([]),
+    })
+    .catch({ compact: [], wide: [] })
+    .default({ compact: [], wide: [] }),
   /** Which side the note-create button sits on. */
   noteButtonAlignment: z.enum(['left', 'right']).default('right'),
-  /** Which capture shortcuts the mobile quick-capture bar shows, in order. */
-  quickCaptureButtons: z.array(z.string()).default(['note', 'checklist']),
+  /**
+   * The quick-capture starts, in order, with the same `{ id, on }` rows the
+   * toolbar uses - but no families and no Width Classes, because five buttons
+   * on one bar have nothing to group and nothing to overflow.
+   *
+   * Renamed from `quickCaptureButtons`, which defaulted to `['note','checklist']`
+   * while the action keys were `text|checklist|audio|drawing|picture`: `'note'`
+   * matched nothing, so the field was wrong in every stored copy it never had.
+   * The old key is simply dropped on the next write.
+   */
+  quickCapture: z
+    .array(z.object({ id: z.string(), on: z.boolean() }))
+    .catch([])
+    .default([]),
   /**
    * Colour-vision palette variant, applied on top of light/dark rather than
    * replacing it. One mode, not one per condition: deuteranopia and protanopia

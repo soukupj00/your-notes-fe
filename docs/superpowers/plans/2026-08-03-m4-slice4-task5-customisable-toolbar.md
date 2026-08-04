@@ -1,6 +1,6 @@
 # M4 Slice 4 Task 5 - Customisable toolbar
 
-**Status:** in progress. Steps 1-3 done (2026-08-04); Steps 4-7 open.
+**Status:** in progress. Steps 1-4 done (2026-08-04); Steps 5-7 open.
 
 **Goal:** Make the editor toolbar the user's own.
 Which controls exist, in what order, grouped or collapsed, separately for a phone and a desktop, plus the same treatment for the quick-capture actions.
@@ -154,11 +154,15 @@ Two test-suite changes this forced, both of them the behaviour change showing up
 
 **Still to verify manually** (needs a real device, not jsdom): that the scrolling row does not fight the sticky-above-keyboard positioning.
 
-### Step 4 - Prefs shape
+### Step 4 - Prefs shape - **done** (2026-08-04)
 
-- [ ] `preferencesSchema`: `toolbar` becomes the object above with a field-level absorber; `quickCaptureButtons` becomes `quickCapture`. No version bump.
-- [ ] `setPreference` writes a whole Layout; the read-modify-write transaction already covers concurrent writes.
-- [ ] Tests: a legacy `toolbar: []` and a legacy `quickCaptureButtons: ['note','checklist']` both parse to defaults **without** resetting density, reduced-motion or `colorBlind`; a stored Layout round-trips.
+- [x] `preferencesSchema`: `toolbar` is `{ compact, wide }` with a `.catch` on the object **and** on each Width Class, so one corrupt Layout does not cost the other; `quickCaptureButtons` becomes `quickCapture` (`{ id, on }[]`). No version bump. Ids stay `z.string()`, not the registry unions, so a blob from a later release round-trips instead of being validated away.
+- [x] `setPreference` writes a whole Layout; the existing read-modify-write transaction already covers concurrent writes.
+- [x] `EditorToolbar` takes `layouts` (both Width Classes) and `editor.tsx` feeds it `preferences.toolbar`, so the bar is live against the store.
+- [x] `resolveLayout` treats an **empty** array the same as an absent one - the schema's default is `[]`, and reconciling that entry by entry would rebuild the bar in registry order rather than the default preset's.
+- [x] Tests: the two legacy shapes absorbed without resetting their neighbours, one broken Width Class not costing the other, an unknown-id Layout round-tripping, a whole Layout written and read back.
+
+Two test files now wrap in `PreferencesProvider` (`editor.test.tsx`, `NoteEditorDialog.realEditor.test.tsx`) because the toolbar reads the store.
 
 ### Step 5 - Settings editor
 

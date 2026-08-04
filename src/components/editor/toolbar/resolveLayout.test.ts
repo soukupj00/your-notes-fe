@@ -15,6 +15,12 @@ describe('reconcileLayout', () => {
     expect(reconcileLayout(undefined, 'compact')).toEqual(defaultToolbarLayout('compact'));
   });
 
+  it('treats the empty array the schema defaults to as never customised', () => {
+    // Reconciling `[]` entry by entry would rebuild the bar in registry order,
+    // which is not the same arrangement as the default preset.
+    expect(reconcileLayout([], 'wide')).toEqual(defaultToolbarLayout('wide'));
+  });
+
   it('appends a registry family the blob has never heard of, at its registry position', () => {
     // An old blob that predates `block` and `media`: they sit between `list` and
     // `font` in the registry, and must land there rather than at the end.

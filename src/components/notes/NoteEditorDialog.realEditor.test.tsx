@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
+import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { db } from '@/db/db.ts';
 import { clearNotesDb } from '@/test/db.ts';
 import { NoteEditorDialog } from './NoteEditorDialog.tsx';
@@ -62,10 +63,14 @@ async function seedNote(body: string) {
 }
 
 function openNote() {
+  // The editor toolbar reads the stored Toolbar Layouts, so the real editor
+  // needs the preferences provider the app always gives it.
   return render(
-    <TooltipProvider>
-      <NoteEditorDialog noteId="n1" onClose={vi.fn()} />
-    </TooltipProvider>
+    <PreferencesProvider>
+      <TooltipProvider>
+        <NoteEditorDialog noteId="n1" onClose={vi.fn()} />
+      </TooltipProvider>
+    </PreferencesProvider>
   );
 }
 

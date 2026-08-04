@@ -7,13 +7,16 @@ import { cn } from '@/lib/utils.ts';
 import { resolveLayout } from './resolveLayout';
 import { ToolbarFamilyMenu } from './ToolbarFamilyMenu';
 import { ToolbarLeaf } from './ToolbarLeaf';
-import type { ToolbarLayout } from './types';
+import type { ToolbarLayout, WidthClass } from './types';
 import { useWidthClass } from './useWidthClass';
 
 interface EditorToolbarProps {
   editor: Editor;
-  /** The user's stored Layout for the current Width Class; undefined = defaults. */
-  layout?: ToolbarLayout;
+  /**
+   * The user's stored Layouts, one per Width Class. Omitted or empty means never
+   * customised, and that width renders its built-in default.
+   */
+  layouts?: Partial<Record<WidthClass, ToolbarLayout>>;
   /**
    * On mobile, pin the bar to the bottom of the scroll container so it rides
    * above the virtual keyboard.
@@ -93,13 +96,13 @@ function edgeFadeStyle({ start, end }: Overflow): React.CSSProperties | undefine
  */
 export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   editor,
-  layout,
+  layouts,
   stickyOnMobile,
   className,
 }) => {
   const { t } = useTranslation();
   const widthClass = useWidthClass();
-  const families = resolveLayout(layout, widthClass);
+  const families = resolveLayout(layouts?.[widthClass], widthClass);
   const compact = widthClass === 'compact';
   const [scrollRef, overflow] = useEdgeFade(compact);
 

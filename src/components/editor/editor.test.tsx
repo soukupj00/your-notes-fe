@@ -1,8 +1,14 @@
-import { render, waitFor } from '@testing-library/react';
-import { createRef } from 'react';
+import { render as rtlRender, waitFor } from '@testing-library/react';
+import { createRef, type ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
+import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { Editor, type EditorHandle } from './editor.tsx';
+
+// The toolbar reads the stored Toolbar Layouts, so every render needs the
+// provider; with nothing written it hydrates to defaults, which is the state
+// these tests are asserting against anyway.
+const render = (ui: ReactElement) => rtlRender(ui, { wrapper: PreferencesProvider });
 
 // Keys pass through untranslated so assertions are stable.
 vi.mock('react-i18next', () => ({

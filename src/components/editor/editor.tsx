@@ -32,6 +32,7 @@ import { LinkBubbleMenu } from '@/components/editor/extensions/Link';
 import { insertVideoAttachmentFiles } from '@/components/editor/extensions/Video/insert.ts';
 import EditorToolbar from '@/components/editor/toolbar/EditorToolbar.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
+import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import type { AttachmentErrorCode } from '@/lib/attachments.ts';
 import { cn } from '@/lib/utils.ts';
@@ -120,6 +121,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   ref
 ) {
   const { t } = useTranslation();
+  const { preferences } = usePreferences();
   // Math node onClick handlers need the live editor, which does not exist yet when
   // the extensions array is built; a ref lets those closures reach it at click time.
   const editorRef = useRef<TiptapEditor | null>(null);
@@ -379,7 +381,13 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
           ordered last and pinned to the bottom of the scroll container. Which
           buttons it holds is the user's stored Layout, not a hardcoded list -
           see `toolbar/EditorToolbar.tsx` and ADR 0011. */}
-        {editable && <EditorToolbar editor={editor} stickyOnMobile={stickyToolbarOnMobile} />}
+        {editable && (
+          <EditorToolbar
+            editor={editor}
+            layouts={preferences.toolbar}
+            stickyOnMobile={stickyToolbarOnMobile}
+          />
+        )}
 
         {/* Editable area. `flex-1` lets it fill a full-screen sheet so a
           sticky-bottom toolbar sits at the screen edge even with little text;

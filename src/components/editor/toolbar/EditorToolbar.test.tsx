@@ -39,7 +39,7 @@ function renderToolbar(layout?: ToolbarLayout) {
   const editor = createEditor();
   render(
     <TooltipProvider>
-      <EditorToolbar editor={editor} layout={layout} />
+      <EditorToolbar editor={editor} layouts={{ compact: layout, wide: layout }} />
     </TooltipProvider>
   );
 }

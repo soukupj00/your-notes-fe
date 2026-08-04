@@ -79,7 +79,7 @@ describe('graceful fallback', () => {
       colorBlind: 'deuteranopia',
       density: 'compact',
       reducedMotion: 'always',
-      toolbar: ['bold', 'italic'],
+      noteButtonAlignment: 'left',
     });
 
     const result = await prefs();
@@ -87,7 +87,64 @@ describe('graceful fallback', () => {
     expect(result.current.preferences.colorBlind).toBe(false);
     expect(result.current.preferences.density).toBe('compact');
     expect(result.current.preferences.reducedMotion).toBe('always');
-    expect(result.current.preferences.toolbar).toEqual(['bold', 'italic']);
+    expect(result.current.preferences.noteButtonAlignment).toBe('left');
+  });
+
+  // The same absorber, for the same reason, on the field that changed shape
+  // with the customisable toolbar: `toolbar` was a flat `string[]` of extension
+  // names and `quickCaptureButtons` an array of keys that never matched the
+  // actions. Both are now object shapes, and a stored copy of either must cost
+  // only itself.
+  it('absorbs the pre-registry toolbar and quick-capture shapes without resetting their neighbours', async () => {
+    await store({
+      version: PREFERENCES_VERSION,
+      toolbar: ['bold', 'italic'],
+      quickCaptureButtons: ['note', 'checklist'],
+      density: 'compact',
+      reducedMotion: 'always',
+      colorBlind: true,
+    });
+
+    const result = await prefs();
+
+    expect(result.current.preferences.toolbar).toEqual({ compact: [], wide: [] });
+    expect(result.current.preferences.quickCapture).toEqual([]);
+    expect(result.current.preferences.density).toBe('compact');
+    expect(result.current.preferences.reducedMotion).toBe('always');
+    expect(result.current.preferences.colorBlind).toBe(true);
+  });
+
+  it('absorbs one broken Width Class without taking the other down with it', async () => {
+    await store({
+      version: PREFERENCES_VERSION,
+      toolbar: {
+        compact: 'not a layout',
+        wide: [{ id: 'format', on: true, collapsed: false, members: [{ id: 'bold', on: true }] }],
+      },
+    });
+
+    const result = await prefs();
+
+    expect(result.current.preferences.toolbar.compact).toEqual([]);
+    expect(result.current.preferences.toolbar.wide).toHaveLength(1);
+  });
+
+  it('keeps a stored Layout naming ids this build does not know', async () => {
+    // Forward compatibility is decision 8: a blob written by a later release
+    // must round-trip, not be validated away.
+    const layout = [
+      {
+        id: 'from-the-future',
+        on: true,
+        collapsed: true,
+        members: [{ id: 'teleport', on: false }],
+      },
+    ];
+    await store({ version: PREFERENCES_VERSION, toolbar: { compact: layout, wide: [] } });
+
+    const result = await prefs();
+
+    expect(result.current.preferences.toolbar.compact).toEqual(layout);
   });
 });
 
@@ -99,6 +156,28 @@ describe('setPreference', () => {
 
     await waitFor(() => expect(result.current.preferences.density).toBe('compact'));
     expect(await stored()).toEqual({ ...DEFAULT_PREFERENCES, density: 'compact' });
+  });
+
+  it('writes a whole Toolbar Layout and reads it back unchanged', async () => {
+    const result = await prefs();
+    const wide = [
+      {
+        id: 'format',
+        on: true,
+        collapsed: false,
+        members: [
+          { id: 'bold', on: true },
+          { id: 'italic', on: false },
+        ],
+      },
+    ];
+
+    // A Layout is written whole, not key by key: order and visibility travel in
+    // one array precisely so there is no second list to keep in sync.
+    await result.current.setPreference('toolbar', { compact: [], wide });
+
+    await waitFor(() => expect(result.current.preferences.toolbar.wide).toEqual(wide));
+    expect(await stored()).toEqual({ ...DEFAULT_PREFERENCES, toolbar: { compact: [], wide } });
   });
 
   it('keeps previously written values when another key is set', async () => {

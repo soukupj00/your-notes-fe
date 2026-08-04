@@ -73,10 +73,11 @@ export function reconcileLayout(
       members: [],
     };
 
-  // No stored Layout at all is not the same as an empty one: it means "never
-  // customised", and the answer to that is the whole default, not a bare bar.
+  // Nothing stored - absent, or the empty array the schema defaults to - means
+  // "never customised", and the answer to that is the whole default arrangement,
+  // not a bar reconstructed in registry order.
   const families = reconcileList(
-    stored ?? defaults,
+    stored?.length ? stored : defaults,
     TOOLBAR_FAMILIES.map((family) => family.id),
     defaultFor
   );
