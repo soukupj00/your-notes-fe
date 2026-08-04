@@ -167,6 +167,21 @@
       "video": "Video",
       "file": "Soubor",
       "drawing": "Kresba"
+    },
+    "toolbar": {
+      "customize": "Přizpůsobit lištu",
+      "family": {
+        "history": "Historie",
+        "style": "Styl textu",
+        "format": "Formátování",
+        "colour": "Barva",
+        "list": "Seznamy",
+        "block": "Bloky",
+        "align": "Zarovnání",
+        "media": "Média",
+        "font": "Písmo",
+        "meta": "Lišta"
+      }
     }
   },
   "settings": {

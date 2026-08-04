@@ -167,6 +167,21 @@
       "video": "Video",
       "file": "File",
       "drawing": "Drawing"
+    },
+    "toolbar": {
+      "customize": "Customise toolbar",
+      "family": {
+        "history": "History",
+        "style": "Text style",
+        "format": "Formatting",
+        "colour": "Colour",
+        "list": "Lists",
+        "block": "Blocks",
+        "align": "Alignment",
+        "media": "Media",
+        "font": "Font",
+        "meta": "Toolbar"
+      }
     }
   },
   "settings": {

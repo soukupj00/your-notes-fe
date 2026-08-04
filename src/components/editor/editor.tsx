@@ -1,11 +1,4 @@
 import type { Editor as TiptapEditor } from '@tiptap/core';
-import Document from '@tiptap/extension-document';
-import { TaskItem } from '@tiptap/extension-list';
-import Paragraph from '@tiptap/extension-paragraph';
-import Text from '@tiptap/extension-text';
-import { TextStyle } from '@tiptap/extension-text-style';
-import { Typography } from '@tiptap/extension-typography';
-import { Placeholder } from '@tiptap/extensions';
 import { EditorContent, useEditor } from '@tiptap/react';
 import 'katex/dist/katex.min.css';
 import type React from 'react';
@@ -22,46 +15,20 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { createAudio } from '@/components/editor/extensions/Audio';
 import type { AttachmentDeps } from '@/components/editor/extensions/attachments/deps';
 import {
   dedupeForeignAttachments,
   insertAttachmentFiles,
 } from '@/components/editor/extensions/attachments/insert';
-import { Blockquote } from '@/components/editor/extensions/Blockquote';
-import { Bold } from '@/components/editor/extensions/Bold';
-import { BulletList } from '@/components/editor/extensions/BulletList';
-import { Clear } from '@/components/editor/extensions/Clear';
-import { Code } from '@/components/editor/extensions/Code';
-import { CodeBlock } from '@/components/editor/extensions/CodeBlock';
-import { Color } from '@/components/editor/extensions/Color';
-import { ColorPreview } from '@/components/editor/extensions/color-preview';
-import { createExcalidraw } from '@/components/editor/extensions/Excalidraw';
+import { buildEditorExtensions } from '@/components/editor/extensions/build';
 import { commitExcalidrawScene } from '@/components/editor/extensions/Excalidraw/commit';
 import {
   type ExcalidrawScene,
   emptyScene,
   parseScene,
 } from '@/components/editor/extensions/Excalidraw/scene';
-import { createFile } from '@/components/editor/extensions/File';
-import { FontFamily } from '@/components/editor/extensions/FontFamily';
-import { FontSize } from '@/components/editor/extensions/FontSize';
-import { Heading } from '@/components/editor/extensions/Heading';
-import { Highlight } from '@/components/editor/extensions/Highlight';
-import { HorizontalRule } from '@/components/editor/extensions/HorizontalRule';
-import { createImage } from '@/components/editor/extensions/Image';
 import { insertImageAttachmentFiles } from '@/components/editor/extensions/Image/insert';
-import { Italic } from '@/components/editor/extensions/Italic';
-import { Link, LinkBubbleMenu } from '@/components/editor/extensions/Link';
-import { ListItem } from '@/components/editor/extensions/ListItem';
-import { createMathematics } from '@/components/editor/extensions/Mathematics';
-import { OrderedList } from '@/components/editor/extensions/OrderedList';
-import { createSlashMenu } from '@/components/editor/extensions/SlashMenu';
-import { Strike } from '@/components/editor/extensions/Strike';
-import { TaskList } from '@/components/editor/extensions/TaskList';
-import { TextAlign } from '@/components/editor/extensions/TextAlign';
-import { Underline } from '@/components/editor/extensions/Underline';
-import { createVideo } from '@/components/editor/extensions/Video';
+import { LinkBubbleMenu } from '@/components/editor/extensions/Link';
 import { insertVideoAttachmentFiles } from '@/components/editor/extensions/Video/insert.ts';
 import BlocksSection from '@/components/editor/menus/toolbars/BlocksSection.tsx';
 import FontSection from '@/components/editor/menus/toolbars/FontSection.tsx';
@@ -247,48 +214,11 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   const getAttachmentDeps = useRef(() => attachmentDepsRef.current).current;
 
   const editor = useEditor({
-    extensions: [
-      Document,
-      Paragraph,
-      Text,
-      Bold,
-      Italic,
-      Strike,
-      Underline,
-      Heading,
-      Blockquote,
-      createImage(getAttachmentDeps),
-      createAudio(getAttachmentDeps),
-      createVideo(getAttachmentDeps),
-      createFile(getAttachmentDeps),
-      createExcalidraw(getAttachmentDeps),
-      BulletList,
-      OrderedList,
-      ListItem,
-      TaskList,
-      TaskItem,
-      Clear,
-      Code,
-      CodeBlock,
-      HorizontalRule,
-      TextAlign,
-      Link,
-      Typography,
-      createSlashMenu(getAttachmentDeps, t),
-      // Only the body gets a placeholder - the title input has its own, and a
-      // second prompt on every empty paragraph would be noise.
-      Placeholder.configure({
-        placeholder: ({ node }) => (node.type.name === 'paragraph' ? t('editor.placeholder') : ''),
-        showOnlyWhenEditable: true,
-      }),
-      createMathematics(() => editorRef.current, t),
-      Color,
-      Highlight,
-      FontFamily,
-      FontSize,
-      TextStyle,
-      ColorPreview,
-    ],
+    extensions: buildEditorExtensions({
+      getDeps: getAttachmentDeps,
+      getEditor: () => editorRef.current,
+      t,
+    }),
     content,
     editable,
     autofocus: autoFocus ? 'end' : false,

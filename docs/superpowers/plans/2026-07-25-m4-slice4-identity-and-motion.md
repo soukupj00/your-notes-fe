@@ -1,6 +1,6 @@
 # M4 Slice 4 - Identity & motion
 
-**Status:** Task 1 complete; Task 1b complete except the touch-target and reflow-measurement gates; Task 2 palette complete including the colour-blind modifier, outstanding only on the `TagPopover` mount; Task 3 complete except dialog consolidation and `NoteFeed` tests; **Task 4 complete** - the editor's note bar shipped 2026-08-03. Task 5 (customisable toolbar + checklist polish) is next.
+**Status:** Task 1 complete; Task 1b complete except the touch-target and reflow-measurement gates; Task 2 palette complete including the colour-blind modifier, outstanding only on the `TagPopover` mount; Task 3 complete except dialog consolidation and `NoteFeed` tests; **Task 4 complete** - the editor's note bar shipped 2026-08-03. Task 5 is next: designed and signed off 2026-08-03, split into its own plan (customisable toolbar) plus Task 5b (checklist polish).
 
 **Goal:** Give the app a distinctive "tactile paper" identity, add purposeful Motion animation, ship the full-card colour system, and make the toolbar user-customisable - turning a competent app into one that feels intentional and personal.
 
@@ -90,7 +90,7 @@ Decisions: `motion` (not GSAP); `useReducedMotion` ← reduced-motion pref.
 
 - [x] Add dep `motion`.
 - [x] `AnimatePresence` for feed entry/exit on lifecycle and filter changes (pin/archive/trash, tag-filter toggles).
-- [x] **Layout animations** for feed reflow/reorder: pinned float-to-top and feed reflow are wired; checklist checked-sink remains with Task 5, which owns the checklist.
+- [x] **Layout animations** for feed reflow/reorder: pinned float-to-top and feed reflow are wired; checklist checked-sink remains with Task 5b, which owns the checklist.
 - [x] **Two feed layouts, and an animated switch between them** (decided 2026-07-30): **Masonry** (default, JS-placed column packing) and **Stack** (every card full container width, one per row; also the no-JS fallback). Both resolve through one pure per-card `x`/`y`/`width` placement module and one DOM-ordered Motion feed. The legacy persisted `list` value migrates to `stack`.
 - [ ] Speed-dial expansion and tag-filter pill toggles use the Nightshift motion contract. Dialog transition consolidation remains.
   Both the speed-dial (`QuickCaptureBar`) and the tag-filter pills (`TagFilterBar`) are on `motion/react` with the shared tokens from `lib/motion.ts`. **Dialog consolidation is the only remainder** - `NoteEditorDialog` and the confirm dialogs still animate through their vendored shadcn `data-state` CSS rather than the contract.
@@ -122,20 +122,28 @@ Decisions (Q15): editor bottom action bar; card pin corner; desktop hover row / 
 - [x] Tests: pin/unpin, archive and recolour fire the Slice 1 mutations from the card; the pin is asserted to mount outside the content layer; the rail is asserted to carry no hover-hidden classes, so a reveal cannot be reintroduced by accident.
   Editor side (`NoteEditorDialog.test.tsx`): colouring and pinning an unsaved draft each create exactly one note through the `ensureNoteId` queue; a colour change on an existing note is written *and* moves the dialog's tint; pin/unpin round-trips `pinnedAt` and `aria-pressed`; an archived note offers no pin but keeps colour and labels.
 
-### Task 5 - Data-driven customisable toolbar + checklist polish
+### Task 5 - Data-driven customisable toolbar
 
-Decisions (Q11): flat ordered list `prefs.toolbar: string[]`; toggle now, drag-reorder fast-follow (dnd-kit); alignment + quick-capture prefs. Checklist (Q5): larger tap targets, drag-reorder via TipTap drag-handle, optional checked-sink.
+**Split out on 2026-08-03** into its own plan: [`2026-08-03-m4-slice4-task5-customisable-toolbar.md`](./2026-08-03-m4-slice4-task5-customisable-toolbar.md), with the shape decision in [ADR 0011](../../adr/0011-toolbar-items-and-families.md).
+The checklist half moved to Task 5b below: the two shared no files, no data model and no concept, and a task whose "done" spans two unrelated subsystems cannot be half-shipped honestly.
 
-- [ ] Refactor the editor toolbar to render from `prefs.toolbar` (visibility = filter, order = list). Hardcoded `*Section`s become implicit groupings/separators. Build on Pattern A (extension-owned buttons + icon registry + `ExtensionButtonBar`).
-- [ ] Settings → toolbar editor: **toggle switches** for each button (step 1).
-- [ ] **Drag-reorder** editor (fast-follow, add `@dnd-kit/*`): reorder the button list (step 2).
-- [ ] Prefs: note-create-button **alignment (L/R)**, **which quick-capture buttons appear**.
+The original decisions (Q11) are **superseded**.
+A flat `prefs.toolbar: string[]` of extension names cannot express the feature, because extension names are not buttons - `heading` yields three, `textAlign` three, `history` two, and the real leaf count is 31 rather than the 25 the name lists suggest.
+Drag-reorder is also promoted from fast-follow to core: order is half of what a layout is, so toggles alone would ship a layout the user cannot lay out.
+
+- [ ] See the linked plan for the seven steps: registry, layout resolution, collapsed-family control, prefs shape, settings editor, in-editor sheet, slash-menu ids.
+
+### Task 5b - Checklist polish
+
+Decisions (Q5): larger tap targets, drag-reorder via TipTap drag-handle, optional checked-sink.
+
 - [ ] **Checklist polish**: larger tap targets on the body TaskList; drag-reorder via TipTap's official drag-handle extension; optional "sink checked items to bottom of their list" on toggle.
-- [ ] Tests: toolbar renders/filters/orders from prefs; alignment pref; checklist reorder + checked-sink.
+- [ ] Tests: checklist reorder + checked-sink.
 
 ### Task 6 - Settings surface complete
 
-- [ ] Settings sections: appearance (theme, **colour-blind**, **density/font-size**, **reduced-motion**), **language switcher** (`country-flag-icons`, already a dep), toolbar customisation, note-create config, backup (Slice 1), replay tutorial (Slice 5), manage labels (Slice 1). Zed-style sectioned switches.
+- [ ] Settings sections: appearance (theme, **colour-blind**, **density/font-size**, **reduced-motion**), **language switcher** (`country-flag-icons`, already a dep), backup (Slice 1), replay tutorial (Slice 5), manage labels (Slice 1). Zed-style sectioned switches.
+      Toolbar customisation, quick-capture customisation and note-create alignment are **Task 5's** sections and land with it; this task only has to leave room for them.
 - [ ] Tests: each toggle persists via `PreferencesProvider` and takes effect.
 
 ## Deferred

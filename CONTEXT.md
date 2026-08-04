@@ -35,6 +35,10 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
 - **Editor** — The rich-text surface (TipTap-based) used to write a Note's body. One Editor edits one Note's content.
 - **Extension** — A self-contained editing capability plugged into the Editor (bold, lists, headings, image insertion, drawing, etc.). An Extension may contribute editing behavior, a Toolbar Button, or both.
 - **Toolbar Button** — The control a user clicks to invoke an Extension's action (e.g. toggle bold). A Button belongs to its Extension and is identified to the user by a descriptive, recognizable icon.
+- **Toolbar Family** — A named group of related Toolbar Buttons that answer the same question (headings, lists, alignment, media). A Family is shown either **expanded**, as its individual Buttons, or **collapsed**, as a single menu standing in for all of them. Families with one member are always expanded.
+- **Toolbar Item** — One control occupying one slot on the toolbar: either a single Toolbar Button, or a collapsed Family's menu. This is the unit a user turns on, turns off, and orders.
+- **Toolbar Layout** — A user's chosen arrangement of Toolbar Items: which Families appear, in what order, expanded or collapsed, and which of their Buttons are on. A Layout belongs to a Width Class, so a user has two.
+- **Width Class** — Which of the two toolbar arrangements is in effect, decided by the window's width rather than the device: **Compact** for narrow windows, **Wide** for the rest. A resized desktop window changes Width Class.
 - **Drawing** — A free-form sketch (Excalidraw-based) embedded in a Note as a kind of content authored inside the Editor.
 
 ## Presentation & accessibility
