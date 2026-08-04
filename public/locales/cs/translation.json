@@ -69,10 +69,19 @@
       "tooltip": "Zvýraznění"
     },
     "fontFamily": {
-      "tooltip": "Písmo"
+      "tooltip": "Písmo",
+      "options": {
+        "default": "Výchozí písmo",
+        "sans": "Bezpatkové",
+        "serif": "Patkové",
+        "mono": "Neproporcionální"
+      }
     },
     "fontSize": {
-      "tooltip": "Velikost písma"
+      "tooltip": "Velikost písma",
+      "options": {
+        "default": "Výchozí velikost"
+      }
     },
     "image": {
       "tooltip": "Vložit obrázek",

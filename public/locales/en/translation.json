@@ -69,10 +69,19 @@
       "tooltip": "Highlight"
     },
     "fontFamily": {
-      "tooltip": "Font family"
+      "tooltip": "Font family",
+      "options": {
+        "default": "Default font",
+        "sans": "Sans-serif",
+        "serif": "Serif",
+        "mono": "Monospace"
+      }
     },
     "fontSize": {
-      "tooltip": "Font size"
+      "tooltip": "Font size",
+      "options": {
+        "default": "Default size"
+      }
     },
     "image": {
       "tooltip": "Insert image",

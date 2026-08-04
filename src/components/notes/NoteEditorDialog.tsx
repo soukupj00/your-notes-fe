@@ -242,9 +242,12 @@ export function NoteEditorDialog({
         {/* The live region is always mounted: a screen reader only announces
             changes *inside* a region it was already observing, so one that
             appears together with its first message is silent. */}
+        {/* Same 32px box as the close button, so the two icons share a centre
+            line instead of the smaller one floating 8px high, and one gap of
+            space between them rather than none. */}
         <div
           aria-live="polite"
-          className="absolute top-4 right-12 flex items-center text-muted-foreground"
+          className="absolute top-4 right-14 flex size-8 items-center justify-center text-muted-foreground"
         >
           {saveStatus !== 'idle' && (
             <>

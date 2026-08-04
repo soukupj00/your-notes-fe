@@ -62,7 +62,10 @@ function DialogContent({
             // Themed like every other icon button (muted at rest, muted bg on
             // hover) instead of shadcn's opacity-only default, which ignored the
             // colour tokens and looked washed out in dark mode.
-            className="absolute top-4 right-4 flex size-8 items-center justify-center rounded-md text-muted-foreground ring-offset-background transition-colors hover:bg-muted hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0"
+            // The disc stays 32px; the *touch target* is 44px, grown with an
+            // invisible inset overlay rather than a bigger disc, so the visual
+            // weight of a close button does not have to pay for reachability.
+            className="absolute top-4 right-4 flex size-8 items-center justify-center rounded-md text-muted-foreground ring-offset-background transition-colors before:absolute before:-inset-1.5 before:content-[''] hover:bg-muted hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0"
           >
             <XIcon />
             <span className="sr-only">Close</span>

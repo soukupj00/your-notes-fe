@@ -1,6 +1,6 @@
 # M4 Slice 4 Task 5 - Customisable toolbar
 
-**Status:** in progress. Steps 1-4, 4b and 4c done (2026-08-04); Steps 5-7 open.
+**Status:** in progress. Steps 1-4, 4b, 4c and 4d done (2026-08-04); Steps 5-7 open.
 
 **Goal:** Make the editor toolbar the user's own.
 Which controls exist, in what order, grouped or collapsed, separately for a phone and a desktop, plus the same treatment for the quick-capture actions.
@@ -194,6 +194,14 @@ Confirmed first, then fixed. `Clear` did indeed advertise `Mod+\\` and bind noth
 Also: `Link` became `createLink(t)` (the `createMathematics` shape), because the fallback prompt needs a translated label and an extension is built once, outside React. `EditorColorPickerButton` gained a shortcut line so a custom-component button describes itself the same way a plain one does.
 
 The guard against a repeat is `toolbar/shortcuts.test.ts`: it walks every registry Item, reads what its button advertises, and fails if the extension manager has no handler for it. **A shortcut shown and not bound cannot ship again.**
+
+### Step 4d - Editor chrome fixes - **done** (2026-08-04)
+
+Three defects found by using the editor, none of them strictly toolbar work, all of them in its immediate frame.
+
+- [x] **The autosave check/spinner sat 8px above the close button's centre line.** It was a bare 16px icon at `top-4` next to a 32px button at `top-4`. It is now a matching 32px box, with a gap between the two rather than none.
+- [x] **The dialog close button was a 32px touch target.** The disc stays 32px; the *hit box* is now 44px, grown with an invisible inset overlay rather than a bigger disc - the same treatment as the card foot rail's pin.
+- [x] **The font family and font size selects both read "Default".** Nothing on either closed trigger said which control it was, and the tooltip that disambiguated them does not exist on a touch screen. Each trigger now carries its own icon and a short value (`Aa` / `Auto`, `Serif` / `24`), and the open menu previews what each row does - a family in its own face, a size at its own size. The full names are localised (`en` + `cs`); they were hardcoded English before.
 
 ### Step 5 - Settings editor
 

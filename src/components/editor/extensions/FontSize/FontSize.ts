@@ -24,7 +24,7 @@ export const FontSize = TiptapFontSize.extend<FontSizeExtensionOptions>({
       ...this.parent?.(),
       button: ({ editor, t }: ButtonContext) => ({
         component: FontSizeButton,
-        componentProps: { editor, tooltip: t('editor.fontSize.tooltip') },
+        componentProps: { editor, t, tooltip: t('editor.fontSize.tooltip') },
       }),
     } as unknown as FontSizeExtensionOptions;
   },
