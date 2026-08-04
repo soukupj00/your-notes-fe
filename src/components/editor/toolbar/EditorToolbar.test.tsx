@@ -122,6 +122,29 @@ describe('EditorToolbar', () => {
     ]);
   });
 
+  it('pins the first family on the compact bar, and only there', () => {
+    setWidth(360);
+    renderToolbar(LAYOUT);
+    const pinned = screen.getByTestId('editor-toolbar').querySelectorAll('[data-pinned]');
+    // Exactly one, and it is the first family in the user's order.
+    expect(pinned).toHaveLength(1);
+    expect(pinned[0].querySelector('button')?.getAttribute('aria-label')).toBe(
+      'editor.orderedList.tooltip'
+    );
+
+    cleanup();
+    setWidth(1024);
+    renderToolbar(LAYOUT);
+    // A wide bar wraps rather than scrolls, so nothing can scroll away from it.
+    expect(screen.getByTestId('editor-toolbar').querySelectorAll('[data-pinned]')).toHaveLength(0);
+  });
+
+  it('never fades the edge the pinned family sits on', () => {
+    setWidth(360);
+    renderToolbar(LAYOUT);
+    expect(screen.getByTestId('editor-toolbar').dataset.overflowStart).toBeUndefined();
+  });
+
   it('wraps on a wide window and scrolls on a compact one, never wrapping there', () => {
     setWidth(1024);
     renderToolbar(LAYOUT);

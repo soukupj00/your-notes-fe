@@ -1,6 +1,6 @@
 # M4 Slice 4 Task 5 - Customisable toolbar
 
-**Status:** in progress. Steps 1-4 done (2026-08-04); Steps 5-7 open.
+**Status:** in progress. Steps 1-4 and 4b done (2026-08-04); Step 4c awaits sign-off; Steps 5-7 open.
 
 **Goal:** Make the editor toolbar the user's own.
 Which controls exist, in what order, grouped or collapsed, separately for a phone and a desktop, plus the same treatment for the quick-capture actions.
@@ -163,6 +163,39 @@ Two test-suite changes this forced, both of them the behaviour change showing up
 - [x] Tests: the two legacy shapes absorbed without resetting their neighbours, one broken Width Class not costing the other, an unknown-id Layout round-tripping, a whole Layout written and read back.
 
 Two test files now wrap in `PreferencesProvider` (`editor.test.tsx`, `NoteEditorDialog.realEditor.test.tsx`) because the toolbar reads the store.
+
+### Step 4b - Three findings from using it - **done** (2026-08-04)
+
+Raised after Step 4, from actually driving the bar rather than reading it.
+
+- [x] **Undo must not be able to scroll away.** On the compact bar the **first family is pinned** (`position: sticky; left: 0`) while the rest scrolls under it, and the left edge-fade is suppressed so the pinned control stays legible.
+      A second always-visible row was considered and rejected: on mobile it breaks this bar's one hard rule (it sits above the keyboard, so it may not take vertical space from the note), and on desktop it spends a row on two buttons that never leave the screen anyway.
+      Pinning needs no setting and no new vocabulary, because *which* family is pinned is already the user's choice - it is whatever they put first. `history` is first in both defaults.
+- [x] **A tooltip floating over a popover was both redundant and mispositioned.** A collapsed family's popover is now a proper menu: each row is the same button, with the same `isActive` and action, plus its **name and keyboard shortcut** rendered inline (`ActionButton` gained `showTooltip`).
+      This is still decision 7 - the popover holds the real leaf buttons - it just stops asking a floating tooltip to label a control inside another floating layer. It also labels the menu on **touch**, where a tooltip never appears at all.
+      Custom-component leaves (the colour pickers, the font selects) render as-is: they bring their own trigger and are self-describing.
+- [x] **A family the editor cannot draw is dropped before it can be positioned.** `resolveLayout` is pure and knows nothing about which extensions are mounted, so an unmountable family used to render as an empty box - and could be the one that got pinned.
+- [ ] **Keyboard shortcuts for the actions that have none.** Split out below as Step 4c; it needs sign-off on the bindings, not just code.
+
+### Step 4c - Keyboard shortcut audit - **not started**
+
+Two separate problems, found while checking what the toolbar advertises:
+
+1. **Bindings that exist but are never advertised.** `textAlign` binds `Mod+Shift+L/E/R/J` upstream, and the registry shows no hint for any of them.
+2. **Actions with no binding at all:** `link`, `highlight`, `text-color`, `math`, `divider`, the five media inserts, and both font selects.
+3. **A hint that may be a lie:** `Clear` displays `Mod+\` but is our own `Extension.create` with no `addKeyboardShortcuts`, and TipTap binds nothing there. Verify before doing anything else - a shortcut shown but not bound is worse than none.
+
+Proposed bindings, for sign-off:
+
+| Action | Binding | Why |
+| --- | --- | --- |
+| `link` | `Mod+K` | The universal one. TipTap does not bind it, and ProseMirror's `preventDefault` keeps the browser's own `Ctrl+K` out of the way inside the editor. |
+| `highlight` | `Mod+Shift+H` | What upstream's own Highlight extension uses. |
+| `math` | `Mod+Shift+M` | Free in TipTap and in every major browser. |
+| `align-*` | `Mod+Shift+L/E/R` | Already bound upstream - this is a **display** fix, not a new binding. |
+| `clear` | `Mod+\` | Already displayed; bind it, or drop the hint. |
+
+**Deliberately not bound:** the five media inserts. They open a file picker, which browsers gate on a live user activation, and the memorable candidates (`Mod+Shift+I`, `Mod+Shift+P`) are devtools and print. A shortcut nobody can remember for an action nobody repeats is cost without benefit.
 
 ### Step 5 - Settings editor
 

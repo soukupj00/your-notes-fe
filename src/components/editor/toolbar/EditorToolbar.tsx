@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from '@/components/editor/extensions/button-types';
 import { cn } from '@/lib/utils.ts';
+import { resolveItemButton } from './registry';
 import { resolveLayout } from './resolveLayout';
 import { ToolbarFamilyMenu } from './ToolbarFamilyMenu';
 import { ToolbarLeaf } from './ToolbarLeaf';
@@ -102,18 +103,30 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
 }) => {
   const { t } = useTranslation();
   const widthClass = useWidthClass();
-  const families = resolveLayout(layouts?.[widthClass], widthClass);
+  // Drop what this editor cannot actually draw before anything downstream cares
+  // about position. `resolveLayout` is pure and knows nothing about which
+  // extensions are mounted, so without this an unmounted family renders as an
+  // empty box - and, worse, could be the one that gets pinned.
+  const families = resolveLayout(layouts?.[widthClass], widthClass)
+    .map((entry) => ({
+      ...entry,
+      items: entry.items.filter((item) => resolveItemButton(item, { editor, t: t as TFunction })),
+    }))
+    .filter((entry) => entry.items.length > 0);
   const compact = widthClass === 'compact';
   const [scrollRef, overflow] = useEdgeFade(compact);
+  // The pinned family sits at the left edge, so fading that edge would fade the
+  // one thing that is meant to stay legible.
+  const fade = compact && families.length > 0 ? { ...overflow, start: false } : overflow;
 
   return (
     <div
       ref={scrollRef}
       data-testid="editor-toolbar"
       data-width-class={widthClass}
-      data-overflow-start={overflow.start || undefined}
-      data-overflow-end={overflow.end || undefined}
-      style={compact ? edgeFadeStyle(overflow) : undefined}
+      data-overflow-start={fade.start || undefined}
+      data-overflow-end={fade.end || undefined}
+      style={compact ? edgeFadeStyle(fade) : undefined}
       className={cn(
         'flex items-center gap-1',
         compact
@@ -130,26 +143,43 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         className
       )}
     >
-      {families.map(({ family, items, collapsed }) =>
-        collapsed ? (
-          <ToolbarFamilyMenu
-            key={family.id}
-            family={family}
-            items={items}
-            editor={editor}
-            t={t as TFunction}
-          />
+      {families.map(({ family, items, collapsed }, index) => {
+        // The first family stays put while the rest scrolls under it, so the
+        // control you reach for *after* something went wrong is never off-screen.
+        // Which family that is stays the user's choice - it is whatever they put
+        // first - so this needs no setting and no new vocabulary. History is
+        // first in both defaults, which is what makes undo always reachable on a
+        // phone, where there is no Ctrl+Z at all.
+        const pinned = compact && index === 0;
+        const content = collapsed ? (
+          <ToolbarFamilyMenu family={family} items={items} editor={editor} t={t as TFunction} />
         ) : (
+          items.map((item) => (
+            <ToolbarLeaf key={item.id} item={item} editor={editor} t={t as TFunction} />
+          ))
+        );
+
+        return (
           // A family is a group, not a wrapper with its own layout: `contents`
           // keeps its buttons as direct children of the bar's flex row, so
-          // scrolling and gaps behave as if the grouping were not there.
-          <div key={family.id} className="contents">
-            {items.map((item) => (
-              <ToolbarLeaf key={item.id} item={item} editor={editor} t={t as TFunction} />
-            ))}
+          // scrolling and gaps behave as if the grouping were not there. The
+          // pinned one is the exception - sticking needs a box to stick.
+          <div
+            key={family.id}
+            data-pinned={pinned || undefined}
+            className={
+              pinned
+                ? // An opaque backing, or the scrolled buttons show through it.
+                  // `bg-note-surface` falls back to `--background`, so it is
+                  // right both inside a tinted note dialog and outside one.
+                  'sticky left-0 z-10 flex shrink-0 items-center gap-1 bg-note-surface pr-1'
+                : 'contents'
+            }
+          >
+            {content}
           </div>
-        )
-      )}
+        );
+      })}
     </div>
   );
 };

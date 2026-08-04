@@ -63,9 +63,21 @@ describe('ToolbarFamilyMenu', () => {
     );
 
     await userEvent.click(screen.getByTestId('toolbar-family-style'));
-    // H1 and H3 only - three leaves minus the one switched off. They are the
-    // extension's own buttons, so they carry its tooltip, not a menu-item label.
+    // H1 and H3 only - three leaves minus the one switched off. They keep the
+    // extension's own accessible name, because they are the same buttons.
     expect(screen.getAllByRole('button', { name: 'editor.heading.level' })).toHaveLength(2);
+  });
+
+  it('labels each row with its name and shortcut instead of a floating tooltip', async () => {
+    // A tooltip stacked over a popover is both redundant and mispositioned, and
+    // on touch it never appears at all - so the menu says it in the row.
+    renderMenu('style', createEditor());
+    await userEvent.click(screen.getByTestId('toolbar-family-style'));
+
+    const row = screen.getAllByRole('button', { name: 'editor.heading.level' })[0];
+    expect(row).toHaveTextContent('editor.slash.heading1');
+    // Mod+Alt+1, rendered through the platform's own symbols.
+    expect(row.textContent).toMatch(/1$/);
   });
 
   it('reports the caret context on a state-reporting trigger', () => {

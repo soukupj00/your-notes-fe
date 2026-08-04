@@ -58,9 +58,9 @@ export const ToolbarFamilyMenu: React.FC<ToolbarFamilyMenuProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
 
-  // A trigger that opens an empty popover is worse than no trigger. `resolveLayout`
-  // already drops a family whose leaves are all switched off; this covers the
-  // other way a family can end up empty - none of its extensions is mounted.
+  // A trigger that opens an empty popover is worse than no trigger. The bar
+  // already filters unmountable leaves out, so this is the standalone guard for
+  // a caller that does not.
   const resolvable = items.filter((item) => resolveItemButton(item, { editor, t }));
   if (resolvable.length === 0) return null;
 
@@ -91,10 +91,15 @@ export const ToolbarFamilyMenu: React.FC<ToolbarFamilyMenuProps> = ({
           </svg>
         </ActionButton>
       </PopoverTrigger>
-      <PopoverContent align="start" side="top" className="w-auto max-w-[min(90vw,20rem)] p-1">
-        <div className="flex flex-wrap items-center gap-1">
+      <PopoverContent
+        align="start"
+        side="top"
+        collisionPadding={8}
+        className="w-auto min-w-[12rem] max-w-[min(90vw,18rem)] p-1"
+      >
+        <div className="flex flex-col">
           {resolvable.map((item) => (
-            <ToolbarLeaf key={item.id} item={item} editor={editor} t={t} />
+            <ToolbarLeaf key={item.id} item={item} editor={editor} t={t} inMenu />
           ))}
         </div>
       </PopoverContent>

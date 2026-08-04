@@ -34,6 +34,13 @@ export interface ActionButtonProps {
   asChild?: boolean;
   /** Use Toggle instead of Button */
   toggle?: boolean;
+  /**
+   * Show the floating tooltip. Turn it off where the label is already visible -
+   * inside a menu, a tooltip is both redundant and mispositioned, because it
+   * floats over the popover rather than beside the row it describes. `tooltip`
+   * is still the accessible name either way.
+   */
+  showTooltip?: boolean;
 }
 
 const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
@@ -51,6 +58,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
       children,
       asChild = false,
       toggle = false,
+      showTooltip = true,
       ...rest
     },
     ref
@@ -91,7 +99,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
           </Comp>
         </TooltipTrigger>
 
-        {tooltip && (
+        {tooltip && showTooltip && (
           <TooltipContent side="top" align="center" {...tooltipOptions}>
             <div className="flex max-w-[200px] flex-col items-center gap-1 text-center">
               <span>{tooltip}</span>
