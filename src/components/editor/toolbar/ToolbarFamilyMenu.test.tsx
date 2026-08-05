@@ -66,7 +66,9 @@ describe('ToolbarFamilyMenu', () => {
     await userEvent.click(screen.getByTestId('toolbar-family-style'));
     // H1 and H3 only - three leaves minus the one switched off. They keep the
     // extension's own accessible name, because they are the same buttons.
-    expect(screen.getAllByRole('button', { name: 'editor.heading.level' })).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'editor.heading.h1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'editor.heading.h3' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'editor.heading.h2' })).not.toBeInTheDocument();
   });
 
   it('labels each row with its name instead of a floating tooltip', async () => {
@@ -75,7 +77,7 @@ describe('ToolbarFamilyMenu', () => {
     renderMenu('style', createEditor());
     await userEvent.click(screen.getByTestId('toolbar-family-style'));
 
-    const row = screen.getAllByRole('button', { name: 'editor.heading.level' })[0];
+    const row = screen.getByRole('button', { name: 'editor.heading.h1' });
     expect(row).toHaveTextContent('editor.heading.h1');
   });
 
@@ -87,7 +89,7 @@ describe('ToolbarFamilyMenu', () => {
     await userEvent.click(screen.getByTestId('toolbar-family-style'));
 
     // `h1` is Mod+Alt+1, so the row would carry a modifier symbol if it drew one.
-    for (const row of screen.getAllByRole('button', { name: 'editor.heading.level' })) {
+    for (const row of screen.getAllByRole('button', { name: /^editor\.heading\.h\d$/ })) {
       expect(row.textContent).not.toMatch(/[⌘⌥⇧^]|Ctrl|Alt|Shift/);
     }
   });
