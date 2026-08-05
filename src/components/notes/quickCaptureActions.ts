@@ -46,8 +46,3 @@ export const QUICK_CAPTURE_ACTIONS: QuickCaptureAction[] = [
     editing: { id: null, capture: 'picture' },
   },
 ];
-
-/** Desktop: the "Take a note" bar already covers plain text. */
-export const DESKTOP_QUICK_CAPTURE_ACTIONS = QUICK_CAPTURE_ACTIONS.filter(
-  (action) => action.key !== 'text'
-);

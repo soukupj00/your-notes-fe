@@ -1,3 +1,4 @@
+import { reconcileOrder } from '@/lib/reconcile-order.ts';
 import { defaultToolbarLayout } from './presets';
 import { getToolbarFamily, itemsInFamily, TOOLBAR_FAMILIES } from './registry';
 import type {
@@ -15,42 +16,6 @@ export interface ResolvedFamily {
   collapsed: boolean;
   /** The leaves that are on, in the user's order. Never empty - see `resolveLayout`. */
   items: ToolbarItem[];
-}
-
-/**
- * Insert the registry entries a stored list has never heard of, at their registry
- * position, and leave everything else alone.
- *
- * This is decision 8 in one function, and it cuts both ways:
- *
- * - A registry id missing from the blob is **new**, not hidden, so a button
- *   shipped next release appears for a user who customised their bar last year.
- *   Anything else would mean new work is invisible to exactly the users who care
- *   most about the toolbar.
- * - A blob id missing from the registry is **kept**, so a temporarily
- *   unregistered extension (a lazy chunk that failed, a build that dropped one)
- *   cannot quietly erase an arrangement the user built by hand.
- *
- * Missing entries are processed in registry order, so a run of several new ones
- * lands in the right order relative to each other too.
- */
-function reconcileList<T extends { id: string }>(
-  stored: T[],
-  registryIds: string[],
-  createDefault: (id: string) => T
-): T[] {
-  const result = [...stored];
-
-  registryIds.forEach((id, registryIndex) => {
-    if (result.some((entry) => entry.id === id)) return;
-    // Land it before the nearest registry sibling that follows it and is already
-    // present; with none, the tail is as close to "its position" as we can get.
-    const following = registryIds.slice(registryIndex + 1);
-    const anchor = result.findIndex((entry) => following.includes(entry.id));
-    result.splice(anchor === -1 ? result.length : anchor, 0, createDefault(id));
-  });
-
-  return result;
 }
 
 /**
@@ -76,7 +41,7 @@ export function reconcileLayout(
   // Nothing stored - absent, or the empty array the schema defaults to - means
   // "never customised", and the answer to that is the whole default arrangement,
   // not a bar reconstructed in registry order.
-  const families = reconcileList(
+  const families = reconcileOrder(
     stored?.length ? stored : defaults,
     TOOLBAR_FAMILIES.map((family) => family.id),
     defaultFor
@@ -88,7 +53,7 @@ export function reconcileLayout(
     const defaults = defaultFor(family.id).members;
     return {
       ...family,
-      members: reconcileList(
+      members: reconcileOrder(
         family.members,
         itemsInFamily(registryFamily.id).map((item) => item.id),
         (id): ToolbarMemberPref => defaults.find((member) => member.id === id) ?? { id, on: true }

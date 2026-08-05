@@ -276,6 +276,18 @@
       "item": {
         "show": "Zobrazit {{name}}"
       }
+    },
+    "quickCapture": {
+      "title": "Rychlé psaní",
+      "description": "Způsoby, jak tlačítko ＋ nabízí založit poznámku.",
+      "show": "Nabízet: {{name}}",
+      "lastOne": "Poslední možnost v nabídce - na telefonu je to jediný způsob, jak vytvořit poznámku.",
+      "alignment": {
+        "label": "Strana tlačítka pro poznámku",
+        "description": "Na které straně obrazovky sedí tlačítko ＋, podle palce, který na něj musí dosáhnout.",
+        "left": "Vlevo",
+        "right": "Vpravo"
+      }
     }
   },
   "pwa": {

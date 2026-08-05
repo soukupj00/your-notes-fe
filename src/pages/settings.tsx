@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { BackupSection } from '@/components/settings/BackupSection.tsx';
 import { PwaInstallSection } from '@/components/settings/PwaInstallSection.tsx';
+import { QuickCaptureSection } from '@/components/settings/QuickCaptureSection.tsx';
 import { SettingsRow, SettingsSection } from '@/components/settings/SettingsSection.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Switch } from '@/components/ui/switch.tsx';
@@ -48,6 +49,7 @@ function ColorBlindSetting() {
       description={t('settings.colorBlind.description')}
     >
       <Switch
+        className="touch-target"
         checked={preferences.colorBlind}
         onCheckedChange={(next) => setPreference('colorBlind', next)}
         aria-label={t('settings.colorBlind.label')}
@@ -87,6 +89,8 @@ export default function SettingsPage() {
           </Button>
         </SettingsRow>
       </SettingsSection>
+
+      <QuickCaptureSection />
 
       <PwaInstallSection />
 

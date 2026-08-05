@@ -3,11 +3,13 @@ import { m } from 'motion/react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { EditingState } from '@/components/notes/NotesView.tsx';
-import { QUICK_CAPTURE_ACTIONS } from '@/components/notes/quickCaptureActions.ts';
+import { resolveQuickCapture } from '@/components/notes/quickCaptureLayout.ts';
 import { Button } from '@/components/ui/button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
+import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { INSTANT_TRANSITION, NIGHTSHIFT_SPRING } from '@/lib/motion.ts';
+import { cn } from '@/lib/utils.ts';
 
 /**
  * Mobile quick capture: one `＋` that expands into the five ways to start a
@@ -19,9 +21,20 @@ export function QuickCaptureBar({ onStart }: { onStart: (editing: EditingState) 
   const [open, setOpen] = useState(false);
   const reducedMotion = useReducedMotion();
   const transition = reducedMotion ? INSTANT_TRANSITION : NIGHTSHIFT_SPRING;
+  const { preferences } = usePreferences();
+  const actions = resolveQuickCapture(preferences.quickCapture);
+  // Which thumb has to reach it. The dial, its labels and the popover all follow
+  // the same edge, so a left-handed layout is the mirror rather than a FAB that
+  // moved and a menu that did not.
+  const left = preferences.noteButtonAlignment === 'left';
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 flex justify-center pb-[env(safe-area-inset-bottom)] sm:hidden">
+    <div
+      className={cn(
+        'fixed inset-x-0 bottom-0 z-40 flex px-3 pb-[env(safe-area-inset-bottom)] sm:hidden',
+        left ? 'justify-start' : 'justify-end'
+      )}
+    >
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -37,11 +50,12 @@ export function QuickCaptureBar({ onStart }: { onStart: (editing: EditingState) 
         </PopoverTrigger>
         <PopoverContent
           side="top"
+          align={left ? 'start' : 'end'}
           sideOffset={12}
           className="w-auto border-0 bg-transparent p-0 shadow-none"
         >
-          <ul className="flex flex-col items-end gap-2">
-            {QUICK_CAPTURE_ACTIONS.map(({ key, Icon, labelKey, editing }, index) => (
+          <ul className={cn('flex flex-col gap-2', left ? 'items-start' : 'items-end')}>
+            {actions.map(({ key, Icon, labelKey, editing }, index) => (
               <m.li
                 key={key}
                 initial={reducedMotion ? false : { opacity: 0, y: 10 }}

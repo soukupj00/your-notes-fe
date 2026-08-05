@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { EditingState } from '@/components/notes/NotesView.tsx';
-import { DESKTOP_QUICK_CAPTURE_ACTIONS } from '@/components/notes/quickCaptureActions.ts';
+import { resolveDesktopQuickCapture } from '@/components/notes/quickCaptureLayout.ts';
 import { Button } from '@/components/ui/button.tsx';
+import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 
 /** Prompts the bar cycles through, in order. The first is the resting copy. */
@@ -28,6 +29,8 @@ export function DesktopCaptureBar({ onStart }: { onStart: (state: EditingState) 
   const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const [index, setIndex] = useState(0);
+  const { preferences } = usePreferences();
+  const actions = resolveDesktopQuickCapture(preferences.quickCapture);
 
   useEffect(() => {
     if (reducedMotion) return;
@@ -54,7 +57,7 @@ export function DesktopCaptureBar({ onStart }: { onStart: (state: EditingState) 
         <span className="sr-only">{t('notes.createPlaceholder')}</span>
       </button>
 
-      {DESKTOP_QUICK_CAPTURE_ACTIONS.map(({ key, Icon, labelKey, editing }) => (
+      {actions.map(({ key, Icon, labelKey, editing }) => (
         <Button
           key={key}
           type="button"

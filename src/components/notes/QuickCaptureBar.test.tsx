@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import { db } from '@/db/db.ts';
 import { QuickCaptureBar } from './QuickCaptureBar.tsx';
 
 vi.mock('react-i18next', () => ({
@@ -12,16 +14,24 @@ vi.mock('@/hooks/useReducedMotion.ts', () => ({
   useReducedMotion: () => true,
 }));
 
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+  <PreferencesProvider>{children}</PreferencesProvider>
+);
+
+afterEach(async () => {
+  await db.settings.clear();
+});
+
 async function openDial() {
   const onStart = vi.fn();
-  render(<QuickCaptureBar onStart={onStart} />);
+  render(<QuickCaptureBar onStart={onStart} />, { wrapper });
   await userEvent.click(screen.getByRole('button', { name: 'notes.capture.open' }));
   return onStart;
 }
 
 describe('QuickCaptureBar', () => {
   it('starts collapsed to a single button', () => {
-    render(<QuickCaptureBar onStart={vi.fn()} />);
+    render(<QuickCaptureBar onStart={vi.fn()} />, { wrapper });
 
     expect(screen.getByRole('button', { name: 'notes.capture.open' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'notes.capture.audio' })).not.toBeInTheDocument();

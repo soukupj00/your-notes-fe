@@ -276,6 +276,18 @@
       "item": {
         "show": "Show {{name}}"
       }
+    },
+    "quickCapture": {
+      "title": "Quick capture",
+      "description": "The ways the ＋ button offers to start a note.",
+      "show": "Offer {{name}}",
+      "lastOne": "The last start on the dial - on a phone this is the only way to make a note.",
+      "alignment": {
+        "label": "Note button side",
+        "description": "Which side of the screen the ＋ button sits on, for the thumb that has to reach it.",
+        "left": "Left",
+        "right": "Right"
+      }
     }
   },
   "pwa": {
