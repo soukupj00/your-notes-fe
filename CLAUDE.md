@@ -109,6 +109,8 @@ Desktop collapse state is persisted per device in `localStorage` through `useSid
 Settings is intentionally not a sidebar destination: the topbar gear is the single entry point, and its mobile quick-settings dialog links to the full settings page.
 
 Quick capture is one list of five starts (`src/components/notes/quickCaptureActions.ts`) rendered two ways so they cannot drift: a `＋` speed-dial FAB on mobile (`QuickCaptureBar`) and inline icons on the desktop "Take a note" bar.
+Which order the starts appear in, and which thumb the FAB sits under, are stored preferences edited in `settings/QuickCaptureSection.tsx`; the side mirrors the whole dial, not just the button.
+Its distance from the bottom edge is `floatingBottomBar.ts`, shared with a view's own floating action pill (Empty trash) because both land in that corner: 24px above `env(safe-area-inset-bottom)`, which resolves to 0 in a browser tab and so does nothing about the strip Android's gesture handle and iOS Safari's toolbar occupy.
 Media starts carry a `capture` intent that the editor auto-runs on open.
 
 A11y: every view renders an `<h1 tabIndex={-1}>` and calls `useFocusOnMount` on it, so a navigation moves focus to the destination heading instead of stranding it on the link.

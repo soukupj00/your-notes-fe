@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import { PREFERENCES_KEY, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { db } from '@/db/db.ts';
+import { FLOATING_BOTTOM_BAR } from './floatingBottomBar.ts';
 import { QuickCaptureBar } from './QuickCaptureBar.tsx';
 
 vi.mock('react-i18next', () => ({
@@ -72,5 +73,47 @@ describe('QuickCaptureBar', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'notes.capture.text' }));
 
     expect(screen.queryByRole('button', { name: 'notes.capture.audio' })).not.toBeInTheDocument();
+  });
+
+  describe('where it sits', () => {
+    /** The `＋`'s positioning ancestor - the fixed strip, not the button. */
+    const strip = () =>
+      screen.getByRole('button', { name: 'notes.capture.open' }).closest('div.fixed');
+
+    it('rides on the shared floating geometry rather than its own', () => {
+      render(<QuickCaptureBar onStart={vi.fn()} />, { wrapper });
+
+      // The `＋` and a view's action pill land in the same corner and may never
+      // sit at different heights, so both take the offsets from one constant.
+      // Asserting the constant is applied is what stops the two drifting.
+      for (const token of FLOATING_BOTTOM_BAR.split(' ')) {
+        expect(strip()).toHaveClass(token);
+      }
+    });
+
+    it('defaults to the right thumb', () => {
+      render(<QuickCaptureBar onStart={vi.fn()} />, { wrapper });
+
+      expect(strip()).toHaveClass('justify-end');
+    });
+
+    it('mirrors the whole dial, not just the button, for a left-handed layout', async () => {
+      await db.settings.put({
+        key: PREFERENCES_KEY,
+        value: { version: 1, noteButtonAlignment: 'left' },
+      });
+      const onStart = vi.fn();
+      render(<QuickCaptureBar onStart={onStart} />, { wrapper });
+
+      await waitFor(() => expect(strip()).toHaveClass('justify-start'));
+
+      // The menu follows the same edge. A FAB that moved while its popover
+      // stayed put would put the labels under the wrong thumb.
+      await userEvent.click(screen.getByRole('button', { name: 'notes.capture.open' }));
+      const list = (await screen.findByRole('button', { name: 'notes.capture.text' })).closest(
+        'ul'
+      );
+      expect(list).toHaveClass('items-start');
+    });
   });
 });

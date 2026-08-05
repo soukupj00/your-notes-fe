@@ -2,6 +2,7 @@ import { Plus } from 'lucide-react';
 import { m } from 'motion/react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FLOATING_BOTTOM_BAR } from '@/components/notes/floatingBottomBar.ts';
 import type { EditingState } from '@/components/notes/NotesView.tsx';
 import { resolveQuickCapture } from '@/components/notes/quickCaptureLayout.ts';
 import { Button } from '@/components/ui/button.tsx';
@@ -29,19 +30,14 @@ export function QuickCaptureBar({ onStart }: { onStart: (editing: EditingState) 
   const left = preferences.noteButtonAlignment === 'left';
 
   return (
-    <div
-      className={cn(
-        'fixed inset-x-0 bottom-0 z-40 flex px-3 pb-[env(safe-area-inset-bottom)] sm:hidden',
-        left ? 'justify-start' : 'justify-end'
-      )}
-    >
+    <div className={cn(FLOATING_BOTTOM_BAR, 'sm:hidden', left ? 'justify-start' : 'justify-end')}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             type="button"
             size="icon"
             aria-label={t('notes.capture.open')}
-            className="mb-3 size-14 rounded-full bg-primary text-primary-foreground shadow-lift hover:bg-primary/90 hover:shadow-lift"
+            className="size-14 rounded-full bg-primary text-primary-foreground shadow-lift hover:bg-primary/90 hover:shadow-lift"
           >
             <m.span animate={{ rotate: reducedMotion ? 0 : open ? 45 : 0 }} transition={transition}>
               <Plus className="size-6" />

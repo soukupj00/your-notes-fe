@@ -3,12 +3,14 @@ import { useTranslation } from 'react-i18next';
 import type { CaptureKind } from '@/components/editor/editor.tsx';
 import { NoteContent } from '@/components/NoteContent.tsx';
 import { DesktopCaptureBar } from '@/components/notes/DesktopCaptureBar.tsx';
+import { FLOATING_BOTTOM_BAR } from '@/components/notes/floatingBottomBar.ts';
 import { QuickCaptureBar } from '@/components/notes/QuickCaptureBar.tsx';
 import { TagFilterBar } from '@/components/tags/TagFilterBar.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import type { NoteFeedScope } from '@/hooks/data/useNoteFeed.ts';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
+import { cn } from '@/lib/utils.ts';
 
 const NoteEditorDialog = lazy(() =>
   import('@/components/notes/NoteEditorDialog.tsx').then((module) => ({
@@ -65,8 +67,13 @@ export function NotesView({
           bar's floating pill on mobile, where there is no longer a title row to
           hang it from. Rendering it twice would duplicate the controls. */}
       {toolbar && (
-        <div className="fixed inset-x-0 bottom-0 z-40 flex justify-center pb-[env(safe-area-inset-bottom)] sm:static sm:mb-4 sm:justify-end sm:pb-0">
-          <div className="mb-3 flex items-center gap-2 rounded-full border bg-background px-2 py-1.5 shadow-lg sm:mb-0 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+        <div
+          className={cn(
+            FLOATING_BOTTOM_BAR,
+            'justify-center sm:static sm:mb-4 sm:justify-end sm:px-0 sm:pb-0'
+          )}
+        >
+          <div className="flex items-center gap-2 rounded-full border bg-background px-2 py-1.5 shadow-lg sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
             {toolbar}
           </div>
         </div>
