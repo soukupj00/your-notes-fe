@@ -16,6 +16,7 @@ How the rich-text editor is built. The canonical extension/toolbar pattern is fi
   The legacy `ToolbarSection.tsx` and `ToolbarButton.tsx` had already been removed; the `extensions/text-color/` folder has also been removed (see Color note below).
 - `extensions/build.ts` — every extension the editor mounts, in one function, so the registry's tests can resolve ids against the real mounted set rather than a copy that drifts.
 - Shared button: `ActionButton` (`src/components/ui/ActionButton.tsx`); icon registry: `src/components/icons/icons.ts`.
+  `ActionButton` owns three things worth knowing before adding a button. **A menu row's name comes from `MenuRowLabelProvider`, not a prop** - `ToolbarLeaf` states it once and whichever `ActionButton` ends up being the row picks it up, because half the leaves (`link`, the five attachment pickers, the two colour triggers) are custom components that *wrap* an `ActionButton` and could never be handed a label. **The keyboard shortcut is desktop-only** (`useFinePointer`, `(pointer: fine)` - the inverse of the 44px Touch Rule's signal) and lives only in the tooltip, never on a menu row. **Active styling is a class, not just `data-[state=on]`**, because a `PopoverTrigger asChild` overwrites `data-state` with its own `open`/`closed`.
 
 ## Canonical pattern (Pattern A — target state)
 

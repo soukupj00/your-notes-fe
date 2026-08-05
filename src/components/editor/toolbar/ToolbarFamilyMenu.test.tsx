@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { Bold } from '@/components/editor/extensions/Bold';
 import { BulletList } from '@/components/editor/extensions/BulletList';
 import { Heading } from '@/components/editor/extensions/Heading';
+import { createLink } from '@/components/editor/extensions/Link/Link';
 import { ListItem } from '@/components/editor/extensions/ListItem';
 import { OrderedList } from '@/components/editor/extensions/OrderedList';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -68,7 +69,7 @@ describe('ToolbarFamilyMenu', () => {
     expect(screen.getAllByRole('button', { name: 'editor.heading.level' })).toHaveLength(2);
   });
 
-  it('labels each row with its name and shortcut instead of a floating tooltip', async () => {
+  it('labels each row with its name instead of a floating tooltip', async () => {
     // A tooltip stacked over a popover is both redundant and mispositioned, and
     // on touch it never appears at all - so the menu says it in the row.
     renderMenu('style', createEditor());
@@ -76,8 +77,44 @@ describe('ToolbarFamilyMenu', () => {
 
     const row = screen.getAllByRole('button', { name: 'editor.heading.level' })[0];
     expect(row).toHaveTextContent('editor.heading.h1');
-    // Mod+Alt+1, rendered through the platform's own symbols.
-    expect(row.textContent).toMatch(/1$/);
+  });
+
+  it('keeps the keyboard shortcut off the row', async () => {
+    // A collapsed family is overwhelmingly a phone, and the row is drawn the
+    // same on both. The tooltip is where a shortcut belongs - `ActionButton`
+    // shows it there, and only to a fine pointer.
+    renderMenu('style', createEditor());
+    await userEvent.click(screen.getByTestId('toolbar-family-style'));
+
+    // `h1` is Mod+Alt+1, so the row would carry a modifier symbol if it drew one.
+    for (const row of screen.getAllByRole('button', { name: 'editor.heading.level' })) {
+      expect(row.textContent).not.toMatch(/[⌘⌥⇧^]|Ctrl|Alt|Shift/);
+    }
+  });
+
+  it('names a leaf whose button is a custom component, not just a plain one', async () => {
+    // `link` wraps an `ActionButton` in its own URL popover rather than being
+    // one, and so did the five attachment pickers and the two colour triggers:
+    // no prop could reach the button, and every one of them drew as a bare,
+    // nameless icon in a menu sized for labelled rows.
+    const editor = new Editor({
+      extensions: [Document, Paragraph, Text, Bold, createLink(t)],
+      content: '<p>hello</p>',
+    });
+    editors.push(editor);
+    renderMenu(
+      'format',
+      editor,
+      itemsInFamily('format').filter((item) => ['bold', 'link'].includes(item.id))
+    );
+
+    await userEvent.click(screen.getByTestId('toolbar-family-format'));
+
+    // Its name is drawn on the row, not left to a tooltip nobody on a phone
+    // will ever see.
+    expect(screen.getByRole('button', { name: 'editor.link.tooltip' })).toHaveTextContent(
+      'editor.link.tooltip'
+    );
   });
 
   it('reports the caret context on a state-reporting trigger', () => {

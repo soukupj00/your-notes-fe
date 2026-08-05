@@ -1,5 +1,4 @@
 import type { Editor } from '@tiptap/react';
-import { Baseline, Highlighter, type LucideIcon } from 'lucide-react';
 import { useCallback, useRef } from 'react';
 import { ColorPickerPanel } from '@/components/color-picker/ColorPickerPanel';
 import {
@@ -12,11 +11,9 @@ import {
   previewColor,
   setColorPicking,
 } from '@/components/editor/extensions/color-preview';
+import type { IconName } from '@/components/icons';
+import { ActionButton } from '@/components/ui/ActionButton.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { toggleVariants } from '@/components/ui/toggle';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
-import { getShortcutKeys } from '@/utils/platform.ts';
 
 export type EditorColorPickerVariant = 'text' | 'highlight';
 
@@ -32,7 +29,8 @@ type SelectionRange = { from: number; to: number; empty: boolean };
 
 type VariantConfig = {
   attribute: 'color' | 'backgroundColor';
-  icon: LucideIcon;
+  /** A registry key, per the icon convention - never an imported component. */
+  icon: IconName;
   palette: ColorPalette;
   previewProperty: 'color' | 'background-color';
 };
@@ -40,13 +38,13 @@ type VariantConfig = {
 const VARIANT_CONFIG: Record<EditorColorPickerVariant, VariantConfig> = {
   text: {
     attribute: 'color',
-    icon: Baseline,
+    icon: 'Baseline',
     palette: TEXT_COLORS,
     previewProperty: 'color',
   },
   highlight: {
     attribute: 'backgroundColor',
-    icon: Highlighter,
+    icon: 'Highlighter',
     palette: HIGHLIGHT_COLORS,
     previewProperty: 'background-color',
   },
@@ -132,41 +130,26 @@ export function EditorColorPickerButton({
     [editor, variant]
   );
 
-  const Icon = config.icon;
-
   return (
     <Popover onOpenChange={handleOpenChange}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <PopoverTrigger
-            aria-label={tooltip}
-            className={cn(
-              toggleVariants({ size: 'sm' }),
-              'flex h-8 w-8 items-center justify-center p-0',
-              currentColor && 'bg-accent'
-            )}
-            style={{ color: currentColor || undefined }}
-          >
-            <Icon className="size-4" />
-          </PopoverTrigger>
-        </TooltipTrigger>
-        {tooltip && (
-          <TooltipContent side="top" align="center">
-            {/* Same two-line shape as `ActionButton`, so a custom-component
-                button and a plain one describe themselves identically. */}
-            <div className="flex max-w-[200px] flex-col items-center gap-1 text-center">
-              <span>{tooltip}</span>
-              {!!shortcutKeys?.length && (
-                <span className="text-muted-foreground text-xs">
-                  {getShortcutKeys(shortcutKeys)
-                    .map((key) => key.symbol)
-                    .join(' + ')}
-                </span>
-              )}
-            </div>
-          </TooltipContent>
-        )}
-      </Tooltip>
+      {/* The trigger is a plain `ActionButton`, which is what makes this button
+          describe itself exactly like every other one: the tooltip, the
+          desktop-only shortcut line and the labelled row a collapsed family
+          needs all come from there. It used to hand-roll the trigger and a copy
+          of the tooltip - the copy carried a comment promising it matched, which
+          is the sort of promise that only holds until one of the two changes,
+          and it had no way at all to draw itself as a menu row. */}
+      <PopoverTrigger asChild>
+        <ActionButton
+          toggle
+          icon={config.icon}
+          tooltip={tooltip}
+          shortcutKeys={shortcutKeys}
+          isActive={() => Boolean(currentColor)}
+          // The swatch: the glyph wears the colour it would apply.
+          style={{ color: currentColor || undefined }}
+        />
+      </PopoverTrigger>
       <PopoverContent align="start" className="w-auto">
         <ColorPickerPanel
           palette={config.palette}
