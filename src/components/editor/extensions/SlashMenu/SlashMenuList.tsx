@@ -1,8 +1,9 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { getToolbarItem } from '@/components/editor/toolbar/registry';
 import { icons } from '@/components/icons';
 import { cn } from '@/lib/utils.ts';
 import type { TFunction } from '../button-types';
-import type { SlashItem } from './slashItems';
+import { type SlashItem, slashItemLabelKey } from './slashItems';
 
 export interface SlashMenuListProps {
   items: SlashItem[];
@@ -80,7 +81,10 @@ export const SlashMenuList = forwardRef<SlashMenuListHandle, SlashMenuListProps>
         className="max-h-72 w-60 overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
       >
         {items.map((item, index) => {
-          const Icon = icons[item.icon];
+          // Icon and name come from the registry, so the menu and the bar can
+          // never show two different things for the same action.
+          const registryItem = getToolbarItem(item.key);
+          const Icon = registryItem ? icons[registryItem.icon] : null;
           return (
             <li key={item.key}>
               <button
@@ -94,8 +98,8 @@ export const SlashMenuList = forwardRef<SlashMenuListHandle, SlashMenuListProps>
                   index === selected && 'bg-accent text-accent-foreground'
                 )}
               >
-                <Icon className="size-4 shrink-0" aria-hidden />
-                <span className="truncate">{t(item.labelKey)}</span>
+                {Icon && <Icon className="size-4 shrink-0" aria-hidden />}
+                <span className="truncate">{t(slashItemLabelKey(item))}</span>
               </button>
             </li>
           );

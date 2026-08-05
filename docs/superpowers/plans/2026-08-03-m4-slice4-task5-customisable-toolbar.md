@@ -238,12 +238,14 @@ Deviations worth recording:
 
 **Fallout worth knowing:** two existing `EditorToolbar` expectations grew a `⚙`. Their stored Layouts predate `meta`, and reconciliation adds it *on* - which is decision 8 working, since until now the gear was silently dropped for having no extension.
 
-### Step 7 - Slash menu onto the registry
+### Step 7 - Slash menu onto the registry - **done** (2026-08-05)
 
-- [ ] `SLASH_ITEMS` keys become registry ids; its per-item `icon` and `labelKey` are dropped in favour of the registry's.
-- [ ] `run` and `keywords` stay in `slashItems.ts` (a slash run must consume the typed `/query` range; a toolbar action must not).
-- [ ] Add the missing `math` slash item, which is the drift this uncovers.
-- [ ] Test: every slash key resolves in the registry, so the two surfaces can never show a different icon or label for the same action.
+- [x] `SLASH_ITEMS` keys are registry ids; the per-item `icon` and `labelKey` are gone, and `SlashMenuList` resolves both through `getToolbarItem`.
+- [x] `run` and `keywords` stay in `slashItems.ts` (a slash run must consume the typed `/query` range; a toolbar action must not). `run` gained `t`, for the one item that has to ask the user something before it can act.
+- [x] Added the missing `math` slash item, which is the drift this uncovers. It prompts with the same translated string the toolbar button uses, rather than a second prompt of its own.
+- [x] Test: `names only actions the registry knows` walks every slash key through the registry, so the two surfaces can never show a different icon or label for the same action.
+
+**One rename this forced, worth recording.** The registry's `labelKey` is a *name*, and five of them pointed at tooltips: "Insert image" is what a button promises, but a list of things you can insert or switch on calls it "Image". So `editor.{image,audio,video,file,excalidraw}.label` now sit beside the existing `.tooltip`, `editor.slash.{heading1,2,3}` became `editor.heading.{h1,h2,h3}`, and the rest of the `editor.slash.*` block is deleted - the menu takes its names from the registry, so those keys had no second reader. `editor.slash.noResults` stays, being the menu's own chrome.
 
 ## Deferred / explicitly out of scope
 

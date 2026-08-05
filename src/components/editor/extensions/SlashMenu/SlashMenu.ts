@@ -30,7 +30,7 @@ export function createSlashMenu(getDeps: () => AttachmentDeps, t: TFunction) {
           allowSpaces: false,
           items: ({ query }) => filterSlashItems(query, t),
           command: ({ editor, range, props }) => {
-            (props as SlashItem).run({ editor, range, deps: getDeps() });
+            (props as SlashItem).run({ editor, range, deps: getDeps(), t });
           },
           render: createRenderer(t),
         } as SuggestionOptions<SlashItem>),

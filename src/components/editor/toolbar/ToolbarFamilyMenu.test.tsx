@@ -75,7 +75,7 @@ describe('ToolbarFamilyMenu', () => {
     await userEvent.click(screen.getByTestId('toolbar-family-style'));
 
     const row = screen.getAllByRole('button', { name: 'editor.heading.level' })[0];
-    expect(row).toHaveTextContent('editor.slash.heading1');
+    expect(row).toHaveTextContent('editor.heading.h1');
     // Mod+Alt+1, rendered through the platform's own symbols.
     expect(row.textContent).toMatch(/1$/);
   });

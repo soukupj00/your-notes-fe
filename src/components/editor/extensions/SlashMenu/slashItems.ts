@@ -1,19 +1,38 @@
 import type { Editor, Range } from '@tiptap/core';
-import type { IconName } from '@/components/icons';
+import { getToolbarItem } from '@/components/editor/toolbar/registry';
 import type { AttachmentDeps } from '../attachments/deps';
 import { insertAttachmentFiles } from '../attachments/insert';
+import type { TFunction } from '../button-types';
 import { insertImageAttachmentFiles } from '../Image/insert';
 
 export interface SlashItem {
-  /** Stable id: the filter key, the React key, and what tests assert on. */
+  /**
+   * The **Toolbar Item id** this menu entry inserts (ADR 0011, decision 13).
+   *
+   * The registry owns the icon and the name; this file owns only what differs
+   * per surface. That is why there is no `icon` or `labelKey` here: two lists
+   * naming the same action were how the menu drifted from the bar in the first
+   * place (Math was a toolbar button with no slash item at all).
+   */
   key: string;
-  icon: IconName;
-  /** i18n key for the visible label. */
-  labelKey: string;
-  /** Extra words the filter should match, so "bullet" finds "List". */
+  /** Extra words the filter should match, so "bullet" finds "Bullet list". */
   keywords: string[];
-  /** `range` covers the typed `/query`; every item must consume it. */
-  run: (ctx: { editor: Editor; range: Range; deps: AttachmentDeps }) => void;
+  /**
+   * `range` covers the typed `/query`; every item must consume it.
+   *
+   * This is the half that cannot be shared with the toolbar: a slash run has a
+   * query to delete first, and a toolbar action must not delete anything.
+   *
+   * `t` is here for the one item that has to speak to the user before it can
+   * act - Math prompts for LaTeX, and a hardcoded English prompt would be the
+   * only untranslated string in the editor.
+   */
+  run: (ctx: { editor: Editor; range: Range; deps: AttachmentDeps; t: TFunction }) => void;
+}
+
+/** The registry's name for a slash item, which is the one both surfaces show. */
+export function slashItemLabelKey(item: SlashItem): string {
+  return getToolbarItem(item.key)?.labelKey ?? item.key;
 }
 
 /**
@@ -47,72 +66,52 @@ function consume(editor: Editor, range: Range) {
  */
 export const SLASH_ITEMS: SlashItem[] = [
   {
-    key: 'heading1',
-    icon: 'Heading1',
-    labelKey: 'editor.slash.heading1',
+    key: 'h1',
     keywords: ['h1', 'title', 'heading'],
     run: ({ editor, range }) => consume(editor, range).toggleHeading({ level: 1 }).run(),
   },
   {
-    key: 'heading2',
-    icon: 'Heading2',
-    labelKey: 'editor.slash.heading2',
+    key: 'h2',
     keywords: ['h2', 'subtitle', 'heading'],
     run: ({ editor, range }) => consume(editor, range).toggleHeading({ level: 2 }).run(),
   },
   {
-    key: 'heading3',
-    icon: 'Heading3',
-    labelKey: 'editor.slash.heading3',
+    key: 'h3',
     keywords: ['h3', 'heading'],
     run: ({ editor, range }) => consume(editor, range).toggleHeading({ level: 3 }).run(),
   },
   {
-    key: 'bulletList',
-    icon: 'List',
-    labelKey: 'editor.slash.bulletList',
+    key: 'bullet-list',
     keywords: ['bullet', 'unordered', 'ul'],
     run: ({ editor, range }) => consume(editor, range).toggleBulletList().run(),
   },
   {
-    key: 'orderedList',
-    icon: 'ListOrdered',
-    labelKey: 'editor.slash.orderedList',
+    key: 'ordered-list',
     keywords: ['numbered', 'ordered', 'ol'],
     run: ({ editor, range }) => consume(editor, range).toggleOrderedList().run(),
   },
   {
-    key: 'taskList',
-    icon: 'ListTodo',
-    labelKey: 'editor.slash.taskList',
+    key: 'task-list',
     keywords: ['todo', 'checklist', 'checkbox'],
     run: ({ editor, range }) => consume(editor, range).toggleTaskList().run(),
   },
   {
     key: 'blockquote',
-    icon: 'Quote',
-    labelKey: 'editor.slash.blockquote',
     keywords: ['quote', 'citation'],
     run: ({ editor, range }) => consume(editor, range).toggleBlockquote().run(),
   },
   {
-    key: 'codeBlock',
-    icon: 'Code2',
-    labelKey: 'editor.slash.codeBlock',
+    key: 'code-block',
     keywords: ['code', 'snippet', 'pre'],
     run: ({ editor, range }) => consume(editor, range).toggleCodeBlock().run(),
   },
   {
-    key: 'horizontalRule',
-    icon: 'Minus',
-    labelKey: 'editor.slash.horizontalRule',
+    key: 'divider',
     keywords: ['divider', 'separator', 'hr', 'rule'],
     run: ({ editor, range }) => consume(editor, range).setHorizontalRule().run(),
   },
   {
     key: 'image',
-    icon: 'ImagePlus',
-    labelKey: 'editor.slash.image',
     keywords: ['picture', 'photo', 'img'],
     run: ({ editor, range, deps }) => {
       consume(editor, range).run();
@@ -125,8 +124,6 @@ export const SLASH_ITEMS: SlashItem[] = [
   },
   {
     key: 'audio',
-    icon: 'Mic',
-    labelKey: 'editor.slash.audio',
     keywords: ['recording', 'voice', 'mic'],
     // Recording is owned by the toolbar's mic button, reached through the same
     // storage coordinator the quick-capture speed-dial uses.
@@ -137,8 +134,6 @@ export const SLASH_ITEMS: SlashItem[] = [
   },
   {
     key: 'video',
-    icon: 'FileVideo',
-    labelKey: 'editor.slash.video',
     keywords: ['movie', 'clip'],
     run: ({ editor, range, deps }) => {
       consume(editor, range).run();
@@ -151,8 +146,6 @@ export const SLASH_ITEMS: SlashItem[] = [
   },
   {
     key: 'file',
-    icon: 'Paperclip',
-    labelKey: 'editor.slash.file',
     keywords: ['attachment', 'document', 'upload'],
     run: ({ editor, range, deps }) => {
       consume(editor, range).run();
@@ -164,9 +157,20 @@ export const SLASH_ITEMS: SlashItem[] = [
     },
   },
   {
+    // The drift this rewrite uncovered: `math` was a toolbar button with no way
+    // to reach it from the keyboard at all.
+    key: 'math',
+    keywords: ['latex', 'formula', 'equation', 'tex'],
+    run: ({ editor, range, t }) => {
+      // The same prompt the toolbar button uses, so the two surfaces ask the
+      // same question.
+      const latex = window.prompt(t('editor.math.prompt'), '');
+      if (!latex) return;
+      consume(editor, range).insertInlineMath({ latex }).run();
+    },
+  },
+  {
     key: 'drawing',
-    icon: 'PenTool',
-    labelKey: 'editor.slash.drawing',
     keywords: ['sketch', 'excalidraw', 'draw', 'diagram'],
     run: ({ editor, range, deps }) => {
       consume(editor, range).run();
@@ -190,7 +194,7 @@ export function filterSlashItems(
   if (!q) return items;
   return items.filter(
     (item) =>
-      t(item.labelKey).toLowerCase().includes(q) ||
+      t(slashItemLabelKey(item)).toLowerCase().includes(q) ||
       item.key.toLowerCase().includes(q) ||
       item.keywords.some((keyword) => keyword.includes(q))
   );

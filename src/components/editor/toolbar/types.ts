@@ -47,7 +47,13 @@ export interface ToolbarItem {
    * resolve their real button views against. The live bar uses the button's own.
    */
   icon: IconName;
-  /** i18n key for the name shown in the settings editor. */
+  /**
+   * i18n key for the action's **name**, shown in the settings editor and in the
+   * slash menu (ADR 0011, decision 13).
+   *
+   * A name, not a tooltip: a toolbar button promises "Insert image", but a list
+   * of things you can turn on or insert calls it "Image".
+   */
   labelKey: string;
 }
 

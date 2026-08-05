@@ -80,6 +80,10 @@ function stubRowGeometry() {
 
 beforeEach(() => setWidth(1280));
 afterEach(async () => {
+  // The geometry stub is a prototype spy, and this suite has no `restoreMocks`:
+  // left in place it would hand fabricated rects to every test that follows,
+  // and a second `stubRowGeometry` would capture the spy as its own original.
+  vi.restoreAllMocks();
   await db.settings.clear();
 });
 
@@ -191,7 +195,7 @@ describe('drilling into a family', () => {
       await screen.findByRole('button', { name: /^editor\.toolbar\.family\.style/ })
     );
     await user.click(
-      screen.getByRole('switch', { name: 'settings.toolbar.item.show:editor.slash.heading3' })
+      screen.getByRole('switch', { name: 'settings.toolbar.item.show:editor.heading.h3' })
     );
 
     await waitFor(async () => {

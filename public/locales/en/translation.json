@@ -40,8 +40,9 @@
     "undo": "Undo",
     "redo": "Redo",
     "heading": {
-      "tooltip": "Heading",
-      "level": "Heading {{level}}"
+      "h1": "Heading 1",
+      "h2": "Heading 2",
+      "h3": "Heading 3"
     },
     "bulletList": {
       "tooltip": "Bullet list"
@@ -92,7 +93,8 @@
         "unsupported-type": "That image type is not supported",
         "too-large": "Image is too large (max 10 MB)",
         "insert-failed": "Could not add the image"
-      }
+      },
+      "label": "Image"
     },
     "audio": {
       "play": "Play",
@@ -109,19 +111,22 @@
         "no-device": "No microphone was found",
         "in-use": "The microphone is being used by another app",
         "failed": "Could not start recording"
-      }
+      },
+      "label": "Voice recording"
     },
     "video": {
       "tooltip": "Attach video",
       "delete": "Delete video",
-      "unavailable": "Video unavailable"
+      "unavailable": "Video unavailable",
+      "label": "Video"
     },
     "file": {
       "tooltip": "Attach file",
       "open": "Open file",
       "delete": "Delete file",
       "unavailable": "File unavailable",
-      "fallbackName": "File"
+      "fallbackName": "File",
+      "label": "File"
     },
     "excalidraw": {
       "tooltip": "Insert drawing",
@@ -136,7 +141,8 @@
       "discardTitle": "Discard drawing?",
       "discardDescription": "Your changes will be lost.",
       "discardConfirm": "Discard",
-      "discardCancel": "Keep editing"
+      "discardCancel": "Keep editing",
+      "label": "Drawing"
     },
     "placeholder": "Write something, or press '/' for commands…",
     "code": {
@@ -161,21 +167,7 @@
       "remove": "Remove link"
     },
     "slash": {
-      "noResults": "Nothing matches",
-      "heading1": "Heading 1",
-      "heading2": "Heading 2",
-      "heading3": "Heading 3",
-      "bulletList": "Bulleted list",
-      "orderedList": "Numbered list",
-      "taskList": "Checklist",
-      "blockquote": "Quote",
-      "codeBlock": "Code block",
-      "horizontalRule": "Divider",
-      "image": "Image",
-      "audio": "Voice recording",
-      "video": "Video",
-      "file": "File",
-      "drawing": "Drawing"
+      "noResults": "Nothing matches"
     },
     "toolbar": {
       "customize": "Customise toolbar",

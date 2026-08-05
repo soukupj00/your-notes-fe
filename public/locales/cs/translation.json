@@ -40,8 +40,9 @@
     "undo": "Zpět",
     "redo": "Znovu",
     "heading": {
-      "tooltip": "Nadpis",
-      "level": "Nadpis {{level}}"
+      "h1": "Nadpis 1",
+      "h2": "Nadpis 2",
+      "h3": "Nadpis 3"
     },
     "bulletList": {
       "tooltip": "Odrážkový seznam"
@@ -92,7 +93,8 @@
         "unsupported-type": "Tento typ obrázku není podporován",
         "too-large": "Obrázek je příliš velký (max 10 MB)",
         "insert-failed": "Obrázek se nepodařilo přidat"
-      }
+      },
+      "label": "Obrázek"
     },
     "audio": {
       "play": "Přehrát",
@@ -109,19 +111,22 @@
         "no-device": "Nebyl nalezen žádný mikrofon",
         "in-use": "Mikrofon používá jiná aplikace",
         "failed": "Nahrávání se nepodařilo spustit"
-      }
+      },
+      "label": "Hlasová nahrávka"
     },
     "video": {
       "tooltip": "Připojit video",
       "delete": "Smazat video",
-      "unavailable": "Video není k dispozici"
+      "unavailable": "Video není k dispozici",
+      "label": "Video"
     },
     "file": {
       "tooltip": "Připojit soubor",
       "open": "Otevřít soubor",
       "delete": "Smazat soubor",
       "unavailable": "Soubor není k dispozici",
-      "fallbackName": "Soubor"
+      "fallbackName": "Soubor",
+      "label": "Soubor"
     },
     "excalidraw": {
       "tooltip": "Vložit kresbu",
@@ -136,7 +141,8 @@
       "discardTitle": "Zahodit kresbu?",
       "discardDescription": "Vaše změny budou ztraceny.",
       "discardConfirm": "Zahodit",
-      "discardCancel": "Pokračovat v úpravách"
+      "discardCancel": "Pokračovat v úpravách",
+      "label": "Kresba"
     },
     "placeholder": "Začněte psát, nebo stiskněte „/“ pro příkazy…",
     "code": {
@@ -161,21 +167,7 @@
       "remove": "Odebrat odkaz"
     },
     "slash": {
-      "noResults": "Nic neodpovídá",
-      "heading1": "Nadpis 1",
-      "heading2": "Nadpis 2",
-      "heading3": "Nadpis 3",
-      "bulletList": "Odrážkový seznam",
-      "orderedList": "Číslovaný seznam",
-      "taskList": "Zaškrtávací seznam",
-      "blockquote": "Citace",
-      "codeBlock": "Blok kódu",
-      "horizontalRule": "Oddělovač",
-      "image": "Obrázek",
-      "audio": "Hlasová nahrávka",
-      "video": "Video",
-      "file": "Soubor",
-      "drawing": "Kresba"
+      "noResults": "Nic neodpovídá"
     },
     "toolbar": {
       "customize": "Přizpůsobit lištu",

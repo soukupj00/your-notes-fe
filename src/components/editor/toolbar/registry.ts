@@ -123,7 +123,7 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     extension: 'heading',
     buttonIndex: 0,
     icon: 'Heading1',
-    labelKey: 'editor.slash.heading1',
+    labelKey: 'editor.heading.h1',
   },
   {
     id: 'h2',
@@ -131,7 +131,7 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     extension: 'heading',
     buttonIndex: 1,
     icon: 'Heading2',
-    labelKey: 'editor.slash.heading2',
+    labelKey: 'editor.heading.h2',
   },
   {
     id: 'h3',
@@ -139,7 +139,7 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     extension: 'heading',
     buttonIndex: 2,
     icon: 'Heading3',
-    labelKey: 'editor.slash.heading3',
+    labelKey: 'editor.heading.h3',
   },
   // format
   {
@@ -288,35 +288,35 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     family: 'media',
     extension: 'imageAttachment',
     icon: 'ImagePlus',
-    labelKey: 'editor.image.tooltip',
+    labelKey: 'editor.image.label',
   },
   {
     id: 'audio',
     family: 'media',
     extension: 'audioAttachment',
     icon: 'Mic',
-    labelKey: 'editor.audio.tooltip',
+    labelKey: 'editor.audio.label',
   },
   {
     id: 'video',
     family: 'media',
     extension: 'videoAttachment',
     icon: 'FileVideo',
-    labelKey: 'editor.video.tooltip',
+    labelKey: 'editor.video.label',
   },
   {
     id: 'file',
     family: 'media',
     extension: 'fileAttachment',
     icon: 'Paperclip',
-    labelKey: 'editor.file.tooltip',
+    labelKey: 'editor.file.label',
   },
   {
     id: 'drawing',
     family: 'media',
     extension: 'excalidrawAttachment',
     icon: 'PenTool',
-    labelKey: 'editor.excalidraw.tooltip',
+    labelKey: 'editor.excalidraw.label',
   },
   // font
   {
