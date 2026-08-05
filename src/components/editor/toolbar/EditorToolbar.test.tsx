@@ -37,6 +37,24 @@ function setWidth(px: number) {
   window.innerWidth = px;
 }
 
+/**
+ * Make the bar believe its row is wider than its box.
+ *
+ * jsdom lays nothing out, so every element measures 0 and `useEdgeFade` can
+ * never discover an overflow - which since Step 8 is the only condition that
+ * pins anything. These are the two numbers it reads; the returned function must
+ * be called, as this repo does not set `restoreMocks`.
+ */
+function stubOverflow({ scrollWidth, clientWidth }: { scrollWidth: number; clientWidth: number }) {
+  const spies = [
+    vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockReturnValue(scrollWidth),
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(clientWidth),
+  ];
+  return () => {
+    for (const spy of spies) spy.mockRestore();
+  };
+}
+
 function renderToolbar(layout?: ToolbarLayout) {
   const editor = createEditor();
   render(
@@ -131,27 +149,73 @@ describe('EditorToolbar', () => {
     ]);
   });
 
-  it('pins the first family on the compact bar, and only there', () => {
-    setWidth(360);
-    renderToolbar(LAYOUT);
-    const pinned = screen.getByTestId('editor-toolbar').querySelectorAll('[data-pinned]');
-    // Exactly one, and it is the first family in the user's order.
-    expect(pinned).toHaveLength(1);
-    expect(pinned[0].querySelector('button')?.getAttribute('aria-label')).toBe(
-      'editor.orderedList.tooltip'
-    );
+  it('pins the first family on a compact bar that scrolls, and only there', () => {
+    const restore = stubOverflow({ scrollWidth: 500, clientWidth: 312 });
+    try {
+      setWidth(360);
+      renderToolbar(LAYOUT);
+      const pinned = screen.getByTestId('editor-toolbar').querySelectorAll('[data-pinned]');
+      // Exactly one, and it is the first family in the user's order.
+      expect(pinned).toHaveLength(1);
+      expect(pinned[0].querySelector('button')?.getAttribute('aria-label')).toBe(
+        'editor.orderedList.tooltip'
+      );
 
-    cleanup();
-    setWidth(1024);
-    renderToolbar(LAYOUT);
-    // A wide bar wraps rather than scrolls, so nothing can scroll away from it.
-    expect(screen.getByTestId('editor-toolbar').querySelectorAll('[data-pinned]')).toHaveLength(0);
+      cleanup();
+      setWidth(1024);
+      renderToolbar(LAYOUT);
+      // A wide bar wraps rather than scrolls, so nothing can scroll away from it.
+      expect(screen.getByTestId('editor-toolbar').querySelectorAll('[data-pinned]')).toHaveLength(
+        0
+      );
+    } finally {
+      restore();
+    }
+  });
+
+  it('leaves a bar that fits unpinned, so its buttons can be spaced evenly', () => {
+    const restore = stubOverflow({ scrollWidth: 292, clientWidth: 312 });
+    try {
+      setWidth(360);
+      renderToolbar(LAYOUT);
+      // Nothing can scroll under a pin on a bar with nothing to scroll, and the
+      // wrapper would cost the even spacing: it makes its family one flex item,
+      // which `justify-between` spreads around instead of within.
+      expect(screen.getByTestId('editor-toolbar').querySelectorAll('[data-pinned]')).toHaveLength(
+        0
+      );
+    } finally {
+      restore();
+    }
+  });
+
+  it('wraps the pinned family without costing the row any width', () => {
+    const restore = stubOverflow({ scrollWidth: 500, clientWidth: 312 });
+    try {
+      setWidth(360);
+      renderToolbar(LAYOUT);
+      const bar = screen.getByTestId('editor-toolbar');
+      const pin = bar.querySelector('[data-pinned]');
+      // Padding here would latch the pin on: a bar that fit unpinned would
+      // overflow *because* it pinned, and could then never unpin. The wrapper
+      // must therefore measure exactly what its buttons measure - same gap as
+      // the bar, nothing else.
+      expect(pin?.className).toContain('gap-1');
+      expect(pin?.className).not.toMatch(/(^|\s)-?p[xlrtby]?-/);
+    } finally {
+      restore();
+    }
   });
 
   it('never fades the edge the pinned family sits on', () => {
-    setWidth(360);
-    renderToolbar(LAYOUT);
-    expect(screen.getByTestId('editor-toolbar').dataset.overflowStart).toBeUndefined();
+    const restore = stubOverflow({ scrollWidth: 500, clientWidth: 312 });
+    try {
+      setWidth(360);
+      renderToolbar(LAYOUT);
+      expect(screen.getByTestId('editor-toolbar').dataset.overflowStart).toBeUndefined();
+    } finally {
+      restore();
+    }
   });
 
   it('wraps on a wide window and scrolls on a compact one, never wrapping there', () => {
@@ -170,6 +234,10 @@ describe('EditorToolbar', () => {
     // this bar may not do, so it scrolls instead of wrapping.
     expect(compact.className).not.toContain('flex-wrap');
     expect(compact.className).toContain('overflow-x-auto');
+    // Spread across the width it has rather than bunched at the left edge.
+    // Safe to apply unconditionally: there is no free space to distribute on a
+    // bar that overflows, so this is inert exactly when it would be wrong.
+    expect(compact.className).toContain('justify-between');
   });
 });
 

@@ -115,6 +115,9 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
     .filter((entry) => entry.items.length > 0);
   const compact = widthClass === 'compact';
   const [scrollRef, overflow] = useEdgeFade(compact);
+  // Whether the row is genuinely wider than the box holding it, which is the one
+  // condition the pin exists for.
+  const scrolls = overflow.start || overflow.end;
   // The pinned family sits at the left edge, so fading that edge would fade the
   // one thing that is meant to stay legible.
   const fade = compact && families.length > 0 ? { ...overflow, start: false } : overflow;
@@ -132,7 +135,13 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         compact
           ? // The scrollbar itself would eat a row of its own under the buttons,
             // and a shrinking button is not a button.
-            'overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&_button]:shrink-0'
+            //
+            // `justify-between` spreads a bar that fits across the width it has,
+            // instead of bunching it at the left edge with dead space beside it.
+            // It needs no "does it fit?" test, because it *is* one: distributing
+            // free space is a no-op when there is none, so an overflowing bar
+            // packs and scrolls exactly as before.
+            'justify-between overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&_button]:shrink-0'
           : 'flex-wrap',
         // The sticky bar needs an opaque background to cover the text scrolling
         // under it, and it takes the note's own surface rather than the app
@@ -150,7 +159,17 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         // first - so this needs no setting and no new vocabulary. History is
         // first in both defaults, which is what makes undo always reachable on a
         // phone, where there is no Ctrl+Z at all.
-        const pinned = compact && index === 0;
+        //
+        // Only while the row actually scrolls, because pinning costs a wrapper:
+        // a sticky family is one flex item instead of several, which `justify-
+        // between` would then spread *around* rather than *within*, hugging its
+        // buttons together while everything else fanned out. A bar that fits has
+        // nothing to scroll under the pin anyway, so it gives up nothing.
+        //
+        // This cannot oscillate: unpinning only ever makes the row narrower, so
+        // a row that fits unpinned stays unpinned, and one that overflows
+        // unpinned still overflows once the wrapper is added.
+        const pinned = compact && scrolls && index === 0;
         const content = collapsed ? (
           <ToolbarFamilyMenu family={family} items={items} editor={editor} t={t as TFunction} />
         ) : (
@@ -172,7 +191,15 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 ? // An opaque backing, or the scrolled buttons show through it.
                   // `bg-note-surface` falls back to `--background`, so it is
                   // right both inside a tinted note dialog and outside one.
-                  'sticky left-0 z-10 flex shrink-0 items-center gap-1 bg-note-surface pr-1'
+                  //
+                  // Same `gap-1` as the bar and no extra padding, so wrapping
+                  // the family costs exactly zero width. That is what keeps
+                  // `scrolls` a pure question about the buttons: with a `pr-1`
+                  // here, a bar that fit unpinned could overflow *because* it
+                  // pinned, and would then never unpin again - measured as a
+                  // real latch at 341px, where 292px of buttons fit in 293px
+                  // until the 4px of padding pushed them to 296px.
+                  'sticky left-0 z-10 flex shrink-0 items-center gap-1 bg-note-surface'
                 : 'contents'
             }
           >

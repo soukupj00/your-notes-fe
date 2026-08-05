@@ -50,7 +50,15 @@ export function QuickCaptureBar({ onStart }: { onStart: (editing: EditingState) 
           sideOffset={12}
           className="w-auto border-0 bg-transparent p-0 shadow-none"
         >
-          <ul className={cn('flex flex-col gap-2', left ? 'items-start' : 'items-end')}>
+          {/* `flex-col-reverse`, not a reversed array: the dial radiates *out of*
+              the `＋`, so the first start belongs nearest the thumb and the last
+              furthest from it. Reversing the array instead would put the primary
+              start last in the DOM, which is also last in the tab order and last
+              to a screen reader - the order the user arranged in settings is a
+              priority, and it has to survive in every reading of the list, not
+              just the visual one. The stagger then falls out for free: index 0 is
+              the button next to the `＋`, so the menu unrolls away from it. */}
+          <ul className={cn('flex flex-col-reverse gap-2', left ? 'items-start' : 'items-end')}>
             {actions.map(({ key, Icon, labelKey, editing }, index) => (
               <m.li
                 key={key}

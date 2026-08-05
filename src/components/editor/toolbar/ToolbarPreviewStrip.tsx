@@ -40,11 +40,13 @@ export function ToolbarPreviewStrip({ layout, widthClass }: ToolbarPreviewStripP
         data-testid="toolbar-preview"
         className={cn(
           'flex items-center gap-1 rounded-control border bg-background p-1',
-          // The real compact bar scrolls rather than wrapping, and the preview
-          // has to make the same promise - a wrapped preview would show a bar
-          // the phone never draws.
+          // The real compact bar scrolls rather than wrapping and spreads across
+          // the width it has, and the preview has to make the same promises - a
+          // wrapped or left-bunched preview would show a bar the phone never
+          // draws. `justify-between` is inert once the strip overflows, exactly
+          // as it is on the bar itself.
           compact
-            ? 'overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+            ? 'justify-between overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
             : 'flex-wrap'
         )}
       >

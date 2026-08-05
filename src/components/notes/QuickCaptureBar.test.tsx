@@ -91,6 +91,27 @@ describe('QuickCaptureBar', () => {
       }
     });
 
+    it('unrolls from the ＋ upward, keeping the first start nearest the thumb', async () => {
+      await openDial();
+      const list = (await screen.findByRole('button', { name: 'notes.capture.text' })).closest(
+        'ul'
+      );
+
+      // Visual order is bottom-to-top, because the dial radiates out of the `＋`.
+      // It is `flex-col-reverse` rather than a reversed array precisely so the
+      // DOM keeps the order the user arranged in settings - that order is a
+      // priority, and reversing the array would put the primary start last for
+      // anyone reading by tab or by screen reader.
+      expect(list).toHaveClass('flex-col-reverse');
+      expect(Array.from(list?.querySelectorAll('button') ?? []).map((b) => b.textContent)).toEqual([
+        'notes.capture.text',
+        'notes.capture.checklist',
+        'notes.capture.audio',
+        'notes.capture.drawing',
+        'notes.capture.picture',
+      ]);
+    });
+
     it('defaults to the right thumb', () => {
       render(<QuickCaptureBar onStart={vi.fn()} />, { wrapper });
 
