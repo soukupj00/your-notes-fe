@@ -228,6 +228,7 @@ Deviations worth recording:
 - `reconcileList` moved out of `resolveLayout.ts` into `lib/reconcile-order.ts` and is now shared with quick capture. Both surfaces are "a list the user arranged, against a list the app ships", and decision 8 subtly diverging in two places is how one feature grows two behaviours.
 - `DESKTOP_QUICK_CAPTURE_ACTIONS` is deleted; the derivation lives in `quickCaptureLayout.ts` where the stored order is applied.
 - The colour-blind switch was missing the coarse-pointer 44px floor and now carries `.touch-target`.
+  **Corrected in Task 6 (2026-08-05):** right intent, wrong mechanism. `.touch-target` sets a 44px *minimum size*, which turned every 20×36 `rounded-full` switch track - here and in this editor's own two - into a 44×44 circle on every phone. They now carry `.touch-reach`, which gives the same hit box as an invisible centred `::before` and leaves the switch drawn as a switch.
 
 ### Step 6 - In-editor entry - **done** (2026-08-05)
 

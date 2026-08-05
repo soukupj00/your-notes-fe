@@ -106,7 +106,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
         />
       )}
 
-      <div className="relative z-10 p-[0.9rem_1rem_0.85rem]">
+      <div className="relative z-10 p-[var(--card-pad)]">
         {/* Above the title, as in the lab: what a note *looks* like is the
             fastest way to recognise it again in a wall. */}
         <CardMedia noteId={note.id} body={note.body} onOpen={(opts) => onSelect(note.id, opts)} />

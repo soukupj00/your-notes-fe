@@ -90,7 +90,7 @@ export function QuickCaptureSection() {
                     </span>
                   </span>
                   <Switch
-                    className="touch-target mx-2"
+                    className="touch-reach mx-2"
                     checked={entry.on}
                     disabled={last}
                     onCheckedChange={(on) =>

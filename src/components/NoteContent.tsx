@@ -5,9 +5,11 @@ import { useViewMode } from '@/context/viewModeProvider.tsx';
 import { type NoteFeedScope, useNoteFeed } from '@/hooks/data/useNoteFeed.ts';
 import { useNoteSearchState } from '@/hooks/useNoteSearchState.ts';
 
+// The same `--feed-gap` the real feed spends, so the skeletons the feed
+// replaces are already at the user's density rather than jumping to it.
 const MASONRY_SKELETONS =
-  'grid grid-cols-1 gap-[0.85rem] min-[22rem]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
-const STACK_SKELETONS = 'grid grid-cols-1 gap-[0.85rem]';
+  'grid grid-cols-1 gap-[var(--feed-gap)] min-[22rem]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
+const STACK_SKELETONS = 'grid grid-cols-1 gap-[var(--feed-gap)]';
 
 /** Which `notes.empty.*` copy block describes an empty feed in this scope. */
 function emptyKeyFor(scope: NoteFeedScope): string {

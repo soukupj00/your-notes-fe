@@ -135,6 +135,10 @@ Manifest rows are validated with `z.looseObject`, so unknown (future) fields sur
 Colors use **OKLCH** custom properties defined in `src/styles/globals.css`; this is the live token source for both light and dark.
 `ThemeProvider` (`src/context/themeProvider.tsx`) is a **custom** provider (not `next-themes`, despite that package being installed): it persists the choice to `localStorage` and toggles the `light`/`dark` class on `<html>`, supporting a `system` mode via `prefers-color-scheme`.
 Theme switching is done at the provider level - no per-component theme logic.
+Preferences that CSS rather than React has to act on are stamped onto `<html>` by `DocumentPreferences` (`src/components/DocumentPreferences.tsx`): the `cvd` colour-blind class, `data-density`, and `data-reduced-motion`.
+The test for belonging there is whether the stylesheet needs the value - density re-values the type and rhythm tokens, and reduced motion has to overrule the `prefers-reduced-motion` media query, which JS cannot reach into.
+Every other preference is read by the component that spends it.
+The 44px Touch Rule has two mechanisms and they are not interchangeable: `.touch-target` grows a control to 44px (right for an icon button), `.touch-reach` gives it a 44px hit box via an invisible centred `::before` and leaves it its own size (right whenever the control's shape is part of what it says, such as a switch).
 
 ### i18n (`src/i18n.ts`)
 

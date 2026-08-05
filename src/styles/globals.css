@@ -543,7 +543,19 @@
   /* The 44px floor applies to touch input, not to every mouse-sized desktop
      control. Shared controls expose stable data slots; bespoke controls opt in
      with `.touch-target`. Layout stays compact with a mouse while a coarse
-     pointer always receives a real, measurable hit box. */
+     pointer always receives a real, measurable hit box.
+
+     Two mechanisms, because the Touch Rule has two shapes and using the wrong
+     one deforms the control. `.touch-target` *grows* the element, which is
+     right for an icon button - it is a square either way, and a bigger square
+     is a bigger button. `.touch-reach` leaves the element its own size and
+     hangs an invisible 44x44 `::before` off its centre, which is the shape
+     `CardPin` and the checklist label already use.
+
+     A switch needs the second one, and shipped with the first: the track is a
+     20x36 `rounded-full` pill, so a 44x44 minimum turned every switch on every
+     phone into a circle with a dot in it. Reach for `.touch-reach` whenever the
+     control's *shape* is part of what it says. */
   @media (pointer: coarse) {
     [data-slot="button"],
     [data-sidebar="menu-button"],
@@ -551,6 +563,23 @@
     .touch-target {
       min-width: 44px;
       min-height: 44px;
+    }
+
+    .touch-reach {
+      position: relative;
+    }
+
+    /* Sized absolutely and centred rather than by a negative inset, for the
+       same reason the checklist box is: the control's own size is not a number
+       this rule should have to know. */
+    .touch-reach::before {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 44px;
+      height: 44px;
+      transform: translate(-50%, -50%);
+      content: "";
     }
   }
 }
@@ -650,6 +679,41 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* The two spacing values density re-cuts, as tokens rather than as literals
+     on the components that spend them. They are shorthand strings, not a
+     spacing scale, so they stay plain custom properties: `--card-pad` is a
+     four-sided shorthand and `--feed-gap` is read back by
+     `useNoteFeedLayout` through `getComputedStyle().rowGap`, which is what
+     lets JS masonry follow density without being told about it. */
+  --feed-gap: 0.85rem;
+  --card-pad: 0.9rem 1rem 0.85rem;
+}
+
+/*
+ * Density (DESIGN.md → "generous by default … with a compact mode for people
+ * who want more wall at once").
+ *
+ * One control, not a spacing control plus a font-size control. DESIGN.md
+ * specifies compact as a single bundle - type *and* rhythm move together - and
+ * that is the honest shape: shrinking the gap while leaving 1.04rem titles
+ * gives a denser wall of cards that are each still the same size, which is not
+ * what "more wall at once" means. It also keeps the states the contrast and
+ * 44px gates were measured against at two rather than at a matrix.
+ *
+ * Unlayered on purpose: `@theme` emits its half onto `:root` inside the theme
+ * cascade layer, and an unlayered rule beats every layer regardless of the
+ * `:root` vs `:root[…]` specificity that would decide it otherwise.
+ *
+ * The touch floor is deliberately *not* in here. Compact is a request for more
+ * information per screen, never a request for smaller hit boxes, so the 44px
+ * coarse-pointer rule stays where it is and applies to both densities.
+ */
+:root[data-density="compact"] {
+  --text-title: 0.94rem;
+  --text-body: 0.8rem;
+  --feed-gap: 0.6rem;
+  --card-pad: 0.65rem 0.75rem 0.6rem;
 }
 
 /* Rich-text content styling (headings, lists, blockquote, code, etc.) comes from the
@@ -815,10 +879,20 @@
   }
 
   /* The shadow is a depth cue tied to scroll position, not a transition, but it
-     is still motion driven by the user's scroll - pin it to the end state. */
+     is still motion driven by the user's scroll - pin it to the end state.
+
+     The stored preference is authoritative over the OS query in both
+     directions, mirroring `useReducedMotion` on the JS side: `always` pins the
+     shadow whatever the OS says, `never` keeps it animating even on a machine
+     that asks for reduced motion, and `system` (the default, and the state
+     before the preference has hydrated) falls through to the query. */
   @media (prefers-reduced-motion: reduce) {
-    .nav-scroll-shadow {
+    :root:not([data-reduced-motion="never"]) .nav-scroll-shadow {
       animation: none;
     }
+  }
+
+  :root[data-reduced-motion="always"] .nav-scroll-shadow {
+    animation: none;
   }
 }

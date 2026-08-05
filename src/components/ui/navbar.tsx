@@ -1,8 +1,8 @@
 import { Link } from '@tanstack/react-router';
-import { CZ, GB } from 'country-flag-icons/react/3x2';
 import { Check, Globe, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+import { LocaleFlag } from '@/components/LocaleFlag.tsx';
 import { SearchInput } from '@/components/searchInput.tsx';
 import { ThemeModeToggleButton } from '@/components/themeModeToggleButton';
 import { Button } from '@/components/ui/button.tsx';
@@ -31,29 +31,16 @@ import {
 import { SidebarTrigger } from '@/components/ui/sidebar.tsx';
 import { useIsFeedRoute } from '@/hooks/useNoteSearchState.ts';
 import i18n from '@/i18n';
-
-// Flags are keyed by ISO 3166-1 country code, not language code, so locales
-// map to named imports. Keeping this static also lets the bundler omit the
-// package's hundreds of unused flag components.
-const LOCALE_FLAGS: Record<string, typeof GB> = {
-  en: GB,
-  cs: CZ,
-};
-
-function LocaleFlag({ locale }: { locale: string }) {
-  const FlagIcon = LOCALE_FLAGS[locale];
-  if (!FlagIcon) return null;
-  return <FlagIcon className="h-3.5 w-5 rounded-xs object-cover" />;
-}
+import { listLocales } from '@/lib/locales.ts';
 
 function Navbar() {
   const { t } = useTranslation();
   // Settings has no feed, so it gets no search box: a control that silently
   // does nothing is worse than an absent one.
   const searchable = useIsFeedRoute();
-  // supportedLngs is the source of truth for which locales ship; 'cimode' is
-  // i18next's debug pseudo-locale and isn't a real one to offer users.
-  const locales = (i18n.options.supportedLngs || []).filter((locale) => locale !== 'cimode');
+  // Shared with Settings → Language, so the topbar and the settings page can
+  // never end up offering different sets of languages.
+  const locales = listLocales();
 
   return (
     // Sticky so the search box, sort menu and label filters stay reachable in a
@@ -84,17 +71,17 @@ function Navbar() {
             <DropdownMenuContent align="end">
               <DropdownMenuGroup>
                 {locales.map((locale) => {
-                  const isActive = i18n.resolvedLanguage === locale;
+                  const isActive = i18n.resolvedLanguage === locale.code;
                   return (
                     <DropdownMenuItem
-                      key={locale}
+                      key={locale.code}
                       onClick={() => {
-                        void i18n.changeLanguage(locale);
+                        void i18n.changeLanguage(locale.code);
                       }}
                     >
                       <Check className={isActive ? 'opacity-100' : 'opacity-0'} />
                       <LocaleFlag locale={locale} />
-                      {locale}
+                      {locale.name}
                     </DropdownMenuItem>
                   );
                 })}
@@ -150,9 +137,9 @@ function Navbar() {
                   </SelectTrigger>
                   <SelectContent>
                     {locales.map((locale) => (
-                      <SelectItem key={locale} value={locale}>
+                      <SelectItem key={locale.code} value={locale.code}>
                         <LocaleFlag locale={locale} />
-                        {locale}
+                        {locale.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

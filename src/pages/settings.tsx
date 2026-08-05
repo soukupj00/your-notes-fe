@@ -3,6 +3,7 @@ import { AppearanceSection } from '@/components/settings/AppearanceSection.tsx';
 import { BackupSection } from '@/components/settings/BackupSection.tsx';
 import { EditorToolbarSection } from '@/components/settings/EditorToolbarSection.tsx';
 import { LabelsSection } from '@/components/settings/LabelsSection.tsx';
+import { LanguageSection } from '@/components/settings/LanguageSection.tsx';
 import { PwaInstallSection } from '@/components/settings/PwaInstallSection.tsx';
 import { QuickCaptureSection } from '@/components/settings/QuickCaptureSection.tsx';
 import { ShortcutsSection } from '@/components/settings/ShortcutsSection.tsx';
@@ -26,6 +27,8 @@ export default function SettingsPage() {
       >
         {t('nav.settings')}
       </h1>
+
+      <LanguageSection />
 
       <AppearanceSection />
 

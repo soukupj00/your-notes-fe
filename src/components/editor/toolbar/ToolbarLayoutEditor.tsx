@@ -256,7 +256,7 @@ function FamilyRow({ family, name, onOpen, onToggle, onCollapse }: FamilyRowProp
       )}
 
       <Switch
-        className="touch-target mx-2"
+        className="touch-reach mx-2"
         checked={family.on}
         onCheckedChange={onToggle}
         aria-label={t('settings.toolbar.family.show', { name })}
@@ -297,7 +297,7 @@ function LeafList({ family, nameOf, onReorder, onToggle }: LeafListProps) {
                   <span className="truncate text-sm">{name}</span>
                 </span>
                 <Switch
-                  className="touch-target mx-2"
+                  className="touch-reach mx-2"
                   checked={member.on}
                   onCheckedChange={(next) => onToggle(member.id, next)}
                   aria-label={t('settings.toolbar.item.show', { name })}

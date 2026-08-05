@@ -203,6 +203,22 @@
       "dark": "Dark",
       "toggle": "Toggle theme"
     },
+    "language": {
+      "title": "Language"
+    },
+    "density": {
+      "label": "Density",
+      "description": "Compact fits more notes on the screen and sets text a little smaller.",
+      "comfortable": "Comfortable",
+      "compact": "Compact"
+    },
+    "reducedMotion": {
+      "label": "Motion",
+      "description": "Reduced turns animation off; Full keeps it on.",
+      "system": "Device",
+      "always": "Reduced",
+      "never": "Full"
+    },
     "colorBlind": {
       "label": "Colour-blind palette",
       "description": "Re-tints note and label colours so the nine stay distinguishable. Works with either theme."

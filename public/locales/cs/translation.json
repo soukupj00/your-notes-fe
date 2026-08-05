@@ -203,6 +203,22 @@
       "dark": "Tmavý",
       "toggle": "Přepnout motiv"
     },
+    "language": {
+      "title": "Jazyk"
+    },
+    "density": {
+      "label": "Hustota",
+      "description": "Kompaktní zobrazí na obrazovce více poznámek a text vysází o něco menší.",
+      "comfortable": "Pohodlná",
+      "compact": "Kompaktní"
+    },
+    "reducedMotion": {
+      "label": "Animace",
+      "description": "Omezené animace vypne, Plné je nechá zapnuté.",
+      "system": "Zařízení",
+      "always": "Omezené",
+      "never": "Plné"
+    },
     "colorBlind": {
       "label": "Paleta pro barvoslepé",
       "description": "Přebarví barvy poznámek a štítků tak, aby šlo všech devět rozlišit. Funguje s oběma motivy."

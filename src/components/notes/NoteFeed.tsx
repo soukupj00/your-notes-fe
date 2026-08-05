@@ -34,7 +34,7 @@ export function NoteFeed({ notes, mode, label, onSelect }: NoteFeedProps) {
   if (!supported) {
     return (
       <ul
-        className="mx-auto flex w-full max-w-[44rem] flex-col gap-[0.85rem]"
+        className="mx-auto flex w-full max-w-[44rem] flex-col gap-[var(--feed-gap)]"
         aria-label={label}
         data-layout="stack"
       >
@@ -54,7 +54,7 @@ export function NoteFeed({ notes, mode, label, onSelect }: NoteFeedProps) {
       aria-busy={!ready}
       data-layout={mode}
       data-layout-ready={ready || undefined}
-      className="relative w-full list-none gap-[0.85rem] p-0"
+      className="relative w-full list-none gap-[var(--feed-gap)] p-0"
       initial={false}
       animate={{ height: layout.height }}
       transition={{ height: layoutTransition }}

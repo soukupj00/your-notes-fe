@@ -10,6 +10,17 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+// LanguageSection reads i18n directly. The real module calls
+// `initReactI18next`, which the mock above does not export, so it has to be
+// stubbed too rather than left to load.
+vi.mock('@/i18n', () => ({
+  default: {
+    options: { supportedLngs: ['en', 'cs'] },
+    resolvedLanguage: 'en',
+    changeLanguage: vi.fn(),
+  },
+}));
+
 // The page links to /settings/labels; the link target is not what this file is
 // about, and rendering it for real would drag in a router.
 vi.mock('@tanstack/react-router', () => ({
