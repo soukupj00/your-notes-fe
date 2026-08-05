@@ -55,6 +55,17 @@ export interface ToolbarItem {
    * of things you can turn on or insert calls it "Image".
    */
   labelKey: string;
+  /**
+   * The key combination this action answers to, in `ActionButton`'s spelling
+   * (`['Mod', 'Shift', 'Z']`). Absent for the actions that have none.
+   *
+   * A copy of the extension's own `shortcutKeys`, and deliberately so: the
+   * shortcut list in Settings has no live editor to resolve buttons against, for
+   * the same reason `ToolbarPreviewStrip` draws a picture rather than mounting
+   * TipTap. `shortcuts.test.ts` pins the copy to the real button in both
+   * directions, so the two cannot drift.
+   */
+  shortcut?: string[];
 }
 
 /** A group of Items, expanded onto the bar or collapsed behind one trigger. */

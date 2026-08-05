@@ -10,6 +10,13 @@ export interface LinkButtonProps {
   editor: Editor;
   t: TFunction;
   tooltip: string;
+  /**
+   * Passed in rather than written here, so the button view carries it like every
+   * other Pattern A button does. Anything reading shortcuts off the resolved
+   * view - the registry's pin test, the Settings shortcut list - would otherwise
+   * see `link` as having none.
+   */
+  shortcutKeys?: string[];
 }
 
 /**
@@ -20,7 +27,7 @@ export interface LinkButtonProps {
  * Editing and removing an existing link happen from the bubble menu that
  * appears on one, not from here.
  */
-export function LinkButton({ editor, t, tooltip }: LinkButtonProps) {
+export function LinkButton({ editor, t, tooltip, shortcutKeys }: LinkButtonProps) {
   const [open, setOpen] = useState(false);
   const [href, setHref] = useState('');
 
@@ -68,7 +75,7 @@ export function LinkButton({ editor, t, tooltip }: LinkButtonProps) {
     <Popover open={open} onOpenChange={openPopover}>
       <PopoverTrigger asChild>
         <ActionButton
-          shortcutKeys={['Mod', 'K']}
+          shortcutKeys={shortcutKeys}
           icon="Link2"
           tooltip={tooltip}
           toggle

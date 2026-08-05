@@ -270,6 +270,10 @@
       },
       "preview": "Jak to bude vypadat"
     },
+    "shortcuts": {
+      "title": "Klávesové zkratky",
+      "description": "Fungují v otevřené poznámce bez ohledu na to, která tlačítka panel zobrazuje."
+    },
     "quickCapture": {
       "title": "Rychlé psaní",
       "description": "Způsoby, jak tlačítko ＋ nabízí založit poznámku.",

@@ -78,6 +78,30 @@ describe('toolbar keyboard shortcuts', () => {
     expect(unbound).toEqual([]);
   });
 
+  /**
+   * The Settings shortcut list reads `shortcut` off the registry, because that
+   * screen has no editor to resolve buttons against (the same reason
+   * `ToolbarPreviewStrip` draws a picture). The copy is only safe while it
+   * agrees with the button in **both** directions: a stale entry teaches a key
+   * that does nothing, a missing one hides a key that works.
+   */
+  it('mirrors every button shortcut in the registry', () => {
+    const editor = createEditor();
+
+    const mismatched: string[] = [];
+    for (const item of TOOLBAR_ITEMS) {
+      const button = resolveItemButton(item, { editor, t })?.componentProps.shortcutKeys ?? [];
+      const registry = item.shortcut ?? [];
+      if (button.join('+') !== registry.join('+')) {
+        mismatched.push(
+          `${item.id}: button ${button.join('+') || 'none'}, registry ${registry.join('+') || 'none'}`
+        );
+      }
+    }
+
+    expect(mismatched).toEqual([]);
+  });
+
   it('clears formatting on Mod+Backslash', () => {
     const editor = createEditor('<p><strong>bold</strong></p>');
     editor.commands.selectAll();

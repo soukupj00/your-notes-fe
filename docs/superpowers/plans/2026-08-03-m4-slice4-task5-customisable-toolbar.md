@@ -287,6 +287,22 @@ Driving a real 360px viewport is what found the gap, and it moved three things.
 
 **One rename this forced, worth recording.** The registry's `labelKey` is a *name*, and five of them pointed at tooltips: "Insert image" is what a button promises, but a list of things you can insert or switch on calls it "Image". So `editor.{image,audio,video,file,excalidraw}.label` now sit beside the existing `.tooltip`, `editor.slash.{heading1,2,3}` became `editor.heading.{h1,h2,h3}`, and the rest of the `editor.slash.*` block is deleted - the menu takes its names from the registry, so those keys had no second reader. `editor.slash.noResults` stays, being the menu's own chrome.
 
+### Step 8d - The shortcuts get their own list, below the Layout editor
+
+The shortcut had one home (a desktop tooltip) and no index: to learn `Mod+Shift+M` you had to already be hovering the Math button, which you can only do if Math is on your bar.
+Step 4c bound them; nothing listed them.
+
+- [x] **A read-only `ShortcutsSection` in `/settings`, directly under the toolbar section.** Not a column in the Layout editor, which was the first idea and the wrong one: that editor answers "what is on my bar, and in what order", and a shortcut answers "how do I do this *without* the bar" - the opposite question, and the one piece of text in those rows that would not be about the row's own state. It would also land on the surface most read on a phone, where the answer is always "you can't".
+- [x] **Hidden entirely on a coarse pointer**, on `useFinePointer` - the same signal that drops the hint from a tooltip (Step 8c). Every row would otherwise be a promise a phone cannot keep.
+- [x] **The registry gained `shortcut`**, and the list reads from there rather than from live button views. Settings has no editor to resolve against, for the same reason `ToolbarPreviewStrip` draws a picture instead of mounting TipTap - and mounting one to read twenty strings would pull the whole editor into the settings route's bundle. Registry order is family order, so the list reads in the same order as the bar.
+- [x] **The copy is pinned in both directions.** `shortcuts.test.ts` gained a test comparing each Item's `shortcut` to what its button actually advertises: a stale entry teaches a key that does nothing, and a missing one hides a key that works. Together with the existing "advertised implies bound" test, a shortcut now has to agree with itself in three places or the suite fails.
+- [x] **`link` was the one Item whose button hid its shortcut from the view.** `LinkButton` wrote `shortcutKeys={['Mod','K']}` in its own JSX, so `resolveItemButton('link').componentProps` reported none - meaning the Step 4c test never checked it either, and it was the single mismatch the new test caught. It now travels through `componentProps` like every other Pattern A button.
+- [x] **Key caps show glyphs, the accessible copy shows words.** `⌘` and `⇧` are what is printed on the keyboard, and what a screen reader reads as punctuation or skips; `getShortcutKeys` already carries both spellings, so the row renders the symbols `aria-hidden` beside an `sr-only` "Control + Shift + S".
+- [x] Tests: 4 in `ShortcutsSection.test.tsx` (a row carries its combination in readable words, the modifier is a glyph visually and a word to AT, nothing renders on a coarse pointer, and an Item without a shortcut takes no row) and 1 in `shortcuts.test.ts` (the registry mirror).
+
+**Left out, with the reason.** A `?` hotkey opening the same list, which is the conventional second entry point: it needs a global key handler that has to stay out of the editor's own typing, and that is a decision about app-wide shortcuts rather than about this list.
+The slash menu's `/` is also absent - it belongs on a list of ways in, but its trigger character lives in `SlashMenu.ts`, and importing that into Settings would drag `@tiptap/suggestion` and floating-ui into the route to print one character.
+
 ## Deferred / explicitly out of scope
 
 - **Long-press on a toolbar button to customise.** Undiscoverable, and on mobile it collides with the OS text-selection menu right where the sticky bar sits. The `⚙` is the only in-editor entry.

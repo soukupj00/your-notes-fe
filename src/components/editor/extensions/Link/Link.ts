@@ -44,7 +44,12 @@ export function createLink(t: TFunction) {
         defaultProtocol: 'https',
         button: ({ editor, t: translate }: ButtonContext) => ({
           component: LinkButton,
-          componentProps: { editor, t: translate, tooltip: translate('editor.link.tooltip') },
+          componentProps: {
+            editor,
+            t: translate,
+            tooltip: translate('editor.link.tooltip'),
+            shortcutKeys: ['Mod', 'K'],
+          },
         }),
       } as unknown as LinkExtensionOptions;
     },

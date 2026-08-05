@@ -270,6 +270,10 @@
       },
       "preview": "How it will look"
     },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "description": "These work while a note is open, whichever buttons your toolbar shows."
+    },
     "quickCapture": {
       "title": "Quick capture",
       "description": "The ways the ＋ button offers to start a note.",
