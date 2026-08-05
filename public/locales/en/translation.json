@@ -275,7 +275,8 @@
       },
       "item": {
         "show": "Show {{name}}"
-      }
+      },
+      "preview": "How it will look"
     },
     "quickCapture": {
       "title": "Quick capture",

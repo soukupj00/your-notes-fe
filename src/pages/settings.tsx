@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { ToolbarLayoutEditor } from '@/components/editor/toolbar/ToolbarLayoutEditor.tsx';
 import { BackupSection } from '@/components/settings/BackupSection.tsx';
 import { PwaInstallSection } from '@/components/settings/PwaInstallSection.tsx';
 import { QuickCaptureSection } from '@/components/settings/QuickCaptureSection.tsx';
@@ -88,6 +89,13 @@ export default function SettingsPage() {
             <Link to="/settings/labels">{t('nav.editLabels')}</Link>
           </Button>
         </SettingsRow>
+      </SettingsSection>
+
+      <SettingsSection title={t('settings.toolbar.title')}>
+        <p className="px-4 py-3 text-muted-foreground text-sm">
+          {t('settings.toolbar.description')}
+        </p>
+        <ToolbarLayoutEditor showPreview />
       </SettingsSection>
 
       <QuickCaptureSection />

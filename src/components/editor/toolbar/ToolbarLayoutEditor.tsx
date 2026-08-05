@@ -13,6 +13,7 @@ import { moveFamily, moveMember, setMemberOn, updateFamily } from './layoutEdits
 import { type ToolbarPresetId, toolbarPreset } from './presets';
 import { getToolbarFamily, itemsInFamily, TOOLBAR_ITEMS } from './registry';
 import { reconcileLayout } from './resolveLayout';
+import { ToolbarPreviewStrip } from './ToolbarPreviewStrip';
 import type { ToolbarFamilyPref, ToolbarLayout, WidthClass } from './types';
 import { useWidthClass } from './useWidthClass';
 
@@ -25,6 +26,14 @@ interface ToolbarLayoutEditorProps {
    * the one the user is looking at while they edit.
    */
   initialWidthClass?: WidthClass;
+  /**
+   * Draw a static picture of the resulting bar above the list.
+   *
+   * On in Settings, which has no note open; off in the sheet over the editor,
+   * where the real bar is a few pixels away and updating live - a second,
+   * lesser copy of it there would be noise.
+   */
+  showPreview?: boolean;
 }
 
 /**
@@ -40,7 +49,7 @@ interface ToolbarLayoutEditorProps {
  * could be abandoned half-applied would need a discard prompt for a decision
  * nobody is making.
  */
-export function ToolbarLayoutEditor({ initialWidthClass }: ToolbarLayoutEditorProps) {
+export function ToolbarLayoutEditor({ initialWidthClass, showPreview }: ToolbarLayoutEditorProps) {
   const { t } = useTranslation();
   const { preferences, setPreference } = usePreferences();
   const windowWidthClass = useWidthClass();
@@ -82,6 +91,7 @@ export function ToolbarLayoutEditor({ initialWidthClass }: ToolbarLayoutEditorPr
             {familyName(openFamily.id)} · {t(`settings.toolbar.width.${widthClass}`)}
           </span>
         </div>
+        {showPreview && <ToolbarPreviewStrip layout={layout} widthClass={widthClass} />}
         <LeafList
           family={openFamily}
           nameOf={itemName}
@@ -118,6 +128,8 @@ export function ToolbarLayoutEditor({ initialWidthClass }: ToolbarLayoutEditorPr
           ))}
         </ToggleGroup>
       </div>
+
+      {showPreview && <ToolbarPreviewStrip layout={layout} widthClass={widthClass} />}
 
       <div className="flex flex-wrap items-center gap-2 border-b px-3 py-3">
         <span className="mr-auto text-sm">{t('settings.toolbar.preset.legend')}</span>

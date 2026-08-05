@@ -275,7 +275,8 @@
       },
       "item": {
         "show": "Zobrazit {{name}}"
-      }
+      },
+      "preview": "Jak to bude vypadat"
     },
     "quickCapture": {
       "title": "Rychlé psaní",

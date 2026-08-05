@@ -1,6 +1,6 @@
 # M4 Slice 4 Task 5 - Customisable toolbar
 
-**Status:** in progress. Steps 1-4, 4b, 4c and 4d done (2026-08-04); Steps 5-7 open.
+**Status:** in progress. Steps 1-4, 4b, 4c, 4d and 5 done (Step 5 on 2026-08-05); Steps 6-7 open.
 
 **Goal:** Make the editor toolbar the user's own.
 Which controls exist, in what order, grouped or collapsed, separately for a phone and a desktop, plus the same treatment for the quick-capture actions.
@@ -91,9 +91,9 @@ Renames worth calling out: `Mathematics` → `math`, `backgroundColor` → `high
 
 Tunable in step 5 against a real 360px device; the shapes below are the starting proposal, not a measured result.
 
-**Compact / Balanced (the new mobile default), 10 items:**
-`undo`, `style ▾`, `bold`, `italic`, `underline`, `list ▾`, `colour ▾`, `block ▾`, `media ▾`, `⚙`.
-Compared with today's phone bar this **adds** undo, redo, Blockquote, Math, the divider and every alignment (inside menus), and costs one tap for headings and lists.
+**Compact / Balanced (the mobile default), 7 items** - tuned in Step 5 against the measured 360px capacity, superseding the 10-item proposal below it:
+`history ▾`, `style ▾`, `format ▾`, `list ▾`, `colour ▾`, `media ▾`, `⚙`.
+Compared with today's phone bar this **adds** undo and redo (there is no Ctrl+Z on a phone) and colour, and costs one tap for every move. `block`, `align` and `font` are off rather than collapsed - see Step 5 for why.
 
 **Compact / Minimal, 5 items:** `style ▾`, `bold`, `list ▾`, `media ▾`, `⚙`.
 
@@ -125,6 +125,7 @@ Also in this step, because the tests could not be honest without them:
 - [x] `extensions/build.ts` - the editor's extension list moved out of `editor.tsx` into `buildEditorExtensions()`, so the registry test resolves against the *real* mounted set rather than a copy that can drift (this is the class of bug the missing `videoAttachment` was).
 
 **Open, for Step 5's tuning pass:** the Compact/Balanced preset as built is 12 items, not the 10 listed above - it keeps `redo` and adds `align` collapsed, which is what the prose promise ("adds undo, redo, Blockquote, Math, the divider and every alignment") requires. Confirm against a real 360px device.
+**Resolved in Step 5 (2026-08-05):** 12 was three-quarters again over the seven slots a 360px phone shows, so the default is now seven collapsed families' worth. The prose promise above is the thing that gave way; see Step 5.
 
 ### Step 2 - Toolbar renders from a resolved Layout - **done** (2026-08-04)
 
@@ -203,15 +204,29 @@ Three defects found by using the editor, none of them strictly toolbar work, all
 - [x] **The dialog close button was a 32px touch target.** The disc stays 32px; the *hit box* is now 44px, grown with an invisible inset overlay rather than a bigger disc - the same treatment as the card foot rail's pin.
 - [x] **The font family and font size selects both read "Default".** Nothing on either closed trigger said which control it was, and the tooltip that disambiguated them does not exist on a touch screen. Each trigger now carries its own icon and a short value (`Aa` / `Auto`, `Serif` / `24`), and the open menu previews what each row does - a family in its own face, a size at its own size. The full names are localised (`en` + `cs`); they were hardcoded English before.
 
-### Step 5 - Settings editor
+### Step 5 - Settings editor - **done** (2026-08-05)
 
-- [ ] Shared `ToolbarLayoutEditor`: Compact/Wide segmented toggle defaulting to the current Width Class and labelled by window width rather than by device; family rows with drag handle, name, on/off switch, expanded/collapsed control; drill-in to a flat leaf list that keeps and displays the Width Class in its header.
-- [ ] `@dnd-kit/core` + `@dnd-kit/sortable`. Drag handle is the only drag origin. Keyboard sensor on, with live-region announcements. No parallel up/down buttons.
-- [ ] Preset buttons (stamp, not mode) and Reset (re-stamp Balanced).
-- [ ] **Fold marker** in the Compact tab: a labelled line after the number of Items that fit a typical phone width, so the user configures against the real constraint.
-- [ ] Quick-capture section: the same row component over the plain ordered list, plus the note-create alignment (L/R) control.
-- [ ] Mount both in `Settings`, with a static preview strip for the toolbar (the settings page has no live editor to preview against).
-- [ ] Tests: reorder persists; toggle persists; drill-in preserves Width Class; a preset stamps a full Layout; Reset restores Balanced; the keyboard sensor moves a row; every row is at least 44px.
+- [x] Shared `ToolbarLayoutEditor`: Compact/Wide segmented toggle defaulting to the current Width Class and labelled by window width rather than by device; family rows with drag handle, name, on/off switch, expanded/collapsed control; drill-in to a flat leaf list that keeps and displays the Width Class in its header.
+      Every change writes straight through - the bar (or the preview strip) is the feedback, so there is no draft state and no Save to abandon halfway.
+- [x] `@dnd-kit/core` + `@dnd-kit/sortable`, wrapped once as `ui/SortableList.tsx` so the toolbar and quick capture reorder identically. Drag handle is the only drag origin (these rows carry switches and a drill-in target, and a row that dragged from anywhere would swallow the first pixels of each). Keyboard sensor on, with translated announcements. No parallel up/down buttons.
+- [x] Preset buttons (stamp, not mode). **No separate Reset:** decision 9 defines Reset as re-stamping Balanced, so it *is* that button, marked as the default - one control per outcome rather than two that produce byte-identical results.
+- [x] **Fold marker** (`foldMarker.ts`), in the Compact tab and drawn again inside the preview strip so the count and the shape agree. `COMPACT_FOLD_SLOTS = 7` is arithmetic, not a guess: the dialog is full-bleed on a phone with `p-6`, leaving 312px, and `n` buttons at `min-w-9` with `gap-1` need `40n - 4`.
+- [x] Quick-capture section: the same row component over the plain ordered list, plus the note-create alignment (L/R) control.
+      Both preferences had **never been read by anything** - the dial and the desktop row rendered the shipped constant, and the FAB sat centred - so this step also wired the consumers. Desktop stays a derivation (`text` filtered out), never a second stored list.
+      The last start on the dial cannot be switched off: on a phone it is the only way to make a note at all.
+- [x] Mount both in `Settings`, with a static preview strip for the toolbar - drawn from the registry rather than from a live editor, because mounting TipTap to show eight icons would pull the whole editor into the settings route's bundle.
+- [x] Tests: 17 in `ToolbarLayoutEditor.test.tsx`, 16 in `layoutEdits.test.ts`, 5 in `ToolbarPreviewStrip.test.tsx`, 4 in `QuickCaptureSection.test.tsx`, 7 in `quickCaptureLayout.test.ts`, plus the two Settings mounts.
+      The keyboard drag is really driven (Space / Arrow / Space) rather than waved at: jsdom reports every rect as 0x0, so the suite stacks the rows' geometry first. The 44px floor is asserted as the classes that produce it - jsdom has no layout, so the measured gate stays manual.
+
+**The tuning pass Step 1 left open is resolved, and it changed the phone default.** Compact/Balanced as built was 12 slots where 7 fit, so a fresh install scrolled to reach its own toolbar. It is now `history▾ style▾ format▾ list▾ colour▾ media▾ ⚙` - six collapsed families plus the gear, exactly seven slots.
+The cost, stated plainly because it walks back a promise in this document's own prose: `block`, `align` and `font` are **off** by default on a phone rather than collapsed, so Blockquote, Math, the divider and alignment are no longer on the default phone bar. At one slot each they would have put it three past the fold on day one. They stay reachable through the slash menu, a keyboard shortcut, or by being switched on - which is now a thing a user can do.
+Undo also costs one tap on the default phone bar, since `history` is collapsed. It is still pinned (Step 4b), so it cannot scroll away.
+
+Deviations worth recording:
+
+- `reconcileList` moved out of `resolveLayout.ts` into `lib/reconcile-order.ts` and is now shared with quick capture. Both surfaces are "a list the user arranged, against a list the app ships", and decision 8 subtly diverging in two places is how one feature grows two behaviours.
+- `DESKTOP_QUICK_CAPTURE_ACTIONS` is deleted; the derivation lives in `quickCaptureLayout.ts` where the stored order is applied.
+- The colour-blind switch was missing the coarse-pointer 44px floor and now carries `.touch-target`.
 
 ### Step 6 - In-editor entry
 

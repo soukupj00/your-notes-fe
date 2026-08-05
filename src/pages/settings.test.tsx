@@ -65,3 +65,23 @@ describe('appearance settings', () => {
     expect(await storedPrefs()).not.toHaveProperty('theme');
   });
 });
+
+describe('the customisation sections', () => {
+  it('carries the toolbar editor, with the preview Settings has no live bar for', async () => {
+    mount();
+
+    expect(await screen.findByTestId('toolbar-preview')).toBeInTheDocument();
+    expect(
+      screen.getByRole('radio', { name: 'settings.toolbar.width.compact' })
+    ).toBeInTheDocument();
+  });
+
+  it('carries the quick-capture list and the note button side', async () => {
+    mount();
+
+    expect(await screen.findByText('settings.quickCapture.title')).toBeInTheDocument();
+    expect(
+      screen.getByRole('radio', { name: 'settings.quickCapture.alignment.left' })
+    ).toBeInTheDocument();
+  });
+});
