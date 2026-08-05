@@ -41,22 +41,23 @@ export function buildLayout(spec: FamilySpec[]): ToolbarLayout {
 }
 
 /**
- * Compact / Balanced - the new phone default, and a strict gain on the old
- * `hideOnMobile` set: undo becomes reachable at all (there is no Ctrl+Z on a
- * phone), and Blockquote, Math, the divider and every alignment become reachable
- * inside menus, at the cost of one tap for headings and lists.
+ * Compact / Balanced - the phone default, tuned in Step 5 to the width it
+ * actually has: six collapsed families plus the gear is exactly the seven slots
+ * a 360px screen fits (`COMPACT_FOLD_SLOTS`), so a fresh install never has to
+ * scroll to reach its own toolbar.
  *
- * `format` is expanded with three leaves rather than collapsed because a family
- * is expanded or collapsed as a whole - see the accepted limitation in the plan.
+ * It still beats the old `hideOnMobile` set, which had no undo at all - there is
+ * no Ctrl+Z on a phone - and no colour. What it costs is one tap per move, and
+ * `block`, `align` and `font` being off rather than collapsed: at one slot each
+ * they would put the bar three past the fold on day one, and they stay reachable
+ * through the slash menu, a keyboard shortcut, or by being switched on.
  */
 const COMPACT_BALANCED: FamilySpec[] = [
-  { family: 'history', leaves: ['undo', 'redo'] },
+  { family: 'history', collapsed: true },
   { family: 'style', collapsed: true },
-  { family: 'format', leaves: ['bold', 'italic', 'underline'] },
+  { family: 'format', collapsed: true },
   { family: 'list', collapsed: true },
   { family: 'colour', collapsed: true },
-  { family: 'block', collapsed: true },
-  { family: 'align', collapsed: true },
   { family: 'media', collapsed: true },
   { family: 'meta' },
 ];
