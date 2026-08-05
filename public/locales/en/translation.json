@@ -247,6 +247,35 @@
       "importCancelled": "Import cancelled. Nothing was changed.",
       "exporting": "Building your backup…",
       "importing": "Reading the backup…"
+    },
+    "toolbar": {
+      "title": "Editor toolbar",
+      "description": "Choose which buttons the editor shows, in what order, and which of them share a menu.",
+      "back": "All groups",
+      "fold": "A phone shows about {{slots}} buttons before this line",
+      "width": {
+        "legend": "Editing the layout for",
+        "hint": "Narrow and wide are separate layouts. Which one you get follows the window's width, so a small desktop window is narrow too.",
+        "compact": "Narrow window",
+        "wide": "Wide window"
+      },
+      "preset": {
+        "legend": "Start from",
+        "minimal": "Minimal",
+        "balanced": "Balanced",
+        "everything": "Everything",
+        "isDefault": "· default"
+      },
+      "family": {
+        "summary": "{{on}} of {{total}} buttons on",
+        "show": "Show the {{name}} group",
+        "collapse": "Put the {{name}} group in one menu",
+        "collapsed": "In one menu",
+        "expanded": "Separate buttons"
+      },
+      "item": {
+        "show": "Show {{name}}"
+      }
     }
   },
   "pwa": {
@@ -414,5 +443,13 @@
       "description": "The app hit an unexpected error. Your notes are safe on this device - reloading should get you back.",
       "reload": "Reload the app"
     }
+  },
+  "dnd": {
+    "handle": "Reorder {{name}}",
+    "instructions": "Press Space to pick this up, the arrow keys to move it, Space to drop it, and Escape to cancel.",
+    "lifted": "{{name}} picked up. It is at position {{position}}.",
+    "over": "{{name}} moved to position {{position}}.",
+    "dropped": "{{name}} dropped at position {{position}}.",
+    "cancelled": "{{name}} put back where it was."
   }
 }

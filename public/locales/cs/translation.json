@@ -247,6 +247,35 @@
       "importCancelled": "Import zrušen. Nic nebylo změněno.",
       "exporting": "Vytvářím zálohu…",
       "importing": "Načítám zálohu…"
+    },
+    "toolbar": {
+      "title": "Panel nástrojů editoru",
+      "description": "Vyberte, která tlačítka editor zobrazí, v jakém pořadí a která z nich sdílejí nabídku.",
+      "back": "Všechny skupiny",
+      "fold": "Na telefonu se před touto čarou vejde asi {{slots}} tlačítek",
+      "width": {
+        "legend": "Upravujete rozvržení pro",
+        "hint": "Úzké a široké okno mají vlastní rozvržení. Které uvidíte, určuje šířka okna, takže i malé okno na počítači je úzké.",
+        "compact": "Úzké okno",
+        "wide": "Široké okno"
+      },
+      "preset": {
+        "legend": "Začít od",
+        "minimal": "Minimální",
+        "balanced": "Vyvážené",
+        "everything": "Vše",
+        "isDefault": "· výchozí"
+      },
+      "family": {
+        "summary": "Zapnuto {{on}} z {{total}} tlačítek",
+        "show": "Zobrazit skupinu {{name}}",
+        "collapse": "Sloučit skupinu {{name}} do jedné nabídky",
+        "collapsed": "V jedné nabídce",
+        "expanded": "Samostatná tlačítka"
+      },
+      "item": {
+        "show": "Zobrazit {{name}}"
+      }
     }
   },
   "pwa": {
@@ -415,5 +444,13 @@
       "description": "Aplikace narazila na neočekávanou chybu. Vaše poznámky jsou v tomto zařízení v bezpečí - znovunačtení by mělo pomoct.",
       "reload": "Znovu načíst aplikaci"
     }
+  },
+  "dnd": {
+    "handle": "Přeuspořádat: {{name}}",
+    "instructions": "Mezerníkem položku zvednete, šipkami ji přesunete, mezerníkem položíte a klávesou Escape akci zrušíte.",
+    "lifted": "{{name}} zvednuto. Pozice {{position}}.",
+    "over": "{{name}} přesunuto na pozici {{position}}.",
+    "dropped": "{{name}} položeno na pozici {{position}}.",
+    "cancelled": "{{name}} vráceno na původní místo."
   }
 }
