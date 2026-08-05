@@ -1,6 +1,6 @@
 # M4 Slice 4 - Identity & motion
 
-**Status:** Task 1 complete; Task 1b complete except the touch-target and reflow-measurement gates; Task 2 palette complete including the colour-blind modifier, outstanding only on the `TagPopover` mount; Task 3 complete except dialog consolidation and `NoteFeed` tests; **Task 4 complete** - the editor's note bar shipped 2026-08-03. Task 5 is next: designed and signed off 2026-08-03, split into its own plan (customisable toolbar) plus Task 5b (checklist polish).
+**Status:** Task 5 complete (2026-08-05, in its own plan). Task 1 complete; Task 1b complete except the touch-target and reflow-measurement gates; Task 2 palette complete including the colour-blind modifier, outstanding only on the `TagPopover` mount; Task 3 complete except dialog consolidation and `NoteFeed` tests; **Task 4 complete** - the editor's note bar shipped 2026-08-03. **Task 5 complete** (2026-08-05) in its own plan (customisable toolbar); Task 5b (checklist polish) is what is left of it and is next.
 
 **Goal:** Give the app a distinctive "tactile paper" identity, add purposeful Motion animation, ship the full-card colour system, and make the toolbar user-customisable - turning a competent app into one that feels intentional and personal.
 
@@ -131,7 +131,8 @@ The original decisions (Q11) are **superseded**.
 A flat `prefs.toolbar: string[]` of extension names cannot express the feature, because extension names are not buttons - `heading` yields three, `textAlign` three, `history` two, and the real leaf count is 31 rather than the 25 the name lists suggest.
 Drag-reorder is also promoted from fast-follow to core: order is half of what a layout is, so toggles alone would ship a layout the user cannot lay out.
 
-- [ ] See the linked plan for the seven steps: registry, layout resolution, collapsed-family control, prefs shape, settings editor, in-editor sheet, slash-menu ids.
+- [x] **All seven steps are done (2026-08-05):** registry, layout resolution, collapsed-family control, prefs shape, settings editor, in-editor sheet, slash-menu ids - plus the shortcut audit (4c) and the editor-chrome fixes (4d). See the linked plan; its manual gates are what remain.
+      Two things there that reach outside the toolbar: the phone's default bar was re-tuned to the seven slots a 360px screen actually shows, and `prefs.quickCapture` / `prefs.noteButtonAlignment` are now read by the capture bars, which had been rendering a hardcoded list and a centred FAB.
 
 ### Task 5b - Checklist polish
 

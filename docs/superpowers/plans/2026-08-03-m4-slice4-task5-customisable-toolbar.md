@@ -1,6 +1,6 @@
 # M4 Slice 4 Task 5 - Customisable toolbar
 
-**Status:** in progress. Steps 1-4, 4b, 4c, 4d and 5 done (Step 5 on 2026-08-05); Steps 6-7 open.
+**Status:** **complete** (2026-08-05). All seven steps plus 4b/4c/4d are done; the manual gates in *Verification* below are the only thing outstanding, and they need a real device rather than jsdom.
 
 **Goal:** Make the editor toolbar the user's own.
 Which controls exist, in what order, grouped or collapsed, separately for a phone and a desktop, plus the same treatment for the quick-capture actions.
