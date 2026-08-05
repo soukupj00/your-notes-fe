@@ -41,25 +41,33 @@ export function buildLayout(spec: FamilySpec[]): ToolbarLayout {
 }
 
 /**
- * Compact / Balanced - the phone default, tuned in Step 5 to the width it
- * actually has: six collapsed families plus the gear is exactly the seven slots
- * a 360px screen fits (`COMPACT_FOLD_SLOTS`), so a fresh install never has to
- * scroll to reach its own toolbar.
+ * Compact / Balanced - the phone default: undo and redo as two real buttons at
+ * the left edge, then five collapsed families.
  *
- * It still beats the old `hideOnMobile` set, which had no undo at all - there is
- * no Ctrl+Z on a phone - and no colour. What it costs is one tap per move, and
- * `block`, `align` and `font` being off rather than collapsed: at one slot each
- * they would put the bar three past the fold on day one, and they stay reachable
- * through the slash menu, a keyboard shortcut, or by being switched on.
+ * `history` is expanded rather than collapsed because a phone has no Ctrl+Z, so
+ * undo is the one control that may not cost a tap to *reach* before it costs a
+ * tap to use - and being first, it is also the pinned family, so it stays put
+ * while the rest of the bar scrolls under it. Redo comes with it: they are one
+ * gesture pair, and a menu holding two buttons is a menu for the sake of one.
+ *
+ * `meta` (the gear) is off here. It is a door to a settings screen, not an
+ * editing control, and on the one bar where slots are scarce it was spending a
+ * slot to duplicate a route `/settings` already offers. Switching it back on is
+ * one toggle in that same screen.
+ *
+ * That leaves six slots, which is exactly what a 360px phone fits
+ * (`COMPACT_FOLD_SLOTS`), so `colour`, `block`, `align` and `font` are off
+ * rather than collapsed. `colour` is the one that had to give: at one slot it
+ * would put the bar past the fold on day one, and text colour and highlight are
+ * the most decorative of the set. All four stay reachable through the slash
+ * menu, a keyboard shortcut, or by being switched on.
  */
 const COMPACT_BALANCED: FamilySpec[] = [
-  { family: 'history', collapsed: true },
+  { family: 'history' },
   { family: 'style', collapsed: true },
   { family: 'format', collapsed: true },
   { family: 'list', collapsed: true },
-  { family: 'colour', collapsed: true },
   { family: 'media', collapsed: true },
-  { family: 'meta' },
 ];
 
 const COMPACT_MINIMAL: FamilySpec[] = [

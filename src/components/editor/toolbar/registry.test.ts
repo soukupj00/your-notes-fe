@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AttachmentDeps } from '@/components/editor/extensions/attachments/deps';
 import { buildEditorExtensions } from '@/components/editor/extensions/build';
 import { icons } from '@/components/icons';
+import { COMPACT_FOLD_SLOTS, familySlots } from './foldMarker';
 import { buildLayout, toolbarPreset } from './presets';
 import {
   getToolbarFamily,
@@ -152,12 +153,17 @@ describe('toolbar presets', () => {
     }
   });
 
-  it('keeps the customise gear in every preset, so there is always a way back', () => {
+  it('keeps the customise gear in every preset but the phone default', () => {
     for (const width of widths) {
       for (const preset of presets) {
         const meta = toolbarPreset(preset, width).find((family) => family.id === 'meta');
-        expect(meta?.on, `${width}/${preset}`).toBe(true);
-        expect(meta?.members).toEqual([{ id: 'customize', on: true }]);
+        // The phone's Balanced bar is the one place the gear costs a slot the
+        // editing controls need - six is all a 360px screen fits, and
+        // `/settings` reaches the same editor. Everywhere else there is room,
+        // so the in-editor way back stays.
+        const expected = !(width === 'compact' && preset === 'balanced');
+        expect(meta?.on, `${width}/${preset}`).toBe(expected);
+        if (expected) expect(meta?.members).toEqual([{ id: 'customize', on: true }]);
       }
     }
   });
@@ -176,6 +182,21 @@ describe('toolbar presets', () => {
     const compact = toolbarPreset('balanced', 'compact');
     const history = compact.find((family) => family.id === 'history');
     expect(history?.on).toBe(true);
-    expect(history?.members.find((member) => member.id === 'undo')?.on).toBe(true);
+    // Expanded, not collapsed: a phone has no Ctrl+Z, so undo and redo are the
+    // two controls that may not cost a tap to reach before they cost one to use.
+    expect(history?.collapsed).toBe(false);
+    expect(history?.members.filter((member) => member.on).map((member) => member.id)).toEqual([
+      'undo',
+      'redo',
+    ]);
+  });
+
+  it('keeps the phone default inside what a 360px bar actually fits', () => {
+    // The one arrangement that must never need scrolling to reach its own
+    // buttons - it is what every fresh install sees before it knows the
+    // settings exist.
+    const compact = toolbarPreset('balanced', 'compact');
+    const slots = compact.reduce((total, family) => total + familySlots(family), 0);
+    expect(slots).toBeLessThanOrEqual(COMPACT_FOLD_SLOTS);
   });
 });

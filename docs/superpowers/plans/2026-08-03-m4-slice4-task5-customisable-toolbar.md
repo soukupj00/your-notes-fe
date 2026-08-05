@@ -211,6 +211,7 @@ Three defects found by using the editor, none of them strictly toolbar work, all
 - [x] `@dnd-kit/core` + `@dnd-kit/sortable`, wrapped once as `ui/SortableList.tsx` so the toolbar and quick capture reorder identically. Drag handle is the only drag origin (these rows carry switches and a drill-in target, and a row that dragged from anywhere would swallow the first pixels of each). Keyboard sensor on, with translated announcements. No parallel up/down buttons.
 - [x] Preset buttons (stamp, not mode). **No separate Reset:** decision 9 defines Reset as re-stamping Balanced, so it *is* that button, marked as the default - one control per outcome rather than two that produce byte-identical results.
 - [x] **Fold marker** (`foldMarker.ts`), in the Compact tab and drawn again inside the preview strip so the count and the shape agree. `COMPACT_FOLD_SLOTS = 7` is arithmetic, not a guess: the dialog is full-bleed on a phone with `p-6`, leaving 312px, and `n` buttons at `min-w-9` with `gap-1` need `40n - 4`.
+      **Corrected in Step 8:** the arithmetic used the button's *mouse* width. The 44px Touch Rule raises it under `pointer: coarse`, which is the only pointer a 360px phone has, so the real number is 6 and this shipped a marker that disagreed with the device it named.
 - [x] Quick-capture section: the same row component over the plain ordered list, plus the note-create alignment (L/R) control.
       Both preferences had **never been read by anything** - the dial and the desktop row rendered the shipped constant, and the FAB sat centred - so this step also wired the consumers. Desktop stays a derivation (`text` filtered out), never a second stored list.
       The last start on the dial cannot be switched off: on a phone it is the only way to make a note at all.
@@ -245,6 +246,22 @@ Deviations worth recording:
 - [x] Added the missing `math` slash item, which is the drift this uncovers. It prompts with the same translated string the toolbar button uses, rather than a second prompt of its own.
 - [x] Test: `names only actions the registry knows` walks every slash key through the registry, so the two surfaces can never show a different icon or label for the same action.
 
+### Step 8 - The phone bar and the FAB, measured on a device - **done** (2026-08-05)
+
+Step 5 tuned the phone default against arithmetic that was never checked in a browser.
+Driving a real 360px viewport is what found the gap, and it moved three things.
+
+- [x] **`COMPACT_FOLD_SLOTS` is 6, not 7.** The Step 5 arithmetic used `min-w-9` (36px), which is the button's width with a *mouse*. DESIGN.md's 44px Touch Rule raises every `[data-slot="button"]` to 44px under `@media (pointer: coarse)`, and a phone has no other pointer - so buttons need `48n - 4` px, and a collapsed family's trigger is 46px wider still because it carries a chevron. Six fit in 312px; seven need 332px.
+      The measured consequence: the shipped default overflowed its own bar by 24px (312px of space, 336px of buttons) while the settings screen reported it as fitting. The marker was not conservative, it was wrong.
+- [x] **The phone default is `↶ ↷ ¶▾ T▾ ≔▾ 📎▾`** - undo and redo as two real buttons, then four collapsed families, measured at exactly 312px in 312px.
+      `history` is expanded because a phone has no Ctrl+Z: undo is the one control that may not cost a tap to *reach* before it costs a tap to use. This walks back the Step 5 note that accepted a collapsed `history`. Being first it is still the pinned family, so it cannot scroll away.
+      `colour` is the slot that paid for it, and is now off rather than collapsed - text colour and highlight are the most decorative of the set, and the note's own colour is on the dialog's foot rail regardless.
+      `meta` (the `⚙`) is off here too: it is a door to a settings screen rather than an editing control, and `/settings` mounts the same editor. It stays on in every other preset and Width Class, which is what `registry.test.ts` now asserts instead of "every preset".
+- [x] **The FAB sits 24px above the safe-area inset and 16px in from the side**, up from 12px and 12px, via a shared `notes/floatingBottomBar.ts`.
+      `env(safe-area-inset-bottom)` is 0 in an ordinary browser tab, so it does nothing about the strip the phone itself owns - Android's gesture handle, iOS Safari's toolbar, the swipe-up area both reserve. A primary control 12px off the edge is inside that strip.
+      The constant is shared because a view's own action pill (Empty trash) lands in the same corner with the same geometry, and the two are never allowed to drift apart even though no route currently shows both.
+- [x] Tests: 3 in `QuickCaptureBar.test.tsx` (the shared geometry is applied, the default side is the right thumb, and a left-handed layout mirrors the popover and its label alignment as well as the button), 1 in `resolveLayout.test.ts` (the phone bar opens with undo and redo as real buttons), and 1 in `registry.test.ts` (the phone default stays inside `COMPACT_FOLD_SLOTS`).
+
 **One rename this forced, worth recording.** The registry's `labelKey` is a *name*, and five of them pointed at tooltips: "Insert image" is what a button promises, but a list of things you can insert or switch on calls it "Image". So `editor.{image,audio,video,file,excalidraw}.label` now sit beside the existing `.tooltip`, `editor.slash.{heading1,2,3}` became `editor.heading.{h1,h2,h3}`, and the rest of the `editor.slash.*` block is deleted - the menu takes its names from the registry, so those keys had no second reader. `editor.slash.noResults` stays, being the menu's own chrome.
 
 ## Deferred / explicitly out of scope
@@ -268,5 +285,9 @@ Deviations worth recording:
   - Resizing a desktop window across `sm` switches Layout without losing editor state.
 - Measured gates:
   - Every settings row and drag handle is at least 44x44.
-  - The fold marker's count matches what actually fits at 360px.
+  - ~~The fold marker's count matches what actually fits at 360px.~~ **Done in Step 8** - it did not, and now does: 6 slots, and the default measures 312px in 312px at a 360px viewport.
   - No new layout shift in the editor dialog when the toolbar re-resolves.
+- Still outstanding, because they need a real device rather than an emulated viewport:
+  - The compact bar stays one row with the on-screen keyboard open.
+  - The `⚙` sheet over the editor dialog behaves on a real phone.
+  - The FAB's 24px lift clears the browser's own bottom chrome on iOS Safari and Android Chrome.

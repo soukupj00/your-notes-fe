@@ -121,7 +121,7 @@ describe('foldIndex', () => {
     const rows = [
       family('history', ['undo', 'redo']), // 2, total 2
       family('style', ['h1', 'h2', 'h3']), // 3, total 5
-      family('list', ['bullet-list', 'ordered-list', 'task-list']), // 3, total 8 > 7
+      family('list', ['bullet-list', 'ordered-list', 'task-list']), // 3, total 8 > 6
     ];
     expect(foldIndex(rows)).toBe(2);
   });

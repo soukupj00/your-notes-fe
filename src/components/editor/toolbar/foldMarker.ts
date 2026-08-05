@@ -5,15 +5,24 @@ import type { ToolbarFamilyPref, ToolbarLayout } from './types';
  * How many buttons a 360px phone shows before the compact bar starts scrolling.
  *
  * Arithmetic rather than a guess: the editor dialog is full-bleed on a phone
- * with `p-6` (48px of padding), leaving 312px; a toolbar button is `min-w-9`
- * (36px) with a `gap-1` (4px) between, so `n` of them need `40n - 4` px. Seven
- * fit at 308px and an eighth would need 348px.
+ * with `p-6` (48px of padding), leaving 312px; a toolbar button is 44px wide,
+ * because DESIGN.md's 44px Touch Rule raises every `[data-slot="button"]` to
+ * that floor under `@media (pointer: coarse)`, and they sit `gap-1` (4px)
+ * apart - so `n` of them need `48n - 4` px. Six fit at 284px and a seventh
+ * would need 332px. A collapsed family's trigger is slightly wider still
+ * (46px: it carries a chevron beside its icon), which six of reach 296px, so
+ * six holds for both kinds of slot.
+ *
+ * This read 7 until the touch rule landed, on the button's *mouse* width of
+ * `min-w-9` (36px). That number was measurably wrong on the device it named:
+ * the shipped phone default overflowed its own bar by 24px while the settings
+ * screen reported it as fitting.
  *
  * It is a marker, not a limit: going past it is allowed, and the number exists
  * so the user configures against the real constraint instead of discovering it
  * on their phone.
  */
-export const COMPACT_FOLD_SLOTS = 7;
+export const COMPACT_FOLD_SLOTS = 6;
 
 /**
  * The number of bar slots a family occupies: one for a collapsed trigger,
