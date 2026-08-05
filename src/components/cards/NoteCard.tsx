@@ -128,7 +128,10 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
         {hasProse && (
           <NoteBody
             html={prose}
-            className="wrap-anywhere line-clamp-6 min-w-0 max-w-full text-body text-foreground [&_*]:max-w-full [&_li]:text-body [&_p]:text-body"
+            // A preview's checkboxes are a picture of the note, not a control:
+            // the card opens the note, and a tick that toggled here would be a
+            // tick that never got saved.
+            className="wrap-anywhere line-clamp-6 min-w-0 max-w-full text-body text-foreground [&_*]:max-w-full [&_input]:pointer-events-none [&_li]:text-body [&_p]:text-body"
           />
         )}
 

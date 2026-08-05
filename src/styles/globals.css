@@ -691,25 +691,97 @@
 }
 
 /* Task lists (TipTap TaskList/TaskItem): render the checkbox and text on one line,
-   overriding prose's default list indent/markers. */
-.tiptap ul[data-type="taskList"] {
+   overriding prose's default list indent/markers.
+
+   Scoped to `.prose`, not to `.tiptap`, because a checklist has two surfaces: the
+   editor and the card preview, which renders the same stored markup. While these
+   rules were editor-only, every checklist on the feed fell back to prose's own
+   list styling - a bullet *and* a checkbox, with the text wrapped onto the line
+   below it. The editor-only half of the treatment is the touch floor further
+   down: a card is a preview, and 44px rows would let three items eat a whole
+   card. */
+.prose ul[data-type="taskList"] {
   @apply list-none p-0;
 }
 
-.tiptap ul[data-type="taskList"] li {
+.prose ul[data-type="taskList"] li {
   @apply flex items-start gap-2;
 }
 
-.tiptap ul[data-type="taskList"] li > label {
+.prose ul[data-type="taskList"] li > label {
   @apply mt-0.5 flex-none select-none;
 }
 
-.tiptap ul[data-type="taskList"] li > div {
+.prose ul[data-type="taskList"] li > div {
   @apply flex-1;
 }
 
-.tiptap ul[data-type="taskList"] li > div p {
+.prose ul[data-type="taskList"] li > div p {
   @apply my-0;
+}
+
+/* The checkbox is the app's most-tapped control and was the one place the system
+   accent still showed through - Chrome's own blue, which is in no palette this
+   app defines. `accent-color` re-tints the native control without replacing it,
+   so it keeps the platform's checkmark, focus ring and forced-colours behaviour. */
+.prose ul[data-type="taskList"] li > label input[type="checkbox"] {
+  accent-color: var(--primary);
+}
+
+/* The 44px Touch Rule (DESIGN.md) reaches into the note body. A checklist box is
+   the smallest control the app has - the native input is ~15px - and it is the
+   one a phone user aims at over and over, so it is named there as a failure to
+   fix rather than port.
+
+   Two halves, and both are needed. The row gets a 44px floor so consecutive hit
+   boxes tile instead of overlapping; without it the box above would cover the
+   checkbox below and a tap would toggle the wrong item. The label then reaches
+   44x44 through an invisible `::before` rather than by growing, the same shape
+   `CardPin` uses: a box drawn that large would either dwarf its own line of text
+   or push the text a thumb's width to the right on every item.
+
+   Coarse pointers only. A mouse never needed the floor, and paying for it there
+   would make a twenty-item list twice as long on a laptop for nothing. */
+@media (pointer: coarse) {
+  .tiptap ul[data-type="taskList"] li {
+    @apply min-h-11;
+  }
+
+  .tiptap ul[data-type="taskList"] li > label {
+    @apply relative;
+  }
+
+  /* Sized absolutely rather than by a negative inset: the native box is a
+     browser default (~13-15px, and not the same number in every engine), so an
+     inset that reaches 44px in Chrome would miss it in Safari. */
+  .tiptap ul[data-type="taskList"] li > label::before {
+    @apply -translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 size-11 content-[''];
+  }
+}
+
+/* The checklist reorder grip (`TaskItemDragHandle`). TipTap positions it
+   absolutely beside the hovered item, so everything here is appearance: it sits
+   in the editor's own left padding, stays quiet until the pointer is on it, and
+   disappears on anything that is not a task item. */
+.task-drag-handle {
+  @apply flex cursor-grab items-center justify-center rounded-sm text-muted-foreground opacity-60 transition-opacity;
+  /* TipTap anchors the grip to the item's top-left corner, which puts it in the
+     editor's own 16px padding (good - it costs the text column nothing) but
+     level with the top of the line box rather than with the line. The nudge is
+     what centres it against the first line of the item it belongs to. */
+  margin-top: 5px;
+}
+
+.task-drag-handle:hover {
+  @apply opacity-100;
+}
+
+.task-drag-handle[data-dragging="true"] {
+  @apply cursor-grabbing opacity-100;
+}
+
+.task-drag-handle--off {
+  visibility: hidden;
 }
 
 /* While a color/highlight picker is open (`.color-picking` toggled on the editor by the

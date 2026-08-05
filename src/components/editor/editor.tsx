@@ -29,6 +29,7 @@ import {
 } from '@/components/editor/extensions/Excalidraw/scene';
 import { insertImageAttachmentFiles } from '@/components/editor/extensions/Image/insert';
 import { LinkBubbleMenu } from '@/components/editor/extensions/Link';
+import { TaskItemDragHandle } from '@/components/editor/extensions/TaskList';
 import { insertVideoAttachmentFiles } from '@/components/editor/extensions/Video/insert.ts';
 import EditorToolbar from '@/components/editor/toolbar/EditorToolbar.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
@@ -400,6 +401,10 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         {/* A link's own controls belong on the link: `openOnClick` is off inside
             the editor, so this is the only way to see where one points. */}
         {editable && <LinkBubbleMenu editor={editor} t={t} />}
+
+        {/* Checklist reorder. Mounted here rather than from the extension because
+            the grip is a React portal that needs the live editor instance. */}
+        {editable && editor && <TaskItemDragHandle editor={editor} />}
       </div>
 
       {/* Auto-started picture capture. `accept="image/*"` with no `capture`
