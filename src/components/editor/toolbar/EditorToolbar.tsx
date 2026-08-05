@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from '@/components/editor/extensions/button-types';
 import { cn } from '@/lib/utils.ts';
-import { resolveItemButton } from './registry';
+import { canRenderItem } from './registry';
 import { resolveLayout } from './resolveLayout';
 import { ToolbarFamilyMenu } from './ToolbarFamilyMenu';
 import { ToolbarLeaf } from './ToolbarLeaf';
@@ -110,7 +110,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   const families = resolveLayout(layouts?.[widthClass], widthClass)
     .map((entry) => ({
       ...entry,
-      items: entry.items.filter((item) => resolveItemButton(item, { editor, t: t as TFunction })),
+      items: entry.items.filter((item) => canRenderItem(item, { editor, t: t as TFunction })),
     }))
     .filter((entry) => entry.items.length > 0);
   const compact = widthClass === 'compact';

@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
@@ -94,5 +95,66 @@ describe('opening a note with the real editor', () => {
     await waitFor(() => expect(screen.getByDisplayValue('Hello')).toBeInTheDocument());
     await new Promise((resolve) => setTimeout(resolve, 200));
     expect(screen.getByDisplayValue('Hello')).toBeInTheDocument();
+  });
+});
+
+describe('the toolbar customisation sheet, over an unsaved draft', () => {
+  it('opens and closes without creating, saving or destroying the draft', async () => {
+    const user = userEvent.setup();
+    render(
+      <PreferencesProvider>
+        <TooltipProvider>
+          <NoteEditorDialog noteId={null} onClose={vi.fn()} />
+        </TooltipProvider>
+      </PreferencesProvider>
+    );
+
+    const title = await screen.findByPlaceholderText('notes.titlePlaceholder');
+    await user.type(title, 'Half a thought');
+
+    await user.click(await screen.findByTestId('toolbar-customize'));
+    // Two dialogs now: the note, and the sheet layered over it. The sheet is
+    // the one that must not navigate - routing to Settings would either destroy
+    // this draft or force the `ensureNoteId` race Task 4 refused.
+    const sheet = await screen.findByRole('dialog', { name: 'settings.toolbar.title' });
+    await user.click(within(sheet).getByRole('radio', { name: 'settings.toolbar.width.wide' }));
+    await user.keyboard('{Escape}');
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('dialog', { name: 'settings.toolbar.title' })
+      ).not.toBeInTheDocument()
+    );
+    // The draft is still a draft: nothing was written to the notes table, and
+    // what was typed is still there.
+    expect(await db.notes.count()).toBe(0);
+    expect(screen.getByDisplayValue('Half a thought')).toBeInTheDocument();
+  });
+
+  it('changes the bar behind it while it is still open', async () => {
+    const user = userEvent.setup();
+    render(
+      <PreferencesProvider>
+        <TooltipProvider>
+          <NoteEditorDialog noteId={null} onClose={vi.fn()} />
+        </TooltipProvider>
+      </PreferencesProvider>
+    );
+
+    const bar = await screen.findByTestId('editor-toolbar');
+    expect(within(bar).getByLabelText('editor.bold.tooltip')).toBeInTheDocument();
+
+    await user.click(await screen.findByTestId('toolbar-customize'));
+    const sheet = await screen.findByRole('dialog', { name: 'settings.toolbar.title' });
+    // This suite's `t` returns the bare key, so every family switch shares a
+    // label; the row is what identifies which family is being switched off.
+    const formatRow = within(sheet).getByRole('button', { name: /editor\.toolbar\.family\.format/ })
+      .parentElement as HTMLElement;
+    await user.click(within(formatRow).getByRole('switch'));
+
+    // No save, no reopen: the bar is the preview.
+    await waitFor(() =>
+      expect(within(bar).queryByLabelText('editor.bold.tooltip')).not.toBeInTheDocument()
+    );
   });
 });

@@ -228,11 +228,15 @@ Deviations worth recording:
 - `DESKTOP_QUICK_CAPTURE_ACTIONS` is deleted; the derivation lives in `quickCaptureLayout.ts` where the stored order is applied.
 - The colour-blind switch was missing the coarse-pointer 44px floor and now carries `.touch-target`.
 
-### Step 6 - In-editor entry
+### Step 6 - In-editor entry - **done** (2026-08-05)
 
-- [ ] `customize` Item renders the `⚙` at the end of the bar and opens `ToolbarLayoutEditor` in a **sheet over the editor dialog**. No navigation, no route change, no save.
-- [ ] The sheet edits the Width Class currently in effect, and the bar behind it updates live.
-- [ ] Tests: opening and closing the sheet leaves an unsaved draft unsaved and undestroyed; a change made in the sheet is visible in the bar behind it; turning `customize` off removes the `⚙` and leaves Settings as the only route in.
+- [x] `customize` Item renders the `⚙` at the end of the bar and opens `ToolbarLayoutEditor` in a **sheet over the editor dialog**. No navigation, no route change, no save.
+      It is the one Item with no extension behind it, so `canRenderItem` is what keeps the bar's "drop what this editor cannot draw" filter from dropping the only way into the sheet.
+- [x] The sheet edits the Width Class currently in effect, and the bar behind it updates live (the store is the single source; there is no draft to apply).
+      The preview strip is shown **only on compact**, where the bottom sheet covers the bar it is editing; on a wide window the sheet takes the side and the real bar stays visible, which is a better preview than a picture of one.
+- [x] Tests: 3 in `EditorToolbar.test.tsx` (the gear renders without an extension, opens the sheet without unmounting the bar, and disappears when switched off) and 2 in `NoteEditorDialog.realEditor.test.tsx` (an unsaved draft survives open-edit-close with nothing written to `notes`; a family switched off in the sheet leaves the bar behind it while it is still open).
+
+**Fallout worth knowing:** two existing `EditorToolbar` expectations grew a `⚙`. Their stored Layouts predate `meta`, and reconciliation adds it *on* - which is decision 8 working, since until now the gear was silently dropped for having no extension.
 
 ### Step 7 - Slash menu onto the registry
 

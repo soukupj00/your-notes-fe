@@ -3,7 +3,8 @@ import type React from 'react';
 import type { TFunction } from '@/components/editor/extensions/button-types';
 import { ActionButton } from '@/components/ui/ActionButton.tsx';
 import { getShortcutKeys } from '@/utils/platform.ts';
-import { resolveItemButton } from './registry';
+import { CUSTOMIZE_ITEM_ID, resolveItemButton } from './registry';
+import { ToolbarCustomizeButton } from './ToolbarCustomizeButton';
 import type { ToolbarItem } from './types';
 
 interface ToolbarLeafProps {
@@ -30,6 +31,10 @@ interface ToolbarLeafProps {
  * not mounted should cost its own button, not the whole bar.
  */
 export const ToolbarLeaf: React.FC<ToolbarLeafProps> = ({ item, editor, t, inMenu }) => {
+  // The one Item with no extension behind it: it changes the bar, not the note,
+  // so the bar owns it rather than resolving it through TipTap.
+  if (item.id === CUSTOMIZE_ITEM_ID) return <ToolbarCustomizeButton />;
+
   const view = resolveItemButton(item, { editor, t });
   if (!view) return null;
   const { component: Component, componentProps } = view;

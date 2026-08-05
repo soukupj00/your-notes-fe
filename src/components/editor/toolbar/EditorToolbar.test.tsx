@@ -1,4 +1,5 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Editor } from '@tiptap/core';
 import Document from '@tiptap/extension-document';
 import Paragraph from '@tiptap/extension-paragraph';
@@ -10,6 +11,7 @@ import { Italic } from '@/components/editor/extensions/Italic';
 import { ListItem } from '@/components/editor/extensions/ListItem';
 import { OrderedList } from '@/components/editor/extensions/OrderedList';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import EditorToolbar from './EditorToolbar';
 import type { ToolbarLayout } from './types';
 
@@ -38,9 +40,12 @@ function setWidth(px: number) {
 function renderToolbar(layout?: ToolbarLayout) {
   const editor = createEditor();
   render(
-    <TooltipProvider>
-      <EditorToolbar editor={editor} layouts={{ compact: layout, wide: layout }} />
-    </TooltipProvider>
+    // The `⚙` opens the Layout editor, which reads the preferences store.
+    <PreferencesProvider>
+      <TooltipProvider>
+        <EditorToolbar editor={editor} layouts={{ compact: layout, wide: layout }} />
+      </TooltipProvider>
+    </PreferencesProvider>
   );
 }
 
@@ -88,6 +93,9 @@ describe('EditorToolbar', () => {
       'editor.bulletList.tooltip',
       'editor.italic.tooltip',
       'editor.bold.tooltip',
+      // Reconciliation appends the families this stored Layout predates, and
+      // `meta` is on by default - "absent means new, not hidden".
+      'editor.toolbar.customize',
     ]);
   });
 
@@ -119,6 +127,7 @@ describe('EditorToolbar', () => {
       'editor.toolbar.family.list',
       'editor.italic.tooltip',
       'editor.bold.tooltip',
+      'editor.toolbar.customize',
     ]);
   });
 
@@ -161,5 +170,43 @@ describe('EditorToolbar', () => {
     // this bar may not do, so it scrolls instead of wrapping.
     expect(compact.className).not.toContain('flex-wrap');
     expect(compact.className).toContain('overflow-x-auto');
+  });
+});
+
+/** Just the gear, which is the whole `meta` family. */
+const META_ONLY: ToolbarLayout = [
+  { id: 'meta', on: true, collapsed: false, members: [{ id: 'customize', on: true }] },
+];
+
+describe('the customize gear', () => {
+  beforeEach(() => setWidth(1024));
+
+  it('renders even though no extension backs it', () => {
+    renderToolbar(META_ONLY);
+
+    // Every other Item is dropped when its extension is unmounted; this one has
+    // no extension at all, and dropping it would leave no way into the sheet.
+    expect(screen.getByTestId('toolbar-customize')).toBeInTheDocument();
+  });
+
+  it('opens the Layout editor in a sheet, without navigating away', async () => {
+    const user = userEvent.setup();
+    renderToolbar(META_ONLY);
+
+    await user.click(screen.getByTestId('toolbar-customize'));
+
+    const sheet = await screen.findByRole('dialog');
+    expect(within(sheet).getByText('settings.toolbar.title')).toBeInTheDocument();
+    // The bar it is editing is still mounted behind it: nothing was routed to,
+    // so an unsaved draft in the editor is untouched.
+    expect(screen.getByTestId('editor-toolbar')).toBeInTheDocument();
+  });
+
+  it('leaves Settings as the only way in once it is switched off', () => {
+    renderToolbar([
+      { id: 'meta', on: true, collapsed: false, members: [{ id: 'customize', on: false }] },
+    ]);
+
+    expect(screen.queryByTestId('toolbar-customize')).not.toBeInTheDocument();
   });
 });

@@ -5,7 +5,7 @@ import type { TFunction } from '@/components/editor/extensions/button-types';
 import type { IconName } from '@/components/icons';
 import { ActionButton } from '@/components/ui/ActionButton.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
-import { resolveItemButton } from './registry';
+import { canRenderItem, resolveItemButton } from './registry';
 import { ToolbarLeaf } from './ToolbarLeaf';
 import type { ToolbarFamily, ToolbarItem } from './types';
 
@@ -61,7 +61,7 @@ export const ToolbarFamilyMenu: React.FC<ToolbarFamilyMenuProps> = ({
   // A trigger that opens an empty popover is worse than no trigger. The bar
   // already filters unmountable leaves out, so this is the standalone guard for
   // a caller that does not.
-  const resolvable = items.filter((item) => resolveItemButton(item, { editor, t }));
+  const resolvable = items.filter((item) => canRenderItem(item, { editor, t }));
   if (resolvable.length === 0) return null;
 
   return (

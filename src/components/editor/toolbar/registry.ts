@@ -337,6 +337,13 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
   { id: 'customize', family: 'meta', icon: 'Settings2', labelKey: 'editor.toolbar.customize' },
 ];
 
+/**
+ * The one Item the app owns rather than an extension: it opens the customisation
+ * sheet instead of editing the note, so it resolves to no button view and the
+ * bar draws it itself.
+ */
+export const CUSTOMIZE_ITEM_ID = 'customize';
+
 const ITEMS_BY_ID = new Map(TOOLBAR_ITEMS.map((item) => [item.id, item]));
 const FAMILIES_BY_ID = new Map(TOOLBAR_FAMILIES.map((family) => [family.id, family]));
 
@@ -351,6 +358,20 @@ export function getToolbarFamily(id: string): ToolbarFamily | undefined {
 /** The family's Items in registry order. */
 export function itemsInFamily(familyId: ToolbarFamilyId): ToolbarItem[] {
   return TOOLBAR_ITEMS.filter((item) => item.family === familyId);
+}
+
+/**
+ * Whether this editor can draw the Item at all.
+ *
+ * The bar drops what it cannot draw *before* anything downstream cares about
+ * position - an unmounted extension must not leave a gap, a trigger that opens
+ * an empty popover, or (worse) become the pinned first family.
+ */
+export function canRenderItem(
+  item: ToolbarItem,
+  context: { editor: Editor; t: TFunction }
+): boolean {
+  return item.id === CUSTOMIZE_ITEM_ID || resolveItemButton(item, context) !== undefined;
 }
 
 /**
