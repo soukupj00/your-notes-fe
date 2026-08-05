@@ -207,6 +207,10 @@
       "label": "Paleta pro barvoslepé",
       "description": "Přebarví barvy poznámek a štítků tak, aby šlo všech devět rozlišit. Funguje s oběma motivy."
     },
+    "sinkCheckedItems": {
+      "label": "Odsouvat splněné položky",
+      "description": "Zaškrtnutá položka seznamu klesne na jeho konec; po odškrtnutí se vrátí zpět nahoru."
+    },
     "backup": {
       "title": "Záloha",
       "exported": "Záloha uložena.",

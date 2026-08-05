@@ -15,6 +15,7 @@ export function AppearanceSection() {
     <SettingsSection title={t('settings.appearance.title')}>
       <ThemeSetting />
       <ColorBlindSetting />
+      <SinkCheckedItemsSetting />
     </SettingsSection>
   );
 }
@@ -59,6 +60,25 @@ function ColorBlindSetting() {
         checked={preferences.colorBlind}
         onCheckedChange={(next) => setPreference('colorBlind', next)}
         aria-label={t('settings.colorBlind.label')}
+      />
+    </SettingsRow>
+  );
+}
+
+function SinkCheckedItemsSetting() {
+  const { t } = useTranslation();
+  const { preferences, setPreference } = usePreferences();
+
+  return (
+    <SettingsRow
+      label={t('settings.sinkCheckedItems.label')}
+      description={t('settings.sinkCheckedItems.description')}
+    >
+      <Switch
+        className="touch-target"
+        checked={preferences.sinkCheckedItems}
+        onCheckedChange={(next) => setPreference('sinkCheckedItems', next)}
+        aria-label={t('settings.sinkCheckedItems.label')}
       />
     </SettingsRow>
   );

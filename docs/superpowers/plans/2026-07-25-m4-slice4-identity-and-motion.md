@@ -1,6 +1,6 @@
 # M4 Slice 4 - Identity & motion
 
-**Status:** Task 5 complete (2026-08-05, in its own plan). Task 1 complete; Task 1b complete except the touch-target and reflow-measurement gates; Task 2 palette complete including the colour-blind modifier, outstanding only on the `TagPopover` mount; Task 3 complete except dialog consolidation and `NoteFeed` tests; **Task 4 complete** - the editor's note bar shipped 2026-08-03. **Task 5 complete** (2026-08-05) in its own plan (customisable toolbar); Task 5b (checklist polish) is what is left of it and is next.
+**Status:** Task 1 complete; Task 1b complete except the reflow-measurement gate - its touch-target gate now has exactly one site left, the `TagPills` remove `×`, since Task 5b closed the checklist boxes; Task 2 palette complete including the colour-blind modifier, outstanding only on the `TagPopover` mount; Task 3 complete except dialog consolidation and `NoteFeed` tests; **Task 4 complete** - the editor's note bar shipped 2026-08-03. **Task 5 complete** (2026-08-05) in its own plan (customisable toolbar). **Task 5b complete** (2026-08-05) - checklist tap targets, drag-reorder and the checked-sink. **Task 6 (settings surface) is next.**
 
 **Goal:** Give the app a distinctive "tactile paper" identity, add purposeful Motion animation, ship the full-card colour system, and make the toolbar user-customisable - turning a competent app into one that feels intentional and personal.
 
@@ -138,8 +138,25 @@ Drag-reorder is also promoted from fast-follow to core: order is half of what a 
 
 Decisions (Q5): larger tap targets, drag-reorder via TipTap drag-handle, optional checked-sink.
 
-- [ ] **Checklist polish**: larger tap targets on the body TaskList; drag-reorder via TipTap's official drag-handle extension; optional "sink checked items to bottom of their list" on toggle.
-- [ ] Tests: checklist reorder + checked-sink.
+- [x] **Tap targets** (2026-08-05). On a coarse pointer a task item is a 44px row and its label carries a 44x44 invisible `::before`; a mouse keeps today's 26px rows.
+      Both halves are load-bearing. The row floor is what makes consecutive hit boxes *tile* - without it the box above covers the checkbox below and a tap toggles the wrong item - and the invisible box is the `CardPin` shape rather than a bigger control, because a 44px checkbox either dwarfs its own line of text or pushes that text a thumb's width right on every item.
+      The box is sized absolutely rather than by a negative inset: the native checkbox is a browser default (~13-15px, and not the same number in every engine), so an inset tuned to reach 44px in Chrome would miss in Safari.
+      This closes the third of DESIGN.md's named Touch Rule failures ("checklist boxes are 15px").
+- [x] **Drag-reorder** (2026-08-05) via `@tiptap/extension-drag-handle-react` (MIT in v3), mounted from `editor.tsx` as `TaskItemDragHandle`.
+      **Checklist-only by hiding, not by excluding.** An excluded node leaves the extension with no candidate, and with no candidate it never calls `onNodeChange` - the grip would sit frozen beside the last checklist it saw while the pointer moved on. Letting a paragraph resolve normally and then hiding on it keeps the grip both scoped *and* honest about where the pointer is.
+      `nested` is on because a task item is never top-level, and the extension's default rules already resolve a checklist to the `taskItem` itself (wrapper list and content paragraph are both excluded). **Edge detection is off**: its deduction is `strength * depth`, which at a task item's depth of 2 reaches the exclusion threshold, so a pointer travelling leftward *toward* the grip would knock out the node the grip is for.
+      **Known limit: mouse only.** The extension positions itself off `mousemove`, which a touchscreen never fires, so a phone cannot reorder a checklist. Deliberately not solved here - a persistent per-item grip is a custom `TaskItem` NodeView and a permanent mark in the note body, which is a separate decision.
+- [x] **Checked-sink** (2026-08-05): `prefs.sinkCheckedItems`, off by default, switched in Settings → Appearance.
+      A preference rather than a behaviour because it is an opinion about what a list is for: a shopping list wants done things out of the way, a ranked list of options wants the order the user put it in, and rewriting that unasked is the app losing work.
+      Unchecking floats the item back to the **top of the checked block**, so a mistaken tap is undone by tapping again rather than leaving the item stranded among ones it no longer belongs with.
+      Implemented as an `appendTransaction` plugin that compares documents rather than reading steps - a toggle arrives as `setNodeMarkup`, which prosemirror expresses structurally, so a step-shaped test would be reading two libraries down. Old positions are mapped forward first, so it survives a toggle arriving alongside an edit elsewhere. Its own transaction is meta-tagged so the pass it triggers doesn't chase the move around the list. The caret travels with the item it was sitting in.
+- [x] Tests: `CheckedSink.test.ts` covers sink, stacking below existing checked items, the float-back, the no-op when already in place, the preference being off, nesting (an item sinks within its **own** sub-list, not past its parent), plain typing not reordering, and the caret following its item.
+      Drag-reorder has no unit test: it is a `dragstart`/`drop` sequence against a floating portal, which jsdom cannot stage honestly. Verified in a real browser instead - a drag moved the first item to the bottom, and the grip was confirmed to show on task items and hide on paragraphs.
+
+**Two fixes outside the stated scope, both in the same component:**
+
+- [x] **The card preview rendered checklists wrong.** The task-list layout CSS was scoped to `.tiptap`, so on the feed every checklist fell back to prose's own list styling - a bullet *and* a checkbox, with the text wrapped onto the line below. Rescoped to `.prose`, which both surfaces share; the touch floor stays `.tiptap`-only, because a card is a preview and 44px rows would let three items eat a whole card. Card checkboxes are also `pointer-events-none`: a preview's checkbox is a picture, and a tick that toggled there is a tick that never got saved.
+- [x] **The checkbox wore Chrome's blue**, which is in no palette this app defines - the last place the system accent showed through. `accent-color: var(--primary)` re-tints the native control without replacing it, so it keeps the platform checkmark, focus ring and forced-colours behaviour.
 
 ### Task 6 - Settings surface complete
 

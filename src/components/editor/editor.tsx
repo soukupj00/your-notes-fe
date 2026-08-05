@@ -211,10 +211,18 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   attachmentDepsRef.current = attachmentDeps;
   const getAttachmentDeps = useRef(() => attachmentDepsRef.current).current;
 
+  // Same shape, same reason: the checked-sink plugin is built once but has to
+  // see the preference as it is at the moment a checkbox is ticked, not as it
+  // was when the note opened.
+  const sinkCheckedItemsRef = useRef(preferences.sinkCheckedItems);
+  sinkCheckedItemsRef.current = preferences.sinkCheckedItems;
+  const getSinkCheckedItems = useRef(() => sinkCheckedItemsRef.current).current;
+
   const editor = useEditor({
     extensions: buildEditorExtensions({
       getDeps: getAttachmentDeps,
       getEditor: () => editorRef.current,
+      sinkCheckedItems: getSinkCheckedItems,
       t,
     }),
     content,

@@ -81,6 +81,15 @@ export const preferencesSchema = z.object({
    */
   colorBlind: z.boolean().catch(false).default(false),
   density: z.enum(['comfortable', 'compact']).default('comfortable'),
+  /**
+   * Whether ticking a checklist item drops it to the bottom of its list.
+   *
+   * Off by default, and a preference rather than a behaviour, because it is an
+   * opinion about what a list is for: a shopping list wants done things out of
+   * the way, while a ranked list of options wants the order the user put it in
+   * left alone. Rewriting that order unasked would be the app losing work.
+   */
+  sinkCheckedItems: z.boolean().default(false),
   /** `system` follows `prefers-reduced-motion`; the others override it. */
   reducedMotion: z.enum(['system', 'always', 'never']).default('system'),
   /** ISO timestamp of when the onboarding tour was completed or skipped. */

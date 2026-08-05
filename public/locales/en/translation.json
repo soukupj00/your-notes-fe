@@ -207,6 +207,10 @@
       "label": "Colour-blind palette",
       "description": "Re-tints note and label colours so the nine stay distinguishable. Works with either theme."
     },
+    "sinkCheckedItems": {
+      "label": "Sink checked items",
+      "description": "Ticking a checklist item drops it to the bottom of its list; unticking floats it back up."
+    },
     "backup": {
       "title": "Backup",
       "exported": "Backup saved.",
