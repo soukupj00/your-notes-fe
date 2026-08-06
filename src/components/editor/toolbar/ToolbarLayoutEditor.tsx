@@ -73,7 +73,7 @@ export function ToolbarLayoutEditor({ initialWidthClass, showPreview }: ToolbarL
   if (openFamily) {
     return (
       <div className="flex flex-col">
-        <div className="flex items-center gap-2 border-b px-2 py-2">
+        <div className="flex items-center gap-2 border-b p-2">
           <Button
             type="button"
             variant="ghost"
@@ -108,7 +108,7 @@ export function ToolbarLayoutEditor({ initialWidthClass, showPreview }: ToolbarL
 
   return (
     <div className="flex flex-col">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b p-3">
         <span className="flex min-w-0 flex-col">
           <span className="text-sm">{t('settings.toolbar.width.legend')}</span>
           <span className="text-muted-foreground text-xs">{t('settings.toolbar.width.hint')}</span>
@@ -131,7 +131,7 @@ export function ToolbarLayoutEditor({ initialWidthClass, showPreview }: ToolbarL
 
       {showPreview && <ToolbarPreviewStrip layout={layout} widthClass={widthClass} />}
 
-      <div className="flex flex-wrap items-center gap-2 border-b px-3 py-3">
+      <div className="flex flex-wrap items-center gap-2 border-b p-3">
         <span className="mr-auto text-sm">{t('settings.toolbar.preset.legend')}</span>
         {PRESETS.map((preset) => (
           <Button

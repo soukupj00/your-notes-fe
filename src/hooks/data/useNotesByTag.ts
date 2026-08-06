@@ -6,7 +6,6 @@ export function useNotesByTag(tagId: string) {
   const notes: (Note | undefined)[] | undefined = useLiveQuery(async () => {
     if (!tagId) return [];
 
-    // Get note-tag relationships for the given tag
     const noteTagRelations = await db.noteTags.where('tagId').equals(tagId).toArray();
     const noteIds = noteTagRelations.map((rel) => rel.noteId);
 

@@ -4,7 +4,7 @@ import { NoteCard } from '@/components/cards/NoteCard.tsx';
 import type { ViewMode } from '@/context/viewModeProvider.tsx';
 import { useNoteFeedLayout } from '@/hooks/useNoteFeedLayout.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
-import { INSTANT_TRANSITION, NIGHTSHIFT_SPRING, PRESENCE_TRANSITION } from '@/lib/motion.ts';
+import { PRESENCE_TRANSITION, resolveTransition } from '@/lib/motion.ts';
 import type { Note } from '@/models.ts';
 
 type NoteFeedProps = {
@@ -25,8 +25,8 @@ export function NoteFeed({ notes, mode, label, onSelect }: NoteFeedProps) {
   const ids = useMemo(() => notes.map((note) => note.id), [notes]);
   const reducedMotion = useReducedMotion();
   const { containerRef, layout, ready, supported } = useNoteFeedLayout(mode, ids);
-  const layoutTransition = reducedMotion ? INSTANT_TRANSITION : NIGHTSHIFT_SPRING;
-  const presenceTransition = reducedMotion ? INSTANT_TRANSITION : PRESENCE_TRANSITION;
+  const layoutTransition = resolveTransition(reducedMotion);
+  const presenceTransition = resolveTransition(reducedMotion, PRESENCE_TRANSITION);
 
   // ResizeObserver is the progressive-enhancement seam. Without measurement,
   // Stack remains a complete, readable, DOM-ordered feed rather than an

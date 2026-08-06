@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
-import { INSTANT_TRANSITION, NIGHTSHIFT_SPRING } from '@/lib/motion.ts';
+import { NIGHTSHIFT_SPRING, resolveTransition } from '@/lib/motion.ts';
 import { cn } from '@/lib/utils.ts';
 
 /**
@@ -21,7 +21,7 @@ export function QuickCaptureBar({ onStart }: { onStart: (editing: EditingState) 
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const reducedMotion = useReducedMotion();
-  const transition = reducedMotion ? INSTANT_TRANSITION : NIGHTSHIFT_SPRING;
+  const transition = resolveTransition(reducedMotion);
   const { preferences } = usePreferences();
   const actions = resolveQuickCapture(preferences.quickCapture);
   // Which thumb has to reach it. The dial, its labels and the popover all follow
@@ -64,11 +64,10 @@ export function QuickCaptureBar({ onStart }: { onStart: (editing: EditingState) 
                 key={key}
                 initial={reducedMotion ? false : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={
-                  reducedMotion
-                    ? INSTANT_TRANSITION
-                    : { ...NIGHTSHIFT_SPRING, delay: index * 0.035 }
-                }
+                transition={resolveTransition(reducedMotion, {
+                  ...NIGHTSHIFT_SPRING,
+                  delay: index * 0.035,
+                })}
               >
                 <Button
                   type="button"

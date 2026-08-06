@@ -10,7 +10,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '@/db/db.ts';
+import { clearNotesDb } from '@/test/db.ts';
 import { useAttachmentActions } from './useAttachmentActions.ts';
 
 function renderAttachmentActions() {
@@ -23,10 +23,7 @@ function renderAttachmentActions() {
   return captured!;
 }
 
-beforeEach(async () => {
-  await db.attachments.clear();
-  await db.notes.clear();
-});
+beforeEach(clearNotesDb);
 
 describe('useAttachmentActions - updateAttachment', () => {
   it('replaces the blob and sets preview + updatedAt', async () => {

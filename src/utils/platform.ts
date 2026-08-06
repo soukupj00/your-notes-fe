@@ -3,9 +3,6 @@
 let isMacResult: boolean | undefined;
 let isTouchDeviceResult: boolean | undefined;
 
-/**
- * Return true if the user is using a Mac (as opposed to Windows, etc.) device.
- */
 export function isMac(): boolean {
   if (isMacResult === undefined) {
     const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
@@ -34,7 +31,6 @@ export const getShortcutKey = (key: string): ShortcutKeyResult =>
 
 export const getShortcutKeys = (keys: string[]): ShortcutKeyResult[] => keys.map(getShortcutKey);
 
-/** Return true if the user is using a touch-based device. */
 export function isTouchDevice(): boolean {
   if (isTouchDeviceResult === undefined) {
     // This technique is taken from

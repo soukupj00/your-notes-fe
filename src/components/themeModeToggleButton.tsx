@@ -24,11 +24,7 @@ export function ThemeModeToggleButton() {
       aria-label={t('settings.theme.toggle')}
       title={t('settings.theme.toggle')}
     >
-      {isDark ? (
-        <Moon className="h-[1.2rem] w-[1.2rem]" />
-      ) : (
-        <Sun className="h-[1.2rem] w-[1.2rem]" />
-      )}
+      {isDark ? <Moon className="size-[1.2rem]" /> : <Sun className="size-[1.2rem]" />}
     </Button>
   );
 }

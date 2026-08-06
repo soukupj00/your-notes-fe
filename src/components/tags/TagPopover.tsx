@@ -1,47 +1,11 @@
-import { Check, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.tsx';
 import { Input } from '@/components/ui/input.tsx';
+import { LabeledCheckbox } from '@/components/ui/LabeledCheckbox.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
-import { cn } from '@/lib/utils.ts';
 import type { Tag } from '@/models.ts';
-
-/**
- * One row of the list: a real checkbox wrapped in its label, so the whole row
- * is one hit target with native keyboard and label-click behaviour.
- *
- * Not the shared `ui/checkbox`: Radix renders that as a `<button>`, which a
- * `<label>` cannot activate natively - the row's text would be dead to clicks.
- * The input is visually hidden and a styled span stands in, so it still looks
- * like every other checkbox in the app.
- */
-function TagCheckbox({
-  label,
-  checked,
-  onToggle,
-}: {
-  label: string;
-  checked: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <label className="flex w-full cursor-pointer items-center gap-2 rounded-md px-1 py-1.5 text-sm hover:bg-accent">
-      <input type="checkbox" checked={checked} onChange={onToggle} className="peer sr-only" />
-      <span
-        aria-hidden
-        className={cn(
-          'flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-input',
-          'peer-focus-visible:ring-2 peer-focus-visible:ring-ring',
-          checked && 'border-primary bg-primary text-primary-foreground'
-        )}
-      >
-        {checked && <Check className="size-3.5" />}
-      </span>
-      <span className="truncate">{label}</span>
-    </label>
-  );
-}
 
 type TagPopoverProps = {
   /** Every existing tag, unfiltered. */
@@ -115,10 +79,12 @@ export function TagPopover({ tags, assignedIds, onToggle, onCreate, trigger }: T
         <ul className="max-h-56 space-y-px overflow-y-auto">
           {filtered.map((tag) => (
             <li key={tag.id}>
-              <TagCheckbox
+              <LabeledCheckbox
                 label={tag.name}
                 checked={assignedIds.has(tag.id)}
                 onToggle={() => onToggle(tag)}
+                className="w-full rounded-md px-1 py-1.5 hover:bg-accent"
+                labelClassName="truncate"
               />
             </li>
           ))}

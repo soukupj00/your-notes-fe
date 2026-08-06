@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '@/db/db.ts';
+import { clearNotesDb } from '@/test/db.ts';
 import { useAttachmentActions } from './useAttachmentActions.ts';
 
 function actions() {
@@ -9,10 +10,7 @@ function actions() {
 
 const pngFile = () => new File([new Uint8Array(4)], 'p.png', { type: 'image/png' });
 
-beforeEach(async () => {
-  await db.attachments.clear();
-  await db.notes.clear();
-});
+beforeEach(clearNotesDb);
 
 describe('useAttachmentActions', () => {
   it('createAttachment validates then writes a row', async () => {

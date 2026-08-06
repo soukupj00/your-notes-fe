@@ -50,13 +50,14 @@ export function reconcileLayout(
   return families.map((family): ToolbarFamilyPref => {
     const registryFamily = getToolbarFamily(family.id);
     if (!registryFamily) return family;
-    const defaults = defaultFor(family.id).members;
+    const defaultMembers = defaultFor(family.id).members;
     return {
       ...family,
       members: reconcileOrder(
         family.members,
         itemsInFamily(registryFamily.id).map((item) => item.id),
-        (id): ToolbarMemberPref => defaults.find((member) => member.id === id) ?? { id, on: true }
+        (id): ToolbarMemberPref =>
+          defaultMembers.find((member) => member.id === id) ?? { id, on: true }
       ),
     };
   });
@@ -78,9 +79,10 @@ export function resolveLayout(
     .flatMap((family): ResolvedFamily[] => {
       const registryFamily = getToolbarFamily(family.id);
       if (!registryFamily) return []; // stored, preserved, but nothing to draw
+      const registryItems = itemsInFamily(registryFamily.id);
       const items = family.members
         .filter((member) => member.on)
-        .map((member) => itemsInFamily(registryFamily.id).find((item) => item.id === member.id))
+        .map((member) => registryItems.find((item) => item.id === member.id))
         .filter((item): item is ToolbarItem => item !== undefined);
       if (items.length === 0) return [];
       return [

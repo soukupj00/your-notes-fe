@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { db } from '@/db/db.ts';
 import type { Attachment, Note } from '@/models.ts';
+import { clearNotesDb } from '@/test/db.ts';
 import { TRASH_GRACE_DAYS, useNoteActions } from './useNoteActions.ts';
 
 function actions() {
@@ -40,11 +41,7 @@ async function putAttachment(noteId: string): Promise<Attachment> {
   return att;
 }
 
-afterEach(async () => {
-  await db.notes.clear();
-  await db.noteTags.clear();
-  await db.attachments.clear();
-});
+afterEach(clearNotesDb);
 
 describe('lifecycle transitions', () => {
   it('pinNote sets pinnedAt and unpinNote clears it', async () => {

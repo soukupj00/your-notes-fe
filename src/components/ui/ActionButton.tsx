@@ -31,32 +31,23 @@ const MenuRowLabelContext = React.createContext<string | null>(null);
 export const MenuRowLabelProvider = MenuRowLabelContext.Provider;
 
 export interface ActionButtonProps {
-  /** Whether button is disabled */
   disabled?: boolean;
-  /** Keyboard shortcut keys */
   shortcutKeys?: string[];
-  /** Custom CSS class */
   className?: string;
   /**
    * Inline styles, for the one thing a class cannot express: a value only known
    * at runtime. The colour triggers wear the colour they would apply.
    */
   style?: React.CSSProperties;
-  /** Loading state */
   loading?: boolean;
-  /** Tooltip text */
   tooltip?: string;
-  /** Tooltip options */
   tooltipOptions?: TooltipContentProps;
   /** Click handler */
   action?: ButtonViewReturnComponentProps['action'];
   /** Active state checker */
   isActive?: ButtonViewReturnComponentProps['isActive'];
-  /** Icon name */
   icon?: IconName;
-  /** Child elements (icon + text) */
   children?: React.ReactNode;
-  /** Render as child */
   asChild?: boolean;
   /** Use Toggle instead of Button */
   toggle?: boolean;
@@ -126,7 +117,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
             // Icon-only buttons need an accessible name; the visual tooltip is not exposed to AT.
             aria-label={tooltip}
             className={cn(
-              'flex h-8 w-8 items-center justify-center p-0',
+              'flex size-8 items-center justify-center p-0',
               flatButton,
               'hover:bg-muted hover:text-foreground',
               activeToggle,
@@ -137,7 +128,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
             )}
             {...rest}
           >
-            {Icon && <Icon className="h-4 w-4" />}
+            {Icon && <Icon className="size-4" />}
             {menuRowLabel !== null && (
               <span className="flex-1 text-left font-normal text-sm">{menuRowLabel}</span>
             )}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatBytes, formatDuration, formatFileType } from './format-attachment.ts';
+import { formatBytes, formatDuration, formatElapsed, formatFileType } from './format-attachment.ts';
 
 describe('formatDuration', () => {
   it('pads seconds and drops the hour when there is none', () => {
@@ -17,6 +17,28 @@ describe('formatDuration', () => {
     expect(formatDuration(undefined)).toBeNull();
     expect(formatDuration(Number.NaN)).toBeNull();
     expect(formatDuration(-1)).toBeNull();
+  });
+});
+
+describe('formatElapsed', () => {
+  it('formats seconds as m:ss', () => {
+    expect(formatElapsed(0)).toBe('0:00');
+    expect(formatElapsed(14)).toBe('0:14');
+    expect(formatElapsed(75)).toBe('1:15');
+  });
+
+  it('grows an hour field like a duration does, so both surfaces read alike', () => {
+    expect(formatElapsed(3661)).toBe('1:01:01');
+  });
+
+  it('floors rather than rounds, so a counter never runs ahead of the clock', () => {
+    expect(formatElapsed(0.9)).toBe('0:00');
+    expect(formatElapsed(59.6)).toBe('0:59');
+  });
+
+  it('shows zero for an unknown time, because a live counter must show something', () => {
+    expect(formatElapsed(Number.NaN)).toBe('0:00');
+    expect(formatElapsed(-1)).toBe('0:00');
   });
 });
 

@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { db } from '@/db/db.ts';
 import type { Attachment, Note, NoteTag } from '@/models.ts';
+import { clearNotesDb } from '@/test/db.ts';
 import { useNoteActions } from './useNoteActions.ts';
 
 // The hook holds no state, so we can call its returned functions directly.
@@ -36,11 +37,7 @@ function makeAtt(noteId: string): Attachment {
   };
 }
 
-afterEach(async () => {
-  await db.notes.clear();
-  await db.noteTags.clear();
-  await db.attachments.clear();
-});
+afterEach(clearNotesDb);
 
 describe('useNoteActions', () => {
   it("creates notes 'active' and unpinned, and lets callers seed lifecycle fields", async () => {

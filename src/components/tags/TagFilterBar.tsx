@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useTags } from '@/hooks/data/useTags.ts';
 import { useNoteSearchState } from '@/hooks/useNoteSearchState.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
-import { INSTANT_TRANSITION, NIGHTSHIFT_SPRING } from '@/lib/motion.ts';
+import { resolveTransition } from '@/lib/motion.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { cn } from '@/lib/utils.ts';
 
@@ -19,7 +19,7 @@ export function TagFilterBar() {
   const { search, toggleTag } = useNoteSearchState();
   const tags = useTags();
   const reducedMotion = useReducedMotion();
-  const transition = reducedMotion ? INSTANT_TRANSITION : NIGHTSHIFT_SPRING;
+  const transition = resolveTransition(reducedMotion);
 
   const searching = search.q.trim().length > 0 || search.tags.length > 0;
   if (!searching || tags.length === 0) return null;

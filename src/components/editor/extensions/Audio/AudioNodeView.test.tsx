@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Attachment } from '@/models.ts';
-import { AudioNodeView, formatTime } from './AudioNodeView';
+import { AudioNodeView } from './AudioNodeView';
 import { createAudioAutoplayCoordinator } from './audioAutoplay';
 
 beforeEach(() => {
@@ -43,14 +43,6 @@ function props(
     extension: { options: { getDeps: () => ({ getAttachment: get, t: (k: string) => k }) } },
   } as unknown as Parameters<typeof AudioNodeView>[0];
 }
-
-describe('formatTime', () => {
-  it('formats seconds as m:ss', () => {
-    expect(formatTime(0)).toBe('0:00');
-    expect(formatTime(14)).toBe('0:14');
-    expect(formatTime(75)).toBe('1:15');
-  });
-});
 
 describe('AudioNodeView', () => {
   it('resolves the blob into the audio element src and exposes a play control', async () => {

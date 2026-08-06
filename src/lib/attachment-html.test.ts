@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  bodyHasAttachment,
-  bodyHasAudio,
-  bodyHasFile,
-  bodyHasVideo,
-  extractAttachmentIds,
-} from './attachment-html';
+import { bodyHasAttachment, extractAttachmentIds } from './attachment-html';
 
 describe('bodyHasAttachment', () => {
   it('is true when the HTML contains an img with data-attachment-id', () => {
@@ -33,48 +27,6 @@ describe('bodyHasAttachment', () => {
         '<img data-attachment-id="first"><img data-attachment-id="second">'
       ).sort()
     ).toEqual(['first', 'second']);
-  });
-});
-
-describe('bodyHasAudio', () => {
-  it('is true for an audio attachment tag', () => {
-    expect(bodyHasAudio('<p>hi</p><audio data-attachment-id="au1"></audio>')).toBe(true);
-  });
-
-  it('is false for images, plain <audio>, or no attachment', () => {
-    expect(bodyHasAudio('<img data-attachment-id="a">')).toBe(false);
-    expect(bodyHasAudio('<audio src="x.webm"></audio>')).toBe(false);
-    expect(bodyHasAudio('<p>hi</p>')).toBe(false);
-    expect(bodyHasAudio('')).toBe(false);
-    expect(bodyHasAudio(undefined)).toBe(false);
-  });
-});
-
-describe('bodyHasVideo', () => {
-  it('is true for a video attachment tag', () => {
-    expect(bodyHasVideo('<p>hi</p><video data-attachment-id="v1"></video>')).toBe(true);
-  });
-
-  it('is false for images, audio, plain <video>, or no attachment', () => {
-    expect(bodyHasVideo('<img data-attachment-id="a">')).toBe(false);
-    expect(bodyHasVideo('<audio data-attachment-id="a1"></audio>')).toBe(false);
-    expect(bodyHasVideo('<video src="x.mp4"></video>')).toBe(false);
-    expect(bodyHasVideo('<p>hi</p>')).toBe(false);
-    expect(bodyHasVideo('')).toBe(false);
-    expect(bodyHasVideo(undefined)).toBe(false);
-  });
-});
-
-describe('bodyHasFile', () => {
-  it('is true for an <a> carrying a data-attachment-id', () => {
-    expect(bodyHasFile('<a data-attachment-id="f1">report.pdf</a>')).toBe(true);
-  });
-  it('is false for a plain link without the marker', () => {
-    expect(bodyHasFile('<a href="https://example.com">link</a>')).toBe(false);
-  });
-  it('is false for empty/nullish', () => {
-    expect(bodyHasFile('')).toBe(false);
-    expect(bodyHasFile(null)).toBe(false);
   });
 });
 

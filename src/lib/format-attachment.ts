@@ -1,16 +1,35 @@
+/** Whole seconds as `m:ss`, or `h:mm:ss` once past an hour. */
+function clock(wholeSeconds: number): string {
+  const hours = Math.floor(wholeSeconds / 3600);
+  const minutes = Math.floor((wholeSeconds % 3600) / 60);
+  const secs = wholeSeconds % 60;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return hours > 0 ? `${hours}:${pad(minutes)}:${pad(secs)}` : `${minutes}:${pad(secs)}`;
+}
+
 /**
- * A clip length as `m:ss`, or `h:mm:ss` once it runs past an hour.
- * Returns null for a row that never had its duration computed, so callers can
- * omit the badge rather than print a placeholder.
+ * A clip's total length.
+ *
+ * Rounded, because a badge states a finished quantity and 59.6s of audio is a
+ * minute long. Returns null for a row that never had its duration computed, so
+ * callers can omit the badge rather than print a placeholder.
  */
 export function formatDuration(seconds: number | undefined): string | null {
   if (seconds === undefined || !Number.isFinite(seconds) || seconds < 0) return null;
-  const whole = Math.round(seconds);
-  const hours = Math.floor(whole / 3600);
-  const minutes = Math.floor((whole % 3600) / 60);
-  const secs = whole % 60;
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return hours > 0 ? `${hours}:${pad(minutes)}:${pad(secs)}` : `${minutes}:${pad(secs)}`;
+  return clock(Math.round(seconds));
+}
+
+/**
+ * A running playhead or recording timer.
+ *
+ * Floored rather than rounded, which is the whole reason this is not
+ * `formatDuration`: a counter that rounds reads `0:01` before the first second
+ * has passed and reaches its own total a half-second early. Unknown time is
+ * `0:00`, because a live counter has to show something.
+ */
+export function formatElapsed(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+  return clock(Math.floor(seconds));
 }
 
 // Decimal units (kB, not KiB): the number next to a filename is read against

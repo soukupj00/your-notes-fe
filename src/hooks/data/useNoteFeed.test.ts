@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { db } from '@/db/db.ts';
 import type { NoteSearchParams } from '@/lib/note-search-params.ts';
 import type { Note, NoteState } from '@/models.ts';
+import { clearNotesDb } from '@/test/db.ts';
 import { type NoteFeedScope, useNoteFeed } from './useNoteFeed.ts';
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString();
@@ -39,11 +40,7 @@ async function putTag(id: string, noteIds: string[]) {
 
 const ids = (notes: Note[]) => notes.map((n) => n.id);
 
-afterEach(async () => {
-  await db.notes.clear();
-  await db.tags.clear();
-  await db.noteTags.clear();
-});
+afterEach(clearNotesDb);
 
 describe('scoping by state', () => {
   it.each<[NoteState, string]>([

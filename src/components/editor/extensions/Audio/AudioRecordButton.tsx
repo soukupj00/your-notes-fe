@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 import { icons } from '@/components/icons';
 import { ActionButton } from '@/components/ui/ActionButton.tsx';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover.tsx';
+import { formatElapsed } from '@/lib/format-attachment.ts';
 import type { AttachmentDeps } from '../attachments/deps';
-import { formatTime } from './AudioNodeView';
 import { RecordingWaveform } from './RecordingWaveform';
 import { useAudioRecorder } from './useAudioRecorder';
 
@@ -111,7 +111,7 @@ export function AudioRecordButton({ editor, getDeps, tooltip }: AudioRecordButto
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <span className="size-2 animate-pulse rounded-full bg-destructive" aria-hidden />
-            <span className="text-xs tabular-nums">{formatTime(rec.elapsedMs / 1000)}</span>
+            <span className="text-xs tabular-nums">{formatElapsed(rec.elapsedMs / 1000)}</span>
           </div>
           <RecordingWaveform stream={rec.stream} />
           <div className="flex items-center justify-end gap-2">
