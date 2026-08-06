@@ -4,13 +4,13 @@ import {
   type QuickCapturePref,
   reconcileQuickCapture,
 } from '@/components/notes/quickCaptureLayout.ts';
-import { SettingsRow, SettingsSection } from '@/components/settings/SettingsSection.tsx';
+import { SegmentedSetting, SettingsSection } from '@/components/settings/SettingsSection.tsx';
 import { SortableList, SortableRow } from '@/components/ui/SortableList.tsx';
 import { Switch } from '@/components/ui/switch.tsx';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx';
-import { usePreferences } from '@/context/PreferencesProvider.tsx';
+import { type Preferences, usePreferences } from '@/context/PreferencesProvider.tsx';
+import { moveById } from '@/lib/move-by-id.ts';
 
-const ALIGNMENTS = ['left', 'right'] as const;
+const ALIGNMENTS: Preferences['noteButtonAlignment'][] = ['left', 'right'];
 
 /**
  * The quick-capture starts: which ways of starting a note the `＋` offers, in
@@ -34,40 +34,21 @@ export function QuickCaptureSection() {
 
   return (
     <SettingsSection title={t('settings.quickCapture.title')}>
-      <SettingsRow
+      <SegmentedSetting
         label={t('settings.quickCapture.alignment.label')}
         description={t('settings.quickCapture.alignment.description')}
-      >
-        <ToggleGroup
-          type="single"
-          value={preferences.noteButtonAlignment}
-          onValueChange={(next) =>
-            setPreference('noteButtonAlignment', (next as 'left' | 'right') || 'right')
-          }
-          variant="outline"
-          size="sm"
-          aria-label={t('settings.quickCapture.alignment.label')}
-        >
-          {ALIGNMENTS.map((option) => (
-            <ToggleGroupItem key={option} value={option}>
-              {t(`settings.quickCapture.alignment.${option}`)}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      </SettingsRow>
+        value={preferences.noteButtonAlignment}
+        options={ALIGNMENTS.map((option) => ({
+          value: option,
+          label: t(`settings.quickCapture.alignment.${option}`),
+        }))}
+        onChange={(next) => void setPreference('noteButtonAlignment', next)}
+      />
 
       <SortableList
         ids={actions.map((entry) => entry.id)}
         nameOf={nameOf}
-        onReorder={(activeId, overId) => {
-          const from = actions.findIndex((entry) => entry.id === activeId);
-          const to = actions.findIndex((entry) => entry.id === overId);
-          if (from === -1 || to === -1) return;
-          const next = [...actions];
-          const [moved] = next.splice(from, 1);
-          next.splice(to, 0, moved);
-          void write(next);
-        }}
+        onReorder={(activeId, overId) => write(moveById(actions, activeId, overId))}
       >
         <ul className="divide-y py-1">
           {actions.map((entry) => {

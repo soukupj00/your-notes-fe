@@ -1,4 +1,5 @@
 import type { Editor } from '@tiptap/react';
+import { ChevronDown } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
 import type { TFunction } from '@/components/editor/extensions/button-types';
@@ -76,19 +77,9 @@ export const ToolbarFamilyMenu: React.FC<ToolbarFamilyMenuProps> = ({
           data-testid={`toolbar-family-${family.id}`}
         >
           {/* The chevron is what makes a menu look like a menu rather than a
-              button whose icon keeps changing under the user. */}
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            className="h-3 w-3 opacity-60"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="m6 9 6 6 6-6" />
-          </svg>
+              button whose icon keeps changing under the user. The same one the
+              preview strip draws, so the picture in Settings matches the bar. */}
+          <ChevronDown className="size-3 opacity-60" aria-hidden />
         </ActionButton>
       </PopoverTrigger>
       <PopoverContent

@@ -27,4 +27,4 @@ Custom theme provider (**not** `next-themes`, even though that package is instal
 - Persists the choice to `localStorage` under `storageKey` (default `vite-ui-theme`); `App.tsx` uses `defaultTheme="dark"`.
 - On change, toggles the `light`/`dark` class on `document.documentElement`; `system` resolves via `window.matchMedia('(prefers-color-scheme: dark)')`.
 - Exposes `{ theme, setTheme }` via the `useTheme()` hook (throws outside the provider).
-- The actual color values are the OKLCH tokens in `src/themes.ts`.
+- The actual color values are the OKLCH custom properties in `src/styles/globals.css`, which is the single live token source for both themes (the old `src/themes.ts` duplicate was deleted in M4 Slice 4).

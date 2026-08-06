@@ -2,6 +2,7 @@ import { Moon, Sun } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/context/themeProvider.tsx';
+import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
 
 export function ThemeModeToggleButton() {
   const { t } = useTranslation();
@@ -18,7 +19,7 @@ export function ThemeModeToggleButton() {
     <Button
       variant="ghost"
       size="icon"
-      className="touch-target rounded-control focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-chrome"
+      className={CHROME_ICON_BUTTON}
       onClick={handleToggle}
       aria-label={t('settings.theme.toggle')}
       title={t('settings.theme.toggle')}

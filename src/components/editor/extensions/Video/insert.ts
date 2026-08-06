@@ -1,8 +1,7 @@
 import type { Editor } from '@tiptap/core';
-import { AttachmentError, validateAttachmentFile } from '@/lib/attachments.ts';
 import { generateVideoPoster } from '@/lib/video-poster.ts';
 import type { AttachmentDeps } from '../attachments/deps.ts';
-import { insertAttachmentFiles } from '../attachments/insert.ts';
+import { insertAttachmentFiles, withDerivedAttachmentData } from '../attachments/insert.ts';
 
 /**
  * Video-specific insertion step, mirroring `insertImageAttachmentFiles`: capture
@@ -20,18 +19,10 @@ export function insertVideoAttachmentFiles(
   deps: AttachmentDeps,
   insertNode: (attachmentId: string) => void
 ): Promise<void> {
-  const videoDeps: AttachmentDeps = {
-    ...deps,
-    createAttachment: async (noteId, file, kind) => {
-      const validationError = validateAttachmentFile(file, 'video');
-      if (validationError) throw new AttachmentError(validationError);
-      const { poster, duration } = await generateVideoPoster(file);
-      return deps.createAttachment(noteId, file, kind, {
-        ...(poster ? { thumbnail: poster } : {}),
-        ...(duration !== undefined ? { duration } : {}),
-      });
-    },
-  };
+  const videoDeps = withDerivedAttachmentData(deps, 'video', async (file) => {
+    const { poster, duration } = await generateVideoPoster(file);
+    return { thumbnail: poster, duration };
+  });
 
   return insertAttachmentFiles(editor, files, 'video', videoDeps, insertNode);
 }

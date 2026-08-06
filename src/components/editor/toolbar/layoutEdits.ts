@@ -1,24 +1,5 @@
+import { moveById } from '@/lib/move-by-id.ts';
 import type { ToolbarFamilyPref, ToolbarLayout } from './types';
-
-/**
- * Move the entry with `activeId` to where `overId` currently sits.
- *
- * This is the one reorder primitive both lists use, and it is deliberately
- * `id`-based rather than index-based: `@dnd-kit` reports a drag as two ids, and
- * translating those to indices at every call site is where an off-by-one lives.
- * An id the list does not hold is a no-op rather than a throw - a drag can end
- * over nothing at all.
- */
-function moveById<T extends { id: string }>(list: T[], activeId: string, overId: string): T[] {
-  const from = list.findIndex((entry) => entry.id === activeId);
-  const to = list.findIndex((entry) => entry.id === overId);
-  if (from === -1 || to === -1 || from === to) return list;
-
-  const next = [...list];
-  const [moved] = next.splice(from, 1);
-  next.splice(to, 0, moved);
-  return next;
-}
 
 /** Reorder the families of one Width Class. Array position is bar order. */
 export function moveFamily(layout: ToolbarLayout, activeId: string, overId: string): ToolbarLayout {

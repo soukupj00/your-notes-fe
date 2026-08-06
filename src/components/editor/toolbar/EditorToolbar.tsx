@@ -101,7 +101,9 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   stickyOnMobile,
   className,
 }) => {
-  const { t } = useTranslation();
+  // The button factories take i18next's `t` under our own narrower alias, so the
+  // cast is done once here rather than at each of the three hand-offs below.
+  const { t } = useTranslation() as { t: TFunction };
   const widthClass = useWidthClass();
   // Drop what this editor cannot actually draw before anything downstream cares
   // about position. `resolveLayout` is pure and knows nothing about which
@@ -110,7 +112,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   const families = resolveLayout(layouts?.[widthClass], widthClass)
     .map((entry) => ({
       ...entry,
-      items: entry.items.filter((item) => canRenderItem(item, { editor, t: t as TFunction })),
+      items: entry.items.filter((item) => canRenderItem(item, { editor, t })),
     }))
     .filter((entry) => entry.items.length > 0);
   const compact = widthClass === 'compact';
@@ -171,11 +173,9 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         // unpinned still overflows once the wrapper is added.
         const pinned = compact && scrolls && index === 0;
         const content = collapsed ? (
-          <ToolbarFamilyMenu family={family} items={items} editor={editor} t={t as TFunction} />
+          <ToolbarFamilyMenu family={family} items={items} editor={editor} t={t} />
         ) : (
-          items.map((item) => (
-            <ToolbarLeaf key={item.id} item={item} editor={editor} t={t as TFunction} />
-          ))
+          items.map((item) => <ToolbarLeaf key={item.id} item={item} editor={editor} t={t} />)
         );
 
         return (

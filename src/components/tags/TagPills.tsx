@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { OverflowCount } from '@/components/ui/OverflowCount.tsx';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { cn } from '@/lib/utils.ts';
 import type { Tag } from '@/models.ts';
@@ -62,12 +63,9 @@ export function TagPills({ tags, onRemove, maxVisible, className }: TagPillsProp
           )}
         </li>
       ))}
-      {/* The overflow chip differs by fill, never by a dashed border (DESIGN.md
-          → Chips), and takes the card's own chip identity so it reads as part of
-          the label row rather than as a grey control dropped into it. */}
       {hiddenCount > 0 && (
-        <li className="shrink-0 rounded-full bg-note-chip px-2.5 py-1 text-label text-note-on-chip tabular-nums">
-          +{hiddenCount}
+        <li className="flex shrink-0">
+          <OverflowCount count={hiddenCount} />
         </li>
       )}
     </ul>

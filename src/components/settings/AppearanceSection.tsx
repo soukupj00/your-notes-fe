@@ -1,9 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { Switch } from '@/components/ui/switch.tsx';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx';
 import { type Preferences, usePreferences } from '@/context/PreferencesProvider.tsx';
 import { type Theme, useTheme } from '@/context/themeProvider.tsx';
-import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
+import { SegmentedSetting, SettingsSection, SwitchSetting } from './SettingsSection.tsx';
 
 const THEMES: Theme[] = ['system', 'light', 'dark'];
 const DENSITIES: Preferences['density'][] = ['comfortable', 'compact'];
@@ -21,48 +19,6 @@ export function AppearanceSection() {
       <ReducedMotionSetting />
       <SinkCheckedItemsSetting />
     </SettingsSection>
-  );
-}
-
-/**
- * A settings row whose control is a segmented picker over a closed set.
- *
- * Shared by all three of them for one reason worth naming: Radix's ToggleGroup
- * clears its value when the *active* item is pressed again, which for a
- * setting means a tap on "Compact" while compact turns the app into no density
- * at all. Every one of these needs the same guard, so it lives in one place
- * rather than being remembered three times.
- */
-function SegmentedSetting<T extends string>({
-  label,
-  description,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  description?: string;
-  value: T;
-  options: readonly { value: T; label: string }[];
-  onChange: (next: T) => void;
-}) {
-  return (
-    <SettingsRow label={label} description={description}>
-      <ToggleGroup
-        type="single"
-        value={value}
-        onValueChange={(next) => onChange((next as T) || value)}
-        variant="outline"
-        size="sm"
-        aria-label={label}
-      >
-        {options.map((option) => (
-          <ToggleGroupItem key={option.value} value={option.value}>
-            {option.label}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
-    </SettingsRow>
   );
 }
 
@@ -135,17 +91,12 @@ function ColorBlindSetting() {
   const { preferences, setPreference } = usePreferences();
 
   return (
-    <SettingsRow
+    <SwitchSetting
       label={t('settings.colorBlind.label')}
       description={t('settings.colorBlind.description')}
-    >
-      <Switch
-        className="touch-reach"
-        checked={preferences.colorBlind}
-        onCheckedChange={(next) => setPreference('colorBlind', next)}
-        aria-label={t('settings.colorBlind.label')}
-      />
-    </SettingsRow>
+      checked={preferences.colorBlind}
+      onChange={(next) => void setPreference('colorBlind', next)}
+    />
   );
 }
 
@@ -154,17 +105,12 @@ function SinkCheckedItemsSetting() {
   const { preferences, setPreference } = usePreferences();
 
   return (
-    <SettingsRow
+    <SwitchSetting
       label={t('settings.sinkCheckedItems.label')}
       description={t('settings.sinkCheckedItems.description')}
-    >
-      <Switch
-        className="touch-reach"
-        checked={preferences.sinkCheckedItems}
-        onCheckedChange={(next) => setPreference('sinkCheckedItems', next)}
-        aria-label={t('settings.sinkCheckedItems.label')}
-      />
-    </SettingsRow>
+      checked={preferences.sinkCheckedItems}
+      onChange={(next) => void setPreference('sinkCheckedItems', next)}
+    />
   );
 }
 

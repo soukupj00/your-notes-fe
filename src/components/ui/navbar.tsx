@@ -31,6 +31,7 @@ import {
 import { SidebarTrigger } from '@/components/ui/sidebar.tsx';
 import { useIsFeedRoute } from '@/hooks/useNoteSearchState.ts';
 import i18n from '@/i18n';
+import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
 import { listLocales } from '@/lib/locales.ts';
 
 function Navbar() {
@@ -62,7 +63,7 @@ function Navbar() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="touch-target rounded-control focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-chrome"
+                className={CHROME_ICON_BUTTON}
                 aria-label={t('settings.locale.label')}
               >
                 <Globe />
@@ -89,12 +90,7 @@ function Navbar() {
             </DropdownMenuContent>
           </DropdownMenu>
           <ThemeModeToggleButton />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="touch-target rounded-control focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-chrome"
-            asChild
-          >
+          <Button variant="ghost" size="icon" className={CHROME_ICON_BUTTON} asChild>
             <Link to="/settings" aria-label={t('nav.settings')}>
               <Settings />
             </Link>
@@ -113,7 +109,7 @@ function Navbar() {
             <Button
               variant="ghost"
               size="icon"
-              className="touch-target rounded-control focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-chrome"
+              className={CHROME_ICON_BUTTON}
               aria-label={t('nav.settings')}
             >
               <Settings />

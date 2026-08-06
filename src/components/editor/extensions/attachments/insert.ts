@@ -1,8 +1,47 @@
 import type { Editor } from '@tiptap/core';
 import { extractAttachmentIds } from '@/lib/attachment-html.ts';
-import { AttachmentError } from '@/lib/attachments.ts';
+import { AttachmentError, validateAttachmentFile } from '@/lib/attachments.ts';
 import type { AttachmentKind } from '@/models.ts';
 import type { AttachmentDeps } from './deps';
+
+/** Derived data computed from the file before it is stored, or nothing. */
+export type DerivedAttachmentData = { thumbnail?: Blob; duration?: number };
+
+/**
+ * `deps` with a `createAttachment` that validates the file and derives its card
+ * metadata in the same step that stores it.
+ *
+ * Image and video both need this - a picture wants a thumbnail, a clip wants a
+ * poster frame and its length - and both need it *atomically* with the write, so
+ * a row can never exist without the preview the feed expects. `deriveData` is
+ * the only difference between them, and it is best-effort by contract: whatever
+ * it fails to produce it simply omits, and the attachment is stored regardless.
+ */
+export function withDerivedAttachmentData(
+  deps: AttachmentDeps,
+  kind: AttachmentKind,
+  deriveData: (file: File) => Promise<DerivedAttachmentData>
+): AttachmentDeps {
+  return {
+    ...deps,
+    createAttachment: async (noteId, file, fileKind) => {
+      // Validated here rather than inside `deriveData`, so a rejected file never
+      // pays for a decode it was always going to throw away.
+      const validationError = validateAttachmentFile(file, kind);
+      if (validationError) throw new AttachmentError(validationError);
+      const derived = await deriveData(file);
+      // Whatever could not be derived is left off entirely rather than passed as
+      // an explicit `undefined`: the options argument says "here is extra data",
+      // and a key with nothing behind it is not that.
+      const options = Object.fromEntries(
+        Object.entries(derived).filter(([, value]) => value !== undefined)
+      ) as DerivedAttachmentData;
+      return Object.keys(options).length > 0
+        ? deps.createAttachment(noteId, file, fileKind, options)
+        : deps.createAttachment(noteId, file, fileKind);
+    },
+  };
+}
 
 const MIME_PREFIX: Partial<Record<AttachmentKind, string>> = {
   image: 'image/',

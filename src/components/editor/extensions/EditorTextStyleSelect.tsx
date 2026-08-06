@@ -1,5 +1,5 @@
 import type { Editor } from '@tiptap/react';
-import { CaseSensitive, type LucideIcon, Type } from 'lucide-react';
+import { type IconName, icons } from '@/components/icons';
 import {
   Select,
   SelectContent,
@@ -24,8 +24,11 @@ const DEFAULT_VALUE = '__default__';
 
 interface StyleOption {
   value: string;
-  /** i18n key for the full name, shown in the open menu. */
-  labelKey: string;
+  /**
+   * i18n key for the full name, shown in the open menu. Absent for an option
+   * whose value is already its name - a size renders as "16px" in every locale.
+   */
+  labelKey?: string;
   /**
    * What the closed trigger shows. It has to be short enough for a toolbar and
    * distinct enough to read at a glance - "Default" on both selects told the
@@ -58,15 +61,15 @@ const OPTIONS: Record<EditorTextStyleVariant, StyleOption[]> = {
     { value: DEFAULT_VALUE, labelKey: 'editor.fontSize.options.default', short: 'Auto' },
     ...['12px', '14px', '16px', '18px', '24px', '32px'].map((size) => ({
       value: size,
-      labelKey: '',
       short: size.replace('px', ''),
     })),
   ],
 };
 
-const ICONS: Record<EditorTextStyleVariant, LucideIcon> = {
-  fontFamily: Type,
-  fontSize: CaseSensitive,
+/** Registry keys, per the icon convention - never an imported component. */
+const ICONS: Record<EditorTextStyleVariant, IconName> = {
+  fontFamily: 'Type',
+  fontSize: 'CaseSensitive',
 };
 
 function updateTextStyle(editor: Editor, variant: EditorTextStyleVariant, value: string): void {
@@ -102,7 +105,7 @@ function previewStyle(
 export function EditorTextStyleSelect({ editor, tooltip, t, variant }: EditorTextStyleSelectProps) {
   const currentValue: string = editor.getAttributes('textStyle')[variant] || '';
   const options = OPTIONS[variant];
-  const Icon = ICONS[variant];
+  const Icon = icons[ICONS[variant]];
   const current = options.find((option) => option.value === (currentValue || DEFAULT_VALUE));
 
   return (

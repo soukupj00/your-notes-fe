@@ -32,7 +32,11 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
     trashNote,
     restoreToActive,
   } = useNoteActions();
-  const liveTags = useTagsForNote(note.id);
+  // The feed joins each note's labels on when it builds the entry
+  // (`useNoteFeed`), so a card in the feed reads them off the note and skips the
+  // query - otherwise every card would open a live query only to discard it. A
+  // card handed a bare note still resolves its own labels.
+  const liveTags = useTagsForNote(note.tags ? null : note.id);
   const tags = note.tags ?? liveTags;
 
   // Attachments are summarised by CardMedia, so the text preview renders the

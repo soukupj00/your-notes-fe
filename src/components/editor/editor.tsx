@@ -31,7 +31,7 @@ import { insertImageAttachmentFiles } from '@/components/editor/extensions/Image
 import { LinkBubbleMenu } from '@/components/editor/extensions/Link';
 import { TaskItemDragHandle } from '@/components/editor/extensions/TaskList';
 import { insertVideoAttachmentFiles } from '@/components/editor/extensions/Video/insert.ts';
-import EditorToolbar from '@/components/editor/toolbar/EditorToolbar.tsx';
+import { EditorToolbar } from '@/components/editor/toolbar/EditorToolbar.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';

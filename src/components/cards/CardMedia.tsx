@@ -2,6 +2,7 @@ import DOMPurify from 'dompurify';
 import { FileText, Play } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { OverflowCount } from '@/components/ui/OverflowCount.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useNoteAttachments } from '@/hooks/data/useNoteAttachments.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
@@ -58,22 +59,27 @@ function useVisualUrls(visuals: Resolved[]): Record<string, string> {
   return urls;
 }
 
-/** The one overflow shape on the card, so the user learns it once. */
-function More({ count, className }: { count: number; className?: string }) {
-  return (
-    <span
-      className={cn(
-        'rounded-full bg-note-chip px-2.5 py-1 text-label text-note-on-chip tabular-nums',
-        className
-      )}
-    >
-      +{count}
-    </span>
-  );
-}
-
 /** Shared recessed plane every preview block sits on. */
 const BLOCK = 'relative overflow-hidden rounded-control bg-note-media';
+
+/**
+ * Whether this visual has something to draw yet.
+ *
+ * The one place the "is there art?" question is answered, because two callers
+ * ask it and must not disagree: `VisualArt` picks between the artwork and a
+ * blank plane, and `VisualHero` decides whether to reserve a 4:3 box so the card
+ * does not grow the moment the bytes land.
+ *
+ * A video's bytes are a container, not an image - handing them to an `<img>`
+ * produces a broken-image glyph - so only a captured poster counts as art. A
+ * clip stored before posters existed has none until `useVideoPosterBackfill`
+ * gives it one.
+ */
+function hasArt(visual: Resolved, url?: string): boolean {
+  if (visual.kind === 'excalidraw') return Boolean(visual.row?.preview);
+  if (visual.kind === 'video') return Boolean(visual.row?.thumbnail);
+  return Boolean(url);
+}
 
 function VisualArt({
   visual,
@@ -86,17 +92,24 @@ function VisualArt({
 }) {
   const { t } = useTranslation();
 
-  // A video's bytes are a container, not an image: handing them to an <img>
-  // produces a broken-image glyph. Only a captured poster is renderable here,
-  // and a clip stored before posters existed correctly falls through to the
-  // neutral plane below (see useVideoPosterBackfill).
-  if (visual.kind === 'video' && !visual.row?.thumbnail) {
-    return <span className={cn('block size-full bg-note-media', className)} aria-hidden />;
+  if (!hasArt(visual, url)) {
+    return (
+      <span
+        className={cn(
+          'block size-full',
+          // The blank plane reads differently per kind: a poster-less video is a
+          // settled state and takes the media ground, while an image whose blob
+          // has not arrived is still loading and says so.
+          visual.kind === 'video' && 'bg-note-media',
+          visual.kind === 'image' && 'animate-pulse bg-muted',
+          className
+        )}
+        aria-hidden
+      />
+    );
   }
 
   if (visual.kind === 'excalidraw') {
-    const preview = visual.row?.preview;
-    if (!preview) return <span className={cn('block size-full', className)} aria-hidden />;
     return (
       <span
         className={cn(
@@ -111,14 +124,9 @@ function VisualArt({
         // Self-generated SVG from our own Excalidraw export (see sceneToSvgString),
         // the same trust model NoteBody applies to the Body markup itself.
         // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized above, self-authored SVG
-        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(preview) }}
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(visual.row?.preview ?? '') }}
       />
     );
-  }
-
-  if (!url) {
-    // Reserve the box rather than let the card grow the moment the blob lands.
-    return <span className={cn('block size-full animate-pulse bg-muted', className)} aria-hidden />;
   }
 
   return (
@@ -138,20 +146,14 @@ function VisualArt({
  */
 function VisualHero({ visual, url }: { visual: Resolved; url?: string }) {
   const duration = formatDuration(visual.row?.duration);
-  // A poster-less video reserves the box rather than collapsing to nothing; a
-  // picture or drawing releases the reserve once it has something to draw.
-  const reserve =
-    visual.kind === 'excalidraw'
-      ? !visual.row?.preview
-      : visual.kind === 'video'
-        ? !visual.row?.thumbnail
-        : !url;
 
   return (
     <div
       data-slot="card-media-visual"
       data-kind={visual.kind}
-      className={cn(BLOCK, reserve && 'aspect-[4/3]')}
+      // Nothing to draw yet reserves the box rather than collapsing to nothing;
+      // the reserve is released once the artwork has landed.
+      className={cn(BLOCK, !hasArt(visual, url) && 'aspect-[4/3]')}
     >
       <VisualArt visual={visual} url={url} className="max-h-[min(14rem,75cqw)] w-full" />
 
@@ -312,7 +314,7 @@ function AudioRow({
       {duration && (
         <span className="shrink-0 text-label text-muted-foreground tabular-nums">{duration}</span>
       )}
-      {extra > 0 && <More count={extra} className="shrink-0" />}
+      {extra > 0 && <OverflowCount count={extra} className="shrink-0" />}
     </div>
   );
 }
@@ -344,7 +346,7 @@ function FileRow({ row, extra }: { row?: Attachment; extra: number }) {
         )}
       </span>
 
-      {extra > 0 && <More count={extra} className="shrink-0" />}
+      {extra > 0 && <OverflowCount count={extra} className="shrink-0" />}
     </div>
   );
 }
