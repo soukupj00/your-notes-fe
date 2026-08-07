@@ -20,10 +20,16 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
+      {/* Visually the topbar's job on mobile, this heading's job on desktop -
+          where the bar carries no title, because the rail already does. It stays
+          in the DOM either way: it is the route's focus target
+          (`useFocusOnMount`) and the document outline, neither of which a span
+          in the bar could take over without moving focus above `#main-content`
+          and stranding the skip link past it. */}
       <h1
         ref={headingRef}
         tabIndex={-1}
-        className="mb-6 font-semibold text-2xl focus-visible:outline-none"
+        className="sr-only sm:not-sr-only sm:mb-6 sm:font-semibold sm:text-2xl sm:focus-visible:outline-none"
       >
         {t('nav.settings')}
       </h1>

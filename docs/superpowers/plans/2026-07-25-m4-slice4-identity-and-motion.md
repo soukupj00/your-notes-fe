@@ -194,6 +194,22 @@ Decisions (Q5): larger tap targets, drag-reorder via TipTap drag-handle, optiona
       Note this reverses [Task 5's plan line](./2026-08-03-m4-slice4-task5-customisable-toolbar.md) "the colour-blind switch … now carries `.touch-target`" - the floor was the right intent applied through the wrong mechanism.
 - [x] **The feed's loading skeletons spent the gap as a literal**, so they would have stayed at comfortable spacing and jumped to compact when the real feed replaced them. Found by the literal gate above, not by looking.
 
+### Task 7 - Mobile topbar, in-app back, and the note URL
+
+**Split out on 2026-08-08** into its own plan: [`2026-08-08-m4-slice4-task7-mobile-topbar-and-back.md`](./2026-08-08-m4-slice4-task7-mobile-topbar-and-back.md).
+Planned, not implemented.
+
+Not in the original slice: it came out of reviewing what Slice 2.5 left behind on a phone.
+The mobile topbar is a hamburger and a gear with dead space between them, it never says which feed you are in, and there is no back affordance anywhere - which on `display: 'standalone'` iOS means none at all, since an installed PWA has no browser chrome.
+
+The finding that shaped it: **the only genuine child route in this app is `/settings`.**
+`/tag/$id` is a peer feed and `/settings/labels` is a drawer destination that merely lives under `/settings` in the URL.
+So a contextual topbar built for the route table alone would serve one route and rot.
+What justifies it is the editor, which is held in `useState` (`NotesView.tsx:51`) and therefore makes the Android system back button *wrong* on the app's busiest screen - it navigates away instead of closing.
+Moving the open note into the URL as `?note=<id>` fixes that, extends Slice 2's "search state lives in the URL" decision to the obvious next piece of state, and gives the contextual bar a third real consumer.
+
+Also uncovered there and folded into its Step 4: `index.html` has no `viewport-fit=cover`, so every `env(safe-area-inset-*)` in the app resolves to 0 - including `floatingBottomBar.ts`'s, which has been a no-op since it was written, in the installed PWA as well as in a tab.
+
 ## Deferred
 
 - Drag-reorder is a fast-follow within the phase; toggle-only is the shippable milestone if time is tight.

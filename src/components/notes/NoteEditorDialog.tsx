@@ -1,14 +1,17 @@
-import { Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, Check, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CaptureKind } from '@/components/editor/editor.tsx';
 import { Editor, type EditorHandle } from '@/components/editor/editor.tsx';
 import { NoteEditorBar } from '@/components/notes/NoteEditorBar.tsx';
+import { AppBar } from '@/components/ui/AppBar.tsx';
+import { Button } from '@/components/ui/button.tsx';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog.tsx';
 import { db } from '@/db/db.ts';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { bodyHasAttachment, extractAttachmentIds } from '@/lib/attachment-html.ts';
+import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { stripHtml } from '@/lib/utils.ts';
 import type { NoteState } from '@/models.ts';
@@ -22,6 +25,16 @@ type SaveStatus = 'idle' | 'saving' | 'saved';
 // keeping it out of the component keeps the autosave callbacks stable.
 const isEmpty = (header: string, body: string) =>
   header.trim() === '' && stripHtml(body).trim() === '' && !bodyHasAttachment(body);
+
+/** Decoration only: the announcement is the one live region in the dialog. */
+function SaveStatusIcon({ status }: { status: SaveStatus }) {
+  if (status === 'idle') return null;
+  return status === 'saving' ? (
+    <Loader2 className="size-4 animate-spin text-muted-foreground" aria-hidden />
+  ) : (
+    <Check className="size-4 text-muted-foreground" aria-hidden />
+  );
+}
 
 type NoteEditorDialogProps = {
   /** Existing note id, or null for a new (draft) note not yet persisted. */
@@ -71,6 +84,9 @@ export function NoteEditorDialog({
   const focusBody = !noteId && !!initialBody;
 
   const editorRef = useRef<EditorHandle>(null);
+  // The title field, so the dialog can hand it the opening focus. See
+  // `onOpenAutoFocus` below - the app bar's back arrow now precedes it.
+  const headerInputRef = useRef<HTMLInputElement>(null);
 
   // The id we persist to: the prop for an existing note, or null until a draft
   // is first saved. A ref (not state) so serialized saves see it synchronously.
@@ -223,6 +239,15 @@ export function NoteEditorDialog({
         // `bg-background`, and between two background utilities the winner is
         // decided by stylesheet order, not by class order.
         {...noteColorAttrs(color)}
+        // Radix gives the opening focus to the first focusable child, which is
+        // now the app bar's back arrow: opening a note would put the caret on
+        // "leave" rather than in the note. Redirect it to the title. A checklist
+        // draft is left alone - `Editor autoFocus` puts the caret in the first
+        // item, and this must not race it back up to the title.
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          if (!focusBody) headerInputRef.current?.focus();
+        }}
         // Clicking the dialog's own padding/gaps (not a child element) drops the
         // cursor into the body, so tapping the margins feels editable too.
         onMouseDown={(e) => {
@@ -231,37 +256,79 @@ export function NoteEditorDialog({
             editorRef.current?.focus();
           }
         }}
-        className="top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-3 overflow-y-auto rounded-none border-0 bg-note-surface! sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-card sm:border sm:border-note-border"
+        // The vendored close X is hidden below `sm:` rather than switched off
+        // with `showCloseButton`, because that prop is a boolean and this needs
+        // to be a breakpoint: mobile closes from the app bar's back arrow,
+        // desktop keeps the X. Hiding it beats re-vendoring the button, whose
+        // themed styling and 44px inset overlay we would otherwise duplicate.
+        // Descendant (`_`), not child (`>`): the close is written as a direct
+        // child of DialogContent but does not render as one, so `>` silently
+        // matches nothing - verified in a browser, not assumed.
+        className="top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-3 overflow-y-auto rounded-none border-0 bg-note-surface! sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-card sm:border sm:border-note-border [&_[data-slot=dialog-close]]:hidden sm:[&_[data-slot=dialog-close]]:flex"
       >
         <DialogTitle className="sr-only">
           {noteId ? t('notes.editNoteTitle') : t('notes.newNoteTitle')}
         </DialogTitle>
 
-        {/* Quiet local autosave indicator (icon only), tucked left of the close
-            button. M5 can extend this to Syncing/Offline states. */}
-        {/* The live region is always mounted: a screen reader only announces
-            changes *inside* a region it was already observing, so one that
-            appears together with its first message is silent. */}
+        {/* Quiet local autosave indicator. M5 can extend this to Syncing /
+            Offline states.
+
+            One live region, two visual indicators. The region is always mounted
+            and never moves: a screen reader only announces changes *inside* a
+            region it was already observing, so one that appears together with
+            its first message is silent - and one that exists twice, once per
+            breakpoint, would be a second observer waiting to double-announce.
+            The icons are `aria-hidden` decoration hung off it. */}
+        <div aria-live="polite" className="sr-only">
+          {saveStatus !== 'idle' && t(`notes.saveStatus.${saveStatus}`)}
+        </div>
+
+        {/* Mobile: the full-screen sheet gets a real app bar. Back sits top-left
+            where a thumb can reach it and where "up" has meant something on
+            every phone for a decade; the vendored close is an X in the far
+            corner, which reads as discard and is the hardest point on the
+            screen to hit one-handed. Desktop keeps that X - correct for a
+            centred modal - and the indicator stays beside it. */}
+        <AppBar
+          // `-ml-3.5` puts the arrow's *glyph* on the same left edge as the
+          // title and body below it, rather than its 44px box - an icon indented
+          // further than the text it sits above reads as a mistake. 14px is that
+          // box's own inset on a coarse pointer, where this bar lives; with a
+          // mouse the button is 36px and the glyph lands 4px further out, which
+          // is the direction to be wrong in.
+          // `shrink-0` is not decoration: DialogContent is a column flex box
+          // and the editor body below is `flex-1`, so without it the bar is a
+          // shrinkable child and gets crushed to *zero height* as soon as the
+          // content overflows - the arrow stays in the DOM, focusable, and 0x0.
+          className="-ml-3.5 shrink-0 px-0 py-0 sm:hidden"
+          left={
+            // Calls `handleClose` directly rather than wrapping in
+            // `DialogClose`: `asChild` forwards `data-slot="dialog-close"` onto
+            // whatever it wraps, so the rule below that hides the vendored X on
+            // mobile would hide this arrow with it. Same close path either way -
+            // `onOpenChange` runs `handleClose` too.
+            <Button
+              variant="ghost"
+              size="icon"
+              className={CHROME_ICON_BUTTON}
+              aria-label={t('nav.back')}
+              onClick={() => void handleClose()}
+            >
+              <ArrowLeft />
+            </Button>
+          }
+          right={<SaveStatusIcon status={saveStatus} />}
+        />
+
         {/* Same 32px box as the close button, so the two icons share a centre
             line instead of the smaller one floating 8px high, and one gap of
             space between them rather than none. */}
-        <div
-          aria-live="polite"
-          className="absolute top-4 right-14 flex size-8 items-center justify-center text-muted-foreground"
-        >
-          {saveStatus !== 'idle' && (
-            <>
-              {saveStatus === 'saving' ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-              ) : (
-                <Check className="size-4" aria-hidden />
-              )}
-              <span className="sr-only">{t(`notes.saveStatus.${saveStatus}`)}</span>
-            </>
-          )}
+        <div className="absolute top-4 right-14 hidden size-8 items-center justify-center text-muted-foreground sm:flex">
+          <SaveStatusIcon status={saveStatus} />
         </div>
 
         <input
+          ref={headerInputRef}
           value={header}
           onChange={(e) => {
             dirtyRef.current = true;

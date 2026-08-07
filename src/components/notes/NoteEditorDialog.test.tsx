@@ -372,3 +372,38 @@ describe('NoteEditorDialog', () => {
     expect(screen.getByRole('button', { name: 'notes.color' })).toBeInTheDocument();
   });
 });
+
+// On a phone the dialog is a full-screen sheet, so it carries its own app bar
+// rather than the vendored close X in the far corner.
+describe('the mobile app bar', () => {
+  it('closes the note from the back arrow', async () => {
+    const note = makeNote();
+    await db.notes.add(note);
+    const onClose = vi.fn();
+
+    render(<NoteEditorDialog noteId={note.id} onClose={onClose} />);
+    await screen.findByDisplayValue(note.header as string);
+
+    await userEvent.click(screen.getByRole('button', { name: 'nav.back' }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+  });
+
+  // The arrow is the sheet's first focusable child, so Radix would hand it the
+  // opening focus: you would open a note with the caret on "leave".
+  it('leaves the opening focus in the note, not on the way out', async () => {
+    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+
+    const title = await screen.findByLabelText('notes.titlePlaceholder');
+    await waitFor(() => expect(title).toHaveFocus());
+  });
+
+  // A checklist draft focuses its own body instead, and the redirect above must
+  // not race that back up to the title.
+  it('leaves a checklist draft focused in its body', async () => {
+    render(<NoteEditorDialog noteId={null} initialBody={EMPTY_CHECKLIST_BODY} onClose={vi.fn()} />);
+
+    const title = await screen.findByLabelText('notes.titlePlaceholder');
+    await waitFor(() => expect(title).not.toHaveFocus());
+  });
+});

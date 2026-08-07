@@ -170,10 +170,12 @@ export default function LabelsPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
+      {/* Visible on desktop, carried by the topbar on mobile - see the same
+          heading in `settings.tsx` for why it stays in the DOM regardless. */}
       <h1
         ref={headingRef}
         tabIndex={-1}
-        className="mb-6 font-semibold text-2xl focus-visible:outline-none"
+        className="sr-only sm:not-sr-only sm:mb-6 sm:font-semibold sm:text-2xl sm:focus-visible:outline-none"
       >
         {t('nav.labels')}
       </h1>

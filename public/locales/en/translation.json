@@ -2,6 +2,7 @@
   "nav": {
     "primary": "Main navigation",
     "open": "Open navigation",
+    "back": "Back",
     "notes": "Notes",
     "labels": "Labels",
     "editLabels": "Edit labels",
