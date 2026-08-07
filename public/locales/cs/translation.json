@@ -9,7 +9,6 @@
     "archive": "Archiv",
     "trash": "Koš",
     "settings": "Nastavení",
-    "allSettings": "Všechna nastavení",
     "toggle": "Přepnout navigaci",
     "drawerDescription": "Odkazy na poznámky, štítky, archiv a koš.",
     "skipToContent": "Přejít na obsah"
@@ -187,7 +186,6 @@
     }
   },
   "settings": {
-    "title": "Nastavení",
     "appearance": {
       "title": "Vzhled"
     },

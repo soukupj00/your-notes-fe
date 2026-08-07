@@ -290,7 +290,13 @@ export function NoteEditorDialog({
         // Descendant (`_`), not child (`>`): the close is written as a direct
         // child of DialogContent but does not render as one, so `>` silently
         // matches nothing - verified in a browser, not assumed.
-        className="top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-3 overflow-y-auto rounded-none border-0 bg-note-surface! sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-card sm:border sm:border-note-border [&_[data-slot=dialog-close]]:hidden sm:[&_[data-slot=dialog-close]]:flex"
+        // `pt-2` on the sheet, restored to the dialog's own `p-6` at `sm:`.
+        // The vendored padding is written for a centred modal, where 24px above
+        // the first line is breathing room; on a full-screen sheet it is 24px of
+        // a phone spent above a back arrow. 8px matches the topbar's own rhythm,
+        // so the two app bars in the app sit their controls at the same height.
+        // The side padding stays: that is the note's own text inset, not chrome.
+        className="top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-3 overflow-y-auto rounded-none border-0 bg-note-surface! pt-2 sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-card sm:border sm:border-note-border sm:pt-6 [&_[data-slot=dialog-close]]:hidden sm:[&_[data-slot=dialog-close]]:flex"
       >
         <DialogTitle className="sr-only">
           {noteId ? t('notes.editNoteTitle') : t('notes.newNoteTitle')}

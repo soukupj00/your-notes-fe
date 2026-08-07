@@ -9,7 +9,6 @@
     "archive": "Archive",
     "trash": "Trash",
     "settings": "Settings",
-    "allSettings": "All settings",
     "toggle": "Toggle navigation",
     "drawerDescription": "Links to your notes, labels, archive and trash.",
     "skipToContent": "Skip to content"
@@ -187,7 +186,6 @@
     }
   },
   "settings": {
-    "title": "Settings",
     "appearance": {
       "title": "Appearance"
     },

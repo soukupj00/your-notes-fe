@@ -10,27 +10,12 @@ import { ThemeModeToggleButton } from '@/components/themeModeToggleButton';
 import { AppBar } from '@/components/ui/AppBar.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { SidebarTrigger } from '@/components/ui/sidebar.tsx';
 import { useIsFeedRoute } from '@/hooks/useNoteSearchState.ts';
 import i18n from '@/i18n';
@@ -121,7 +106,20 @@ function Navbar() {
               searchable && <SearchInput />
             )
           }
-          right={topbar.kind === 'feed' && <MobileSettingsButton />}
+          // The gear goes straight to Settings, the same as it does on desktop.
+          // It used to open a mini-dialog holding a copy of the language and
+          // theme controls, which existed because Settings was a one-way trip
+          // on a phone - there was no back button to come home with. Now there
+          // is, so the copy is just a second place for a setting to live.
+          right={
+            topbar.kind === 'feed' && (
+              <Button variant="ghost" size="icon" className={CHROME_ICON_BUTTON} asChild>
+                <Link to="/settings" aria-label={t('nav.settings')}>
+                  <Settings />
+                </Link>
+              </Button>
+            )
+          }
         />
         {topbar.title && searchable && (
           <div className="px-4 pb-2">
@@ -130,64 +128,6 @@ function Navbar() {
         )}
       </div>
     </header>
-  );
-}
-
-/** The gear, and the quick-settings sheet behind it. Feed routes only. */
-function MobileSettingsButton() {
-  const { t } = useTranslation();
-  const locales = listLocales();
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={CHROME_ICON_BUTTON}
-          aria-label={t('nav.settings')}
-        >
-          <Settings />
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('settings.title')}</DialogTitle>
-        </DialogHeader>
-        <div className="flex flex-col gap-6">
-          <div className="flex items-center justify-between gap-4">
-            <span className="font-medium text-sm">{t('settings.locale.label')}</span>
-            <Select
-              value={i18n.resolvedLanguage}
-              onValueChange={(code) => {
-                void i18n.changeLanguage(code);
-              }}
-            >
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {locales.map((locale) => (
-                  <SelectItem key={locale.code} value={locale.code}>
-                    <LocaleFlag locale={locale} />
-                    {locale.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center justify-between gap-4">
-            <span className="font-medium text-sm">{t('settings.theme.label')}</span>
-            <ThemeModeToggleButton />
-          </div>
-          <DialogClose asChild>
-            <Button asChild>
-              <Link to="/settings">{t('nav.allSettings')}</Link>
-            </Button>
-          </DialogClose>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }
 

@@ -109,7 +109,8 @@ Below `sm:` the same sidebar content renders in a wider left-anchored `Sheet` dr
 `navItems.ts` is the single source of fixed destinations so the desktop rail and mobile drawer cannot drift.
 `SideNav` also lists every tag as a link to `/tag/$id`; tags are hidden in the collapsed desktop rail but remain visible in the mobile drawer.
 Desktop collapse state is persisted per device in `localStorage` through `useSidebarOpen`.
-Settings is intentionally not a sidebar destination: the topbar gear is the single entry point, and its mobile quick-settings dialog links to the full settings page.
+Settings is intentionally not a sidebar destination: the topbar gear is the single entry point, and it navigates straight to `/settings` on both platforms.
+The mobile quick-settings dialog that used to sit behind it is gone - it held copies of the language and theme controls, and only existed because Settings was a one-way trip before there was a back button.
 
 Quick capture is one list of five starts (`src/components/notes/quickCaptureActions.ts`) rendered two ways so they cannot drift: a `＋` speed-dial FAB on mobile (`QuickCaptureBar`) and inline icons on the desktop "Take a note" bar.
 Which order the starts appear in, and which thumb the FAB sits under, are stored preferences edited in `settings/QuickCaptureSection.tsx`; the side mirrors the whole dial, not just the button.

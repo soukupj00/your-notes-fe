@@ -1,7 +1,7 @@
 # M4 Slice 4 Task 7 - Mobile topbar, in-app back, and the note URL
 
 **Status:** **in progress** (2026-08-08).
-Designed in a grilling session. Steps 1 and 2 are done and verified in a browser; Steps 3-4 are not started.
+Designed in a grilling session. Steps 1-3 are done and verified in a browser; Step 4 is not started.
 
 **Goal:** Give the mobile topbar a job.
 Today it is a hamburger and a gear with dead space between them, it never says where you are, and the app has no back affordance at all - which on an installed iOS PWA means no back affordance *whatsoever*.
@@ -214,12 +214,35 @@ Cards are therefore unclickable in jsdom under the default view mode.
 
 Verified in a browser, at 390px touch: opening a new note writes `?note=<uuid>` immediately, typing and autosaving leave the URL alone, the platform back button closes the editor instead of navigating out from under it, the draft persists under exactly the id the URL was already showing, a cold load of that link reopens the note, a dead `?note=` clears itself and writes nothing, and on desktop typing a query keeps the note open (`?q=back&note=<id>`).
 
-## Step 3 - Delete the quick-settings dialog
+## Step 3 - Delete the quick-settings dialog - **done** (2026-08-08)
 
-- [ ] Remove the `Dialog` from `navbar.tsx:107` and its `Select` / `ThemeModeToggleButton` / "All settings" contents.
-      The mobile gear becomes the same `Link to="/settings"` the desktop one already is.
-- [ ] Remove `nav.allSettings` from `en` and `cs` if nothing else claims it.
-- [ ] Test: the mobile gear navigates rather than opening a dialog.
+- [x] The `Dialog`, its language `Select`, its theme toggle and its "All settings" link are gone, along with the `MobileSettingsButton` wrapper they lived in.
+      The mobile gear is the same `Link to="/settings"` the desktop one already is, so the two platforms stop diverging and a setting has one home.
+- [x] `nav.allSettings` and `settings.title` removed from `en` and `cs` - both were only reachable from that dialog.
+      Six now-unused imports dropped from `navbar.tsx` (`Dialog*`, `Select*`, `LocaleFlag`, `ThemeModeToggleButton`, `i18n`, `listLocales` stayed only for the desktop globe).
+- [x] Test: `layout.test.tsx`'s "offers the full settings page from quick settings" became "goes straight to the settings page from the gear" - it asserts the gear is a link to `/settings`, that clicking it lands on the settings heading, and that no dialog appears on the way.
+      Rewritten rather than deleted: the behaviour it covered still exists, it just got simpler.
+
+Confirmed in a browser: on a feed at 390px the gear is an `<a href="/settings">`, and there is no settings `<button>` left anywhere.
+
+## Step 3b - The editor sheet stops spending a phone's height on chrome
+
+Not in the original plan; raised while reviewing Step 3.
+
+The two app bars in the app sat their controls at different heights. Measured at 390px:
+
+| | space above the control | first line of content |
+| --- | --- | --- |
+| Navbar (`/settings`) | 8px | - |
+| Editor sheet | **24px** | title at 80px |
+
+The 24px is the vendored `DialogContent`'s `p-6`, which is written for a centred modal where it is breathing room above the first line. On a full-screen sheet it is 24px of a phone spent above a back arrow.
+
+- [x] `pt-2` on the sheet, `sm:pt-6` to leave the centred modal alone.
+      Only the top: the side padding is the note's own text inset, not chrome.
+- [x] Measured after: 8px above the arrow, title at 64px - 16px handed back to the note, and the two app bars now sit their controls at the same height. The arrow is still 44x44 and its glyph still shares the title's left edge.
+
+**Step 4 has to account for this.** `env(safe-area-inset-top)` will be added *on top of* the 8px, not instead of it, or the arrow ends up under the iOS status bar on the one surface with no system back to fall back on.
 
 ## Step 4 - `viewport-fit=cover` and the real safe area
 

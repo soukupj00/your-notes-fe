@@ -158,20 +158,23 @@ describe('below the nav breakpoint', () => {
     await waitFor(() => expect(heading).toHaveFocus());
   });
 
-  it('offers the full settings page from quick settings', async () => {
+  // The gear used to open a mini-dialog holding copies of the language and
+  // theme controls. That existed because Settings was a one-way trip on a phone
+  // - there was no back button to come home with. There is one now, so the gear
+  // goes to the one place a setting lives, exactly as it does on desktop.
+  it('goes straight to the settings page from the gear', async () => {
     renderRoute('/');
 
-    await userEvent.click(await screen.findByRole('button', { name: 'nav.settings' }));
+    const gear = (await screen.findAllByRole('link', { name: 'nav.settings' }))[0];
+    expect(gear).toHaveAttribute('href', '/settings');
 
-    const allSettings = await screen.findByRole('link', { name: 'nav.allSettings' });
-    expect(allSettings).toHaveAttribute('href', '/settings');
+    await userEvent.click(gear);
 
-    await userEvent.click(allSettings);
-
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(
       await screen.findByRole('heading', { level: 1, name: 'nav.settings' })
     ).toBeInTheDocument();
+    // No intermediate dialog on the way.
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('shows the nav without a trigger press at the breakpoint', async () => {
