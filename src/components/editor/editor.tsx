@@ -1,4 +1,5 @@
 import type { Editor as TiptapEditor } from '@tiptap/core';
+import type { EditorView } from '@tiptap/pm/view';
 import { EditorContent, useEditor } from '@tiptap/react';
 import 'katex/dist/katex.min.css';
 import type React from 'react';
@@ -218,21 +219,34 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   sinkCheckedItemsRef.current = preferences.sinkCheckedItems;
   const getSinkCheckedItems = useRef(() => sinkCheckedItemsRef.current).current;
 
-  const editor = useEditor({
-    extensions: buildEditorExtensions({
-      getDeps: getAttachmentDeps,
-      getEditor: () => editorRef.current,
-      sinkCheckedItems: getSinkCheckedItems,
-      t,
-    }),
-    content,
-    editable,
-    autofocus: autoFocus ? 'end' : false,
-    onUpdate: ({ editor }) => {
-      onUpdate?.(editor.getHTML());
-    },
-    editorProps: {
-      handlePaste: (_view, event) => {
+  /*
+   * `extensions`, `editorProps` and `content` are all stabilised for one reason:
+   * TipTap re-checks its options on every render (`useEditor` is called with no
+   * deps, so the editor is never recreated) and any key that fails reference
+   * equality costs a `setOptions` -> `view.setProps` -> full ProseMirror view
+   * pass, stacked on top of the one the keystroke already triggered. Event
+   * handlers are exempt from that comparison, so `onUpdate` may stay inline.
+   *
+   * Nothing here needs to be reactive: every live value already reaches the
+   * built extensions through a stable getter over a ref (see above), and the
+   * translator resolves the current language at call time rather than at build
+   * time - so a captured `t` is not stale, provided its consumers call it
+   * lazily (see `createLink`).
+   */
+  const extensions = useMemo(
+    () =>
+      buildEditorExtensions({
+        getDeps: getAttachmentDeps,
+        getEditor: () => editorRef.current,
+        sinkCheckedItems: getSinkCheckedItems,
+        t,
+      }),
+    [getAttachmentDeps, getSinkCheckedItems, t]
+  );
+
+  const editorProps = useMemo(
+    () => ({
+      handlePaste: (_view: EditorView, event: ClipboardEvent) => {
         const files = event.clipboardData?.files;
         const ed = editorRef.current;
         if (ed && files && insertTransferredAttachments(ed, files, attachmentDepsRef.current)) {
@@ -246,14 +260,31 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         }
         return false;
       },
-      handleDrop: (_view, event) => {
+      handleDrop: (_view: EditorView, event: Event) => {
         const files = (event as DragEvent).dataTransfer?.files;
         const ed = editorRef.current;
         return Boolean(
           ed && files && insertTransferredAttachments(ed, files, attachmentDepsRef.current)
         );
       },
+    }),
+    []
+  );
+
+  // Creation-time only. The `content` prop is not a controlled value: the
+  // microtask effect below owns every later change, and letting the option
+  // itself churn would defeat the stabilisation above on every keystroke.
+  const initialContent = useRef(content).current;
+
+  const editor = useEditor({
+    extensions,
+    content: initialContent,
+    editable,
+    autofocus: autoFocus ? 'end' : false,
+    onUpdate: ({ editor }) => {
+      onUpdate?.(editor.getHTML());
     },
+    editorProps,
     shouldRerenderOnTransaction: true,
     // Client-only SPA (no SSR): render the editor view after commit, not during
     // React's render phase. With `true`, content that mounts a React node view

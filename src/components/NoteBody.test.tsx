@@ -1,104 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from '@/db/db.ts';
-import type { Attachment } from '@/models.ts';
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
 import { NoteBody } from './NoteBody.tsx';
 
-const { getAttachment } = vi.hoisted(() => ({
-  getAttachment: vi.fn<(id: string) => Promise<Attachment | undefined>>(),
-}));
-vi.mock('@/hooks/data/useAttachmentActions.ts', () => ({
-  useAttachmentActions: () => ({ getAttachment }),
-}));
-
-const revoke = vi.fn();
-beforeEach(() => {
-  let n = 0;
-  globalThis.URL.createObjectURL = vi.fn(() => `blob:mock/${n++}`);
-  globalThis.URL.revokeObjectURL = revoke;
-  getAttachment.mockReset();
-  getAttachment.mockImplementation((id) => db.attachments.get(id));
-});
-afterEach(async () => {
-  revoke.mockReset();
-  await db.attachments.clear();
-});
-
-function putAtt(id: string, overrides: Partial<Attachment> = {}): Promise<string> {
-  const now = new Date().toISOString();
-  const att: Attachment = {
-    id,
-    noteId: 'n1',
-    kind: 'image',
-    mime: 'image/png',
-    blob: new Blob(['x'], { type: 'image/png' }),
-    createdAt: now,
-    updatedAt: now,
-    ...overrides,
-  };
-  return db.attachments.put(att);
-}
-
 describe('NoteBody', () => {
-  it('hydrates data-attachment-id images to object URLs', async () => {
-    await putAtt('a1');
-    render(<NoteBody html='<p>hi</p><img data-attachment-id="a1">' />);
-    const img = await screen.findByRole('img');
-    await waitFor(() => expect(img).toHaveAttribute('src', expect.stringContaining('blob:mock/')));
-    expect(img).toHaveAttribute('loading', 'lazy');
-    expect(img).toHaveClass('rounded-md');
-  });
-
-  it('uses an image thumbnail instead of the full blob when one is stored', async () => {
-    const full = new Blob(['full'], { type: 'image/png' });
-    const thumbnail = new Blob(['small'], { type: 'image/webp' });
-    const now = new Date().toISOString();
-    getAttachment.mockResolvedValue({
-      id: 'a-thumb',
-      noteId: 'n1',
-      kind: 'image',
-      mime: 'image/png',
-      blob: full,
-      thumbnail,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    render(<NoteBody html='<img data-attachment-id="a-thumb">' />);
-    await waitFor(() => expect(URL.createObjectURL).toHaveBeenCalledOnce());
-
-    const objectUrlSource = vi.mocked(URL.createObjectURL).mock.calls[0]?.[0];
-    expect(objectUrlSource).toBe(thumbnail);
-    expect(objectUrlSource).not.toBe(full);
-  });
-
-  // A src-less <img> measures zero high, so the card used to jump by the full
-  // image height the moment the blob resolved. The reserved box is released on
-  // `load`, not when `src` is assigned - otherwise it collapses during decode.
-  it('reserves a skeleton box for an image until its bytes decode', async () => {
-    await putAtt('a1');
-    const { container } = render(<NoteBody html='<img data-attachment-id="a1">' />);
-
-    const img = container.querySelector('img') as HTMLImageElement;
-    expect(img).toHaveClass('animate-pulse');
-    expect(img.style.aspectRatio).not.toBe('');
-
-    await waitFor(() => expect(img).toHaveAttribute('src', expect.stringContaining('blob:mock/')));
-    expect(img).toHaveClass('animate-pulse');
-
-    img.dispatchEvent(new Event('load'));
-    expect(img).not.toHaveClass('animate-pulse');
-    expect(img.style.aspectRatio).toBe('');
-  });
-
-  it('drops the skeleton box when the attachment row is missing', async () => {
-    const { container } = render(<NoteBody html='<img data-attachment-id="gone">' />);
-    const img = container.querySelector('img') as HTMLImageElement;
-
-    await waitFor(() => expect(img).not.toHaveClass('animate-pulse'));
-    expect(img.style.aspectRatio).toBe('');
-  });
-
   it('renders plain HTML while removing unsafe pasted attributes', () => {
     const { container } = render(
       <NoteBody html='<p>just text</p><img src="x" onerror="alert(1)">' />
@@ -107,36 +11,22 @@ describe('NoteBody', () => {
     expect(container.querySelector('img')).not.toHaveAttribute('onerror');
   });
 
-  it('strips src-less audio attachment nodes (card shows a play button instead)', () => {
-    render(<NoteBody html='<p>hi</p><audio data-attachment-id="au1"></audio>' />);
-    expect(screen.getByText('hi')).toBeInTheDocument();
-    // The audio node is removed, not rendered as a broken native player or chip.
-    expect(document.querySelector('audio')).toBeNull();
-    expect(document.querySelector('[data-attachment-chip="audio"]')).toBeNull();
+  it('keeps the custom drawing element rather than sanitizing it away', () => {
+    const { container } = render(
+      <NoteBody html='<excalidraw-drawing data-attachment-id="draw-1"></excalidraw-drawing>' />
+    );
+    expect(container.querySelector('excalidraw-drawing')).toBeInTheDocument();
   });
 
-  it('injects the stored SVG preview for an excalidraw node (not stripped)', async () => {
-    const now = new Date().toISOString();
-    await db.attachments.put({
-      id: 'draw-1',
-      noteId: 'n1',
-      kind: 'excalidraw',
-      mime: 'application/json',
-      blob: new Blob(['{}'], { type: 'application/json' }),
-      preview: '<svg id="snap" width="400" height="100" viewBox="0 0 400 100"></svg>',
-      createdAt: now,
-      updatedAt: now,
-    });
-    const html = '<excalidraw-drawing data-attachment-id="draw-1"></excalidraw-drawing>';
-    const { container } = render(<NoteBody html={html} />);
-    const svg = await waitFor(() => {
-      const resolved = container.querySelector<SVGElement>('svg[id="snap"]');
-      expect(resolved).toBeInTheDocument();
-      return resolved as SVGElement;
-    });
-    const drawing = container.querySelector<HTMLElement>('excalidraw-drawing');
-    expect(drawing).toHaveStyle({ display: 'block', lineHeight: '0' });
-    expect(drawing).toHaveClass('overflow-hidden', 'rounded-md');
-    expect(svg).toHaveStyle({ display: 'block', width: '100%', height: 'auto' });
+  // The masonry wall measures a card the moment it mounts, so a body that
+  // arrived one effect later would be measured empty and grow afterwards.
+  it('has its markup in the DOM on the first render, not after an effect', () => {
+    const { container } = render(<NoteBody html="<p>measured immediately</p>" />);
+    expect(container.querySelector('p')?.textContent).toBe('measured immediately');
+  });
+
+  it('renders nothing for an empty or missing body', () => {
+    const { container } = render(<NoteBody html={null} />);
+    expect(container.firstElementChild?.innerHTML).toBe('');
   });
 });

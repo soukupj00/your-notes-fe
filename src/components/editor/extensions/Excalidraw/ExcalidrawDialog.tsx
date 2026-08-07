@@ -1,7 +1,7 @@
 import '@excalidraw/excalidraw/index.css';
 import { Excalidraw } from '@excalidraw/excalidraw';
 import { XIcon } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import {
@@ -21,6 +21,8 @@ interface ExcalidrawApi {
   getSceneElements: () => readonly unknown[];
   getAppState: () => Record<string, unknown>;
   getFiles: () => Record<string, unknown>;
+  /** Recomputes the canvas offsets Excalidraw caches. See `onAnimationEnd` below. */
+  refresh: () => void;
 }
 
 function elementFingerprint(element: unknown): unknown {
@@ -88,6 +90,58 @@ export function ExcalidrawDialog({
   const [hasElements, setHasElements] = useState((initialScene?.elements.length ?? 0) > 0);
   const [confirm, setConfirm] = useState<'discard' | 'delete' | null>(null);
 
+  const canvasAreaRef = useRef<HTMLDivElement>(null);
+
+  /*
+   * Bound the drawable region to the canvas row.
+   *
+   * The canvas takes a pointer capture on pointerdown, and from then on every
+   * move is delivered to it regardless of what is physically under the cursor.
+   * So a stroke begun below the header kept extending as the pointer travelled
+   * up into the header, writing scene elements above the canvas top: clipped
+   * from view, unreachable without panning, and still present in the exported
+   * image. A drag could reach that strip even though a press could never start
+   * there, which is what made it feel arbitrary.
+   *
+   * Hit-testing cannot fix this - capture bypasses it - so the moves themselves
+   * have to be withheld. A capture-phase listener on `window` sees each move
+   * before it can reach the canvas (capture runs root-down, and this one is
+   * registered on open, ahead of the window listeners Excalidraw attaches when
+   * a drag begins). Above the boundary the event is stopped, so the stroke
+   * simply pauses at the edge and resumes if the pointer comes back down.
+   *
+   * Gated on a drag that started in the canvas, so ordinary pointer traffic
+   * over the header - hovering Save, aiming at the close button - is untouched.
+   */
+  useEffect(() => {
+    if (!open) return;
+    let drawing = false;
+
+    const onDown = (event: PointerEvent) => {
+      const area = canvasAreaRef.current;
+      drawing = Boolean(area && event.target instanceof Node && area.contains(event.target));
+    };
+    const onMove = (event: PointerEvent) => {
+      if (!drawing) return;
+      const top = canvasAreaRef.current?.getBoundingClientRect().top;
+      if (top !== undefined && event.clientY < top) event.stopPropagation();
+    };
+    const onUp = () => {
+      drawing = false;
+    };
+
+    window.addEventListener('pointerdown', onDown, true);
+    window.addEventListener('pointermove', onMove, true);
+    window.addEventListener('pointerup', onUp, true);
+    window.addEventListener('pointercancel', onUp, true);
+    return () => {
+      window.removeEventListener('pointerdown', onDown, true);
+      window.removeEventListener('pointermove', onMove, true);
+      window.removeEventListener('pointerup', onUp, true);
+      window.removeEventListener('pointercancel', onUp, true);
+    };
+  }, [open]);
+
   const requestClose = () => {
     if (dirty) setConfirm('discard');
     else onClose();
@@ -114,9 +168,34 @@ export function ExcalidrawDialog({
           onEscapeKeyDown={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
-          // Relative units only. Mobile: true fullscreen. sm+: large centered
-          // surface. Flex column: slim header (actions top-right) + canvas fill.
-          className="flex h-[100dvh] w-screen max-w-none flex-col gap-0 rounded-none p-0 sm:h-[88vh] sm:w-[92vw] sm:max-w-[75rem] sm:rounded-lg"
+          // Belt and braces for any later reposition: `refresh()` recomputes the
+          // offsets Excalidraw caches. It does not resize the canvas, which is
+          // why the scale animation has to go rather than be corrected after.
+          onAnimationEnd={(e) => {
+            if (e.target === e.currentTarget) apiRef.current?.refresh();
+          }}
+          /*
+           * `zoom-in-100` cancels the shared dialog's `zoom-in-95` entrance, and
+           * that is load-bearing rather than taste. Excalidraw sizes its canvas
+           * from `getBoundingClientRect`, which reports the *transformed* box,
+           * while a transform leaves layout size untouched - so a ResizeObserver
+           * never fires and the wrong number is never corrected. Opening mid-scale
+           * cached the container at ~98.5%, leaving the drawable surface ~18px
+           * narrower than the frame and every stroke landing off the cursor by a
+           * margin that grew with the dialog, i.e. worst on desktop. The fade is
+           * kept; only the geometry-corrupting part is dropped.
+           *
+           * Sizing is relative units only. Mobile: true fullscreen. sm+: as much
+           * of the viewport as it can take - a drawing surface has no readable
+           * line length to cap, so unlike the text editor it is not held to a
+           * content width, and `sm:max-w-none` is required to beat the shared
+           * dialog's `sm:max-w-lg`.
+           *
+           * `border-0` on mobile because a fullscreen surface has nothing to be
+           * bordered against - the shared dialog's 1px frame would sit on the
+           * screen edge. The desktop frame comes back at sm+.
+           */
+          className="data-[state=closed]:zoom-out-100 data-[state=open]:zoom-in-100 flex h-[100dvh] w-screen max-w-none flex-col gap-0 rounded-none border-0 p-0 sm:h-[92vh] sm:w-[94vw] sm:max-w-none sm:rounded-lg sm:border"
         >
           <DialogHeader className="flex shrink-0 flex-row items-center gap-2 space-y-0 border-b p-3 text-left">
             <DialogTitle className="flex-1">{t('editor.excalidraw.title')}</DialogTitle>
@@ -150,8 +229,10 @@ export function ExcalidrawDialog({
           </DialogHeader>
 
           {/* Actions live top-right (not a bottom footer) because Excalidraw owns
-              the bottom edge with its own mobile toolbar. */}
-          <div className="min-h-0 flex-1">
+              the bottom edge with its own mobile toolbar. `overflow-hidden` keeps
+              the canvas painting inside its own row; the drawable region is
+              bounded by the clamp in `useEffect` above, not by this. */}
+          <div ref={canvasAreaRef} className="min-h-0 flex-1 overflow-hidden">
             <Excalidraw
               initialData={initialScene as never}
               excalidrawAPI={(api: unknown) => {

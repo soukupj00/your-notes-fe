@@ -92,6 +92,11 @@ export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
 
     // A note's tags ride along with it: the index needs their names at build
     // time, and the pill filters need their ids.
+    //
+    // Both tables are read whole on purpose. On the active feed the candidates
+    // are most of the library, so `where('noteId').anyOf(ids)` would trade one
+    // sequential read of a two-column join table for hundreds of index seeks.
+    // Worth revisiting only if a scope ever holds a small slice of a large one.
     const [allTags, links] = await Promise.all([db.tags.toArray(), db.noteTags.toArray()]);
     const tagById = new Map(allTags.map((tag) => [tag.id, tag]));
     const linksByNote = new Map<string, string[]>();

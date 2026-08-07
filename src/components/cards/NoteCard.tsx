@@ -8,6 +8,7 @@ import { NoteBody } from '@/components/NoteBody.tsx';
 import { TagPills } from '@/components/tags/TagPills.tsx';
 import { Card } from '@/components/ui/card.tsx';
 import { type LifecycleSnapshot, useNoteActions } from '@/hooks/data/useNoteActions.ts';
+import type { NoteAttachments } from '@/hooks/data/useNoteAttachments.ts';
 import { useTagsForNote } from '@/hooks/data/useTagsForNote.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { stripAttachmentNodes } from '@/lib/note-attachments.ts';
@@ -17,10 +18,15 @@ import type { Note } from '@/models.ts';
 
 interface NoteCardProps {
   note: Note;
+  /**
+   * The note's attachment rows, when the feed joined them on in one query.
+   * Absent means the card resolves its own, the same fallback its labels use.
+   */
+  attachments?: NoteAttachments;
   onSelect: (id: string, opts?: { autoplayFirstAudio?: boolean }) => void;
 }
 
-export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
+export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect }) => {
   const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const {
@@ -113,7 +119,12 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onSelect }) => {
       <div className="relative z-10 p-[var(--card-pad)]">
         {/* Above the title, as in the lab: what a note *looks* like is the
             fastest way to recognise it again in a wall. */}
-        <CardMedia noteId={note.id} body={note.body} onOpen={(opts) => onSelect(note.id, opts)} />
+        <CardMedia
+          noteId={note.id}
+          body={note.body}
+          attachments={attachments}
+          onOpen={(opts) => onSelect(note.id, opts)}
+        />
 
         {note.header ? (
           <h2

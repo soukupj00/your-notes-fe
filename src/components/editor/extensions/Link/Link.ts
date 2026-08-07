@@ -32,8 +32,6 @@ declare module '@tiptap/core' {
  * needs a translated label, and an extension is built once, outside React.
  */
 export function createLink(t: TFunction) {
-  const promptLabel = t('editor.link.url');
-
   return TiptapLink.extend<LinkExtensionOptions>({
     addOptions() {
       return {
@@ -67,7 +65,10 @@ export function createLink(t: TFunction) {
           // No button is mounted - the whole `format` family is collapsed, so
           // the popover lives inside a closed menu. Ask directly rather than
           // let the shortcut silently do nothing.
-          const url = window.prompt(promptLabel, '');
+          // Resolved here rather than when the extension is built: the array is
+          // built once per editor, so a label read at build time would keep the
+          // language the note was opened in.
+          const url = window.prompt(t('editor.link.url'), '');
           if (url !== null) applyLink(this.editor, url);
           return true;
         },

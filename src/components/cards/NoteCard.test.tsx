@@ -42,7 +42,7 @@ afterEach(async () => {
 
 beforeEach(() => {
   motion.reduced = false;
-  // jsdom lacks object-URL APIs; NoteBody resolves attachments to blob URLs.
+  // jsdom lacks object-URL APIs; CardMedia mints them for its previews.
   globalThis.URL.createObjectURL = vi.fn(() => 'blob:mock/0');
   globalThis.URL.revokeObjectURL = vi.fn();
 });
@@ -359,6 +359,38 @@ describe('NoteCard', () => {
     expect(
       document.querySelector('[data-slot="card-media-visual"][data-kind="excalidraw"]')
     ).toBeTruthy();
+  });
+
+  // The feed joins every card's rows in one query and hands them down. If a card
+  // silently fell back to its own query, nothing would look wrong - the N+1 would
+  // just be back - so this pins the rows coming from the prop by leaving the
+  // database empty and still expecting a drawing to render.
+  it('draws from the rows the feed handed it, without querying for its own', async () => {
+    const now = new Date().toISOString();
+    const note = makeNote({
+      header: '',
+      body: '<excalidraw-drawing data-attachment-id="d1"></excalidraw-drawing>',
+    });
+    const attachments = new Map([
+      [
+        'd1',
+        {
+          id: 'd1',
+          noteId: note.id,
+          kind: 'excalidraw' as const,
+          mime: 'application/json',
+          blob: new Blob(['{}'], { type: 'application/json' }),
+          preview: '<svg id="from-prop"></svg>',
+          createdAt: now,
+          updatedAt: now,
+        },
+      ],
+    ]);
+
+    render(<NoteCard note={note} attachments={attachments} onSelect={vi.fn()} />);
+
+    await waitFor(() => expect(document.querySelector('svg#from-prop')).toBeTruthy());
+    expect(await db.attachments.count()).toBe(0);
   });
 
   it('opens the note when a video preview is clicked, like any other part of the card', async () => {

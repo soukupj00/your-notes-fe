@@ -60,7 +60,6 @@ export function useNoteFeedLayout(
   const containerNode = useRef<HTMLUListElement | null>(null);
   const observer = useRef<ResizeObserver | null>(null);
   const observedItems = useRef(new Set<HTMLElement>());
-  const deferredItems = useRef(new Set<string>());
   const animationFrame = useRef<number | null>(null);
   const input = useRef<LayoutInput>({ mode, ids, minColumnWidth });
   const layoutSnapshot = useRef(EMPTY_LAYOUT);
@@ -125,18 +124,6 @@ export function useNoteFeedLayout(
     }
     if (currentIds.some((id) => !nodes.has(id))) return;
 
-    // NoteBody hydrates sanitized HTML in an effect. Measuring a newly mounted
-    // card in this layout effect sees an empty body and makes the card grow
-    // after it has already faded in. ResizeObserver always reports a newly
-    // observed node, so defer its first placement to that post-effect report.
-    const needsPostEffectMeasurement = currentIds.filter(
-      (id) => !layoutSnapshot.current.placements[id] && !deferredItems.current.has(id)
-    );
-    if (needsPostEffectMeasurement.length > 0) {
-      for (const id of needsPostEffectMeasurement) deferredItems.current.add(id);
-      return;
-    }
-
     const next = calculateNoteFeedLayout({
       mode: currentMode,
       containerWidth: width,
@@ -149,7 +136,6 @@ export function useNoteFeedLayout(
       layoutSnapshot.current = next;
       setLayout(next);
     }
-    for (const id of currentIds) deferredItems.current.delete(id);
     setReady(true);
   }, []);
 
@@ -197,7 +183,6 @@ export function useNoteFeedLayout(
       instance.disconnect();
       observer.current = null;
       observedItems.current.clear();
-      deferredItems.current.clear();
     };
   }, [scheduleMeasure, supported, syncObservedItems]);
 

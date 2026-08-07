@@ -2,6 +2,7 @@ import { AnimatePresence, m } from 'motion/react';
 import { useMemo } from 'react';
 import { NoteCard } from '@/components/cards/NoteCard.tsx';
 import type { ViewMode } from '@/context/viewModeProvider.tsx';
+import { useAttachmentsByNote } from '@/hooks/data/useNoteAttachments.ts';
 import { useNoteFeedLayout } from '@/hooks/useNoteFeedLayout.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { PRESENCE_TRANSITION, resolveTransition } from '@/lib/motion.ts';
@@ -23,6 +24,10 @@ type NoteFeedProps = {
  */
 export function NoteFeed({ notes, mode, label, onSelect }: NoteFeedProps) {
   const ids = useMemo(() => notes.map((note) => note.id), [notes]);
+  // One query for the whole wall rather than one per card. Each note keeps its
+  // own Map identity across refires, so a write to one note does not re-mint
+  // every other card's thumbnails (see `useAttachmentsByNote`).
+  const attachmentsByNote = useAttachmentsByNote(ids);
   const reducedMotion = useReducedMotion();
   const { containerRef, layout, ready, supported } = useNoteFeedLayout(mode, ids);
   const layoutTransition = resolveTransition(reducedMotion);
@@ -40,7 +45,11 @@ export function NoteFeed({ notes, mode, label, onSelect }: NoteFeedProps) {
       >
         {notes.map((note) => (
           <li key={note.id}>
-            <NoteCard note={note} onSelect={onSelect} />
+            <NoteCard
+              note={note}
+              attachments={attachmentsByNote.get(note.id)}
+              onSelect={onSelect}
+            />
           </li>
         ))}
       </ul>
@@ -77,7 +86,11 @@ export function NoteFeed({ notes, mode, label, onSelect }: NoteFeedProps) {
                 className="invisible absolute top-0 left-0"
                 style={{ width: layout.itemWidth || '100%' }}
               >
-                <NoteCard note={note} onSelect={onSelect} />
+                <NoteCard
+                  note={note}
+                  attachments={attachmentsByNote.get(note.id)}
+                  onSelect={onSelect}
+                />
               </li>
             );
           }
@@ -111,7 +124,11 @@ export function NoteFeed({ notes, mode, label, onSelect }: NoteFeedProps) {
               }}
               className="absolute top-0 left-0"
             >
-              <NoteCard note={note} onSelect={onSelect} />
+              <NoteCard
+                note={note}
+                attachments={attachmentsByNote.get(note.id)}
+                onSelect={onSelect}
+              />
             </m.li>
           );
         })}

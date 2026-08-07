@@ -14,6 +14,8 @@ The React interface to the Dexie layer. Components use these hooks; they should 
 | `useNoteFeed(scope, search?)` | `{ notes, loading }` | **the** feed query: filters by `scope.state` (indexed) and optional `scope.tagId`, then applies the URL search state (`q`, `sort`, `dir`, `tags`) within that scope. Replaced `useSearchNotes`. |
 | `useNotesByTag(tagId)` | `Note[]` | notes linked to a tag via `noteTags` |
 | `useTagsForNote(noteId)` | `Tag[]` | tags linked to a note via `noteTags` |
+| `useNoteAttachments(noteId)` | `Map<id, Attachment>` | one note's rows; `null` skips the query |
+| `useAttachmentsByNote(noteIds)` | `Map<noteId, Map<id, Attachment>>` | the same join for a whole feed, in **one** query |
 
 **Mutations** — plain async functions returned from a hook (no live query):
 
@@ -21,13 +23,19 @@ The React interface to the Dexie layer. Components use these hooks; they should 
 | ------ | ----------- |
 | `useNoteActions()` | `createNote(partial)`, `updateNote(id, updates)`, `purgeNote(id)`, `restoreNote(note, removed)` — plus the lifecycle set: `pinNote`/`unpinNote`, `archiveNote`, `trashNote`, `restoreToActive`, `revertLifecycle(id, snapshot)`, `purgeExpiredTrash(graceDays?)`, `emptyTrash()` |
 | `useTagActions()` | `createTag(name, color?)`, `updateTag(id, changes)`, `deleteTag(id)`, `mergeTags(sourceId, targetId)`, `addTagToNote(noteId, tagId)`, `removeTagFromNote(noteId, tagId)` |
-| `useAttachmentActions()` | `createAttachment(noteId, file, kind?)`, `getAttachment(id)`, `deleteAttachment(id)`, `cloneAttachment(source, noteId)`, `collectOrphans(noteId, referencedIds)`, `collectMissingNoteOrphans()`, `collectStartupOrphans()` |
+| `useAttachmentActions()` | `createAttachment(noteId, file, kind?)`, `getAttachment(id)`, `deleteAttachment(id)`, `cloneAttachment(source, noteId)`, `collectOrphans(noteId, referencedIds)`, `collectStartupOrphans()` |
 
 ## Conventions & behaviors
 
 - Mutations set/refresh `updatedAt` and generate `uuid` ids (see `useNoteActions`).
 - Relationship-aware deletes run in a `db.transaction('rw', ...)`: `purgeNote` also clears the note's `noteTags` and `attachments`, returning `{ removedTags, removedAttachments }` so callers can pass them (with the captured note) to `restoreNote` for a lossless undo; `deleteTag` clears the tag's `noteTags`.
+- `collectStartupOrphans` is **one pass over both tables**, not the note-scoped `collectOrphans` run per note: "the owning Note is gone" and "the owner's Body no longer references this row" are the same question asked of one row, so answering them together costs one transaction instead of one per note on every app start.
+`collectOrphans` stays for the note-scoped case (`NoteEditorDialog` on close); the separate missing-owner sweep is gone, folded into the same predicate.
 - **Lifecycle** ([ADR 0009](../../../docs/adr/0009-note-lifecycle-model.md)): the user-facing "delete" is `trashNote`, not `purgeNote`. Every transition returns a `LifecycleSnapshot` of the fields it was about to overwrite (including `updatedAt`); hand that back to `revertLifecycle` to undo it without a trace. `purgeNote` is the irreversible one and undoes via `restoreNote` instead. `purgeExpiredTrash` runs at app start and reclaims trashed notes older than `TRASH_GRACE_DAYS` (30), cascading their attachments.
+- **Attachments are joined feed-wide, not per card.** `NoteFeed` calls `useAttachmentsByNote(ids)` once and passes each note's rows down through `NoteCard` to `CardMedia`; a card rendered outside a feed still resolves its own via `useNoteAttachments`, the same fallback labels use.
+A card whose Body references no attachment opens no query either way.
+The batched hook **preserves each note's Map identity** across refires, and that is load-bearing rather than an optimisation: one shared query refires for *any* attachment write, and `CardMedia` mints object URLs off that Map, so handing back a fresh Map would revoke and re-mint every thumbnail on screen - the whole feed flickering because one drawing was saved.
+`useNoteAttachments.test.ts` locks the guarantee; do not "simplify" the signature cache away.
 - `addTagToNote` is idempotent — it checks for an existing `[noteId+tagId]` before inserting.
 - **Tags**: `createTag` is idempotent by name, case-insensitively — it returns the existing tag rather than minting a case-variant duplicate, because create-on-the-fly runs from a free-text field.
 `updateTag` takes a `{ name?, color? }` patch; a *present* `color: undefined` clears the colour, an absent key leaves it alone.

@@ -19,6 +19,34 @@ vi.mock('react-i18next', () => ({
 // canvas lib - unmocked, it crashes under jsdom (no canvas.getContext()).
 vi.mock('@excalidraw/excalidraw', () => ({ Excalidraw: () => null, exportToSvg: vi.fn() }));
 
+describe('Editor content syncing', () => {
+  // `content` is passed to useEditor once, at creation, so that the option does
+  // not churn on every keystroke (see the stabilisation note in editor.tsx).
+  // Every later change has to reach the doc through the setContent effect - if
+  // that ever stops being true, opening an existing note shows a blank editor.
+  it('applies a body that arrives after mount, not just the one seeded at creation', async () => {
+    const { container, rerender } = render(<Editor content="" getNoteId={vi.fn()} />);
+
+    rerender(<Editor content="<p>loaded later</p>" getNoteId={vi.fn()} />);
+
+    await waitFor(() =>
+      expect(container.querySelector('.tiptap')?.textContent).toContain('loaded later')
+    );
+  });
+
+  it('keeps applying later changes, so an external edit is not a one-shot', async () => {
+    const { container, rerender } = render(<Editor content="" getNoteId={vi.fn()} />);
+
+    rerender(<Editor content="<p>first</p>" getNoteId={vi.fn()} />);
+    await waitFor(() => expect(container.querySelector('.tiptap')?.textContent).toContain('first'));
+
+    rerender(<Editor content="<p>second</p>" getNoteId={vi.fn()} />);
+    await waitFor(() =>
+      expect(container.querySelector('.tiptap')?.textContent).toContain('second')
+    );
+  });
+});
+
 describe('Editor autoplay-on-open', () => {
   it('scans the doc after a later setContent applies the loaded body, not just at mount', async () => {
     // Mirrors NoteEditorDialog opening an existing note: it renders with an

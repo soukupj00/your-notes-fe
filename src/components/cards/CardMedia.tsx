@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { OverflowCount } from '@/components/ui/OverflowCount.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
-import { useNoteAttachments } from '@/hooks/data/useNoteAttachments.ts';
+import { type NoteAttachments, useNoteAttachments } from '@/hooks/data/useNoteAttachments.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { formatBytes, formatDuration, formatFileType } from '@/lib/format-attachment.ts';
 import { type BodyAttachment, extractBodyAttachments } from '@/lib/note-attachments.ts';
@@ -357,6 +357,11 @@ interface CardMediaProps {
   body: string | null | undefined;
   /** Opens the note; every preview is a way into the note, never a player of its own. */
   onOpen: (opts?: { autoplayFirstAudio?: boolean }) => void;
+  /**
+   * The note's rows, when the feed has already joined them on in one query.
+   * Absent means resolve them here - a card mounted outside a feed still works.
+   */
+  attachments?: NoteAttachments;
 }
 
 /**
@@ -369,9 +374,12 @@ interface CardMediaProps {
  * happened to attach - and a predictable height is what makes the masonry wall
  * scannable. The feed's job is recognising which note to open, not reading it.
  */
-export function CardMedia({ noteId, body, onOpen }: CardMediaProps) {
+export function CardMedia({ noteId, body, onOpen, attachments }: CardMediaProps) {
   const refs = useMemo(() => extractBodyAttachments(body), [body]);
-  const rows = useNoteAttachments(noteId);
+  // Skip the query when the feed already joined the rows on, and when the Body
+  // references nothing at all - most of a feed is prose.
+  const ownRows = useNoteAttachments(attachments || refs.length === 0 ? null : noteId);
+  const rows = attachments ?? ownRows;
 
   // One memo for all four lists: `useVisualUrls` mints object URLs off `visuals`
   // and must only see a new array when the underlying data actually changed.

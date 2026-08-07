@@ -73,25 +73,6 @@ describe('useAttachmentActions', () => {
     expect(await a.getAttachment(drop.id)).toBeUndefined();
   });
 
-  it('collectMissingNoteOrphans removes rows whose note is gone', async () => {
-    const a = actions();
-    const orphanNote = crypto.randomUUID();
-    await a.createAttachment(orphanNote, pngFile());
-    const liveNote = crypto.randomUUID();
-    await db.notes.put({
-      id: liveNote,
-      header: '',
-      description: '',
-      body: '',
-      state: 'active',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
-    await a.createAttachment(liveNote, pngFile());
-    const removed = await a.collectMissingNoteOrphans();
-    expect(removed).toBe(1);
-  });
-
   it('collectStartupOrphans reconciles every saved note and missing note owner', async () => {
     const a = actions();
     const liveNote = crypto.randomUUID();

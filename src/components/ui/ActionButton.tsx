@@ -143,8 +143,17 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
           <TooltipContent side="top" align="center" {...tooltipOptions}>
             <div className="flex max-w-[200px] flex-col items-center gap-1 text-center">
               <span>{tooltip}</span>
+              {/* The shortcut sits on the tooltip's accent surface, so its
+                  colour has to come from that surface's own pairing. It used to
+                  be `text-muted-foreground`, which is page ink and measured
+                  around 1.1:1 against the accent in *both* themes - a soft grey
+                  is simply the wrong distance from a mid-lightness orange either
+                  way. `text-primary-foreground` is the tone the surface is
+                  guaranteed legible against; hierarchy comes from the letter
+                  spacing and the separate line rather than from dimming, since
+                  there is no headroom to dim into. */}
               {finePointer && !!shortcutKeys?.length && (
-                <span className="text-muted-foreground text-xs">
+                <span className="text-primary-foreground text-xs tracking-wide">
                   {getShortcutKeys(shortcutKeys)
                     .map((k) => k.symbol)
                     .join(' + ')}

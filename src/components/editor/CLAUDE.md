@@ -5,6 +5,10 @@ How the rich-text editor is built. The canonical extension/toolbar pattern is fi
 ## Structure
 
 - `editor.tsx` — the `Editor` React component: `useEditor({ extensions, content, editable, onUpdate })`, renders `EditorContent`. Syncs external `content` prop into the editor via `setContent`.
+  **`content` is not a controlled value.** It is read once, at creation, and every later change reaches the doc through the `setContent` effect instead.
+  That is deliberate: `useEditor` is called with no deps, so the editor is never recreated, and TipTap re-checks its options on every render — any key failing reference equality costs a `setOptions` → `view.setProps` → full ProseMirror view pass on top of the one the keystroke already triggered.
+  For the same reason the extensions array and `editorProps` are memoised, and nothing in them may be reactive: every live value reaches the built extensions through a stable getter over a ref, and a captured `t` is safe only because i18next resolves the language at call time — so a consumer must call `t()` lazily, never store its result at build time (`createLink` is the one that got this wrong).
+  `editor.test.tsx`'s "Editor content syncing" suite is the guard; it fails if the `setContent` path stops applying later bodies.
 - `extensions/<Name>/` — one folder per editing capability. Each has `<Name>.ts` (the extension) and `index.ts` (re-export).
 - `toolbar/` — the customisable toolbar (ADR 0011).
   `registry.ts` maps a stable Toolbar Item id to its icon, **name** and family, and to the extension whose Pattern A `button` it renders; `presets.ts` holds the Minimal / Balanced / Everything stamps per Width Class; `resolveLayout.ts` reconciles a stored Layout against the registry and turns it into a render list; `EditorToolbar.tsx` draws it; `useWidthClass.ts` picks which of the two Layouts is in effect.

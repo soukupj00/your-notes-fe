@@ -73,6 +73,29 @@
   }
 
   /*
+   * The default border colour is the theme's rule, not the element's ink.
+   *
+   * Tailwind v4's preflight resets every element to `border: 0 solid` and sets
+   * no colour, so a bare `border` / `border-b` inherits `currentColor` - the
+   * element's *text* colour. A hairline meant to be a quiet edge then comes out
+   * at full ink strength and, worse, inverts with the theme in the wrong
+   * direction: white text in the dark theme drew a white frame. Every such
+   * border in the app wants `--border`, which is why it is cheaper to make that
+   * the default than to spell `border-border` at each of the call sites.
+   *
+   * `currentColor` stays as the fallback so the declaration degrades to the
+   * upstream behaviour rather than to nothing, and `border-current` remains the
+   * explicit opt-in for the rare border that really should follow the ink.
+   */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--border, currentColor);
+  }
+
+  /*
    * ── nightshift: the day desk ──────────────────────────────────────────────
    *
    * DESIGN.md is the contract; this block is its light half. The primitives
