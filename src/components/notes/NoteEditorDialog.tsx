@@ -295,8 +295,15 @@ export function NoteEditorDialog({
         // the first line is breathing room; on a full-screen sheet it is 24px of
         // a phone spent above a back arrow. 8px matches the topbar's own rhythm,
         // so the two app bars in the app sit their controls at the same height.
-        // The side padding stays: that is the note's own text inset, not chrome.
-        className="top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-3 overflow-y-auto rounded-none border-0 bg-note-surface! pt-2 sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-card sm:border sm:border-note-border sm:pt-6 [&_[data-slot=dialog-close]]:hidden sm:[&_[data-slot=dialog-close]]:flex"
+        //
+        // The insets are *added to* those numbers, not substituted for them: the
+        // sheet is `h-[100dvh]` and, under `viewport-fit=cover`, that really is
+        // the whole screen. Without the top inset the back arrow sits under the
+        // status bar - on the one surface with no system back to fall back on -
+        // and without the bottom one the editor toolbar sits under the home
+        // indicator. The side padding is the note's own text inset rather than
+        // chrome, so the horizontal insets ride on top of it.
+        className="top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-3 overflow-y-auto rounded-none border-0 bg-note-surface! pt-[calc(0.5rem+var(--safe-top))] pr-[calc(1.5rem+var(--safe-right))] pb-[calc(1.5rem+var(--safe-bottom))] pl-[calc(1.5rem+var(--safe-left))] sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-card sm:border sm:border-note-border sm:p-6 [&_[data-slot=dialog-close]]:hidden sm:[&_[data-slot=dialog-close]]:flex"
       >
         <DialogTitle className="sr-only">
           {noteId ? t('notes.editNoteTitle') : t('notes.newNoteTitle')}

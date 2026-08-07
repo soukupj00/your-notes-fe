@@ -177,3 +177,71 @@ describe('reduced motion', () => {
     expect(CSS.match(/\[data-reduced-motion="always"\]/g)?.length ?? 0).toBe(queries);
   });
 });
+
+/**
+ * The safe-area insets are the easiest thing in this change to lose silently.
+ *
+ * `viewport-fit=cover` and the padding that answers for it live in different
+ * files, and each is harmless-looking on its own: drop the meta tag and every
+ * inset quietly returns to 0, which looks *correct* on every machine anyone
+ * develops on. That is exactly how `floatingBottomBar.ts` shipped safe-area
+ * maths that had never once computed a non-zero number.
+ *
+ * So this pins the pair together, and pins the direction the padding is applied
+ * in - the inset is always *added to* the design's own spacing, never
+ * substituted for it.
+ */
+describe('safe-area insets', () => {
+  const HTML: string = readFileSync('index.html', 'utf8');
+  const SIDES = ['top', 'right', 'bottom', 'left'] as const;
+
+  it('declares each inset exactly once, so no surface can invent its own', () => {
+    for (const side of SIDES) {
+      const declarations = CSS.match(new RegExp(`--safe-${side}:\\s*env\\(`, 'g')) ?? [];
+      expect(declarations).toHaveLength(1);
+    }
+  });
+
+  // Without the meta tag every `env()` above resolves to 0 - in the installed
+  // PWA as much as in a tab - and the variables become decoration.
+  //
+  // Read out of the tag's `content`, not out of the file. The first version of
+  // this searched the whole of `index.html`, which passed happily with the meta
+  // tag stripped: the comment *above* it explaining `viewport-fit=cover`
+  // contains the string being searched for.
+  it('is paired with the viewport-fit that makes the insets non-zero', () => {
+    const content = HTML.match(/<meta\s+name="viewport"\s+content="([^"]*)"/)?.[1];
+    expect(content).toBeDefined();
+    expect(content).toContain('viewport-fit=cover');
+  });
+
+  // A bare `p-[var(--safe-bottom)]` would *replace* the spacing it was meant to
+  // extend, so on a phone with no notch the control would end up flush.
+  it('adds the insets to the design spacing rather than replacing it', () => {
+    // Both of these clear something the design already sized: the FAB's 24px
+    // above the edge, and the content padding that keeps the feed out from
+    // under it. Neither may collapse to the bare inset.
+    const files = ['src/components/notes/floatingBottomBar.ts', 'src/components/layout.tsx'];
+
+    for (const file of files) {
+      const source = readFileSync(file, 'utf8');
+      // One level of nesting, because the interesting operand is a `var(...)`.
+      const calcs = source.match(/calc\((?:[^()]|\([^()]*\))*\)/g) ?? [];
+
+      // Counted rather than filtered. Filtering to "the calcs that mention an
+      // inset" and checking those cannot see the failure it exists for: a
+      // `pb-[var(--safe-bottom)]` that lost its `calc` is not a calc, so it
+      // drops out of the set and the remaining ones pass. Every *use* has to be
+      // accounted for, not every calc.
+      const uses = (source.match(/var\(--safe-/g) ?? []).length;
+      const covered = calcs
+        .filter((calc) => /\d(?:\.\d+)?rem/.test(calc))
+        // Order-independent: `calc(1rem+var(--safe-left))` and
+        // `calc(var(--safe-bottom)+1.5rem)` are both fine.
+        .reduce((total, calc) => total + (calc.match(/var\(--safe-/g) ?? []).length, 0);
+
+      expect(uses).toBeGreaterThan(0);
+      expect(covered).toBe(uses);
+    }
+  });
+});

@@ -114,7 +114,10 @@ The mobile quick-settings dialog that used to sit behind it is gone - it held co
 
 Quick capture is one list of five starts (`src/components/notes/quickCaptureActions.ts`) rendered two ways so they cannot drift: a `＋` speed-dial FAB on mobile (`QuickCaptureBar`) and inline icons on the desktop "Take a note" bar.
 Which order the starts appear in, and which thumb the FAB sits under, are stored preferences edited in `settings/QuickCaptureSection.tsx`; the side mirrors the whole dial, not just the button.
-Its distance from the bottom edge is `floatingBottomBar.ts`, shared with a view's own floating action pill (Empty trash) because both land in that corner: 24px above `env(safe-area-inset-bottom)`, which resolves to 0 in a browser tab and so does nothing about the strip Android's gesture handle and iOS Safari's toolbar occupy.
+Its distance from the bottom edge is `floatingBottomBar.ts`, shared with a view's own floating action pill (Empty trash) because both land in that corner: 24px above the bottom safe-area inset.
+The four insets are named once in `globals.css` as `--safe-top/right/bottom/left` and are always *added to* the design's own spacing, never substituted for it.
+They only report real numbers because `index.html` carries `viewport-fit=cover`; without it they resolve to 0 in the installed PWA as much as in a tab, which is why this maths did nothing at all until M4 slice 4 task 7.
+A desktop browser reports 0 for all four and no emulator exposes a notch, so overriding those four variables on `:root` is how you see a phone's insets without a phone - and `globals.test.ts` gates the pairing.
 Media starts carry a `capture` intent that the editor auto-runs on open.
 
 A11y: every view renders an `<h1 tabIndex={-1}>` and calls `useFocusOnMount` on it, so a navigation moves focus to the destination heading instead of stranding it on the link.

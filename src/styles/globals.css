@@ -67,6 +67,29 @@
 }
 
 @layer base {
+  /*
+   * The four safe-area insets, named once.
+   *
+   * `index.html` carries `viewport-fit=cover`, without which every `env()`
+   * below resolves to 0 - in the installed PWA as well as in a tab. That is
+   * what it did for the whole of M3 and M4: `floatingBottomBar.ts` was written
+   * against these values and computed a flat 24px everywhere, so the quick
+   * capture `＋` never actually cleared Android's gesture handle.
+   *
+   * Routed through variables rather than spelled `env()` at each site for two
+   * reasons. One, there are five consumers and they have to agree. Two, and
+   * more usefully: a desktop browser reports 0 for all four and no emulator
+   * here exposes a notch, so overriding these on `:root` is the only way to see
+   * a phone's insets without a phone. `globals.test.ts` does exactly that, and
+   * so should any manual pass.
+   */
+  :root {
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+  }
+
   body {
     background-color: var(--background);
     color: var(--foreground);

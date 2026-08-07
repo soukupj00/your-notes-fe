@@ -68,10 +68,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             (rendered by the notes feed) never covers content. */}
         {/* `tabIndex={-1}` so the skip link can actually move focus here -
             a plain anchor target is not focusable on its own. */}
+        {/* The gutters carry the horizontal insets so text never runs under a
+            landscape notch, and the mobile bottom padding carries the vertical
+            one: it exists to clear the fixed quick-capture bar, which now floats
+            a home-indicator's height higher than it used to. */}
         <div
           id="main-content"
           tabIndex={-1}
-          className="min-w-0 flex-1 px-4 pt-6 pb-24 outline-none sm:pb-6"
+          className="min-w-0 flex-1 pt-6 pr-[calc(1rem+var(--safe-right))] pb-[calc(6rem+var(--safe-bottom))] pl-[calc(1rem+var(--safe-left))] outline-none sm:pb-6"
         >
           {children}
         </div>

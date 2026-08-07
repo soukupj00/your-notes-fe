@@ -1,7 +1,7 @@
 # M4 Slice 4 Task 7 - Mobile topbar, in-app back, and the note URL
 
-**Status:** **in progress** (2026-08-08).
-Designed in a grilling session. Steps 1-3 are done and verified in a browser; Step 4 is not started.
+**Status:** **complete** (2026-08-08).
+Designed in a grilling session; all four steps done and verified in a browser, with the measured results recorded per step.
 
 **Goal:** Give the mobile topbar a job.
 Today it is a hamburger and a gear with dead space between them, it never says where you are, and the app has no back affordance at all - which on an installed iOS PWA means no back affordance *whatsoever*.
@@ -244,16 +244,50 @@ The 24px is the vendored `DialogContent`'s `p-6`, which is written for a centred
 
 **Step 4 has to account for this.** `env(safe-area-inset-top)` will be added *on top of* the 8px, not instead of it, or the arrow ends up under the iOS status bar on the one surface with no system back to fall back on.
 
-## Step 4 - `viewport-fit=cover` and the real safe area
+## Step 4 - `viewport-fit=cover` and the real safe area - **done** (2026-08-08)
 
-Its own step with its own device pass, deliberately last.
-It is a global: it changes the layout viewport for the feed, the cards, the drawer and every dialog at once, not only the two surfaces this task edits.
-Bundling it would make the rest harder to review and to revert.
+Its own step, deliberately last, because it is a global: it changes the layout viewport for the feed, the cards, the drawer and every dialog at once.
 
-- [ ] `index.html` - add `viewport-fit=cover` to the viewport meta.
-- [ ] Top inset on the sticky header and on the `h-[100dvh]` editor sheet, or a back arrow can sit under the iOS status bar - precisely the surface with no system back to fall back on.
-- [ ] Re-check `floatingBottomBar.ts`, which starts doing what it was written to do for the first time, and should now clear Android's gesture pill.
-- [ ] Manual pass on a notched device across feed, cards, drawer, every dialog, and both densities.
+- [x] `index.html` - `viewport-fit=cover` on the viewport meta.
+- [x] `globals.css` - the four insets named once as `--safe-top/right/bottom/left`, on `:root`.
+- [x] Sticky header: `pt-[var(--safe-top)]` plus the horizontal insets, on the **header** rather than the rows inside it, so `bg-chrome` paints *under* the status bar instead of leaving a transparent strip above a floating bar.
+- [x] Editor sheet: the insets are **added to** its own `pt-2` / `p-6`, not substituted for them. It is `h-[100dvh]` and under `cover` that is the whole screen, so without the top inset the back arrow sits under the status bar - the one surface with no system back to fall back on - and without the bottom one the editor toolbar sits under the home indicator.
+- [x] `floatingBottomBar.ts` - now spends `--safe-bottom` and does for the first time what it was written to do.
+- [x] `layout.tsx` - the content gutters carry the horizontal insets, and the mobile bottom padding carries the vertical one, since the bar it exists to clear now floats a home-indicator higher.
+- [x] Sidebar, **both** presentations. The mobile drawer was the obvious one; the desktop rail matters too, because a phone in landscape is wider than `sm:` and so gets the rail, which is exactly where the sensor housing sits.
+- [x] `globals.test.ts` gate, and it was **confirmed to fail when violated** rather than assumed to work - see below.
+
+### Why the insets go through variables
+
+`env()` could have been written at each of the seven sites. The indirection earns itself twice: they have to agree, and - more usefully - **a desktop browser reports 0 for all four and no emulator here exposes a notch**, so overriding the four on `:root` is the only way to see a phone's insets without a phone. That is how everything below was measured, and it is how any future manual pass should be done.
+
+### The gate shipped vacuous, twice, before it worked
+
+Both failures are worth recording because both looked correct:
+
+- **`expect(HTML).toMatch(/viewport-fit=cover/)` passed with the meta tag stripped.** The comment *above* the tag explains `viewport-fit=cover`, and contains the string being searched for. It now reads the value out of the tag's `content` attribute.
+- **Checking "every `calc` that mentions an inset also has a rem" could not see the failure it existed for.** A `pb-[var(--safe-bottom)]` that lost its `calc` is not a `calc`, so it drops out of the filtered set and the survivors pass. It now counts every *use* and requires each to be accounted for inside a qualifying `calc`.
+
+Both were then re-checked by actually breaking the source, confirming two red tests, and restoring.
+
+### Measured
+
+No notch (every dev machine): header padding `0px`, content padding `16px / 16px / 96px` - byte-identical to before, which is the point.
+
+Simulated iPhone portrait (top 59, bottom 34):
+
+| | result |
+| --- | --- |
+| Header | pads 59px, still paints from `y=0` |
+| Editor sheet | spans 0-844, padding `67 / 24 / 58 / 24` - i.e. 59+8 and 34+24 |
+| Back arrow | `y=67`, clear of the 59px status bar |
+| Editor's lowest content | 58px above the edge |
+| Quick-capture `＋` | 58px above the edge (34+24) - clearing the gesture strip for the first time |
+| Drawer | paints from `y=0`, column pads 59px |
+
+Simulated landscape (left/right 48, bottom 21), which is the case `cover` newly exposes: the rail paints from `x=0` and pads 48px, its first link lands at 64 (48+16), the header's gear sits 64px off the right edge, and content gutters read `64px / 64px`.
+
+Density is orthogonal and was not separately measured: compact re-values `--feed-gap` and `--card-pad`, and none of the inset padding is expressed in those tokens.
 
 ## Verification
 

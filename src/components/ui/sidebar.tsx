@@ -196,7 +196,14 @@ const Sidebar = React.forwardRef<
               <SheetTitle>{t('nav.primary')}</SheetTitle>
               <SheetDescription>{t('nav.drawerDescription')}</SheetDescription>
             </SheetHeader>
-            <div className="flex h-full w-full flex-col">{children}</div>
+            {/* The drawer is full-height and flush to the left edge, so under
+                `viewport-fit=cover` its brand row would sit under the status bar
+                and, in landscape, its links under the sensor housing. Padding
+                the inner column rather than the panel keeps `bg-sidebar`
+                painting edge to edge behind them. */}
+            <div className="flex h-full w-full flex-col pt-[var(--safe-top)] pb-[var(--safe-bottom)] pl-[var(--safe-left)]">
+              {children}
+            </div>
           </SheetContent>
         </Sheet>
       );
@@ -236,9 +243,14 @@ const Sidebar = React.forwardRef<
           )}
           {...props}
         >
+          {/* The rail is `fixed inset-y-0 left-0`, so it owns a screen edge on
+              every side but one. A phone in landscape is wider than `sm:` and so
+              gets *this*, not the drawer - which is exactly where the sensor
+              housing sits. Padding the column rather than the panel keeps
+              `bg-sidebar` painting under the housing behind the links. */}
           <div
             data-sidebar="sidebar"
-            className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+            className="flex h-full w-full flex-col bg-sidebar pt-[var(--safe-top)] pb-[var(--safe-bottom)] pl-[var(--safe-left)] group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
           >
             {children}
           </div>

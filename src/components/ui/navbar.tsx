@@ -38,7 +38,12 @@ function Navbar() {
     // Sticky so the search box, sort menu and label filters stay reachable in a
     // long feed - the feed's visible title row was dropped in favour of them.
     // z-10 matches the sidebar panel and stays under QuickCaptureBar's z-40.
-    <header className="nav-scroll-shadow sticky top-0 z-10 bg-chrome sm:border-b">
+    // `pt-[--safe-top]` on the header itself rather than on the rows inside it,
+    // so `bg-chrome` paints *under* the status bar instead of leaving a
+    // transparent strip above a floating bar. The horizontal insets matter only
+    // in landscape on a notched phone, where the bar would otherwise start
+    // beneath the sensor housing.
+    <header className="nav-scroll-shadow sticky top-0 z-10 bg-chrome pt-[var(--safe-top)] pr-[var(--safe-right)] pl-[var(--safe-left)] sm:border-b">
       {/* Web Navbar */}
       <div className="hidden items-center justify-between px-4 py-2 sm:flex">
         {/* Left: the sidebar toggle. The brand lives in SidebarHeader now. */}
