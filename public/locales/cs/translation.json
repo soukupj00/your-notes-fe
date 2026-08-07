@@ -225,7 +225,7 @@
     },
     "sinkCheckedItems": {
       "label": "Odsouvat splněné položky",
-      "description": "Zaškrtnutá položka seznamu klesne na jeho konec; po odškrtnutí se vrátí zpět nahoru."
+      "description": "Zaškrtnuté položky se zobrazují na konci seznamu. Pořadí, ve kterém jste je napsali, se nikdy nemění."
     },
     "backup": {
       "title": "Záloha",

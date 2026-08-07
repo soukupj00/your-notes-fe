@@ -102,13 +102,34 @@ describe('AppearanceSection', () => {
   });
 
   describe('sink checked items', () => {
-    it('persists being switched on', async () => {
+    // On by default since ADR 0013 made sinking a presentation rule, so the
+    // direction a user actually travels here is off - the escape hatch for a
+    // list where sequence is the content.
+    it('persists being switched off', async () => {
       const user = userEvent.setup();
       render(<AppearanceSection />, { wrapper });
 
-      await user.click(
-        await screen.findByRole('switch', { name: 'settings.sinkCheckedItems.label' })
-      );
+      const toggle = await screen.findByRole('switch', {
+        name: 'settings.sinkCheckedItems.label',
+      });
+      expect(toggle).toBeChecked();
+
+      await user.click(toggle);
+
+      await waitFor(async () => expect((await storedPrefs()).sinkCheckedItems).toBe(false));
+    });
+
+    it('persists being switched back on', async () => {
+      const user = userEvent.setup();
+      render(<AppearanceSection />, { wrapper });
+
+      const toggle = await screen.findByRole('switch', {
+        name: 'settings.sinkCheckedItems.label',
+      });
+      await user.click(toggle);
+      await waitFor(async () => expect((await storedPrefs()).sinkCheckedItems).toBe(false));
+
+      await user.click(toggle);
 
       await waitFor(async () => expect((await storedPrefs()).sinkCheckedItems).toBe(true));
     });

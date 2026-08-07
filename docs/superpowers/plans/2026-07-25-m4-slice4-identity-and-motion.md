@@ -136,13 +136,18 @@ Drag-reorder is also promoted from fast-follow to core: order is half of what a 
 
 ### Task 5b - Checklist polish
 
+**Partly superseded (2026-08-07) by [Task 5c](./2026-08-07-m4-slice4-task5c-live-checklists-and-held-rank.md).**
+The checked-sink below is replaced: it moved the item in the document, which could not reach the card at all, so sinking became a presentation rule in CSS ([ADR 0013](../../adr/0013-checklist-sinking-is-presentation-not-storage.md)) and `CheckedSink` is deleted.
+The card's `pointer-events-none` checkboxes are replaced too - the property never worked, because the `<label>` wrapping the input activates it regardless, so the box flipped and wrote nothing.
+**Drag-reorder is removed** (2026-08-07): the grip was mouse-only from the start, and once sinking became a CSS `order` rule a drag moved the item in the document while the visual order stayed governed by `order`, so it read as doing nothing. `TaskItemDragHandle.tsx`, its CSS and both `@tiptap/extension-drag-handle*` packages are gone. The tap targets are **reshaped**: the 44px row floor is gone from both surfaces, replaced by a 44px-wide hit box anchored to each row's own height, after the floor was measured to cost 24px of dead space per row on a phone.
+
 Decisions (Q5): larger tap targets, drag-reorder via TipTap drag-handle, optional checked-sink.
 
 - [x] **Tap targets** (2026-08-05). On a coarse pointer a task item is a 44px row and its label carries a 44x44 invisible `::before`; a mouse keeps today's 26px rows.
       Both halves are load-bearing. The row floor is what makes consecutive hit boxes *tile* - without it the box above covers the checkbox below and a tap toggles the wrong item - and the invisible box is the `CardPin` shape rather than a bigger control, because a 44px checkbox either dwarfs its own line of text or pushes that text a thumb's width right on every item.
       The box is sized absolutely rather than by a negative inset: the native checkbox is a browser default (~13-15px, and not the same number in every engine), so an inset tuned to reach 44px in Chrome would miss in Safari.
       This closes the third of DESIGN.md's named Touch Rule failures ("checklist boxes are 15px").
-- [x] **Drag-reorder** (2026-08-05) via `@tiptap/extension-drag-handle-react` (MIT in v3), mounted from `editor.tsx` as `TaskItemDragHandle`.
+- [x] ~~**Drag-reorder**~~ (2026-08-05, **removed 2026-08-07** - see the supersession note at the top of this task) via `@tiptap/extension-drag-handle-react` (MIT in v3), mounted from `editor.tsx` as `TaskItemDragHandle`.
       **Checklist-only by hiding, not by excluding.** An excluded node leaves the extension with no candidate, and with no candidate it never calls `onNodeChange` - the grip would sit frozen beside the last checklist it saw while the pointer moved on. Letting a paragraph resolve normally and then hiding on it keeps the grip both scoped *and* honest about where the pointer is.
       `nested` is on because a task item is never top-level, and the extension's default rules already resolve a checklist to the `taskItem` itself (wrapper list and content paragraph are both excluded). **Edge detection is off**: its deduction is `strength * depth`, which at a task item's depth of 2 reaches the exclusion threshold, so a pointer travelling leftward *toward* the grip would knock out the node the grip is for.
       **Known limit: mouse only.** The extension positions itself off `mousemove`, which a touchscreen never fires, so a phone cannot reorder a checklist. Deliberately not solved here - a persistent per-item grip is a custom `TaskItem` NodeView and a permanent mark in the note body, which is a separate decision.

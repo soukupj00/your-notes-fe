@@ -225,7 +225,7 @@
     },
     "sinkCheckedItems": {
       "label": "Sink checked items",
-      "description": "Ticking a checklist item drops it to the bottom of its list; unticking floats it back up."
+      "description": "Checked items are shown at the bottom of their list. The order you typed is never changed."
     },
     "backup": {
       "title": "Backup",

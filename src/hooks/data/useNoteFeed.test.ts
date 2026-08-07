@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { db } from '@/db/db.ts';
 import type { NoteSearchParams } from '@/lib/note-search-params.ts';
@@ -119,6 +119,143 @@ describe('sorting', () => {
     const result = await feed({ state: 'active' }, 'pancakes');
 
     expect(ids(result.current.notes)[0]).toBe('pinned');
+  });
+});
+
+/**
+ * Apply a write and resolve once the feed has actually re-run for it.
+ *
+ * A bare `waitFor(() => expect(notes).toHaveLength(n))` is instantly true and
+ * proves nothing, so an order assertion after one can pass against a feed that
+ * has not seen the write yet. Every held-rank test below therefore edits the
+ * note's `header` alongside whatever it is really testing and waits for *that*
+ * to arrive: a propagated value is the only honest signal that the live query
+ * has refired and the order on screen is the post-write one.
+ */
+async function writeAndSettle(
+  result: { current: { notes: Note[] } },
+  id: string,
+  changes: Partial<Note>
+) {
+  const marker = `settled-${id}-${Math.random().toString(36).slice(2)}`;
+  await db.notes.update(id, { ...changes, header: marker });
+  await waitFor(() =>
+    expect(result.current.notes.find((note) => note.id === id)?.header).toBe(marker)
+  );
+}
+
+describe('held rank (ADR 0012)', () => {
+  it('does not move a note the user just edited', async () => {
+    await putNote({ id: 'a', updatedAt: daysAgo(1) });
+    await putNote({ id: 'b', updatedAt: daysAgo(2) });
+    await putNote({ id: 'c', updatedAt: daysAgo(3) });
+
+    const { result } = renderHook(() => useNoteFeed({ state: 'active' }));
+    await waitFor(() => expect(ids(result.current.notes)).toEqual(['a', 'b', 'c']));
+
+    // Exactly what recolouring a card or ticking a checkbox does.
+    await writeAndSettle(result, 'c', { updatedAt: new Date().toISOString() });
+
+    // `c` now sorts first, and must stay put anyway.
+    expect(ids(result.current.notes)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('still removes a note that leaves the feed', async () => {
+    await putNote({ id: 'a', updatedAt: daysAgo(1) });
+    await putNote({ id: 'b', updatedAt: daysAgo(2) });
+
+    const { result } = renderHook(() => useNoteFeed({ state: 'active' }));
+    await waitFor(() => expect(ids(result.current.notes)).toEqual(['a', 'b']));
+
+    await db.notes.update('a', { state: 'archived' });
+
+    await waitFor(() => expect(ids(result.current.notes)).toEqual(['b']));
+  });
+
+  it('still shows a newly created note', async () => {
+    await putNote({ id: 'a', updatedAt: daysAgo(2) });
+
+    const { result } = renderHook(() => useNoteFeed({ state: 'active' }));
+    await waitFor(() => expect(ids(result.current.notes)).toEqual(['a']));
+
+    await putNote({ id: 'fresh', updatedAt: new Date().toISOString() });
+
+    await waitFor(() => expect(ids(result.current.notes)).toEqual(['fresh', 'a']));
+  });
+
+  it('re-ranks when the sort changes', async () => {
+    await putNote({ id: 'a', header: 'Apples', updatedAt: daysAgo(1) });
+    await putNote({ id: 'z', header: 'Zebra', updatedAt: daysAgo(2) });
+
+    const { result, rerender } = renderHook(
+      ({ search }: { search: NoteSearchParams }) => useNoteFeed({ state: 'active' }, search),
+      { initialProps: { search: { sort: 'updated', dir: 'desc' } as NoteSearchParams } }
+    );
+    await waitFor(() => expect(ids(result.current.notes)).toEqual(['a', 'z']));
+
+    rerender({ search: { sort: 'title', dir: 'desc' } });
+
+    await waitFor(() => expect(ids(result.current.notes)).toEqual(['z', 'a']));
+  });
+
+  it('re-ranks when the tab becomes visible again', async () => {
+    await putNote({ id: 'a', updatedAt: daysAgo(1) });
+    await putNote({ id: 'b', updatedAt: daysAgo(2) });
+
+    const { result } = renderHook(() => useNoteFeed({ state: 'active' }));
+    await waitFor(() => expect(ids(result.current.notes)).toEqual(['a', 'b']));
+
+    await writeAndSettle(result, 'b', { updatedAt: new Date().toISOString() });
+    expect(ids(result.current.notes)).toEqual(['a', 'b']);
+
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+
+    await waitFor(() => expect(ids(result.current.notes)).toEqual(['b', 'a']));
+  });
+
+  it('lets an unpinned note fall back to its held place, not to its fresh one', async () => {
+    await putNote({ id: 'a', updatedAt: daysAgo(1) });
+    await putNote({ id: 'b', updatedAt: daysAgo(2) });
+    await putNote({ id: 'c', updatedAt: daysAgo(3) });
+
+    const { result } = renderHook(() => useNoteFeed({ state: 'active' }));
+    await waitFor(() => expect(ids(result.current.notes)).toEqual(['a', 'b', 'c']));
+
+    // Make the held order disagree with the fresh one, or this test cannot tell
+    // "returned to its held place" from "returned to its sorted place": `c` is
+    // now the most recently updated note but is still held last.
+    await writeAndSettle(result, 'c', { updatedAt: new Date().toISOString() });
+    expect(ids(result.current.notes)).toEqual(['a', 'b', 'c']);
+
+    // Pinning is the one action still allowed to move a card on the spot.
+    await writeAndSettle(result, 'c', { pinnedAt: new Date().toISOString() });
+    expect(ids(result.current.notes)).toEqual(['c', 'a', 'b']);
+
+    // Taking the pin back must undo it - back to last, where it was held, and
+    // not to first, where `updated desc` would now put it.
+    await writeAndSettle(result, 'c', { pinnedAt: undefined });
+    expect(ids(result.current.notes)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('re-ranks everything, not just the edited note, once the user looks away', async () => {
+    await putNote({ id: 'a', updatedAt: daysAgo(1) });
+    await putNote({ id: 'b', updatedAt: daysAgo(2) });
+    await putNote({ id: 'c', updatedAt: daysAgo(3) });
+
+    const { result } = renderHook(() => useNoteFeed({ state: 'active' }));
+    await waitFor(() => expect(ids(result.current.notes)).toEqual(['a', 'b', 'c']));
+
+    await writeAndSettle(result, 'c', { updatedAt: daysAgo(0) });
+    await writeAndSettle(result, 'b', { updatedAt: new Date().toISOString() });
+    expect(ids(result.current.notes)).toEqual(['a', 'b', 'c']);
+
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+
+    await waitFor(() => expect(ids(result.current.notes)).toEqual(['b', 'c', 'a']));
   });
 });
 

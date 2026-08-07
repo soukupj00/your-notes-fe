@@ -148,6 +148,70 @@ describe('graceful fallback', () => {
   });
 });
 
+describe('v1 → v2 migration (ADR 0013)', () => {
+  it('opts a v1 blob into sinking without touching its other settings', async () => {
+    // The whole reason a migration is needed rather than a changed default:
+    // `setPreference` persists the entire parsed blob, so every existing user
+    // already has `sinkCheckedItems: false` on disk and a new default would
+    // reach none of them.
+    await store({
+      version: 1,
+      sinkCheckedItems: false,
+      density: 'compact',
+      reducedMotion: 'always',
+      colorBlind: true,
+      noteButtonAlignment: 'left',
+    });
+
+    const result = await prefs();
+
+    expect(result.current.preferences.sinkCheckedItems).toBe(true);
+    expect(result.current.preferences.density).toBe('compact');
+    expect(result.current.preferences.reducedMotion).toBe('always');
+    expect(result.current.preferences.colorBlind).toBe(true);
+    expect(result.current.preferences.noteButtonAlignment).toBe('left');
+  });
+
+  it('leaves a v2 blob that has opted out alone', async () => {
+    await store({ version: 2, sinkCheckedItems: false });
+
+    const result = await prefs();
+
+    expect(result.current.preferences.sinkCheckedItems).toBe(false);
+  });
+
+  it('does not rewrite the stored blob on read', async () => {
+    // The existing contract: a read never destroys data we might want to
+    // inspect. The migration is therefore re-applied on every read until the
+    // next `setPreference` persists version 2, which is why it is idempotent.
+    const v1 = { version: 1, sinkCheckedItems: false, density: 'compact' };
+    await store(v1);
+
+    await prefs();
+
+    expect(await stored()).toEqual(v1);
+  });
+
+  it('persists version 2 once any preference is written', async () => {
+    await store({ version: 1, sinkCheckedItems: false, density: 'compact' });
+    const result = await prefs();
+
+    await result.current.setPreference('density', 'comfortable');
+
+    const blob = (await stored()) as Record<string, unknown>;
+    expect(blob.version).toBe(PREFERENCES_VERSION);
+    expect(blob.sinkCheckedItems).toBe(true);
+  });
+
+  it('still rejects a version it has never heard of', async () => {
+    await store({ version: 999, sinkCheckedItems: false, density: 'compact' });
+
+    const result = await prefs();
+
+    expect(result.current.preferences).toEqual(DEFAULT_PREFERENCES);
+  });
+});
+
 describe('setPreference', () => {
   it('round-trips a written value through Dexie', async () => {
     const result = await prefs();

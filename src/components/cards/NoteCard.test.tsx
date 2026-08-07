@@ -460,6 +460,120 @@ describe('NoteCard', () => {
     expect(screen.getByText('+2')).toBeInTheDocument();
   });
 
+  describe('checklist (ADR 0013)', () => {
+    const checklist = (...items: [string, boolean][]) =>
+      `<ul data-type="taskList">${items
+        .map(
+          ([label, checked]) =>
+            `<li data-type="taskItem" data-checked="${checked}">` +
+            `<label><input type="checkbox"${checked ? ' checked' : ''}><span></span></label>` +
+            `<div><p>${label}</p></div></li>`
+        )
+        .join('')}</ul>`;
+
+    /** The card writes to Dexie, so the stored note is what the tick has to reach. */
+    const storedBody = async (id: string) => (await db.notes.get(id))?.body;
+
+    it('ticks an item from the card and persists it', async () => {
+      // The defect this whole slice starts from: the box flipped, nothing was
+      // written, and reopening the note showed it unchecked again.
+      const note = makeNote({ body: checklist(['Milk', false], ['Bread', false]) });
+      await db.notes.put(note);
+      render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+      await userEvent.click(screen.getAllByRole('checkbox')[0]);
+
+      await waitFor(async () => {
+        expect(await storedBody(note.id)).toContain('<li data-type="taskItem" data-checked="true"');
+      });
+    });
+
+    it('does not open the note when the box itself is clicked', async () => {
+      const note = makeNote({ body: checklist(['Milk', false]) });
+      await db.notes.put(note);
+      const onSelect = vi.fn();
+      render(<NoteCard note={note} onSelect={onSelect} />);
+
+      await userEvent.click(screen.getAllByRole('checkbox')[0]);
+
+      expect(onSelect).not.toHaveBeenCalled();
+    });
+
+    it('still opens the note when the row’s text is clicked', async () => {
+      // Only the box is a control. Everything else on the row is still the card.
+      const note = makeNote({ body: checklist(['Milk', false]) });
+      await db.notes.put(note);
+      const onSelect = vi.fn();
+      render(<NoteCard note={note} onSelect={onSelect} />);
+
+      await userEvent.click(screen.getByText('Milk'));
+
+      expect(onSelect).toHaveBeenCalledWith(note.id);
+    });
+
+    it('ticks from the keyboard, because the box is a real focusable control', async () => {
+      // This is why the delegated listener does not need its own key handler:
+      // Space on a focused checkbox fires a click, which reaches the delegate by
+      // bubbling. The a11y suppression in `NoteBody` rests on this test.
+      const note = makeNote({ body: checklist(['Milk', false]) });
+      await db.notes.put(note);
+      render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+      screen.getAllByRole('checkbox')[0].focus();
+      await userEvent.keyboard(' ');
+
+      await waitFor(async () => {
+        expect(await storedBody(note.id)).toContain('data-checked="true"');
+      });
+    });
+
+    it('unticks an item that was checked', async () => {
+      const note = makeNote({ body: checklist(['Milk', true]) });
+      await db.notes.put(note);
+      render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+      await userEvent.click(screen.getAllByRole('checkbox')[0]);
+
+      await waitFor(async () => {
+        expect(await storedBody(note.id)).toContain('data-checked="false"');
+      });
+    });
+
+    it('ticks the item that was clicked, not the first one', async () => {
+      const note = makeNote({
+        body: checklist(['Milk', false], ['Bread', false], ['Eggs', false]),
+      });
+      await db.notes.put(note);
+      render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+      await userEvent.click(screen.getAllByRole('checkbox')[2]);
+
+      await waitFor(async () => {
+        const body = (await storedBody(note.id)) ?? '';
+        expect(body.match(/data-checked="true"/g) ?? []).toHaveLength(1);
+        expect(body.indexOf('data-checked="true"')).toBeGreaterThan(body.indexOf('Bread'));
+      });
+    });
+
+    it('leaves the stored order exactly as it was written', async () => {
+      // The regression guard for sinking being presentation: the card must move
+      // nothing, because the stored order is what a backup and M5 sync carry.
+      const note = makeNote({
+        body: checklist(['Milk', false], ['Bread', false], ['Eggs', false]),
+      });
+      await db.notes.put(note);
+      render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+      await userEvent.click(screen.getAllByRole('checkbox')[0]);
+
+      await waitFor(async () => {
+        const body = (await storedBody(note.id)) ?? '';
+        expect(body.indexOf('Milk')).toBeLessThan(body.indexOf('Bread'));
+        expect(body.indexOf('Bread')).toBeLessThan(body.indexOf('Eggs'));
+      });
+    });
+  });
+
   it('renders the note’s labels as read-only pills', async () => {
     const note = makeNote();
     const now = new Date().toISOString();

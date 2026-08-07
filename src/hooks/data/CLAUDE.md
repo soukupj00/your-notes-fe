@@ -49,6 +49,13 @@ Fuzzy search dropped the old `createdAt`/`updatedAt` substring matching - fuzzy-
 Sort is field × direction (`updated`/`created`/`title` × `desc`/`asc`, default `updated`/`desc`); multiple `tags` narrow with **AND**.
 Tag filtering is applied to the *results*, not the candidates, so toggling a pill never rebuilds the Fuse index and relevance order survives.
 - **Pinned notes always head the feed** - under any sort *and* under a search ranking - and keep their own order (newest pin first) rather than adopting the sort, because a pin shelf is arranged by hand.
+- **Membership is live, rank is held** ([ADR 0012](../../../docs/adr/0012-feed-rank-is-held-membership-is-live.md)).
+A live query refires for *any* write to the notes table and every mutation bumps `updatedAt`, so on the default `updated desc` sort the wall used to re-order itself the moment a card was recoloured, a checkbox ticked, or the open editor autosaved.
+Notes still join and leave the feed at once; what is held is where the ones already on screen sit.
+The order is re-taken only when the user is not watching - on mount, on a search-param change, and on returning to the tab (`useVisibilityEpoch`) - all folded into one `rankKey`.
+The held order is checked for staleness **inside the memo at read time** rather than reset from an effect: an effect would run after the memo it needs to precede, and resetting during render would be a ref write the lint rules reject.
+It is recorded *before* `floatPinned`, which is what keeps pinning live (ADR 0012's one exception) and what lets an unpin actually put the note back rather than stranding it at rank 0.
+`mergeHeldOrder` (`src/lib/feed-rank.ts`) is the pure part: incumbents keep their order, and a newcomer is anchored after the last incumbent that outranks it in the fresh order - not simply placed at the front, which would be wrong under `title asc`.
 - Search runs *within* the current scope, so trashed notes are unreachable from any view but `/trash` (ADR 0009).
 
 ## Known inconsistencies (see PLAN)

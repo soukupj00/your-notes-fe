@@ -33,7 +33,7 @@ import { createMathematics } from './Mathematics';
 import { OrderedList } from './OrderedList';
 import { createSlashMenu } from './SlashMenu';
 import { Strike } from './Strike';
-import { CheckedSink, TaskList } from './TaskList';
+import { ChecklistFlip, TaskList } from './TaskList';
 import { TextAlign } from './TextAlign';
 import { Underline } from './Underline';
 import { createVideo } from './Video';
@@ -44,11 +44,11 @@ interface BuildOptions {
   getDeps: () => AttachmentDeps;
   /** The live editor, which does not exist yet while this array is built. */
   getEditor: () => TiptapEditor | null;
-  /** Read live, for the same reason as `getDeps`: the preference can be
+  /** Read live, for the same reason as `getDeps`: reduced motion can be
    *  switched while a note is open, but this array is built once. Optional
-   *  because the preference is off by default, so a caller with no preferences
-   *  to hand (a headless test) gets the same editor a fresh user does. */
-  sinkCheckedItems?: () => boolean;
+   *  because a caller with no preferences to hand (a headless test) should get
+   *  the quieter answer, not an animation it never asked for. */
+  animateChecklist?: () => boolean;
   t: TFunction;
 }
 
@@ -60,7 +60,7 @@ interface BuildOptions {
  * button that silently never appears, which is exactly the class of bug the
  * `videoAttachment` omission was.
  */
-export function buildEditorExtensions({ getDeps, getEditor, sinkCheckedItems, t }: BuildOptions) {
+export function buildEditorExtensions({ getDeps, getEditor, animateChecklist, t }: BuildOptions) {
   return [
     Document,
     Paragraph,
@@ -81,7 +81,7 @@ export function buildEditorExtensions({ getDeps, getEditor, sinkCheckedItems, t 
     ListItem,
     TaskList,
     TaskItem,
-    CheckedSink.configure({ enabled: sinkCheckedItems ?? (() => false) }),
+    ChecklistFlip.configure({ animate: animateChecklist ?? (() => false) }),
     Clear,
     Code,
     CodeBlock,

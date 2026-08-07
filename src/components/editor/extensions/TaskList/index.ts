@@ -1,3 +1,2 @@
-export * from './CheckedSink';
-export * from './TaskItemDragHandle';
+export * from './ChecklistFlip';
 export * from './TaskList';

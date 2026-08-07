@@ -11,7 +11,7 @@ export const PREFERENCES_KEY = 'preferences';
  * way defaults can't absorb, and handle the old shape in `parsePreferences`;
  * an unrecognised version is treated as unreadable and falls back to defaults.
  */
-export const PREFERENCES_VERSION = 1;
+export const PREFERENCES_VERSION = 2;
 
 /** One leaf inside a stored family: array position is its order on the bar. */
 const toolbarMemberSchema = z.object({ id: z.string(), on: z.boolean() });
@@ -82,14 +82,17 @@ export const preferencesSchema = z.object({
   colorBlind: z.boolean().catch(false).default(false),
   density: z.enum(['comfortable', 'compact']).default('comfortable'),
   /**
-   * Whether ticking a checklist item drops it to the bottom of its list.
+   * Whether a checklist is *shown* with its checked items gathered at the
+   * bottom (CONTEXT.md, "Sinking").
    *
-   * Off by default, and a preference rather than a behaviour, because it is an
-   * opinion about what a list is for: a shopping list wants done things out of
-   * the way, while a ranked list of options wants the order the user put it in
-   * left alone. Rewriting that order unasked would be the app losing work.
+   * On by default. It was off while sinking physically reordered the stored
+   * body, because rewriting the user's typed order unasked is the app losing
+   * work; ADR 0013 made it a presentation rule, so nothing is rewritten and
+   * unchecking returns an item to exactly where it was authored. The preference
+   * survives for the case where sequence *is* the content - recipe steps, a
+   * ranked list of options - which is real but a minority.
    */
-  sinkCheckedItems: z.boolean().default(false),
+  sinkCheckedItems: z.boolean().default(true),
   /** `system` follows `prefers-reduced-motion`; the others override it. */
   reducedMotion: z.enum(['system', 'always', 'never']).default('system'),
   /** ISO timestamp of when the onboarding tour was completed or skipped. */
@@ -104,6 +107,37 @@ export const DEFAULT_PREFERENCES: Preferences = preferencesSchema.parse({
 });
 
 /**
+ * Brings a blob written by an older schema version up to the current one.
+ *
+ * Runs *before* the schema sees it, which is the only place it can: `version`
+ * is a `z.literal`, so a stored older version fails validation outright and
+ * `parsePreferences` would fall back to defaults - wiping the toolbar, density
+ * and reduced-motion settings this is meant to preserve.
+ *
+ * Must stay idempotent. Nothing writes the migrated blob back (a read never
+ * destroys data), so this re-runs on every read until the next `setPreference`
+ * happens to persist the new version.
+ */
+function migratePreferences(raw: unknown): unknown {
+  if (!raw || typeof raw !== 'object') return raw;
+  const blob = raw as Record<string, unknown>;
+
+  // v1 → v2 (ADR 0013): sinking became a presentation rule, so the reason it
+  // defaulted off - that it rewrote the user's stored order - is gone. Forced
+  // rather than left to the new default, because `setPreference` persists the
+  // whole parsed blob: every user who has ever changed any setting already has
+  // `sinkCheckedItems: false` on disk, so a changed default would reach nobody.
+  //
+  // This does overrule the handful of users who turned sinking on and then off
+  // again in the two days the setting existed. A stored `false` is
+  // indistinguishable from the old default, and being opted into a behaviour
+  // that no longer destroys anything is benign.
+  if (blob.version === 1) return { ...blob, version: 2, sinkCheckedItems: true };
+
+  return blob;
+}
+
+/**
  * Preferences are cosmetic, so an unreadable blob must never block the app:
  * anything that fails the schema (corrupt, hand-edited, or written by a version
  * we don't know) yields defaults. The bad blob is deliberately left on disk -
@@ -111,7 +145,7 @@ export const DEFAULT_PREFERENCES: Preferences = preferencesSchema.parse({
  * might want to inspect.
  */
 export function parsePreferences(raw: unknown): Preferences {
-  const parsed = preferencesSchema.safeParse(raw);
+  const parsed = preferencesSchema.safeParse(migratePreferences(raw));
   return parsed.success ? parsed.data : DEFAULT_PREFERENCES;
 }
 

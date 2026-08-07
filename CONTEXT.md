@@ -6,7 +6,8 @@ Domain glossary for the note-taking app. This file defines the **language** of t
 
 - **Note** — A single unit of content a user captures. Has an optional header, an optional plaintext description, a rich-text body (which may contain a Checklist), zero or more attachments, and zero or more tags. A Note is the central aggregate of the app.
 - **Body** — The rich-text content of a Note, authored in the Editor and stored as HTML. This is the main writing surface, and it is where every richer element lives — attachments and the Checklist are authored inside it, not alongside it. Distinct from the **description** (a short plaintext subtitle).
-- **Checklist** — A to-do list authored *inside* the Body: a list whose items each carry a checked/unchecked state. It is Body content, not separate structured Note data. Distinct from a plain bullet/ordered list, which has no checked state — the Checklist is the one with checkboxes. A Body may contain more than one Checklist. Checked items may optionally sink to the bottom of their list.
+- **Checklist** — A to-do list authored *inside* the Body: a list whose items each carry a checked/unchecked state. It is Body content, not separate structured Note data. Distinct from a plain bullet/ordered list, which has no checked state — the Checklist is the one with checkboxes. A Body may contain more than one Checklist.
+- **Sinking** — Presenting a Checklist with its checked items gathered at the bottom, below its unchecked ones. Sinking is a way of *showing* a Checklist, never a way of storing one: the order the user typed is what is kept, so unchecking an item returns it to exactly the place it was authored in. Applies to every surface a Checklist appears on, so the same list never reads two ways.
 - **Tag** — A user-defined label (e.g. "Work", "Personal") used to group Notes. A Tag exists independently of any Note and can be attached to many Notes. May carry an optional **Color** (a palette token, resolved per-Theme like a Note's Color).
 - **NoteTag** — The many-to-many association between a Note and a Tag. Attaching or detaching a Tag creates or removes a NoteTag; it never deletes the Tag itself.
 - **Attachment** — Any non-text media belonging to a Note. An Attachment is authored **inside the Body**: the Body holds a lightweight reference to the Attachment (never the media bytes), and the Attachment's bytes and metadata are stored separately. The Body decides *which* Attachments a Note shows and *where*; the Attachment store owns the bytes. Five kinds, each a separate concept:
@@ -17,6 +18,13 @@ Domain glossary for the note-taking app. This file defines the **language** of t
   - **Drawing** — an Excalidraw scene authored inside the Note (created empty and edited in place, not attached from an existing file).
 - **Preview** — A lightweight stand-in rendered on the note card in place of the full Attachment, so the feed never loads the full bytes. It is a downscaled raster for an Image, and an SVG snapshot for a Drawing. Audio, Video, and File have no Preview; the card shows a control button or icon instead. A Preview is a rendering optimisation, never the source of truth — the full Attachment remains authoritative.
 - **Orphan Attachment** — An Attachment whose Note no longer references it (its reference was removed from the Body, or its Note was discarded/never saved). Orphans are reclaimed by a sweep, not deleted the instant a reference disappears (so an in-editor undo can bring the reference back).
+
+## The feed
+
+- **Feed** — A scoped, ordered wall of Notes: a scope (Active, Archived, Trashed, or one Tag), narrowed by Search, arranged by a Sort. Every Note-listing screen in the app is a Feed.
+- **Sort** — The rule a Feed is arranged by (by when a Note was last updated, when it was created, or its title), in a direction. A Sort is part of the Feed's address, so a given arrangement is shareable and survives a refresh.
+- **Membership** — Which Notes a Feed contains. Membership is always live: a Note that stops qualifying leaves at once, and one that starts qualifying arrives at once.
+- **Rank** — A Note's place within a Feed. Distinct from Membership, and unlike it, Rank is **held**: a Note already on screen does not change place because of something the user just did to it. Rank is recomputed only when the user is not watching the Feed. Pinning is the one exception, because moving the Note *is* the action being asked for.
 
 ## Note lifecycle
 

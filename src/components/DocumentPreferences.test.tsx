@@ -14,6 +14,7 @@ afterEach(async () => {
   document.documentElement.classList.remove(COLOR_BLIND_CLASS, 'dark');
   document.documentElement.removeAttribute('data-density');
   document.documentElement.removeAttribute('data-reduced-motion');
+  document.documentElement.removeAttribute('data-sink-checked');
   await db.settings.clear();
 });
 
@@ -123,12 +124,38 @@ describe('DocumentPreferences', () => {
     });
   });
 
+  describe('checklist sinking', () => {
+    // The only switch the sinking rules have (ADR 0013): they are pure CSS, so
+    // without this attribute the preference cannot reach them at all.
+    it('stamps the on-by-default preference', async () => {
+      mount();
+      await waitFor(() =>
+        expect(document.documentElement.hasAttribute('data-sink-checked')).toBe(true)
+      );
+    });
+
+    it('removes the attribute when the preference is turned off', async () => {
+      const { rerender } = mount();
+      await waitFor(() =>
+        expect(document.documentElement.hasAttribute('data-sink-checked')).toBe(true)
+      );
+
+      await store({ version: PREFERENCES_VERSION, sinkCheckedItems: false });
+      rerender(tree());
+
+      await waitFor(() =>
+        expect(document.documentElement.hasAttribute('data-sink-checked')).toBe(false)
+      );
+    });
+  });
+
   it('stamps every preference from one pass, so none can be left behind', async () => {
     await store({
       version: PREFERENCES_VERSION,
       colorBlind: true,
       density: 'compact',
       reducedMotion: 'always',
+      sinkCheckedItems: false,
     });
 
     mount();
@@ -137,6 +164,7 @@ describe('DocumentPreferences', () => {
       expect(document.documentElement.classList.contains(COLOR_BLIND_CLASS)).toBe(true);
       expect(document.documentElement.dataset.density).toBe('compact');
       expect(document.documentElement.dataset.reducedMotion).toBe('always');
+      expect(document.documentElement.hasAttribute('data-sink-checked')).toBe(false);
     });
   });
 });

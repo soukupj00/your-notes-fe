@@ -30,12 +30,12 @@ import {
 } from '@/components/editor/extensions/Excalidraw/scene';
 import { insertImageAttachmentFiles } from '@/components/editor/extensions/Image/insert';
 import { LinkBubbleMenu } from '@/components/editor/extensions/Link';
-import { TaskItemDragHandle } from '@/components/editor/extensions/TaskList';
 import { insertVideoAttachmentFiles } from '@/components/editor/extensions/Video/insert.ts';
 import { EditorToolbar } from '@/components/editor/toolbar/EditorToolbar.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
+import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import type { AttachmentErrorCode } from '@/lib/attachments.ts';
 import { cn } from '@/lib/utils.ts';
 
@@ -124,6 +124,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
 ) {
   const { t } = useTranslation();
   const { preferences } = usePreferences();
+  const reducedMotion = useReducedMotion();
   // Math node onClick handlers need the live editor, which does not exist yet when
   // the extensions array is built; a ref lets those closures reach it at click time.
   const editorRef = useRef<TiptapEditor | null>(null);
@@ -212,12 +213,13 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   attachmentDepsRef.current = attachmentDeps;
   const getAttachmentDeps = useRef(() => attachmentDepsRef.current).current;
 
-  // Same shape, same reason: the checked-sink plugin is built once but has to
+  // Same shape, same reason: the checklist FLIP plugin is built once but has to
   // see the preference as it is at the moment a checkbox is ticked, not as it
-  // was when the note opened.
-  const sinkCheckedItemsRef = useRef(preferences.sinkCheckedItems);
-  sinkCheckedItemsRef.current = preferences.sinkCheckedItems;
-  const getSinkCheckedItems = useRef(() => sinkCheckedItemsRef.current).current;
+  // was when the note opened. Reduced motion is a hard killswitch (DESIGN.md),
+  // so it is read here rather than inside the plugin.
+  const animateChecklistRef = useRef(!reducedMotion);
+  animateChecklistRef.current = !reducedMotion;
+  const getAnimateChecklist = useRef(() => animateChecklistRef.current).current;
 
   /*
    * `extensions`, `editorProps` and `content` are all stabilised for one reason:
@@ -238,10 +240,10 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       buildEditorExtensions({
         getDeps: getAttachmentDeps,
         getEditor: () => editorRef.current,
-        sinkCheckedItems: getSinkCheckedItems,
+        animateChecklist: getAnimateChecklist,
         t,
       }),
-    [getAttachmentDeps, getSinkCheckedItems, t]
+    [getAttachmentDeps, getAnimateChecklist, t]
   );
 
   const editorProps = useMemo(
@@ -443,7 +445,6 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
 
         {/* Checklist reorder. Mounted here rather than from the extension because
             the grip is a React portal that needs the live editor instance. */}
-        {editable && editor && <TaskItemDragHandle editor={editor} />}
       </div>
 
       {/* Auto-started picture capture. `accept="image/*"` with no `capture`
