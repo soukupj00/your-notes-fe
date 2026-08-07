@@ -28,6 +28,7 @@ The React interface to the Dexie layer. Components use these hooks; they should 
 ## Conventions & behaviors
 
 - Mutations set/refresh `updatedAt` and generate `uuid` ids (see `useNoteActions`).
+`createNote` accepts an `id` instead of minting one, which is how a draft keeps the id its URL is already showing ([ADR 0014](../../../docs/adr/0014-the-open-note-lives-in-the-url.md)): the editor's id goes into the address bar when it opens, before there is a row.
 - Relationship-aware deletes run in a `db.transaction('rw', ...)`: `purgeNote` also clears the note's `noteTags` and `attachments`, returning `{ removedTags, removedAttachments }` so callers can pass them (with the captured note) to `restoreNote` for a lossless undo; `deleteTag` clears the tag's `noteTags`.
 - `collectStartupOrphans` is **one pass over both tables**, not the note-scoped `collectOrphans` run per note: "the owning Note is gone" and "the owner's Body no longer references this row" are the same question asked of one row, so answering them together costs one transaction instead of one per note on every app start.
 `collectOrphans` stays for the note-scoped case (`NoteEditorDialog` on close); the separate missing-owner sweep is gone, folded into the same predicate.

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { EditingState } from '@/components/notes/NotesView.tsx';
+import type { NoteOpenRequest } from '@/components/notes/NotesView.tsx';
 import { resolveDesktopQuickCapture } from '@/components/notes/quickCaptureLayout.ts';
 import { Button } from '@/components/ui/button.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
@@ -25,7 +25,7 @@ const ROTATE_MS = 5000;
  * The prompt cycles slowly to hint at what a note can be. It is decoration, so
  * reduced motion pins it to the resting copy rather than merely speeding it up.
  */
-export function DesktopCaptureBar({ onStart }: { onStart: (state: EditingState) => void }) {
+export function DesktopCaptureBar({ onStart }: { onStart: (state: NoteOpenRequest) => void }) {
   const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const [index, setIndex] = useState(0);

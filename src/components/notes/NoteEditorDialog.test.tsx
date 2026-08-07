@@ -373,6 +373,47 @@ describe('NoteEditorDialog', () => {
   });
 });
 
+// The note's id is in the URL from the moment the editor opens (ADR 0014), so
+// the dialog has to work with an id that names a note which does not exist yet
+// - and tell the caller when one names a note that never will.
+describe('the id in the URL', () => {
+  it('persists a new draft under the id it was given, not a fresh one', async () => {
+    const draftId = crypto.randomUUID();
+    render(<NoteEditorDialog noteId={null} draftId={draftId} onClose={vi.fn()} />);
+
+    await userEvent.type(headerInput(), 'Shopping');
+
+    await waitFor(async () => expect(await db.notes.count()).toBe(1), { timeout: 2000 });
+    const [saved] = await db.notes.toArray();
+    // Anything else and the URL would be naming a note that does not exist.
+    expect(saved.id).toBe(draftId);
+  });
+
+  // Reachable without doing anything strange: closing an empty draft purges it,
+  // so the history entry the user just came from names a note that is gone.
+  it('reports a note that is not there rather than opening an empty editor', async () => {
+    const onNoteMissing = vi.fn();
+    render(
+      <NoteEditorDialog noteId="not-a-real-note" onClose={vi.fn()} onNoteMissing={onNoteMissing} />
+    );
+
+    await waitFor(() => expect(onNoteMissing).toHaveBeenCalled());
+    // Nothing was written under the dead id on the way past.
+    expect(await db.notes.count()).toBe(0);
+  });
+
+  it('says nothing when the note is there', async () => {
+    const note = makeNote();
+    await db.notes.add(note);
+    const onNoteMissing = vi.fn();
+
+    render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} onNoteMissing={onNoteMissing} />);
+    await screen.findByDisplayValue(note.header as string);
+
+    expect(onNoteMissing).not.toHaveBeenCalled();
+  });
+});
+
 // On a phone the dialog is a full-screen sheet, so it carries its own app bar
 // rather than the vendored close X in the far corner.
 describe('the mobile app bar', () => {

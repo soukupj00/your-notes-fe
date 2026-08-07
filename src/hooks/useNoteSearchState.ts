@@ -41,8 +41,14 @@ export function useNoteSearchState() {
       // Fire-and-forget: the router owns the transition, there is nothing to await.
       void navigate({
         to: '.',
-        search: (prev: NoteSearchParams) =>
-          toNoteSearchParams({ ...resolveNoteSearch(prev), ...patch }),
+        search: (prev: NoteSearchParams) => ({
+          ...toNoteSearchParams({ ...resolveNoteSearch(prev), ...patch }),
+          // `note` is not feed state, so `toNoteSearchParams` does not know
+          // about it and would drop it. Carried explicitly: on desktop the feed
+          // and its search box sit behind the open editor, so without this,
+          // typing a query - or toggling a sort - would close the note.
+          note: prev.note,
+        }),
         replace: options?.replace ?? false,
       });
     },

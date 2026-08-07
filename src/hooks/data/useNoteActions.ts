@@ -35,7 +35,10 @@ function graceCutoff(days = TRASH_GRACE_DAYS) {
 // would make that effect re-run every render and loop the debounced save.
 export function useNoteActions() {
   const createNote = useCallback(async (data: Partial<Note>) => {
-    const id = uuid();
+    // An id may be supplied rather than minted: a note's id goes into the URL
+    // the moment its editor opens, before there is anything worth persisting,
+    // so the draft has to be able to say which id it will eventually take.
+    const id = data.id ?? uuid();
     const now = new Date().toISOString();
 
     const newNote: Note = {

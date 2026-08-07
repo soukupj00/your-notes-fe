@@ -3,7 +3,7 @@ import { m } from 'motion/react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FLOATING_BOTTOM_BAR } from '@/components/notes/floatingBottomBar.ts';
-import type { EditingState } from '@/components/notes/NotesView.tsx';
+import type { NoteOpenRequest } from '@/components/notes/NotesView.tsx';
 import { resolveQuickCapture } from '@/components/notes/quickCaptureLayout.ts';
 import { Button } from '@/components/ui/button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils.ts';
  * note. A Popover rather than hand-rolled state, so tap-outside and Esc close
  * it and focus is managed for free.
  */
-export function QuickCaptureBar({ onStart }: { onStart: (editing: EditingState) => void }) {
+export function QuickCaptureBar({ onStart }: { onStart: (editing: NoteOpenRequest) => void }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const reducedMotion = useReducedMotion();

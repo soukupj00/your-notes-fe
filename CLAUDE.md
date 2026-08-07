@@ -57,6 +57,9 @@ Data access uses dedicated hooks in `src/hooks/data/`:
 - `useNotesByTag`, `useTagsForNote` — relationship queries via the `noteTags` join table
 
 Search/filter state is **not** in a context - it lives in the URL as typed TanStack search params (`q`, `sort`, `dir`, `tags`), validated by `src/lib/note-search-params.ts` and read through `useNoteSearchState()`.
+Which note is **open** lives there too, as `note` ([ADR 0014](./docs/adr/0014-the-open-note-lives-in-the-url.md), read through `useOpenNote()`), so the platform back button closes the editor rather than navigating the feed out from under it - the editor is a full-screen sheet below `sm:`, and the app is `display: standalone`, so an installed user has no browser chrome to correct that with.
+A note's id is minted when its editor **opens**, not when it is first saved: that id is the dialog's React key and its load-effect dependency, so a mid-session `?note=new` → `?note=<uuid>` swap would remount the editor under a typing user's cursor.
+One-shot open *intents* (start the camera, autoplay the first clip) stay in React state - a reload of a URL must not re-fire them.
 The `NotesProvider` that used to hold the query is gone: a searched feed is now shareable, refresh-proof, and steppable with the back button.
 
 ### Editor (`src/components/editor/`)

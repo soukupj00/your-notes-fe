@@ -39,6 +39,19 @@ function SaveStatusIcon({ status }: { status: SaveStatus }) {
 type NoteEditorDialogProps = {
   /** Existing note id, or null for a new (draft) note not yet persisted. */
   noteId: string | null;
+  /**
+   * The id a draft will take when it is first persisted, minted at open so the
+   * URL can name the note before there is a row for it (ADR 0014). Ignored when
+   * `noteId` is set. Optional so a caller outside a feed can still open an
+   * editor without knowing about the URL.
+   */
+  draftId?: string;
+  /**
+   * `noteId` named a note that is not in the database - a dead `?note=` from a
+   * discarded draft, a stale tab, or a shared link to something since deleted.
+   * The dialog cannot decide what to do about the URL, so it reports up.
+   */
+  onNoteMissing?: () => void;
   /** Seed body for a new draft (e.g. an empty checklist for quick-capture). */
   initialBody?: string;
   /** Best-effort: autoplay the note's first audio attachment on open (set when
@@ -59,10 +72,12 @@ type NoteEditorDialogProps = {
  */
 export function NoteEditorDialog({
   noteId,
+  draftId,
   initialBody,
   autoplayFirstAudio,
   initialCapture,
   onClose,
+  onNoteMissing,
 }: NoteEditorDialogProps) {
   const { t } = useTranslation();
   const { createNote, updateNote, purgeNote, pinNote, unpinNote } = useNoteActions();
@@ -113,30 +128,37 @@ export function NoteEditorDialog({
     if (!noteId) return;
     let active = true;
     void db.notes.get(noteId).then((n) => {
-      if (active && n) {
+      if (!active) return;
+      if (n) {
         setHeader(n.header ?? '');
         setBody(n.body ?? '');
         setColor(n.color);
         setPinnedAt(n.pinnedAt);
         setState(n.state);
+        return;
       }
+      // The note named by the URL is not there. Reporting up rather than
+      // rendering an empty editor: a blank surface titled "edit note" invites
+      // typing into a note that no longer exists, and on close would silently
+      // create a second one under the dead id.
+      onNoteMissing?.();
     });
     return () => {
       active = false;
     };
-  }, [noteId]);
+  }, [noteId, onNoteMissing]);
 
   const persist = useCallback(
     async (h: string, b: string) => {
       if (idRef.current == null) {
         if (isEmpty(h, b)) return;
-        const created = await createNote({ header: h, body: b });
+        const created = await createNote({ id: draftId, header: h, body: b });
         idRef.current = created.id;
       } else {
         await updateNote(idRef.current, { header: h, body: b });
       }
     },
-    [createNote, updateNote]
+    [createNote, updateNote, draftId]
   );
 
   // Attachments need a persisted note to reference. When an image is inserted
@@ -148,7 +170,11 @@ export function NoteEditorDialog({
   const ensureNoteId = useCallback(async (): Promise<string> => {
     const chained = saveChainRef.current.then(async () => {
       if (idRef.current == null) {
-        const created = await createNote({ header: headerRef.current, body: bodyRef.current });
+        const created = await createNote({
+          id: draftId,
+          header: headerRef.current,
+          body: bodyRef.current,
+        });
         idRef.current = created.id;
       }
       return idRef.current as string;
@@ -159,7 +185,7 @@ export function NoteEditorDialog({
       () => undefined
     );
     return chained;
-  }, [createNote]);
+  }, [createNote, draftId]);
 
   const enqueueSave = useCallback(
     (h: string, b: string) => {

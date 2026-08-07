@@ -1,7 +1,7 @@
 # M4 Slice 4 Task 7 - Mobile topbar, in-app back, and the note URL
 
 **Status:** **in progress** (2026-08-08).
-Designed in a grilling session. Step 1 is done and verified in a browser; Steps 2-4 are not started.
+Designed in a grilling session. Steps 1 and 2 are done and verified in a browser; Steps 3-4 are not started.
 
 **Goal:** Give the mobile topbar a job.
 Today it is a hamburger and a gear with dead space between them, it never says where you are, and the app has no back affordance at all - which on an installed iOS PWA means no back affordance *whatsoever*.
@@ -170,33 +170,49 @@ Rejected: title *below* the controls row (reads as a caption), and a one-row bar
 
 Measured on a 390px touch viewport: back button 44x44 (the Touch Rule holds), and the arrow's glyph at x=24, on the same left edge as the title and body. With a mouse the button is 36px and the glyph lands at 20 - 4px further out, which is the direction to be wrong in. Both `BackButton` branches were confirmed in a real browser: a cold load of `/settings` falls back to `/`, and arriving from `/archive` in-app returns to `/archive`.
 
-## Step 2 - The open note lives in the URL
+## Step 2 - The open note lives in the URL - **done** (2026-08-08)
 
-Needs the ADR named at the top of this file.
+[ADR 0014](../../adr/0014-the-open-note-lives-in-the-url.md).
 
-- [ ] Extend the feed routes' `validateSearch` with `note?: string`.
-      One shared validator already covers all four (`validateNoteSearch`), so this is one place.
-- [ ] `NotesView` reads `editing` from the search param instead of `useState`.
-- [ ] Close is **hybrid**, same predicate as Step 1's back: `history.back()` when `useCanGoBack()`, else `navigate({ search: { note: undefined }, replace: true })`.
-      Not a plain replace-close.
-      Trace it: on `/archive` you tap a card, history is `[/archive, /archive?note=x]`; a replace-close makes it `[/archive, /archive]`, so the user's next back press appears to do nothing.
-      A dead tap on the system button is worse than the bug being fixed.
-      Not a plain `history.back()` either: someone opening a shared note link cold has `?note=x` as their first entry, and back would exit the app.
+- [x] `note?: string` joins `noteSearchParamsSchema`, so all four feed routes get it from the one validator they already share.
+      Deliberately **not** part of `ResolvedNoteSearch`: it has no default and filtering has no opinion about it.
+      `useNoteSearchState` therefore carries it across writes explicitly - on desktop the search box sits *behind* the open editor, so without that, typing a query would close the note.
+- [x] `NotesView` reads the open note from the URL. What stays in React state is the one-shot *intent* - start the camera, autoplay the first clip, seed a checklist - scoped by `for` to the note it was made about.
+      Identity belongs in the address bar; a gesture does not. In the URL, a reload would re-fire the camera and a shared link would replay someone's audio.
+- [x] Close is **hybrid**, reusing Step 1's predicate.
+- [x] `EditingState` → `NoteOpenRequest`: it included `null` because it *was* the editor's state, and now only ever describes a start.
+- [x] Tests: 11 new. `NotesView.openNote.test.tsx` covers push-exactly-one, deep link, no intent in a link, the pre-minted draft id, pop-not-replace, the cold-entry close, the dead-param heal, and the search box carry-through; three in `NoteEditorDialog.test.tsx` cover the draft id and the missing-note report.
+      823 passing, `tsc` and `check:ci` clean.
 
-Three invariants, each a bug if missed and none obvious from outside:
+### The deviation: the id is minted at open, not at first save
 
-- [ ] **`?note=new` → `?note=<uuid>` is `replace: true`.**
-      `ensureNoteId` mints the id lazily, mid-session.
-      A push leaves a `?note=new` entry behind, so back opens a *second* blank draft instead of closing the first.
-- [ ] **An unresolvable `?note=<id>` strips itself**, with `replace: true`, and shows the feed.
-      Not hypothetical: closing an empty draft calls `purgeNote` (`NoteEditorDialog.tsx:200`), so the id you just came from is dead.
-      Reachable by forward-tap or by reloading a stale tab.
-- [ ] **Autosave never touches the URL.**
-      Same rule Slice 2 set for the search box: text edits replace, deliberate navigation pushes.
+**The plan's Invariant 1 was unimplementable as written**, and the reason is worth recording rather than the workaround.
 
-There is no delete-from-editor case to handle: `NoteEditorBar.tsx:26` states the editor carries "colour, labels and pin, and nothing else", so archive and trash are not reachable from inside it.
+It called for `?note=new`, swapped for `?note=<uuid>` with `replace: true` once `ensureNoteId` mints an id.
+But that id is the dialog's React `key` **and** the dependency of the effect that loads its content.
+Swapping it mid-session remounts the editor under a typing user's cursor and re-reads the note from the database on top of unsaved state.
+`replace` versus push was never the hard part.
 
-- [ ] Tests: opening pushes exactly one entry; back closes; the lazy id swap replaces; a dead `?note=` self-heals; autosave leaves history alone.
+So `NotesView` mints the uuid when it opens the editor and passes it down as `draftId`, and `createNote` takes an id rather than always generating one (its only two call sites are both in the editor).
+Guardrail 2 is untouched - nothing is written until there is something worth writing - but the id it *will* take is known from the first frame.
+
+The URL is then stable for the whole life of an open, and Invariant 1 stops existing rather than being satisfied.
+
+The other two invariants stand as written and are covered:
+
+- [x] **An unresolvable `?note=<id>` strips itself** with `replace: true`. The dialog reports up (`onNoteMissing`) rather than rendering an empty editor - a blank surface titled "edit note" invites typing into a note that is gone, and on close would create a second one under the dead id.
+- [x] **Autosave never touches the URL**, structurally: the editor has no router access at all, only `onClose` and `onNoteMissing`. Confirmed live - typing and a full autosave cycle left `?note=` untouched.
+
+There is no delete-from-editor case to handle: `NoteEditorBar.tsx:26` states the editor carries "colour, labels and pin, and nothing else".
+
+### One thing the tests could not reach until it was fixed
+
+**No test had ever opened the editor from the feed**, and it turned out not to be possible.
+The global setup stubs `ResizeObserver` with a no-op, so `NoteFeed`'s `supported` is true but nothing is ever measured - and an unmeasured masonry card renders inside an `aria-hidden`, `invisible` `li` until its placement lands.
+Cards are therefore unclickable in jsdom under the default view mode.
+`NotesView.openNote.test.tsx` removes the global for its own suite, which puts the feed on its documented no-measurement path: a plain, DOM-ordered, accessible stack.
+
+Verified in a browser, at 390px touch: opening a new note writes `?note=<uuid>` immediately, typing and autosaving leave the URL alone, the platform back button closes the editor instead of navigating out from under it, the draft persists under exactly the id the URL was already showing, a cold load of that link reopens the note, a dead `?note=` clears itself and writes nothing, and on desktop typing a query keeps the note open (`?q=back&note=<id>`).
 
 ## Step 3 - Delete the quick-settings dialog
 
