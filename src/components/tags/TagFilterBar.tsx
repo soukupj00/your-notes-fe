@@ -1,8 +1,11 @@
 import { Check } from 'lucide-react';
+import { AnimatePresence, m } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useTags } from '@/hooks/data/useTags.ts';
 import { useNoteSearchState } from '@/hooks/useNoteSearchState.ts';
-import { noteColorStyle } from '@/lib/note-colors.ts';
+import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
+import { resolveTransition } from '@/lib/motion.ts';
+import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { cn } from '@/lib/utils.ts';
 
 /**
@@ -15,6 +18,8 @@ export function TagFilterBar() {
   const { t } = useTranslation();
   const { search, toggleTag } = useNoteSearchState();
   const tags = useTags();
+  const reducedMotion = useReducedMotion();
+  const transition = resolveTransition(reducedMotion);
 
   const searching = search.q.trim().length > 0 || search.tags.length > 0;
   if (!searching || tags.length === 0) return null;
@@ -31,14 +36,29 @@ export function TagFilterBar() {
                 type="button"
                 aria-pressed={selected}
                 onClick={() => toggleTag(tag.id)}
-                style={noteColorStyle(tag.color)}
+                {...noteColorAttrs(tag.color)}
                 className={cn(
-                  'flex items-center gap-1 rounded-full border bg-muted px-2.5 py-1 text-xs transition-shadow',
-                  'hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                  selected ? 'border-foreground/40 shadow-sm' : 'opacity-80'
+                  'flex min-h-11 items-center gap-1 rounded-full bg-note-chip px-3 py-1 text-label text-note-on-chip uppercase transition-shadow',
+                  'hover:shadow-rest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  // Selection is carried by a real ring rather than by opacity:
+                  // a dimmed pill reads as disabled, which is the opposite state.
+                  selected ? 'ring-2 ring-note-swatch-ring' : ''
                 )}
               >
-                {selected && <Check className="size-3" aria-hidden />}
+                <AnimatePresence initial={false}>
+                  {selected && (
+                    <m.span
+                      key="selected"
+                      initial={reducedMotion ? false : { width: 0, opacity: 0, scale: 0.6 }}
+                      animate={{ width: 12, opacity: 1, scale: 1 }}
+                      exit={{ width: 0, opacity: 0, scale: 0.6 }}
+                      transition={transition}
+                      className="flex overflow-hidden"
+                    >
+                      <Check className="size-3 shrink-0" aria-hidden />
+                    </m.span>
+                  )}
+                </AnimatePresence>
                 <span className="truncate">{tag.name}</span>
               </button>
             </li>

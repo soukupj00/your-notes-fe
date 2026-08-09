@@ -3,9 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/note-128.png" />
+    <!-- `viewport-fit=cover` lets the app paint edge to edge, under the status
+         bar and the home indicator. It is also what makes every
+         `env(safe-area-inset-*)` report a real number: without it the page is
+         laid out inside the safe area and all four resolve to 0, which is why
+         the safe-area maths already in the codebase had never done anything.
+         Turning it on therefore obliges every surface at a screen edge to pad
+         itself - see `--safe-*` in `globals.css`. -->
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content"
     />
     <title>YouNotes</title>
   </head>

@@ -2,6 +2,7 @@ import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
 import { icons } from '@/components/icons';
 import { AttachmentDeleteButton } from '../attachments/AttachmentDeleteButton';
+import { AttachmentUnavailable } from '../attachments/AttachmentUnavailable';
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
 
@@ -32,12 +33,10 @@ export function FileNodeView(props: ReactNodeViewProps) {
 
   if (state.status === 'missing') {
     return (
-      <NodeViewWrapper as="div" className="relative my-2" data-drag-handle>
-        <div className="flex items-center gap-3 rounded-md border border-dashed p-4 text-muted-foreground text-sm">
-          <span className="flex-1 text-center">{deps.t('editor.file.unavailable')}</span>
-        </div>
-        {deleteButton}
-      </NodeViewWrapper>
+      <AttachmentUnavailable
+        label={deps.t('editor.file.unavailable')}
+        deleteButton={deleteButton}
+      />
     );
   }
 

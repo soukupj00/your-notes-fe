@@ -5,6 +5,7 @@ import DOMPurify from 'dompurify';
 import { db } from '@/db/db.ts';
 import { cn } from '@/lib/utils.ts';
 import { AttachmentDeleteButton } from '../attachments/AttachmentDeleteButton';
+import { AttachmentUnavailable } from '../attachments/AttachmentUnavailable';
 import type { AttachmentDeps } from '../attachments/deps';
 
 /** Editor render path for excalidrawAttachment - a passive preview, never the
@@ -42,12 +43,10 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
 
   if (row === null) {
     return (
-      <NodeViewWrapper as="div" className="relative my-2" data-drag-handle>
-        <div className="flex items-center gap-3 rounded-md border border-dashed p-4 text-muted-foreground text-sm">
-          <span className="flex-1 text-center">{deps.t('editor.excalidraw.unavailable')}</span>
-        </div>
-        {deleteButton}
-      </NodeViewWrapper>
+      <AttachmentUnavailable
+        label={deps.t('editor.excalidraw.unavailable')}
+        deleteButton={deleteButton}
+      />
     );
   }
 

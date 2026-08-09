@@ -51,11 +51,16 @@ describe('Heading extension', () => {
       expect(buttons[2].componentProps.shortcutKeys).toEqual(['Mod', 'Alt', '3']);
     });
 
-    it('each button has a tooltip with the heading key', () => {
+    // Per level, and pinned to keys that actually exist: the interpolated
+    // `editor.heading.level` these used to share was in no translation file, so
+    // the tooltip rendered as the raw key and i18next warned on every rebuild.
+    it('each button has the tooltip key for its own level', () => {
       const buttons = getButtons(editor);
-      for (const btn of buttons) {
-        expect(btn.componentProps.tooltip).toBe('editor.heading.level');
-      }
+      expect(buttons.map((btn) => btn.componentProps.tooltip)).toEqual([
+        'editor.heading.h1',
+        'editor.heading.h2',
+        'editor.heading.h3',
+      ]);
     });
 
     it('level-2 action toggles heading level 2 and isActive reflects it', () => {

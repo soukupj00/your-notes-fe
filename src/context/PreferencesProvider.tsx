@@ -11,24 +11,88 @@ export const PREFERENCES_KEY = 'preferences';
  * way defaults can't absorb, and handle the old shape in `parsePreferences`;
  * an unrecognised version is treated as unreadable and falls back to defaults.
  */
-export const PREFERENCES_VERSION = 1;
+export const PREFERENCES_VERSION = 2;
+
+/** One leaf inside a stored family: array position is its order on the bar. */
+const toolbarMemberSchema = z.object({ id: z.string(), on: z.boolean() });
+
+/**
+ * One family. `id` and the member ids are plain strings, not the registry's
+ * unions: a blob written by a later release may name Items this build has never
+ * heard of, and those must survive a round-trip rather than fail validation
+ * (ADR 0011, decision 8).
+ */
+const toolbarFamilySchema = z.object({
+  id: z.string(),
+  on: z.boolean(),
+  collapsed: z.boolean(),
+  members: z.array(toolbarMemberSchema),
+});
+
+const toolbarLayoutSchema = z.array(toolbarFamilySchema);
 
 export const preferencesSchema = z.object({
   version: z.literal(PREFERENCES_VERSION),
   /**
-   * Editor toolbar buttons: membership = visible, position = order. Empty means
-   * "never customised" and the toolbar renders its own default set - the button
-   * registry lands with the customisable toolbar (M4 Slice 4), so freezing a
-   * list of ids here would only give it something to drift from.
+   * The editor toolbar, one Toolbar Layout per Width Class (ADR 0011). An empty
+   * array means "never customised" and the toolbar renders that width's default.
+   *
+   * The `.catch` is the same load-bearing absorber as `colorBlind` below: this
+   * field used to be a flat `string[]` of extension names, and a stored array
+   * failing an object schema would reject the *whole* blob and take the user's
+   * density and reduced-motion down with a setting nothing ever wrote. No
+   * `PREFERENCES_VERSION` bump for the same reason - a field-level absorber is
+   * enough, and a version bump would discard the neighbours it is protecting.
    */
-  toolbar: z.array(z.string()).default([]),
+  toolbar: z
+    .object({
+      compact: toolbarLayoutSchema.catch([]).default([]),
+      wide: toolbarLayoutSchema.catch([]).default([]),
+    })
+    .catch({ compact: [], wide: [] })
+    .default({ compact: [], wide: [] }),
   /** Which side the note-create button sits on. */
   noteButtonAlignment: z.enum(['left', 'right']).default('right'),
-  /** Which capture shortcuts the mobile quick-capture bar shows, in order. */
-  quickCaptureButtons: z.array(z.string()).default(['note', 'checklist']),
-  /** Colour-vision palette variant applied on top of light/dark. */
-  colorBlind: z.enum(['none', 'deuteranopia', 'protanopia', 'tritanopia']).default('none'),
+  /**
+   * The quick-capture starts, in order, with the same `{ id, on }` rows the
+   * toolbar uses - but no families and no Width Classes, because five buttons
+   * on one bar have nothing to group and nothing to overflow.
+   *
+   * Renamed from `quickCaptureButtons`, which defaulted to `['note','checklist']`
+   * while the action keys were `text|checklist|audio|drawing|picture`: `'note'`
+   * matched nothing, so the field was wrong in every stored copy it never had.
+   * The old key is simply dropped on the next write.
+   */
+  quickCapture: z
+    .array(z.object({ id: z.string(), on: z.boolean() }))
+    .catch([])
+    .default([]),
+  /**
+   * Colour-vision palette variant, applied on top of light/dark rather than
+   * replacing it. One mode, not one per condition: deuteranopia and protanopia
+   * are both red-green and differ marginally, so three palettes would be three
+   * times the values to hand-tune and verify for a distinction two of them
+   * barely make. The single palette is optimised against all three at once.
+   *
+   * The `.catch` is load-bearing. This field used to be an enum, and a stored
+   * `'deuteranopia'` failing a bare boolean would reject the *whole* blob and
+   * silently reset the user's toolbar, density and reduced-motion along with
+   * it. Absorbing it at the field keeps the blast radius to this one setting.
+   */
+  colorBlind: z.boolean().catch(false).default(false),
   density: z.enum(['comfortable', 'compact']).default('comfortable'),
+  /**
+   * Whether a checklist is *shown* with its checked items gathered at the
+   * bottom (CONTEXT.md, "Sinking").
+   *
+   * On by default. It was off while sinking physically reordered the stored
+   * body, because rewriting the user's typed order unasked is the app losing
+   * work; ADR 0013 made it a presentation rule, so nothing is rewritten and
+   * unchecking returns an item to exactly where it was authored. The preference
+   * survives for the case where sequence *is* the content - recipe steps, a
+   * ranked list of options - which is real but a minority.
+   */
+  sinkCheckedItems: z.boolean().default(true),
   /** `system` follows `prefers-reduced-motion`; the others override it. */
   reducedMotion: z.enum(['system', 'always', 'never']).default('system'),
   /** ISO timestamp of when the onboarding tour was completed or skipped. */
@@ -43,6 +107,37 @@ export const DEFAULT_PREFERENCES: Preferences = preferencesSchema.parse({
 });
 
 /**
+ * Brings a blob written by an older schema version up to the current one.
+ *
+ * Runs *before* the schema sees it, which is the only place it can: `version`
+ * is a `z.literal`, so a stored older version fails validation outright and
+ * `parsePreferences` would fall back to defaults - wiping the toolbar, density
+ * and reduced-motion settings this is meant to preserve.
+ *
+ * Must stay idempotent. Nothing writes the migrated blob back (a read never
+ * destroys data), so this re-runs on every read until the next `setPreference`
+ * happens to persist the new version.
+ */
+function migratePreferences(raw: unknown): unknown {
+  if (!raw || typeof raw !== 'object') return raw;
+  const blob = raw as Record<string, unknown>;
+
+  // v1 → v2 (ADR 0013): sinking became a presentation rule, so the reason it
+  // defaulted off - that it rewrote the user's stored order - is gone. Forced
+  // rather than left to the new default, because `setPreference` persists the
+  // whole parsed blob: every user who has ever changed any setting already has
+  // `sinkCheckedItems: false` on disk, so a changed default would reach nobody.
+  //
+  // This does overrule the handful of users who turned sinking on and then off
+  // again in the two days the setting existed. A stored `false` is
+  // indistinguishable from the old default, and being opted into a behaviour
+  // that no longer destroys anything is benign.
+  if (blob.version === 1) return { ...blob, version: 2, sinkCheckedItems: true };
+
+  return blob;
+}
+
+/**
  * Preferences are cosmetic, so an unreadable blob must never block the app:
  * anything that fails the schema (corrupt, hand-edited, or written by a version
  * we don't know) yields defaults. The bad blob is deliberately left on disk -
@@ -50,7 +145,7 @@ export const DEFAULT_PREFERENCES: Preferences = preferencesSchema.parse({
  * might want to inspect.
  */
 export function parsePreferences(raw: unknown): Preferences {
-  const parsed = preferencesSchema.safeParse(raw);
+  const parsed = preferencesSchema.safeParse(migratePreferences(raw));
   return parsed.success ? parsed.data : DEFAULT_PREFERENCES;
 }
 

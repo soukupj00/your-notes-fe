@@ -6,10 +6,12 @@ import type { SlashItem } from './slashItems';
 
 const t = (key: string) => key;
 
+// Real registry ids: the list resolves its icon and its name through the
+// registry now, so a made-up key would render a row with neither.
 const items: SlashItem[] = [
-  { key: 'a', icon: 'List', labelKey: 'first', keywords: [], run: vi.fn() },
-  { key: 'b', icon: 'Quote', labelKey: 'second', keywords: [], run: vi.fn() },
-  { key: 'c', icon: 'Minus', labelKey: 'third', keywords: [], run: vi.fn() },
+  { key: 'bullet-list', keywords: [], run: vi.fn() },
+  { key: 'blockquote', keywords: [], run: vi.fn() },
+  { key: 'divider', keywords: [], run: vi.fn() },
 ];
 
 function renderList(props: Partial<React.ComponentProps<typeof SlashMenuList>> = {}) {

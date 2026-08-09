@@ -1,8 +1,14 @@
-import { render, waitFor } from '@testing-library/react';
-import { createRef } from 'react';
+import { render as rtlRender, waitFor } from '@testing-library/react';
+import { createRef, type ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
+import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { Editor, type EditorHandle } from './editor.tsx';
+
+// The toolbar reads the stored Toolbar Layouts, so every render needs the
+// provider; with nothing written it hydrates to defaults, which is the state
+// these tests are asserting against anyway.
+const render = (ui: ReactElement) => rtlRender(ui, { wrapper: PreferencesProvider });
 
 // Keys pass through untranslated so assertions are stable.
 vi.mock('react-i18next', () => ({
@@ -12,6 +18,34 @@ vi.mock('react-i18next', () => ({
 // editor.tsx registers createExcalidraw, which statically imports the real
 // canvas lib - unmocked, it crashes under jsdom (no canvas.getContext()).
 vi.mock('@excalidraw/excalidraw', () => ({ Excalidraw: () => null, exportToSvg: vi.fn() }));
+
+describe('Editor content syncing', () => {
+  // `content` is passed to useEditor once, at creation, so that the option does
+  // not churn on every keystroke (see the stabilisation note in editor.tsx).
+  // Every later change has to reach the doc through the setContent effect - if
+  // that ever stops being true, opening an existing note shows a blank editor.
+  it('applies a body that arrives after mount, not just the one seeded at creation', async () => {
+    const { container, rerender } = render(<Editor content="" getNoteId={vi.fn()} />);
+
+    rerender(<Editor content="<p>loaded later</p>" getNoteId={vi.fn()} />);
+
+    await waitFor(() =>
+      expect(container.querySelector('.tiptap')?.textContent).toContain('loaded later')
+    );
+  });
+
+  it('keeps applying later changes, so an external edit is not a one-shot', async () => {
+    const { container, rerender } = render(<Editor content="" getNoteId={vi.fn()} />);
+
+    rerender(<Editor content="<p>first</p>" getNoteId={vi.fn()} />);
+    await waitFor(() => expect(container.querySelector('.tiptap')?.textContent).toContain('first'));
+
+    rerender(<Editor content="<p>second</p>" getNoteId={vi.fn()} />);
+    await waitFor(() =>
+      expect(container.querySelector('.tiptap')?.textContent).toContain('second')
+    );
+  });
+});
 
 describe('Editor autoplay-on-open', () => {
   it('scans the doc after a later setContent applies the loaded body, not just at mount', async () => {
@@ -146,7 +180,7 @@ describe('Editor auto-capture', () => {
  * regression - that needs the dialog's own state updates to reproduce.
  */
 describe('Editor in editable mode', () => {
-  it('renders the toolbar buttons the new extensions contribute', async () => {
+  it('renders the toolbar buttons the Wide default puts on the bar', async () => {
     const { findByRole } = render(
       <TooltipProvider>
         <Editor editable content="<p>hi</p>" getNoteId={vi.fn()} />
@@ -158,9 +192,23 @@ describe('Editor in editable mode', () => {
       'editor.link.tooltip',
       'editor.codeBlock.tooltip',
       'editor.horizontalRule.tooltip',
-      'editor.textAlign.left',
+      // Undo/redo reach the bar for the first time with the registry.
+      'editor.undo',
     ]) {
       expect(await findByRole('button', { name })).toBeInTheDocument();
     }
+  });
+
+  it('puts the alignment buttons behind their family trigger, not on the bar', async () => {
+    const { findByTestId, queryByRole } = render(
+      <TooltipProvider>
+        <Editor editable content="<p>hi</p>" getNoteId={vi.fn()} />
+      </TooltipProvider>
+    );
+
+    // `align` is collapsed in the Wide default, so its three leaves are one tap
+    // away rather than three slots of bar.
+    expect(await findByTestId('toolbar-family-align')).toBeInTheDocument();
+    expect(queryByRole('button', { name: 'editor.textAlign.left' })).not.toBeInTheDocument();
   });
 });

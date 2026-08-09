@@ -21,7 +21,6 @@ export const Code = TiptapCode.extend<CodeExtensionOptions>({
           tooltip: t('editor.code.tooltip'),
           toggle: true,
         },
-        hideOnMobile: true,
       }),
     } as unknown as CodeExtensionOptions;
   },

@@ -4,7 +4,7 @@ What's left at the provider layer. See [root PLAN.md](../../PLAN.md) for milesto
 
 ## Theming & accessibility (M4)
 
-- Add accessibility theme variants beyond light/dark: color-blindness (e.g. deuteranopia/protanopia/tritanopia) and low-vision/high-contrast modes, driven from `src/themes.ts` OKLCH tokens.
+- Add accessibility theme variants beyond light/dark: the colour-blind palette has shipped (`colorBlind` preference, stamped as the `cvd` class by `DocumentPreferences`); low-vision/high-contrast is still open, driven from the OKLCH tokens in `src/styles/globals.css`.
 - Decide whether the variant is a separate axis from light/dark (recommended: `mode` × `palette`) and reflect it in `themeProvider.tsx`.
 - Ensure icons remain descriptive/recognizable per the accessibility goal in `INSTRUCTIONS.md`.
 

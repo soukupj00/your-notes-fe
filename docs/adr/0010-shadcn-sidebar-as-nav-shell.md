@@ -34,7 +34,7 @@ On mobile that gear opens quick settings with an "All settings" link to the full
 
 **Sidebar colour tokens alias the existing semantic tokens** rather than introducing a second palette.
 
-**Six deliberate edits to the vendored `src/components/ui/sidebar.tsx`**, each carrying a one-line comment in situ:
+**Seven deliberate edits to the vendored `src/components/ui/sidebar.tsx`**, each carrying a one-line comment in situ:
 
 1. The `document.cookie` write in `setOpen` is deleted.
 2. The `Cmd/Ctrl+B` window keydown listener is deleted.
@@ -42,6 +42,7 @@ On mobile that gear opens quick settings with an "All settings" link to the full
 4. `onCloseAutoFocus` is prevented on the mobile `SheetContent`.
 5. The hardcoded English `SheetTitle` / `SheetDescription` go through `t()`.
 6. (In `use-mobile.tsx`, not `sidebar.tsx`) `MOBILE_BREAKPOINT` 768 → 640.
+7. The mobile drawer uses 70% of the viewport width and removes the inherited right border and focus outline.
 
 Recording these is the main reason this ADR exists.
 A future reader finds a vendored file with deletions in it and will reasonably assume they were accidents, or "fix" them by re-running `shadcn add --overwrite`.
@@ -75,7 +76,11 @@ Preventing restoration lets the destination heading win.
 The trade-off is that dismissing without navigating (Esc, backdrop) now leaves focus on `<body>` rather than the trigger; closing-by-navigation is the dominant path for a nav menu, and a conditional implementation was judged not worth its state-threading until there is evidence the Esc path matters.
 
 **The drawer's accessible name was untranslated.**
-`SheetTitle` was the hardcoded English string "Sidebar" — the accessible name of the entire nav drawer, in an app that ships `en` and `cs`.
+`SheetTitle` was the hardcoded English string "Sidebar" - the accessible name of the entire nav drawer, in an app that ships `en` and `cs`.
+
+**The mobile drawer needs one visual boundary, not three.**
+The overlay already separates navigation from content, so the inherited right border and browser focus outline looked like a bright white seam in the dark theme.
+The drawer now takes 70% of the viewport width and relies on the blurred overlay plus shadow for its boundary.
 
 ## Considered options
 

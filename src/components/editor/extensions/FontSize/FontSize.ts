@@ -6,7 +6,6 @@ import { FontSizeButton } from './FontSizeButton';
 interface FontSizeButtonView {
   component: typeof FontSizeButton;
   componentProps: ComponentProps<typeof FontSizeButton>;
-  hideOnMobile?: boolean;
 }
 
 export interface FontSizeExtensionOptions extends FontSizeOptions {
@@ -25,9 +24,7 @@ export const FontSize = TiptapFontSize.extend<FontSizeExtensionOptions>({
       ...this.parent?.(),
       button: ({ editor, t }: ButtonContext) => ({
         component: FontSizeButton,
-        componentProps: { editor, tooltip: t('editor.fontSize.tooltip') },
-        // Mobile-first: hidden below `sm` to keep the mobile toolbar lean (Balanced preset).
-        hideOnMobile: true,
+        componentProps: { editor, t, tooltip: t('editor.fontSize.tooltip') },
       }),
     } as unknown as FontSizeExtensionOptions;
   },

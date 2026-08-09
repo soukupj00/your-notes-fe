@@ -18,26 +18,26 @@ describe('ViewModeProvider', () => {
     expect(result.current.viewMode).toBe('masonry');
   });
 
-  it('reads the persisted mode on init', () => {
+  it('migrates the legacy persisted list mode to Stack', () => {
     localStorage.setItem(STORAGE_KEY, 'list');
     const { result } = renderHook(() => useViewMode(), { wrapper });
-    expect(result.current.viewMode).toBe('list');
+    expect(result.current.viewMode).toBe('stack');
   });
 
   it('persists the mode to localStorage when set', () => {
     const { result } = renderHook(() => useViewMode(), { wrapper });
 
-    act(() => result.current.setViewMode('list'));
+    act(() => result.current.setViewMode('stack'));
 
-    expect(result.current.viewMode).toBe('list');
-    expect(localStorage.getItem(STORAGE_KEY)).toBe('list');
+    expect(result.current.viewMode).toBe('stack');
+    expect(localStorage.getItem(STORAGE_KEY)).toBe('stack');
   });
 
   it('shares state across consumers under one provider', () => {
     function Toggle() {
       const { viewMode, setViewMode } = useViewMode();
       return (
-        <button type="button" onClick={() => setViewMode('list')}>
+        <button type="button" onClick={() => setViewMode('stack')}>
           {viewMode}
         </button>
       );
@@ -60,8 +60,8 @@ describe('ViewModeProvider', () => {
     act(() => screen.getByRole('button').click());
 
     // Both the toggle and the sibling reader see the same shared value.
-    expect(screen.getByRole('button')).toHaveTextContent('list');
-    expect(screen.getByRole('status')).toHaveTextContent('list');
+    expect(screen.getByRole('button')).toHaveTextContent('stack');
+    expect(screen.getByRole('status')).toHaveTextContent('stack');
   });
 
   it('throws when used outside the provider', () => {

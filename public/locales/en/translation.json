@@ -2,13 +2,13 @@
   "nav": {
     "primary": "Main navigation",
     "open": "Open navigation",
+    "back": "Back",
     "notes": "Notes",
     "labels": "Labels",
     "editLabels": "Edit labels",
     "archive": "Archive",
     "trash": "Trash",
     "settings": "Settings",
-    "allSettings": "All settings",
     "toggle": "Toggle navigation",
     "drawerDescription": "Links to your notes, labels, archive and trash.",
     "skipToContent": "Skip to content"
@@ -40,8 +40,9 @@
     "undo": "Undo",
     "redo": "Redo",
     "heading": {
-      "tooltip": "Heading",
-      "level": "Heading {{level}}"
+      "h1": "Heading 1",
+      "h2": "Heading 2",
+      "h3": "Heading 3"
     },
     "bulletList": {
       "tooltip": "Bullet list"
@@ -69,10 +70,19 @@
       "tooltip": "Highlight"
     },
     "fontFamily": {
-      "tooltip": "Font family"
+      "tooltip": "Font family",
+      "options": {
+        "default": "Default font",
+        "sans": "Sans-serif",
+        "serif": "Serif",
+        "mono": "Monospace"
+      }
     },
     "fontSize": {
-      "tooltip": "Font size"
+      "tooltip": "Font size",
+      "options": {
+        "default": "Default size"
+      }
     },
     "image": {
       "tooltip": "Insert image",
@@ -83,7 +93,8 @@
         "unsupported-type": "That image type is not supported",
         "too-large": "Image is too large (max 10 MB)",
         "insert-failed": "Could not add the image"
-      }
+      },
+      "label": "Image"
     },
     "audio": {
       "play": "Play",
@@ -100,19 +111,22 @@
         "no-device": "No microphone was found",
         "in-use": "The microphone is being used by another app",
         "failed": "Could not start recording"
-      }
+      },
+      "label": "Voice recording"
     },
     "video": {
       "tooltip": "Attach video",
       "delete": "Delete video",
-      "unavailable": "Video unavailable"
+      "unavailable": "Video unavailable",
+      "label": "Video"
     },
     "file": {
       "tooltip": "Attach file",
       "open": "Open file",
       "delete": "Delete file",
       "unavailable": "File unavailable",
-      "fallbackName": "File"
+      "fallbackName": "File",
+      "label": "File"
     },
     "excalidraw": {
       "tooltip": "Insert drawing",
@@ -127,7 +141,8 @@
       "discardTitle": "Discard drawing?",
       "discardDescription": "Your changes will be lost.",
       "discardConfirm": "Discard",
-      "discardCancel": "Keep editing"
+      "discardCancel": "Keep editing",
+      "label": "Drawing"
     },
     "placeholder": "Write something, or press '/' for commands…",
     "code": {
@@ -152,25 +167,25 @@
       "remove": "Remove link"
     },
     "slash": {
-      "noResults": "Nothing matches",
-      "heading1": "Heading 1",
-      "heading2": "Heading 2",
-      "heading3": "Heading 3",
-      "bulletList": "Bulleted list",
-      "orderedList": "Numbered list",
-      "taskList": "Checklist",
-      "blockquote": "Quote",
-      "codeBlock": "Code block",
-      "horizontalRule": "Divider",
-      "image": "Image",
-      "audio": "Voice recording",
-      "video": "Video",
-      "file": "File",
-      "drawing": "Drawing"
+      "noResults": "Nothing matches"
+    },
+    "toolbar": {
+      "customize": "Customise toolbar",
+      "family": {
+        "history": "History",
+        "style": "Text style",
+        "format": "Formatting",
+        "colour": "Colour",
+        "list": "Lists",
+        "block": "Blocks",
+        "align": "Alignment",
+        "media": "Media",
+        "font": "Font",
+        "meta": "Toolbar"
+      }
     }
   },
   "settings": {
-    "title": "Settings",
     "appearance": {
       "title": "Appearance"
     },
@@ -186,6 +201,30 @@
       "light": "Light",
       "dark": "Dark",
       "toggle": "Toggle theme"
+    },
+    "language": {
+      "title": "Language"
+    },
+    "density": {
+      "label": "Density",
+      "description": "Compact fits more notes on the screen and sets text a little smaller.",
+      "comfortable": "Comfortable",
+      "compact": "Compact"
+    },
+    "reducedMotion": {
+      "label": "Motion",
+      "description": "Reduced turns animation off; Full keeps it on.",
+      "system": "Device",
+      "always": "Reduced",
+      "never": "Full"
+    },
+    "colorBlind": {
+      "label": "Colour-blind palette",
+      "description": "Re-tints note and label colours so the nine stay distinguishable. Works with either theme."
+    },
+    "sinkCheckedItems": {
+      "label": "Sink checked items",
+      "description": "Checked items are shown at the bottom of their list. The order you typed is never changed."
     },
     "backup": {
       "title": "Backup",
@@ -219,6 +258,52 @@
       "importCancelled": "Import cancelled. Nothing was changed.",
       "exporting": "Building your backup…",
       "importing": "Reading the backup…"
+    },
+    "toolbar": {
+      "title": "Editor toolbar",
+      "description": "Choose which buttons the editor shows, in what order, and which of them share a menu.",
+      "back": "All groups",
+      "fold": "A phone shows about {{slots}} buttons before this line",
+      "width": {
+        "legend": "Editing the layout for",
+        "hint": "Narrow and wide are separate layouts. Which one you get follows the window's width, so a small desktop window is narrow too.",
+        "compact": "Narrow window",
+        "wide": "Wide window"
+      },
+      "preset": {
+        "legend": "Start from",
+        "minimal": "Minimal",
+        "balanced": "Balanced",
+        "everything": "Everything",
+        "isDefault": "· default"
+      },
+      "family": {
+        "summary": "{{on}} of {{total}} buttons on",
+        "show": "Show the {{name}} group",
+        "collapse": "Put the {{name}} group in one menu",
+        "collapsed": "In one menu",
+        "expanded": "Separate buttons"
+      },
+      "item": {
+        "show": "Show {{name}}"
+      },
+      "preview": "How it will look"
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "description": "These work while a note is open, whichever buttons your toolbar shows."
+    },
+    "quickCapture": {
+      "title": "Quick capture",
+      "description": "The ways the ＋ button offers to start a note.",
+      "show": "Offer {{name}}",
+      "lastOne": "The last start on the dial - on a phone this is the only way to make a note.",
+      "alignment": {
+        "label": "Note button side",
+        "description": "Which side of the screen the ＋ button sits on, for the thumb that has to reach it.",
+        "left": "Left",
+        "right": "Right"
+      }
     }
   },
   "pwa": {
@@ -264,30 +349,33 @@
         "subtitle": "Try a different search, or clear the label filters."
       }
     },
-    "menu": "Note options",
     "playAudio": "Play audio",
     "playVideo": "Play video",
     "openFile": "Open file",
+    "attachmentImage": "Image",
+    "attachmentVideo": "Video",
+    "attachmentDrawing": "Drawing",
+    "attachmentAudio": "Voice note",
+    "attachmentFile": "File",
     "pin": "Pin",
     "unpin": "Unpin",
     "pinned": "Note pinned",
     "unpinned": "Note unpinned",
+    "color": "Card colour",
     "archive": "Archive",
     "archived": "Note archived",
     "moveToTrash": "Move to trash",
     "movedToTrash": "Note moved to trash",
     "restore": "Restore",
     "restored": "Note restored",
-    "deleteForever": "Delete forever",
-    "deletedForever": "Note deleted forever",
     "emptyTrash": "Empty trash",
     "trashEmptied_one": "Deleted {{count}} note",
     "trashEmptied_other": "Deleted {{count}} notes",
     "undo": "Undo",
     "view": {
       "toggle": "Toggle layout",
-      "masonry": "Grid view",
-      "list": "List view"
+      "masonry": "Masonry view",
+      "stack": "Stack view"
     },
     "saveStatus": {
       "saving": "Saving…",
@@ -383,5 +471,13 @@
       "description": "The app hit an unexpected error. Your notes are safe on this device - reloading should get you back.",
       "reload": "Reload the app"
     }
+  },
+  "dnd": {
+    "handle": "Reorder {{name}}",
+    "instructions": "Press Space to pick this up, the arrow keys to move it, Space to drop it, and Escape to cancel.",
+    "lifted": "{{name}} picked up. It is at position {{position}}.",
+    "over": "{{name}} moved to position {{position}}.",
+    "dropped": "{{name}} dropped at position {{position}}.",
+    "cancelled": "{{name}} put back where it was."
   }
 }

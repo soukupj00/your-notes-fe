@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { Switch } from '@/components/ui/switch.tsx';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx';
 
 /**
  * One titled group of settings. Sections are the page's only structure - each
@@ -33,5 +35,77 @@ export function SettingsRow({
       </span>
       {children}
     </div>
+  );
+}
+
+/**
+ * A settings row whose control is a segmented picker over a closed set.
+ *
+ * Shared for one reason worth naming: Radix's ToggleGroup clears its value when
+ * the *active* item is pressed again, which for a setting means a tap on
+ * "Compact" while compact turns the app into no density at all. Every segmented
+ * setting needs the same guard, so it lives here rather than being remembered
+ * at each call site.
+ */
+export function SegmentedSetting<T extends string>({
+  label,
+  description,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  description?: string;
+  value: T;
+  options: readonly { value: T; label: string }[];
+  onChange: (next: T) => void;
+}) {
+  return (
+    <SettingsRow label={label} description={description}>
+      <ToggleGroup
+        type="single"
+        value={value}
+        onValueChange={(next) => onChange((next as T) || value)}
+        variant="outline"
+        size="sm"
+        aria-label={label}
+      >
+        {options.map((option) => (
+          <ToggleGroupItem key={option.value} value={option.value}>
+            {option.label}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+    </SettingsRow>
+  );
+}
+
+/**
+ * A settings row whose control is one on/off switch.
+ *
+ * `touch-reach` rather than `touch-target`: a switch's shape is part of what it
+ * says, so it keeps its own size and gets its 44px hit box invisibly (DESIGN.md
+ * → The 44px Touch Rule).
+ */
+export function SwitchSetting({
+  label,
+  description,
+  checked,
+  onChange,
+}: {
+  label: string;
+  description?: string;
+  checked: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  return (
+    <SettingsRow label={label} description={description}>
+      <Switch
+        className="touch-reach"
+        checked={checked}
+        onCheckedChange={onChange}
+        aria-label={label}
+      />
+    </SettingsRow>
   );
 }

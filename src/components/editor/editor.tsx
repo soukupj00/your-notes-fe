@@ -1,11 +1,5 @@
 import type { Editor as TiptapEditor } from '@tiptap/core';
-import Document from '@tiptap/extension-document';
-import { TaskItem } from '@tiptap/extension-list';
-import Paragraph from '@tiptap/extension-paragraph';
-import Text from '@tiptap/extension-text';
-import { TextStyle } from '@tiptap/extension-text-style';
-import { Typography } from '@tiptap/extension-typography';
-import { Placeholder } from '@tiptap/extensions';
+import type { EditorView } from '@tiptap/pm/view';
 import { EditorContent, useEditor } from '@tiptap/react';
 import 'katex/dist/katex.min.css';
 import type React from 'react';
@@ -22,54 +16,26 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { createAudio } from '@/components/editor/extensions/Audio';
 import type { AttachmentDeps } from '@/components/editor/extensions/attachments/deps';
 import {
   dedupeForeignAttachments,
   insertAttachmentFiles,
 } from '@/components/editor/extensions/attachments/insert';
-import { Blockquote } from '@/components/editor/extensions/Blockquote';
-import { Bold } from '@/components/editor/extensions/Bold';
-import { BulletList } from '@/components/editor/extensions/BulletList';
-import { Clear } from '@/components/editor/extensions/Clear';
-import { Code } from '@/components/editor/extensions/Code';
-import { CodeBlock } from '@/components/editor/extensions/CodeBlock';
-import { Color } from '@/components/editor/extensions/Color';
-import { ColorPreview } from '@/components/editor/extensions/color-preview';
-import { createExcalidraw } from '@/components/editor/extensions/Excalidraw';
+import { buildEditorExtensions } from '@/components/editor/extensions/build';
 import { commitExcalidrawScene } from '@/components/editor/extensions/Excalidraw/commit';
 import {
   type ExcalidrawScene,
   emptyScene,
   parseScene,
 } from '@/components/editor/extensions/Excalidraw/scene';
-import { createFile } from '@/components/editor/extensions/File';
-import { FontFamily } from '@/components/editor/extensions/FontFamily';
-import { FontSize } from '@/components/editor/extensions/FontSize';
-import { Heading } from '@/components/editor/extensions/Heading';
-import { Highlight } from '@/components/editor/extensions/Highlight';
-import { HorizontalRule } from '@/components/editor/extensions/HorizontalRule';
-import { createImage } from '@/components/editor/extensions/Image';
 import { insertImageAttachmentFiles } from '@/components/editor/extensions/Image/insert';
-import { Italic } from '@/components/editor/extensions/Italic';
-import { Link, LinkBubbleMenu } from '@/components/editor/extensions/Link';
-import { ListItem } from '@/components/editor/extensions/ListItem';
-import { createMathematics } from '@/components/editor/extensions/Mathematics';
-import { OrderedList } from '@/components/editor/extensions/OrderedList';
-import { createSlashMenu } from '@/components/editor/extensions/SlashMenu';
-import { Strike } from '@/components/editor/extensions/Strike';
-import { TaskList } from '@/components/editor/extensions/TaskList';
-import { TextAlign } from '@/components/editor/extensions/TextAlign';
-import { Underline } from '@/components/editor/extensions/Underline';
-import { createVideo } from '@/components/editor/extensions/Video';
-import BlocksSection from '@/components/editor/menus/toolbars/BlocksSection.tsx';
-import FontSection from '@/components/editor/menus/toolbars/FontSection.tsx';
-import FormatSection from '@/components/editor/menus/toolbars/FormatSection.tsx';
-import HeadingSection from '@/components/editor/menus/toolbars/HeadingSection.tsx';
-import ListSection from '@/components/editor/menus/toolbars/ListSection.tsx';
+import { LinkBubbleMenu } from '@/components/editor/extensions/Link';
+import { insertVideoAttachmentFiles } from '@/components/editor/extensions/Video/insert.ts';
+import { EditorToolbar } from '@/components/editor/toolbar/EditorToolbar.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
-import { Separator } from '@/components/ui/separator.tsx';
+import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
+import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import type { AttachmentErrorCode } from '@/lib/attachments.ts';
 import { cn } from '@/lib/utils.ts';
 
@@ -134,7 +100,7 @@ function insertTransferredAttachments(
     return true;
   }
   if (transferredFiles.some((file) => file.type.startsWith('video/'))) {
-    void insertAttachmentFiles(editor, files, 'video', deps, (id) =>
+    void insertVideoAttachmentFiles(editor, files, deps, (id) =>
       editor.chain().focus().insertVideoAttachment({ attachmentId: id }).run()
     );
     return true;
@@ -157,6 +123,8 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   ref
 ) {
   const { t } = useTranslation();
+  const { preferences } = usePreferences();
+  const reducedMotion = useReducedMotion();
   // Math node onClick handlers need the live editor, which does not exist yet when
   // the extensions array is built; a ref lets those closures reach it at click time.
   const editorRef = useRef<TiptapEditor | null>(null);
@@ -245,57 +213,42 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   attachmentDepsRef.current = attachmentDeps;
   const getAttachmentDeps = useRef(() => attachmentDepsRef.current).current;
 
-  const editor = useEditor({
-    extensions: [
-      Document,
-      Paragraph,
-      Text,
-      Bold,
-      Italic,
-      Strike,
-      Underline,
-      Heading,
-      Blockquote,
-      createImage(getAttachmentDeps),
-      createAudio(getAttachmentDeps),
-      createVideo(getAttachmentDeps),
-      createFile(getAttachmentDeps),
-      createExcalidraw(getAttachmentDeps),
-      BulletList,
-      OrderedList,
-      ListItem,
-      TaskList,
-      TaskItem,
-      Clear,
-      Code,
-      CodeBlock,
-      HorizontalRule,
-      TextAlign,
-      Link,
-      Typography,
-      createSlashMenu(getAttachmentDeps, t),
-      // Only the body gets a placeholder - the title input has its own, and a
-      // second prompt on every empty paragraph would be noise.
-      Placeholder.configure({
-        placeholder: ({ node }) => (node.type.name === 'paragraph' ? t('editor.placeholder') : ''),
-        showOnlyWhenEditable: true,
+  // Same shape, same reason: the checklist FLIP plugin is built once but has to
+  // see the preference as it is at the moment a checkbox is ticked, not as it
+  // was when the note opened. Reduced motion is a hard killswitch (DESIGN.md),
+  // so it is read here rather than inside the plugin.
+  const animateChecklistRef = useRef(!reducedMotion);
+  animateChecklistRef.current = !reducedMotion;
+  const getAnimateChecklist = useRef(() => animateChecklistRef.current).current;
+
+  /*
+   * `extensions`, `editorProps` and `content` are all stabilised for one reason:
+   * TipTap re-checks its options on every render (`useEditor` is called with no
+   * deps, so the editor is never recreated) and any key that fails reference
+   * equality costs a `setOptions` -> `view.setProps` -> full ProseMirror view
+   * pass, stacked on top of the one the keystroke already triggered. Event
+   * handlers are exempt from that comparison, so `onUpdate` may stay inline.
+   *
+   * Nothing here needs to be reactive: every live value already reaches the
+   * built extensions through a stable getter over a ref (see above), and the
+   * translator resolves the current language at call time rather than at build
+   * time - so a captured `t` is not stale, provided its consumers call it
+   * lazily (see `createLink`).
+   */
+  const extensions = useMemo(
+    () =>
+      buildEditorExtensions({
+        getDeps: getAttachmentDeps,
+        getEditor: () => editorRef.current,
+        animateChecklist: getAnimateChecklist,
+        t,
       }),
-      createMathematics(() => editorRef.current, t),
-      Color,
-      Highlight,
-      FontFamily,
-      FontSize,
-      TextStyle,
-      ColorPreview,
-    ],
-    content,
-    editable,
-    autofocus: autoFocus ? 'end' : false,
-    onUpdate: ({ editor }) => {
-      onUpdate?.(editor.getHTML());
-    },
-    editorProps: {
-      handlePaste: (_view, event) => {
+    [getAttachmentDeps, getAnimateChecklist, t]
+  );
+
+  const editorProps = useMemo(
+    () => ({
+      handlePaste: (_view: EditorView, event: ClipboardEvent) => {
         const files = event.clipboardData?.files;
         const ed = editorRef.current;
         if (ed && files && insertTransferredAttachments(ed, files, attachmentDepsRef.current)) {
@@ -309,14 +262,31 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         }
         return false;
       },
-      handleDrop: (_view, event) => {
+      handleDrop: (_view: EditorView, event: Event) => {
         const files = (event as DragEvent).dataTransfer?.files;
         const ed = editorRef.current;
         return Boolean(
           ed && files && insertTransferredAttachments(ed, files, attachmentDepsRef.current)
         );
       },
+    }),
+    []
+  );
+
+  // Creation-time only. The `content` prop is not a controlled value: the
+  // microtask effect below owns every later change, and letting the option
+  // itself churn would defeat the stabilisation above on every keystroke.
+  const initialContent = useRef(content).current;
+
+  const editor = useEditor({
+    extensions,
+    content: initialContent,
+    editable,
+    autofocus: autoFocus ? 'end' : false,
+    onUpdate: ({ editor }) => {
+      onUpdate?.(editor.getHTML());
     },
+    editorProps,
     shouldRerenderOnTransaction: true,
     // Client-only SPA (no SSR): render the editor view after commit, not during
     // React's render phase. With `true`, content that mounts a React node view
@@ -450,38 +420,15 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         onMouseDown={editable ? focusOnEmptyClick : undefined}
       >
         {/* Toolbar. Desktop: on top (DOM order). Mobile + stickyToolbarOnMobile:
-          ordered last and pinned to the bottom of the scroll container (no
-          border; the editor is padding-free on mobile, so no margin cancelling). */}
+          ordered last and pinned to the bottom of the scroll container. Which
+          buttons it holds is the user's stored Layout, not a hardcoded list -
+          see `toolbar/EditorToolbar.tsx` and ADR 0011. */}
         {editable && (
-          <div
-            className={cn(
-              'flex flex-wrap items-center gap-1',
-              stickyToolbarOnMobile &&
-                'sticky bottom-0 z-10 order-last bg-background py-2 sm:static sm:order-none sm:py-0'
-            )}
-          >
-            <HeadingSection editor={editor} />
-            <Separator
-              orientation="vertical"
-              className="mx-1 hidden data-[orientation=vertical]:h-6 sm:block"
-            />
-            <FormatSection editor={editor} />
-            <Separator
-              orientation="vertical"
-              className="mx-1 hidden data-[orientation=vertical]:h-6 sm:block"
-            />
-            <ListSection editor={editor} />
-            <Separator
-              orientation="vertical"
-              className="mx-1 hidden data-[orientation=vertical]:h-6 sm:block"
-            />
-            <BlocksSection editor={editor} />
-            <Separator
-              orientation="vertical"
-              className="mx-1 hidden data-[orientation=vertical]:h-6 sm:block"
-            />
-            <FontSection editor={editor} />
-          </div>
+          <EditorToolbar
+            editor={editor}
+            layouts={preferences.toolbar}
+            stickyOnMobile={stickyToolbarOnMobile}
+          />
         )}
 
         {/* Editable area. `flex-1` lets it fill a full-screen sheet so a
@@ -495,6 +442,9 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         {/* A link's own controls belong on the link: `openOnClick` is off inside
             the editor, so this is the only way to see where one points. */}
         {editable && <LinkBubbleMenu editor={editor} t={t} />}
+
+        {/* Checklist reorder. Mounted here rather than from the extension because
+            the grip is a React portal that needs the live editor instance. */}
       </div>
 
       {/* Auto-started picture capture. `accept="image/*"` with no `capture`

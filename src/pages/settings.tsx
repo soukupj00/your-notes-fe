@@ -1,45 +1,18 @@
-import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { AppearanceSection } from '@/components/settings/AppearanceSection.tsx';
 import { BackupSection } from '@/components/settings/BackupSection.tsx';
+import { EditorToolbarSection } from '@/components/settings/EditorToolbarSection.tsx';
+import { LabelsSection } from '@/components/settings/LabelsSection.tsx';
+import { LanguageSection } from '@/components/settings/LanguageSection.tsx';
 import { PwaInstallSection } from '@/components/settings/PwaInstallSection.tsx';
-import { SettingsRow, SettingsSection } from '@/components/settings/SettingsSection.tsx';
-import { Button } from '@/components/ui/button.tsx';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx';
-import { type Theme, useTheme } from '@/context/themeProvider.tsx';
+import { QuickCaptureSection } from '@/components/settings/QuickCaptureSection.tsx';
+import { ShortcutsSection } from '@/components/settings/ShortcutsSection.tsx';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
 
-const THEMES: Theme[] = ['system', 'light', 'dark'];
-
-function ThemeSetting() {
-  const { t } = useTranslation();
-  const { theme, setTheme } = useTheme();
-
-  return (
-    <SettingsRow label={t('settings.theme.label')}>
-      <ToggleGroup
-        type="single"
-        value={theme}
-        // Radix clears the value when the active item is pressed again; keeping
-        // the current theme makes the group behave like a radio group.
-        onValueChange={(next) => setTheme((next as Theme) || theme)}
-        variant="outline"
-        size="sm"
-        aria-label={t('settings.theme.label')}
-      >
-        {THEMES.map((option) => (
-          <ToggleGroupItem key={option} value={option}>
-            {t(`settings.theme.${option}`)}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
-    </SettingsRow>
-  );
-}
-
 /**
- * Settings shell. Appearance and Labels are wired; the remaining controls
- * (toolbar, colour-blind/density/reduced-motion, language, backup) land with
- * the tasks that own them and slot into sections here.
+ * Settings shell: a heading and the sections, in order.
+ *
+ * Every section owns its own `SettingsSection` wrapper and its own controls
  */
 export default function SettingsPage() {
   const { t } = useTranslation();
@@ -47,25 +20,31 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
+      {/* Visually the topbar's job on mobile, this heading's job on desktop -
+          where the bar carries no title, because the rail already does. It stays
+          in the DOM either way: it is the route's focus target
+          (`useFocusOnMount`) and the document outline, neither of which a span
+          in the bar could take over without moving focus above `#main-content`
+          and stranding the skip link past it. */}
       <h1
         ref={headingRef}
         tabIndex={-1}
-        className="mb-6 font-semibold text-2xl focus-visible:outline-none"
+        className="sr-only sm:not-sr-only sm:mb-6 sm:font-semibold sm:text-2xl sm:focus-visible:outline-none"
       >
         {t('nav.settings')}
       </h1>
 
-      <SettingsSection title={t('settings.appearance.title')}>
-        <ThemeSetting />
-      </SettingsSection>
+      <LanguageSection />
 
-      <SettingsSection title={t('nav.labels')}>
-        <SettingsRow label={t('settings.labels.description')}>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/settings/labels">{t('nav.editLabels')}</Link>
-          </Button>
-        </SettingsRow>
-      </SettingsSection>
+      <AppearanceSection />
+
+      <LabelsSection />
+
+      <EditorToolbarSection />
+
+      <QuickCaptureSection />
+
+      <ShortcutsSection />
 
       <PwaInstallSection />
 

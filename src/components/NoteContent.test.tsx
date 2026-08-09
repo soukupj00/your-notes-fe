@@ -27,15 +27,23 @@ vi.mock('@/hooks/data/useNoteFeed.ts', () => ({
   useNoteFeed: () => ({ notes: notesState.notes, loading: notesState.loading }),
 }));
 
-const viewModeState = { viewMode: 'masonry' as 'masonry' | 'list' };
+const viewModeState = { viewMode: 'masonry' as 'masonry' | 'stack' };
 vi.mock('@/context/viewModeProvider.tsx', () => ({
   useViewMode: () => viewModeState,
 }));
 
-// The NoteCard is exercised in its own suite; stub it so this test focuses on
-// the container layout, not card internals.
-vi.mock('@/components/cards/NoteCard.tsx', () => ({
-  NoteCard: ({ note }: { note: Note }) => <div data-testid="note-card">{note.id}</div>,
+// Measurement and Motion have their own seams; this suite only verifies that
+// query results and the chosen mode reach the populated feed.
+vi.mock('@/components/notes/NoteFeed.tsx', () => ({
+  NoteFeed: ({ notes, mode }: { notes: Note[]; mode: 'masonry' | 'stack' }) => (
+    <ul data-testid="note-feed" data-layout={mode}>
+      {notes.map((note) => (
+        <li key={note.id} data-testid="note-card">
+          {note.id}
+        </li>
+      ))}
+    </ul>
+  ),
 }));
 
 function note(id: string): Note {
@@ -59,30 +67,24 @@ afterEach(() => {
 });
 
 describe('NoteContent layout', () => {
-  it('uses the masonry (columns) layout by default', () => {
+  it('uses Masonry by default', () => {
     notesState.notes = [note('a'), note('b')];
-    const { container } = render(<NoteContent scope={{ state: 'active' }} onSelect={vi.fn()} />);
+    render(<NoteContent scope={{ state: 'active' }} onSelect={vi.fn()} />);
 
-    // card -> its <li> -> the list that carries the layout classes
-    const grid = container.querySelector('[data-testid="note-card"]')?.parentElement?.parentElement;
-    expect(grid?.className).toContain('columns-1');
-    expect(grid?.className).not.toContain('flex-col');
+    expect(screen.getByTestId('note-feed')).toHaveAttribute('data-layout', 'masonry');
   });
 
-  it('uses a single-column list layout when viewMode is list', () => {
+  it('passes the Stack choice to the same feed', () => {
     notesState.notes = [note('a'), note('b')];
-    viewModeState.viewMode = 'list';
-    const { container } = render(<NoteContent scope={{ state: 'active' }} onSelect={vi.fn()} />);
+    viewModeState.viewMode = 'stack';
+    render(<NoteContent scope={{ state: 'active' }} onSelect={vi.fn()} />);
 
-    // card -> its <li> -> the list that carries the layout classes
-    const grid = container.querySelector('[data-testid="note-card"]')?.parentElement?.parentElement;
-    expect(grid?.className).toContain('flex-col');
-    expect(grid?.className).not.toContain('columns-1');
+    expect(screen.getByTestId('note-feed')).toHaveAttribute('data-layout', 'stack');
   });
 
   it('renders one card per note regardless of layout', () => {
     notesState.notes = [note('a'), note('b'), note('c')];
-    viewModeState.viewMode = 'list';
+    viewModeState.viewMode = 'stack';
     render(<NoteContent scope={{ state: 'active' }} onSelect={vi.fn()} />);
     expect(screen.getAllByTestId('note-card')).toHaveLength(3);
   });

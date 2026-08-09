@@ -14,11 +14,4 @@ export interface ButtonContext {
 export interface ButtonView {
   component: typeof ActionButton;
   componentProps: ActionButtonProps;
-  /**
-   * When true, the button is hidden below the `sm` breakpoint (640px) and only
-   * shown on larger screens. Mobile-first: use it to keep the mobile toolbar lean
-   * (e.g. Heading H2/H3). Applied generically by `ExtensionButtonBar`, so it works
-   * for any extension's buttons, including custom-component ones.
-   */
-  hideOnMobile?: boolean;
 }

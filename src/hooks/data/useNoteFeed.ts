@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { db } from '@/db/db.ts';
+import { mergeHeldOrder } from '@/lib/feed-rank.ts';
 import { createNoteSearchIndex, type NoteSearchEntry, searchNotes } from '@/lib/note-search.ts';
 import {
   type NoteSearchParams,
@@ -61,6 +62,37 @@ function floatPinned(notes: Note[]): Note[] {
   return [...pinned, ...notes.filter((note) => !note.pinnedAt)];
 }
 
+/** Stable empties, so a render that has neither does not invalidate a memo. */
+const EMPTY_NOTES: Note[] = [];
+const EMPTY_IDS: readonly string[] = [];
+
+/** Whether a stored order still describes this list, position for position. */
+function sameOrder(ids: readonly string[], notes: readonly Note[]): boolean {
+  return ids.length === notes.length && ids.every((id, index) => id === notes[index].id);
+}
+
+/**
+ * Counts the times the document has become visible again.
+ *
+ * Folded into the rank key so returning to a backgrounded tab re-ranks the wall
+ * (ADR 0012). It is the one "the user is not watching" signal a route change
+ * cannot supply: a PWA tab stays open for days, so without it the held order
+ * would go stale for as long as the tab lives.
+ */
+function useVisibilityEpoch(): number {
+  const [epoch, setEpoch] = useState(0);
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') setEpoch((previous) => previous + 1);
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, []);
+
+  return epoch;
+}
+
 /**
  * The single reactive query behind every note list. Scope first (state, and
  * optionally a tag), then the search text, then ordering.
@@ -73,6 +105,14 @@ function floatPinned(notes: Note[]): Note[] {
  * tag filters) is applied afterwards against a memoised Fuse index, so typing
  * or toggling a filter re-scores in memory instead of re-hitting IndexedDB and
  * rebuilding the index.
+ *
+ * **Membership is live, rank is held** (ADR 0012). A live query refires for
+ * *any* write to the notes table, and every mutation bumps `updatedAt`, so on
+ * the default `updated desc` sort the wall would re-order itself the instant
+ * the user recoloured a card, ticked a checkbox, or typed in the open editor.
+ * Notes still join and leave the feed at once; what is held is where the ones
+ * already on screen sit. The order is re-taken only when the user is not
+ * watching: on mount, on a search-param change, and on returning to the tab.
  */
 export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
   const { q, sort, dir, tags } = resolveNoteSearch(search);
@@ -80,6 +120,7 @@ export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
   // Arrays are fresh objects on every render; the joined key is what the memos
   // can actually compare.
   const tagKey = tags.join(',');
+  const visibilityEpoch = useVisibilityEpoch();
 
   const entries = useLiveQuery(async () => {
     let candidates = await db.notes.where('state').equals(scope.state).toArray();
@@ -92,11 +133,16 @@ export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
 
     // A note's tags ride along with it: the index needs their names at build
     // time, and the pill filters need their ids.
+    //
+    // Both tables are read whole on purpose. On the active feed the candidates
+    // are most of the library, so `where('noteId').anyOf(ids)` would trade one
+    // sequential read of a two-column join table for hundreds of index seeks.
+    // Worth revisiting only if a scope ever holds a small slice of a large one.
     const [allTags, links] = await Promise.all([db.tags.toArray(), db.noteTags.toArray()]);
-    const nameById = new Map(allTags.map((tag) => [tag.id, tag.name]));
+    const tagById = new Map(allTags.map((tag) => [tag.id, tag]));
     const linksByNote = new Map<string, string[]>();
     for (const link of links) {
-      if (!nameById.has(link.tagId)) continue;
+      if (!tagById.has(link.tagId)) continue;
       const existing = linksByNote.get(link.noteId);
       if (existing) existing.push(link.tagId);
       else linksByNote.set(link.noteId, [link.tagId]);
@@ -104,7 +150,15 @@ export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
 
     return candidates.map<FeedEntry>((note) => {
       const tagIds = linksByNote.get(note.id) ?? [];
-      return { note, tagIds, tagNames: tagIds.map((id) => nameById.get(id) ?? '') };
+      const tags = tagIds.flatMap((id) => {
+        const tag = tagById.get(id);
+        return tag ? [tag] : [];
+      });
+      return {
+        note: { ...note, tags },
+        tagIds,
+        tagNames: tags.map((tag) => tag.name),
+      };
     });
   }, [scope.state, scope.tagId]);
 
@@ -119,20 +173,55 @@ export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
     if (!entries || required.length === 0) return null;
     // Multi-tag is AND: the note must carry every selected label.
     return new Set(
-      entries
-        .filter((entry) => required.every((tagId) => entry.tagIds.includes(tagId)))
-        .map((entry) => entry.note.id)
+      entries.flatMap((entry) =>
+        required.every((tagId) => entry.tagIds.includes(tagId)) ? [entry.note.id] : []
+      )
     );
   }, [entries, required]);
 
-  const notes = useMemo(() => {
-    if (!entries) return [];
+  // Everything the user can ask for a *different* order with. A change here is
+  // the user looking away or asking to be re-ranked, so the held order is
+  // abandoned and the fresh one adopted (ADR 0012).
+  const rankKey = `${scope.state}|${scope.tagId ?? ''}|${trimmed}|${sort}|${dir}|${tagKey}|${visibilityEpoch}`;
+
+  // The freshly sorted feed, before any memory of what was last shown.
+  const fresh = useMemo(() => {
+    if (!entries) return EMPTY_NOTES;
     const matched = trimmed
       ? searchNotes(index, trimmed)
       : entries.map((entry) => entry.note).sort(comparatorFor(sort, dir));
-    const filtered = allowedIds ? matched.filter((note) => allowedIds.has(note.id)) : matched;
-    return floatPinned(filtered);
+    return allowedIds ? matched.filter((note) => allowedIds.has(note.id)) : matched;
   }, [entries, index, trimmed, sort, dir, allowedIds]);
+
+  // State rather than a ref: the order last shown has to be *read* while
+  // rendering, and a ref may be neither read nor written during render.
+  // Tagged with the params it was captured under, so a stale order is
+  // recognised at read time rather than through a reset effect that would run
+  // after the memo it is meant to precede.
+  const [held, setHeld] = useState<{ key: string; ids: readonly string[] } | null>(null);
+  const heldIds = held?.key === rankKey ? held.ids : EMPTY_IDS;
+
+  const ranked = useMemo(() => mergeHeldOrder(fresh, heldIds), [fresh, heldIds]);
+
+  // Recorded *before* pinning, which is what keeps pinning live (ADR 0012's one
+  // exception). Holding the post-float order instead would pin a note to the
+  // front permanently: unpinning it would find it already at rank 0 and leave
+  // it there, so the pin could never be taken back.
+  //
+  // Adjusted during render rather than from an effect. This is React's
+  // documented way to derive state from a changed input: the re-render happens
+  // before anything commits, so it costs a second pass rather than a second
+  // paint - where an effect would setState after committing and show the
+  // unstable order for a frame first.
+  //
+  // The equality check is what terminates it. Storing the order feeds straight
+  // back into the memo that produced it, so without bailing out on an unchanged
+  // result the two would re-trigger each other forever.
+  if (!sameOrder(heldIds, ranked) || held?.key !== rankKey) {
+    setHeld({ key: rankKey, ids: ranked.map((note) => note.id) });
+  }
+
+  const notes = useMemo(() => floatPinned(ranked), [ranked]);
 
   // `undefined` means the live query has not resolved yet; surface that as
   // `loading` so views show skeletons instead of a false empty state.

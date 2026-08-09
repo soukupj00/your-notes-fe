@@ -10,6 +10,8 @@ Open-source self-hosted PWA note-taking app (Google Keep alternative). Mobile-fi
 
 - [`CONTEXT.md`](./CONTEXT.md) — domain glossary (canonical meaning of Note, Tag, Attachment, Sync, etc.).
 - [`PLAN.md`](./PLAN.md) — overall roadmap and milestone order.
+- [`PRODUCT.md`](./PRODUCT.md) — who the product is for, its positioning and operating context.
+- [`DESIGN.md`](./DESIGN.md) — **the visual contract.** The `nightshift` direction ("Day desk, night shop"), its tokens, and its Named Rules, which are binding for any UI work. Written from measurement, not impression, so it also records six defects that must be fixed rather than ported. `.impeccable/design.json` is its machine-readable sidecar (tonal ramps, shadow/motion tokens, component snippets).
 - [`docs/adr/`](./docs/adr/) — architecture decision records.
 - Per-area docs (each folder has a `CLAUDE.md` = how it works + `PLAN.md` = what's left):
   [`src/db`](./src/db/CLAUDE.md), [`src/hooks/data`](./src/hooks/data/CLAUDE.md), [`src/components/editor`](./src/components/editor/CLAUDE.md), [`src/context`](./src/context/CLAUDE.md).
@@ -48,12 +50,16 @@ pnpm test:e2e     # Playwright — not yet added
 All persistence is via **Dexie** (IndexedDB wrapper). The schema lives in `src/db/db.ts` as `NotesDB extends Dexie`. Domain models are in `src/models.ts` (`Note`, `Tag`, `NoteTag`, `NoteImage`, `NoteAudio`, `NoteFile`).
 
 Data access uses dedicated hooks in `src/hooks/data/`:
+
 - `useNotes` / `useNote` — live queries via `useLiveQuery` from `dexie-react-hooks`
 - `useNoteActions` / `useTagActions` — CRUD mutations (create/update/delete)
 - `useNoteFeed` — the one feed query: lifecycle/tag scoping plus fuzzy ranked search (Fuse.js, `src/lib/note-search.ts`)
 - `useNotesByTag`, `useTagsForNote` — relationship queries via the `noteTags` join table
 
 Search/filter state is **not** in a context - it lives in the URL as typed TanStack search params (`q`, `sort`, `dir`, `tags`), validated by `src/lib/note-search-params.ts` and read through `useNoteSearchState()`.
+Which note is **open** lives there too, as `note` ([ADR 0014](./docs/adr/0014-the-open-note-lives-in-the-url.md), read through `useOpenNote()`), so the platform back button closes the editor rather than navigating the feed out from under it - the editor is a full-screen sheet below `sm:`, and the app is `display: standalone`, so an installed user has no browser chrome to correct that with.
+A note's id is minted when its editor **opens**, not when it is first saved: that id is the dialog's React key and its load-effect dependency, so a mid-session `?note=new` → `?note=<uuid>` swap would remount the editor under a typing user's cursor.
+One-shot open *intents* (start the camera, autoplay the first clip) stay in React state - a reload of a URL must not re-fire them.
 The `NotesProvider` that used to hold the query is gone: a searched feed is now shareable, refresh-proof, and steppable with the back button.
 
 ### Editor (`src/components/editor/`)
@@ -61,7 +67,9 @@ The `NotesProvider` that used to hold the query is gone: a searched feed is now 
 Built on **TipTap v3**. The core `Editor` component (`editor.tsx`) composes extensions and renders `EditorContent`.
 
 Each editor extension lives in its own folder under `src/components/editor/extensions/<ExtensionName>/`. The pattern is:
+
 1. A TypeScript file that extends the upstream TipTap extension and adds a `button` option:
+
    ```ts
    export const Bold = TiptapBold.extend<BoldOptions>({
      addOptions() {
@@ -75,6 +83,7 @@ Each editor extension lives in its own folder under `src/components/editor/exten
      },
    });
    ```
+
 2. An `index.ts` that re-exports it.
 
 The `icon` prop is a **string key** resolved via `src/components/icons/icons.ts`, which maps names to Lucide icon components. When adding a new icon for a toolbar button, add it to that registry.
@@ -100,9 +109,15 @@ Below `sm:` the same sidebar content renders in a wider left-anchored `Sheet` dr
 `navItems.ts` is the single source of fixed destinations so the desktop rail and mobile drawer cannot drift.
 `SideNav` also lists every tag as a link to `/tag/$id`; tags are hidden in the collapsed desktop rail but remain visible in the mobile drawer.
 Desktop collapse state is persisted per device in `localStorage` through `useSidebarOpen`.
-Settings is intentionally not a sidebar destination: the topbar gear is the single entry point, and its mobile quick-settings dialog links to the full settings page.
+Settings is intentionally not a sidebar destination: the topbar gear is the single entry point, and it navigates straight to `/settings` on both platforms.
+The mobile quick-settings dialog that used to sit behind it is gone - it held copies of the language and theme controls, and only existed because Settings was a one-way trip before there was a back button.
 
 Quick capture is one list of five starts (`src/components/notes/quickCaptureActions.ts`) rendered two ways so they cannot drift: a `＋` speed-dial FAB on mobile (`QuickCaptureBar`) and inline icons on the desktop "Take a note" bar.
+Which order the starts appear in, and which thumb the FAB sits under, are stored preferences edited in `settings/QuickCaptureSection.tsx`; the side mirrors the whole dial, not just the button.
+Its distance from the bottom edge is `floatingBottomBar.ts`, shared with a view's own floating action pill (Empty trash) because both land in that corner: 24px above the bottom safe-area inset.
+The four insets are named once in `globals.css` as `--safe-top/right/bottom/left` and are always *added to* the design's own spacing, never substituted for it.
+They only report real numbers because `index.html` carries `viewport-fit=cover`; without it they resolve to 0 in the installed PWA as much as in a tab, which is why this maths did nothing at all until M4 slice 4 task 7.
+A desktop browser reports 0 for all four and no emulator exposes a notch, so overriding those four variables on `:root` is how you see a phone's insets without a phone - and `globals.test.ts` gates the pairing.
 Media starts carry a `capture` intent that the editor auto-runs on open.
 
 A11y: every view renders an `<h1 tabIndex={-1}>` and calls `useFocusOnMount` on it, so a navigation moves focus to the destination heading instead of stranding it on the link.
@@ -122,9 +137,15 @@ Zipping is `fflate`.
 Saving always goes through `requestSaveTarget`, which asks for the destination *before* the bytes are built (`showSaveFilePicker` needs the click's user activation) and reports `confirmed: false` on the Firefox/Safari anchor fallback, where we must not claim the file landed.
 Manifest rows are validated with `z.looseObject`, so unknown (future) fields survive a round-trip.
 
-### Theming (`src/themes.ts`, `src/context/themeProvider.tsx`)
+### Theming (`src/styles/globals.css`, `src/context/themeProvider.tsx`)
 
-Colors use **OKLCH** values defined in `src/themes.ts` for `light` and `dark` tokens. `ThemeProvider` (`src/context/themeProvider.tsx`) is a **custom** provider (not `next-themes`, despite that package being installed): it persists the choice to `localStorage` and toggles the `light`/`dark` class on `<html>`, supporting a `system` mode via `prefers-color-scheme`. Theme switching is done at the provider level — no per-component theme logic.
+Colors use **OKLCH** custom properties defined in `src/styles/globals.css`; this is the live token source for both light and dark.
+`ThemeProvider` (`src/context/themeProvider.tsx`) is a **custom** provider (not `next-themes`, despite that package being installed): it persists the choice to `localStorage` and toggles the `light`/`dark` class on `<html>`, supporting a `system` mode via `prefers-color-scheme`.
+Theme switching is done at the provider level - no per-component theme logic.
+Preferences that CSS rather than React has to act on are stamped onto `<html>` by `DocumentPreferences` (`src/components/DocumentPreferences.tsx`): the `cvd` colour-blind class, `data-density`, and `data-reduced-motion`.
+The test for belonging there is whether the stylesheet needs the value - density re-values the type and rhythm tokens, and reduced motion has to overrule the `prefers-reduced-motion` media query, which JS cannot reach into.
+Every other preference is read by the component that spends it.
+The 44px Touch Rule has two mechanisms and they are not interchangeable: `.touch-target` grows a control to 44px (right for an icon button), `.touch-reach` gives it a 44px hit box via an invisible centred `::before` and leaves it its own size (right whenever the control's shape is part of what it says, such as a switch).
 
 ### i18n (`src/i18n.ts`)
 

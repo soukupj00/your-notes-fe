@@ -1,19 +1,14 @@
 import { Link } from '@tanstack/react-router';
-import { CZ, GB } from 'country-flag-icons/react/3x2';
 import { Check, Globe, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+import { LocaleFlag } from '@/components/LocaleFlag.tsx';
+import { BackButton } from '@/components/nav/BackButton.tsx';
+import { useTopbar } from '@/components/nav/useTopbar.ts';
 import { SearchInput } from '@/components/searchInput.tsx';
 import { ThemeModeToggleButton } from '@/components/themeModeToggleButton';
+import { AppBar } from '@/components/ui/AppBar.tsx';
 import { Button } from '@/components/ui/button.tsx';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,45 +16,34 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { SidebarTrigger } from '@/components/ui/sidebar.tsx';
 import { useIsFeedRoute } from '@/hooks/useNoteSearchState.ts';
 import i18n from '@/i18n';
-
-// Flags are keyed by ISO 3166-1 country code, not language code, so locales
-// map to named imports. Keeping this static also lets the bundler omit the
-// package's hundreds of unused flag components.
-const LOCALE_FLAGS: Record<string, typeof GB> = {
-  en: GB,
-  cs: CZ,
-};
-
-function LocaleFlag({ locale }: { locale: string }) {
-  const FlagIcon = LOCALE_FLAGS[locale];
-  if (!FlagIcon) return null;
-  return <FlagIcon className="h-3.5 w-5 rounded-xs object-cover" />;
-}
+import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
+import { listLocales } from '@/lib/locales.ts';
 
 function Navbar() {
   const { t } = useTranslation();
   // Settings has no feed, so it gets no search box: a control that silently
   // does nothing is worse than an absent one.
   const searchable = useIsFeedRoute();
-  // supportedLngs is the source of truth for which locales ship; 'cimode' is
-  // i18next's debug pseudo-locale and isn't a real one to offer users.
-  const locales = (i18n.options.supportedLngs || []).filter((locale) => locale !== 'cimode');
+  // Shared with Settings → Language, so the topbar and the settings page can
+  // never end up offering different sets of languages.
+  const locales = listLocales();
+  // Mobile only. Desktop needs none of it: the rail is permanently visible, so
+  // it already says where you are and reaches everywhere in one click.
+  const topbar = useTopbar();
 
   return (
     // Sticky so the search box, sort menu and label filters stay reachable in a
     // long feed - the feed's visible title row was dropped in favour of them.
     // z-10 matches the sidebar panel and stays under QuickCaptureBar's z-40.
-    <header className="nav-scroll-shadow sticky top-0 z-10 border-b bg-background">
+    // `pt-[--safe-top]` on the header itself rather than on the rows inside it,
+    // so `bg-chrome` paints *under* the status bar instead of leaving a
+    // transparent strip above a floating bar. The horizontal insets matter only
+    // in landscape on a notched phone, where the bar would otherwise start
+    // beneath the sensor housing.
+    <header className="nav-scroll-shadow sticky top-0 z-10 bg-chrome pt-[var(--safe-top)] pr-[var(--safe-right)] pl-[var(--safe-left)] sm:border-b">
       {/* Web Navbar */}
       <div className="hidden items-center justify-between px-4 py-2 sm:flex">
         {/* Left: the sidebar toggle. The brand lives in SidebarHeader now. */}
@@ -72,24 +56,29 @@ function Navbar() {
         <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label={t('settings.locale.label')}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={CHROME_ICON_BUTTON}
+                aria-label={t('settings.locale.label')}
+              >
                 <Globe />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuGroup>
                 {locales.map((locale) => {
-                  const isActive = i18n.resolvedLanguage === locale;
+                  const isActive = i18n.resolvedLanguage === locale.code;
                   return (
                     <DropdownMenuItem
-                      key={locale}
+                      key={locale.code}
                       onClick={() => {
-                        void i18n.changeLanguage(locale);
+                        void i18n.changeLanguage(locale.code);
                       }}
                     >
                       <Check className={isActive ? 'opacity-100' : 'opacity-0'} />
                       <LocaleFlag locale={locale} />
-                      {locale}
+                      {locale.name}
                     </DropdownMenuItem>
                   );
                 })}
@@ -97,7 +86,7 @@ function Navbar() {
             </DropdownMenuContent>
           </DropdownMenu>
           <ThemeModeToggleButton />
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" className={CHROME_ICON_BUTTON} asChild>
             <Link to="/settings" aria-label={t('nav.settings')}>
               <Settings />
             </Link>
@@ -105,56 +94,43 @@ function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Navbar */}
-      <div className="flex items-center gap-4 px-4 py-2 sm:hidden">
-        {/* No logo here: it clutters the top bar and now lives in SidebarHeader,
-            so it still shows inside the drawer this trigger opens. */}
-        <SidebarTrigger />
-        {searchable && <SearchInput />}
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label={t('nav.settings')}>
-              <Settings />
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('settings.title')}</DialogTitle>
-            </DialogHeader>
-            <div className="flex flex-col gap-6">
-              <div className="flex items-center justify-between gap-4">
-                <span className="font-medium text-sm">{t('settings.locale.label')}</span>
-                <Select
-                  value={i18n.resolvedLanguage}
-                  onValueChange={(code) => {
-                    void i18n.changeLanguage(code);
-                  }}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locales.map((locale) => (
-                      <SelectItem key={locale} value={locale}>
-                        <LocaleFlag locale={locale} />
-                        {locale}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="font-medium text-sm">{t('settings.theme.label')}</span>
-                <ThemeModeToggleButton />
-              </div>
-              <DialogClose asChild>
-                <Button asChild>
-                  <Link to="/settings">{t('nav.allSettings')}</Link>
-                </Button>
-              </DialogClose>
-            </div>
-          </DialogContent>
-        </Dialog>
+      {/* Mobile Navbar. One rule shapes it: the drawer trigger belongs to feed
+          routes, and every other surface gets back (`topbar.ts`). No logo here
+          either - it clutters the bar and lives in SidebarHeader, so it still
+          shows inside the drawer the trigger opens. */}
+      <div className="sm:hidden">
+        <AppBar
+          left={topbar.kind === 'feed' ? <SidebarTrigger /> : <BackButton parent={topbar.parent} />}
+          // The search box takes the middle only when there is no title to put
+          // there; with a title it drops to its own row below, so it stays
+          // full-bleed instead of being squeezed between two 44px controls.
+          center={
+            topbar.title ? (
+              <span className="truncate font-medium text-title">{topbar.title}</span>
+            ) : (
+              searchable && <SearchInput />
+            )
+          }
+          // The gear goes straight to Settings, the same as it does on desktop.
+          // It used to open a mini-dialog holding a copy of the language and
+          // theme controls, which existed because Settings was a one-way trip
+          // on a phone - there was no back button to come home with. Now there
+          // is, so the copy is just a second place for a setting to live.
+          right={
+            topbar.kind === 'feed' && (
+              <Button variant="ghost" size="icon" className={CHROME_ICON_BUTTON} asChild>
+                <Link to="/settings" aria-label={t('nav.settings')}>
+                  <Settings />
+                </Link>
+              </Button>
+            )
+          }
+        />
+        {topbar.title && searchable && (
+          <div className="px-4 pb-2">
+            <SearchInput />
+          </div>
+        )}
       </div>
     </header>
   );

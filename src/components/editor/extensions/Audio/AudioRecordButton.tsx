@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 import { icons } from '@/components/icons';
 import { ActionButton } from '@/components/ui/ActionButton.tsx';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover.tsx';
+import { formatElapsed } from '@/lib/format-attachment.ts';
 import type { AttachmentDeps } from '../attachments/deps';
-import { formatTime } from './AudioNodeView';
 import { RecordingWaveform } from './RecordingWaveform';
 import { useAudioRecorder } from './useAudioRecorder';
 
@@ -68,7 +68,11 @@ export function AudioRecordButton({ editor, getDeps, tooltip }: AudioRecordButto
       const noteId = await deps.getNoteId();
       const ext = EXT[out.mime.split(';')[0]] ?? 'webm';
       const file = new File([out.blob], `recording.${ext}`, { type: out.mime });
-      const att = await deps.createAttachment(noteId, file, 'audio');
+      // The recorder already measured this; persisting it is what lets a card
+      // show a clip's length without decoding the audio on the feed.
+      const att = await deps.createAttachment(noteId, file, 'audio', {
+        duration: out.durationMs / 1000,
+      });
       insert(att.id);
     } catch {
       deps.onError('insert-failed');
@@ -107,7 +111,7 @@ export function AudioRecordButton({ editor, getDeps, tooltip }: AudioRecordButto
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <span className="size-2 animate-pulse rounded-full bg-destructive" aria-hidden />
-            <span className="text-xs tabular-nums">{formatTime(rec.elapsedMs / 1000)}</span>
+            <span className="text-xs tabular-nums">{formatElapsed(rec.elapsedMs / 1000)}</span>
           </div>
           <RecordingWaveform stream={rec.stream} />
           <div className="flex items-center justify-end gap-2">

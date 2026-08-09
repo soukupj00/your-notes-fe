@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import { Image, ListChecks, Mic, PencilRuler, SquarePen } from 'lucide-react';
-import type { EditingState } from '@/components/notes/NotesView.tsx';
+import type { NoteOpenRequest } from '@/components/notes/NotesView.tsx';
 import { EMPTY_CHECKLIST_BODY } from '@/components/notes/noteDrafts.ts';
 
 export type QuickCaptureActionKey = 'text' | 'checklist' | 'audio' | 'drawing' | 'picture';
@@ -11,7 +11,7 @@ export type QuickCaptureAction = {
   /** i18n key for the action's accessible name and its speed-dial label. */
   labelKey: string;
   /** The editor state this action opens - a body seed, a capture, or neither. */
-  editing: NonNullable<EditingState>;
+  editing: NoteOpenRequest;
 };
 
 /**
@@ -46,8 +46,3 @@ export const QUICK_CAPTURE_ACTIONS: QuickCaptureAction[] = [
     editing: { id: null, capture: 'picture' },
   },
 ];
-
-/** Desktop: the "Take a note" bar already covers plain text. */
-export const DESKTOP_QUICK_CAPTURE_ACTIONS = QUICK_CAPTURE_ACTIONS.filter(
-  (action) => action.key !== 'text'
-);

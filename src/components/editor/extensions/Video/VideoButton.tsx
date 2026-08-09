@@ -1,7 +1,7 @@
 import type { Editor } from '@tiptap/core';
 import { AttachmentFilePickerButton } from '../attachments/AttachmentFilePickerButton';
 import type { AttachmentDeps } from '../attachments/deps';
-import { insertAttachmentFiles } from '../attachments/insert';
+import { insertVideoAttachmentFiles } from './insert.ts';
 
 export interface VideoButtonProps {
   editor: Editor;
@@ -22,7 +22,7 @@ export function VideoButton({ editor, getDeps, tooltip }: VideoButtonProps) {
       accept="video/*"
       onFiles={(files) => {
         // Resolve deps after selection so the button reads the freshest getNoteId.
-        void insertAttachmentFiles(editor, files, 'video', getDeps(), (id) =>
+        void insertVideoAttachmentFiles(editor, files, getDeps(), (id) =>
           editor.chain().focus().insertVideoAttachment({ attachmentId: id }).run()
         );
       }}

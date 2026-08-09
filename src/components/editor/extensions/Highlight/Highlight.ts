@@ -3,8 +3,16 @@ import {
   BackgroundColor as TiptapBackgroundColor,
 } from '@tiptap/extension-text-style';
 import type { ComponentProps } from 'react';
+import { HIGHLIGHT_COLORS } from '@/components/color-picker/palettes.ts';
 import type { ButtonContext } from '../button-types';
 import { HighlightButton } from './HighlightButton';
+
+/**
+ * What `Mod+Shift+H` applies. Yellow, because a highlighter is yellow - the
+ * shortcut is for the common case, and the picker is still there for the rest.
+ */
+const SHORTCUT_COLOR =
+  HIGHLIGHT_COLORS.colors.find((color) => color.label === 'Yellow')?.cssValue ?? '#fef08a';
 
 interface HighlightButtonView {
   component: typeof HighlightButton;
@@ -27,8 +35,24 @@ export const Highlight = TiptapBackgroundColor.extend<HighlightExtensionOptions>
       ...this.parent?.(),
       button: ({ editor, t }: ButtonContext) => ({
         component: HighlightButton,
-        componentProps: { editor, tooltip: t('editor.highlight.tooltip') },
+        componentProps: {
+          editor,
+          tooltip: t('editor.highlight.tooltip'),
+          shortcutKeys: ['Mod', 'Shift', 'H'],
+        },
       }),
     } as unknown as HighlightExtensionOptions;
+  },
+
+  // The shortcut toggles rather than opening the picker: a popover cannot be
+  // opened from a keyboard shortcut when its button is inside a collapsed
+  // family, and "highlight this" is what the key is reached for anyway.
+  addKeyboardShortcuts() {
+    return {
+      'Mod-Shift-h': () =>
+        this.editor.getAttributes('textStyle').backgroundColor
+          ? this.editor.chain().focus().unsetBackgroundColor().run()
+          : this.editor.chain().focus().setBackgroundColor(SHORTCUT_COLOR).run(),
+    };
   },
 });

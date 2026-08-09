@@ -25,7 +25,6 @@ export const CodeBlock = TiptapCodeBlock.extend<CodeBlockExtensionOptions>({
           tooltip: t('editor.codeBlock.tooltip'),
           toggle: true,
         },
-        hideOnMobile: true,
       }),
     } as unknown as CodeBlockExtensionOptions;
   },

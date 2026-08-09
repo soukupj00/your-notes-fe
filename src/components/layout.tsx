@@ -40,14 +40,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <div className="flex h-10 w-full items-center justify-center gap-2 overflow-hidden">
-            <img
-              src="/note-128.png"
-              alt={t('navbar.logo')}
-              className="size-9 shrink-0 object-contain group-data-[collapsible=icon]:size-8"
+            <span
+              role="img"
+              aria-label={t('navbar.logo')}
+              className="size-9 shrink-0 bg-primary [mask-image:url('/note-128.png')] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain] group-data-[collapsible=icon]:size-8"
             />
             <span
               aria-hidden="true"
-              className="truncate font-bold text-xl group-data-[collapsible=icon]:hidden"
+              className="truncate font-display text-primary text-title group-data-[collapsible=icon]:hidden"
             >
               {t('navbar.logo')}
             </span>
@@ -68,10 +68,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             (rendered by the notes feed) never covers content. */}
         {/* `tabIndex={-1}` so the skip link can actually move focus here -
             a plain anchor target is not focusable on its own. */}
+        {/* The gutters carry the horizontal insets so text never runs under a
+            landscape notch, and the mobile bottom padding carries the vertical
+            one: it exists to clear the fixed quick-capture bar, which now floats
+            a home-indicator's height higher than it used to. */}
         <div
           id="main-content"
           tabIndex={-1}
-          className="min-w-0 flex-1 px-4 pt-6 pb-24 outline-none sm:pb-6"
+          className="min-w-0 flex-1 pt-6 pr-[calc(1rem+var(--safe-right))] pb-[calc(6rem+var(--safe-bottom))] pl-[calc(1rem+var(--safe-left))] outline-none sm:pb-6"
         >
           {children}
         </div>

@@ -44,7 +44,13 @@ function SearchInput({ className, enableShortcut = false, ...props }: SearchInpu
   const modSymbol = getShortcutKey('mod').symbol;
 
   return (
-    <div className={`relative w-full rounded-full ${className}`.trim()} {...props}>
+    <div
+      className={cn(
+        'relative w-full rounded-full border border-input bg-card shadow-rest transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30',
+        className
+      )}
+      {...props}
+    >
       <Search
         size={18}
         className="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
@@ -55,9 +61,9 @@ function SearchInput({ className, enableShortcut = false, ...props }: SearchInpu
         type="search"
         placeholder={t('notes.searchPlaceholder')}
         className={cn(
-          'w-full rounded-full border-0 bg-transparent py-2 pl-9 text-foreground placeholder-muted-foreground focus:outline-none',
+          'h-11 w-full rounded-full border-0 bg-transparent py-2 pl-9 text-body text-foreground shadow-none placeholder:text-muted-foreground focus:outline-none focus-visible:border-transparent focus-visible:ring-0 dark:bg-transparent',
           // Room for sort + layout, plus the hint chip where it is shown.
-          enableShortcut ? 'pr-18 sm:pr-30' : 'pr-18'
+          enableShortcut ? 'pr-24 sm:pr-32' : 'pr-24'
         )}
         value={search.q}
         // Typing is not navigation: replace the history entry so the back
@@ -79,7 +85,7 @@ function SearchInput({ className, enableShortcut = false, ...props }: SearchInpu
           </kbd>
         )}
         <SortMenu />
-        <ViewModeToggle className="size-8" />
+        <ViewModeToggle className="touch-target size-8" />
       </div>
     </div>
   );

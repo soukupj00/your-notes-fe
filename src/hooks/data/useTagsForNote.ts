@@ -2,7 +2,14 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db.ts';
 import type { Tag } from '@/models.ts';
 
-export function useTagsForNote(noteId: string) {
+/**
+ * A note's labels, live.
+ *
+ * `noteId` is nullable so a caller that already has the labels can skip the
+ * query outright - the feed joins them on when it builds each entry, and running
+ * this once per card would open a live query per card only to discard it.
+ */
+export function useTagsForNote(noteId: string | null | undefined) {
   const tags: (Tag | undefined)[] | undefined = useLiveQuery(async () => {
     if (!noteId) return [];
 

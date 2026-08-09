@@ -4,6 +4,7 @@ import { TagPopover } from '@/components/tags/TagPopover.tsx';
 import { useTagActions } from '@/hooks/data/useTagActions.ts';
 import { useTags } from '@/hooks/data/useTags.ts';
 import { useTagsForNote } from '@/hooks/data/useTagsForNote.ts';
+import { cn } from '@/lib/utils.ts';
 import type { Tag } from '@/models.ts';
 
 type NoteTagsBarProps = {
@@ -11,6 +12,7 @@ type NoteTagsBarProps = {
   noteId: string | null;
   /** Persists the draft on demand and returns its id. Required when `noteId` is null. */
   ensureNoteId?: () => Promise<string>;
+  className?: string;
 };
 
 /**
@@ -22,7 +24,7 @@ type NoteTagsBarProps = {
  * change and remembered here (the parent's `noteId` prop stays null: it holds
  * the draft id in a ref, not in state).
  */
-export function NoteTagsBar({ noteId, ensureNoteId }: NoteTagsBarProps) {
+export function NoteTagsBar({ noteId, ensureNoteId, className }: NoteTagsBarProps) {
   const [resolvedId, setResolvedId] = useState(noteId);
   const tags = useTags();
   const assigned = useTagsForNote(resolvedId ?? '');
@@ -59,14 +61,25 @@ export function NoteTagsBar({ noteId, ensureNoteId }: NoteTagsBarProps) {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-1">
-      <TagPills tags={assigned} onRemove={(tag) => void remove(tag)} />
+    /*
+     * A column, not a wrapping row: the trigger keeps its own line and the pills
+     * flow underneath it.
+     *
+     * The pills are a single `<ul>`, so in one wrapping row they are one flex
+     * item - the moment they outgrow the space beside the trigger the whole
+     * block drops to the next line, and anything after it (the editor bar's
+     * colour and pin) is pushed down again. Stacking makes the trigger's
+     * position independent of how many labels a note carries, which also keeps
+     * the popover anchored where the user last clicked.
+     */
+    <div className={cn('flex min-w-0 flex-col items-start gap-1.5', className)}>
       <TagPopover
         tags={tags}
         assignedIds={assignedIds}
         onToggle={(tag) => void toggle(tag)}
         onCreate={(name) => void create(name)}
       />
+      <TagPills tags={assigned} onRemove={(tag) => void remove(tag)} className="max-w-full" />
     </div>
   );
 }

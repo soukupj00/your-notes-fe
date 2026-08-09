@@ -2,17 +2,10 @@ import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { icons } from '@/components/icons';
+import { formatElapsed } from '@/lib/format-attachment.ts';
 import { AttachmentDeleteButton } from '../attachments/AttachmentDeleteButton';
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
-
-/** Seconds -> "m:ss". */
-export function formatTime(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
 
 /** Editor render path for audioAttachment: a hidden native <audio> (decode/seek
  *  engine) skinned with a themed play/pause + time + scrubber. Object-URL
@@ -136,8 +129,8 @@ export function AudioNodeView(props: ReactNodeViewProps) {
           className="h-1 flex-1 accent-primary"
         />
         <span className="text-muted-foreground text-xs tabular-nums">
-          {formatTime(current)} /{' '}
-          {formatTime(
+          {formatElapsed(current)} /{' '}
+          {formatElapsed(
             duration || (state.status === 'ready' ? (state.attachment.duration ?? 0) : 0)
           )}
         </span>

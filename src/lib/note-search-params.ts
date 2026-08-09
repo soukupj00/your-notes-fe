@@ -20,6 +20,16 @@ export const noteSearchParamsSchema = z.object({
   sort: z.enum(NOTE_SORT_FIELDS).optional().catch(undefined),
   dir: z.enum(NOTE_SORT_DIRECTIONS).optional().catch(undefined),
   tags: z.array(z.string()).optional().catch(undefined),
+  /**
+   * Which note is open, if any ([ADR 0014](../../docs/adr/0014-the-open-note-lives-in-the-url.md)).
+   *
+   * It rides on the feed routes' params but is *not* feed state: it never
+   * reaches `ResolvedNoteSearch`, has no default, and filtering has no opinion
+   * about it. It lives here because this is the one schema those four routes
+   * validate against, and a second `validateSearch` would be a second place for
+   * them to drift.
+   */
+  note: z.string().optional().catch(undefined),
 });
 
 export type NoteSearchParams = z.infer<typeof noteSearchParamsSchema>;

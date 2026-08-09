@@ -1,3 +1,3 @@
-export { Link } from './Link';
+export { createLink } from './Link';
 export { LinkBubbleMenu } from './LinkBubbleMenu';
 export { LinkButton } from './LinkButton';

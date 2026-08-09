@@ -34,9 +34,11 @@ function graceCutoff(days = TRASH_GRACE_DAYS) {
 // autosave effect depends (transitively) on these, and unstable references
 // would make that effect re-run every render and loop the debounced save.
 export function useNoteActions() {
-  // CREATE a new note
   const createNote = useCallback(async (data: Partial<Note>) => {
-    const id = uuid();
+    // An id may be supplied rather than minted: a note's id goes into the URL
+    // the moment its editor opens, before there is anything worth persisting,
+    // so the draft has to be able to say which id it will eventually take.
+    const id = data.id ?? uuid();
     const now = new Date().toISOString();
 
     const newNote: Note = {
@@ -77,7 +79,6 @@ export function useNoteActions() {
     []
   );
 
-  // UPDATE an existing note
   const updateNote = useCallback(async (id: string, updates: Partial<Note>) => {
     const note = await db.notes.get(id);
     if (!note) return null;

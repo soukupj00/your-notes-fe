@@ -1,5 +1,5 @@
 import type { Editor } from '@tiptap/core';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActionButton } from '@/components/ui/ActionButton.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Input } from '@/components/ui/input.tsx';
@@ -10,6 +10,13 @@ export interface LinkButtonProps {
   editor: Editor;
   t: TFunction;
   tooltip: string;
+  /**
+   * Passed in rather than written here, so the button view carries it like every
+   * other Pattern A button does. Anything reading shortcuts off the resolved
+   * view - the registry's pin test, the Settings shortcut list - would otherwise
+   * see `link` as having none.
+   */
+  shortcutKeys?: string[];
 }
 
 /**
@@ -20,15 +27,26 @@ export interface LinkButtonProps {
  * Editing and removing an existing link happen from the bubble menu that
  * appears on one, not from here.
  */
-export function LinkButton({ editor, t, tooltip }: LinkButtonProps) {
+export function LinkButton({ editor, t, tooltip, shortcutKeys }: LinkButtonProps) {
   const [open, setOpen] = useState(false);
   const [href, setHref] = useState('');
 
-  const openPopover = (next: boolean) => {
-    // Seed from the link under the cursor so re-opening it is an edit, not a retype.
-    if (next) setHref((editor.getAttributes('link').href as string | undefined) ?? '');
-    setOpen(next);
-  };
+  const openPopover = useCallback(
+    (next: boolean) => {
+      // Seed from the link under the cursor so re-opening it is an edit, not a retype.
+      if (next) setHref((editor.getAttributes('link').href as string | undefined) ?? '');
+      setOpen(next);
+    },
+    [editor]
+  );
+
+  // `Mod+K` opens this popover rather than a second, different link UI. The
+  // extension falls back to a prompt when no button is mounted, so the shortcut
+  // still works when the whole format family is collapsed.
+  useEffect(
+    () => editor.storage.link.prompt.registerButton(() => openPopover(true)),
+    [editor, openPopover]
+  );
 
   const apply = () => {
     const url = href.trim();
@@ -57,6 +75,7 @@ export function LinkButton({ editor, t, tooltip }: LinkButtonProps) {
     <Popover open={open} onOpenChange={openPopover}>
       <PopoverTrigger asChild>
         <ActionButton
+          shortcutKeys={shortcutKeys}
           icon="Link2"
           tooltip={tooltip}
           toggle

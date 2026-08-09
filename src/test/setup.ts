@@ -15,6 +15,14 @@ if (typeof Element !== 'undefined' && typeof window !== 'undefined') {
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
   }) as unknown as typeof window.matchMedia;
+  // jsdom has no layout, so it ships no ResizeObserver. A no-op keeps components
+  // that watch their own size (the toolbar's edge fade) mountable; anything that
+  // needs real measurements belongs in a manual pass, not here.
+  globalThis.ResizeObserver ??= class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
 }
 
 // React Testing Library does not auto-clean between tests under Vitest globals,

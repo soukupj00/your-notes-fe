@@ -14,7 +14,7 @@ export function useAttachmentActions() {
       noteId: string,
       file: File,
       kind: AttachmentKind = 'image',
-      options: { thumbnail?: Blob } = {}
+      options: { thumbnail?: Blob; duration?: number } = {}
     ): Promise<Attachment> => {
       const bad = validateAttachmentFile(file, kind);
       if (bad) throw new AttachmentError(bad);
@@ -26,6 +26,7 @@ export function useAttachmentActions() {
         mime: file.type,
         blob: file, // a File is a Blob; persist directly (ADR 0007)
         thumbnail: options.thumbnail,
+        duration: options.duration,
         name: file.name,
         size: file.size,
         createdAt: now,
@@ -60,12 +61,16 @@ export function useAttachmentActions() {
     []
   );
 
-  // Write-back for interactive attachments (Excalidraw): replace the stored
-  // scene blob and/or refresh the SVG preview in place, on the same row the
-  // Body already references by id. Decoupled from Body autosave (the
-  // attachmentId never changes on an edit).
+  // Write-back for an attachment's derived data, on the same row the Body
+  // already references by id. Decoupled from Body autosave (the attachmentId
+  // never changes on an edit). Two callers: Excalidraw replaces the stored
+  // scene blob and refreshes its SVG preview; the card backfills a poster and
+  // duration onto a video stored before posters were captured at insert.
   const updateAttachment = useCallback(
-    async (id: string, changes: { blob?: Blob; preview?: string }): Promise<void> => {
+    async (
+      id: string,
+      changes: { blob?: Blob; preview?: string; thumbnail?: Blob; duration?: number }
+    ): Promise<void> => {
       await db.attachments.update(id, { ...changes, updatedAt: new Date().toISOString() });
     },
     []
@@ -82,28 +87,31 @@ export function useAttachmentActions() {
     });
   }, []);
 
-  // Global safety net: drop rows whose owning Note no longer exists (covers a
-  // draft that was discarded before it was ever persisted, or a crash).
-  const collectMissingNoteOrphans = useCallback(async () => {
+  // Startup GC: the saved Body is authoritative because no editor undo stack
+  // survives a reload. Reconcile every live Note as well as missing owners.
+  //
+  // One pass over both tables rather than the note-scoped sweep per note: the
+  // missing-owner and unreferenced-row cases are the same question asked of one
+  // row ("is anything still pointing at this?"), and answering them together
+  // costs one transaction instead of a full attachments read plus one indexed
+  // read and one transaction per note, on every app start.
+  const collectStartupOrphans = useCallback(async () => {
     return db.transaction('rw', db.notes, db.attachments, async () => {
-      const noteIds = new Set(await db.notes.toCollection().primaryKeys());
-      const all = await db.attachments.toArray();
-      const orphans = all.filter((r) => !noteIds.has(r.noteId));
-      await db.attachments.bulkDelete(orphans.map((r) => r.id));
+      const [notes, all] = await Promise.all([db.notes.toArray(), db.attachments.toArray()]);
+      const referencedByNote = new Map(
+        notes.map((note) => [note.id, new Set(extractAttachmentIds(note.body))])
+      );
+
+      const orphans = all.filter((row) => {
+        // No entry at all means the owning Note is gone, which is an orphan for
+        // the same reason an unreferenced row is.
+        return !referencedByNote.get(row.noteId)?.has(row.id);
+      });
+
+      await db.attachments.bulkDelete(orphans.map((row) => row.id));
       return orphans.length;
     });
   }, []);
-
-  // Startup GC: the saved Body is authoritative because no editor undo stack
-  // survives a reload. Reconcile every live Note as well as missing owners.
-  const collectStartupOrphans = useCallback(async () => {
-    let removed = await collectMissingNoteOrphans();
-    const notes = await db.notes.toArray();
-    for (const note of notes) {
-      removed += await collectOrphans(note.id, extractAttachmentIds(note.body));
-    }
-    return removed;
-  }, [collectMissingNoteOrphans, collectOrphans]);
 
   return {
     createAttachment,
@@ -112,7 +120,6 @@ export function useAttachmentActions() {
     cloneAttachment,
     updateAttachment,
     collectOrphans,
-    collectMissingNoteOrphans,
     collectStartupOrphans,
   };
 }

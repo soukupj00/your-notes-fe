@@ -58,7 +58,7 @@ describe('Mathematics extension', () => {
     expect(props.icon).toBe('Latex');
     expect(props.tooltip).toBe('editor.math.tooltip');
     expect(props.toggle).toBe(true);
-    expect(props.shortcutKeys).toBeUndefined();
+    expect(props.shortcutKeys).toEqual(['Mod', 'Shift', 'M']);
     expect(typeof props.isActive?.()).toBe('boolean');
   });
 

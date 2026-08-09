@@ -2,13 +2,13 @@
   "nav": {
     "primary": "Hlavní navigace",
     "open": "Otevřít navigaci",
+    "back": "Zpět",
     "notes": "Poznámky",
     "labels": "Štítky",
     "editLabels": "Upravit štítky",
     "archive": "Archiv",
     "trash": "Koš",
     "settings": "Nastavení",
-    "allSettings": "Všechna nastavení",
     "toggle": "Přepnout navigaci",
     "drawerDescription": "Odkazy na poznámky, štítky, archiv a koš.",
     "skipToContent": "Přejít na obsah"
@@ -40,8 +40,9 @@
     "undo": "Zpět",
     "redo": "Znovu",
     "heading": {
-      "tooltip": "Nadpis",
-      "level": "Nadpis {{level}}"
+      "h1": "Nadpis 1",
+      "h2": "Nadpis 2",
+      "h3": "Nadpis 3"
     },
     "bulletList": {
       "tooltip": "Odrážkový seznam"
@@ -69,10 +70,19 @@
       "tooltip": "Zvýraznění"
     },
     "fontFamily": {
-      "tooltip": "Písmo"
+      "tooltip": "Písmo",
+      "options": {
+        "default": "Výchozí písmo",
+        "sans": "Bezpatkové",
+        "serif": "Patkové",
+        "mono": "Neproporcionální"
+      }
     },
     "fontSize": {
-      "tooltip": "Velikost písma"
+      "tooltip": "Velikost písma",
+      "options": {
+        "default": "Výchozí velikost"
+      }
     },
     "image": {
       "tooltip": "Vložit obrázek",
@@ -83,7 +93,8 @@
         "unsupported-type": "Tento typ obrázku není podporován",
         "too-large": "Obrázek je příliš velký (max 10 MB)",
         "insert-failed": "Obrázek se nepodařilo přidat"
-      }
+      },
+      "label": "Obrázek"
     },
     "audio": {
       "play": "Přehrát",
@@ -100,19 +111,22 @@
         "no-device": "Nebyl nalezen žádný mikrofon",
         "in-use": "Mikrofon používá jiná aplikace",
         "failed": "Nahrávání se nepodařilo spustit"
-      }
+      },
+      "label": "Hlasová nahrávka"
     },
     "video": {
       "tooltip": "Připojit video",
       "delete": "Smazat video",
-      "unavailable": "Video není k dispozici"
+      "unavailable": "Video není k dispozici",
+      "label": "Video"
     },
     "file": {
       "tooltip": "Připojit soubor",
       "open": "Otevřít soubor",
       "delete": "Smazat soubor",
       "unavailable": "Soubor není k dispozici",
-      "fallbackName": "Soubor"
+      "fallbackName": "Soubor",
+      "label": "Soubor"
     },
     "excalidraw": {
       "tooltip": "Vložit kresbu",
@@ -127,7 +141,8 @@
       "discardTitle": "Zahodit kresbu?",
       "discardDescription": "Vaše změny budou ztraceny.",
       "discardConfirm": "Zahodit",
-      "discardCancel": "Pokračovat v úpravách"
+      "discardCancel": "Pokračovat v úpravách",
+      "label": "Kresba"
     },
     "placeholder": "Začněte psát, nebo stiskněte „/“ pro příkazy…",
     "code": {
@@ -152,25 +167,25 @@
       "remove": "Odebrat odkaz"
     },
     "slash": {
-      "noResults": "Nic neodpovídá",
-      "heading1": "Nadpis 1",
-      "heading2": "Nadpis 2",
-      "heading3": "Nadpis 3",
-      "bulletList": "Odrážkový seznam",
-      "orderedList": "Číslovaný seznam",
-      "taskList": "Zaškrtávací seznam",
-      "blockquote": "Citace",
-      "codeBlock": "Blok kódu",
-      "horizontalRule": "Oddělovač",
-      "image": "Obrázek",
-      "audio": "Hlasová nahrávka",
-      "video": "Video",
-      "file": "Soubor",
-      "drawing": "Kresba"
+      "noResults": "Nic neodpovídá"
+    },
+    "toolbar": {
+      "customize": "Přizpůsobit lištu",
+      "family": {
+        "history": "Historie",
+        "style": "Styl textu",
+        "format": "Formátování",
+        "colour": "Barva",
+        "list": "Seznamy",
+        "block": "Bloky",
+        "align": "Zarovnání",
+        "media": "Média",
+        "font": "Písmo",
+        "meta": "Lišta"
+      }
     }
   },
   "settings": {
-    "title": "Nastavení",
     "appearance": {
       "title": "Vzhled"
     },
@@ -186,6 +201,30 @@
       "light": "Světlý",
       "dark": "Tmavý",
       "toggle": "Přepnout motiv"
+    },
+    "language": {
+      "title": "Jazyk"
+    },
+    "density": {
+      "label": "Hustota",
+      "description": "Kompaktní zobrazí na obrazovce více poznámek a text vysází o něco menší.",
+      "comfortable": "Pohodlná",
+      "compact": "Kompaktní"
+    },
+    "reducedMotion": {
+      "label": "Animace",
+      "description": "Omezené animace vypne, Plné je nechá zapnuté.",
+      "system": "Zařízení",
+      "always": "Omezené",
+      "never": "Plné"
+    },
+    "colorBlind": {
+      "label": "Paleta pro barvoslepé",
+      "description": "Přebarví barvy poznámek a štítků tak, aby šlo všech devět rozlišit. Funguje s oběma motivy."
+    },
+    "sinkCheckedItems": {
+      "label": "Odsouvat splněné položky",
+      "description": "Zaškrtnuté položky se zobrazují na konci seznamu. Pořadí, ve kterém jste je napsali, se nikdy nemění."
     },
     "backup": {
       "title": "Záloha",
@@ -219,6 +258,52 @@
       "importCancelled": "Import zrušen. Nic nebylo změněno.",
       "exporting": "Vytvářím zálohu…",
       "importing": "Načítám zálohu…"
+    },
+    "toolbar": {
+      "title": "Panel nástrojů editoru",
+      "description": "Vyberte, která tlačítka editor zobrazí, v jakém pořadí a která z nich sdílejí nabídku.",
+      "back": "Všechny skupiny",
+      "fold": "Na telefonu se před touto čarou vejde asi {{slots}} tlačítek",
+      "width": {
+        "legend": "Upravujete rozvržení pro",
+        "hint": "Úzké a široké okno mají vlastní rozvržení. Které uvidíte, určuje šířka okna, takže i malé okno na počítači je úzké.",
+        "compact": "Úzké okno",
+        "wide": "Široké okno"
+      },
+      "preset": {
+        "legend": "Začít od",
+        "minimal": "Minimální",
+        "balanced": "Vyvážené",
+        "everything": "Vše",
+        "isDefault": "· výchozí"
+      },
+      "family": {
+        "summary": "Zapnuto {{on}} z {{total}} tlačítek",
+        "show": "Zobrazit skupinu {{name}}",
+        "collapse": "Sloučit skupinu {{name}} do jedné nabídky",
+        "collapsed": "V jedné nabídce",
+        "expanded": "Samostatná tlačítka"
+      },
+      "item": {
+        "show": "Zobrazit {{name}}"
+      },
+      "preview": "Jak to bude vypadat"
+    },
+    "shortcuts": {
+      "title": "Klávesové zkratky",
+      "description": "Fungují v otevřené poznámce bez ohledu na to, která tlačítka panel zobrazuje."
+    },
+    "quickCapture": {
+      "title": "Rychlé psaní",
+      "description": "Způsoby, jak tlačítko ＋ nabízí založit poznámku.",
+      "show": "Nabízet: {{name}}",
+      "lastOne": "Poslední možnost v nabídce - na telefonu je to jediný způsob, jak vytvořit poznámku.",
+      "alignment": {
+        "label": "Strana tlačítka pro poznámku",
+        "description": "Na které straně obrazovky sedí tlačítko ＋, podle palce, který na něj musí dosáhnout.",
+        "left": "Vlevo",
+        "right": "Vpravo"
+      }
     }
   },
   "pwa": {
@@ -264,22 +349,25 @@
         "subtitle": "Zkuste jiné hledání nebo zrušte filtry štítků."
       }
     },
-    "menu": "Možnosti poznámky",
     "playAudio": "Přehrát zvuk",
     "playVideo": "Přehrát video",
     "openFile": "Otevřít soubor",
+    "attachmentImage": "Obrázek",
+    "attachmentVideo": "Video",
+    "attachmentDrawing": "Kresba",
+    "attachmentAudio": "Hlasová poznámka",
+    "attachmentFile": "Soubor",
     "pin": "Připnout",
     "unpin": "Odepnout",
     "pinned": "Poznámka připnuta",
     "unpinned": "Poznámka odepnuta",
+    "color": "Barva karty",
     "archive": "Archivovat",
     "archived": "Poznámka archivována",
     "moveToTrash": "Přesunout do koše",
     "movedToTrash": "Poznámka přesunuta do koše",
     "restore": "Obnovit",
     "restored": "Poznámka obnovena",
-    "deleteForever": "Smazat navždy",
-    "deletedForever": "Poznámka trvale smazána",
     "emptyTrash": "Vysypat koš",
     "trashEmptied_one": "Smazána {{count}} poznámka",
     "trashEmptied_few": "Smazány {{count}} poznámky",
@@ -287,8 +375,8 @@
     "undo": "Zpět",
     "view": {
       "toggle": "Přepnout rozvržení",
-      "masonry": "Mřížka",
-      "list": "Seznam"
+      "masonry": "Mřížkové zobrazení",
+      "stack": "Zobrazení v jednom sloupci"
     },
     "saveStatus": {
       "saving": "Ukládání…",
@@ -384,5 +472,13 @@
       "description": "Aplikace narazila na neočekávanou chybu. Vaše poznámky jsou v tomto zařízení v bezpečí - znovunačtení by mělo pomoct.",
       "reload": "Znovu načíst aplikaci"
     }
+  },
+  "dnd": {
+    "handle": "Přeuspořádat: {{name}}",
+    "instructions": "Mezerníkem položku zvednete, šipkami ji přesunete, mezerníkem položíte a klávesou Escape akci zrušíte.",
+    "lifted": "{{name}} zvednuto. Pozice {{position}}.",
+    "over": "{{name}} přesunuto na pozici {{position}}.",
+    "dropped": "{{name}} položeno na pozici {{position}}.",
+    "cancelled": "{{name}} vráceno na původní místo."
   }
 }

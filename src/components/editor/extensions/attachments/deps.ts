@@ -11,7 +11,7 @@ export interface AttachmentDeps {
     noteId: string,
     file: File,
     kind: AttachmentKind,
-    options?: { thumbnail?: Blob }
+    options?: { thumbnail?: Blob; duration?: number }
   ) => Promise<Attachment>;
   getAttachment: (id: string) => Promise<Attachment | undefined>;
   cloneAttachment: (source: Attachment, noteId: string) => Promise<Attachment>;

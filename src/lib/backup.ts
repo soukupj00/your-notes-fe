@@ -145,13 +145,24 @@ export async function buildBackupZip(): Promise<Blob> {
   const entries: Zippable = {};
   const attachmentMeta = [];
 
-  for (const attachment of attachments) {
-    const { blob, thumbnail, ...meta } = attachment;
-    entries[blobPath(attachment.id)] = [await bytesOf(blob), { level: 0 }];
-    if (thumbnail) {
-      entries[thumbnailPath(attachment.id)] = [await bytesOf(thumbnail), { level: 0 }];
+  // Every blob read is independent, so they run together rather than paying
+  // each read's latency in series. Peak memory is unchanged - the bytes all had
+  // to be resident in `entries` before zipping either way. The writes are then
+  // replayed in table order, so an archive's layout stays deterministic.
+  const read = await Promise.all(
+    attachments.map(async ({ blob, thumbnail, ...meta }) => ({
+      meta,
+      blobBytes: await bytesOf(blob),
+      thumbnailBytes: thumbnail ? await bytesOf(thumbnail) : undefined,
+    }))
+  );
+
+  for (const { meta, blobBytes, thumbnailBytes } of read) {
+    entries[blobPath(meta.id)] = [blobBytes, { level: 0 }];
+    if (thumbnailBytes) {
+      entries[thumbnailPath(meta.id)] = [thumbnailBytes, { level: 0 }];
     }
-    attachmentMeta.push({ ...meta, hasThumbnail: Boolean(thumbnail) });
+    attachmentMeta.push({ ...meta, hasThumbnail: Boolean(thumbnailBytes) });
   }
 
   // Not annotated as BackupManifest: that type describes the *parsed* shape,

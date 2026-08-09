@@ -17,42 +17,6 @@ export function bodyHasAttachment(html: string | null | undefined): boolean {
   return ATTACHMENT_ID_TEST_RE.test(html);
 }
 
-// Matches an <audio> tag that carries a data-attachment-id (our audio node's
-// serialized form), regardless of attribute order. Non-global on purpose: only
-// used with `.test()`, so no stateful lastIndex to leak (see note above).
-const AUDIO_ATTACHMENT_RE = /<audio\b[^>]*\bdata-attachment-id="[^"]+"/i;
-
-/** True when the Body HTML embeds at least one audio attachment node.
- *  Narrower than bodyHasAttachment, which also matches images. */
-export function bodyHasAudio(html: string | null | undefined): boolean {
-  if (!html) return false;
-  return AUDIO_ATTACHMENT_RE.test(html);
-}
-
-// Matches a <video> tag that carries a data-attachment-id (our video node's
-// serialized form), regardless of attribute order. Non-global on purpose: only
-// used with `.test()`, so no stateful lastIndex to leak (see note above).
-const VIDEO_ATTACHMENT_RE = /<video\b[^>]*\bdata-attachment-id="[^"]+"/i;
-
-/** True when the Body HTML embeds at least one video attachment node.
- *  Narrower than bodyHasAttachment, which also matches images and audio. */
-export function bodyHasVideo(html: string | null | undefined): boolean {
-  if (!html) return false;
-  return VIDEO_ATTACHMENT_RE.test(html);
-}
-
-// Matches an <a> tag that carries a data-attachment-id (our file node's
-// serialized form), regardless of attribute order. Non-global on purpose: only
-// used with `.test()`, so no stateful lastIndex to leak (see note above).
-const FILE_ATTACHMENT_RE = /<a\b[^>]*\bdata-attachment-id="[^"]+"/i;
-
-/** True when the Body HTML embeds at least one file attachment node.
- *  Narrower than bodyHasAttachment, which also matches images/audio/video. */
-export function bodyHasFile(html: string | null | undefined): boolean {
-  if (!html) return false;
-  return FILE_ATTACHMENT_RE.test(html);
-}
-
 /** Every distinct attachment id referenced by the Body HTML. */
 export function extractAttachmentIds(html: string | null | undefined): string[] {
   if (!html) return [];

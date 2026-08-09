@@ -1,10 +1,10 @@
-import { Check } from 'lucide-react';
 import { type ChangeEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { icons } from '@/components/icons';
 import { Button } from '@/components/ui/button.tsx';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog.tsx';
+import { LabeledCheckbox } from '@/components/ui/LabeledCheckbox.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import {
   BackupError,
@@ -15,7 +15,6 @@ import {
   requestSaveTarget,
   restoreBackup,
 } from '@/lib/backup.ts';
-import { cn } from '@/lib/utils.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
 /** Which long-running action is in flight; blocks both buttons while set. */
@@ -25,37 +24,6 @@ function errorKey(error: unknown): string {
   return error instanceof BackupError
     ? `settings.backup.error.${error.code}`
     : 'settings.backup.error.unknown';
-}
-
-/**
- * A real checkbox wrapped in its label, matching `TagPopover` - Radix renders
- * the shared `ui/checkbox` as a `<button>`, which a `<label>` cannot activate.
- */
-function InlineCheckbox({
-  label,
-  checked,
-  onToggle,
-}: {
-  label: string;
-  checked: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <label className="flex cursor-pointer items-center gap-2 text-sm">
-      <input type="checkbox" checked={checked} onChange={onToggle} className="peer sr-only" />
-      <span
-        aria-hidden
-        className={cn(
-          'flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-input',
-          'peer-focus-visible:ring-2 peer-focus-visible:ring-ring',
-          checked && 'border-primary bg-primary text-primary-foreground'
-        )}
-      >
-        {checked && <Check className="size-3.5" />}
-      </span>
-      <span>{label}</span>
-    </label>
-  );
 }
 
 /**
@@ -198,7 +166,7 @@ export function BackupSection() {
         cancelLabel={t('settings.backup.confirmImport.cancel')}
         onConfirm={() => void confirmRestore()}
         body={
-          <InlineCheckbox
+          <LabeledCheckbox
             label={t('settings.backup.confirmImport.backupFirst')}
             checked={backupFirst}
             onToggle={() => setBackupFirst((value) => !value)}

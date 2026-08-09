@@ -3,13 +3,13 @@ import Document from '@tiptap/extension-document';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { Link, type LinkExtensionOptions } from './Link';
+import { createLink, type LinkExtensionOptions } from './Link';
 
 const t = (key: string) => key;
 
 function createEditor() {
   return new Editor({
-    extensions: [Document, Paragraph, Text, Link],
+    extensions: [Document, Paragraph, Text, createLink(t)],
     content: '<p>tiptap.dev</p>',
   });
 }

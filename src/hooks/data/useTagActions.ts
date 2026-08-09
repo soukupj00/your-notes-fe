@@ -16,9 +16,9 @@ export function useTagActions() {
    */
   const createTag = async (name: string, color?: string) => {
     const trimmed = name.trim();
-    const existing = (await db.tags.toArray()).find(
-      (tag) => tag.name.toLowerCase() === trimmed.toLowerCase()
-    );
+    // Through the `name` index rather than a scan of every tag: this runs on
+    // each keystroke-driven create from the label field.
+    const existing = await db.tags.where('name').equalsIgnoreCase(trimmed).first();
     if (existing) return existing;
 
     const now = new Date().toISOString();
@@ -27,8 +27,8 @@ export function useTagActions() {
     return newTag;
   };
 
-  // UPDATE a tag's name and/or colour. Absent keys are left alone; a present
-  // `color: undefined` is the "no colour" value and clears the field.
+  // Absent keys are left alone; a present `color: undefined` is the "no colour"
+  // value and clears the field.
   const updateTag = async (id: string, changes: TagChanges) => {
     const tag = await db.tags.get(id);
     if (!tag) return null;
@@ -43,7 +43,6 @@ export function useTagActions() {
     return updatedTag;
   };
 
-  // DELETE a tag (remove from tags table and all relationships in noteTags)
   const deleteTag = async (id: string) => {
     await db.transaction('rw', db.tags, db.noteTags, async () => {
       await db.tags.delete(id);
@@ -88,7 +87,6 @@ export function useTagActions() {
     });
   };
 
-  // ASSIGN a tag to a note
   const addTagToNote = async (noteId: string, tagId: string) => {
     const exists = await db.noteTags.where({ noteId, tagId }).first();
 
@@ -98,7 +96,6 @@ export function useTagActions() {
     }
   };
 
-  // REMOVE a tag from a note
   const removeTagFromNote = async (noteId: string, tagId: string) => {
     await db.noteTags.where({ noteId, tagId }).delete();
   };

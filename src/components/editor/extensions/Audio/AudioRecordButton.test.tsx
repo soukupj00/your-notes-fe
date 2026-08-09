@@ -110,7 +110,11 @@ describe('AudioRecordButton', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: /stop/i }));
     await waitFor(() => expect(deps.getNoteId).toHaveBeenCalled());
-    expect(createAttachment).toHaveBeenCalledWith('note1', expect.any(File), 'audio');
+    // The take's measured length rides along as metadata, so the card and the
+    // player can show a duration without decoding the blob.
+    expect(createAttachment).toHaveBeenCalledWith('note1', expect.any(File), 'audio', {
+      duration: 3.2,
+    });
     await waitFor(() =>
       expect(insertAudioAttachmentMock).toHaveBeenCalledWith({ attachmentId: 'att1' })
     );

@@ -1,4 +1,5 @@
 import type { Editor } from '@tiptap/react';
+import { type IconName, icons } from '@/components/icons';
 import {
   Select,
   SelectContent,
@@ -7,34 +8,68 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import type { TFunction } from './button-types';
 
 export type EditorTextStyleVariant = 'fontFamily' | 'fontSize';
 
 interface EditorTextStyleSelectProps {
   editor: Editor;
   tooltip?: string;
+  t: TFunction;
   variant: EditorTextStyleVariant;
 }
 
 /** Radix Select.Item forbids an empty-string value. */
 const DEFAULT_VALUE = '__default__';
 
-const OPTIONS: Record<EditorTextStyleVariant, { value: string; label: string }[]> = {
+interface StyleOption {
+  value: string;
+  /**
+   * i18n key for the full name, shown in the open menu. Absent for an option
+   * whose value is already its name - a size renders as "16px" in every locale.
+   */
+  labelKey?: string;
+  /**
+   * What the closed trigger shows. It has to be short enough for a toolbar and
+   * distinct enough to read at a glance - "Default" on both selects told the
+   * user nothing about which control they were looking at, and on a phone,
+   * where the tooltip never appears, it was the only thing they had.
+   */
+  short: string;
+}
+
+const OPTIONS: Record<EditorTextStyleVariant, StyleOption[]> = {
   fontFamily: [
-    { value: DEFAULT_VALUE, label: 'Default' },
-    { value: 'ui-sans-serif, system-ui, sans-serif', label: 'Sans-serif' },
-    { value: 'ui-serif, Georgia, serif', label: 'Serif' },
-    { value: 'ui-monospace, SFMono-Regular, monospace', label: 'Monospace' },
+    { value: DEFAULT_VALUE, labelKey: 'editor.fontFamily.options.default', short: 'Aa' },
+    {
+      value: 'ui-sans-serif, system-ui, sans-serif',
+      labelKey: 'editor.fontFamily.options.sans',
+      short: 'Sans',
+    },
+    {
+      value: 'ui-serif, Georgia, serif',
+      labelKey: 'editor.fontFamily.options.serif',
+      short: 'Serif',
+    },
+    {
+      value: 'ui-monospace, SFMono-Regular, monospace',
+      labelKey: 'editor.fontFamily.options.mono',
+      short: 'Mono',
+    },
   ],
   fontSize: [
-    { value: DEFAULT_VALUE, label: 'Default' },
-    { value: '12px', label: '12px' },
-    { value: '14px', label: '14px' },
-    { value: '16px', label: '16px' },
-    { value: '18px', label: '18px' },
-    { value: '24px', label: '24px' },
-    { value: '32px', label: '32px' },
+    { value: DEFAULT_VALUE, labelKey: 'editor.fontSize.options.default', short: 'Auto' },
+    ...['12px', '14px', '16px', '18px', '24px', '32px'].map((size) => ({
+      value: size,
+      short: size.replace('px', ''),
+    })),
   ],
+};
+
+/** Registry keys, per the icon convention - never an imported component. */
+const ICONS: Record<EditorTextStyleVariant, IconName> = {
+  fontFamily: 'Type',
+  fontSize: 'CaseSensitive',
 };
 
 function updateTextStyle(editor: Editor, variant: EditorTextStyleVariant, value: string): void {
@@ -51,10 +86,27 @@ function updateTextStyle(editor: Editor, variant: EditorTextStyleVariant, value:
   else chain.setFontSize(value).run();
 }
 
+/**
+ * A menu row previews what it does: a family renders in its own face, a size at
+ * its own size. Scanning the list is then reading the answer rather than
+ * decoding a name.
+ */
+function previewStyle(
+  variant: EditorTextStyleVariant,
+  option: StyleOption
+): React.CSSProperties | undefined {
+  if (option.value === DEFAULT_VALUE) return undefined;
+  return variant === 'fontFamily'
+    ? { fontFamily: option.value }
+    : { fontSize: option.value, lineHeight: 1.2 };
+}
+
 /** Shared toolbar select for the font-related attributes on the textStyle mark. */
-export function EditorTextStyleSelect({ editor, tooltip, variant }: EditorTextStyleSelectProps) {
+export function EditorTextStyleSelect({ editor, tooltip, t, variant }: EditorTextStyleSelectProps) {
   const currentValue: string = editor.getAttributes('textStyle')[variant] || '';
   const options = OPTIONS[variant];
+  const Icon = icons[ICONS[variant]];
+  const current = options.find((option) => option.value === (currentValue || DEFAULT_VALUE));
 
   return (
     <Select
@@ -68,7 +120,10 @@ export function EditorTextStyleSelect({ editor, tooltip, variant }: EditorTextSt
             size="sm"
             className="h-8 w-auto min-w-0 gap-1 px-2 text-xs"
           >
-            <SelectValue />
+            {/* The icon, not the tooltip, is what says which select this is.
+                A tooltip cannot: there is no hover on a touch screen. */}
+            <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+            <SelectValue>{current?.short ?? currentValue}</SelectValue>
           </SelectTrigger>
         </TooltipTrigger>
         {tooltip && (
@@ -79,16 +134,8 @@ export function EditorTextStyleSelect({ editor, tooltip, variant }: EditorTextSt
       </Tooltip>
       <SelectContent>
         {options.map((option) => (
-          <SelectItem
-            key={option.value}
-            value={option.value}
-            style={
-              variant === 'fontFamily' && option.value !== DEFAULT_VALUE
-                ? { fontFamily: option.value }
-                : undefined
-            }
-          >
-            {option.label}
+          <SelectItem key={option.value} value={option.value} style={previewStyle(variant, option)}>
+            {option.labelKey ? t(option.labelKey) : option.value}
           </SelectItem>
         ))}
       </SelectContent>

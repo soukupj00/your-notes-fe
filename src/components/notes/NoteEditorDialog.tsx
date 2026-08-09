@@ -1,15 +1,20 @@
-import { Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, Check, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CaptureKind } from '@/components/editor/editor.tsx';
 import { Editor, type EditorHandle } from '@/components/editor/editor.tsx';
-import { NoteTagsBar } from '@/components/tags/NoteTagsBar.tsx';
+import { NoteEditorBar } from '@/components/notes/NoteEditorBar.tsx';
+import { AppBar } from '@/components/ui/AppBar.tsx';
+import { Button } from '@/components/ui/button.tsx';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog.tsx';
 import { db } from '@/db/db.ts';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { bodyHasAttachment, extractAttachmentIds } from '@/lib/attachment-html.ts';
+import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
+import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { stripHtml } from '@/lib/utils.ts';
+import type { NoteState } from '@/models.ts';
 
 const AUTOSAVE_DELAY_MS = 600;
 
@@ -21,9 +26,32 @@ type SaveStatus = 'idle' | 'saving' | 'saved';
 const isEmpty = (header: string, body: string) =>
   header.trim() === '' && stripHtml(body).trim() === '' && !bodyHasAttachment(body);
 
+/** Decoration only: the announcement is the one live region in the dialog. */
+function SaveStatusIcon({ status }: { status: SaveStatus }) {
+  if (status === 'idle') return null;
+  return status === 'saving' ? (
+    <Loader2 className="size-4 animate-spin text-muted-foreground" aria-hidden />
+  ) : (
+    <Check className="size-4 text-muted-foreground" aria-hidden />
+  );
+}
+
 type NoteEditorDialogProps = {
   /** Existing note id, or null for a new (draft) note not yet persisted. */
   noteId: string | null;
+  /**
+   * The id a draft will take when it is first persisted, minted at open so the
+   * URL can name the note before there is a row for it (ADR 0014). Ignored when
+   * `noteId` is set. Optional so a caller outside a feed can still open an
+   * editor without knowing about the URL.
+   */
+  draftId?: string;
+  /**
+   * `noteId` named a note that is not in the database - a dead `?note=` from a
+   * discarded draft, a stale tab, or a shared link to something since deleted.
+   * The dialog cannot decide what to do about the URL, so it reports up.
+   */
+  onNoteMissing?: () => void;
   /** Seed body for a new draft (e.g. an empty checklist for quick-capture). */
   initialBody?: string;
   /** Best-effort: autoplay the note's first audio attachment on open (set when
@@ -44,13 +72,15 @@ type NoteEditorDialogProps = {
  */
 export function NoteEditorDialog({
   noteId,
+  draftId,
   initialBody,
   autoplayFirstAudio,
   initialCapture,
   onClose,
+  onNoteMissing,
 }: NoteEditorDialogProps) {
   const { t } = useTranslation();
-  const { createNote, updateNote, purgeNote } = useNoteActions();
+  const { createNote, updateNote, purgeNote, pinNote, unpinNote } = useNoteActions();
   const { collectOrphans } = useAttachmentActions();
 
   const [header, setHeader] = useState('');
@@ -58,10 +88,20 @@ export function NoteEditorDialog({
   const [body, setBody] = useState(noteId ? '' : (initialBody ?? ''));
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
 
+  // The note-bar fields. Held locally and written through immediately (unlike
+  // header/body, which are debounced): a colour or a pin is one deliberate tap,
+  // not a stream of keystrokes. A draft starts uncoloured, unpinned and Active.
+  const [color, setColor] = useState<string | undefined>(undefined);
+  const [pinnedAt, setPinnedAt] = useState<string | undefined>(undefined);
+  const [state, setState] = useState<NoteState>('active');
+
   // A checklist draft opens focused in the body so the first item is ready.
   const focusBody = !noteId && !!initialBody;
 
   const editorRef = useRef<EditorHandle>(null);
+  // The title field, so the dialog can hand it the opening focus. See
+  // `onOpenAutoFocus` below - the app bar's back arrow now precedes it.
+  const headerInputRef = useRef<HTMLInputElement>(null);
 
   // The id we persist to: the prop for an existing note, or null until a draft
   // is first saved. A ref (not state) so serialized saves see it synchronously.
@@ -88,27 +128,37 @@ export function NoteEditorDialog({
     if (!noteId) return;
     let active = true;
     void db.notes.get(noteId).then((n) => {
-      if (active && n) {
+      if (!active) return;
+      if (n) {
         setHeader(n.header ?? '');
         setBody(n.body ?? '');
+        setColor(n.color);
+        setPinnedAt(n.pinnedAt);
+        setState(n.state);
+        return;
       }
+      // The note named by the URL is not there. Reporting up rather than
+      // rendering an empty editor: a blank surface titled "edit note" invites
+      // typing into a note that no longer exists, and on close would silently
+      // create a second one under the dead id.
+      onNoteMissing?.();
     });
     return () => {
       active = false;
     };
-  }, [noteId]);
+  }, [noteId, onNoteMissing]);
 
   const persist = useCallback(
     async (h: string, b: string) => {
       if (idRef.current == null) {
         if (isEmpty(h, b)) return;
-        const created = await createNote({ header: h, body: b });
+        const created = await createNote({ id: draftId, header: h, body: b });
         idRef.current = created.id;
       } else {
         await updateNote(idRef.current, { header: h, body: b });
       }
     },
-    [createNote, updateNote]
+    [createNote, updateNote, draftId]
   );
 
   // Attachments need a persisted note to reference. When an image is inserted
@@ -120,7 +170,11 @@ export function NoteEditorDialog({
   const ensureNoteId = useCallback(async (): Promise<string> => {
     const chained = saveChainRef.current.then(async () => {
       if (idRef.current == null) {
-        const created = await createNote({ header: headerRef.current, body: bodyRef.current });
+        const created = await createNote({
+          id: draftId,
+          header: headerRef.current,
+          body: bodyRef.current,
+        });
         idRef.current = created.id;
       }
       return idRef.current as string;
@@ -131,7 +185,7 @@ export function NoteEditorDialog({
       () => undefined
     );
     return chained;
-  }, [createNote]);
+  }, [createNote, draftId]);
 
   const enqueueSave = useCallback(
     (h: string, b: string) => {
@@ -140,6 +194,30 @@ export function NoteEditorDialog({
     },
     [persist]
   );
+
+  // Colour and pin on a not-yet-saved draft go through the same ensureNoteId
+  // queue labels and attachments use, so a draft is still created exactly once
+  // whichever control the user reaches for first. Local state is set up front so
+  // the tint and the pin respond on the tap rather than on the write; an empty
+  // draft that was only coloured is still `isEmpty`, so closing discards it.
+  const handleColorChange = useCallback(
+    async (next?: string) => {
+      setColor(next);
+      const id = await ensureNoteId();
+      await updateNote(id, { color: next });
+    },
+    [ensureNoteId, updateNote]
+  );
+
+  const handlePinToggle = useCallback(async () => {
+    const next = pinnedAt ? undefined : new Date().toISOString();
+    setPinnedAt(next);
+    const id = await ensureNoteId();
+    // The lifecycle transitions own the pin field (ADR 0009) rather than a raw
+    // updateNote, so the editor and the card write it the same way.
+    if (next) await pinNote(id);
+    else await unpinNote(id);
+  }, [pinnedAt, ensureNoteId, pinNote, unpinNote]);
 
   // Debounced autosave whenever the user has actually edited something.
   useEffect(() => {
@@ -179,6 +257,23 @@ export function NoteEditorDialog({
       }}
     >
       <DialogContent
+        // The dialog is the note's own card held open, so it takes the note's
+        // identity: a parchment tint by day, near-black with the identity edge
+        // by night. That is also what makes the colour picker honest - without
+        // it, choosing a colour changes nothing but a checkmark in the grid.
+        // `bg-note-surface!` because the vendored DialogContent carries its own
+        // `bg-background`, and between two background utilities the winner is
+        // decided by stylesheet order, not by class order.
+        {...noteColorAttrs(color)}
+        // Radix gives the opening focus to the first focusable child, which is
+        // now the app bar's back arrow: opening a note would put the caret on
+        // "leave" rather than in the note. Redirect it to the title. A checklist
+        // draft is left alone - `Editor autoFocus` puts the caret in the first
+        // item, and this must not race it back up to the title.
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          if (!focusBody) headerInputRef.current?.focus();
+        }}
         // Clicking the dialog's own padding/gaps (not a child element) drops the
         // cursor into the body, so tapping the margins feels editable too.
         onMouseDown={(e) => {
@@ -187,34 +282,92 @@ export function NoteEditorDialog({
             editorRef.current?.focus();
           }
         }}
-        className="top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-3 overflow-y-auto rounded-none border-0 sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-lg sm:border"
+        // The vendored close X is hidden below `sm:` rather than switched off
+        // with `showCloseButton`, because that prop is a boolean and this needs
+        // to be a breakpoint: mobile closes from the app bar's back arrow,
+        // desktop keeps the X. Hiding it beats re-vendoring the button, whose
+        // themed styling and 44px inset overlay we would otherwise duplicate.
+        // Descendant (`_`), not child (`>`): the close is written as a direct
+        // child of DialogContent but does not render as one, so `>` silently
+        // matches nothing - verified in a browser, not assumed.
+        // `pt-2` on the sheet, restored to the dialog's own `p-6` at `sm:`.
+        // The vendored padding is written for a centred modal, where 24px above
+        // the first line is breathing room; on a full-screen sheet it is 24px of
+        // a phone spent above a back arrow. 8px matches the topbar's own rhythm,
+        // so the two app bars in the app sit their controls at the same height.
+        //
+        // The insets are *added to* those numbers, not substituted for them: the
+        // sheet is `h-[100dvh]` and, under `viewport-fit=cover`, that really is
+        // the whole screen. Without the top inset the back arrow sits under the
+        // status bar - on the one surface with no system back to fall back on -
+        // and without the bottom one the editor toolbar sits under the home
+        // indicator. The side padding is the note's own text inset rather than
+        // chrome, so the horizontal insets ride on top of it.
+        className="top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-3 overflow-y-auto rounded-none border-0 bg-note-surface! pt-[calc(0.5rem+var(--safe-top))] pr-[calc(1.5rem+var(--safe-right))] pb-[calc(1.5rem+var(--safe-bottom))] pl-[calc(1.5rem+var(--safe-left))] sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-card sm:border sm:border-note-border sm:p-6 [&_[data-slot=dialog-close]]:hidden sm:[&_[data-slot=dialog-close]]:flex"
       >
         <DialogTitle className="sr-only">
           {noteId ? t('notes.editNoteTitle') : t('notes.newNoteTitle')}
         </DialogTitle>
 
-        {/* Quiet local autosave indicator (icon only), tucked left of the close
-            button. M5 can extend this to Syncing/Offline states. */}
-        {/* The live region is always mounted: a screen reader only announces
-            changes *inside* a region it was already observing, so one that
-            appears together with its first message is silent. */}
-        <div
-          aria-live="polite"
-          className="absolute top-4 right-12 flex items-center text-muted-foreground"
-        >
-          {saveStatus !== 'idle' && (
-            <>
-              {saveStatus === 'saving' ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-              ) : (
-                <Check className="size-4" aria-hidden />
-              )}
-              <span className="sr-only">{t(`notes.saveStatus.${saveStatus}`)}</span>
-            </>
-          )}
+        {/* Quiet local autosave indicator. M5 can extend this to Syncing /
+            Offline states.
+
+            One live region, two visual indicators. The region is always mounted
+            and never moves: a screen reader only announces changes *inside* a
+            region it was already observing, so one that appears together with
+            its first message is silent - and one that exists twice, once per
+            breakpoint, would be a second observer waiting to double-announce.
+            The icons are `aria-hidden` decoration hung off it. */}
+        <div aria-live="polite" className="sr-only">
+          {saveStatus !== 'idle' && t(`notes.saveStatus.${saveStatus}`)}
+        </div>
+
+        {/* Mobile: the full-screen sheet gets a real app bar. Back sits top-left
+            where a thumb can reach it and where "up" has meant something on
+            every phone for a decade; the vendored close is an X in the far
+            corner, which reads as discard and is the hardest point on the
+            screen to hit one-handed. Desktop keeps that X - correct for a
+            centred modal - and the indicator stays beside it. */}
+        <AppBar
+          // `-ml-3.5` puts the arrow's *glyph* on the same left edge as the
+          // title and body below it, rather than its 44px box - an icon indented
+          // further than the text it sits above reads as a mistake. 14px is that
+          // box's own inset on a coarse pointer, where this bar lives; with a
+          // mouse the button is 36px and the glyph lands 4px further out, which
+          // is the direction to be wrong in.
+          // `shrink-0` is not decoration: DialogContent is a column flex box
+          // and the editor body below is `flex-1`, so without it the bar is a
+          // shrinkable child and gets crushed to *zero height* as soon as the
+          // content overflows - the arrow stays in the DOM, focusable, and 0x0.
+          className="-ml-3.5 shrink-0 px-0 py-0 sm:hidden"
+          left={
+            // Calls `handleClose` directly rather than wrapping in
+            // `DialogClose`: `asChild` forwards `data-slot="dialog-close"` onto
+            // whatever it wraps, so the rule below that hides the vendored X on
+            // mobile would hide this arrow with it. Same close path either way -
+            // `onOpenChange` runs `handleClose` too.
+            <Button
+              variant="ghost"
+              size="icon"
+              className={CHROME_ICON_BUTTON}
+              aria-label={t('nav.back')}
+              onClick={() => void handleClose()}
+            >
+              <ArrowLeft />
+            </Button>
+          }
+          right={<SaveStatusIcon status={saveStatus} />}
+        />
+
+        {/* Same 32px box as the close button, so the two icons share a centre
+            line instead of the smaller one floating 8px high, and one gap of
+            space between them rather than none. */}
+        <div className="absolute top-4 right-14 hidden size-8 items-center justify-center text-muted-foreground sm:flex">
+          <SaveStatusIcon status={saveStatus} />
         </div>
 
         <input
+          ref={headerInputRef}
           value={header}
           onChange={(e) => {
             dirtyRef.current = true;
@@ -235,18 +388,27 @@ export function NoteEditorDialog({
           initialCapture={initialCapture}
           stickyToolbarOnMobile
           // Mobile: no bordered box, so the dialog's own padding is the only
-          // spacing around the title + content. Desktop keeps the framed editor.
-          className="flex-1 rounded-none border-0 p-0 sm:rounded-xl sm:border sm:px-4"
+          // spacing around the title + content. Desktop keeps the framed editor,
+          // whose frame follows the note's identity like the dialog's own.
+          className="flex-1 rounded-none border-0 p-0 sm:rounded-card sm:border sm:border-note-border sm:px-4"
           onUpdate={(html) => {
             dirtyRef.current = true;
             setBody(html);
           }}
         />
 
-        {/* Labels sit below the body, where Slice 4's action bar will join them.
-            A draft is persisted on the first label through the same
-            ensureNoteId queue attachments use. */}
-        <NoteTagsBar noteId={noteId} ensureNoteId={ensureNoteId} />
+        {/* The note bar: labels, colour and pin, in the scroll flow at the end
+            of the content rather than pinned to the bottom edge - the format
+            toolbar is the only chrome that has to stay above the keyboard. */}
+        <NoteEditorBar
+          noteId={noteId}
+          ensureNoteId={ensureNoteId}
+          color={color}
+          pinned={Boolean(pinnedAt)}
+          pinnable={state === 'active'}
+          onColorChange={(next) => void handleColorChange(next)}
+          onPinToggle={() => void handlePinToggle()}
+        />
       </DialogContent>
     </Dialog>
   );

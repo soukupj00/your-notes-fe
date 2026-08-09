@@ -1,7 +1,14 @@
 import { createContext, useContext, useState } from 'react';
 
-/** How the note feed is laid out. `masonry` = CSS columns; `list` = single column. */
-export type ViewMode = 'masonry' | 'list';
+/** The complete set of note-feed layouts from DESIGN.md. */
+export type ViewMode = 'masonry' | 'stack';
+
+function parseViewMode(value: string | null): ViewMode {
+  // `list` was the pre-Nightshift name for Stack. Preserve the user's choice
+  // while ensuring unknown or corrupt values never create a third layout.
+  if (value === 'stack' || value === 'list') return 'stack';
+  return 'masonry';
+}
 
 type ViewModeProviderState = {
   viewMode: ViewMode;
@@ -22,8 +29,8 @@ export function ViewModeProvider({
   children: React.ReactNode;
   storageKey?: string;
 }) {
-  const [viewMode, setViewModeState] = useState<ViewMode>(
-    () => (localStorage.getItem(storageKey) as ViewMode) || 'masonry'
+  const [viewMode, setViewModeState] = useState<ViewMode>(() =>
+    parseViewMode(localStorage.getItem(storageKey))
   );
 
   const setViewMode = (mode: ViewMode) => {

@@ -1,16 +1,15 @@
 import { useTranslation } from 'react-i18next';
-import { NoteCard } from '@/components/cards/NoteCard.tsx';
+import { NoteFeed } from '@/components/notes/NoteFeed.tsx';
 import { Skeleton } from '@/components/ui/skeleton.tsx';
 import { useViewMode } from '@/context/viewModeProvider.tsx';
 import { type NoteFeedScope, useNoteFeed } from '@/hooks/data/useNoteFeed.ts';
 import { useNoteSearchState } from '@/hooks/useNoteSearchState.ts';
 
-// Responsive masonry via CSS `columns` (no JS lib). Cards must not split across
-// columns, so each carries `break-inside-avoid` (see NoteCard). Note: CSS
-// columns fill column-major, so ordering is top-of-column-1 down, not row-major.
-const MASONRY = 'columns-1 gap-4 sm:columns-2 lg:columns-3 xl:columns-4';
-// Single-column reading list, centered and width-capped for comfortable line length.
-const LIST = 'mx-auto flex max-w-2xl flex-col gap-4';
+// The same `--feed-gap` the real feed spends, so the skeletons the feed
+// replaces are already at the user's density rather than jumping to it.
+const MASONRY_SKELETONS =
+  'grid grid-cols-1 gap-[var(--feed-gap)] min-[22rem]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
+const STACK_SKELETONS = 'grid grid-cols-1 gap-[var(--feed-gap)]';
 
 /** Which `notes.empty.*` copy block describes an empty feed in this scope. */
 function emptyKeyFor(scope: NoteFeedScope): string {
@@ -30,15 +29,15 @@ export function NoteContent({
   const { notes, loading } = useNoteFeed(scope, search);
   const { viewMode } = useViewMode();
   const { t } = useTranslation();
-  const layout = viewMode === 'list' ? LIST : MASONRY;
+  const skeletonLayout = viewMode === 'masonry' ? MASONRY_SKELETONS : STACK_SKELETONS;
 
   if (loading) {
     return (
       // `role="status"`: the skeletons are decoration, so the wait needs a name
       // of its own or a screen reader hears nothing at all while the feed loads.
-      <div className={layout} role="status" aria-busy aria-label={t('notes.loading')}>
+      <div className={skeletonLayout} role="status" aria-busy aria-label={t('notes.loading')}>
         {['a', 'b', 'c', 'd', 'e', 'f'].map((k) => (
-          <Skeleton key={k} className="mb-4 h-32 w-full break-inside-avoid" />
+          <Skeleton key={k} className="h-32 w-full" />
         ))}
       </div>
     );
@@ -59,15 +58,5 @@ export function NoteContent({
     );
   }
 
-  // A list, not a stack of divs: the feed is a countable collection, so screen
-  // readers should be able to announce its size and let the user step through it.
-  return (
-    <ul className={layout} aria-label={t('notes.feed')}>
-      {notes.map((note) => (
-        <li key={note.id} className="break-inside-avoid">
-          <NoteCard note={note} onSelect={onSelect} />
-        </li>
-      ))}
-    </ul>
-  );
+  return <NoteFeed notes={notes} mode={viewMode} label={t('notes.feed')} onSelect={onSelect} />;
 }

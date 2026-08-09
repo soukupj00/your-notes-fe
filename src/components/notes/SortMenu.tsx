@@ -26,7 +26,12 @@ export function SortMenu() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-8" aria-label={t('notes.sort.label')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="touch-target size-8"
+          aria-label={t('notes.sort.label')}
+        >
           <ArrowDownUp className="size-4" />
         </Button>
       </PopoverTrigger>
