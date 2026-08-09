@@ -186,7 +186,12 @@ Step 1's two acts are one act - it clicks the resolved `capture` element, and a 
   Not just the app root: Radix portals to `body`, so the editor dialog would escape it.
   This does three jobs at once. Tab cycles inside the popover with no focus-trap library; the dimmed UI is unreachable by keyboard as well as pointer; and step 2 cannot raise the software keyboard.
   That last one is not incidental. The editor autofocuses (`NoteEditorDialog.tsx:275`, `editor.tsx:285`) and `index.html` carries `interactive-widget=resizes-content`, so without this the phone viewport halves at step 2 and the popover has nowhere to sit.
-  **Verify Radix's own open-focus attempt fails quietly under `inert`** rather than warning or looping. Do this before building on it.
+  ~~**Verify Radix's own open-focus attempt fails quietly under `inert`** rather than warning or looping. Do this before building on it.~~
+  **Verified 2026-08-09**, in Chromium at both projects' viewports, with a throwaway spec driving the app's real editor: body marked inert first and a `MutationObserver` marking each new child, then the dialog opened.
+  `document.activeElement` stayed on `<body>`, nothing was focused inside the dialog, typing did not reach the editor, and neither Radix's `FocusScope` nor TipTap logged anything at all - no warning, no retry loop, no page error.
+  The fallback (a no-autofocus flag threaded through `NoteEditorDialog`) is not needed.
+  The same probe settled a second assumption the step list depends on: **a programmatic `.click()` still runs its React handler inside an `inert` subtree**, which is how step 1 opens the speed dial. `inert` disables hit testing, not dispatch.
+  Note for the marking loop: the dial's own Radix popover portals to `body` too, so it is marked inert as it opens. That is correct - the Tour is not interactive - but it means the exemption list has to be driver's elements specifically, not "anything that arrived after we started".
 - [ ] Any navigation the Tour did not initiate destroys it, Props and all. Do not fight the user for the router.
   The Tour must therefore **mark its own navigations**, because several acts are navigations: step 2 opens a note (a `?note=` search param since ADR 0014) and closing it runs `history.back()`, and step 4's Back pops `/settings`.
   Without that marking the Tour destroys itself on its own second step.
@@ -218,7 +223,8 @@ These were left open by the grilling. Each has a default recorded so implementat
 - **Back may not earn its cost.** It is why every step needs an `exit()`, roughly doubling the script work. Default: keep it. If Task 3 runs long, dropping Back to Next/Skip only is the first cut to make, and it removes `exit()` entirely.
 - **Prop copy** is sketched above, not written. Default: the three notes as tabled, in `en` and `cs` like all other copy.
 - **Step 4's reach.** Its copy originally promised density, the colour-blind palette and motion, which live in `AppearanceSection` two sections above the cutout with `LabelsSection` in between. **Settled 2026-08-09: narrow the copy, do not reorder the page.** Step 4 promises only what is inside its spotlight - the toolbar, the capture order and the thumb side - and the step table above has been corrected to match.
-- **`inert` under Radix** is unverified. Default: assume it works, verify in Task 4 before building on it. If Radix misbehaves, fall back to threading a no-autofocus flag through `NoteEditorDialog` for tour-opened notes.
+- ~~**`inert` under Radix** is unverified. Default: assume it works, verify in Task 4 before building on it. If Radix misbehaves, fall back to threading a no-autofocus flag through `NoteEditorDialog` for tour-opened notes.~~
+  **Closed 2026-08-09: it works, and quietly.** Details in task 4.
 
 ## Verification
 
