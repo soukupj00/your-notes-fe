@@ -45,10 +45,10 @@ export default function SettingsPage() {
           legible in one place. They wrap rather than mark, because each step
           points at a *block* of related rows and a bare `div` changes no layout.
 
-          Step 4's copy also mentions density, the colour-blind palette and
-          motion, which live in `AppearanceSection` two sections up and cannot be
-          spotlit with these without dragging `LabelsSection` in between into the
-          cutout too. */}
+          Step 4 stops at what is inside this block. Density, the colour-blind
+          palette and motion live in `AppearanceSection` two sections up, and
+          reaching them would mean dragging `LabelsSection` into the cutout as
+          well; the step's copy was narrowed instead of the page reordered. */}
       <div data-tour="settings-customisation">
         <EditorToolbarSection />
 

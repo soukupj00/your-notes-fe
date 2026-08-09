@@ -38,7 +38,7 @@ An intermediate design from the same session - a persistent welcome library gate
 | 1 | Start anything | opens the speed dial (below `sm:`); nothing on desktop | `capture` | text, list, photo, voice, drawing |
 | 2 | Write it | opens Prop C's editor, then opens the `/` menu | `editor-toolbar` | slash commands, inline images/audio/files/drawings |
 | 3 | Your wall | pins Prop C, wall re-packs | `[data-note-feed-id="<propC>"]` | pin, colour, label; archive keeps, trash discards with an undo window; `mod+K` |
-| 4 | Make it yours | navigates to `/settings` | `settings-customisation` | toolbar, capture order, thumb side, density, colour-blind palette, motion |
+| 4 | Make it yours | navigates to `/settings` | `settings-customisation` | toolbar, capture order, thumb side |
 | 5 | It all lives here | none | `settings-local` | nothing leaves this device; install, export a zip |
 
 Step 1 is **one step with two acts**, not two steps: there is no dial on desktop, but the idea is identical.
@@ -201,6 +201,7 @@ These were left open by the grilling. Each has a default recorded so implementat
 
 - **Back may not earn its cost.** It is why every step needs an `exit()`, roughly doubling the script work. Default: keep it. If Task 3 runs long, dropping Back to Next/Skip only is the first cut to make, and it removes `exit()` entirely.
 - **Prop copy** is sketched above, not written. Default: the three notes as tabled, in `en` and `cs` like all other copy.
+- **Step 4's reach.** Its copy originally promised density, the colour-blind palette and motion, which live in `AppearanceSection` two sections above the cutout with `LabelsSection` in between. **Settled 2026-08-09: narrow the copy, do not reorder the page.** Step 4 promises only what is inside its spotlight - the toolbar, the capture order and the thumb side - and the step table above has been corrected to match.
 - **`inert` under Radix** is unverified. Default: assume it works, verify in Task 4 before building on it. If Radix misbehaves, fall back to threading a no-autofocus flag through `NoteEditorDialog` for tour-opened notes.
 
 ## Verification
