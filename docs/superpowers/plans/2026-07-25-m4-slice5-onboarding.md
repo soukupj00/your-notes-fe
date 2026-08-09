@@ -113,10 +113,17 @@ Ordered by dependency. Task 0 first because `CLAUDE.md` mandates the acceptance 
 
 ### Task 0 - Wire Playwright, write the acceptance spec red
 
-- [ ] `playwright.config.ts`, `pnpm test:e2e`, `e2e/` excluded from Vitest's include glob.
-- [ ] `.gitlab-ci.yml`: an `test:e2e` job in the existing `test` stage, replacing the deferral comment.
-- [ ] `e2e/onboarding.spec.ts`, failing: fresh profile runs the Tour once; three Props appear and are gone at the end; Skip works; reload does not re-run; Settings replay does.
-- [ ] Rationale to keep in the file: jsdom returns zeroed rects, so the spotlight's only real failure mode, a hole cut over nothing, is invisible to Vitest.
+- [x] `playwright.config.ts`, `pnpm test:e2e`, `e2e/` excluded from Vitest's include glob (it always was - Vitest includes `src/**` only).
+  Two projects, desktop and mobile, because step 1 branches on the breakpoint.
+  It runs against `pnpm dev` rather than `preview`: `VitePWA` declares no `devOptions`, so dev serves no service worker, and a service worker choosing when to hand back a cached bundle is the last thing an acceptance suite needs.
+- [x] `.gitlab-ci.yml`: an `test:e2e` job in the existing `test` stage, replacing the deferral comment.
+  It carries `allow_failure: true` **for the length of this slice only** - see task 6.
+  It also cannot use the shared `*pnpm-setup`: `node:22-alpine` has neither the browsers nor their system libraries, so the job runs on `mcr.microsoft.com/playwright`, whose tag has to be kept in step with `@playwright/test`.
+- [x] `e2e/onboarding.spec.ts`, failing: fresh profile runs the Tour once; three Props appear and are gone at the end; Skip works; reload does not re-run; Settings replay does.
+  Verified red for the right reason - the page snapshot in the failure shows the whole app rendered and only the popover missing.
+  Also `tsconfig.node.json` now includes `e2e/`, `playwright.config.ts` and `vitest.config.ts`, none of which any project was typechecking.
+- [x] Rationale to keep in the file: jsdom returns zeroed rects, so the spotlight's only real failure mode, a hole cut over nothing, is invisible to Vitest.
+- [x] The spec pins two things the plan had not settled, both recorded in its header comment: the popover is addressed by `data-testid="tour-popover"`, and Props are found by **text rather than by role**, because `inert` takes its subtree out of the accessibility tree and a note card under the scrim is therefore not a button.
 
 ### Task 1 - Props
 
@@ -150,6 +157,7 @@ The functions take `createNote`/`purgeNote` as arguments and *return* the new ba
 
 - [ ] `TourProvider`: start, advance, retreat, skip, teardown; exposes `useTourActive()`.
 - [ ] Auto-start gated on `hydrated && !onboardingSeenAt`, after the Feed has painted. Props are created first, so the wall is populated behind the spotlight.
+- [ ] **The abandoned-Prop sweep runs at app start, not at Tour start.** Task 1 said Tour start and that is wrong: `onboardingSeenAt` is stamped at step 1, so a user who reloads mid-Tour never gets another Tour start and their three Props would live forever. ADR 0015 already says "swept on the next **load**". It belongs beside the other startup sweeps in `routes/__root.tsx`, and it is a `purgeProps` call over whatever `tourProps` holds, followed by clearing the field.
 - [ ] Stamp `onboardingSeenAt` when step 1 renders.
 - [ ] **Mark every direct child of `document.body` except driver's portal as `inert`** for the Tour's lifetime.
   Not just the app root: Radix portals to `body`, so the editor dialog would escape it.
@@ -178,6 +186,7 @@ The functions take `createNote`/`purgeNote` as arguments and *return* the new ba
   That is where the other "learn the app" surface already lives, and it leaves `PwaInstallSection` + `BackupSection` as the closing pair that step 5 spotlights.
 - [ ] Replay navigates to `/` and runs the same sequence, including the hop back to `/settings` at step 4.
 - [ ] Copy in `en` and `cs` under `onboarding.*`; a test asserts key parity between the two bundles.
+- [ ] **Drop `allow_failure: true` from the `test:e2e` job.** It went on in task 0 so that a deliberately red acceptance test would not leave the pipeline red for the length of the slice; the moment the Tour works it is just a way to not notice it breaking.
 
 ## Open, with defaults taken
 

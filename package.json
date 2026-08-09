@@ -12,6 +12,7 @@
     "seed": "ts-node src/db/seeder.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "check": "biome check --write .",
     "check:ci": "biome ci .",
     "format": "biome format --write .",

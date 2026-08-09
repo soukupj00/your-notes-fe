@@ -33,13 +33,12 @@ pnpm check:ci     # biome ci .        (non-mutating gate, used in CI)
 pnpm format       # biome format --write
 pnpm test         # Vitest run (unit/component/data) — wired up in M1
 pnpm test:watch   # Vitest watch mode
+pnpm test:e2e     # Playwright, specs in e2e/ (wired up in M4 slice 5)
 ```
 
-Still planned (see [M0/M1 in PLAN.md](./PLAN.md) — not yet wired up):
-
-```bash
-pnpm test:e2e     # Playwright — not yet added
-```
+Playwright runs against `pnpm dev` (started for you by `playwright.config.ts`) at two breakpoints, `desktop` and `mobile`.
+Vitest includes `src/**` only and Playwright's `testDir` is `e2e/`, so neither runner sees the other's files; `tsconfig.node.json` is what typechecks `e2e/` and the two Vite configs.
+First run on a machine needs `pnpm exec playwright install chromium`.
 
 > `pnpm lint` (ESLint) is being **replaced by Biome** — see [ADR 0005](./docs/adr/0005-biome-replaces-eslint-prettier.md).
 
