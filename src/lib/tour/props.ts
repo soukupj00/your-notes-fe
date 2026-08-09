@@ -83,7 +83,15 @@ function paragraph(text: string): string {
  * equal cards reads as a grid, and the masonry pack is one of the things step 3
  * is showing. `ideas` is the one step 2 opens and step 3 pins.
  */
-const PROP_SPECS: { key: string; color?: NoteColor; body: (t: Translate) => string }[] = [
+/**
+ * Which Prop a step means. Two of the five steps address one in particular -
+ * step 2 opens `ideas` and step 3 pins it - and they say so by name rather than
+ * by position in `tourProps`, which is an array of ids that has no idea what it
+ * is holding.
+ */
+export type PropKey = 'groceries' | 'weekend' | 'ideas';
+
+const PROP_SPECS: { key: PropKey; color?: NoteColor; body: (t: Translate) => string }[] = [
   {
     key: 'groceries',
     color: 'green',
@@ -110,6 +118,22 @@ const PROP_SPECS: { key: string; color?: NoteColor; body: (t: Translate) => stri
     body: (t) => paragraph(t('onboarding.props.ideas.body')),
   },
 ];
+
+/**
+ * The Prop a step is talking about, or `undefined` if this run has none.
+ *
+ * Position is the link between the two, because `createProps` writes the specs
+ * in order and `tourProps` keeps it - `props.test.ts` pins that. The alternative
+ * was a third field on the stored baseline, which would have put a Prop's *name*
+ * in the preferences blob for the sake of two call sites.
+ *
+ * `undefined` is reachable in normal use: a run restored from a half-finished
+ * one, or a user who deleted a Prop mid-Tour, leaves a shorter list. The steps
+ * that ask treat it as "nothing to demonstrate on" and simply do not act.
+ */
+export function propByKey(props: TourProp[], key: PropKey): TourProp | undefined {
+  return props[PROP_SPECS.findIndex((spec) => spec.key === key)];
+}
 
 // --- Lifecycle --------------------------------------------------------------
 

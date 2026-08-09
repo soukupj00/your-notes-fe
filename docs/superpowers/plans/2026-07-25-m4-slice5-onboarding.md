@@ -36,7 +36,7 @@ An intermediate design from the same session - a persistent welcome library gate
 | # | Name | `enter()` acts | Target | Copy covers |
 |---|------|----------------|--------|-------------|
 | 1 | Start anything | opens the speed dial (below `sm:`); nothing on desktop | `capture` | text, list, photo, voice, drawing |
-| 2 | Write it | opens Prop C's editor, then opens the `/` menu | `editor-toolbar` | slash commands, inline images/audio/files/drawings |
+| 2 | Write it | opens Prop C's editor | `editor-toolbar` | slash commands, inline images/audio/files/drawings |
 | 3 | Your wall | pins Prop C, wall re-packs | `[data-note-feed-id="<propC>"]` | pin, colour, label; archive keeps, trash discards with an undo window; `mod+K` |
 | 4 | Make it yours | navigates to `/settings` | `settings-customisation` | toolbar, capture order, thumb side |
 | 5 | It all lives here | none | `settings-local` | nothing leaves this device; install, export a zip |
@@ -45,7 +45,7 @@ Step 1 is **one step with two acts**, not two steps: there is no dial on desktop
 
 Step 3 targets a card by note id rather than by a `data-tour` attribute, because `NoteFeed` already stamps `data-note-feed-id={note.id}` on both the Masonry and Stack branches.
 
-`exit()` is the inverse of each: close the `/` menu and the editor, unpin, `history.back()`.
+`exit()` is the inverse of each: close the dial and the editor, unpin, `history.back()`.
 
 ## Props
 
@@ -155,10 +155,26 @@ The functions take `createNote`/`purgeNote` as arguments and *return* the new ba
 
 ### Task 3 - The script
 
-- [ ] `waitFor.ts`: awaits a predicate against the DOM with a bounded timeout, never a fixed delay. Reduced motion makes every duration zero, so a fixed wait is wrong in both directions.
-- [ ] `steps.ts`: the five steps, each with target, copy keys, `enter()`, `exit()`, and a `stageRadius`.
-- [ ] No `driver.js` import anywhere in `src/lib/tour/`. That separation is what makes any of this testable.
-- [ ] Tests: each step's `enter`/`exit` round-trips the app back to the state it started in.
+- [x] `waitFor.ts`: awaits a predicate against the DOM with a bounded timeout, never a fixed delay. Reduced motion makes every duration zero, so a fixed wait is wrong in both directions.
+  Polls per animation frame, because what is nearly always being waited on is a *rect*, and a rect is only true after the browser has laid out.
+  It returns `null` on timeout rather than throwing: a step that cannot find its target still has copy worth reading.
+- [x] `steps.ts`: the five steps, each with target, copy keys, `enter()`, `exit()`, and ~~a `stageRadius`~~ **`stageRadiusOf(element)`**.
+  A number per step cannot be right: step 1 points at a 28px circle on a phone and a 16px card on desktop, and it is one step.
+  Reading the target's own computed `border-radius` is shorter, self-maintaining, and needs the clamp anyway - Tailwind's `rounded-full` computes to a near-infinite length that no cutout path can use.
+- [x] **Step 2 no longer opens the `/` menu.** Settled 2026-08-09: it opens Prop C's editor, spotlights the toolbar, and the copy says `/` reaches the same list.
+  Keeping the act meant threading a live TipTap instance out through `NoteEditorDialog` purely for the Tour, writing a character into a Prop and undoing it on the way back - and the menu renders at the caret, which is inside the scrim and outside the cutout the step had just cut over the toolbar.
+- [x] ~~Steps whose target does not resolve are dropped **before** `drive()`~~ - **not implementable, and it was never the right shape.**
+  Three of the five targets do not exist when a run starts: the editor toolbar is created by step 2's own act, and both Settings blocks by step 4's.
+  A pre-flight filter could therefore only ever have asked about step 1, which is also the one target that is always there.
+  What replaces it: each step's `enter` awaits its target through `waitFor`, and a step that still has none is shown centred with no spotlight (`stageRadiusOf(null)` is the card radius, and task 4 hands driver no element).
+  The counter's honesty, which is what the drop rule existed for, is safe because the two steps that *could* be dropped - `settingsLocal` for a missing install prompt, step 3 for a missing Prop - are both already answered: task 2 moved the anchor to `BackupSection`, which always renders, and a run with no Props acts on nothing rather than failing.
+- [x] No `driver.js` import anywhere in `src/lib/tour/`. That separation is what makes any of this testable.
+- [x] Tests: each step's `enter`/`exit` round-trips the app back to the state it started in.
+
+Landed as `waitFor.ts` + `steps.ts` with colocated tests, plus `propByKey` in `props.ts`.
+The steps act through a `TourStage` handed to them - `openNote`/`closeNote`, `pinProp`/`unpinProp`, `navigate`/`back` - so no step reaches for a hook, and none of them *can* forget to rebase a Prop, because the stage's writers are the rebasing ones.
+Everything else a step needs it reads from the document: `steps.test.ts` runs the five against a paper app of divs carrying the same `data-tour` names, which is enough to pin every act's inverse.
+Step 1's two acts are one act - it clicks the resolved `capture` element, and a missing `aria-expanded` is how it knows this width has no dial to open.
 
 ### Task 4 - Provider and driver adapter
 

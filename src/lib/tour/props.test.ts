@@ -11,7 +11,7 @@ import { TaskList } from '@/components/editor/extensions/TaskList';
 import { db } from '@/db/db.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { clearNotesDb } from '@/test/db.ts';
-import { createProps, purgeProps, rebaseProp } from './props.ts';
+import { createProps, propByKey, purgeProps, rebaseProp } from './props.ts';
 
 afterEach(clearNotesDb);
 
@@ -157,6 +157,23 @@ describe('purgeProps', () => {
     await purgeProps(purgeNote, props);
 
     await expect(db.noteTags.count()).resolves.toBe(0);
+  });
+});
+
+describe('propByKey', () => {
+  it('finds the Prop the steps name, which is the one they open and pin', async () => {
+    const props = await seed();
+
+    const ideas = propByKey(props, 'ideas');
+
+    const note = await db.notes.get(ideas?.id ?? '');
+    expect(note?.header).toBe('onboarding.props.ideas.header');
+  });
+
+  it('answers undefined for a run that seeded nothing', () => {
+    // A restored half-finished run, or a Prop the user deleted mid-Tour. The
+    // steps that ask simply do not act.
+    expect(propByKey([], 'ideas')).toBeUndefined();
   });
 });
 
