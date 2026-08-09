@@ -94,12 +94,6 @@ test:e2e:
     policy: pull
   script:
     - pnpm test:e2e
-  # TEMPORARY, and it comes off in task 6 of the M4 slice 5 plan. The onboarding
-  # spec is an acceptance test written before its feature, so it is red on
-  # purpose for the length of the slice; the alternative to allowing it to fail
-  # is a pipeline that is red for a fortnight, which teaches everyone to stop
-  # reading it. Lint, typecheck and the unit suite still gate as before.
-  allow_failure: true
   artifacts:
     when: always
     paths:

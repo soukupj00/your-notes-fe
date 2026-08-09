@@ -99,8 +99,7 @@ describe('opening a note with the real editor', () => {
 });
 
 describe('the toolbar customisation sheet, over an unsaved draft', () => {
-  it('opens and closes without creating, saving or destroying the draft', async () => {
-    const user = userEvent.setup();
+  function renderDraft() {
     render(
       <PreferencesProvider>
         <TooltipProvider>
@@ -108,14 +107,18 @@ describe('the toolbar customisation sheet, over an unsaved draft', () => {
         </TooltipProvider>
       </PreferencesProvider>
     );
+    return userEvent.setup();
+  }
 
-    const title = await screen.findByPlaceholderText('notes.titlePlaceholder');
-    await user.type(title, 'Half a thought');
-
+  /**
+   * Opens the sheet, changes something in it, and closes it again.
+   *
+   * Two dialogs are open while it runs: the note, and the sheet layered over it.
+   * The sheet is the one that must not navigate - routing to Settings would
+   * either destroy this draft or force the `ensureNoteId` race Task 4 refused.
+   */
+  async function roundTripTheSheet(user: ReturnType<typeof userEvent.setup>) {
     await user.click(await screen.findByTestId('toolbar-customize'));
-    // Two dialogs now: the note, and the sheet layered over it. The sheet is
-    // the one that must not navigate - routing to Settings would either destroy
-    // this draft or force the `ensureNoteId` race Task 4 refused.
     const sheet = await screen.findByRole('dialog', { name: 'settings.toolbar.title' });
     await user.click(within(sheet).getByRole('radio', { name: 'settings.toolbar.width.wide' }));
     await user.keyboard('{Escape}');
@@ -125,9 +128,30 @@ describe('the toolbar customisation sheet, over an unsaved draft', () => {
         screen.queryByRole('dialog', { name: 'settings.toolbar.title' })
       ).not.toBeInTheDocument()
     );
-    // The draft is still a draft: nothing was written to the notes table, and
-    // what was typed is still there.
+  }
+
+  // These were one test, which asserted an empty notes table on a draft that had
+  // just been typed into - so it was really asserting that the whole sheet
+  // round-trip finished inside the 600ms autosave debounce, and it failed on a
+  // loaded machine when it did not. Autosaving a dirty draft is correct
+  // behaviour; what the sheet must not do is create the note *itself*, which is
+  // only answerable on a draft that has nothing to save.
+  it('opens and closes without creating the draft', async () => {
+    const user = renderDraft();
+    await screen.findByPlaceholderText('notes.titlePlaceholder');
+
+    await roundTripTheSheet(user);
+
     expect(await db.notes.count()).toBe(0);
+  });
+
+  it('leaves the draft open, with what was typed still in it', async () => {
+    const user = renderDraft();
+    const title = await screen.findByPlaceholderText('notes.titlePlaceholder');
+    await user.type(title, 'Half a thought');
+
+    await roundTripTheSheet(user);
+
     expect(screen.getByDisplayValue('Half a thought')).toBeInTheDocument();
   });
 

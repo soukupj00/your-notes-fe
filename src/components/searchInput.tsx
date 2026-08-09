@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { SortMenu } from '@/components/notes/SortMenu.tsx';
 import { ViewModeToggle } from '@/components/notes/ViewModeToggle.tsx';
 import { Input } from '@/components/ui/input.tsx';
+import { useTourActive } from '@/context/TourProvider.tsx';
 import { useNoteSearchState } from '@/hooks/useNoteSearchState.ts';
 import { cn } from '@/lib/utils.ts';
 import { getShortcutKey } from '@/utils/platform.ts';
@@ -24,9 +25,15 @@ function SearchInput({ className, enableShortcut = false, ...props }: SearchInpu
   const { search, setSearch } = useNoteSearchState();
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
+  const tourActive = useTourActive();
 
   // `enableOnFormTags`: search is a global escape hatch, so it has to work from
   // inside the note title field too, not only from a "neutral" focus.
+  //
+  // Stood down while the Tour runs. The binding is on the document with
+  // `preventDefault`, so it fires straight through the scrim - and the one thing
+  // it does, focusing a field the Tour has marked inert, is the one thing that
+  // cannot work while the Tour is up.
   useHotkeys(
     'mod+k',
     () => {
@@ -34,7 +41,7 @@ function SearchInput({ className, enableShortcut = false, ...props }: SearchInpu
       inputRef.current?.select();
     },
     {
-      enabled: enableShortcut,
+      enabled: enableShortcut && !tourActive,
       preventDefault: true,
       enableOnFormTags: true,
       enableOnContentEditable: true,

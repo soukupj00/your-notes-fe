@@ -65,7 +65,14 @@ export function QuickCaptureBar({ onStart }: { onStart: (editing: NoteOpenReques
               priority, and it has to survive in every reading of the list, not
               just the visual one. The stagger then falls out for free: index 0 is
               the button next to the `＋`, so the menu unrolls away from it. */}
-          <ul className={cn('flex flex-col-reverse gap-2', left ? 'items-start' : 'items-end')}>
+          {/* The Tour spotlights the open dial rather than the `＋` that opened
+              it: the starts unfold above the button, so a cutout over the button
+              alone would leave the five things the step is about under the
+              scrim (`lib/tour/targets.ts`). */}
+          <ul
+            data-tour="capture-dial"
+            className={cn('flex flex-col-reverse gap-2', left ? 'items-start' : 'items-end')}
+          >
             {actions.map(({ key, Icon, labelKey, editing }, index) => (
               <m.li
                 key={key}

@@ -1,6 +1,6 @@
 # M4 Slice 5 - Onboarding
 
-**Status:** not started.
+**Status:** done. Tasks 0-6 landed; the acceptance suite is green at both breakpoints.
 **Rewritten:** 2026-08-09, after a `/grill-with-docs` session against the finished slices 1-4.
 **Decision record:** [ADR 0015 - The tour drives the app on disposable props](../../adr/0015-the-tour-drives-the-app-on-disposable-props.md).
 **Glossary:** `CONTEXT.md` gained **Tour** and **Prop**, and **Purge** widened to cover both.
@@ -89,14 +89,17 @@ No Dexie schema change. Props are ordinary `notes` rows.
 | `src/components/settings/HelpSection.tsx` | the "Replay tutorial" row |
 | `playwright.config.ts`, `e2e/onboarding.spec.ts` | the acceptance test |
 
-Plus a colocated `*.test.ts(x)` for each of the four `src/lib/tour/` modules and for `TourProvider`.
+Plus a colocated `*.test.ts(x)` for each `src/lib/tour/` module and for `TourProvider`.
+
+Two files arrived that the manifest did not name, both because logic moved *out* of the provider to where it could be tested: `src/lib/tour/inert.ts` (the body-inert rule, with the driver-specific exemption injected) and `src/i18n.test.ts` (bundle key parity).
+`TourProvider.test.tsx` is deliberately thin as a result - jsdom measures every element as 0x0, so no step can be shown there at all, and what is left to it is the startup sweep and `useTourActive()`'s tolerance of no provider.
 
 **Modified**
 
 | Path | Change |
 |------|--------|
 | `src/context/PreferencesProvider.tsx` | `tourProps` field; `onboardingSeenAt` comment |
-| `src/App.tsx` | `TourProvider` into the provider chain, inside the router |
+| `src/routes/__root.tsx` | `TourProvider` around `Layout` - **not `App.tsx`**, which is outside `RouterProvider`, and the Tour navigates |
 | `src/pages/settings.tsx` | `HelpSection` after `ShortcutsSection` |
 | `src/components/searchInput.tsx` | AND `useTourActive()` into the `mod+K` `enabled` |
 | `src/components/notes/QuickCaptureBar.tsx`, `DesktopCaptureBar.tsx` | `data-tour="capture"` |
@@ -178,58 +181,72 @@ Step 1's two acts are one act - it clicks the resolved `capture` element, and a 
 
 ### Task 4 - Provider and driver adapter
 
-- [ ] `TourProvider`: start, advance, retreat, skip, teardown; exposes `useTourActive()`.
-- [ ] Auto-start gated on `hydrated && !onboardingSeenAt`, after the Feed has painted. Props are created first, so the wall is populated behind the spotlight.
-- [ ] **The abandoned-Prop sweep runs at app start, not at Tour start.** Task 1 said Tour start and that is wrong: `onboardingSeenAt` is stamped at step 1, so a user who reloads mid-Tour never gets another Tour start and their three Props would live forever. ADR 0015 already says "swept on the next **load**". It belongs beside the other startup sweeps in `routes/__root.tsx`, and it is a `purgeProps` call over whatever `tourProps` holds, followed by clearing the field.
-- [ ] Stamp `onboardingSeenAt` when step 1 renders.
-- [ ] **Mark every direct child of `document.body` except driver's portal as `inert`** for the Tour's lifetime.
-  Not just the app root: Radix portals to `body`, so the editor dialog would escape it.
-  This does three jobs at once. Tab cycles inside the popover with no focus-trap library; the dimmed UI is unreachable by keyboard as well as pointer; and step 2 cannot raise the software keyboard.
-  That last one is not incidental. The editor autofocuses (`NoteEditorDialog.tsx:275`, `editor.tsx:285`) and `index.html` carries `interactive-widget=resizes-content`, so without this the phone viewport halves at step 2 and the popover has nowhere to sit.
-  ~~**Verify Radix's own open-focus attempt fails quietly under `inert`** rather than warning or looping. Do this before building on it.~~
-  **Verified 2026-08-09**, in Chromium at both projects' viewports, with a throwaway spec driving the app's real editor: body marked inert first and a `MutationObserver` marking each new child, then the dialog opened.
-  `document.activeElement` stayed on `<body>`, nothing was focused inside the dialog, typing did not reach the editor, and neither Radix's `FocusScope` nor TipTap logged anything at all - no warning, no retry loop, no page error.
-  The fallback (a no-autofocus flag threaded through `NoteEditorDialog`) is not needed.
-  The same probe settled a second assumption the step list depends on: **a programmatic `.click()` still runs its React handler inside an `inert` subtree**, which is how step 1 opens the speed dial. `inert` disables hit testing, not dispatch.
-  Note for the marking loop: the dial's own Radix popover portals to `body` too, so it is marked inert as it opens. That is correct - the Tour is not interactive - but it means the exemption list has to be driver's elements specifically, not "anything that arrived after we started".
-- [ ] Any navigation the Tour did not initiate destroys it, Props and all. Do not fight the user for the router.
-  The Tour must therefore **mark its own navigations**, because several acts are navigations: step 2 opens a note (a `?note=` search param since ADR 0014) and closing it runs `history.back()`, and step 4's Back pops `/settings`.
-  Without that marking the Tour destroys itself on its own second step.
-- [ ] Step 4's Next awaits `navigate()` **and** the target's presence before `moveNext()`.
-- [ ] Suppress `mod+K` while active: `searchInput.tsx` binds it on the document with `preventDefault` and `enableOnFormTags`, so it fires straight through a scrim.
-- [ ] Esc skips, arrows go prev/next, Enter activates the focused button.
-- [ ] `animate: false` and `smoothScroll: false` under `useReducedMotion()`. Reduced motion is a hard killswitch.
+- [x] `TourProvider`: start, advance, retreat, skip, teardown; exposes `useTourActive()`.
+- [x] Auto-start gated on `hydrated && !onboardingSeenAt`, after the Feed has painted.
+  The "after the Feed has painted" gate is a `waitFor` on the `capture` target, and it is load-bearing twice over: it is also what keeps the Tour out of an environment that never paints a Feed, which is every jsdom test that renders a route.
+  **It does not navigate.** Only a *replay* moves the user to `/`; someone who opened the app straight into Settings asked to be there, and the Tour is offered the next time they are on the wall it is about.
+- [x] **The abandoned-Prop sweep runs at app start** - but inside `TourProvider`, not in `routes/__root.tsx` as this plan said.
+  The provider is mounted by the root route, so it *is* app start; what putting it in `__root.tsx` would have cost is the ordering. The sweep and the seed are the same list, and running them from two components races a fresh seed against the old list's purge.
+- [x] Stamp `onboardingSeenAt` when step 1 renders - **before the Props are seeded, not after**.
+  The three notes land on the wall the instant they are written, and the acceptance suite caught the window: a reload between the seed and the stamp re-armed the Tour, which then seeded three more on top of the three it had orphaned.
+- [x] **Mark every direct child of `document.body` except driver's portal as `inert`** for the Tour's lifetime.
+  Landed as `src/lib/tour/inert.ts` (with its own tests) rather than inside the provider: it is a DOM rule with no React in it, and the exemption is passed in as a predicate so nothing in `src/lib/tour/` has to know which spotlight library is running.
+  ~~**Verify Radix's own open-focus attempt fails quietly under `inert`**~~ **Verified 2026-08-09**, in Chromium at both projects' viewports - `document.activeElement` stayed on `<body>`, nothing was focused inside the dialog, typing did not reach the editor, and neither Radix's `FocusScope` nor TipTap logged anything at all.
+  The same probe settled that **a programmatic `.click()` still runs its React handler inside an `inert` subtree**, which is how step 1 opens the speed dial.
+- [x] Any navigation the Tour did not initiate destroys it, Props and all, and the Tour marks its own so it does not destroy itself on its own second step.
+- [x] Step 4's Next awaits `navigate()` **and** the target's presence before showing the step.
+- [x] Suppress `mod+K` while active, through `useTourActive()` in `searchInput.tsx`.
+- [x] Esc skips, arrows go prev/next, Enter activates the focused button.
+- [x] `animate: false` and `smoothScroll: false` under `useReducedMotion()`.
+
+Three things this task ran into that the plan had not foreseen, all of them found by the acceptance suite or by looking at the result:
+
+- **A step is a scene, not a layer.** The app's state between steps is not additive - step 2's editor covers the wall step 3 points at - so a move is `exit` the step being left, then `enter` the one arriving, in *both* directions. Steps 4 and 5 are the exception: they are Settings looked at twice, so step 5 carries `continues` and stepping between the pair does neither. `changesScene` and `leaveScene` live in `steps.ts` beside the list they reason about.
+- **The Tour's own presses must stop at the popover.** Radix's dismissable layers listen on the document for a pointer "outside" themselves, and the popover is outside every one of them: pressing Next while step 2's editor was open made Radix close that dialog *as well*, so the step's `history.back()` and Radix's landed as two pops and the second left the app entirely. The popover swallows `pointerdown`/`mousedown`/`touchstart`/`focusin`, which is also the true statement - nothing on that surface is an interaction with the app underneath.
+- **The popover host carries `aria-live="off"`.** A modal Radix dialog marks every other child of `body` `aria-hidden`, and the library it uses keeps `[aria-live]` elements deliberately - so this is its supported way of saying "not this one". Without it the popover's buttons left the accessibility tree the moment the editor opened: visible, clickable, and unreachable by name.
 
 ### Task 5 - Popover and theming
 
-- [ ] React portalled in via `onPopoverRender`: real `Button`, real `useTranslation`, honest "n of N" counter, `aria-live="polite"` step announcement, safe-area padding.
-- [ ] Scrim is ink-based and warm by day, recessed-canvas by night. **Never plain black.**
-- [ ] Cutout takes a solid amber hairline ring by day and an accent glow by night. `DESIGN.md` forbids glow in the day theme and drop-shadow depth at night, so the two cannot be treated alike.
-- [ ] `stageRadius` per step matches the target's own radius: 16px card, 10px control, pill for the FAB.
-- [ ] Popover is a `rounded-card` surface on `--canvas-day-high` / `--canvas-night-raised`, Bricolage title, Work Sans body, 44px minimum on every control.
+- [x] React portalled in via `onPopoverRender`: real `Button`, real `useTranslation`, honest "n of N" counter, `aria-live="polite"` step announcement, safe-area padding.
+  The React is rendered into a host of our own and *appended* into driver's popover rather than rendered into it, because driver positions the box the moment `onPopoverRender` returns and a tree committed at that instant would still be empty.
+- [x] Scrim is ink-based and warm by day, recessed-canvas by night. **Never plain black.**
+  Passed as `overlayColor: 'var(--tour-scrim)'`: driver writes it into the overlay path's inline `style.fill`, where a `var()` resolves like anywhere else - so the two scrims switch with the theme and no stylesheet has to out-specify an inline style.
+- [x] Cutout takes a solid amber hairline ring by day and an accent glow by night, drawn on the spotlit element itself. Not a stroke on the overlay path: that path outlines the viewport as well as the hole, so stroking it would frame the whole screen.
+- [x] `stageRadiusOf` per step matches the target's own radius.
+- [x] Popover is a `rounded-card` surface on the popover plane, Bricolage title, Work Sans body, 44px minimum on every control.
+
+Two defects found by looking at the result rather than by a test, both about *when* driver measures:
+
+- **Driver measures the popover exactly once and never looks again.** Handed a box a beat early it measured an empty one, decided the popover was 0px tall, and put step 1 half off the top of the window and on top of the very control it was pointing at. `TourPopover` now stamps `data-tour-step`, and the provider waits for that to match before handing driver anything.
+- **The typefaces are self-hosted and load async**, so a popover measured mid-swap is measured in the fallback face. `start()` awaits `document.fonts.ready` before the first step.
+
+Step 1 also changed target below `sm:`. The `＋` was the wrong thing to cut a hole over once the dial was open: the five starts unfold *above* the button, so the step's copy was about five things sitting under the scrim, two of them behind the popover. There is now a `captureDial` target on the dial's own list, and step 1 points at whichever of the two is on screen - which above `sm:` is still the bar, because there the bar *is* the five starts.
 
 ### Task 6 - Replay and copy
 
-- [ ] `HelpSection` with a "Replay tutorial" row, placed **after `ShortcutsSection`** in `settings.tsx`.
-  That is where the other "learn the app" surface already lives, and it leaves `PwaInstallSection` + `BackupSection` as the closing pair that step 5 spotlights.
-- [ ] Replay navigates to `/` and runs the same sequence, including the hop back to `/settings` at step 4.
-- [ ] Copy in `en` and `cs` under `onboarding.*`; a test asserts key parity between the two bundles.
-- [ ] **Drop `allow_failure: true` from the `test:e2e` job.** It went on in task 0 so that a deliberately red acceptance test would not leave the pipeline red for the length of the slice; the moment the Tour works it is just a way to not notice it breaking.
+- [x] `HelpSection` with a "Replay tutorial" row, placed **after `ShortcutsSection`** in `settings.tsx`.
+- [x] Replay navigates to `/` and runs the same sequence on a fresh set of Props, including the hop back to `/settings` at step 4.
+- [x] Copy in `en` and `cs` under `onboarding.*`, plus `settings.help.*`.
+  `src/i18n.test.ts` asserts key parity between the bundles and that every step's built key (`onboarding.steps.<step.key>.*`) resolves in both - the Tour's keys are composed at render time, so renaming a step is a rename in three files and nothing else would notice.
+  Parity is compared on *base* keys: plural suffixes are not the same set in every language (Czech needs `_few`).
+- [x] **Dropped `allow_failure: true` from the `test:e2e` job.**
 
 ## Open, with defaults taken
 
 These were left open by the grilling. Each has a default recorded so implementation is not blocked; overturn any of them before starting rather than during.
 
-- **Back may not earn its cost.** It is why every step needs an `exit()`, roughly doubling the script work. Default: keep it. If Task 3 runs long, dropping Back to Next/Skip only is the first cut to make, and it removes `exit()` entirely.
-- **Prop copy** is sketched above, not written. Default: the three notes as tabled, in `en` and `cs` like all other copy.
+- ~~**Back may not earn its cost.**~~ **Kept, and it paid for itself twice over.** `exit()` turned out not to be Back's cost at all: because a step is a scene rather than a layer, the forward move needs the same inverse. Dropping Back would have saved nothing.
+- ~~**Prop copy** is sketched above, not written.~~ **Written, as tabled, in `en` and `cs`.**
 - **Step 4's reach.** Its copy originally promised density, the colour-blind palette and motion, which live in `AppearanceSection` two sections above the cutout with `LabelsSection` in between. **Settled 2026-08-09: narrow the copy, do not reorder the page.** Step 4 promises only what is inside its spotlight - the toolbar, the capture order and the thumb side - and the step table above has been corrected to match.
 - ~~**`inert` under Radix** is unverified. Default: assume it works, verify in Task 4 before building on it. If Radix misbehaves, fall back to threading a no-autofocus flag through `NoteEditorDialog` for tour-opened notes.~~
   **Closed 2026-08-09: it works, and quietly.** Details in task 4.
 
 ## Verification
 
-- `pnpm test`, `pnpm test:e2e`, `pnpm tsc -b --noEmit`, `pnpm check:ci`.
-- Manual, fresh profile, across `en`/`cs`, light/dark, mobile/desktop, colour-blind on, reduced motion on:
-  Tour runs once; each step's act lands on the right element; the wall holds no Props afterwards; reload does not re-run; Settings replay does.
-- Notch emulation via the `--safe-*` overrides on `:root`: the popover must clear the home indicator.
-- Phone check specifically: step 2 must not raise the keyboard.
+- `pnpm test`, `pnpm test:e2e`, `pnpm tsc -b --noEmit`, `pnpm check:ci` - all green.
+  The acceptance suite runs the six specs at both breakpoints: the Tour runs once on a fresh profile, demonstrates on three Props, purges them on Done and on Skip, retreats without ending, does not re-run after a reload (and sweeps what that reload abandoned), and replays from Settings.
+- Looked at, at both breakpoints in both themes, every step: the scrim, the cutout's ring and glow, the popover's placement and its copy.
+  That pass is where three of this slice's defects came from, none of which a test would have reported - a popover measured before its own content existed, a scrim that stayed plain black because driver writes its fill inline, and a step 1 whose spotlight was on the button rather than on the five things its copy names.
+- Phone check: step 2 raises no keyboard, which is `inert` doing its third job.
+
+Still owed, and not blocking: a manual pass in `cs`, with the colour-blind palette on, with reduced motion on, and with the `--safe-*` overrides on `:root` standing in for a notch.

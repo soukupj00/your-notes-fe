@@ -293,6 +293,14 @@
       "title": "Klávesové zkratky",
       "description": "Fungují v otevřené poznámce bez ohledu na to, která tlačítka panel zobrazuje."
     },
+    "help": {
+      "title": "Nápověda",
+      "replay": {
+        "label": "Průvodce",
+        "description": "Pět kroků na třech poznámkách, které pak zase zmizí.",
+        "action": "Spustit průvodce znovu"
+      }
+    },
     "quickCapture": {
       "title": "Rychlé psaní",
       "description": "Způsoby, jak tlačítko ＋ nabízí založit poznámku.",
@@ -482,6 +490,35 @@
     "cancelled": "{{name}} vráceno na původní místo."
   },
   "onboarding": {
+    "progress": "Krok {{current}} z {{total}}",
+    "buttons": {
+      "back": "Zpět",
+      "next": "Další",
+      "skip": "Přeskočit",
+      "done": "Hotovo"
+    },
+    "steps": {
+      "capture": {
+        "title": "Začni čímkoliv",
+        "body": "Text, seznam úkolů, fotka, hlasová poznámka nebo kresba - všechny způsoby začínají tady."
+      },
+      "editor": {
+        "title": "Napiš to",
+        "body": "Napiš / kdekoliv v poznámce a vyber nadpis, seznam, citaci nebo vzorec. Obrázky, zvuk, soubory i kresby jsou přímo v poznámce."
+      },
+      "wall": {
+        "title": "Tvoje nástěnka",
+        "body": "Připni poznámku nahoru, dej jí barvu nebo štítek. Archiv si ji nechá, koš ji zahodí a nechá chvíli na rozmyšlenou - a {{mod}} K najde kteroukoliv."
+      },
+      "settings": {
+        "title": "Uprav si to",
+        "body": "Vyber, která tlačítka nese lišta editoru, v jakém pořadí se nabízejí rychlé starty a pod kterým palcem sedí ＋."
+      },
+      "local": {
+        "title": "Všechno zůstává tady",
+        "body": "Každá poznámka je na tomhle zařízení a nikde jinde. Nainstaluj si aplikaci, ať ji máš po ruce, a kdykoliv si stáhni zálohu v zipu."
+      }
+    },
     "props": {
       "groceries": {
         "header": "Nákup",

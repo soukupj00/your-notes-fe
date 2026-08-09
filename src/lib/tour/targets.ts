@@ -26,6 +26,16 @@
 export const TOUR_TARGETS = {
   /** Step 1: the `＋` speed dial below `sm:`, the "Take a note" bar above it. */
   capture: '[data-tour="capture"]',
+  /**
+   * Step 1, once the dial is open: the five starts themselves.
+   *
+   * Below `sm:` the starts are folded behind the `＋` and unfold *above* it, so a
+   * cutout over the button leaves everything the step's copy is about sitting in
+   * the dark - and the popover, placed clear of the button, lands on top of two
+   * of them. Above `sm:` this resolves to nothing and the bar keeps the
+   * spotlight, which is right: there the bar *is* the five starts.
+   */
+  captureDial: '[data-tour="capture-dial"]',
   /** Step 2: the editor's toolbar, inside the open note. */
   editorToolbar: '[data-tour="editor-toolbar"]',
   /** Step 4: the customisation block in Settings. */

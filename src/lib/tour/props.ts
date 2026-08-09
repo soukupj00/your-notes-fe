@@ -138,24 +138,42 @@ export function propByKey(props: TourProp[], key: PropKey): TourProp | undefined
 // --- Lifecycle --------------------------------------------------------------
 
 /**
- * Seeds the three Props and returns the baselines to store in `tourProps`.
+ * Seeds the three Props and records their baselines, atomically.
  *
  * Created one at a time rather than in parallel so the wall's default
  * `updated desc` order is the reverse of the table above and is the same on
  * every run - a Tour that deals its own cards differently each time is a Tour
  * whose steps cannot describe what the user is looking at.
+ *
+ * The `record` writer is taken rather than left to the caller *after* the fact,
+ * and the whole thing runs in one transaction across both stores, because a
+ * Prop that exists without a baseline is a Prop nothing will ever sweep. That
+ * window was not theoretical: the three notes land on the wall the instant they
+ * are written, and a reload in the moment before `tourProps` followed them left
+ * all three on the user's wall for good. Either the Props and their baselines
+ * both exist, or neither does.
+ *
+ * `record` is still injected rather than reached for, for the same reason
+ * `createNote` is: this module knows nothing about React or preferences.
  */
-export async function createProps(createNote: CreateNote, t: Translate): Promise<TourProp[]> {
-  const props: TourProp[] = [];
-  for (const spec of PROP_SPECS) {
-    const note = await createNote({
-      header: t(`onboarding.props.${spec.key}.header`),
-      body: spec.body(t),
-      color: spec.color,
-    });
-    props.push({ id: note.id, updatedAt: note.updatedAt });
-  }
-  return props;
+export async function createProps(
+  createNote: CreateNote,
+  t: Translate,
+  record: (props: TourProp[]) => Promise<void>
+): Promise<TourProp[]> {
+  return db.transaction('rw', db.notes, db.settings, async () => {
+    const props: TourProp[] = [];
+    for (const spec of PROP_SPECS) {
+      const note = await createNote({
+        header: t(`onboarding.props.${spec.key}.header`),
+        body: spec.body(t),
+        color: spec.color,
+      });
+      props.push({ id: note.id, updatedAt: note.updatedAt });
+    }
+    await record(props);
+    return props;
+  });
 }
 
 /**

@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BulletList } from '@/components/editor/extensions/BulletList';
 import { ListItem } from '@/components/editor/extensions/ListItem';
 import { TaskList } from '@/components/editor/extensions/TaskList';
+import type { TourProp } from '@/context/PreferencesProvider.tsx';
 import { db } from '@/db/db.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { clearNotesDb } from '@/test/db.ts';
@@ -22,9 +23,15 @@ function actions() {
   return renderHook(() => useNoteActions()).result.current;
 }
 
+/** What the Tour's own `record` does, close enough to assert against. */
+let recorded: TourProp[] = [];
+
 async function seed() {
   const { createNote } = actions();
-  return createProps(createNote, t);
+  recorded = [];
+  return createProps(createNote, t, async (props) => {
+    recorded = props;
+  });
 }
 
 describe('createProps', () => {
@@ -63,6 +70,27 @@ describe('createProps', () => {
       expect(editor.getHTML()).toBe(note?.body);
       editor.destroy();
     }
+  });
+
+  it('records the baselines in the same transaction that writes the notes', async () => {
+    // The window this closes is not theoretical: the three notes appear on the
+    // wall the instant they are written, and a reload before `tourProps`
+    // followed them left all three there for good, with nothing to sweep by.
+    const { createNote } = actions();
+
+    await expect(
+      createProps(createNote, t, async () => {
+        throw new Error('interrupted');
+      })
+    ).rejects.toThrow('interrupted');
+
+    await expect(db.notes.count()).resolves.toBe(0);
+  });
+
+  it('hands the recorder the same baselines it returns', async () => {
+    const props = await seed();
+
+    expect(recorded).toEqual(props);
   });
 
   it('opens the checklist with exactly one item already ticked', async () => {

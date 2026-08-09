@@ -53,6 +53,10 @@ describe('every named tour target is mounted somewhere', () => {
     // always in the document and CSS hides one; this is the duplication that
     // makes `resolveTourTarget`'s rect check load-bearing rather than tidy.
     expect(found('capture')).toHaveLength(2);
+    // The dial's own contents exist only while it is open, which below `sm:` is
+    // step 1's own doing - so there is nothing to count here, and `steps.ts`
+    // falls back to the `＋` whenever this resolves to nothing.
+    expect(found('captureDial')).toHaveLength(0);
   });
 
   it('marks the customisation and local-data blocks in Settings', async () => {
@@ -84,7 +88,7 @@ describe('every named tour target is mounted somewhere', () => {
   it('covers every target the registry declares', () => {
     // The one that fails when a target is added and nothing above is updated.
     expect(Object.keys(TOUR_TARGETS).sort()).toEqual(
-      ['capture', 'editorToolbar', 'settingsCustomisation', 'settingsLocal'].sort()
+      ['capture', 'captureDial', 'editorToolbar', 'settingsCustomisation', 'settingsLocal'].sort()
     );
   });
 });

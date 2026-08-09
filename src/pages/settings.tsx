@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { AppearanceSection } from '@/components/settings/AppearanceSection.tsx';
 import { BackupSection } from '@/components/settings/BackupSection.tsx';
 import { EditorToolbarSection } from '@/components/settings/EditorToolbarSection.tsx';
+import { HelpSection } from '@/components/settings/HelpSection.tsx';
 import { LabelsSection } from '@/components/settings/LabelsSection.tsx';
 import { LanguageSection } from '@/components/settings/LanguageSection.tsx';
 import { PwaInstallSection } from '@/components/settings/PwaInstallSection.tsx';
@@ -56,6 +57,12 @@ export default function SettingsPage() {
       </div>
 
       <ShortcutsSection />
+
+      {/* Deliberately between the shortcuts and the closing pair: it is the
+          other "learn the app" surface, and putting it here keeps
+          `PwaInstallSection` + `BackupSection` adjacent for the Tour's own last
+          step to point at. */}
+      <HelpSection />
 
       {/* `PwaInstallSection` renders nothing unless the browser is offering an
           install, so it cannot be step 5's anchor on its own - and step 5 is the

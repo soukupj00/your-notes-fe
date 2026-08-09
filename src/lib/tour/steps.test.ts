@@ -1,5 +1,12 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { stageRadiusOf, TOUR_STEPS, type TourStage, type TourStep } from './steps.ts';
+import {
+  changesScene,
+  leaveScene,
+  stageRadiusOf,
+  TOUR_STEPS,
+  type TourStage,
+  type TourStep,
+} from './steps.ts';
 import { tourTargetSelector } from './targets.ts';
 
 /**
@@ -256,6 +263,45 @@ describe('every step round-trips', () => {
       expect(document.body.innerHTML).toBe(before);
     }
   );
+});
+
+describe('moving between steps', () => {
+  const at = (key: string) => TOUR_STEPS.findIndex((step) => step.key === key);
+
+  it('changes scene for every move but the one pair that shares a place', () => {
+    // Steps 4 and 5 are Settings looked at twice. Exiting step 4 on the way to
+    // step 5 would bounce the user back to the Feed and then have to navigate to
+    // Settings again, with the whole flash in between.
+    expect(changesScene(at('settings'), at('local'))).toBe(false);
+    expect(changesScene(at('local'), at('settings'))).toBe(false);
+
+    expect(changesScene(at('capture'), at('editor'))).toBe(true);
+    expect(changesScene(at('editor'), at('wall'))).toBe(true);
+    expect(changesScene(at('wall'), at('settings'))).toBe(true);
+    expect(changesScene(at('settings'), at('wall'))).toBe(true);
+  });
+
+  it('unwinds one step when that step is the whole scene', async () => {
+    const { stage, calls } = paperApp();
+    await step('wall').enter?.(stage);
+    calls.length = 0;
+
+    await leaveScene(at('wall'), stage);
+
+    expect(calls).toEqual(['unpin:prop-ideas']);
+  });
+
+  it('unwinds the step that opened the scene as well, when ending on a continuation', async () => {
+    // Skipping or finishing on step 5 has to undo step 4's navigation, because
+    // step 4 is where the scene was entered and step 5 has nothing of its own.
+    const { stage, calls } = paperApp();
+    await step('settings').enter?.(stage);
+    calls.length = 0;
+
+    await leaveScene(at('local'), stage);
+
+    expect(calls).toEqual(['back']);
+  });
 });
 
 describe('stageRadiusOf', () => {

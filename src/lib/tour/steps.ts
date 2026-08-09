@@ -73,6 +73,23 @@ export interface TourStep {
   enter?: (stage: TourStage) => Promise<void>;
   /** Takes it back, so stepping Back is an inverse and not a second forward. */
   exit?: (stage: TourStage) => Promise<void>;
+  /**
+   * This step is shown in the scene the step before it set up, so stepping
+   * between the two neither enters nor exits anything.
+   *
+   * Only step 5 carries it, and it is what keeps `exit` a strict inverse
+   * everywhere else. Every other move is "leave this scene, enter that one":
+   * the app's state is not additive - step 2's editor covers the wall step 3
+   * points at - so a step that only ever entered would arrive to find the
+   * previous step's act in the way. Steps 4 and 5 are the exception because
+   * they are the same place looked at twice, and running step 4's `exit` on the
+   * way to step 5 would bounce the user back to the Feed and then have to
+   * navigate to Settings again.
+   *
+   * `TourProvider` also reads it in reverse: ending the Tour on step 5 has to
+   * unwind step 4 as well, because step 4 is where the scene was entered.
+   */
+  continues?: boolean;
 }
 
 /** The element a step points at right now, waiting for the app to produce it. */
@@ -113,7 +130,10 @@ export const TOUR_STEPS: TourStep[] = [
    */
   {
     key: 'capture',
-    target: () => 'capture',
+    // Whichever of the two is on screen once the act has run: the unfolded dial
+    // on a phone, the bar that never folded on a desktop. The step points at the
+    // five starts either way, which is the only thing its copy claims.
+    target: () => (resolveTourTarget('captureDial') ? 'captureDial' : 'capture'),
     enter: () => setSpeedDialOpen(true),
     exit: () => setSpeedDialOpen(false),
   },
@@ -194,12 +214,53 @@ export const TOUR_STEPS: TourStep[] = [
   /**
    * 5 - It all lives here. No act: the last step is a fact about where the data
    * is, and the section it points at is the one that gets it off the device.
+   *
+   * It is already *in* Settings, because step 4 went there - hence `continues`,
+   * which is the whole of what "no act" means here.
    */
   {
     key: 'local',
     target: () => 'settingsLocal',
+    continues: true,
   },
 ];
+
+// --- Moving between steps ---------------------------------------------------
+//
+// A step is a scene, not a layer. The app's state between steps is not additive
+// - step 2's editor covers the wall step 3 points at - so a move is "leave this
+// scene, enter that one" rather than a stack that only ever grows. That is what
+// keeps `exit` a strict inverse of `enter`, which is the contract the round-trip
+// tests below pin, and it is why Back needs no separate machinery: it is the
+// same move in the other direction.
+//
+// The one exception is a step that `continues` the one before it, which is a
+// second look at a scene already entered.
+
+/**
+ * Whether moving between these two steps changes scene, and so whether anything
+ * has to be exited and entered at all.
+ *
+ * The later of the pair decides, in both directions: it is the one that either
+ * declares itself a continuation or does not.
+ */
+export function changesScene(from: number, to: number): boolean {
+  return !TOUR_STEPS[Math.max(from, to)]?.continues;
+}
+
+/**
+ * Unwinds the scene the given step is shown in, innermost act first.
+ *
+ * Usually that is just the step's own `exit`; the chain has a second link only
+ * where a step `continues` the one before it, and then leaving means undoing
+ * both - the scene was entered by the earlier of the two.
+ */
+export async function leaveScene(from: number, stage: TourStage): Promise<void> {
+  for (let index = from; index >= 0; index--) {
+    await TOUR_STEPS[index].exit?.(stage);
+    if (!TOUR_STEPS[index].continues) return;
+  }
+}
 
 /**
  * The cutout's corner radius, taken from the target's own `border-radius`.

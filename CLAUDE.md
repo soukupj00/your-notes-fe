@@ -146,9 +146,27 @@ The test for belonging there is whether the stylesheet needs the value - density
 Every other preference is read by the component that spends it.
 The 44px Touch Rule has two mechanisms and they are not interchangeable: `.touch-target` grows a control to 44px (right for an icon button), `.touch-reach` gives it a 44px hit box via an invisible centred `::before` and leaves it its own size (right whenever the control's shape is part of what it says, such as a switch).
 
+### The Tour (`src/lib/tour/`, `src/context/TourProvider.tsx`)
+
+The five-step onboarding Tour ([ADR 0015](./docs/adr/0015-the-tour-drives-the-app-on-disposable-props.md)).
+It **demonstrates**: every step drives the real app, and the user presses Next, Back or Skip and nothing else.
+
+- It acts on **Props** — three Notes it creates at the start and Purges at the end (`CONTEXT.md`), because a fresh install has an empty Feed and nothing to spotlight.
+The rules live in `lib/tour/props.ts` and they are the part worth reading before changing anything: a bug there does not land a spotlight badly, it deletes something the user wrote.
+A Prop is only purged while its `updatedAt` still matches the baseline the Tour last recorded, so **every act that writes to a Prop rebases it** — the `TourStage` handed to a step only offers the rebasing writers, so a step cannot forget.
+The baselines live in the `tourProps` preference rather than React state so a reload mid-Tour leaves something to sweep, and the seed writes notes and baselines in **one transaction** across both stores.
+- **Nothing in `src/lib/tour/` imports `driver.js` or React.** That separation is what makes the steps, the targets, the Prop rules and the inert marking testable at all; `TourProvider` is the only place that knows a spotlight library exists.
+- **A step is a scene, not a layer.** Moving between steps is `exit` the one being left, then `enter` the one arriving, in both directions — the app's state is not additive (step 2's editor covers the wall step 3 points at). Steps 4 and 5 are Settings looked at twice and say so with `continues`.
+- **Everything except the popover is `inert`** for the Tour's lifetime (`lib/tour/inert.ts`), which traps focus, blocks the pointer and stops step 2 raising a phone's keyboard, all with one attribute.
+- Targets are resolved by **first match with a non-zero rect** (`lib/tour/targets.ts`), because several of the app's surfaces are mounted twice with CSS hiding one.
+- Waiting is always on a **DOM condition, never a timer** (`lib/tour/waitFor.ts`): reduced motion is a hard killswitch, so a fixed wait is wrong in both directions at once.
+- `onboardingSeenAt` is stamped when the Tour is **offered**, before a single Prop exists — not on completion, which would re-arm it after every reload.
+- The Tour's own behaviour is verified by `e2e/onboarding.spec.ts` at two breakpoints, not by Vitest: jsdom measures every element as 0x0, so a hole cut over nothing is invisible there.
+
 ### i18n (`src/i18n.ts`)
 
 Uses **i18next** with browser language detection. Translations are loaded from `/public/locales/<lng>/translation.json`. Fallback language is `en`. The `t()` function is passed into extension button factories for tooltip translations.
+`src/i18n.test.ts` gates the bundles against each other: the same base keys in every locale (plural suffixes differ by language, so they are folded), and every key the Tour *composes* at render time resolving in both.
 
 ### Path alias
 

@@ -293,6 +293,14 @@
       "title": "Keyboard shortcuts",
       "description": "These work while a note is open, whichever buttons your toolbar shows."
     },
+    "help": {
+      "title": "Help",
+      "replay": {
+        "label": "Tutorial",
+        "description": "Five steps, on three notes it clears up afterwards.",
+        "action": "Replay tutorial"
+      }
+    },
     "quickCapture": {
       "title": "Quick capture",
       "description": "The ways the ＋ button offers to start a note.",
@@ -481,6 +489,35 @@
     "cancelled": "{{name}} put back where it was."
   },
   "onboarding": {
+    "progress": "Step {{current}} of {{total}}",
+    "buttons": {
+      "back": "Back",
+      "next": "Next",
+      "skip": "Skip",
+      "done": "Done"
+    },
+    "steps": {
+      "capture": {
+        "title": "Start anything",
+        "body": "Text, a checklist, a photo, a voice memo or a drawing - every way in starts here."
+      },
+      "editor": {
+        "title": "Write it",
+        "body": "Type / anywhere in a note for headings, lists, quotes and maths. Images, audio, files and drawings go inline, in the note itself."
+      },
+      "wall": {
+        "title": "Your wall",
+        "body": "Pin a note to keep it on top, give it a colour or a label. Archive keeps it, trash lets it go with a moment to change your mind - and {{mod}} K finds any of them."
+      },
+      "settings": {
+        "title": "Make it yours",
+        "body": "Choose which buttons the editor's toolbar carries, which order the quick starts come in, and which thumb the ＋ sits under."
+      },
+      "local": {
+        "title": "It all lives here",
+        "body": "Every note is on this device and nowhere else. Install the app to keep it a tap away, and export a zip whenever you want a copy."
+      }
+    },
     "props": {
       "groceries": {
         "header": "Groceries",
