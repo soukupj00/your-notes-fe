@@ -1,33 +1,192 @@
 # M4 Slice 5 - Onboarding
 
 **Status:** not started.
+**Rewritten:** 2026-08-09, after a `/grill-with-docs` session against the finished slices 1-4.
+**Decision record:** [ADR 0015 - The tour drives the app on disposable props](../../adr/0015-the-tour-drives-the-app-on-disposable-props.md).
+**Glossary:** `CONTEXT.md` gained **Tour** and **Prop**, and **Purge** widened to cover both.
 
-**Goal:** A short, guided first-run tutorial that highlights the app's most important features and points the user at the customisation they now have - built last, because it highlights everything the earlier phases created.
+**Goal:** A five-step Tour that *demonstrates* the app on Props it creates and Purges, ending on the customisation Settings gained in item 11 and on the fact that the data is local.
 
-**Depends on:** Slices 1-4 (the tour highlights real, finished UI). Do this **last**.
+**Depends on:** Slices 1-4. Do this **last**.
 
 **Cross-cutting rule:** tour copy ships `en` + `cs`.
 
-## Context
+## What changed from the original plan
 
-Item 12: a first-load (or Settings-triggered) tutorial that highlights a section, shows an arrow + descriptive text, and leads to the Settings customisation. Decision (grilling): themed `driver.js` (robust spotlight/positioning/a11y, CSS-themeable) over a hand-rolled Motion tour. Trigger gated by an `onboardingSeenAt` pref (already in the Slice 1 schema).
+The original plan is superseded in five places; the reasoning is in ADR 0015.
+
+- The Tour **acts**, it does not merely point. The user presses Next, Back or Skip and nothing else.
+- It demonstrates on **Props**, because a fresh install has an empty Feed and there was literally nothing to spotlight.
+- The step list dropped *search* (a visible box that renders its own `mod+K` hint) and *create* as standalone descriptions, and gained **the editor** and **"it all lives here"**.
+- `onboardingSeenAt` is stamped at **start**, not on completion.
+- `driver.js` is confirmed, but React is portalled into its popover rather than its markup being restyled.
+
+An intermediate design from the same session - a persistent welcome library gated by a new `welcomeNoteSeededAt` pref, with a note-count backstop against `restoreBackup` wiping the flag - was **abandoned in favour of Props**, which dissolve that whole problem: a re-run after a restore now creates three notes and removes them again.
+
+## Non-goals
+
+- No interactive steps. Nothing waits on the user doing anything; a step that did would be a different concept (`CONTEXT.md`, **Tour**).
+- No second tour for the editor. It is step 2 here.
+- No recorded assets of any kind. See ADR 0015 for why video does not survive locale × theme × breakpoint.
+- No Prop **Tags**. Step 3's copy mentions labels, but a Prop carrying a Tag would leave that Tag in the sidebar after the sweep, and purging a Tag the user may since have attached elsewhere is a strictly worse problem than not demonstrating one.
+- No Prop **Attachments**. A seeded blob would ride every zip backup and M5 sync for the life of the install.
+
+## The five steps
+
+| # | Name | `enter()` acts | Target | Copy covers |
+|---|------|----------------|--------|-------------|
+| 1 | Start anything | opens the speed dial (below `sm:`); nothing on desktop | `capture` | text, list, photo, voice, drawing |
+| 2 | Write it | opens Prop C's editor, then opens the `/` menu | `editor-toolbar` | slash commands, inline images/audio/files/drawings |
+| 3 | Your wall | pins Prop C, wall re-packs | `[data-note-feed-id="<propC>"]` | pin, colour, label; archive keeps, trash discards with an undo window; `mod+K` |
+| 4 | Make it yours | navigates to `/settings` | `settings-customisation` | toolbar, capture order, thumb side, density, colour-blind palette, motion |
+| 5 | It all lives here | none | `settings-local` | nothing leaves this device; install, export a zip |
+
+Step 1 is **one step with two acts**, not two steps: there is no dial on desktop, but the idea is identical.
+
+Step 3 targets a card by note id rather than by a `data-tour` attribute, because `NoteFeed` already stamps `data-note-feed-id={note.id}` on both the Masonry and Stack branches.
+
+`exit()` is the inverse of each: close the `/` menu and the editor, unpin, `history.back()`.
+
+## Props
+
+Three Notes, created at Tour start, Purged at Tour end. Deliberately mundane content: they are stage dressing, and they are gone in five clicks.
+
+| | Header | Body | Colour | Role |
+|---|--------|------|--------|------|
+| A | Groceries | checklist, 3 items, one already checked | cool | shows the Checklist and Sinking; shortest card |
+| B | Weekend in Brno | a paragraph plus a bullet list | base (none) | tallest card, so the wall reads as a wall rather than a grid |
+| C | Ideas | one short paragraph | deep | the card step 2 opens and step 3 pins |
+
+Three distinct palette tokens, so the colour system is legible at a glance without a step spending words on it.
+
+Ordering falls out of the existing feed rules and needs no special handling: Membership is live so the Props arrive at once, Rank is held so nothing jumps under the user, and Pinning is the documented exception (ADR 0012), which is exactly why step 3's pin reads as direct manipulation.
+
+## Data
+
+`src/context/PreferencesProvider.tsx`:
+
+- `onboardingSeenAt` (already in the schema). Behaviour unchanged in shape, changed in meaning: stamped when step 1 renders. Its doc comment becomes **"when the Tour was first shown"**.
+- **New** `tourProps: z.array(z.object({ id: z.string(), updatedAt: z.string() })).catch([]).default([])`.
+  The Props currently on the wall, each with the `updatedAt` the Tour last left it at.
+  It lives in the preferences blob rather than React state so a reload, crash or closed tab mid-Tour leaves something to sweep on the next start.
+  It stores `updatedAt` rather than bare ids because the Tour's own acts write: pinning bumps `updatedAt` and step 2 opens the editor, so a baseline taken at seed time would make every Prop look user-edited and nothing would ever be swept.
+  `.catch([])` for the same field-level-absorber reason as `colorBlind` and `toolbar`, and no `PREFERENCES_VERSION` bump, since it is a new optional field with a default.
+
+No Dexie schema change. Props are ordinary `notes` rows.
+
+## File manifest
+
+**New**
+
+| Path | Holds |
+|------|-------|
+| `src/lib/tour/props.ts` | `createProps`, `rebaseProp`, `purgeProps`, `sweepAbandonedProps` |
+| `src/lib/tour/targets.ts` | target keys, the visibility-aware resolver |
+| `src/lib/tour/steps.ts` | the five steps as data plus their `enter`/`exit` |
+| `src/lib/tour/waitFor.ts` | await-a-DOM-condition helper (never a timer) |
+| `src/context/TourProvider.tsx` | lifecycle, `driver.js` adapter, `inert`, navigation ownership, `useTourActive()` |
+| `src/components/tour/TourPopover.tsx` | the React portalled into driver's popover |
+| `src/components/settings/HelpSection.tsx` | the "Replay tutorial" row |
+| `playwright.config.ts`, `e2e/onboarding.spec.ts` | the acceptance test |
+
+Plus a colocated `*.test.ts(x)` for each of the four `src/lib/tour/` modules and for `TourProvider`.
+
+**Modified**
+
+| Path | Change |
+|------|--------|
+| `src/context/PreferencesProvider.tsx` | `tourProps` field; `onboardingSeenAt` comment |
+| `src/App.tsx` | `TourProvider` into the provider chain, inside the router |
+| `src/pages/settings.tsx` | `HelpSection` after `ShortcutsSection` |
+| `src/components/searchInput.tsx` | AND `useTourActive()` into the `mod+K` `enabled` |
+| `src/components/notes/QuickCaptureBar.tsx`, `DesktopCaptureBar.tsx` | `data-tour="capture"` |
+| `src/components/editor/toolbar/EditorToolbar.tsx` | `data-tour="editor-toolbar"` |
+| `src/components/settings/EditorToolbarSection.tsx`, `PwaInstallSection.tsx` | `data-tour="settings-customisation"` / `data-tour="settings-local"` |
+| `src/styles/globals.css` | scrim and cutout tokens |
+| `public/locales/{en,cs}/translation.json` | `onboarding.*` |
+| `package.json` | `driver.js`; `test:e2e` script |
+| `.gitlab-ci.yml` | replace the "Playwright remains deferred" comment at line 77 with a real job |
 
 ## Tasks
 
-### Task 1 - Themed driver.js tour
+Ordered by dependency. Task 0 first because `CLAUDE.md` mandates the acceptance test before a user flow, and this is the most flow-shaped work in M4.
 
-- [ ] Add dep `driver.js`; theme it (CSS) to match the Slice 4 "tactile paper" look.
-- [ ] Author the step sequence highlighting the key surfaces: create/speed-dial, search (sort + tag pills), a note's lifecycle actions (pin/colour/archive/trash), tags, and **ending on Settings customisation** (toolbar/appearance) to close the loop with item 11.
-- [ ] Ensure steps target stable selectors; verify responsive behaviour on mobile (drawer open where needed).
+### Task 0 - Wire Playwright, write the acceptance spec red
 
-### Task 2 - Trigger + replay
+- [ ] `playwright.config.ts`, `pnpm test:e2e`, `e2e/` excluded from Vitest's include glob.
+- [ ] `.gitlab-ci.yml`: an `test:e2e` job in the existing `test` stage, replacing the deferral comment.
+- [ ] `e2e/onboarding.spec.ts`, failing: fresh profile runs the Tour once; three Props appear and are gone at the end; Skip works; reload does not re-run; Settings replay does.
+- [ ] Rationale to keep in the file: jsdom returns zeroed rects, so the spotlight's only real failure mode, a hole cut over nothing, is invisible to Vitest.
 
-- [ ] **First-load auto-start** gated by `prefs.onboardingSeenAt` (set it when the tour completes/skips, so it shows once; syncs in M5).
-- [ ] **"Replay tutorial"** action in Settings to re-run on demand.
-- [ ] Respect reduced-motion (driver.js transitions minimal/off).
-- [ ] Tests: shows once (flag set after run), replay re-triggers, skippable.
+### Task 1 - Props
+
+- [ ] `createProps()` writes the three rows above via `createNote` and records `{ id, updatedAt }` into `tourProps`.
+- [ ] `rebaseProp(id)` re-reads `updatedAt` and updates the baseline. **Every act that writes to a Prop calls it.**
+- [ ] `purgeProps()` uses the existing `purgeNote(id)` from `useNoteActions`, which already means exactly what `CONTEXT.md` says Purge means. Purge only Props whose current `updatedAt` still matches the baseline; leave the rest and clear them from `tourProps` regardless.
+- [ ] `sweepAbandonedProps()` runs at Tour start against whatever the last run left behind.
+- [ ] Tests: created and purged; a **user**-edited Prop survives; a **Tour**-edited Prop is still purged (the regression this whole design exists to prevent); an abandoned run is swept on the next start; a Prop the user deleted themselves does not break the sweep.
+
+### Task 2 - Targets
+
+- [ ] `data-tour` attributes per the manifest; names owned by `targets.ts`.
+- [ ] Resolver returns the first match with a **non-zero client rect**.
+  Not optional: `DesktopCaptureBar` is `hidden sm:flex` and `QuickCaptureBar` is `sm:hidden`, so both are always mounted and a naive `querySelector` matches the invisible one on one of the two breakpoints. `searchInput.tsx` has the same duplication.
+- [ ] Resolver also accepts a dynamic selector, for step 3's `[data-note-feed-id="<id>"]`.
+- [ ] Steps whose target does not resolve are dropped **before** `drive()`, so the "3 of 5" counter never lies.
+- [ ] Test: every step's target resolves at both breakpoints in a rendered app.
+
+### Task 3 - The script
+
+- [ ] `waitFor.ts`: awaits a predicate against the DOM with a bounded timeout, never a fixed delay. Reduced motion makes every duration zero, so a fixed wait is wrong in both directions.
+- [ ] `steps.ts`: the five steps, each with target, copy keys, `enter()`, `exit()`, and a `stageRadius`.
+- [ ] No `driver.js` import anywhere in `src/lib/tour/`. That separation is what makes any of this testable.
+- [ ] Tests: each step's `enter`/`exit` round-trips the app back to the state it started in.
+
+### Task 4 - Provider and driver adapter
+
+- [ ] `TourProvider`: start, advance, retreat, skip, teardown; exposes `useTourActive()`.
+- [ ] Auto-start gated on `hydrated && !onboardingSeenAt`, after the Feed has painted. Props are created first, so the wall is populated behind the spotlight.
+- [ ] Stamp `onboardingSeenAt` when step 1 renders.
+- [ ] **Mark every direct child of `document.body` except driver's portal as `inert`** for the Tour's lifetime.
+  Not just the app root: Radix portals to `body`, so the editor dialog would escape it.
+  This does three jobs at once. Tab cycles inside the popover with no focus-trap library; the dimmed UI is unreachable by keyboard as well as pointer; and step 2 cannot raise the software keyboard.
+  That last one is not incidental. The editor autofocuses (`NoteEditorDialog.tsx:275`, `editor.tsx:285`) and `index.html` carries `interactive-widget=resizes-content`, so without this the phone viewport halves at step 2 and the popover has nowhere to sit.
+  **Verify Radix's own open-focus attempt fails quietly under `inert`** rather than warning or looping. Do this before building on it.
+- [ ] Any navigation the Tour did not initiate destroys it, Props and all. Do not fight the user for the router.
+  The Tour must therefore **mark its own navigations**, because several acts are navigations: step 2 opens a note (a `?note=` search param since ADR 0014) and closing it runs `history.back()`, and step 4's Back pops `/settings`.
+  Without that marking the Tour destroys itself on its own second step.
+- [ ] Step 4's Next awaits `navigate()` **and** the target's presence before `moveNext()`.
+- [ ] Suppress `mod+K` while active: `searchInput.tsx` binds it on the document with `preventDefault` and `enableOnFormTags`, so it fires straight through a scrim.
+- [ ] Esc skips, arrows go prev/next, Enter activates the focused button.
+- [ ] `animate: false` and `smoothScroll: false` under `useReducedMotion()`. Reduced motion is a hard killswitch.
+
+### Task 5 - Popover and theming
+
+- [ ] React portalled in via `onPopoverRender`: real `Button`, real `useTranslation`, honest "n of N" counter, `aria-live="polite"` step announcement, safe-area padding.
+- [ ] Scrim is ink-based and warm by day, recessed-canvas by night. **Never plain black.**
+- [ ] Cutout takes a solid amber hairline ring by day and an accent glow by night. `DESIGN.md` forbids glow in the day theme and drop-shadow depth at night, so the two cannot be treated alike.
+- [ ] `stageRadius` per step matches the target's own radius: 16px card, 10px control, pill for the FAB.
+- [ ] Popover is a `rounded-card` surface on `--canvas-day-high` / `--canvas-night-raised`, Bricolage title, Work Sans body, 44px minimum on every control.
+
+### Task 6 - Replay and copy
+
+- [ ] `HelpSection` with a "Replay tutorial" row, placed **after `ShortcutsSection`** in `settings.tsx`.
+  That is where the other "learn the app" surface already lives, and it leaves `PwaInstallSection` + `BackupSection` as the closing pair that step 5 spotlights.
+- [ ] Replay navigates to `/` and runs the same sequence, including the hop back to `/settings` at step 4.
+- [ ] Copy in `en` and `cs` under `onboarding.*`; a test asserts key parity between the two bundles.
+
+## Open, with defaults taken
+
+These were left open by the grilling. Each has a default recorded so implementation is not blocked; overturn any of them before starting rather than during.
+
+- **Back may not earn its cost.** It is why every step needs an `exit()`, roughly doubling the script work. Default: keep it. If Task 3 runs long, dropping Back to Next/Skip only is the first cut to make, and it removes `exit()` entirely.
+- **Prop copy** is sketched above, not written. Default: the three notes as tabled, in `en` and `cs` like all other copy.
+- **`inert` under Radix** is unverified. Default: assume it works, verify in Task 4 before building on it. If Radix misbehaves, fall back to threading a no-autofocus flag through `NoteEditorDialog` for tour-opened notes.
 
 ## Verification
 
-- `pnpm test`, `pnpm tsc -b --noEmit`, `pnpm check:ci`.
-- Manual: fresh profile → tour runs once, steps land on the right elements in `en` and `cs`, final step opens Settings; reload → does not re-run; Settings "Replay tutorial" re-runs it; mobile layout intact.
+- `pnpm test`, `pnpm test:e2e`, `pnpm tsc -b --noEmit`, `pnpm check:ci`.
+- Manual, fresh profile, across `en`/`cs`, light/dark, mobile/desktop, colour-blind on, reduced motion on:
+  Tour runs once; each step's act lands on the right element; the wall holds no Props afterwards; reload does not re-run; Settings replay does.
+- Notch emulation via the `--safe-*` overrides on `:root`: the popover must clear the home indicator.
+- Phone check specifically: step 2 must not raise the keyboard.
