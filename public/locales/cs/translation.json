@@ -480,5 +480,26 @@
     "over": "{{name}} přesunuto na pozici {{position}}.",
     "dropped": "{{name}} položeno na pozici {{position}}.",
     "cancelled": "{{name}} vráceno na původní místo."
+  },
+  "onboarding": {
+    "props": {
+      "groceries": {
+        "header": "Nákup",
+        "item1": "Ovesné mléko",
+        "item2": "Kvasový chleba",
+        "item3": "Něco na neděli"
+      },
+      "weekend": {
+        "header": "Víkend v Brně",
+        "intro": "Vlak jede v pátek v šest, tak sbalit už večer.",
+        "item1": "Zamluvit pokoj kousek od nádraží",
+        "item2": "Hvězdárna, jestli zůstane jasno",
+        "item3": "Káva na Jakubské"
+      },
+      "ideas": {
+        "header": "Nápady",
+        "body": "Police do předsíně - nejdřív změřit výklenek."
+      }
+    }
   }
 }

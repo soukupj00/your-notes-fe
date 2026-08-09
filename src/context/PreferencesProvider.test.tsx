@@ -114,6 +114,32 @@ describe('graceful fallback', () => {
     expect(result.current.preferences.colorBlind).toBe(true);
   });
 
+  // `tourProps` was added without a `PREFERENCES_VERSION` bump on the grounds
+  // that a new optional field with a default needs no migration. These two are
+  // that claim: every blob already on disk predates the field, and a corrupt
+  // copy of it must not cost the user their appearance settings.
+  it('reads a blob written before tourProps existed', async () => {
+    await store({ version: PREFERENCES_VERSION, density: 'compact' });
+
+    const result = await prefs();
+
+    expect(result.current.preferences.tourProps).toEqual([]);
+    expect(result.current.preferences.density).toBe('compact');
+  });
+
+  it('absorbs a corrupt tourProps without resetting its neighbours', async () => {
+    await store({
+      version: PREFERENCES_VERSION,
+      tourProps: [{ id: 'a' }],
+      density: 'compact',
+    });
+
+    const result = await prefs();
+
+    expect(result.current.preferences.tourProps).toEqual([]);
+    expect(result.current.preferences.density).toBe('compact');
+  });
+
   it('absorbs one broken Width Class without taking the other down with it', async () => {
     await store({
       version: PREFERENCES_VERSION,

@@ -479,5 +479,26 @@
     "over": "{{name}} moved to position {{position}}.",
     "dropped": "{{name}} dropped at position {{position}}.",
     "cancelled": "{{name}} put back where it was."
+  },
+  "onboarding": {
+    "props": {
+      "groceries": {
+        "header": "Groceries",
+        "item1": "Oat milk",
+        "item2": "Sourdough",
+        "item3": "Something for Sunday"
+      },
+      "weekend": {
+        "header": "Weekend in Brno",
+        "intro": "Train leaves Friday at six, so pack the night before.",
+        "item1": "Book the room near the station",
+        "item2": "The observatory, if it stays clear",
+        "item3": "Coffee on Jakubská"
+      },
+      "ideas": {
+        "header": "Ideas",
+        "body": "A shelf for the hallway - measure the alcove first."
+      }
+    }
   }
 }

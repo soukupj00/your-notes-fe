@@ -120,11 +120,15 @@ Ordered by dependency. Task 0 first because `CLAUDE.md` mandates the acceptance 
 
 ### Task 1 - Props
 
-- [ ] `createProps()` writes the three rows above via `createNote` and records `{ id, updatedAt }` into `tourProps`.
-- [ ] `rebaseProp(id)` re-reads `updatedAt` and updates the baseline. **Every act that writes to a Prop calls it.**
-- [ ] `purgeProps()` uses the existing `purgeNote(id)` from `useNoteActions`, which already means exactly what `CONTEXT.md` says Purge means. Purge only Props whose current `updatedAt` still matches the baseline; leave the rest and clear them from `tourProps` regardless.
-- [ ] `sweepAbandonedProps()` runs at Tour start against whatever the last run left behind.
-- [ ] Tests: created and purged; a **user**-edited Prop survives; a **Tour**-edited Prop is still purged (the regression this whole design exists to prevent); an abandoned run is swept on the next start; a Prop the user deleted themselves does not break the sweep.
+- [x] `createProps()` writes the three rows above via `createNote` and records `{ id, updatedAt }` into `tourProps`.
+- [x] `rebaseProp(id)` re-reads `updatedAt` and updates the baseline. **Every act that writes to a Prop calls it.**
+- [x] `purgeProps()` uses the existing `purgeNote(id)` from `useNoteActions`, which already means exactly what `CONTEXT.md` says Purge means. Purge only Props whose current `updatedAt` still matches the baseline; leave the rest and clear them from `tourProps` regardless.
+- [x] ~~`sweepAbandonedProps()` runs at Tour start against whatever the last run left behind.~~
+  **Not a separate function.** The start-of-run sweep and the end-of-run teardown are the same question asked of the same list, so they are the same `purgeProps` call; the only difference is which run left the list behind.
+- [x] Tests: created and purged; a **user**-edited Prop survives; a **Tour**-edited Prop is still purged (the regression this whole design exists to prevent); an abandoned run is swept on the next start; a Prop the user deleted themselves does not break the sweep.
+
+Landed as `src/lib/tour/props.ts` + `props.test.ts`, with the `tourProps` field and the `onboardingSeenAt` comment in `PreferencesProvider.tsx` and the Prop copy under `onboarding.props.*` in both bundles.
+The functions take `createNote`/`purgeNote` as arguments and *return* the new baselines rather than persisting them, so the module is callable with no React and no preferences plumbing; `TourProvider` (task 4) owns both halves.
 
 ### Task 2 - Targets
 

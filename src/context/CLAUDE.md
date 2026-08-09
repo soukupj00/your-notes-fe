@@ -15,6 +15,7 @@ User preferences, persisted as one Zod-validated blob in the Dexie `settings` st
 - **Anything unreadable yields defaults** — corrupt value, invalid field, or an unknown `version`. A failed read deliberately leaves the bad blob on disk (the next write replaces it) so a read can never destroy data.
 - Hydration is async: `useLiveQuery` returns nothing on the first render, so children see `DEFAULT_PREFERENCES` and re-render when the blob lands. `hydrated` is exposed for the consumers that must not act before then (the onboarding tour).
 - `setPreference(key, value)` does a read-modify-write inside a `rw` transaction, so two writes to different keys can't clobber each other, and re-stamps the current `version`.
+- **`tourProps` is the one field that is not a user setting.** It is the Tour's live list of Props (`{ id, updatedAt }` apiece, [ADR 0015](../../docs/adr/0015-the-tour-drives-the-app-on-disposable-props.md)), stored here rather than in React state precisely because a reload or a closed tab mid-Tour has to leave something for the next start to sweep. It holds `updatedAt` and not bare ids because the Tour's own acts write to Props; the rules live in `src/lib/tour/props.ts`.
 - `usePreferences()` throws outside the provider.
 
 > `ThemeProvider` and `ViewModeProvider` still use `localStorage`. Folding them into this store is a deliberate later consolidation (both are read synchronously on first paint, which this async store can't do without a flash).
