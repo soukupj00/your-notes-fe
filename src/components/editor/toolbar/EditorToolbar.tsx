@@ -128,6 +128,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
     <div
       ref={scrollRef}
       data-testid="editor-toolbar"
+      data-tour="editor-toolbar"
       data-width-class={widthClass}
       data-overflow-start={fade.start || undefined}
       data-overflow-end={fade.end || undefined}

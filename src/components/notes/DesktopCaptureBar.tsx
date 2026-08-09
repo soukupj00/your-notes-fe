@@ -41,7 +41,14 @@ export function DesktopCaptureBar({ onStart }: { onStart: (state: NoteOpenReques
   const placeholder = t(PLACEHOLDER_KEYS[reducedMotion ? 0 : index]);
 
   return (
-    <div className="mx-auto mb-6 hidden max-w-lg items-center gap-1 rounded-card border bg-card pr-2 shadow-rest transition-shadow hover:shadow-lift sm:flex">
+    // `data-tour` goes on the whole bar here, not on one control: unlike the
+    // mobile dial, the bar *is* the affordance, and its five icons are the thing
+    // step 1 is describing. Its twin is `QuickCaptureBar`; both are always
+    // mounted, so `lib/tour/targets.ts` picks by which one has a client rect.
+    <div
+      data-tour="capture"
+      className="mx-auto mb-6 hidden max-w-lg items-center gap-1 rounded-card border bg-card pr-2 shadow-rest transition-shadow hover:shadow-lift sm:flex"
+    >
       <button
         type="button"
         onClick={() => onStart({ id: null })}

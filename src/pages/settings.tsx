@@ -40,15 +40,33 @@ export default function SettingsPage() {
 
       <LabelsSection />
 
-      <EditorToolbarSection />
+      {/* The Tour's two Settings targets are declared here rather than inside a
+          section, so no section has to know the Tour exists and both anchors are
+          legible in one place. They wrap rather than mark, because each step
+          points at a *block* of related rows and a bare `div` changes no layout.
 
-      <QuickCaptureSection />
+          Step 4's copy also mentions density, the colour-blind palette and
+          motion, which live in `AppearanceSection` two sections up and cannot be
+          spotlit with these without dragging `LabelsSection` in between into the
+          cutout too. */}
+      <div data-tour="settings-customisation">
+        <EditorToolbarSection />
+
+        <QuickCaptureSection />
+      </div>
 
       <ShortcutsSection />
 
-      <PwaInstallSection />
+      {/* `PwaInstallSection` renders nothing unless the browser is offering an
+          install, so it cannot be step 5's anchor on its own - and step 5 is the
+          one carrying the fact that the data is local, which may not be the step
+          that goes missing. `BackupSection` always renders and holds the
+          actionable half of the same message. */}
+      <div data-tour="settings-local">
+        <PwaInstallSection />
 
-      <BackupSection />
+        <BackupSection />
+      </div>
     </div>
   );
 }

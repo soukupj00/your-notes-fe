@@ -33,9 +33,16 @@ export function QuickCaptureBar({ onStart }: { onStart: (editing: NoteOpenReques
     <div className={cn(FLOATING_BOTTOM_BAR, 'sm:hidden', left ? 'justify-start' : 'justify-end')}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
+          {/* `data-tour` sits on the `＋` itself rather than on the wrapper: the
+              wrapper is a full-width bar pinned to the bottom edge, and a
+              spotlight cut over it would be a letterbox across the screen
+              instead of a circle round the button. Its twin is the desktop
+              capture bar; `lib/tour/targets.ts` picks whichever of the two is
+              visible at this width. */}
           <Button
             type="button"
             size="icon"
+            data-tour="capture"
             aria-label={t('notes.capture.open')}
             className="size-14 rounded-full bg-primary text-primary-foreground shadow-lift hover:bg-primary/90 hover:shadow-lift"
           >

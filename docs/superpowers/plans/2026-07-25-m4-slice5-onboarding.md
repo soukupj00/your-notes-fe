@@ -101,7 +101,7 @@ Plus a colocated `*.test.ts(x)` for each of the four `src/lib/tour/` modules and
 | `src/components/searchInput.tsx` | AND `useTourActive()` into the `mod+K` `enabled` |
 | `src/components/notes/QuickCaptureBar.tsx`, `DesktopCaptureBar.tsx` | `data-tour="capture"` |
 | `src/components/editor/toolbar/EditorToolbar.tsx` | `data-tour="editor-toolbar"` |
-| `src/components/settings/EditorToolbarSection.tsx`, `PwaInstallSection.tsx` | `data-tour="settings-customisation"` / `data-tour="settings-local"` |
+| `src/pages/settings.tsx` | `data-tour="settings-customisation"` / `data-tour="settings-local"` as wrappers (see task 2 for why not on the sections themselves) |
 | `src/styles/globals.css` | scrim and cutout tokens |
 | `public/locales/{en,cs}/translation.json` | `onboarding.*` |
 | `package.json` | `driver.js`; `test:e2e` script |
@@ -139,12 +139,19 @@ The functions take `createNote`/`purgeNote` as arguments and *return* the new ba
 
 ### Task 2 - Targets
 
-- [ ] `data-tour` attributes per the manifest; names owned by `targets.ts`.
-- [ ] Resolver returns the first match with a **non-zero client rect**.
+- [x] `data-tour` attributes per the manifest; names owned by `targets.ts`. Three of the five placements moved, each for a reason worth keeping:
+  - **`capture` sits on the `＋` button, not on `QuickCaptureBar`'s wrapper.** The wrapper is a full-width bar pinned to the bottom edge, so a cutout over it would be a letterbox across the screen rather than a circle round the button. The desktop twin keeps the attribute on the whole bar, because there the bar *is* the affordance.
+  - **The two Settings targets are declared in `settings.tsx`, wrapping their sections**, rather than inside `EditorToolbarSection` / `PwaInstallSection`. No section then has to know the Tour exists, both anchors are legible in one place, and a step points at a block of related rows rather than at one of them. A bare `div` around `<section>`s changes no layout.
+  - **`settings-local` wraps `PwaInstallSection` *and* `BackupSection`, and would be `BackupSection` alone if it had to choose.** `PwaInstallSection` returns `null` unless the browser is offering an install - which it is not once installed, not on desktop Firefox, and not in a headless browser - so as the sole anchor it would drop step 5 for most users. Step 5 carries the one fact whose absence can cost somebody everything they have written; it may not be the step that goes missing.
+- [x] Resolver returns the first match with a **non-zero client rect**.
   Not optional: `DesktopCaptureBar` is `hidden sm:flex` and `QuickCaptureBar` is `sm:hidden`, so both are always mounted and a naive `querySelector` matches the invisible one on one of the two breakpoints. `searchInput.tsx` has the same duplication.
-- [ ] Resolver also accepts a dynamic selector, for step 3's `[data-note-feed-id="<id>"]`.
-- [ ] Steps whose target does not resolve are dropped **before** `drive()`, so the "3 of 5" counter never lies.
-- [ ] Test: every step's target resolves at both breakpoints in a rendered app.
+- [x] Resolver also accepts a dynamic selector, for step 3's `[data-note-feed-id="<id>"]` (`noteCardTarget(id)`, `CSS.escape`d).
+- [ ] ~~Steps whose target does not resolve are dropped **before** `drive()`~~ - **moved to task 3**, where the step list exists. `resolveTourTarget` returning `null` is the mechanism and it is documented as a normal answer; writing the filter here would have meant a generic over a step type that does not exist yet.
+- [x] Test: ~~every step's target resolves at both breakpoints in a rendered app.~~ **Split, because half of it is not answerable in jsdom.**
+  jsdom applies no CSS and measures every element as 0x0, so `hidden sm:flex` and `sm:hidden` are indistinguishable there and `resolveTourTarget` returns `null` for both members of a pair. So:
+  - `targets.test.ts` covers the resolver's logic against rects it stubs itself - picks the measured one of a pair, first-in-document-order among equals, `null` when all are hidden, dynamic selectors, a scoped root.
+  - `targets.mounted.test.tsx` is the drift guard: every name in `TOUR_TARGETS` is on something in a rendered app (and `capture` is on exactly two things, which is what makes the rect check load-bearing), plus a test that fails when a target is added and nothing checks it.
+  - The breakpoint half belongs to the acceptance suite, which already runs `desktop` and `mobile` projects.
 
 ### Task 3 - The script
 
