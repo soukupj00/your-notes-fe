@@ -64,6 +64,8 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
   A Tour *drives the app* rather than describing it: each step performs the gesture it is talking about, and the user only advances, retreats, or skips.
   It is therefore always in the user's own Locale, Theme, Vision Mode and Width Class, because there is nothing to be in but the app itself.
   A Tour never asks the user to act and never waits on them; a step that required the user to do something would be a different concept.
+  A Tour is not over until its Props are gone: clearing the stage is the Tour's last act, not the app's first one.
+  So the app is handed back already free of them, and taking the dressing away is never something the user watches happen.
 - **Prop** — A Note the app creates so a Tour has something to demonstrate on.
   While it exists a Prop is an ordinary Note in every respect: it sits in the Feed, it can be Pinned, Coloured, opened and edited, and nothing marks it out to the user.
   Its one difference is its ending: a Prop is Purged when its Tour ends, rather than living until the user discards it.

@@ -25,7 +25,7 @@ import {
   TOUR_STEPS,
   type TourStage,
 } from '@/lib/tour/steps.ts';
-import { resolveTourTarget } from '@/lib/tour/targets.ts';
+import { noteCardTarget, resolveTourTarget, tourTargetSelector } from '@/lib/tour/targets.ts';
 import { waitFor } from '@/lib/tour/waitFor.ts';
 import 'driver.js/dist/driver.css';
 
@@ -188,8 +188,21 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const sweep = useCallback(
     async (props: TourProp[]) => {
       if (props.length === 0) return;
-      await purgeProps(purgeNote, props);
+      const purged = await purgeProps(purgeNote, props);
       await setProps([]);
+      // Gone from Dexie is not gone from the wall: the Feed repaints through a
+      // live query, so the cards outlive the rows by a frame or two. Since the
+      // whole point of sweeping before the app is handed back is that nobody
+      // watches the Props leave, the scrim has to outlive the repaint as well.
+      // On the steps that end in Settings there is no Feed mounted and this is
+      // true on its first look, costing nothing.
+      await waitFor(
+        () =>
+          !purged.some(
+            (id) => document.querySelector(tourTargetSelector(noteCardTarget(id))) !== null
+          ),
+        { label: 'the feed to drop the purged Props' }
+      );
     },
     [purgeNote, setProps]
   );
@@ -216,7 +229,9 @@ export function TourProvider({ children }: { children: ReactNode }) {
         // reads the Tour's own write as the user's and leaves the Prop behind.
         if (id) {
           queueWrite(async () => {
-            await waitFor(() => resolveTourTarget('editorToolbar') === null);
+            await waitFor(() => resolveTourTarget('editorToolbar') === null, {
+              label: 'the editor to close before rebasing',
+            });
             await rebase(id);
           });
         }
@@ -285,13 +300,16 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const showStep = useCallback(
     async (at: number) => {
       await waitFor(
-        () => popoverHost.firstElementChild?.getAttribute('data-tour-step') === String(at)
+        () => popoverHost.firstElementChild?.getAttribute('data-tour-step') === String(at),
+        { label: `the popover to render step ${at + 1}` }
       );
       const target = TOUR_STEPS[at].target(makeStage());
       // The act that produces the target has already run, but the app may still
       // be painting it. A step that never gets one is shown centred with no
       // spotlight rather than dropped - the copy is still worth reading.
-      const element = target ? await waitFor(() => resolveTourTarget(target)) : null;
+      const element = target
+        ? await waitFor(() => resolveTourTarget(target), { label: tourTargetSelector(target) })
+        : null;
       driverRef.current?.setConfig(driverConfig(element));
       driverRef.current?.highlight({
         element: element ?? undefined,
@@ -337,22 +355,39 @@ export function TourProvider({ children }: { children: ReactNode }) {
       const from = indexRef.current;
       if (from === null) return;
 
-      // Torn down before the app is put back, so the spotlight goes the moment
-      // the user asks rather than after the last navigation has settled.
+      // The popover goes the moment the user asks, so the press is answered at
+      // once; the scrim outlives it by the length of the wind-down below.
       indexRef.current = null;
       setIndex(null);
       setRunning(false);
-      driverRef.current?.destroy();
-      driverRef.current = null;
-      releaseInertRef.current?.();
-      releaseInertRef.current = null;
 
-      // Not when the *user* navigated away: they have moved on, and the Tour
-      // does not get to move them back. Purging the Props undoes the pin anyway.
-      if (unwind) await leaveScene(from, makeStage());
+      try {
+        // A Tour is not over until its Props are gone (CONTEXT.md): clearing
+        // the stage is the Tour's last act, not the app's first one. Swept
+        // *before* the app is handed back, so the three notes the user did not
+        // write are never seen leaving - from steps 4 and 5 the Feed is not
+        // even mounted, and from the rest the app is still dimmed and inert.
+        //
+        // Purging with step 2's editor still open is safe rather than merely
+        // survivable: `updateNote` reads the row first and returns null when it
+        // has gone, so the dialog's closing flush cannot write the Prop back.
+        await writesRef.current;
+        await sweep(propsRef.current);
 
-      await writesRef.current;
-      await sweep(propsRef.current);
+        // Not when the *user* navigated away: they have moved on, and the Tour
+        // does not get to move them back. The sweep above has already undone
+        // step 3's pin, and left `props` empty, so `leaveScene` finds nothing
+        // to unpin and simply retraces the navigations.
+        if (unwind) await leaveScene(from, makeStage());
+      } finally {
+        // In a `finally` because the sweep now runs first: a purge that threw
+        // would otherwise leave the user under an inert overlay with no way
+        // out, which is a worse failure than the one it is reporting.
+        driverRef.current?.destroy();
+        driverRef.current = null;
+        releaseInertRef.current?.();
+        releaseInertRef.current = null;
+      }
     },
     [makeStage, sweep, setRunning]
   );
@@ -375,8 +410,18 @@ export function TourProvider({ children }: { children: ReactNode }) {
     }
 
     // The Feed has to be on screen before anything is seeded. This doubles as
-    // the gate that keeps the Tour out of anywhere that never paints one.
-    if (!(await waitFor(() => resolveTourTarget('capture')))) return;
+    // the gate that keeps the Tour out of anywhere that never paints one - the
+    // one wait here whose timeout is a normal answer rather than a bug, hence
+    // the label saying so.
+    if (!(await waitFor(() => resolveTourTarget('capture'), { label: 'a Feed to start on' })))
+      return;
+
+    // Step 2 opens a note, and the editor is a lazy chunk: warmed here, its
+    // module cost is paid while step 1 is being read rather than in the middle
+    // of the step that needs it. Un-awaited on purpose - a failure to preload is
+    // not a reason not to run the Tour, and `NotesView`'s own `lazy()` will ask
+    // for the same module and get this one.
+    void import('@/components/notes/NoteEditorDialog.tsx');
 
     // Driver measures the popover once, to decide which side of the target it
     // goes on, and never re-measures. The app's two typefaces are self-hosted

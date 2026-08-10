@@ -43,6 +43,13 @@ export function QuickCaptureBar({ onStart }: { onStart: (editing: NoteOpenReques
             type="button"
             size="icon"
             data-tour="capture"
+            // The control that *opens* the dial, marked apart from the thing
+            // step 1 points at even though they are the same element here. Only
+            // this width has one, so its presence is how a step knows there is
+            // a dial at all: the desktop bar carries `capture` too and has
+            // nothing to open. A second attribute rather than a second
+            // `data-tour` value, because one element cannot hold two.
+            data-tour-toggle=""
             aria-label={t('notes.capture.open')}
             className="size-14 rounded-full bg-primary text-primary-foreground shadow-lift hover:bg-primary/90 hover:shadow-lift"
           >

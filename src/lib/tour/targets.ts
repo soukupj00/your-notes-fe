@@ -36,6 +36,16 @@ export const TOUR_TARGETS = {
    * spotlight, which is right: there the bar *is* the five starts.
    */
   captureDial: '[data-tour="capture-dial"]',
+  /**
+   * The control that opens the dial, which only the narrow width has.
+   *
+   * Separate from `capture` although below `sm:` they are the same element:
+   * `capture` is what step 1 *points at*, and the two happen to coincide there
+   * but not above `sm:`, where the bar is the five starts and opens nothing.
+   * Resolving to nothing is therefore the answer to "does this width have a
+   * dial", which a step has to ask before it clicks anything.
+   */
+  captureToggle: '[data-tour-toggle]',
   /** Step 2: the editor's toolbar, inside the open note. */
   editorToolbar: '[data-tour="editor-toolbar"]',
   /** Step 4: the customisation block in Settings. */

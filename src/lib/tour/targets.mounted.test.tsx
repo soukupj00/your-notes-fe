@@ -53,9 +53,13 @@ describe('every named tour target is mounted somewhere', () => {
     // always in the document and CSS hides one; this is the duplication that
     // makes `resolveTourTarget`'s rect check load-bearing rather than tidy.
     expect(found('capture')).toHaveLength(2);
+    // Exactly one, and that is the point: `captureToggle` marks the control
+    // that *opens* a dial, and only the narrow layout has one. Its absence is
+    // how a step knows the wide layout has nothing to open.
+    expect(found('captureToggle')).toHaveLength(1);
     // The dial's own contents exist only while it is open, which below `sm:` is
-    // step 1's own doing - so there is nothing to count here, and `steps.ts`
-    // falls back to the `＋` whenever this resolves to nothing.
+    // step 1's own doing - so there is nothing to count here, and that absence
+    // is exactly how `steps.ts` reads "the dial is closed".
     expect(found('captureDial')).toHaveLength(0);
   });
 
@@ -88,7 +92,14 @@ describe('every named tour target is mounted somewhere', () => {
   it('covers every target the registry declares', () => {
     // The one that fails when a target is added and nothing above is updated.
     expect(Object.keys(TOUR_TARGETS).sort()).toEqual(
-      ['capture', 'captureDial', 'editorToolbar', 'settingsCustomisation', 'settingsLocal'].sort()
+      [
+        'capture',
+        'captureDial',
+        'captureToggle',
+        'editorToolbar',
+        'settingsCustomisation',
+        'settingsLocal',
+      ].sort()
     );
   });
 });

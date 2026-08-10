@@ -8,6 +8,7 @@ import {
   type TourStep,
 } from './steps.ts';
 import { tourTargetSelector } from './targets.ts';
+import { TOUR_WAIT_MS } from './waitFor.ts';
 
 /**
  * The steps are tested against a paper app: a few divs carrying the same
@@ -40,8 +41,25 @@ const PROPS = [
   { id: 'prop-ideas', updatedAt: '2026-08-09T10:00:02.000Z' },
 ];
 
+/**
+ * The narrow layout: a `＋` that is both what step 1 points at and what opens
+ * the dial, and no dial until it is pressed.
+ *
+ * The dial's contents are *absent* rather than hidden, because that is what
+ * Radix does with a closed popover, and it is the whole basis of how a step
+ * reads the dial's state now. It used to be modelled with `aria-expanded` on
+ * the `＋`, which was wrong in a way no test could see: driver.js writes that
+ * same attribute onto whatever it spotlights, so in the real app it read "open"
+ * from the first frame and step 1's exit spent its entire wait budget.
+ */
 const FEED = `
-  <button data-tour="capture" aria-expanded="false"></button>
+  <button data-tour="capture" data-tour-toggle></button>
+  ${PROPS.map((prop) => `<article data-note-feed-id="${prop.id}"></article>`).join('')}
+`;
+
+/** The wide layout: a bar that *is* the five starts and opens nothing. */
+const DESKTOP_FEED = `
+  <div data-tour="capture"></div>
   ${PROPS.map((prop) => `<article data-note-feed-id="${prop.id}"></article>`).join('')}
 `;
 
@@ -61,17 +79,15 @@ function paperApp(props = PROPS) {
   const calls: string[] = [];
   document.body.innerHTML = FEED;
 
-  // Radix moves `aria-expanded` through React state rather than setting it on
-  // the click, which is exactly the lag `setSpeedDialOpen` reads back for.
-  document.querySelector('[data-tour="capture"]')?.addEventListener('click', (event) => {
-    const trigger = event.currentTarget as HTMLElement;
+  // Radix mounts and unmounts the dial through React state rather than on the
+  // click itself, which is exactly the lag `setSpeedDialOpen` reads back for.
+  document.querySelector('[data-tour-toggle]')?.addEventListener('click', () => {
     calls.push('dial');
-    later(() =>
-      trigger.setAttribute(
-        'aria-expanded',
-        String(trigger.getAttribute('aria-expanded') !== 'true')
-      )
-    );
+    later(() => {
+      const dial = document.querySelector('[data-tour="capture-dial"]');
+      if (dial) dial.remove();
+      else document.body.insertAdjacentHTML('beforeend', '<ul data-tour="capture-dial"></ul>');
+    });
   });
 
   const stage: TourStage = {
@@ -116,10 +132,17 @@ function step(key: string): TourStep {
 }
 
 function dialOpen() {
-  return document.querySelector('[data-tour="capture"]')?.getAttribute('aria-expanded') === 'true';
+  return document.querySelector('[data-tour="capture-dial"]') !== null;
 }
 
-afterEach(() => {
+/** Lets the paper app finish whatever a step did not wait for. */
+const settle = () => new Promise((resolve) => setTimeout(resolve, LATENCY * 3));
+
+afterEach(async () => {
+  // Closing the dial is deliberately not awaited, so a test can end with the
+  // paper app still catching up. Drained here, or it lands in the next test's
+  // document - which is exactly how it first showed up.
+  await settle();
   document.body.innerHTML = '';
 });
 
@@ -138,15 +161,30 @@ describe('the step list', () => {
 });
 
 describe('step 1, the capture affordance', () => {
-  it('opens the speed dial and closes it again', async () => {
+  it('waits for the dial it is about to spotlight to finish unfolding', async () => {
+    // Driver measures the target's rect exactly once, so a dial handed over
+    // half-open gets a hole cut over half of it.
     const { stage, calls } = paperApp();
 
     await step('capture').enter?.(stage);
+
     expect(dialOpen()).toBe(true);
+    expect(calls).toEqual(['dial']);
+  });
+
+  it('closes the dial without waiting for it, since the editor is already covering it', async () => {
+    // The 430ms this saves on a phone was spent watching a popover fold away
+    // underneath the sheet step 2 is opening over it.
+    const { stage, calls } = paperApp();
+    await step('capture').enter?.(stage);
 
     await step('capture').exit?.(stage);
-    expect(dialOpen()).toBe(false);
+
     expect(calls).toEqual(['dial', 'dial']);
+    // Pressed, but not yet gone: the act returned before the app caught up.
+    expect(dialOpen()).toBe(true);
+    await new Promise((resolve) => setTimeout(resolve, LATENCY * 3));
+    expect(dialOpen()).toBe(false);
   });
 
   it('does not click a dial that is already in the state it wants', async () => {
@@ -159,14 +197,35 @@ describe('step 1, the capture affordance', () => {
   });
 
   it('does nothing at a width that has no dial', async () => {
-    // Desktop: the same target name, but a plain bar with no expanded state.
-    // The step keeps its spotlight and loses only its act.
+    // Desktop: the same target name, but a bar that *is* the five starts and
+    // has nothing to open. The step keeps its spotlight and loses only its act.
     const { stage, calls } = paperApp();
-    document.body.innerHTML = '<div data-tour="capture"></div>';
+    document.body.innerHTML = DESKTOP_FEED;
 
     await step('capture').enter?.(stage);
+    await step('capture').exit?.(stage);
 
     expect(calls).toEqual([]);
+  });
+
+  it('does not mistake something else marking the bar for an open dial', async () => {
+    // The regression this file could not see before. The spotlight library
+    // stamps `aria-expanded="true"` (plus `aria-haspopup` and `aria-controls`)
+    // onto whatever it highlights - which at step 1 is the capture bar itself.
+    // Read that, and the wide layout's exit clicks a `div` with no handler and
+    // then waits out the full budget for an attribute it does not own: three
+    // dead seconds per run, and the only symptom a Tour that felt slow.
+    const { stage, calls } = paperApp();
+    document.body.innerHTML = DESKTOP_FEED;
+    const bar = document.querySelector('[data-tour="capture"]')!;
+    bar.setAttribute('aria-haspopup', 'dialog');
+    bar.setAttribute('aria-expanded', 'true');
+
+    const started = Date.now();
+    await step('capture').exit?.(stage);
+
+    expect(calls).toEqual([]);
+    expect(Date.now() - started).toBeLessThan(TOUR_WAIT_MS);
   });
 });
 
@@ -251,6 +310,10 @@ describe('every step round-trips', () => {
   // The contract behind Back: `exit` is an inverse, not a second forward move.
   // A step that left the app somewhere new would make Back a way of walking
   // sideways through the app, and would leave the Tour's own litter behind.
+  //
+  // Settled first, because one act deliberately does not wait for itself: step
+  // 1 presses the dial shut and moves on. "Where it found it" is where the app
+  // ends up, not where it is in the frame the act returned.
   it.each(TOUR_STEPS.map((current) => [current.key, current] as const))(
     '%s leaves the app where it found it',
     async (_key, current) => {
@@ -259,6 +322,7 @@ describe('every step round-trips', () => {
 
       await current.enter?.(stage);
       await current.exit?.(stage);
+      await settle();
 
       expect(document.body.innerHTML).toBe(before);
     }

@@ -4,7 +4,6 @@ App-wide React context providers. See [`PLAN.md`](./PLAN.md) for upcoming work.
 
 > **`NotesProvider` is gone** (M4 Slice 2). The app-wide search text it held now lives in the URL as typed TanStack search params, read and written through `useNoteSearchState()` (`src/hooks/useNoteSearchState.ts`); the feed itself is `useNoteFeed(scope, search)` per route.
 > A context would have made the same state unshareable and invisible to the back button.
-> Note the standalone `useNotes()` **hook** in `src/hooks/data/useNotes.ts` (returns all notes) is unrelated and still there.
 
 ## `PreferencesProvider.tsx`
 

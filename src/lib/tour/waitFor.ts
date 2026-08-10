@@ -37,10 +37,19 @@ export const TOUR_WAIT_MS = 3000;
  * `null` is a returned value rather than a rejection: a step that cannot find
  * its target still has copy worth reading, and the Tour showing it centred with
  * no spotlight beats the Tour dying halfway through with a stack trace.
+ *
+ * **A spent budget is always a bug, so it says so.** Nothing here retries, so
+ * the only way to reach the deadline is that the app never did the thing - and
+ * a silent `null` hides that behind three seconds of what looks like a slow
+ * step. It hid exactly that: step 1's exit spent the whole budget every run on
+ * desktop, waiting for an attribute the spotlight library had taken over, and
+ * the only symptom was a Tour that felt sluggish. The warning is `DEV`-only
+ * because the fallback behaviour is correct in production; `e2e/onboarding.spec.ts`
+ * fails on one, which is what makes it a gate rather than a hint.
  */
 export function waitFor<T>(
   condition: () => T | null | undefined | false,
-  timeout = TOUR_WAIT_MS
+  { timeout = TOUR_WAIT_MS, label = 'a DOM condition' }: { timeout?: number; label?: string } = {}
 ): Promise<T | null> {
   return new Promise((resolve) => {
     const deadline = Date.now() + timeout;
@@ -54,6 +63,7 @@ export function waitFor<T>(
       // Checked after the condition, so a zero timeout still gets one look. The
       // common case is that the thing being waited for is already there.
       if (Date.now() >= deadline) {
+        if (import.meta.env.DEV) console.warn(`[tour] timed out waiting for ${label}`);
         resolve(null);
         return;
       }

@@ -30,7 +30,12 @@
 
 import type { TourProp } from '@/context/PreferencesProvider.tsx';
 import { propByKey } from './props.ts';
-import { noteCardTarget, resolveTourTarget, type TourTarget } from './targets.ts';
+import {
+  noteCardTarget,
+  resolveTourTarget,
+  type TourTarget,
+  tourTargetSelector,
+} from './targets.ts';
 import { waitFor } from './waitFor.ts';
 
 /**
@@ -94,33 +99,63 @@ export interface TourStep {
 
 /** The element a step points at right now, waiting for the app to produce it. */
 function waitForTarget(target: TourTarget): Promise<Element | null> {
-  return waitFor(() => resolveTourTarget(target));
+  return waitFor(() => resolveTourTarget(target), { label: tourTargetSelector(target) });
 }
 
 /**
  * Opens or closes the mobile speed dial, by clicking the `＋` the way a thumb
  * would.
  *
- * There is nothing to open above `sm:`, and this is how it knows: the desktop
- * capture bar carries the same `data-tour` name but is a plain wrapper with no
- * expanded state, so a missing `aria-expanded` means "this width has no dial"
- * and the step quietly becomes a spotlight with no act. That is the whole of
- * "one step with two acts" - the two breakpoints are the same idea, and the
- * resolver has already picked which of the pair is on screen.
+ * Two questions, each answered by the DOM rather than inferred:
  *
- * The state is read back rather than assumed, because Radix moves it through
- * React state: two acts in the same tick would otherwise both see the old value
- * and the second would toggle the dial shut again.
+ * 1. **Is there a dial at this width?** Only the narrow layout has a control
+ *    that opens one, and `captureToggle` marks it. Above `sm:` it resolves to
+ *    nothing and the step quietly becomes a spotlight with no act - the bar
+ *    there *is* the five starts. That is the whole of "one step with two acts".
+ * 2. **Is it open?** The five starts are on screen, which is `captureDial`, the
+ *    same resolve the step uses to choose its own target.
+ *
+ * **Neither question may be asked of `aria-expanded`, and that is not a style
+ * preference.** The spotlight library stamps `aria-expanded="true"` onto
+ * whatever element it highlights (driver.js `highlight`, alongside
+ * `aria-haspopup` and `aria-controls`). Step 1 highlights the capture bar, so
+ * from the first frame of the Tour that attribute says "open" on a desktop bar
+ * that opens nothing - and reading it here cost three seconds per run: the exit
+ * clicked a `div` with no handler and then waited out the whole `waitFor`
+ * budget for an attribute it did not own. Ask the app what is on screen; ARIA on
+ * a spotlit element belongs to the spotlight.
+ *
+ * ## Opening is awaited; closing is not
+ *
+ * Opening has to be: the dial *is* what step 1 spotlights, and driver measures
+ * that rect once, so handing it a dial mid-unfold cuts the hole over half of it.
+ *
+ * Closing has nobody waiting on it. It is the last thing step 1 does on its way
+ * to step 2, whose first act covers the whole screen with the editor - so the
+ * dial folds away behind a sheet that is already opening, and awaiting it only
+ * delays the note. On a phone at 4x CPU that wait was **430 ms of the 1363 ms**
+ * step 1 → 2 cost, spent watching a popover the user is about to stop seeing.
+ *
+ * What the asymmetry costs is the guarantee that a step arrives to a settled
+ * dial. It is safe for the one move that could care - Back, from step 2 - only
+ * because that move closes the editor first and *does* await it, which is far
+ * longer than Radix's unmount. If that ever stops being true, the symptom is
+ * step 1 spotlighting the `＋` instead of the starts, not a broken Tour.
+ *
+ * The state is still read before clicking rather than assumed, because Radix
+ * moves it through React state: two acts in the same tick would otherwise both
+ * see the old value and the second would toggle the dial shut again.
  */
 async function setSpeedDialOpen(open: boolean): Promise<void> {
-  const trigger = resolveTourTarget('capture');
-  if (!(trigger instanceof HTMLElement)) return;
+  const toggle = resolveTourTarget('captureToggle');
+  if (!(toggle instanceof HTMLElement)) return;
 
-  const expanded = () => trigger.getAttribute('aria-expanded');
-  if (expanded() === null || expanded() === String(open)) return;
+  const isOpen = () => resolveTourTarget('captureDial') !== null;
+  if (isOpen() === open) return;
 
-  trigger.click();
-  await waitFor(() => expanded() === String(open));
+  toggle.click();
+  if (!open) return;
+  await waitFor(isOpen, { label: 'the speed dial to unfold' });
 }
 
 export const TOUR_STEPS: TourStep[] = [
@@ -161,7 +196,9 @@ export const TOUR_STEPS: TourStep[] = [
       stage.closeNote();
       // The editor is a Radix dialog with an exit animation, so "closed" is when
       // its toolbar has left the document, not when the router has been told.
-      await waitFor(() => resolveTourTarget('editorToolbar') === null);
+      await waitFor(() => resolveTourTarget('editorToolbar') === null, {
+        label: 'the editor to close',
+      });
     },
   },
 

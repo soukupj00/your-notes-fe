@@ -43,18 +43,38 @@ describe('waitFor', () => {
   it('gives up with null rather than hanging', async () => {
     // A step whose target never arrives still has copy worth reading; null is
     // what lets the Tour show it centred instead of dying halfway through.
-    await expect(waitFor(() => null, 30)).resolves.toBeNull();
+    await expect(waitFor(() => null, { timeout: 30 })).resolves.toBeNull();
   });
 
   it('still looks once when there is no budget at all', async () => {
-    await expect(waitFor(() => 'here', 0)).resolves.toBe('here');
-    await expect(waitFor(() => null, 0)).resolves.toBeNull();
+    await expect(waitFor(() => 'here', { timeout: 0 })).resolves.toBe('here');
+    await expect(waitFor(() => null, { timeout: 0 })).resolves.toBeNull();
   });
 
   it('treats every falsy answer as "not yet", including zero and empty string', async () => {
     // Both are real DOM answers - a zero-width rect, a blank attribute - and
     // both mean the app has not finished.
-    await expect(waitFor(() => 0, 20)).resolves.toBeNull();
-    await expect(waitFor(() => '', 20)).resolves.toBeNull();
+    await expect(waitFor(() => 0, { timeout: 20 })).resolves.toBeNull();
+    await expect(waitFor(() => '', { timeout: 20 })).resolves.toBeNull();
+  });
+
+  it('says what it gave up on, so a spent budget is not a silent slow step', async () => {
+    // The budget is only ever spent when something is genuinely wrong, and the
+    // one time it was, the sole symptom was three seconds of apparent sloth.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    await waitFor(() => null, { timeout: 10, label: 'the editor toolbar' });
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('the editor toolbar'));
+    warn.mockRestore();
+  });
+
+  it('says nothing when the condition holds', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    await waitFor(() => 'here', { label: 'something that is already there' });
+
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 });

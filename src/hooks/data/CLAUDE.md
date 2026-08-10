@@ -8,11 +8,8 @@ The React interface to the Dexie layer. Components use these hooks; they should 
 
 | Hook | Returns | Notes |
 | ------ | --------- | ------- |
-| `useNotes()` | `Note[]` | all notes |
-| `useNote(id)` | `Note \| null \| undefined` | single note by id |
 | `useTags()` | `Tag[]` | all tags |
 | `useNoteFeed(scope, search?)` | `{ notes, loading }` | **the** feed query: filters by `scope.state` (indexed) and optional `scope.tagId`, then applies the URL search state (`q`, `sort`, `dir`, `tags`) within that scope. Replaced `useSearchNotes`. |
-| `useNotesByTag(tagId)` | `Note[]` | notes linked to a tag via `noteTags` |
 | `useTagsForNote(noteId)` | `Tag[]` | tags linked to a note via `noteTags` |
 | `useNoteAttachments(noteId)` | `Map<id, Attachment>` | one note's rows; `null` skips the query |
 | `useAttachmentsByNote(noteIds)` | `Map<noteId, Map<id, Attachment>>` | the same join for a whole feed, in **one** query |
