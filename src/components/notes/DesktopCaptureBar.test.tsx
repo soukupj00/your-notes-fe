@@ -29,20 +29,34 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
   <PreferencesProvider>{children}</PreferencesProvider>
 );
 
+// The prompt types itself in through a MotionValue, which writes to the DOM
+// outside React on rAF - so the visible glyphs are mid-string at any moment a
+// fake clock can reach. `data-prompt` is the rotation's own contract: which
+// prompt, and when. The reveal between them is Motion's business.
+const promptKey = () => screen.getByTestId('capture-prompt').getAttribute('data-prompt');
+
 describe('DesktopCaptureBar', () => {
   it('cycles the prompt over time', () => {
     render(<DesktopCaptureBar onStart={vi.fn()} />, { wrapper });
-    expect(screen.getByText('notes.placeholders.default')).toBeInTheDocument();
+    expect(promptKey()).toBe('notes.placeholders.default');
 
     act(() => {
       vi.advanceTimersByTime(5000);
     });
-    expect(screen.getByText('notes.placeholders.thought')).toBeInTheDocument();
+    expect(promptKey()).toBe('notes.placeholders.thought');
 
     act(() => {
       vi.advanceTimersByTime(5000);
     });
-    expect(screen.getByText('notes.placeholders.todo')).toBeInTheDocument();
+    expect(promptKey()).toBe('notes.placeholders.todo');
+  });
+
+  // Translations arrive over HTTP, so on a cold load the resting copy changes
+  // from its raw key to real words before any rotation has fired. That change
+  // must not read as the user watching their own label being typed.
+  it('presents the resting copy whole, before the first rotation', () => {
+    render(<DesktopCaptureBar onStart={vi.fn()} />, { wrapper });
+    expect(screen.getByTestId('capture-prompt')).toHaveTextContent('notes.placeholders.default');
   });
 
   it('pins the prompt to the resting copy under reduced motion', () => {
@@ -52,7 +66,7 @@ describe('DesktopCaptureBar', () => {
     act(() => {
       vi.advanceTimersByTime(30_000);
     });
-    expect(screen.getByText('notes.placeholders.default')).toBeInTheDocument();
+    expect(promptKey()).toBe('notes.placeholders.default');
   });
 
   // The visible prompt renames itself; the accessible name must not.
