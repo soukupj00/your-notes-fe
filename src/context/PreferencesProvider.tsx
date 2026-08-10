@@ -31,7 +31,7 @@ const toolbarFamilySchema = z.object({
 
 const toolbarLayoutSchema = z.array(toolbarFamilySchema);
 
-export const preferencesSchema = z.object({
+const preferencesSchema = z.object({
   version: z.literal(PREFERENCES_VERSION),
   /**
    * The editor toolbar, one Toolbar Layout per Width Class (ADR 0011). An empty
@@ -174,7 +174,7 @@ function migratePreferences(raw: unknown): unknown {
  * the next `setPreference` replaces it, but a mere read never destroys data we
  * might want to inspect.
  */
-export function parsePreferences(raw: unknown): Preferences {
+function parsePreferences(raw: unknown): Preferences {
   const parsed = preferencesSchema.safeParse(migratePreferences(raw));
   return parsed.success ? parsed.data : DEFAULT_PREFERENCES;
 }

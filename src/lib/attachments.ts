@@ -38,7 +38,7 @@ export function validateImageFile(file: File): AttachmentErrorCode | null {
 }
 
 /** Audio MIME types accepted for attachment (recorder output is always allowed). */
-export const ALLOWED_AUDIO_MIME = [
+const ALLOWED_AUDIO_MIME = [
   'audio/webm',
   'audio/ogg',
   'audio/mpeg',
@@ -50,12 +50,7 @@ export const ALLOWED_AUDIO_MIME = [
 export const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 
 /** Video MIME types accepted for attachment. */
-export const ALLOWED_VIDEO_MIME = [
-  'video/mp4',
-  'video/webm',
-  'video/ogg',
-  'video/quicktime',
-] as const;
+const ALLOWED_VIDEO_MIME = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'] as const;
 
 /** Per-video size cap: 100 MB. */
 export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
@@ -65,7 +60,7 @@ export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 export const MAX_FILE_BYTES = 50 * 1024 * 1024;
 
 /** Excalidraw scenes are stored as a JSON document (reuses the Blob-based attachments table). */
-export const EXCALIDRAW_MIME = 'application/json';
+const EXCALIDRAW_MIME = 'application/json';
 
 /** Per-scene size cap: 25 MB. Enforced at creation only. */
 export const MAX_EXCALIDRAW_BYTES = 25 * 1024 * 1024;

@@ -22,7 +22,6 @@ Open-source self-hosted PWA note-taking app (Google Keep alternative). Mobile-fi
 pnpm dev          # start Vite dev server
 pnpm build        # tsc + vite build
 pnpm preview      # preview production build locally
-pnpm seed         # seed IndexedDB with dummy notes (ts-node)
 ```
 
 Package manager is **pnpm**. Do not use npm or yarn.

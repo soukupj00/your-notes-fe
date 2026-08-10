@@ -9,10 +9,6 @@ const IS_MAC = (() => {
   return platform.toLowerCase().includes('mac');
 })();
 
-export function isMac(): boolean {
-  return IS_MAC;
-}
-
 type ShortcutKeyResult = {
   symbol: string;
   readable: string;

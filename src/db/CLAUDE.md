@@ -6,10 +6,10 @@ How the local persistence layer works. See [`PLAN.md`](./PLAN.md) for upcoming w
 
 - `db.ts` — the Dexie database (`NotesDB`) and the exported singleton `db`.
 - `models.ts` (in `src/`, not here) — the TypeScript interfaces for every entity. The Dexie tables are typed against these.
-- `dummyNotes.ts` — static sample notes used for seeding; covers every lifecycle state (active/pinned/coloured, archived, recently trashed, and one back-dated past the purge window).
-- `seed.ts` — `seedDummyData()`, the single shared wipe-and-repopulate routine.
-- `seeder.ts` — Node/`ts-node` entry point (`pnpm seed`); imports `fake-indexeddb/auto` so it runs outside a browser.
-- `browserSeeder.ts` — `seedBrowserData()`, the in-app entry point for populating the real browser IndexedDB. Currently unwired (there is no "Seed Notes" button any more).
+
+There is no seeder.
+`dummyNotes.ts`, `seed.ts`, `seeder.ts` and `browserSeeder.ts` were deleted once nothing called them: the in-app "Seed Notes" button had already gone, and `pnpm seed` could not run at all because `ts-node` is not a dependency.
+Sample data now comes from the Tour's Props (`lib/tour/props.ts`), which a fresh install creates and purges for itself.
 
 ## Schema (`NotesDB`, version 4)
 
@@ -32,9 +32,5 @@ The blob carries its own Zod schema `version`, so adding or changing a preferenc
 
 - **IDs**: `uuid` v4 strings for every entity.
 - **Timestamps**: ISO strings via `new Date().toISOString()`, on both `createdAt` and `updatedAt`.
-- **Mutations** that touch relationships use `db.transaction('rw', ...)` (see the seeders and `useNoteActions.deleteNote`, which also clears `noteTags`).
+- **Mutations** that touch relationships use `db.transaction('rw', ...)` (see `useNoteActions.deleteNote`, which also clears `noteTags`).
 - Reads in components go through the hooks in [`src/hooks/data`](../hooks/data/CLAUDE.md), not direct `db` access.
-
-## Gotchas
-
-- The `seeder.ts` path uses `fake-indexeddb`, so `pnpm seed` populates an in-memory DB (useful for tests/CI), **not** your browser. Use the in-app "Seed Notes" button (`browserSeeder.ts`) to populate real browser data.

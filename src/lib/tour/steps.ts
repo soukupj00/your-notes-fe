@@ -311,7 +311,7 @@ export async function leaveScene(from: number, stage: TourStage): Promise<void> 
  * near-infinite length, which a cutout path cannot use; half the shorter side is
  * what "fully round" means for a real rectangle.
  */
-export const DEFAULT_STAGE_RADIUS = 16;
+const DEFAULT_STAGE_RADIUS = 16;
 
 export function stageRadiusOf(element: Element | null): number {
   if (!element) return DEFAULT_STAGE_RADIUS;

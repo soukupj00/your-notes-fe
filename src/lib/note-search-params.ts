@@ -15,7 +15,7 @@ export type NoteSortDirection = (typeof NOTE_SORT_DIRECTIONS)[number];
  * `.catch()` per field rather than on the object: a hand-edited `?sort=banana`
  * should lose the bad field, not the whole (possibly carefully typed) query.
  */
-export const noteSearchParamsSchema = z.object({
+const noteSearchParamsSchema = z.object({
   q: z.string().optional().catch(undefined),
   sort: z.enum(NOTE_SORT_FIELDS).optional().catch(undefined),
   dir: z.enum(NOTE_SORT_DIRECTIONS).optional().catch(undefined),

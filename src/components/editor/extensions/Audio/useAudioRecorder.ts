@@ -5,7 +5,7 @@ export const MAX_RECORDING_MS = 5 * 60 * 1000;
 const CANDIDATE_MIME = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
 
 /** First MediaRecorder mime the browser supports, or null if unsupported. */
-export function pickAudioMimeType(): string | null {
+function pickAudioMimeType(): string | null {
   if (typeof MediaRecorder === 'undefined') return null;
   for (const m of CANDIDATE_MIME) {
     if (MediaRecorder.isTypeSupported(m)) return m;
@@ -21,7 +21,7 @@ export function pickAudioMimeType(): string | null {
  * (Firefox and Safari do not expose the `microphone` descriptor), in which
  * case the only way to find out is to ask for the stream.
  */
-export async function queryMicrophonePermission(): Promise<PermissionState | null> {
+async function queryMicrophonePermission(): Promise<PermissionState | null> {
   try {
     if (typeof navigator === 'undefined' || !navigator.permissions?.query) return null;
     const status = await navigator.permissions.query({
@@ -41,7 +41,7 @@ export type RecorderStatus = 'idle' | 'requesting' | 'recording' | 'error';
 export type RecorderError = 'unsupported' | 'denied' | 'no-device' | 'in-use' | 'failed';
 
 /** Map a getUserMedia rejection to a RecorderError via its DOMException name. */
-export function mapGetUserMediaError(err: unknown): RecorderError {
+function mapGetUserMediaError(err: unknown): RecorderError {
   const name = err instanceof DOMException ? err.name : '';
   switch (name) {
     case 'NotAllowedError':

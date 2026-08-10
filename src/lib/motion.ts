@@ -8,7 +8,7 @@ export const NIGHTSHIFT_SPRING = {
   mass: 0.9,
 } satisfies Transition;
 
-export const INSTANT_TRANSITION = { duration: 0 } satisfies Transition;
+const INSTANT_TRANSITION = { duration: 0 } satisfies Transition;
 
 export const PRESENCE_TRANSITION = {
   duration: 0.16,
