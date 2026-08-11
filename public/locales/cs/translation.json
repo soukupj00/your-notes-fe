@@ -189,9 +189,6 @@
     "appearance": {
       "title": "Vzhled"
     },
-    "labels": {
-      "description": "Přejmenujte, sloučte, obarvěte a mažte své štítky."
-    },
     "locale": {
       "label": "Jazyk"
     },
@@ -266,7 +263,7 @@
       "fold": "Na telefonu se před touto čarou vejde asi {{slots}} tlačítek",
       "width": {
         "legend": "Upravujete rozvržení pro",
-        "hint": "Úzké a široké okno mají vlastní rozvržení. Které uvidíte, určuje šířka okna, takže i malé okno na počítači je úzké.",
+        "hint": "Úzké a široké okno mají vlastní rozvržení. Úzké dostanete v úzkém okně a na každém dotykovém zařízení - telefon zůstane úzký i naležato.",
         "compact": "Úzké okno",
         "wide": "Široké okno"
       },
@@ -292,6 +289,14 @@
     "shortcuts": {
       "title": "Klávesové zkratky",
       "description": "Fungují v otevřené poznámce bez ohledu na to, která tlačítka panel zobrazuje."
+    },
+    "help": {
+      "title": "Nápověda",
+      "replay": {
+        "label": "Průvodce",
+        "description": "Pět kroků na třech poznámkách, které pak zase zmizí.",
+        "action": "Spustit průvodce znovu"
+      }
     },
     "quickCapture": {
       "title": "Rychlé psaní",
@@ -480,5 +485,59 @@
     "over": "{{name}} přesunuto na pozici {{position}}.",
     "dropped": "{{name}} položeno na pozici {{position}}.",
     "cancelled": "{{name}} vráceno na původní místo."
+  },
+  "onboarding": {
+    "progress": "Krok {{current}} z {{total}}",
+    "buttons": {
+      "back": "Zpět",
+      "next": "Další",
+      "skip": "Přeskočit",
+      "done": "Hotovo"
+    },
+    "steps": {
+      "capture": {
+        "title": "Začni čímkoliv",
+        "body": "Text, seznam úkolů, fotka, hlasová poznámka nebo kresba - všechny způsoby začínají tady."
+      },
+      "editor": {
+        "title": "Napiš to",
+        "body": "Napiš / kdekoliv v poznámce a vyber nadpis, seznam, citaci nebo vzorec. Obrázky, zvuk, soubory i kresby jsou přímo v poznámce."
+      },
+      "wall": {
+        "title": "Tvoje nástěnka",
+        "body": "Připni poznámku nahoru, dej jí barvu nebo štítek. Archiv si ji nechá, koš ji zahodí a nechá chvíli na rozmyšlenou."
+      },
+      "toolbar": {
+        "title": "Tvoje lišta",
+        "body": "Vyber, která tlačítka nese lišta editoru a v jakém pořadí. Telefon a počítač si drží každý své uspořádání."
+      },
+      "quickCapture": {
+        "title": "Tvoje rychlé starty",
+        "body": "Přeskládej způsoby, jak začít, ať je první ten, po kterém saháš nejčastěji, a dej ＋ pod palec, který používáš."
+      },
+      "local": {
+        "title": "Všechno zůstává tady",
+        "body": "Každá poznámka je na tomhle zařízení a nikde jinde. Nainstaluj si aplikaci, ať ji máš po ruce, a kdykoliv si stáhni zálohu v zipu."
+      }
+    },
+    "props": {
+      "groceries": {
+        "header": "Nákup",
+        "item1": "Ovesné mléko",
+        "item2": "Kvasový chleba",
+        "item3": "Něco na neděli"
+      },
+      "weekend": {
+        "header": "Víkend v Brně",
+        "intro": "Vlak jede v pátek v šest, tak sbalit už večer.",
+        "item1": "Zamluvit pokoj kousek od nádraží",
+        "item2": "Hvězdárna, jestli zůstane jasno",
+        "item3": "Káva na Jakubské"
+      },
+      "ideas": {
+        "header": "Nápady",
+        "body": "Police do předsíně - nejdřív změřit výklenek."
+      }
+    }
   }
 }

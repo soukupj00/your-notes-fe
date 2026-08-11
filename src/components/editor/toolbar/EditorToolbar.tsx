@@ -128,6 +128,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
     <div
       ref={scrollRef}
       data-testid="editor-toolbar"
+      data-tour="editor-toolbar"
       data-width-class={widthClass}
       data-overflow-start={fade.start || undefined}
       data-overflow-end={fade.end || undefined}
@@ -149,8 +150,14 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         // under it, and it takes the note's own surface rather than the app
         // background - the editor sits inside a note-tinted dialog, where a
         // neutral band would read as a foreign element.
+        // `order-last` puts it under the note bar the sheet hands the editor as
+        // a `footer`, and the bottom padding is the sheet's own: the sheet stops
+        // padding below `sm:` so this bar can be flush with the viewport edge,
+        // which means the home indicator and the keyboard are now this bar's to
+        // clear. `--keyboard-inset` is 0 wherever the layout viewport already
+        // shrank (`useKeyboardInset`), so on Android this is just the safe area.
         stickyOnMobile &&
-          'sticky bottom-0 z-10 order-last bg-note-surface py-2 sm:static sm:order-none sm:py-0',
+          'sticky bottom-0 z-10 order-last bg-note-surface pt-2 pb-[calc(0.5rem+var(--safe-bottom)+var(--keyboard-inset))] sm:static sm:order-none sm:py-0',
         className
       )}
     >

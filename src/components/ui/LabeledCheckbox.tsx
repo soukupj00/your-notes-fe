@@ -5,10 +5,11 @@ import { cn } from '@/lib/utils.ts';
  * A real checkbox wrapped in its label, so the whole row is one hit target with
  * native keyboard and label-click behaviour.
  *
- * Not the shared `ui/checkbox`: Radix renders that as a `<button>`, which a
- * `<label>` cannot activate natively - the label text would be dead to clicks.
- * The input is visually hidden and a styled span stands in, so it still looks
- * like every other checkbox in the app.
+ * A native `<input type="checkbox">` rather than Radix's, which renders as a
+ * `<button>` that a `<label>` cannot activate natively - the label text would be
+ * dead to clicks. The input is visually hidden and a styled span stands in, so it
+ * still looks like every other checkbox in the app. This is the app's only
+ * checkbox; the vendored Radix one was removed once nothing used it.
  */
 export function LabeledCheckbox({
   label,

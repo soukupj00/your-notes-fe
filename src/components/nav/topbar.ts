@@ -16,23 +16,26 @@
  * separate resolver for dynamic titles.
  */
 
-/** Where back goes when there is nothing in history to pop. */
-export type BackTarget = '/' | '/settings';
-
 /** A title the topbar can show, before it has been resolved to a string. */
 export type TopbarTitle = { kind: 'key'; key: string } | { kind: 'tag'; id: string };
 
 export type TopbarConfig = {
   /**
    * One discriminator rather than three booleans, because the rule really is
-   * one rule: **the drawer trigger belongs to feed routes, and every other
-   * surface gets back.** `feed` carries the trigger, the search box and the
-   * settings gear; `page` carries a back arrow and nothing else.
+   * one rule: **the nav control belongs to Destinations, and a page with a
+   * parent gets back.** A `destination` carries the trigger and the settings
+   * gear; a `child` carries a back arrow and nothing else.
+   *
+   * It used to say `feed` and `page`, and that name was the bug. `/settings/
+   * labels` is in `navItems.ts` - the drawer lists it beside Notes, Archive and
+   * Trash - so it was the one Destination of the four that offered back to a
+   * parent the user had very likely never been on. Being a Destination and
+   * having a Feed are different questions; the search box asks the second one
+   * for itself, through `useIsFeedRoute`.
    */
-  kind: 'feed' | 'page';
+  kind: 'destination' | 'child';
   /** `null` on `/`: the default surface does not need to announce itself. */
   title: TopbarTitle | null;
-  parent: BackTarget;
 };
 
 const TAG_ROUTE = /^\/tag\/([^/]+)$/;
@@ -47,25 +50,33 @@ export function resolveTopbar(pathname: string): TopbarConfig {
 
   switch (path) {
     case '/':
-      return { kind: 'feed', title: null, parent: '/' };
+      return { kind: 'destination', title: null };
     case '/archive':
-      return { kind: 'feed', title: { kind: 'key', key: 'nav.archive' }, parent: '/' };
+      return { kind: 'destination', title: { kind: 'key', key: 'nav.archive' } };
     case '/trash':
-      return { kind: 'feed', title: { kind: 'key', key: 'nav.trash' }, parent: '/' };
-    case '/settings':
-      return { kind: 'page', title: { kind: 'key', key: 'nav.settings' }, parent: '/' };
+      return { kind: 'destination', title: { kind: 'key', key: 'nav.trash' } };
+    // A Destination without a Feed, and a sibling of Archive and Trash rather
+    // than a page inside Settings - `navItems.ts` has listed it beside them all
+    // along, and the URL now says the same thing.
+    //
     // `nav.labels`, not `nav.editLabels`: the sidebar entry has to disambiguate
     // itself from the list of labels beneath it, and the page itself does not.
     // This is the same string the page's own <h1> uses, which is the point.
-    case '/settings/labels':
-      return { kind: 'page', title: { kind: 'key', key: 'nav.labels' }, parent: '/settings' };
+    case '/labels':
+      return { kind: 'destination', title: { kind: 'key', key: 'nav.labels' } };
+    // A child, not a Destination: Settings is deliberately absent from
+    // `navItems.ts` (the gear is its single entry point), so a nav control here
+    // would open a drawer that does not list the page you are standing on.
+    case '/settings':
+      return { kind: 'child', title: { kind: 'key', key: 'nav.settings' } };
   }
 
   const tag = TAG_ROUTE.exec(path);
-  if (tag) return { kind: 'feed', title: { kind: 'tag', id: tag[1] }, parent: '/' };
+  if (tag) return { kind: 'destination', title: { kind: 'tag', id: tag[1] } };
 
-  // Anything unrecognised is a dead end rather than a feed: offering search over
-  // a feed that is not there is the failure `useIsFeedRoute` already avoids, and
-  // a way out is the one control such a page definitely needs.
-  return { kind: 'page', title: null, parent: '/' };
+  // Anything unrecognised is a dead end rather than a Destination: the nav
+  // cannot list a route it does not know, so a trigger there would open a drawer
+  // with nothing marked active, and a way out is the one control such a page
+  // definitely needs.
+  return { kind: 'child', title: null };
 }

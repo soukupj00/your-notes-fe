@@ -31,7 +31,7 @@ const toolbarFamilySchema = z.object({
 
 const toolbarLayoutSchema = z.array(toolbarFamilySchema);
 
-export const preferencesSchema = z.object({
+const preferencesSchema = z.object({
   version: z.literal(PREFERENCES_VERSION),
   /**
    * The editor toolbar, one Toolbar Layout per Width Class (ADR 0011). An empty
@@ -95,12 +95,42 @@ export const preferencesSchema = z.object({
   sinkCheckedItems: z.boolean().default(true),
   /** `system` follows `prefers-reduced-motion`; the others override it. */
   reducedMotion: z.enum(['system', 'always', 'never']).default('system'),
-  /** ISO timestamp of when the onboarding tour was completed or skipped. */
+  /**
+   * ISO timestamp of when the Tour was first *shown* - stamped as step 1
+   * renders, not on completion (ADR 0015). The fact worth recording is that the
+   * Tour was offered; a flag stamped on completion re-arms after every reload,
+   * crash and closed tab, and a tutorial that reappears after you dismissed it
+   * is the most irritating thing this feature can do.
+   */
   onboardingSeenAt: z.string().optional(),
+  /**
+   * The Props currently on the wall, each with the `updatedAt` the Tour last
+   * left it at (CONTEXT.md, "Prop"; ADR 0015).
+   *
+   * It lives here rather than in React state so a reload, crash or closed tab
+   * mid-Tour leaves something to sweep on the next start.
+   *
+   * It stores `updatedAt` rather than bare ids because the Tour's own acts
+   * write - pinning bumps `updatedAt`, and step 2 opens the editor - so a
+   * baseline taken once at seed time would make every Prop look user-edited and
+   * nothing would ever be swept, producing exactly the litter Props exist to
+   * prevent. The Tour re-records the baseline after each of its own acts.
+   *
+   * `.catch([])` for the same field-level-absorber reason as `colorBlind` and
+   * `toolbar` above, and no `PREFERENCES_VERSION` bump: a new optional field
+   * with a default is absorbed by the schema as it stands.
+   */
+  tourProps: z
+    .array(z.object({ id: z.string(), updatedAt: z.string() }))
+    .catch([])
+    .default([]),
 });
 
 export type Preferences = z.infer<typeof preferencesSchema>;
 export type PreferenceKey = Exclude<keyof Preferences, 'version'>;
+
+/** One live Prop and the `updatedAt` baseline the sweep compares against. */
+export type TourProp = Preferences['tourProps'][number];
 
 export const DEFAULT_PREFERENCES: Preferences = preferencesSchema.parse({
   version: PREFERENCES_VERSION,
@@ -144,7 +174,7 @@ function migratePreferences(raw: unknown): unknown {
  * the next `setPreference` replaces it, but a mere read never destroys data we
  * might want to inspect.
  */
-export function parsePreferences(raw: unknown): Preferences {
+function parsePreferences(raw: unknown): Preferences {
   const parsed = preferencesSchema.safeParse(migratePreferences(raw));
   return parsed.success ? parsed.data : DEFAULT_PREFERENCES;
 }

@@ -33,9 +33,23 @@ export function QuickCaptureBar({ onStart }: { onStart: (editing: NoteOpenReques
     <div className={cn(FLOATING_BOTTOM_BAR, 'sm:hidden', left ? 'justify-start' : 'justify-end')}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
+          {/* `data-tour` sits on the `＋` itself rather than on the wrapper: the
+              wrapper is a full-width bar pinned to the bottom edge, and a
+              spotlight cut over it would be a letterbox across the screen
+              instead of a circle round the button. Its twin is the desktop
+              capture bar; `lib/tour/targets.ts` picks whichever of the two is
+              visible at this width. */}
           <Button
             type="button"
             size="icon"
+            data-tour="capture"
+            // The control that *opens* the dial, marked apart from the thing
+            // step 1 points at even though they are the same element here. Only
+            // this width has one, so its presence is how a step knows there is
+            // a dial at all: the desktop bar carries `capture` too and has
+            // nothing to open. A second attribute rather than a second
+            // `data-tour` value, because one element cannot hold two.
+            data-tour-toggle=""
             aria-label={t('notes.capture.open')}
             className="size-14 rounded-full bg-primary text-primary-foreground shadow-lift hover:bg-primary/90 hover:shadow-lift"
           >
@@ -58,7 +72,14 @@ export function QuickCaptureBar({ onStart }: { onStart: (editing: NoteOpenReques
               priority, and it has to survive in every reading of the list, not
               just the visual one. The stagger then falls out for free: index 0 is
               the button next to the `＋`, so the menu unrolls away from it. */}
-          <ul className={cn('flex flex-col-reverse gap-2', left ? 'items-start' : 'items-end')}>
+          {/* The Tour spotlights the open dial rather than the `＋` that opened
+              it: the starts unfold above the button, so a cutout over the button
+              alone would leave the five things the step is about under the
+              scrim (`lib/tour/targets.ts`). */}
+          <ul
+            data-tour="capture-dial"
+            className={cn('flex flex-col-reverse gap-2', left ? 'items-start' : 'items-end')}
+          >
             {actions.map(({ key, Icon, labelKey, editing }, index) => (
               <m.li
                 key={key}

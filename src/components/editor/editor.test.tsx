@@ -1,8 +1,9 @@
 import { render as rtlRender, waitFor } from '@testing-library/react';
 import { createRef, type ReactElement } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import { setViewport } from '@/test/viewport.ts';
 import { Editor, type EditorHandle } from './editor.tsx';
 
 // The toolbar reads the stored Toolbar Layouts, so every render needs the
@@ -180,6 +181,11 @@ describe('Editor auto-capture', () => {
  * regression - that needs the dialog's own state updates to reproduce.
  */
 describe('Editor in editable mode', () => {
+  // Which buttons reach the bar is the Wide default, and which Layout is in
+  // effect is now a pointer question as well as a width one (ADR 0016) - jsdom
+  // answers coarse to both unless told otherwise.
+  beforeEach(() => setViewport(1024));
+
   it('renders the toolbar buttons the Wide default puts on the bar', async () => {
     const { findByRole } = render(
       <TooltipProvider>

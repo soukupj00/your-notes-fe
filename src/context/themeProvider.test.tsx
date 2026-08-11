@@ -5,6 +5,8 @@ import { ThemeProvider } from './themeProvider.tsx';
 afterEach(() => {
   localStorage.clear();
   document.documentElement.classList.remove('light', 'dark');
+  document.documentElement.style.removeProperty('--background');
+  document.querySelector('meta[name="theme-color"]')?.remove();
   vi.restoreAllMocks();
 });
 
@@ -31,5 +33,20 @@ describe('ThemeProvider', () => {
 
     expect(document.documentElement).toHaveClass('dark');
     expect(document.documentElement).not.toHaveClass('light');
+  });
+
+  // The system chrome (Android's status bar, a browser tab's toolbar) can only
+  // be told a colour through this tag, and the manifest's copy is stamped at
+  // build time - so a theme switched at runtime reaches the platform here or
+  // nowhere.
+  it('hands the resolved background to the platform as theme-color', () => {
+    document.documentElement.style.setProperty('--background', 'oklch(17% 0.012 265)');
+
+    render(<ThemeProvider defaultTheme="dark">content</ThemeProvider>);
+
+    expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute(
+      'content',
+      'oklch(17% 0.012 265)'
+    );
   });
 });

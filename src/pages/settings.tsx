@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { AppearanceSection } from '@/components/settings/AppearanceSection.tsx';
 import { BackupSection } from '@/components/settings/BackupSection.tsx';
 import { EditorToolbarSection } from '@/components/settings/EditorToolbarSection.tsx';
-import { LabelsSection } from '@/components/settings/LabelsSection.tsx';
+import { HelpSection } from '@/components/settings/HelpSection.tsx';
 import { LanguageSection } from '@/components/settings/LanguageSection.tsx';
 import { PwaInstallSection } from '@/components/settings/PwaInstallSection.tsx';
 import { QuickCaptureSection } from '@/components/settings/QuickCaptureSection.tsx';
@@ -38,17 +38,43 @@ export default function SettingsPage() {
 
       <AppearanceSection />
 
-      <LabelsSection />
+      {/* The Tour's Settings targets are declared here rather than inside a
+          section, so no section has to know the Tour exists and the anchors are
+          legible in one place. They wrap rather than mark, because a step points
+          at a *block* of related rows and a bare `div` changes no layout.
 
+          These two used to be one `settings-customisation` block covering both
+          sections, and it could not work: the pair measures 1296px on an 839px
+          phone, the app is `inert` for the Tour's lifetime so the user cannot
+          scroll to the rest, and `EditorToolbarSection` alone is still 880px.
+          Two steps pointing at two things that fit beats one step pointing at a
+          hole whose bottom edge is off-screen. The toolbar step aims at the
+          preview strip inside the section (`settings-toolbar`, marked by
+          `ToolbarPreviewStrip` itself) rather than at this wrapper. */}
       <EditorToolbarSection />
 
-      <QuickCaptureSection />
+      <div data-tour="settings-quick-capture">
+        <QuickCaptureSection />
+      </div>
 
       <ShortcutsSection />
 
-      <PwaInstallSection />
+      {/* Deliberately between the shortcuts and the closing pair: it is the
+          other "learn the app" surface, and putting it here keeps
+          `PwaInstallSection` + `BackupSection` adjacent for the Tour's own last
+          step to point at. */}
+      <HelpSection />
 
-      <BackupSection />
+      {/* `PwaInstallSection` renders nothing unless the browser is offering an
+          install, so it cannot be step 5's anchor on its own - and step 5 is the
+          one carrying the fact that the data is local, which may not be the step
+          that goes missing. `BackupSection` always renders and holds the
+          actionable half of the same message. */}
+      <div data-tour="settings-local">
+        <PwaInstallSection />
+
+        <BackupSection />
+      </div>
     </div>
   );
 }

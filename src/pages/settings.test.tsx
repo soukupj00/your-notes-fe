@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PREFERENCES_KEY, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import { TourProvider } from '@/context/TourProvider.tsx';
 import { ThemeProvider } from '@/context/themeProvider.tsx';
 import { db } from '@/db/db.ts';
 import SettingsPage from './settings.tsx';
@@ -21,10 +22,16 @@ vi.mock('@/i18n', () => ({
   },
 }));
 
-// The page links to /settings/labels; the link target is not what this file is
-// about, and rendering it for real would drag in a router.
+// `HelpSection` can start the Tour and the page links out to it; neither is
+// what this file is about, and rendering either for real would drag in a router.
+// The three hooks are `TourProvider`'s, which the mount below wraps the page in
+// so the replay row has a Tour to ask about.
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, ...props }: { children: React.ReactNode }) => <a {...props}>{children}</a>,
+  useNavigate: () => vi.fn(),
+  useRouter: () => ({ state: { location: { pathname: '/settings' } }, history: { back: vi.fn() } }),
+  useRouterState: ({ select }: { select: (state: unknown) => unknown }) =>
+    select({ location: { href: 'http://localhost/settings' } }),
 }));
 
 afterEach(async () => {
@@ -39,7 +46,9 @@ function mount() {
   return render(
     <ThemeProvider>
       <PreferencesProvider>
-        <SettingsPage />
+        <TourProvider>
+          <SettingsPage />
+        </TourProvider>
       </PreferencesProvider>
     </ThemeProvider>
   );

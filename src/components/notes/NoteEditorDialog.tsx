@@ -10,9 +10,12 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog.tsx';
 import { db } from '@/db/db.ts';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
+import { useIsMobile } from '@/hooks/use-mobile.tsx';
+import { useKeyboardInset } from '@/hooks/useKeyboardInset.ts';
 import { bodyHasAttachment, extractAttachmentIds } from '@/lib/attachment-html.ts';
 import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
+import { requestPersistentStorage } from '@/lib/persistentStorage.ts';
 import { stripHtml } from '@/lib/utils.ts';
 import type { NoteState } from '@/models.ts';
 
@@ -82,6 +85,10 @@ export function NoteEditorDialog({
   const { t } = useTranslation();
   const { createNote, updateNote, purgeNote, pinNote, unpinNote } = useNoteActions();
   const { collectOrphans } = useAttachmentActions();
+  const isMobile = useIsMobile();
+  // The sheet is the one surface the software keyboard shares the screen with,
+  // so it is the one that has to know how much of it the keyboard is covering.
+  useKeyboardInset();
 
   const [header, setHeader] = useState('');
   // New drafts may seed a body (e.g. checklist); existing notes load below.
@@ -157,6 +164,10 @@ export function NoteEditorDialog({
       } else {
         await updateNote(idRef.current, { header: h, body: b });
       }
+      // The user has now written something of their own, which is the moment
+      // this origin's storage is worth a permission prompt. Only the dirty-gated
+      // save path reaches here, so a Tour's Props never trigger it.
+      void requestPersistentStorage();
     },
     [createNote, updateNote, draftId]
   );
@@ -234,6 +245,31 @@ export function NoteEditorDialog({
     };
   }, [header, body, enqueueSave]);
 
+  /**
+   * The note bar: labels, colour and pin, in the scroll flow rather than pinned
+   * - the format toolbar is the only chrome that has to stay above the keyboard.
+   *
+   * One element, rendered in one of two places, because the two breakpoints have
+   * genuinely different boxes to put it in. On mobile it goes *through* the
+   * editor as its `footer`, so the sticky toolbar can sit below it and reach the
+   * bottom of the sheet. On desktop the editor root is a bordered card and the
+   * toolbar is at the top, so a footer would move this bar inside that frame -
+   * it stays a sibling underneath it, exactly where it has always been.
+   *
+   * Width, not pointer: this is a question about which box exists (ADR 0016).
+   */
+  const noteBar = (
+    <NoteEditorBar
+      noteId={noteId}
+      ensureNoteId={ensureNoteId}
+      color={color}
+      pinned={Boolean(pinnedAt)}
+      pinnable={state === 'active'}
+      onColorChange={(next) => void handleColorChange(next)}
+      onPinToggle={() => void handlePinToggle()}
+    />
+  );
+
   const handleClose = useCallback(async () => {
     if (timerRef.current) clearTimeout(timerRef.current);
     await enqueueSave(header, body); // flush the latest edit
@@ -299,11 +335,19 @@ export function NoteEditorDialog({
         // The insets are *added to* those numbers, not substituted for them: the
         // sheet is `h-[100dvh]` and, under `viewport-fit=cover`, that really is
         // the whole screen. Without the top inset the back arrow sits under the
-        // status bar - on the one surface with no system back to fall back on -
-        // and without the bottom one the editor toolbar sits under the home
-        // indicator. The side padding is the note's own text inset rather than
-        // chrome, so the horizontal insets ride on top of it.
-        className="top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-3 overflow-y-auto rounded-none border-0 bg-note-surface! pt-[calc(0.5rem+var(--safe-top))] pr-[calc(1.5rem+var(--safe-right))] pb-[calc(1.5rem+var(--safe-bottom))] pl-[calc(1.5rem+var(--safe-left))] sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-card sm:border sm:border-note-border sm:p-6 [&_[data-slot=dialog-close]]:hidden sm:[&_[data-slot=dialog-close]]:flex"
+        // status bar - on the one surface with no system back to fall back on.
+        // The side padding is the note's own text inset rather than chrome, so
+        // the horizontal insets ride on top of it.
+        //
+        // There is deliberately **no bottom padding below `sm:`**. It used to
+        // carry `1.5rem + --safe-bottom`, and that padding plus the note bar
+        // below the editor is what held the format toolbar ~80px off the
+        // keyboard: a `sticky` element cannot leave its parent's box, so the
+        // toolbar bottomed out where the editor column ended rather than where
+        // the sheet did. The toolbar now owns the bottom edge and the insets
+        // that go with it (`EditorToolbar`, `useKeyboardInset`), and the note
+        // bar rides inside the editor column as its `footer`.
+        className="top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-3 overflow-y-auto rounded-none border-0 bg-note-surface! pt-[calc(0.5rem+var(--safe-top))] pr-[calc(1.5rem+var(--safe-right))] pb-0 pl-[calc(1.5rem+var(--safe-left))] sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-card sm:border sm:border-note-border sm:p-6 [&_[data-slot=dialog-close]]:hidden sm:[&_[data-slot=dialog-close]]:flex"
       >
         <DialogTitle className="sr-only">
           {noteId ? t('notes.editNoteTitle') : t('notes.newNoteTitle')}
@@ -387,6 +431,7 @@ export function NoteEditorDialog({
           autoplayFirstAudio={autoplayFirstAudio}
           initialCapture={initialCapture}
           stickyToolbarOnMobile
+          footer={isMobile ? noteBar : undefined}
           // Mobile: no bordered box, so the dialog's own padding is the only
           // spacing around the title + content. Desktop keeps the framed editor,
           // whose frame follows the note's identity like the dialog's own.
@@ -397,18 +442,7 @@ export function NoteEditorDialog({
           }}
         />
 
-        {/* The note bar: labels, colour and pin, in the scroll flow at the end
-            of the content rather than pinned to the bottom edge - the format
-            toolbar is the only chrome that has to stay above the keyboard. */}
-        <NoteEditorBar
-          noteId={noteId}
-          ensureNoteId={ensureNoteId}
-          color={color}
-          pinned={Boolean(pinnedAt)}
-          pinnable={state === 'active'}
-          onColorChange={(next) => void handleColorChange(next)}
-          onPinToggle={() => void handlePinToggle()}
-        />
+        {!isMobile && noteBar}
       </DialogContent>
     </Dialog>
   );

@@ -22,7 +22,6 @@ Open-source self-hosted PWA note-taking app (Google Keep alternative). Mobile-fi
 pnpm dev          # start Vite dev server
 pnpm build        # tsc + vite build
 pnpm preview      # preview production build locally
-pnpm seed         # seed IndexedDB with dummy notes (ts-node)
 ```
 
 Package manager is **pnpm**. Do not use npm or yarn.
@@ -33,13 +32,12 @@ pnpm check:ci     # biome ci .        (non-mutating gate, used in CI)
 pnpm format       # biome format --write
 pnpm test         # Vitest run (unit/component/data) — wired up in M1
 pnpm test:watch   # Vitest watch mode
+pnpm test:e2e     # Playwright, specs in e2e/ (wired up in M4 slice 5)
 ```
 
-Still planned (see [M0/M1 in PLAN.md](./PLAN.md) — not yet wired up):
-
-```bash
-pnpm test:e2e     # Playwright — not yet added
-```
+Playwright runs against `pnpm dev` (started for you by `playwright.config.ts`) at two breakpoints, `desktop` and `mobile`.
+Vitest includes `src/**` only and Playwright's `testDir` is `e2e/`, so neither runner sees the other's files; `tsconfig.node.json` is what typechecks `e2e/` and the two Vite configs.
+First run on a machine needs `pnpm exec playwright install chromium`.
 
 > `pnpm lint` (ESLint) is being **replaced by Biome** — see [ADR 0005](./docs/adr/0005-biome-replaces-eslint-prettier.md).
 
@@ -51,10 +49,10 @@ All persistence is via **Dexie** (IndexedDB wrapper). The schema lives in `src/d
 
 Data access uses dedicated hooks in `src/hooks/data/`:
 
-- `useNotes` / `useNote` — live queries via `useLiveQuery` from `dexie-react-hooks`
+- `useTags` / `useTagsForNote` — live queries via `useLiveQuery` from `dexie-react-hooks`
 - `useNoteActions` / `useTagActions` — CRUD mutations (create/update/delete)
 - `useNoteFeed` — the one feed query: lifecycle/tag scoping plus fuzzy ranked search (Fuse.js, `src/lib/note-search.ts`)
-- `useNotesByTag`, `useTagsForNote` — relationship queries via the `noteTags` join table
+- `useTagsForNote`, `useNoteAttachments` — relationship queries via the `noteTags` join table and the attachment stores
 
 Search/filter state is **not** in a context - it lives in the URL as typed TanStack search params (`q`, `sort`, `dir`, `tags`), validated by `src/lib/note-search-params.ts` and read through `useNoteSearchState()`.
 Which note is **open** lives there too, as `note` ([ADR 0014](./docs/adr/0014-the-open-note-lives-in-the-url.md), read through `useOpenNote()`), so the platform back button closes the editor rather than navigating the feed out from under it - the editor is a full-screen sheet below `sm:`, and the app is `display: standalone`, so an installed user has no browser chrome to correct that with.
@@ -96,7 +94,7 @@ The `icon` prop is a **string key** resolved via `src/components/icons/icons.ts`
 
 **TanStack Router** with file-based routing ([ADR 0008](./docs/adr/0008-tanstack-router-over-react-router.md)). Route modules live in `src/routes/`; the `@tanstack/router-plugin` Vite plugin (wired in both `vite.config.ts` and `vitest.config.ts`) regenerates `src/routeTree.gen.ts` from them. That file is **generated and committed** — never edit it; it is excluded from Biome and `tsc` reads it directly. Colocated `*.test.tsx` files inside `src/routes/` are excluded from generation via `routeFileIgnorePattern`.
 
-Routes: `/` (active feed), `/archive`, `/trash`, `/tag/$id`, `/settings`, `/settings/labels`.
+Routes: `/` (active feed), `/archive`, `/trash`, `/labels`, `/tag/$id`, `/settings`.
 The four feed routes share one `validateSearch` (`validateNoteSearch`), which is what makes the search box, sort menu, and label filters URL-driven; the Navbar hides the search box on routes without a feed. Route modules stay thin — they pick a scope and a title and delegate to a view (`NotesView`, or a page in `src/pages/`).
 
 `App.tsx` is the composition root: providers (Theme → Preferences → Tooltip → ViewMode) wrap `<RouterProvider>`, and the `declare module '@tanstack/react-router'` block registers the router's types so `<Link to>` and params are type-checked.
@@ -126,7 +124,7 @@ In the feed views that heading is `sr-only` - the visible title row was dropped 
 
 ### Tags / labels (`src/components/tags/`, `src/pages/labels.tsx`)
 
-`NoteTagsBar` (pills + the "＋ Label" popover) is the one place labels are assigned; it resolves an unsaved draft's id lazily through the editor's `ensureNoteId`, the same queue attachments use. `TagPills` renders a note's labels read-only on `NoteCard`, tinted from the shared Note/Tag palette (`lib/note-colors.ts`) via `NoteColorPicker`. `/settings/labels` (`src/pages/labels.tsx`) is the manage view: create, inline rename, colour, merge-into, delete.
+`NoteTagsBar` (pills + the "＋ Label" popover) is the one place labels are assigned; it resolves an unsaved draft's id lazily through the editor's `ensureNoteId`, the same queue attachments use. `TagPills` renders a note's labels read-only on `NoteCard`, tinted from the shared Note/Tag palette (`lib/note-colors.ts`) via `NoteColorPicker`. `/labels` (`src/pages/labels.tsx`) is the manage view: create, inline rename, colour, merge-into, delete. It is a Destination beside Archive and Trash rather than a page inside Settings - `navItems.ts` had always listed it there, and Settings no longer carries a section that only links to it.
 
 ### Backup (`src/lib/backup.ts`, `src/components/settings/`)
 
@@ -147,9 +145,27 @@ The test for belonging there is whether the stylesheet needs the value - density
 Every other preference is read by the component that spends it.
 The 44px Touch Rule has two mechanisms and they are not interchangeable: `.touch-target` grows a control to 44px (right for an icon button), `.touch-reach` gives it a 44px hit box via an invisible centred `::before` and leaves it its own size (right whenever the control's shape is part of what it says, such as a switch).
 
+### The Tour (`src/lib/tour/`, `src/context/TourProvider.tsx`)
+
+The six-step onboarding Tour ([ADR 0015](./docs/adr/0015-the-tour-drives-the-app-on-disposable-props.md)).
+It **demonstrates**: every step drives the real app, and the user presses Next, Back or Skip and nothing else.
+
+- It acts on **Props** — three Notes it creates at the start and Purges at the end (`CONTEXT.md`), because a fresh install has an empty Feed and nothing to spotlight.
+The rules live in `lib/tour/props.ts` and they are the part worth reading before changing anything: a bug there does not land a spotlight badly, it deletes something the user wrote.
+A Prop is only purged while its `updatedAt` still matches the baseline the Tour last recorded, so **every act that writes to a Prop rebases it** — the `TourStage` handed to a step only offers the rebasing writers, so a step cannot forget.
+The baselines live in the `tourProps` preference rather than React state so a reload mid-Tour leaves something to sweep, and the seed writes notes and baselines in **one transaction** across both stores.
+- **Nothing in `src/lib/tour/` imports `driver.js` or React.** That separation is what makes the steps, the targets, the Prop rules and the inert marking testable at all; `TourProvider` is the only place that knows a spotlight library exists.
+- **A step is a scene, not a layer.** Moving between steps is `exit` the one being left, then `enter` the one arriving, in both directions — the app's state is not additive (step 2's editor covers the wall step 3 points at). Steps 4-6 are Settings looked at three times and say so with `continues`; step 4 is where that scene is entered, so `leaveScene` walks the chain back to it.
+- **Everything except the popover is `inert`** for the Tour's lifetime (`lib/tour/inert.ts`), which traps focus, blocks the pointer and stops step 2 raising a phone's keyboard, all with one attribute.
+- Targets are resolved by **first match with a non-zero rect** (`lib/tour/targets.ts`), because several of the app's surfaces are mounted twice with CSS hiding one.
+- Waiting is always on a **DOM condition, never a timer** (`lib/tour/waitFor.ts`): reduced motion is a hard killswitch, so a fixed wait is wrong in both directions at once.
+- `onboardingSeenAt` is stamped when the Tour is **offered**, before a single Prop exists — not on completion, which would re-arm it after every reload.
+- The Tour's own behaviour is verified by `e2e/onboarding.spec.ts` at two breakpoints, not by Vitest: jsdom measures every element as 0x0, so a hole cut over nothing is invisible there.
+
 ### i18n (`src/i18n.ts`)
 
 Uses **i18next** with browser language detection. Translations are loaded from `/public/locales/<lng>/translation.json`. Fallback language is `en`. The `t()` function is passed into extension button factories for tooltip translations.
+`src/i18n.test.ts` gates the bundles against each other: the same base keys in every locale (plural suffixes differ by language, so they are folded), and every key the Tour *composes* at render time resolving in both.
 
 ### Path alias
 

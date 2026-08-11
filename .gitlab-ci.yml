@@ -74,7 +74,34 @@ test:unit:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
 
-# Playwright remains deferred until the project has an E2E suite and test:e2e script.
+test:e2e:
+  # Not the shared *pnpm-setup: Playwright needs its browsers and their system
+  # libraries, and node:22-alpine has neither. The official image ships both, so
+  # the version here must be kept in step with @playwright/test in package.json
+  # or the browsers on disk will not be the ones the runner asks for.
+  image: mcr.microsoft.com/playwright:v1.62.0-noble
+  stage: test
+  before_script:
+    - corepack enable
+    - pnpm config set store-dir "$PNPM_STORE_PATH"
+    - pnpm install --frozen-lockfile
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - .pnpm-store/
+    policy: pull
+  script:
+    - pnpm test:e2e
+  artifacts:
+    when: always
+    paths:
+      - playwright-report/
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
 
 # ─── Build ────────────────────────────────────────────────────────────────────
 build:

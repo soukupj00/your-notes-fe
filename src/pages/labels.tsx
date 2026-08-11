@@ -162,7 +162,7 @@ function LabelRow({ tag, tags }: { tag: Tag; tags: Tag[] }) {
   );
 }
 
-/** Manage-labels view (`/settings/labels`): create, rename, colour, merge, delete. */
+/** Manage-labels view (`/labels`): create, rename, colour, merge, delete. */
 export default function LabelsPage() {
   const { t } = useTranslation();
   const headingRef = useFocusOnMount<HTMLHeadingElement>();

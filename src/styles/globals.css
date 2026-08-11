@@ -88,6 +88,21 @@
     --safe-right: env(safe-area-inset-right, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --safe-left: env(safe-area-inset-left, 0px);
+
+    /*
+     * How much of the layout viewport the software keyboard covers. Written by
+     * `useKeyboardInset`, which measures `window.visualViewport`; declared here
+     * so every consumer has a real length before the first measurement and on
+     * the browsers that expose no visual viewport at all.
+     *
+     * It is 0 wherever `interactive-widget=resizes-content` is honoured
+     * (Chrome/Android), because there the layout viewport has already shrunk
+     * and there is nothing left to subtract. It is the keyboard's height on
+     * iOS Safari, which ignores that hint and draws the keyboard over the page.
+     * Same variable either way - the platform difference is in the number, not
+     * in the stylesheet.
+     */
+    --keyboard-inset: 0px;
   }
 
   body {
@@ -1099,4 +1114,91 @@
   :root[data-reduced-motion="always"] .nav-scroll-shadow {
     animation: none;
   }
+}
+
+/*
+ * ── The Tour ────────────────────────────────────────────────────────────────
+ *
+ * `driver.js` ships its own look, and none of it belongs here: a white box with
+ * a black scrim is the one thing DESIGN.md's two themes agree is wrong. What is
+ * kept is the geometry - driver measures a rect, cuts a hole and places a box
+ * beside it - and everything painted is the app's own.
+ *
+ * The scrim is never plain black. By day it is warm ink, the same hue as the
+ * text on the parchment behind it; by night it is the recessed chrome plane, so
+ * dimming reads as the room going quiet rather than as a sheet of tarpaulin.
+ */
+:root {
+  --tour-scrim: color-mix(in oklab, var(--ink) 62%, transparent);
+  /* Day lifts with a hairline (The Glow-Is-Night-Only Rule), so the cutout is
+     ringed in solid amber and nothing more. */
+  --tour-cutout-ring: 0 0 0 2px var(--accent-tone);
+}
+
+.dark {
+  --tour-scrim: color-mix(in oklab, var(--canvas-chrome) 82%, transparent);
+  /* Night has no drop-shadow depth to spend, so the ring gains the glow that
+     every lit thing in this theme carries. */
+  --tour-cutout-ring:
+    0 0 0 2px var(--accent-tone),
+    0 0 24px 2px color-mix(in oklab, var(--accent-tone) 45%, transparent);
+}
+
+/* The ring is drawn on the spotlit element itself rather than as a stroke on the
+   overlay path, because that path outlines the viewport as well as the hole and
+   would frame the whole screen. It lands inside the cutout's own padding.
+
+   No `!important` needed to beat the target's own `shadow-lift`: Tailwind's
+   utilities live in `@layer utilities` and everything in this block is
+   unlayered, which wins over any layer whatever its specificity. */
+.driver-active-element {
+  box-shadow: var(--tour-cutout-ring);
+}
+
+/* Driver's popover wrapper is reduced to a positioner. It keeps the arrow and
+   the placement; the surface, the width and the type are `TourPopover`'s.
+
+   The padding is the safe-area inset: driver clamps the box to `innerHeight`,
+   which under `viewport-fit=cover` includes the notch and the home indicator, so
+   reserving them here is what keeps the popover clear of both. It is invisible
+   because the wrapper paints nothing. */
+.driver-popover.tour-popover {
+  min-width: 0;
+  max-width: none;
+  padding: var(--safe-top) 0 var(--safe-bottom);
+  border-radius: 0;
+  background-color: transparent;
+  box-shadow: none;
+  color: inherit;
+  font-family: var(--font-sans);
+}
+
+/* Driver hides these itself once it is given no title, description or buttons.
+   Stated anyway: they are its chrome, and a future default that renders one of
+   them would put a second header on a popover that already has one. */
+.driver-popover.tour-popover .driver-popover-title,
+.driver-popover.tour-popover .driver-popover-description,
+.driver-popover.tour-popover .driver-popover-footer,
+.driver-popover.tour-popover .driver-popover-close-btn {
+  display: none;
+}
+
+.driver-popover.tour-popover .driver-popover-arrow {
+  border-width: 6px;
+}
+
+.driver-popover.tour-popover .driver-popover-arrow-side-left {
+  border-left-color: var(--popover);
+}
+
+.driver-popover.tour-popover .driver-popover-arrow-side-right {
+  border-right-color: var(--popover);
+}
+
+.driver-popover.tour-popover .driver-popover-arrow-side-top {
+  border-top-color: var(--popover);
+}
+
+.driver-popover.tour-popover .driver-popover-arrow-side-bottom {
+  border-bottom-color: var(--popover);
 }
