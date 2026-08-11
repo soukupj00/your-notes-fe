@@ -15,6 +15,7 @@ import { useKeyboardInset } from '@/hooks/useKeyboardInset.ts';
 import { bodyHasAttachment, extractAttachmentIds } from '@/lib/attachment-html.ts';
 import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
+import { requestPersistentStorage } from '@/lib/persistentStorage.ts';
 import { stripHtml } from '@/lib/utils.ts';
 import type { NoteState } from '@/models.ts';
 
@@ -163,6 +164,10 @@ export function NoteEditorDialog({
       } else {
         await updateNote(idRef.current, { header: h, body: b });
       }
+      // The user has now written something of their own, which is the moment
+      // this origin's storage is worth a permission prompt. Only the dirty-gated
+      // save path reaches here, so a Tour's Props never trigger it.
+      void requestPersistentStorage();
     },
     [createNote, updateNote, draftId]
   );

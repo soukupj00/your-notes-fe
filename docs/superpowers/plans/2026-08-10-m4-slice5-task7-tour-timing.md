@@ -226,6 +226,12 @@ Kept because it is one line and cannot hurt, but it is not what fixed anything -
 
 ### Step 4 - Pin both orderings in the acceptance suite
 
+**Result: half of it, deliberately.**
+The **timeout guard landed** - four lines on the run that walks all six steps, at both breakpoints.
+It is the class of bug this task was rather than the instance, and it costs nothing to keep.
+The **paint probe was dropped** (2026-08-11): it was verified by hand in Chromium under Steps 1 and 1b, and re-landing it in the suite means an injected `MutationObserver` plus an assertion that the probe *observed* the teardown at all, or it passes vacuously - a trap this file already records having fallen into once.
+What it would guard is an ordering inside one function, which the comments there now explain.
+
 `e2e/onboarding.spec.ts`, at both breakpoints.
 Both assertions fail against today's code, which is the point - the current implementation ends up *right*, three frames later, so any end-state assertion passes before and after.
 

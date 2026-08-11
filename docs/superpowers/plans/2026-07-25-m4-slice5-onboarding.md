@@ -1,11 +1,13 @@
 # M4 Slice 5 - Onboarding
 
 **Status:** done. Tasks 0-6 landed; the acceptance suite is green at both breakpoints.
+Two follow-ups landed after it and are recorded separately: [task 7 - the Tour's timing](./2026-08-10-m4-slice5-task7-tour-timing.md), and the landscape/pointer split in [ADR 0016](../../adr/0016-width-decides-layout-pointer-decides-affordances.md), which took a Tour step's `mod+K` promise off devices with no key to press.
 **Rewritten:** 2026-08-09, after a `/grill-with-docs` session against the finished slices 1-4.
 **Decision record:** [ADR 0015 - The tour drives the app on disposable props](../../adr/0015-the-tour-drives-the-app-on-disposable-props.md).
 **Glossary:** `CONTEXT.md` gained **Tour** and **Prop**, and **Purge** widened to cover both.
 
-**Goal:** A five-step Tour that *demonstrates* the app on Props it creates and Purges, ending on the customisation Settings gained in item 11 and on the fact that the data is local.
+**Goal:** A Tour that *demonstrates* the app on Props it creates and Purges, ending on the customisation Settings gained in item 11 and on the fact that the data is local.
+Planned as five steps; **shipped as six**, because step 4 had to split (see the table).
 
 **Depends on:** Slices 1-4. Do this **last**.
 
@@ -31,17 +33,24 @@ An intermediate design from the same session - a persistent welcome library gate
 - No Prop **Tags**. Step 3's copy mentions labels, but a Prop carrying a Tag would leave that Tag in the sidebar after the sweep, and purging a Tag the user may since have attached elsewhere is a strictly worse problem than not demonstrating one.
 - No Prop **Attachments**. A seeded blob would ride every zip backup and M5 sync for the life of the install.
 
-## The five steps
+## The steps
 
-| # | Name | `enter()` acts | Target | Copy covers |
+Six, as shipped (`src/lib/tour/steps.ts`); the `key` column is what `onboarding.steps.<key>.*` is built from.
+
+| # | `key` | `enter()` acts | Target | Copy covers |
 |---|------|----------------|--------|-------------|
-| 1 | Start anything | opens the speed dial (below `sm:`); nothing on desktop | `capture` | text, list, photo, voice, drawing |
-| 2 | Write it | opens Prop C's editor | `editor-toolbar` | slash commands, inline images/audio/files/drawings |
-| 3 | Your wall | pins Prop C, wall re-packs | `[data-note-feed-id="<propC>"]` | pin, colour, label; archive keeps, trash discards with an undo window; `mod+K` |
-| 4 | Make it yours | navigates to `/settings` | `settings-customisation` | toolbar, capture order, thumb side |
-| 5 | It all lives here | none | `settings-local` | nothing leaves this device; install, export a zip |
+| 1 | `capture` | opens the speed dial (below `sm:`); nothing on desktop | `captureDial` if it is on screen, else `capture` | text, list, photo, voice, drawing |
+| 2 | `editor` | opens Prop C's editor | `editorToolbar` | slash commands, inline images/audio/files/drawings |
+| 3 | `wall` | pins Prop C, wall re-packs | `[data-note-feed-id="<propC>"]` | pin, colour, label; archive keeps, trash discards with an undo window; `mod+K` (Fine pointers only, ADR 0016) |
+| 4 | `toolbar` | navigates to `/settings` | `settingsToolbar` | the editor toolbar's own layout |
+| 5 | `quickCapture` | none, `continues` | `settingsQuickCapture` | capture order, thumb side |
+| 6 | `local` | none, `continues` | `settingsLocal` | nothing leaves this device; install, export a zip |
 
 Step 1 is **one step with two acts**, not two steps: there is no dial on desktop, but the idea is identical.
+Its target changed during task 5 - see that task for why the `＋` was the wrong thing to cut a hole over.
+
+**Steps 4 and 5 were one step**, over a single `settings-customisation` block covering both sections, and split on a measurement rather than on taste: `EditorToolbarSection` is **880px tall on an 839px phone**, and the app is `inert` for the Tour's lifetime, so a cutout over the pair was a hole whose bottom edge the user could never reach.
+Splitting also let each step's copy promise only what its own spotlight contains, which is what the "Step 4's reach" item under *Open* had already decided in the narrow.
 
 Step 3 targets a card by note id rather than by a `data-tour` attribute, because `NoteFeed` already stamps `data-note-feed-id={note.id}` on both the Masonry and Stack branches.
 
@@ -82,7 +91,7 @@ No Dexie schema change. Props are ordinary `notes` rows.
 |------|-------|
 | `src/lib/tour/props.ts` | `createProps`, `rebaseProp`, `purgeProps`, `sweepAbandonedProps` |
 | `src/lib/tour/targets.ts` | target keys, the visibility-aware resolver |
-| `src/lib/tour/steps.ts` | the five steps as data plus their `enter`/`exit` |
+| `src/lib/tour/steps.ts` | the steps as data plus their `enter`/`exit` |
 | `src/lib/tour/waitFor.ts` | await-a-DOM-condition helper (never a timer) |
 | `src/context/TourProvider.tsx` | lifecycle, `driver.js` adapter, `inert`, navigation ownership, `useTourActive()` |
 | `src/components/tour/TourPopover.tsx` | the React portalled into driver's popover |

@@ -11,17 +11,20 @@ See [`CONTEXT.md`](./CONTEXT.md) for the domain glossary and [`docs/adr/`](./doc
 - ✅ Data-access hooks (`src/hooks/data`): live queries + CRUD + search.
 - ✅ TipTap editor on the canonical Pattern A ([ADR 0004](./docs/adr/0004-canonical-editor-toolbar-pattern.md)): marks, headings, lists/tasks, blockquote, text color + highlight, font family/size, and Mathematics (KaTeX) - each shipped with a test; live color preview and a responsive, mobile-first toolbar.
 - ✅ i18n (en/cs) and light/dark theming via OKLCH tokens.
-- ✅ Vitest + React Testing Library wired up (64 tests, reusing `fake-indexeddb`); legacy toolbar patterns removed.
+- ✅ Vitest + React Testing Library (907 tests across 131 files, reusing `fake-indexeddb`); legacy toolbar patterns removed.
 - ✅ Real notes home (M2): masonry list, create bar + mobile quick-capture, `NoteEditorDialog` with debounced autosave, delete + undo, search over body.
 - ✅ M2.5 polish: feed layout toggle (masonry ↔ list, persisted), mobile capture bar (note + checklist) with checklist smart-init, sticky-bottom mobile editor toolbar, local "Saved" autosave indicator.
-- ⏸️ Playwright E2E deferred (resource-heavy; UI tested manually).
+- ✅ Playwright wired in M4 slice 5 (`e2e/`, `desktop` + `mobile` projects, a CI job in the `test` stage). It was deferred through M1-M3; the Tour is what needed it, since jsdom measures every element as 0x0 and can see nothing a spotlight does.
 - ✅ M3 Slice 1: inline images end to end (custom `imageAttachment` node + Dexie-backed `attachments` table, cascade delete/undo, orphan GC).
 - ✅ M3 Slice 2: inline audio end to end (custom `audioAttachment` node reusing the Slice 1 `attachments/` core, mic recording via `useAudioRecorder`/`MediaRecorder`, custom player NodeView, home-card chip with autoplay-on-open).
 - ✅ M3 Slice 3: inline video end to end (`videoAttachment` node on the shared core, native `<video controls>` NodeView, home-card play button coexisting with the audio button).
 - ✅ M3 Slice 3.5: confirm-before-delete retrofit (shared `ConfirmDeleteButton`, wired onto Image/Audio/Video).
 - ✅ M3 Slice 4: generic file attachments end to end (`fileAttachment` node on the shared core, toolbar-picker-only insertion with no MIME whitelist, filename + generic icon + open/download NodeView, home-card file button coexisting with audio/video). Paste/drop, content preview/thumbnails, and metadata beyond the filename are deferred (no MIME prefix to disambiguate `file` in the shared paste/drop router).
   Excalidraw and image/audio/video processing (thumbnails, waveform) deferred to later M3 sub-slices.
-- ❌ No sync, no accounts, no accessibility themes, no animations.
+- ✅ M4 complete: TanStack Router + sidebar shell, note lifecycle, tags/labels, zip backup, fuzzy search in the URL, the `nightshift` identity with Motion, a customisable toolbar, full Settings, and the Tour.
+  Accessibility themes shipped as the colour-blind palette, density and reduced motion (`DocumentPreferences`); high-contrast/low-vision is still open (`src/context/PLAN.md`).
+- ✅ Storage persistence requested on the user's first saved note (`src/lib/persistentStorage.ts`); reporting the answer waits for M5's storage/sync section.
+- ❌ No sync, no accounts.
 
 ## Milestones
 
@@ -73,22 +76,28 @@ Keep-simple friction-reducers layered on M2. Retro plan: [`docs/superpowers/plan
 - ✅ **Slice 6 - performance & polish closeout** (plan: [`docs/superpowers/plans/2026-07-24-m3-slice6-perf-polish-closeout.md`](./docs/superpowers/plans/2026-07-24-m3-slice6-perf-polish-closeout.md)): the perf + correctness work that finishes M3, plus a bounded set of named polish fixes. Six small tasks: (1) **image thumbnails** for the card feed (new `Attachment.thumbnail?: Blob`, no migration; WebP <=512px generated at insert; card falls back to the full blob when absent) + a `CONTEXT.md` **Preview** glossary entry; (2) **comprehensive startup GC sweep** (per-note reference reconciliation at `NotesHome` mount, closing the crash/hard-close orphan leak); (3) **unify the delete button** placement/prominence (corner overlay for image/video/file, inline-trailing for audio, all via the shared `ConfirmDeleteButton`); (4) **audio recording UI** - full-width on mobile + a calmer scrolling amplitude-bar visualizer (replacing the jumpy oscilloscope); (5) **Excalidraw card preview rounded corners** (card path in `NoteBody`); (6) **harden autoplay-on-open**. Closes M3.
 - Deferred to M4 (earmarked, not dismissed): **video poster thumbnails** (the one useful media preview beyond images, but heavier + a new inline card preview); mobile quick-capture-bar photo/mic buttons (unified capture bar); image resize/alignment controls; recording trim/edit + playback speed; audio/video waveform/level-meter as a feature (`wavesurfer.js`).
 
-### M4 — Accessibility, polish & feature completion
+### M4 — Accessibility, polish & feature completion  ✅ done
 The last frontend-only milestone (M5 is sync). Scoped from [`M4.md`](./M4.md) via a `/grill-with-docs` session that surfaced net-new features hiding inside "polish" (Tags had no UI, Settings was empty, the checklist was a dead field, there was no note lifecycle). Brings the app to Google-Keep parity with a distinctive, accessible, customisable identity.
 
 Key decisions: [ADR 0008](./docs/adr/0008-tanstack-router-over-react-router.md) (TanStack Router), [ADR 0009](./docs/adr/0009-note-lifecycle-model.md) (note lifecycle model), and the `CONTEXT.md` glossary (lifecycle; checklist redefined as a body task list; tag colour). New deps: `@tanstack/react-router`, `fuse.js`, `fflate`, `motion`, `react-hotkeys-hook`, `driver.js`, `@tiptap/extension-text-align`, `@dnd-kit/*`. One Dexie bump (lifecycle fields + `Tag.color`, remove dead `checklist`; no migration).
 
-Five slices, each a checkable plan doc:
-- **Slice 1 — Foundations** ([plan](./docs/superpowers/plans/2026-07-25-m4-slice1-foundations.md)): lifecycle data model + actions/purge/undo, TanStack Router + nav shell, Dexie-backed `PreferencesProvider`, Tags end-to-end, zip export/import.
-- **Slice 2 — Search & capture** ([plan](./docs/superpowers/plans/2026-07-25-m4-slice2-search-and-capture.md)): Fuse.js fuzzy search, sort + AND tag-pill filters in typed URL params, Keep-style creation speed-dial with auto-capture.
-- **Slice 3 — Polish sweep** ([plan](./docs/superpowers/plans/2026-07-25-m4-slice3-polish-sweep.md)): hover states, missing colour tokens, de-purple, skeletons/empty states, semantics + tab order + error boundary, `mod+K`, editor nodes (Link/HR/code/text-align/code-block) + slash menu.
-- **Slice 4 — Identity & motion** ([plan](./docs/superpowers/plans/2026-07-25-m4-slice4-identity-and-motion.md)): "tactile paper" redesign (prototype-first), Motion animations, full-card colour system, data-driven customisable toolbar, checklist polish, complete Settings.
-- ✅ **Slice 5 — Onboarding** ([plan](./docs/superpowers/plans/2026-07-25-m4-slice5-onboarding.md), [ADR 0015](./docs/adr/0015-the-tour-drives-the-app-on-disposable-props.md)): a five-step Tour that *drives* the app rather than describing it, demonstrating on disposable Props it creates and purges; `driver.js` for the spotlight with React portalled into its popover; first-load + Settings replay; wires Playwright.
+Five slices (six plan docs - 2.5 was scoped mid-milestone), each a checkable plan doc:
+- ✅ **Slice 1 — Foundations** ([plan](./docs/superpowers/plans/2026-07-25-m4-slice1-foundations.md)): lifecycle data model + actions/purge/undo, TanStack Router + nav shell, Dexie-backed `PreferencesProvider`, Tags end-to-end, zip export/import.
+- ✅ **Slice 2 — Search & capture** ([plan](./docs/superpowers/plans/2026-07-25-m4-slice2-search-and-capture.md)): Fuse.js fuzzy search, sort + AND tag-pill filters in typed URL params, Keep-style creation speed-dial with auto-capture.
+- ✅ **Slice 2.5 — Sidebar nav shell** ([plan](./docs/superpowers/plans/2026-07-29-m4-slice2.5-sidebar-nav-shell.md), [ADR 0010](./docs/adr/0010-shadcn-sidebar-as-nav-shell.md)): the vendored shadcn `Sidebar` as the app shell - a full-height icon-collapsible rail from `sm:`, the same content in a drawer below it.
+- ✅ **Slice 3 — Polish sweep** ([plan](./docs/superpowers/plans/2026-07-25-m4-slice3-polish-sweep.md)): hover states, missing colour tokens, de-purple, skeletons/empty states, semantics + tab order + error boundary, `mod+K`, editor nodes (Link/HR/code/text-align/code-block) + slash menu.
+- ✅ **Slice 4 — Identity & motion** ([plan](./docs/superpowers/plans/2026-07-25-m4-slice4-identity-and-motion.md), plus [task 5](./docs/superpowers/plans/2026-08-03-m4-slice4-task5-customisable-toolbar.md), [task 5c](./docs/superpowers/plans/2026-08-07-m4-slice4-task5c-live-checklists-and-held-rank.md), [task 7](./docs/superpowers/plans/2026-08-08-m4-slice4-task7-mobile-topbar-and-back.md)): the `nightshift` redesign ([DESIGN.md](./DESIGN.md)), Motion animations, full-card colour system, data-driven customisable toolbar, checklist polish, complete Settings, mobile topbar + back.
+- ✅ **Slice 5 — Onboarding** ([plan](./docs/superpowers/plans/2026-07-25-m4-slice5-onboarding.md), plus [task 7 - timing](./docs/superpowers/plans/2026-08-10-m4-slice5-task7-tour-timing.md), [ADR 0015](./docs/adr/0015-the-tour-drives-the-app-on-disposable-props.md)): a six-step Tour that *drives* the app rather than describing it, demonstrating on disposable Props it creates and purges; `driver.js` for the spotlight with React portalled into its popover; first-load + Settings replay; wires Playwright.
 
-Deferred to pre-release/M5: `navigator.storage.persist()`; single-key power shortcuts + `?` cheat sheet; merge-style import.
+Deferred to pre-release/M5: single-key power shortcuts + `?` cheat sheet; merge-style import; the Settings storage row (see M5).
+Named remainders inside the slice-4 plans rather than dropped: a touch-target audit of the production surfaces, the Motion contract on the speed-dial and tag-filter pills, and keyboard shortcuts for the toolbar actions that have none (task 5's step 4c, which needs sign-off on the bindings rather than code).
+`navigator.storage.persist()` is no longer deferred - it landed in this closeout.
 
 ### M5 — Sync (client-side)
 - Local-account/auth context, REST/HATEOAS API client, response caching, offline mutation queue, conflict resolution against Dexie. Backend lives in the separate repo.
+- **Carried in from M4:** a storage row in Settings reporting `navigator.storage.persisted()` and `estimate()`.
+  The *request* landed in M4 (`src/lib/persistentStorage.ts`, fired on the user's first saved note - Firefox prompts, so it may not land during the Tour).
+  Reporting the answer waits for M5 because this milestone gives that same area a sync status (last synced, queued changes, this device's account), and "is my data safe here" is one question best answered in one block.
 
 ## Per-area plans
 

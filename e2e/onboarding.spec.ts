@@ -77,10 +77,22 @@ test.describe('the Tour', () => {
   });
 
   test('purges its Props when it finishes', async ({ page }) => {
+    // A spent `waitFor` budget is always a bug - nothing retries - and it is
+    // silent by design (`waitFor` returns null on timeout), so a three-second
+    // stall once read as merely a slow step. This walks a whole run, and the
+    // suite runs it at both breakpoints, which is what the stall needed: it
+    // fired at 1280px and not at 390px.
+    const timeouts: string[] = [];
+    page.on('console', (m) => {
+      if (m.text().includes('[tour] timed out')) timeouts.push(m.text());
+    });
+
     await page.goto('/');
     await expectPropsOnTheWall(page);
 
     await finishTheTour(page);
+
+    expect(timeouts).toEqual([]);
 
     await expect(popover(page)).toBeHidden();
     // Step 4 leaves the Feed for /settings, so the Tour ends there.
