@@ -88,6 +88,21 @@
     --safe-right: env(safe-area-inset-right, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --safe-left: env(safe-area-inset-left, 0px);
+
+    /*
+     * How much of the layout viewport the software keyboard covers. Written by
+     * `useKeyboardInset`, which measures `window.visualViewport`; declared here
+     * so every consumer has a real length before the first measurement and on
+     * the browsers that expose no visual viewport at all.
+     *
+     * It is 0 wherever `interactive-widget=resizes-content` is honoured
+     * (Chrome/Android), because there the layout viewport has already shrunk
+     * and there is nothing left to subtract. It is the keyboard's height on
+     * iOS Safari, which ignores that hint and draws the keyboard over the page.
+     * Same variable either way - the platform difference is in the number, not
+     * in the stylesheet.
+     */
+    --keyboard-inset: 0px;
   }
 
   body {

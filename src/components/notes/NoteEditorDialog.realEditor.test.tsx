@@ -1,10 +1,11 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { db } from '@/db/db.ts';
 import { clearNotesDb } from '@/test/db.ts';
+import { setViewport } from '@/test/viewport.ts';
 import { NoteEditorDialog } from './NoteEditorDialog.tsx';
 
 /**
@@ -99,6 +100,11 @@ describe('opening a note with the real editor', () => {
 });
 
 describe('the toolbar customisation sheet, over an unsaved draft', () => {
+  // The `⚙` that opens this sheet is on the bar in the Wide default and off in
+  // the Compact one, and which Layout is in effect is a pointer question as well
+  // as a width one (ADR 0016) - jsdom answers coarse to both unless told.
+  beforeEach(() => setViewport(1024));
+
   function renderDraft() {
     render(
       <PreferencesProvider>

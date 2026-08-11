@@ -61,6 +61,21 @@ type EditorProps = {
    * meta). Desktop keeps the toolbar on top.
    */
   stickyToolbarOnMobile?: boolean;
+  /**
+   * Rendered inside the editor's own column, after the content and *before* the
+   * toolbar.
+   *
+   * It exists so the note bar (labels, colour, pin) can sit above a sticky
+   * toolbar rather than below it. A sticky element cannot leave its parent's
+   * box, so while the bar was a sibling *after* this component the toolbar
+   * bottomed out at this column's edge - roughly 80px above the keyboard, with
+   * the note bar and the sheet's own padding stacked underneath it. Handing the
+   * bar in rather than pinning a second one keeps the rule the mobile editor was
+   * built on: the format toolbar is the only fixed chrome, because formatting is
+   * a typing move and a second permanent strip costs the axis a phone has least
+   * of.
+   */
+  footer?: React.ReactNode;
   /** Extra classes for the editor root (e.g. `flex-1` inside a full-screen sheet). */
   className?: string;
   /** Resolves the owning note id for image inserts (creating a draft note if needed). */
@@ -115,6 +130,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     onUpdate,
     autoFocus,
     stickyToolbarOnMobile,
+    footer,
     className,
     getNoteId,
     autoplayFirstAudio,
@@ -438,6 +454,15 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
           editor={editor}
           className="prose prose-sm min-h-[150px] max-w-none flex-1 cursor-text focus:outline-none"
         />
+
+        {/* The note bar, when a caller hands one in. It is in the flow rather
+            than pinned: `EditorContent` above is `flex-1`, so on a note that
+            fits it is pushed down and sits just above the toolbar exactly as it
+            used to, and on a long one it scrolls away instead of taxing the
+            screen for the whole session. Ordered before the toolbar in the DOM
+            and *not* given `order-last`, which is what puts the toolbar under
+            it once the toolbar is sticky. */}
+        {footer}
 
         {/* A link's own controls belong on the link: `openOnClick` is off inside
             the editor, so this is the only way to see where one points. */}

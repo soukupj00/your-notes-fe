@@ -94,7 +94,7 @@ The `icon` prop is a **string key** resolved via `src/components/icons/icons.ts`
 
 **TanStack Router** with file-based routing ([ADR 0008](./docs/adr/0008-tanstack-router-over-react-router.md)). Route modules live in `src/routes/`; the `@tanstack/router-plugin` Vite plugin (wired in both `vite.config.ts` and `vitest.config.ts`) regenerates `src/routeTree.gen.ts` from them. That file is **generated and committed** — never edit it; it is excluded from Biome and `tsc` reads it directly. Colocated `*.test.tsx` files inside `src/routes/` are excluded from generation via `routeFileIgnorePattern`.
 
-Routes: `/` (active feed), `/archive`, `/trash`, `/tag/$id`, `/settings`, `/settings/labels`.
+Routes: `/` (active feed), `/archive`, `/trash`, `/labels`, `/tag/$id`, `/settings`.
 The four feed routes share one `validateSearch` (`validateNoteSearch`), which is what makes the search box, sort menu, and label filters URL-driven; the Navbar hides the search box on routes without a feed. Route modules stay thin — they pick a scope and a title and delegate to a view (`NotesView`, or a page in `src/pages/`).
 
 `App.tsx` is the composition root: providers (Theme → Preferences → Tooltip → ViewMode) wrap `<RouterProvider>`, and the `declare module '@tanstack/react-router'` block registers the router's types so `<Link to>` and params are type-checked.
@@ -124,7 +124,7 @@ In the feed views that heading is `sr-only` - the visible title row was dropped 
 
 ### Tags / labels (`src/components/tags/`, `src/pages/labels.tsx`)
 
-`NoteTagsBar` (pills + the "＋ Label" popover) is the one place labels are assigned; it resolves an unsaved draft's id lazily through the editor's `ensureNoteId`, the same queue attachments use. `TagPills` renders a note's labels read-only on `NoteCard`, tinted from the shared Note/Tag palette (`lib/note-colors.ts`) via `NoteColorPicker`. `/settings/labels` (`src/pages/labels.tsx`) is the manage view: create, inline rename, colour, merge-into, delete.
+`NoteTagsBar` (pills + the "＋ Label" popover) is the one place labels are assigned; it resolves an unsaved draft's id lazily through the editor's `ensureNoteId`, the same queue attachments use. `TagPills` renders a note's labels read-only on `NoteCard`, tinted from the shared Note/Tag palette (`lib/note-colors.ts`) via `NoteColorPicker`. `/labels` (`src/pages/labels.tsx`) is the manage view: create, inline rename, colour, merge-into, delete. It is a Destination beside Archive and Trash rather than a page inside Settings - `navItems.ts` had always listed it there, and Settings no longer carries a section that only links to it.
 
 ### Backup (`src/lib/backup.ts`, `src/components/settings/`)
 
@@ -147,7 +147,7 @@ The 44px Touch Rule has two mechanisms and they are not interchangeable: `.touch
 
 ### The Tour (`src/lib/tour/`, `src/context/TourProvider.tsx`)
 
-The five-step onboarding Tour ([ADR 0015](./docs/adr/0015-the-tour-drives-the-app-on-disposable-props.md)).
+The six-step onboarding Tour ([ADR 0015](./docs/adr/0015-the-tour-drives-the-app-on-disposable-props.md)).
 It **demonstrates**: every step drives the real app, and the user presses Next, Back or Skip and nothing else.
 
 - It acts on **Props** — three Notes it creates at the start and Purges at the end (`CONTEXT.md`), because a fresh install has an empty Feed and nothing to spotlight.
@@ -155,7 +155,7 @@ The rules live in `lib/tour/props.ts` and they are the part worth reading before
 A Prop is only purged while its `updatedAt` still matches the baseline the Tour last recorded, so **every act that writes to a Prop rebases it** — the `TourStage` handed to a step only offers the rebasing writers, so a step cannot forget.
 The baselines live in the `tourProps` preference rather than React state so a reload mid-Tour leaves something to sweep, and the seed writes notes and baselines in **one transaction** across both stores.
 - **Nothing in `src/lib/tour/` imports `driver.js` or React.** That separation is what makes the steps, the targets, the Prop rules and the inert marking testable at all; `TourProvider` is the only place that knows a spotlight library exists.
-- **A step is a scene, not a layer.** Moving between steps is `exit` the one being left, then `enter` the one arriving, in both directions — the app's state is not additive (step 2's editor covers the wall step 3 points at). Steps 4 and 5 are Settings looked at twice and say so with `continues`.
+- **A step is a scene, not a layer.** Moving between steps is `exit` the one being left, then `enter` the one arriving, in both directions — the app's state is not additive (step 2's editor covers the wall step 3 points at). Steps 4-6 are Settings looked at three times and say so with `continues`; step 4 is where that scene is entered, so `leaveScene` walks the chain back to it.
 - **Everything except the popover is `inert`** for the Tour's lifetime (`lib/tour/inert.ts`), which traps focus, blocks the pointer and stops step 2 raising a phone's keyboard, all with one attribute.
 - Targets are resolved by **first match with a non-zero rect** (`lib/tour/targets.ts`), because several of the app's surfaces are mounted twice with CSS hiding one.
 - Waiting is always on a **DOM condition, never a timer** (`lib/tour/waitFor.ts`): reduced motion is a hard killswitch, so a fixed wait is wrong in both directions at once.

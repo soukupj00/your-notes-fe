@@ -48,16 +48,27 @@ export const TOUR_TARGETS = {
   captureToggle: '[data-tour-toggle]',
   /** Step 2: the editor's toolbar, inside the open note. */
   editorToolbar: '[data-tour="editor-toolbar"]',
-  /** Step 4: the customisation block in Settings. */
-  settingsCustomisation: '[data-tour="settings-customisation"]',
   /**
-   * Step 5: the "your data is on this device" block in Settings.
+   * Step 4: the preview of the bar the user is arranging.
+   *
+   * The strip and not `EditorToolbarSection` around it, and that is a hard
+   * constraint rather than a preference: the section measures **880px on a
+   * phone with an 839px viewport**, so a cutout over it can never be seen whole
+   * - and the app is `inert` for the Tour's lifetime, so the user cannot scroll
+   * to the rest of it. The strip is also the more honest target: it is a picture
+   * of the resulting bar, which is exactly what the step's copy claims.
+   */
+  settingsToolbar: '[data-tour="settings-toolbar"]',
+  /** Step 5: the quick-start order and the ＋'s side, in Settings. */
+  settingsQuickCapture: '[data-tour="settings-quick-capture"]',
+  /**
+   * Step 6: the "your data is on this device" block in Settings.
    *
    * This is `BackupSection` and **not** `PwaInstallSection`, which the file
    * manifest originally named. `PwaInstallSection` returns `null` unless the
    * browser is offering an install, which it is not once the app is installed,
-   * not at all on desktop Firefox, and not in a headless browser - so step 5
-   * would be dropped for most users. It is the step carrying the one fact whose
+   * not at all on desktop Firefox, and not in a headless browser - so the last
+   * step would be dropped for most users. It is the step carrying the one fact whose
    * absence can cost somebody everything they have written, so it may not be the
    * step that goes missing. Exporting a zip is the actionable half of the same
    * message, and that section always renders.

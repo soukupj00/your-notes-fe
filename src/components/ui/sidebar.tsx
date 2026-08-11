@@ -407,8 +407,19 @@ const SidebarMenuItem = React.forwardRef<HTMLLIElement, React.ComponentProps<'li
 );
 SidebarMenuItem.displayName = 'SidebarMenuItem';
 
+// Vendored edit: `group-data-[collapsible=icon]:[&>span:last-child]:hidden` and
+// `justify-center`. Upstream relies on the button being exactly 32px wide for
+// the label to fall outside `overflow-hidden`, which stops being true the moment
+// anything gives the button a different width - and the 44px Coarse floor
+// (ADR 0016) does exactly that, leaving ~12px of label showing in a rail that is
+// meant to be icons only. Hiding the label outright is what makes the collapsed
+// rail independent of the arithmetic; `justify-center` then centres the icon in
+// whatever width the button ends up with, and `mx-auto` centres that button in
+// its slot. Without the last one a 44px button sits at the left of a 48px slot
+// and the four nav icons land 2px off the brand mark above them, which in a
+// 64px rail is a visible jog.
 const sidebarMenuButtonVariants = cva(
-  'peer/menu-button group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0',
+  'peer/menu-button group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center [&>span:last-child]:truncate group-data-[collapsible=icon]:[&>span:last-child]:hidden [&>svg]:size-4 [&>svg]:shrink-0',
   {
     variants: {
       variant: {

@@ -1,5 +1,5 @@
 /**
- * The five steps, as data plus the acts that set each one up and take it back.
+ * The six steps, as data plus the acts that set each one up and take it back.
  *
  * The Tour *demonstrates*: every step drives the real app, on the real Props,
  * and the user presses Next, Back or Skip and nothing else (ADR 0015). So a step
@@ -82,17 +82,19 @@ export interface TourStep {
    * This step is shown in the scene the step before it set up, so stepping
    * between the two neither enters nor exits anything.
    *
-   * Only step 5 carries it, and it is what keeps `exit` a strict inverse
+   * Steps 5 and 6 carry it, and it is what keeps `exit` a strict inverse
    * everywhere else. Every other move is "leave this scene, enter that one":
    * the app's state is not additive - step 2's editor covers the wall step 3
    * points at - so a step that only ever entered would arrive to find the
-   * previous step's act in the way. Steps 4 and 5 are the exception because
-   * they are the same place looked at twice, and running step 4's `exit` on the
-   * way to step 5 would bounce the user back to the Feed and then have to
-   * navigate to Settings again.
+   * previous step's act in the way. The last three steps are the exception
+   * because they are the same place looked at three times, and running step 4's
+   * `exit` on the way to step 5 would bounce the user back to the Feed and then
+   * have to navigate to Settings again.
    *
-   * `TourProvider` also reads it in reverse: ending the Tour on step 5 has to
-   * unwind step 4 as well, because step 4 is where the scene was entered.
+   * `TourProvider` also reads it in reverse: ending the Tour on step 6 has to
+   * unwind back to step 4, because step 4 is where the scene was entered. That
+   * walk is `leaveScene`, which follows the chain rather than counting - so
+   * adding a fourth look at Settings would need no change here.
    */
   continues?: boolean;
 }
@@ -228,16 +230,23 @@ export const TOUR_STEPS: TourStep[] = [
   },
 
   /**
-   * 4 - Make it yours. The step's act is the navigation itself: Settings is a
+   * 4 - Your toolbar. The step's act is the navigation itself: Settings is a
    * place, and a Tour that described it without going there would be back to
    * being a caption.
+   *
+   * It points at the preview strip, not at the section holding it. That is a
+   * measurement, not taste: `EditorToolbarSection` is **880px on an 839px
+   * phone**, and the app is `inert` for the Tour's lifetime, so a cutout over it
+   * is a hole whose bottom edge the user can never reach. This step and the next
+   * were one step (`settings`, over a 1296px block covering both sections) and
+   * split for exactly that reason.
    */
   {
-    key: 'settings',
-    target: () => 'settingsCustomisation',
+    key: 'toolbar',
+    target: () => 'settingsToolbar',
     enter: async (stage) => {
       await stage.navigate('/settings');
-      await waitForTarget('settingsCustomisation');
+      await waitForTarget('settingsToolbar');
     },
     exit: async (stage) => {
       // Back rather than a forward navigation to `/`: the Tour is retracing its
@@ -249,11 +258,23 @@ export const TOUR_STEPS: TourStep[] = [
   },
 
   /**
-   * 5 - It all lives here. No act: the last step is a fact about where the data
+   * 5 - Your quick starts. The second half of the old step 4, and the reason it
+   * needs no act of its own: step 4 is already in Settings, so this is the same
+   * scene looked at again - hence `continues`.
+   */
+  {
+    key: 'quickCapture',
+    target: () => 'settingsQuickCapture',
+    continues: true,
+  },
+
+  /**
+   * 6 - It all lives here. No act: the last step is a fact about where the data
    * is, and the section it points at is the one that gets it off the device.
    *
-   * It is already *in* Settings, because step 4 went there - hence `continues`,
-   * which is the whole of what "no act" means here.
+   * Still in the scene step 4 entered, two steps back now. `leaveScene` walks
+   * the `continues` chain until it reaches the step that entered the scene, so
+   * the chain length is not something this file has to state.
    */
   {
     key: 'local',

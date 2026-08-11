@@ -189,9 +189,6 @@
     "appearance": {
       "title": "Vzhled"
     },
-    "labels": {
-      "description": "Přejmenujte, sloučte, obarvěte a mažte své štítky."
-    },
     "locale": {
       "label": "Jazyk"
     },
@@ -266,7 +263,7 @@
       "fold": "Na telefonu se před touto čarou vejde asi {{slots}} tlačítek",
       "width": {
         "legend": "Upravujete rozvržení pro",
-        "hint": "Úzké a široké okno mají vlastní rozvržení. Které uvidíte, určuje šířka okna, takže i malé okno na počítači je úzké.",
+        "hint": "Úzké a široké okno mají vlastní rozvržení. Úzké dostanete v úzkém okně a na každém dotykovém zařízení - telefon zůstane úzký i naležato.",
         "compact": "Úzké okno",
         "wide": "Široké okno"
       },
@@ -508,11 +505,15 @@
       },
       "wall": {
         "title": "Tvoje nástěnka",
-        "body": "Připni poznámku nahoru, dej jí barvu nebo štítek. Archiv si ji nechá, koš ji zahodí a nechá chvíli na rozmyšlenou - a {{mod}} K najde kteroukoliv."
+        "body": "Připni poznámku nahoru, dej jí barvu nebo štítek. Archiv si ji nechá, koš ji zahodí a nechá chvíli na rozmyšlenou."
       },
-      "settings": {
-        "title": "Uprav si to",
-        "body": "Vyber, která tlačítka nese lišta editoru, v jakém pořadí se nabízejí rychlé starty a pod kterým palcem sedí ＋."
+      "toolbar": {
+        "title": "Tvoje lišta",
+        "body": "Vyber, která tlačítka nese lišta editoru a v jakém pořadí. Telefon a počítač si drží každý své uspořádání."
+      },
+      "quickCapture": {
+        "title": "Tvoje rychlé starty",
+        "body": "Přeskládej způsoby, jak začít, ať je první ten, po kterém saháš nejčastěji, a dej ＋ pod palec, který používáš."
       },
       "local": {
         "title": "Všechno zůstává tady",

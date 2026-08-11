@@ -22,10 +22,10 @@ vi.mock('@/i18n', () => ({
   },
 }));
 
-// The page links to /settings/labels and `HelpSection` can start the Tour;
-// neither destination is what this file is about, and rendering either for real
-// would drag in a router. The three hooks are `TourProvider`'s, which the mount
-// below wraps the page in so the replay row has a Tour to ask about.
+// `HelpSection` can start the Tour and the page links out to it; neither is
+// what this file is about, and rendering either for real would drag in a router.
+// The three hooks are `TourProvider`'s, which the mount below wraps the page in
+// so the replay row has a Tour to ask about.
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, ...props }: { children: React.ReactNode }) => <a {...props}>{children}</a>,
   useNavigate: () => vi.fn(),

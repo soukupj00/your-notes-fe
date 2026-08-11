@@ -69,7 +69,7 @@ It cuts a hole in an **SVG overlay** (the overlay takes `pointer-events: none`, 
 That matters concretely here: every masonry card is an `m.li` carrying an x/y transform and therefore its own stacking context, so a `z-index`-based spotlight - which is what a naive hand-roll reaches for - would leave the highlighted card dimmed underneath the scrim.
 
 Two gaps are patched rather than lived with.
-`driver.js` renders its own popover markup, so React is portalled into it through `onPopoverRender`, giving the real `Button` component, real `useTranslation`, an honest "3 of 5" counter, an `aria-live` step announcement, and safe-area padding its own positioning engine knows nothing about.
+`driver.js` renders its own popover markup, so React is portalled into it through `onPopoverRender`, giving the real `Button` component, real `useTranslation`, an honest "3 of 6" counter, an `aria-live` step announcement, and safe-area padding its own positioning engine knows nothing about.
 And because no step needs the user to touch the app, everything is marked `inert` for the Tour's lifetime - every direct child of `document.body` except the popover's own portal, rather than just the app root, since Radix portals to `body` and the editor dialog would otherwise escape it.
 That earns its keep three times over: Tab cycles inside the popover with no focus-trap library, the dimmed UI is unreachable by keyboard as well as pointer, and the software keyboard cannot rise during the editor step.
 The last is the one that would otherwise have hurt.

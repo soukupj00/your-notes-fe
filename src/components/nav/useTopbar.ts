@@ -35,5 +35,5 @@ export function useTopbar(): ResolvedTopbar {
     title = tag?.name ?? t('nav.labels');
   }
 
-  return { kind: config.kind, parent: config.parent, title };
+  return { kind: config.kind, title };
 }

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '@/db/db.ts';
 import { clearNotesDb } from '@/test/db.ts';
 import { renderRoute } from '@/test/renderRoute.tsx';
+import { setViewport } from '@/test/viewport.ts';
 
 // Vitest hoists `vi.mock`, so these cannot come from a shared helper.
 vi.mock('react-i18next', () => ({
@@ -23,7 +24,7 @@ vi.mock('@/components/notes/NoteEditorDialog.tsx', () => ({
 const MOBILE_WIDTH = 500;
 
 beforeEach(() => {
-  window.innerWidth = MOBILE_WIDTH;
+  setViewport(MOBILE_WIDTH);
 });
 
 afterEach(async () => {
@@ -35,7 +36,7 @@ const back = () => screen.findByRole('button', { name: 'nav.back' });
 const appBar = () => document.querySelector('[data-slot="app-bar"]') as HTMLElement;
 
 describe('the topbar left slot', () => {
-  it('is the drawer trigger on a feed', async () => {
+  it('is the drawer trigger on a Destination', async () => {
     renderRoute('/');
 
     // The desktop row renders too (it is hidden with CSS, which jsdom does not
@@ -45,14 +46,28 @@ describe('the topbar left slot', () => {
     expect(within(appBar()).queryByRole('button', { name: 'nav.back' })).not.toBeInTheDocument();
   });
 
-  it('is back on a page, which gives up the drawer', async () => {
+  it('is back on a page that is not a Destination, which gives up the drawer', async () => {
     renderRoute('/settings');
 
     await waitFor(() => expect(appBar()).not.toBeNull());
     expect(within(appBar()).getByRole('button', { name: 'nav.back' })).toBeInTheDocument();
-    // Deliberate: the settings stack is somewhere you exit, not a peer of the
-    // feeds, so it trades the drawer for a way out.
+    // Deliberate: Settings is somewhere you exit and is absent from
+    // `navItems.ts`, so the drawer it would open does not list the page you are
+    // standing on. It trades the trigger for a way out.
     expect(within(appBar()).queryByRole('button', { name: 'nav.toggle' })).not.toBeInTheDocument();
+  });
+
+  // The regression this file exists for now. Labels is in `navItems.ts` - the
+  // drawer lists it beside Notes, Archive and Trash - and it was the only one of
+  // the four offering back instead, to a parent the user had very likely never
+  // been on. It lived at `/settings/labels` then; being a Destination is what
+  // decides the control either way, not where the URL sits.
+  it('is the drawer trigger on the labels Destination', async () => {
+    renderRoute('/labels');
+
+    await waitFor(() => expect(appBar()).not.toBeNull());
+    expect(within(appBar()).getByRole('button', { name: 'nav.toggle' })).toBeInTheDocument();
+    expect(within(appBar()).queryByRole('button', { name: 'nav.back' })).not.toBeInTheDocument();
   });
 });
 
@@ -76,14 +91,6 @@ describe('BackButton', () => {
     await userEvent.click(await back());
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/'));
-  });
-
-  it('walks the settings stack one level at a time when cold', async () => {
-    const router = renderRoute('/settings/labels');
-
-    await userEvent.click(await back());
-
-    await waitFor(() => expect(router.state.location.pathname).toBe('/settings'));
   });
 });
 

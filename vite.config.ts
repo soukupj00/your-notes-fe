@@ -29,8 +29,14 @@ export default defineConfig({
         short_name: 'YouNotes',
         start_url: '/',
         display: 'standalone',
-        background_color: '#f7f8fb',
-        theme_color: '#7257dc',
+        // The dark `--canvas` from `globals.css`, because `App.tsx` opens on
+        // `defaultTheme="dark"`. A manifest is stamped at build time and cannot
+        // read a token, so this is the one place the value is restated - and it
+        // only has to hold until React mounts, after which `themeProvider`
+        // writes the live one to `<meta name="theme-color">`. The purple it
+        // replaced predated the nightshift palette and appeared nowhere in it.
+        background_color: '#0d0f15',
+        theme_color: '#0d0f15',
         icons: [
           { src: 'note-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'note-512.png', sizes: '512x512', type: 'image/png' },

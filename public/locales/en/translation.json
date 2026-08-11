@@ -189,9 +189,6 @@
     "appearance": {
       "title": "Appearance"
     },
-    "labels": {
-      "description": "Rename, merge, colour and delete your labels."
-    },
     "locale": {
       "label": "Language"
     },
@@ -266,7 +263,7 @@
       "fold": "A phone shows about {{slots}} buttons before this line",
       "width": {
         "legend": "Editing the layout for",
-        "hint": "Narrow and wide are separate layouts. Which one you get follows the window's width, so a small desktop window is narrow too.",
+        "hint": "Narrow and wide are separate layouts. You get the narrow one on a narrow window, and on any touchscreen - a phone stays narrow held sideways.",
         "compact": "Narrow window",
         "wide": "Wide window"
       },
@@ -507,11 +504,15 @@
       },
       "wall": {
         "title": "Your wall",
-        "body": "Pin a note to keep it on top, give it a colour or a label. Archive keeps it, trash lets it go with a moment to change your mind - and {{mod}} K finds any of them."
+        "body": "Pin a note to keep it on top, give it a colour or a label. Archive keeps it, trash lets it go with a moment to change your mind."
       },
-      "settings": {
-        "title": "Make it yours",
-        "body": "Choose which buttons the editor's toolbar carries, which order the quick starts come in, and which thumb the ＋ sits under."
+      "toolbar": {
+        "title": "Your toolbar",
+        "body": "Choose which buttons the editor's toolbar carries, and in what order. Phone and desktop each keep their own arrangement."
+      },
+      "quickCapture": {
+        "title": "Your quick starts",
+        "body": "Reorder the ways in so the one you reach for most comes first, and put the ＋ under whichever thumb you use."
       },
       "local": {
         "title": "It all lives here",

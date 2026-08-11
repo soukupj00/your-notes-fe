@@ -94,13 +94,13 @@ function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Navbar. One rule shapes it: the drawer trigger belongs to feed
-          routes, and every other surface gets back (`topbar.ts`). No logo here
-          either - it clutters the bar and lives in SidebarHeader, so it still
-          shows inside the drawer the trigger opens. */}
+      {/* Mobile Navbar. One rule shapes it: the drawer trigger belongs to
+          Destinations, and a page with a parent gets back (`topbar.ts`). No logo
+          here either - it clutters the bar and lives in SidebarHeader, so it
+          still shows inside the drawer the trigger opens. */}
       <div className="sm:hidden">
         <AppBar
-          left={topbar.kind === 'feed' ? <SidebarTrigger /> : <BackButton parent={topbar.parent} />}
+          left={topbar.kind === 'destination' ? <SidebarTrigger /> : <BackButton />}
           // The search box takes the middle only when there is no title to put
           // there; with a title it drops to its own row below, so it stays
           // full-bleed instead of being squeezed between two 44px controls.
@@ -117,7 +117,7 @@ function Navbar() {
           // on a phone - there was no back button to come home with. Now there
           // is, so the copy is just a second place for a setting to live.
           right={
-            topbar.kind === 'feed' && (
+            topbar.kind === 'destination' && (
               <Button variant="ghost" size="icon" className={CHROME_ICON_BUTTON} asChild>
                 <Link to="/settings" aria-label={t('nav.settings')}>
                   <Settings />

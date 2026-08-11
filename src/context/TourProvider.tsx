@@ -44,8 +44,9 @@ import 'driver.js/dist/driver.css';
  * wall step 3 points at - so moving between steps is "leave this scene, enter
  * that one": `exit` the step being left, `enter` the one arriving. That is what
  * makes `exit` a strict inverse rather than a second forward move, which is the
- * contract `steps.test.ts` pins. Steps 4 and 5 are one scene looked at twice and
- * say so with `continues`; stepping between them does neither.
+ * contract `steps.test.ts` pins. The last three steps are one scene (Settings)
+ * looked at three times and say so with `continues`; stepping between them does
+ * neither.
  *
  * ## Everything else is inert
  *
@@ -211,13 +212,33 @@ export function TourProvider({ children }: { children: ReactNode }) {
     ownNavigationsRef.current += 1;
   }, []);
 
+  /**
+   * Every navigation the Tour makes opts out of the router's scroll reset, and
+   * it is load-bearing rather than tidy.
+   *
+   * TanStack Router scrolls to the top on navigate (`resetScroll ?? true`), and
+   * that lands *after* the spotlight has asked for its target. Traced on a
+   * Pixel 7: driver called `scrollIntoView({behavior:'smooth', block:'start'})`
+   * at 2637ms and the router called `scrollTo({top:0})` at 2648ms, so the step
+   * that navigates to Settings spotlit a block 930px below the fold while its
+   * popover sat at the bottom of the screen pointing at nothing. Instant scroll
+   * would have lost the same race; the router's call simply comes second.
+   *
+   * `openNote` needs it for the same reason even though its scroll is behind a
+   * dialog: it returns to the Feed, and the step after it points at a card there
+   * that a reset to the top can put off-screen.
+   */
   const makeStage = useCallback(
     (): TourStage => ({
       props: propsRef.current,
       openNote: (id) => {
         openedPropRef.current = id;
         markNavigation();
-        void navigate({ to: '/', search: (prev) => ({ ...prev, note: id }) });
+        void navigate({
+          to: '/',
+          search: (prev) => ({ ...prev, note: id }),
+          resetScroll: false,
+        });
       },
       closeNote: () => {
         const id = openedPropRef.current;
@@ -248,7 +269,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         markNavigation();
         // `steps.ts` names routes as plain strings so it can stay clear of the
         // router's types; this is the one place that has to reconcile the two.
-        await navigate({ to: to as '/settings' });
+        await navigate({ to: to as '/settings', resetScroll: false });
       },
       back: () => {
         markNavigation();
@@ -365,7 +386,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         // A Tour is not over until its Props are gone (CONTEXT.md): clearing
         // the stage is the Tour's last act, not the app's first one. Swept
         // *before* the app is handed back, so the three notes the user did not
-        // write are never seen leaving - from steps 4 and 5 the Feed is not
+        // write are never seen leaving - from the Settings steps the Feed is not
         // even mounted, and from the rest the app is still dimmed and inert.
         //
         // Purging with step 2's editor still open is safe rather than merely

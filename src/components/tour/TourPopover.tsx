@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.tsx';
-import { getShortcutKey } from '@/utils/platform.ts';
 
 /**
  * The Tour's popover, as React rather than as strings handed to `driver.js`.
@@ -66,12 +65,13 @@ export function TourPopover({
         <h2 className="font-display text-foreground text-title">
           {t(`onboarding.steps.${stepKey}.title`)}
         </h2>
-        {/* `mod` is handed to every step, not only the one that names a
-            shortcut: an unused interpolation costs nothing, and the alternative
-            is copy that has to declare which placeholders it wants. */}
-        <p className="text-body text-muted-foreground">
-          {t(`onboarding.steps.${stepKey}.body`, { mod: getShortcutKey('mod').symbol })}
-        </p>
+        {/* No interpolation. Step 3 used to end "and {{mod}} K finds any of
+            them", which the Tour showed to every device including the ones with
+            no modifier key to press (ADR 0016) - and unlike a hint chip that can
+            be hidden, a clause is part of the sentence. It was also the only
+            line in the Tour naming a key rather than a place the step points at,
+            so the copy lost nothing by dropping it. */}
+        <p className="text-body text-muted-foreground">{t(`onboarding.steps.${stepKey}.body`)}</p>
       </div>
 
       <div className="flex items-center justify-between gap-2">

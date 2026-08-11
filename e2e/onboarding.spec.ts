@@ -33,8 +33,8 @@ import { expect, type Page, test } from '@playwright/test';
 
 const PROP_HEADERS = ['Groceries', 'Weekend in Brno', 'Ideas'] as const;
 
-/** The last step's advance button reads `Done`; the four before it read `Next`. */
-const STEPS = 5;
+/** The last step's advance button reads `Done`; the five before it read `Next`. */
+const STEPS = 6;
 
 function popover(page: Page) {
   return page.getByTestId('tour-popover');

@@ -33,7 +33,13 @@ export function ToolbarPreviewStrip({ layout, widthClass }: ToolbarPreviewStripP
   );
 
   return (
-    <div className="flex flex-col gap-1 p-3">
+    // `data-tour` sits here rather than on `EditorToolbarSection` around it: the
+    // section measures 880px on an 839px phone, so a spotlight over it can never
+    // be seen whole, and the Tour is `inert` so nobody can scroll to the rest.
+    // This strip is also the better target - it is a picture of the bar the step
+    // is talking about. Only Settings mounts the strip (`showPreview`), so there
+    // is one of these in the document.
+    <div data-tour="settings-toolbar" className="flex flex-col gap-1 p-3">
       <span className="text-muted-foreground text-xs">{t('settings.toolbar.preview')}</span>
       <div
         aria-hidden

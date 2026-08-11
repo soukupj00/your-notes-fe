@@ -64,7 +64,8 @@ const DESKTOP_FEED = `
 `;
 
 const SETTINGS = `
-  <section data-tour="settings-customisation"></section>
+  <section data-tour="settings-toolbar"></section>
+  <section data-tour="settings-quick-capture"></section>
   <section data-tour="settings-local"></section>
 `;
 
@@ -147,14 +148,15 @@ afterEach(async () => {
 });
 
 describe('the step list', () => {
-  it('is the five steps, in the order the copy is written for', () => {
+  it('is the six steps, in the order the copy is written for', () => {
     // The keys are also the copy's keys (`onboarding.steps.<key>`), so this is
     // the test that fails when a step is renamed in one place only.
     expect(TOUR_STEPS.map((s) => s.key)).toEqual([
       'capture',
       'editor',
       'wall',
-      'settings',
+      'toolbar',
+      'quickCapture',
       'local',
     ]);
   });
@@ -269,21 +271,21 @@ describe('step 3, the wall', () => {
   });
 });
 
-describe('step 4, Settings', () => {
+describe('step 4, the toolbar in Settings', () => {
   it('navigates there and waits for the block it points at', async () => {
     const { stage, calls } = paperApp();
 
-    await step('settings').enter?.(stage);
+    await step('toolbar').enter?.(stage);
 
     expect(calls).toEqual(['navigate:/settings']);
-    expect(document.querySelector('[data-tour="settings-customisation"]')).not.toBeNull();
+    expect(document.querySelector('[data-tour="settings-toolbar"]')).not.toBeNull();
   });
 
   it('retreats by popping history rather than navigating forward again', async () => {
     const { stage, calls } = paperApp();
-    await step('settings').enter?.(stage);
+    await step('toolbar').enter?.(stage);
 
-    await step('settings').exit?.(stage);
+    await step('toolbar').exit?.(stage);
 
     expect(calls).toEqual(['navigate:/settings', 'back']);
     expect(document.querySelector('[data-tour="capture"]')).not.toBeNull();
@@ -332,17 +334,19 @@ describe('every step round-trips', () => {
 describe('moving between steps', () => {
   const at = (key: string) => TOUR_STEPS.findIndex((step) => step.key === key);
 
-  it('changes scene for every move but the one pair that shares a place', () => {
-    // Steps 4 and 5 are Settings looked at twice. Exiting step 4 on the way to
-    // step 5 would bounce the user back to the Feed and then have to navigate to
-    // Settings again, with the whole flash in between.
-    expect(changesScene(at('settings'), at('local'))).toBe(false);
-    expect(changesScene(at('local'), at('settings'))).toBe(false);
+  it('changes scene for every move but the ones that share a place', () => {
+    // Steps 4, 5 and 6 are Settings looked at three times. Exiting step 4 on the
+    // way to step 5 would bounce the user back to the Feed and then have to
+    // navigate to Settings again, with the whole flash in between.
+    expect(changesScene(at('toolbar'), at('quickCapture'))).toBe(false);
+    expect(changesScene(at('quickCapture'), at('toolbar'))).toBe(false);
+    expect(changesScene(at('quickCapture'), at('local'))).toBe(false);
+    expect(changesScene(at('local'), at('quickCapture'))).toBe(false);
 
     expect(changesScene(at('capture'), at('editor'))).toBe(true);
     expect(changesScene(at('editor'), at('wall'))).toBe(true);
-    expect(changesScene(at('wall'), at('settings'))).toBe(true);
-    expect(changesScene(at('settings'), at('wall'))).toBe(true);
+    expect(changesScene(at('wall'), at('toolbar'))).toBe(true);
+    expect(changesScene(at('toolbar'), at('wall'))).toBe(true);
   });
 
   it('unwinds one step when that step is the whole scene', async () => {
@@ -356,10 +360,12 @@ describe('moving between steps', () => {
   });
 
   it('unwinds the step that opened the scene as well, when ending on a continuation', async () => {
-    // Skipping or finishing on step 5 has to undo step 4's navigation, because
-    // step 4 is where the scene was entered and step 5 has nothing of its own.
+    // Skipping or finishing on step 6 has to undo step 4's navigation, because
+    // step 4 is where the scene was entered and the two after it have nothing of
+    // their own. `leaveScene` walks the `continues` chain rather than counting,
+    // so this holds however many looks at Settings the Tour grows.
     const { stage, calls } = paperApp();
-    await step('settings').enter?.(stage);
+    await step('toolbar').enter?.(stage);
     calls.length = 0;
 
     await leaveScene(at('local'), stage);

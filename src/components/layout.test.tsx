@@ -5,6 +5,7 @@ import { NAV_ITEMS } from '@/components/nav/navItems.ts';
 import { db } from '@/db/db.ts';
 import { clearNotesDb } from '@/test/db.ts';
 import { renderRoute } from '@/test/renderRoute.tsx';
+import { setViewport } from '@/test/viewport.ts';
 
 // Vitest hoists `vi.mock`, so these cannot come from a shared helper - they have
 // to be declared in every file that needs them.
@@ -27,9 +28,9 @@ vi.mock('@/components/notes/NoteEditorDialog.tsx', () => ({
 }));
 
 const DESKTOP_WIDTH = 1024;
-/** `useIsMobile` reads `innerWidth` synchronously, so this must be set pre-render. */
+/** `useIsMobile` reads its query synchronously, so this must be set pre-render. */
 function setViewportWidth(width: number) {
-  window.innerWidth = width;
+  setViewport(width);
 }
 
 async function seedTag() {

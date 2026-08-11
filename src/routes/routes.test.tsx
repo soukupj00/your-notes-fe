@@ -240,16 +240,6 @@ describe('settings page', () => {
     await waitFor(() => expect(document.documentElement).toHaveClass('light'));
     expect(localStorage.getItem('vite-ui-theme')).toBe('light');
   });
-
-  it('links to the manage-labels view', async () => {
-    renderAt('/settings');
-
-    // Scoped to the page: the sidebar carries its own "Edit labels" link.
-    const link = await within(await screen.findByRole('main')).findByRole('link', {
-      name: 'nav.editLabels',
-    });
-    expect(link).toHaveAttribute('href', '/settings/labels');
-  });
 });
 
 describe('trash view', () => {

@@ -240,7 +240,13 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
             plus that. 12px read as a hole on a phone, where the card is the
             scarce surface; 4px lands the visible gap at the same ~8px the rail
             keeps below itself. */}
-        <div className="coarse:mt-1 mt-3 flex flex-wrap items-end gap-2">
+        {/* `items-center`, not `items-end`. A pill is 21px and a control is 44px
+            on a coarse pointer, so bottom-aligning them put the label 11px below
+            the icons' centre line - which read, correctly, as a label sagging to
+            the bottom of the card. It only showed where the two share a flex
+            line (list view, or any card wide enough); in the grid the pills wrap
+            to a line of their own and either value looks the same. */}
+        <div className="coarse:mt-1 mt-3 flex flex-wrap items-center gap-2">
           <TagPills tags={tags} maxVisible={3} className="min-w-0" />
 
           <CardActions

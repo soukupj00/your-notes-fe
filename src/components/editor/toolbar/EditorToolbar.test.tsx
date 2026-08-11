@@ -12,6 +12,7 @@ import { ListItem } from '@/components/editor/extensions/ListItem';
 import { OrderedList } from '@/components/editor/extensions/OrderedList';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import { setViewport } from '@/test/viewport.ts';
 import EditorToolbar from './EditorToolbar';
 import type { ToolbarLayout } from './types';
 
@@ -31,10 +32,6 @@ function createEditor() {
   });
   editors.push(editor);
   return editor;
-}
-
-function setWidth(px: number) {
-  window.innerWidth = px;
 }
 
 /**
@@ -102,7 +99,7 @@ const LAYOUT: ToolbarLayout = [
 ];
 
 describe('EditorToolbar', () => {
-  beforeEach(() => setWidth(1024));
+  beforeEach(() => setViewport(1024));
 
   it('renders the resolved items in the stored order', () => {
     renderToolbar(LAYOUT);
@@ -152,7 +149,7 @@ describe('EditorToolbar', () => {
   it('pins the first family on a compact bar that scrolls, and only there', () => {
     const restore = stubOverflow({ scrollWidth: 500, clientWidth: 312 });
     try {
-      setWidth(360);
+      setViewport(360);
       renderToolbar(LAYOUT);
       const pinned = screen.getByTestId('editor-toolbar').querySelectorAll('[data-pinned]');
       // Exactly one, and it is the first family in the user's order.
@@ -162,7 +159,7 @@ describe('EditorToolbar', () => {
       );
 
       cleanup();
-      setWidth(1024);
+      setViewport(1024);
       renderToolbar(LAYOUT);
       // A wide bar wraps rather than scrolls, so nothing can scroll away from it.
       expect(screen.getByTestId('editor-toolbar').querySelectorAll('[data-pinned]')).toHaveLength(
@@ -176,7 +173,7 @@ describe('EditorToolbar', () => {
   it('leaves a bar that fits unpinned, so its buttons can be spaced evenly', () => {
     const restore = stubOverflow({ scrollWidth: 292, clientWidth: 312 });
     try {
-      setWidth(360);
+      setViewport(360);
       renderToolbar(LAYOUT);
       // Nothing can scroll under a pin on a bar with nothing to scroll, and the
       // wrapper would cost the even spacing: it makes its family one flex item,
@@ -192,7 +189,7 @@ describe('EditorToolbar', () => {
   it('wraps the pinned family without costing the row any width', () => {
     const restore = stubOverflow({ scrollWidth: 500, clientWidth: 312 });
     try {
-      setWidth(360);
+      setViewport(360);
       renderToolbar(LAYOUT);
       const bar = screen.getByTestId('editor-toolbar');
       const pin = bar.querySelector('[data-pinned]');
@@ -210,7 +207,7 @@ describe('EditorToolbar', () => {
   it('never fades the edge the pinned family sits on', () => {
     const restore = stubOverflow({ scrollWidth: 500, clientWidth: 312 });
     try {
-      setWidth(360);
+      setViewport(360);
       renderToolbar(LAYOUT);
       expect(screen.getByTestId('editor-toolbar').dataset.overflowStart).toBeUndefined();
     } finally {
@@ -219,14 +216,14 @@ describe('EditorToolbar', () => {
   });
 
   it('wraps on a wide window and scrolls on a compact one, never wrapping there', () => {
-    setWidth(1024);
+    setViewport(1024);
     renderToolbar(LAYOUT);
     const wide = screen.getByTestId('editor-toolbar');
     expect(wide.dataset.widthClass).toBe('wide');
     expect(wide.className).toContain('flex-wrap');
 
     cleanup();
-    setWidth(360);
+    setViewport(360);
     renderToolbar(LAYOUT);
     const compact = screen.getByTestId('editor-toolbar');
     expect(compact.dataset.widthClass).toBe('compact');
@@ -247,7 +244,7 @@ const META_ONLY: ToolbarLayout = [
 ];
 
 describe('the customize gear', () => {
-  beforeEach(() => setWidth(1024));
+  beforeEach(() => setViewport(1024));
 
   it('renders even though no extension backs it', () => {
     renderToolbar(META_ONLY);

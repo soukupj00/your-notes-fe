@@ -37,3 +37,6 @@ dist-ssr
 
 # Per-machine Claude Code permissions, not shared
 .claude/settings.local.json
+
+# TanStack Router plugin scratch dir
+.tanstack

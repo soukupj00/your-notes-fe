@@ -57,6 +57,13 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
 - **Vision Mode** — An accessibility modifier that composes *with* a Theme rather than replacing it, re-valuing the Note identity colors so they carry identity on lightness first and hue second. It is independent of Theme: a user may have dark and a Vision Mode at once, because color vision and a preference for a dark room are unrelated. Distinct from a Theme: a Theme re-lights everything, a Vision Mode re-values only the Note identity colors.
 - **Locale** — The language the UI is presented in (e.g. `en`, `cs`).
 - **Fallback** — The Locale used when the active Locale lacks a translation for a given string. The Fallback is always English (`en`).
+- **Pointer Class** — Whether the primary input is a mouse (**Fine**) or a finger (**Coarse**).
+  It is independent of Width Class, and the two disagree in both directions: a phone held sideways is a wide window with a Coarse pointer, and a touchscreen laptop is a wide window that is Fine but can still be tapped.
+  Width Class decides what the app *lays out*; Pointer Class decides which *affordances* it offers - the 44px minimum a control grows to, and whether a keyboard shortcut is named at all.
+  A shortcut is never shown to a Coarse pointer, because that device has no key to press: showing one is a promise the hardware cannot keep.
+- **Destination** — A place the nav lists and can reach directly, in the rail or the drawer.
+  Every Destination shows the nav control in its top-left corner; a page that is *not* one shows Back, because it has a parent it was opened from.
+  A Destination is not the same thing as a surface with a Feed: managing labels is a Destination and has no Feed, and Settings has neither.
 
 ## Onboarding
 

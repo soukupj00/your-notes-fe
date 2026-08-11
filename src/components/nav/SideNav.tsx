@@ -14,6 +14,22 @@ import { useTags } from '@/hooks/data/useTags.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
 
 /**
+ * The rail is 4rem wide, so this padding is what is left for the buttons inside
+ * it: `px-4` leaves exactly 32px, which fits their `size-8` and is 12px short of
+ * the 44px floor a Coarse pointer imposes (ADR 0016). A phone in landscape is
+ * wide enough for the desktop rail *and* Coarse, and there the buttons
+ * overflowed their slot to the right, dragging the first glyphs of their labels
+ * into a rail that is supposed to hold icons only.
+ *
+ * Collapsed, the rail makes room instead of opting out of the floor. 44px hit
+ * boxes hung off 32px buttons at this menu's 36px pitch would have overlapped
+ * their neighbours by 8px, and a mis-tap in navigation is a worse bug than the
+ * one being fixed. At `px-2` there is 48px of content, the button centres in it,
+ * and the pitch becomes 48px.
+ */
+const GROUP_PADDING = 'px-4 group-data-[collapsible=icon]:px-2';
+
+/**
  * The nav link list, rendered by both the desktop sidebar and the mobile
  * drawer. It closes the drawer itself on selection, so callers do not have to
  * know the drawer exists.
@@ -34,7 +50,7 @@ export function SideNav() {
 
   return (
     <nav aria-label={t('nav.primary')}>
-      <SidebarGroup className="px-4">
+      <SidebarGroup className={GROUP_PADDING}>
         <SidebarGroupContent>
           <SidebarMenu>
             {NAV_ITEMS.map(({ to, icon: Icon, labelKey }) => (
@@ -60,7 +76,7 @@ export function SideNav() {
       </SidebarGroup>
 
       {showLabels && (
-        <SidebarGroup className="px-4">
+        <SidebarGroup className={GROUP_PADDING}>
           <SidebarGroupLabel>{t('nav.labels')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
