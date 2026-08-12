@@ -10,7 +10,7 @@ Domain glossary for the note-taking app. This file defines the **language** of t
 - **Sinking** — Presenting a Checklist with its checked items gathered at the bottom, below its unchecked ones. Sinking is a way of *showing* a Checklist, never a way of storing one: the order the user typed is what is kept, so unchecking an item returns it to exactly the place it was authored in. Applies to every surface a Checklist appears on, so the same list never reads two ways.
 - **Tag** — A user-defined label (e.g. "Work", "Personal") used to group Notes. A Tag exists independently of any Note and can be attached to many Notes. May carry an optional **Color** (a palette token, resolved per-Theme like a Note's Color).
 - **NoteTag** — The many-to-many association between a Note and a Tag. Attaching or detaching a Tag creates or removes a NoteTag; it never deletes the Tag itself.
-- **Attachment** — Any non-text media belonging to a Note. An Attachment is authored **inside the Body**: the Body holds a lightweight reference to the Attachment (never the media bytes), and the Attachment's bytes and metadata are stored separately. The Body decides *which* Attachments a Note shows and *where*; the Attachment store owns the bytes. Five kinds, each a separate concept:
+- **Attachment** — Any non-text media belonging to a Note. An Attachment is authored **inside the Body**: the Body holds a lightweight reference to the Attachment (never the media bytes), and the Attachment's bytes and metadata are stored separately. The Body decides *which* Attachments a Note shows and *where*; the Attachment store owns the bytes. An Attachment's bytes never change once it exists: editing a Drawing produces a *new* Attachment and repoints the Body at it, rather than rewriting the old one. Five kinds, each a separate concept:
   - **Image** — a picture displayed inline in the Body.
   - **Audio** — a sound recording, optionally with a duration.
   - **Video** — a moving-image clip.
@@ -82,7 +82,27 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
 ## Sync & accounts (frontend perspective)
 
 - **Local Account** — A user identity created on a self-hosted server that lets the same person's Notes sync across their devices. "Account" always means this sync identity — it is not the owner field of a Note and not an OS/browser user.
+  A Local Account is a private silo: its Notes are visible to it alone, and there is no way to hand a Note to another Account.
+  Two people sharing a Self-hosted Server share the machine, not their Notes.
+- **Owner** - The first Local Account created on a Self-hosted Server, and the only one that can invite others or reset their password.
+  There is exactly one, it cannot be transferred, and it is a role on the server rather than a property of any Note.
+- **Invite** - A one-time permission to create a Local Account on a server that otherwise refuses to create them.
+  It is how a household member joins: the Owner issues one, the newcomer spends it, and it is then gone.
+- **Device** - One installed copy of the app signed in to one Local Account.
+  A Device is the unit the user recognises ("my phone") and the unit of revocation: signing out a lost Device ends its access without touching the Account or any other Device.
 - **Sync** — Reconciling the device's local Notes with the self-hosted server so changes propagate across a user's devices. Sync is bidirectional.
-- **Offline Mutation Queue** — The ordered record of local changes (create/update/delete) made while disconnected, held so they can be replayed to the server once connectivity returns.
-- **Conflict Resolution** — Deciding the winning version when the same Note was changed both locally and on the server since the last Sync.
+- **Offline Mutation Queue** - The **set** of local changes the server has not yet accepted, sent when connectivity returns.
+  It is a set and not an ordered log: what the server is owed is the *current state* of each changed thing, not the history of how it got there, so editing one Note ten times offline owes the server one change, not ten.
+  A deletion is owed the same way, as a Tombstone.
+  The Queue is therefore never a separate record that could disagree with the Notes themselves - it is a way of reading them.
+- **Revision** - The server's count of how many accepted changes a synced thing has had.
+  A device holds the Revision its copy was last in agreement with, which is what lets the server tell a change made *from* the current version from one made from a stale one.
+  A Revision belongs to the server alone: a device never invents one, it only reports the one it was given.
+- **Conflict Resolution** - Deciding the winning version when the same Note was changed both locally and on the server since the last Sync.
+  The server's version wins and becomes the Note; the device's own version is kept beside it as a **Conflicted Copy**.
+  Sync therefore never discards anything a user wrote: resolving a conflict is reading two Notes and discarding one, which is a thing the user does, not a thing the app does.
+- **Conflicted Copy** - An ordinary Note holding the version that lost a Conflict Resolution.
+  It is a Note in every respect from the moment it exists; nothing about it is special except how it was born and how it is titled.
+- **Tombstone** - The record that something was deleted, kept after the thing itself is gone so that the deletion can reach devices that were offline when it happened.
+  Without one, a device returning from offline cannot tell "deleted elsewhere" from "not yet uploaded", and would resurrect what the user discarded.
 - **Self-hosted Server** — The backend instance, run by the user on their own network, that stores accounts and synced Notes. It lives in a separate repository and is out of scope for this frontend repo's code.

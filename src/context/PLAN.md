@@ -8,10 +8,13 @@ What's left at the provider layer. See [root PLAN.md](../../PLAN.md) for milesto
 - Decide whether the variant is a separate axis from light/dark (recommended: `mode` × `palette`) and reflect it in `themeProvider.tsx`.
 - Ensure icons remain descriptive/recognizable per the accessibility goal in `INSTRUCTIONS.md`.
 
-## Auth / accounts context (M5)
+## Auth / accounts context (M5 slice 2)
 
-- Add a provider for the **Local Account** (see [CONTEXT.md](../../CONTEXT.md)): login/create-local-account state, token, and sync status, consumed by the sync layer.
-- Keep network/sync logic out of components — expose it through this context plus the data hooks ([`src/hooks/data/PLAN.md`](../hooks/data/PLAN.md)).
+- Add a provider for the **Local Account** (see [CONTEXT.md](../../CONTEXT.md)): signed-in state, the current Device, and sync status, consumed by the sync layer.
+  There is **no token to hold**: the session is an `HttpOnly` cookie the browser sends and JavaScript cannot read ([ADR 0018](../../docs/adr/0018-the-server-serves-the-pwa.md)), so "am I signed in" is answered by asking the server once at startup, not by inspecting storage.
+  There is also **no server URL to configure** - the server served this app, so its origin is the app's own.
+- **`SyncProvider` is a separate provider from the account one**, and runs the loop on the main thread over the app's Dexie connection: poll on focus / `online` / visibility plus a short interval while visible, push dirty rows, pull the change feed from the stored cursor. Keep network logic out of components - expose it through this context plus the data hooks ([`src/hooks/data/PLAN.md`](../hooks/data/PLAN.md)).
+- `PreferencesProvider`'s note that it is "the store M5 will sync" needs revisiting when we get there: several preferences (Toolbar Layout per Width Class, sidebar state, density) are arguably per-Device rather than per-Account, and syncing them is **not** in the M5 slices.
 
 ## Tests
 
