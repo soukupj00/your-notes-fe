@@ -79,6 +79,17 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
   **A Prop the user edits stops being a Prop** and becomes an ordinary Note, because the moment it holds the user's writing it is no longer the app's to remove.
   Props are what make a Tour safe to let loose on the real app: pinning, colouring and opening a Prop mutates nothing the user owns.
 
+## Backup & import
+
+- **Backup** - A complete copy of everything the app holds (Notes, Tags, Attachments, settings) saved to a file the user keeps.
+- **Import** - Bringing Notes from a file into the app, alongside what is already here.
+  Import never empties anything: a Note from the file that the app has never seen is added, and a Note the app already holds (same identity) is overwritten by the file's version, whichever of the two is newer.
+  Only a Backup can carry identities the app recognises; Notes from any other Source are always new, so importing the same foreign file twice yields two copies.
+  Imported Tags are matched to existing Tags by name (ignoring case) and created when no match exists.
+  There is no replace-all "restore": putting a Backup back is an Import like any other.
+- **Source** - Where an Import's file comes from: this app's own Backup, or another app (Google Keep, Obsidian, ...).
+  The user picks one file; the app tells the Sources apart from the file's contents, never by asking.
+
 ## Sync & accounts (frontend perspective)
 
 - **Local Account** — A user identity created on a self-hosted server that lets the same person's Notes sync across their devices. "Account" always means this sync identity — it is not the owner field of a Note and not an OS/browser user.

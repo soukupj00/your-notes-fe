@@ -67,7 +67,7 @@
     "country-flag-icons": "^1.6.20",
     "dexie": "^4.4.4",
     "dexie-react-hooks": "^4.4.0",
-    "dompurify": "^3.4.12",
+    "dompurify": "^3.4.14",
     "driver.js": "^1.8.0",
     "fflate": "^0.8.3",
     "fuse.js": "^7.5.0",
