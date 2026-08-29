@@ -1,6 +1,7 @@
-import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useMemo, useState } from 'react';
-import { db } from '@/db/db.ts';
+import type { NoteFeedScope } from '@/data/LocalStore.ts';
+import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
+import { useLive } from '@/data/useLive.ts';
 import { mergeHeldOrder } from '@/lib/feed-rank.ts';
 import { createNoteSearchIndex, type NoteSearchEntry, searchNotes } from '@/lib/note-search.ts';
 import {
@@ -9,17 +10,9 @@ import {
   type NoteSortField,
   resolveNoteSearch,
 } from '@/lib/note-search-params.ts';
-import type { Note, NoteState } from '@/models.ts';
+import type { Note } from '@/models.ts';
 
-/**
- * Which slice of the library a view is showing. `state` maps one-to-one onto a
- * route (`/` → active, `/archive` → archived, `/trash` → trashed); `tagId`
- * narrows it further for `/tag/$id`.
- */
-export type NoteFeedScope = {
-  state: NoteState;
-  tagId?: string;
-};
+export type { NoteFeedScope } from '@/data/LocalStore.ts';
 
 /** A scoped note with the tag data the feed needs to search and filter it. */
 type FeedEntry = NoteSearchEntry & { tagIds: string[] };
@@ -122,45 +115,20 @@ export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
   const tagKey = tags.join(',');
   const visibilityEpoch = useVisibilityEpoch();
 
-  const entries = useLiveQuery(async () => {
-    let candidates = await db.notes.where('state').equals(scope.state).toArray();
+  const store = useLocalStore();
+  const notesInScope = useLive(() => store.notes.feed(scope), [store, scope.state, scope.tagId]);
 
-    if (scope.tagId) {
-      const links = await db.noteTags.where('tagId').equals(scope.tagId).toArray();
-      const inTag = new Set(links.map((link) => link.noteId));
-      candidates = candidates.filter((note) => inTag.has(note.id));
-    }
-
-    // A note's tags ride along with it: the index needs their names at build
-    // time, and the pill filters need their ids.
-    //
-    // Both tables are read whole on purpose. On the active feed the candidates
-    // are most of the library, so `where('noteId').anyOf(ids)` would trade one
-    // sequential read of a two-column join table for hundreds of index seeks.
-    // Worth revisiting only if a scope ever holds a small slice of a large one.
-    const [allTags, links] = await Promise.all([db.tags.toArray(), db.noteTags.toArray()]);
-    const tagById = new Map(allTags.map((tag) => [tag.id, tag]));
-    const linksByNote = new Map<string, string[]>();
-    for (const link of links) {
-      if (!tagById.has(link.tagId)) continue;
-      const existing = linksByNote.get(link.noteId);
-      if (existing) existing.push(link.tagId);
-      else linksByNote.set(link.noteId, [link.tagId]);
-    }
-
-    return candidates.map<FeedEntry>((note) => {
-      const tagIds = linksByNote.get(note.id) ?? [];
-      const tags = tagIds.flatMap((id) => {
-        const tag = tagById.get(id);
-        return tag ? [tag] : [];
-      });
-      return {
-        note: { ...note, tags },
-        tagIds,
-        tagNames: tags.map((tag) => tag.name),
-      };
-    });
-  }, [scope.state, scope.tagId]);
+  // A note's tags ride along with it from the store: the index needs their
+  // names at build time, and the pill filters need their ids.
+  const entries = useMemo(
+    () =>
+      notesInScope?.map<FeedEntry>((note) => ({
+        note,
+        tagIds: (note.tags ?? []).map((tag) => tag.id),
+        tagNames: (note.tags ?? []).map((tag) => tag.name),
+      })),
+    [notesInScope]
+  );
 
   // Filtering by tag before the index is built would rebuild it on every pill
   // toggle; filtering the *results* keeps the index tied to the scope alone

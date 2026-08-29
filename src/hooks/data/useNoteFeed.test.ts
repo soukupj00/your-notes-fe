@@ -1,9 +1,8 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { db } from '@/db/db.ts';
 import type { NoteSearchParams } from '@/lib/note-search-params.ts';
 import type { Note, NoteState } from '@/models.ts';
-import { clearNotesDb } from '@/test/db.ts';
+import { clearStore, renderHookWithStore, testStore } from '@/test/store.tsx';
 import { type NoteFeedScope, useNoteFeed } from './useNoteFeed.ts';
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString();
@@ -18,29 +17,29 @@ async function putNote(overrides: Partial<Note> & { id: string }): Promise<Note>
     updatedAt: now,
     ...overrides,
   };
-  await db.notes.put(note);
+  await testStore.notes.put(note);
   return note;
 }
 
 /** Render the hook and wait for the live query to settle. */
 async function feed(scope: NoteFeedScope, search?: NoteSearchParams | string) {
   const params = typeof search === 'string' ? { q: search } : search;
-  const { result } = renderHook(() => useNoteFeed(scope, params));
+  const { result } = renderHookWithStore(() => useNoteFeed(scope, params));
   await waitFor(() => expect(result.current.loading).toBe(false));
   return result;
 }
 
 async function putTag(id: string, noteIds: string[]) {
   const now = new Date().toISOString();
-  await db.tags.put({ id, name: id, createdAt: now, updatedAt: now });
+  await testStore.tags.put({ id, name: id, createdAt: now, updatedAt: now });
   for (const noteId of noteIds) {
-    await db.noteTags.put({ noteId, tagId: id, createdAt: now, updatedAt: now });
+    await testStore.tags.link({ noteId, tagId: id, createdAt: now, updatedAt: now });
   }
 }
 
 const ids = (notes: Note[]) => notes.map((n) => n.id);
 
-afterEach(clearNotesDb);
+afterEach(clearStore);
 
 describe('scoping by state', () => {
   it.each<[NoteState, string]>([
@@ -61,8 +60,8 @@ describe('scoping by state', () => {
     await putNote({ id: 'tagged' });
     await putNote({ id: 'untagged' });
     const now = new Date().toISOString();
-    await db.tags.put({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
-    await db.noteTags.put({ noteId: 'tagged', tagId: 't1', createdAt: now, updatedAt: now });
+    await testStore.tags.put({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
+    await testStore.tags.link({ noteId: 'tagged', tagId: 't1', createdAt: now, updatedAt: now });
 
     const result = await feed({ state: 'active', tagId: 't1' });
 
@@ -138,7 +137,7 @@ async function writeAndSettle(
   changes: Partial<Note>
 ) {
   const marker = `settled-${id}-${Math.random().toString(36).slice(2)}`;
-  await db.notes.update(id, { ...changes, header: marker });
+  await testStore.notes.update(id, () => ({ ...changes, header: marker }));
   await waitFor(() =>
     expect(result.current.notes.find((note) => note.id === id)?.header).toBe(marker)
   );
@@ -150,7 +149,7 @@ describe('held rank (ADR 0012)', () => {
     await putNote({ id: 'b', updatedAt: daysAgo(2) });
     await putNote({ id: 'c', updatedAt: daysAgo(3) });
 
-    const { result } = renderHook(() => useNoteFeed({ state: 'active' }));
+    const { result } = renderHookWithStore(() => useNoteFeed({ state: 'active' }));
     await waitFor(() => expect(ids(result.current.notes)).toEqual(['a', 'b', 'c']));
 
     // Exactly what recolouring a card or ticking a checkbox does.
@@ -164,10 +163,10 @@ describe('held rank (ADR 0012)', () => {
     await putNote({ id: 'a', updatedAt: daysAgo(1) });
     await putNote({ id: 'b', updatedAt: daysAgo(2) });
 
-    const { result } = renderHook(() => useNoteFeed({ state: 'active' }));
+    const { result } = renderHookWithStore(() => useNoteFeed({ state: 'active' }));
     await waitFor(() => expect(ids(result.current.notes)).toEqual(['a', 'b']));
 
-    await db.notes.update('a', { state: 'archived' });
+    await testStore.notes.update('a', () => ({ state: 'archived' }));
 
     await waitFor(() => expect(ids(result.current.notes)).toEqual(['b']));
   });
@@ -175,7 +174,7 @@ describe('held rank (ADR 0012)', () => {
   it('still shows a newly created note', async () => {
     await putNote({ id: 'a', updatedAt: daysAgo(2) });
 
-    const { result } = renderHook(() => useNoteFeed({ state: 'active' }));
+    const { result } = renderHookWithStore(() => useNoteFeed({ state: 'active' }));
     await waitFor(() => expect(ids(result.current.notes)).toEqual(['a']));
 
     await putNote({ id: 'fresh', updatedAt: new Date().toISOString() });
@@ -187,13 +186,18 @@ describe('held rank (ADR 0012)', () => {
     await putNote({ id: 'a', header: 'Apples', updatedAt: daysAgo(1) });
     await putNote({ id: 'z', header: 'Zebra', updatedAt: daysAgo(2) });
 
-    const { result, rerender } = renderHook(
-      ({ search }: { search: NoteSearchParams }) => useNoteFeed({ state: 'active' }, search),
-      { initialProps: { search: { sort: 'updated', dir: 'desc' } as NoteSearchParams } }
+    // `renderHookWithStore` renders a fixed no-args callback, so the search
+    // params it closes over are mutated and re-read on `rerender()` rather
+    // than passed as `initialProps` - the params live in this variable, not
+    // in the render function's arguments.
+    let search: NoteSearchParams = { sort: 'updated', dir: 'desc' };
+    const { result, rerender } = renderHookWithStore(() =>
+      useNoteFeed({ state: 'active' }, search)
     );
     await waitFor(() => expect(ids(result.current.notes)).toEqual(['a', 'z']));
 
-    rerender({ search: { sort: 'title', dir: 'desc' } });
+    search = { sort: 'title', dir: 'desc' };
+    rerender();
 
     await waitFor(() => expect(ids(result.current.notes)).toEqual(['z', 'a']));
   });
@@ -202,7 +206,7 @@ describe('held rank (ADR 0012)', () => {
     await putNote({ id: 'a', updatedAt: daysAgo(1) });
     await putNote({ id: 'b', updatedAt: daysAgo(2) });
 
-    const { result } = renderHook(() => useNoteFeed({ state: 'active' }));
+    const { result } = renderHookWithStore(() => useNoteFeed({ state: 'active' }));
     await waitFor(() => expect(ids(result.current.notes)).toEqual(['a', 'b']));
 
     await writeAndSettle(result, 'b', { updatedAt: new Date().toISOString() });
@@ -220,7 +224,7 @@ describe('held rank (ADR 0012)', () => {
     await putNote({ id: 'b', updatedAt: daysAgo(2) });
     await putNote({ id: 'c', updatedAt: daysAgo(3) });
 
-    const { result } = renderHook(() => useNoteFeed({ state: 'active' }));
+    const { result } = renderHookWithStore(() => useNoteFeed({ state: 'active' }));
     await waitFor(() => expect(ids(result.current.notes)).toEqual(['a', 'b', 'c']));
 
     // Make the held order disagree with the fresh one, or this test cannot tell
@@ -244,7 +248,7 @@ describe('held rank (ADR 0012)', () => {
     await putNote({ id: 'b', updatedAt: daysAgo(2) });
     await putNote({ id: 'c', updatedAt: daysAgo(3) });
 
-    const { result } = renderHook(() => useNoteFeed({ state: 'active' }));
+    const { result } = renderHookWithStore(() => useNoteFeed({ state: 'active' }));
     await waitFor(() => expect(ids(result.current.notes)).toEqual(['a', 'b', 'c']));
 
     await writeAndSettle(result, 'c', { updatedAt: daysAgo(0) });
@@ -304,8 +308,8 @@ describe('search within a scope', () => {
     await putNote({ id: 'by-tag', header: 'x' });
     await putNote({ id: 'no-match', header: 'x' });
     const now = new Date().toISOString();
-    await db.tags.put({ id: 't1', name: 'Groceries', createdAt: now, updatedAt: now });
-    await db.noteTags.put({ noteId: 'by-tag', tagId: 't1', createdAt: now, updatedAt: now });
+    await testStore.tags.put({ id: 't1', name: 'Groceries', createdAt: now, updatedAt: now });
+    await testStore.tags.link({ noteId: 'by-tag', tagId: 't1', createdAt: now, updatedAt: now });
 
     const result = await feed({ state: 'active' }, 'grocer');
 

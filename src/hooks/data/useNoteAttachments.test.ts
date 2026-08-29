@@ -1,11 +1,10 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '@/db/db.ts';
 import type { Attachment } from '@/models.ts';
-import { clearNotesDb } from '@/test/db.ts';
+import { clearStore, renderHookWithStore, testStore } from '@/test/store.tsx';
 import { useAttachmentsByNote } from './useNoteAttachments.ts';
 
-beforeEach(clearNotesDb);
+beforeEach(clearStore);
 
 async function putAttachment(id: string, noteId: string): Promise<Attachment> {
   const now = new Date().toISOString();
@@ -18,7 +17,7 @@ async function putAttachment(id: string, noteId: string): Promise<Attachment> {
     createdAt: now,
     updatedAt: now,
   };
-  await db.attachments.put(row);
+  await testStore.attachments.add(row);
   return row;
 }
 
@@ -28,7 +27,7 @@ describe('useAttachmentsByNote', () => {
     await putAttachment('a2', 'n1');
     await putAttachment('b1', 'n2');
 
-    const { result } = renderHook(() => useAttachmentsByNote(['n1', 'n2']));
+    const { result } = renderHookWithStore(() => useAttachmentsByNote(['n1', 'n2']));
 
     await waitFor(() => expect(result.current.get('n1')?.size).toBe(2));
     expect([...(result.current.get('n1') ?? new Map()).keys()].sort()).toEqual(['a1', 'a2']);
@@ -38,7 +37,7 @@ describe('useAttachmentsByNote', () => {
   it('leaves out a note that owns nothing rather than mapping it to an empty Map', async () => {
     await putAttachment('a1', 'n1');
 
-    const { result } = renderHook(() => useAttachmentsByNote(['n1', 'n2']));
+    const { result } = renderHookWithStore(() => useAttachmentsByNote(['n1', 'n2']));
 
     await waitFor(() => expect(result.current.get('n1')?.size).toBe(1));
     expect(result.current.has('n2')).toBe(false);
@@ -51,7 +50,7 @@ describe('useAttachmentsByNote', () => {
     await putAttachment('a1', 'n1');
     await putAttachment('b1', 'n2');
 
-    const { result } = renderHook(() => useAttachmentsByNote(['n1', 'n2']));
+    const { result } = renderHookWithStore(() => useAttachmentsByNote(['n1', 'n2']));
     await waitFor(() => expect(result.current.get('n2')?.size).toBe(1));
 
     const untouched = result.current.get('n1');
@@ -67,7 +66,7 @@ describe('useAttachmentsByNote', () => {
   it('gives the written note a new Map, so its own card does refresh', async () => {
     await putAttachment('a1', 'n1');
 
-    const { result } = renderHook(() => useAttachmentsByNote(['n1']));
+    const { result } = renderHookWithStore(() => useAttachmentsByNote(['n1']));
     await waitFor(() => expect(result.current.get('n1')?.size).toBe(1));
     const before = result.current.get('n1');
 
@@ -79,11 +78,13 @@ describe('useAttachmentsByNote', () => {
 
   it('re-reads a row that was updated in place, not just added or removed', async () => {
     await putAttachment('a1', 'n1');
-    const { result } = renderHook(() => useAttachmentsByNote(['n1']));
+    const { result } = renderHookWithStore(() => useAttachmentsByNote(['n1']));
     await waitFor(() => expect(result.current.get('n1')?.size).toBe(1));
     const before = result.current.get('n1');
 
-    await db.attachments.update('a1', { updatedAt: new Date(Date.now() + 1000).toISOString() });
+    await testStore.attachments.update('a1', {
+      updatedAt: new Date(Date.now() + 1000).toISOString(),
+    });
 
     await waitFor(() => expect(result.current.get('n1')).not.toBe(before));
   });
@@ -91,7 +92,7 @@ describe('useAttachmentsByNote', () => {
   it('runs no query and returns nothing for an empty feed', async () => {
     await putAttachment('a1', 'n1');
 
-    const { result } = renderHook(() => useAttachmentsByNote([]));
+    const { result } = renderHookWithStore(() => useAttachmentsByNote([]));
 
     await waitFor(() => expect(result.current.size).toBe(0));
   });

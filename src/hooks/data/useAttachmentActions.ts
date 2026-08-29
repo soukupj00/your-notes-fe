@@ -1,14 +1,17 @@
 import { useCallback } from 'react';
 import { v4 as uuid } from 'uuid';
-import { db } from '@/db/db.ts';
+import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import { extractAttachmentIds } from '@/lib/attachment-html.ts';
 import { AttachmentError, validateAttachmentFile } from '@/lib/attachments.ts';
 import type { Attachment, AttachmentKind } from '@/models.ts';
 
-// Mutations close over the stable `db` import only, so they are memoized with
-// empty deps - the editor's insert handlers and the dialog's autosave depend on
-// stable identities (see useNoteActions for the same rationale).
+// Mutations close over the store from context, which the provider creates
+// once, so they are memoized on it alone - the editor's insert handlers and
+// the dialog's autosave depend on stable identities (see useNoteActions for
+// the same rationale).
 export function useAttachmentActions() {
+  const store = useLocalStore();
+
   const createAttachment = useCallback(
     async (
       noteId: string,
@@ -32,17 +35,15 @@ export function useAttachmentActions() {
         createdAt: now,
         updatedAt: now,
       };
-      await db.attachments.add(att);
+      await store.attachments.add(att);
       return att;
     },
-    []
+    [store]
   );
 
-  const getAttachment = useCallback((id: string) => db.attachments.get(id), []);
+  const getAttachment = useCallback((id: string) => store.attachments.get(id), [store]);
 
-  const deleteAttachment = useCallback(async (id: string) => {
-    await db.attachments.delete(id);
-  }, []);
+  const deleteAttachment = useCallback((id: string) => store.attachments.delete(id), [store]);
 
   const cloneAttachment = useCallback(
     async (source: Attachment, noteId: string): Promise<Attachment> => {
@@ -55,10 +56,10 @@ export function useAttachmentActions() {
         createdAt: now,
         updatedAt: now,
       };
-      await db.attachments.add(clone);
+      await store.attachments.add(clone);
       return clone;
     },
-    []
+    [store]
   );
 
   // Write-back for an attachment's derived data, on the same row the Body
@@ -67,25 +68,16 @@ export function useAttachmentActions() {
   // scene blob and refreshes its SVG preview; the card backfills a poster and
   // duration onto a video stored before posters were captured at insert.
   const updateAttachment = useCallback(
-    async (
-      id: string,
-      changes: { blob?: Blob; preview?: string; thumbnail?: Blob; duration?: number }
-    ): Promise<void> => {
-      await db.attachments.update(id, { ...changes, updatedAt: new Date().toISOString() });
-    },
-    []
+    (id: string, changes: { blob?: Blob; preview?: string; thumbnail?: Blob; duration?: number }) =>
+      store.attachments.update(id, { ...changes, updatedAt: new Date().toISOString() }),
+    [store]
   );
 
   // Note-scoped GC: drop this note's rows no longer referenced by the saved Body.
-  const collectOrphans = useCallback(async (noteId: string, referencedIds: string[]) => {
-    const referenced = new Set(referencedIds);
-    return db.transaction('rw', db.attachments, async () => {
-      const rows = await db.attachments.where('noteId').equals(noteId).toArray();
-      const orphans = rows.filter((r) => !referenced.has(r.id));
-      await db.attachments.bulkDelete(orphans.map((r) => r.id));
-      return orphans.length;
-    });
-  }, []);
+  const collectOrphans = useCallback(
+    (noteId: string, referencedIds: string[]) => store.attachments.sweepNote(noteId, referencedIds),
+    [store]
+  );
 
   // Startup GC: the saved Body is authoritative because no editor undo stack
   // survives a reload. Reconcile every live Note as well as missing owners.
@@ -95,23 +87,10 @@ export function useAttachmentActions() {
   // row ("is anything still pointing at this?"), and answering them together
   // costs one transaction instead of a full attachments read plus one indexed
   // read and one transaction per note, on every app start.
-  const collectStartupOrphans = useCallback(async () => {
-    return db.transaction('rw', db.notes, db.attachments, async () => {
-      const [notes, all] = await Promise.all([db.notes.toArray(), db.attachments.toArray()]);
-      const referencedByNote = new Map(
-        notes.map((note) => [note.id, new Set(extractAttachmentIds(note.body))])
-      );
-
-      const orphans = all.filter((row) => {
-        // No entry at all means the owning Note is gone, which is an orphan for
-        // the same reason an unreferenced row is.
-        return !referencedByNote.get(row.noteId)?.has(row.id);
-      });
-
-      await db.attachments.bulkDelete(orphans.map((row) => row.id));
-      return orphans.length;
-    });
-  }, []);
+  const collectStartupOrphans = useCallback(
+    () => store.attachments.sweepAll((note) => extractAttachmentIds(note.body)),
+    [store]
+  );
 
   return {
     createAttachment,

@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
-import { v4 as uuid } from 'uuid';
-import { db } from '@/db/db.ts';
-import type { Attachment, Note, NoteTag } from '@/models.ts';
+import type { PurgedRelations } from '@/data/LocalStore.ts';
+import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
+import { newNote } from '@/lib/new-note.ts';
+import type { Note } from '@/models.ts';
 
 /** How long a Trashed note is kept before the sweep purges it (ADR 0009). */
 export const TRASH_GRACE_DAYS = 30;
@@ -29,126 +30,88 @@ function graceCutoff(days = TRASH_GRACE_DAYS) {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 }
 
-// The functions close over nothing but the stable `db` import, so they are
-// memoized with empty deps. Stable identities matter: NoteEditorDialog's
-// autosave effect depends (transitively) on these, and unstable references
-// would make that effect re-run every render and loop the debounced save.
+// The functions close over the store from context, which the provider creates
+// once, so they are memoized on it alone. Stable identities matter:
+// NoteEditorDialog's autosave effect depends (transitively) on these.
 export function useNoteActions() {
-  const createNote = useCallback(async (data: Partial<Note>) => {
-    // An id may be supplied rather than minted: a note's id goes into the URL
-    // the moment its editor opens, before there is anything worth persisting,
-    // so the draft has to be able to say which id it will eventually take.
-    const id = data.id ?? uuid();
-    const now = new Date().toISOString();
+  const store = useLocalStore();
 
-    const newNote: Note = {
-      id,
-      header: data.header ?? '',
-      description: data.description ?? '',
-      body: data.body ?? '',
-      state: data.state ?? 'active',
-      pinnedAt: data.pinnedAt,
-      color: data.color,
-      // Carried through so a note seeded straight into the trash still has the
-      // timestamp the purge sweep keys off; without it such a note is immortal.
-      trashedAt: data.trashedAt,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    await db.notes.add(newNote);
-    return newNote;
-  }, []);
+  const createNote = useCallback(
+    async (data: Partial<Note>) => {
+      const note = newNote(data);
+      await store.notes.add(note);
+      return note;
+    },
+    [store]
+  );
 
   // RESTORE a previously captured note verbatim (for delete-undo): keeps the
   // original id/timestamps and re-links its noteTags + attachments, so undoing
   // a delete reproduces the exact prior state.
   const restoreNote = useCallback(
-    async (
-      note: Note,
-      removed: { removedTags?: NoteTag[]; removedAttachments?: Attachment[] } = {}
-    ) => {
-      const { removedTags = [], removedAttachments = [] } = removed;
-      await db.transaction('rw', db.notes, db.noteTags, db.attachments, async () => {
-        await db.notes.put(note);
-        if (removedTags.length > 0) await db.noteTags.bulkPut(removedTags);
-        if (removedAttachments.length > 0) await db.attachments.bulkPut(removedAttachments);
-      });
+    async (note: Note, removed: Partial<PurgedRelations> = {}) => {
+      await store.notes.restore(note, removed);
       return note;
     },
-    []
+    [store]
   );
 
-  const updateNote = useCallback(async (id: string, updates: Partial<Note>) => {
-    const note = await db.notes.get(id);
-    if (!note) return null;
-
-    const updatedNote = { ...note, ...updates, updatedAt: new Date().toISOString() };
-    await db.notes.put(updatedNote);
-    return updatedNote;
-  }, []);
+  const updateNote = useCallback(
+    async (id: string, updates: Partial<Note>) => {
+      const result = await store.notes.update(id, () => ({
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      }));
+      return result?.after ?? null;
+    },
+    [store]
+  );
 
   // PURGE a note and its relationships - the permanent, irreversible removal
   // (CONTEXT.md "Purge"). Returns the removed noteTags + attachments so the
   // caller can pass them (with the captured note) to restoreNote for a lossless
   // undo. Normal user-facing deletion goes through trashNote instead.
-  const purgeNote = useCallback(async (id: string) => {
-    return db.transaction('rw', db.notes, db.noteTags, db.attachments, async () => {
-      const removedTags = await db.noteTags.where('noteId').equals(id).toArray();
-      const removedAttachments = await db.attachments.where('noteId').equals(id).toArray();
-      await db.notes.delete(id);
-      await db.noteTags.where('noteId').equals(id).delete();
-      await db.attachments.where('noteId').equals(id).delete();
-      return { removedTags, removedAttachments };
-    });
-  }, []);
+  const purgeNote = useCallback((id: string) => store.notes.purge(id), [store]);
 
   // ---- Lifecycle (ADR 0009) -------------------------------------------------
 
-  // Every transition below is the same shape: read the note, snapshot the
-  // lifecycle fields, write the new ones. Sharing one implementation keeps the
-  // "snapshot before write" invariant in a single place - if a transition
-  // forgot it, its undo would silently do nothing.
+  // Every transition is the same shape: snapshot the lifecycle fields, write
+  // the new ones, in one atomic update. Sharing one implementation keeps the
+  // "snapshot before write" invariant in one place.
   const transition = useCallback(
     async (
       id: string,
       next: (note: Note) => Partial<LifecycleSnapshot>
     ): Promise<LifecycleSnapshot | null> => {
-      return db.transaction('rw', db.notes, async () => {
-        const note = await db.notes.get(id);
-        if (!note) return null;
-        const before = snapshotOf(note);
-        await db.notes.put({ ...note, ...next(note), updatedAt: new Date().toISOString() });
-        return before;
-      });
+      const result = await store.notes.update(id, (note) => ({
+        ...next(note),
+        updatedAt: new Date().toISOString(),
+      }));
+      return result ? snapshotOf(result.before) : null;
     },
-    []
+    [store]
   );
 
   /** Undo any lifecycle transition by writing its snapshot back verbatim. */
-  const revertLifecycle = useCallback(async (id: string, snapshot: LifecycleSnapshot) => {
-    return db.transaction('rw', db.notes, async () => {
-      const note = await db.notes.get(id);
-      if (!note) return null;
+  const revertLifecycle = useCallback(
+    async (id: string, snapshot: LifecycleSnapshot) => {
       // Spread rather than merge: `pinnedAt`/`trashedAt` are absent-means-unset,
       // so an undo must be able to clear a field the transition set.
-      const reverted: Note = {
-        ...note,
+      const result = await store.notes.update(id, () => ({
         state: snapshot.state,
         pinnedAt: snapshot.pinnedAt,
         trashedAt: snapshot.trashedAt,
         updatedAt: snapshot.updatedAt,
-      };
-      await db.notes.put(reverted);
-      return reverted;
-    });
-  }, []);
+      }));
+      return result?.after ?? null;
+    },
+    [store]
+  );
 
   const pinNote = useCallback(
     (id: string) => transition(id, () => ({ pinnedAt: new Date().toISOString() })),
     [transition]
   );
-
   const unpinNote = useCallback(
     (id: string) => transition(id, () => ({ pinnedAt: undefined })),
     [transition]
@@ -162,7 +125,6 @@ export function useNoteActions() {
       transition(id, () => ({ state: 'archived', pinnedAt: undefined, trashedAt: undefined })),
     [transition]
   );
-
   const trashNote = useCallback(
     (id: string) =>
       transition(id, () => ({
@@ -172,7 +134,6 @@ export function useNoteActions() {
       })),
     [transition]
   );
-
   /** Back to the feed - the "Restore" action for both Archive and Trash. */
   const restoreToActive = useCallback(
     (id: string) => transition(id, () => ({ state: 'active', trashedAt: undefined })),
@@ -185,23 +146,20 @@ export function useNoteActions() {
    */
   const purgeExpiredTrash = useCallback(
     async (graceDays = TRASH_GRACE_DAYS) => {
-      const cutoff = graceCutoff(graceDays);
-      // `trashedAt` is indexed, so this is a range scan rather than a full
-      // table read - it runs on every app start.
-      const expired = await db.notes.where('trashedAt').below(cutoff).toArray();
+      const expired = await store.notes.listTrashedBefore(graceCutoff(graceDays));
       const stale = expired.filter((note) => note.state === 'trashed');
       for (const note of stale) await purgeNote(note.id);
       return stale.length;
     },
-    [purgeNote]
+    [store, purgeNote]
   );
 
   /** The manual "Empty trash" action - purges everything currently trashed. */
   const emptyTrash = useCallback(async () => {
-    const trashed = await db.notes.where('state').equals('trashed').toArray();
+    const trashed = await store.notes.listByState('trashed');
     for (const note of trashed) await purgeNote(note.id);
     return trashed.length;
-  }, [purgeNote]);
+  }, [store, purgeNote]);
 
   return {
     createNote,
