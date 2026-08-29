@@ -3,7 +3,6 @@
 // every Blob round-trip through Dexie has to run under Node's real Blob.
 import { strToU8, unzipSync, zipSync } from 'fflate';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createDexieLocalStore } from '@/data/dexie/DexieLocalStore.ts';
 import {
   BACKUP_MANIFEST_NAME,
   BACKUP_VERSION,
@@ -13,8 +12,7 @@ import {
   restoreBackup,
 } from '@/lib/backup.ts';
 import type { Attachment, Note, NoteTag, Tag } from '@/models.ts';
-
-const store = createDexieLocalStore();
+import { clearStore, testStore as store } from '@/test/store.tsx';
 
 const NOW = '2026-07-28T10:00:00.000Z';
 
@@ -66,9 +64,7 @@ function zipWith(manifest: unknown, extra: Record<string, Uint8Array> = {}): Uin
 }
 
 describe('backup', () => {
-  beforeEach(async () => {
-    await store.clear();
-  });
+  beforeEach(clearStore);
 
   it('round-trips notes, tags, relations and binary attachments', async () => {
     await seed();
