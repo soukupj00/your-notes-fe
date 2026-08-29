@@ -522,13 +522,18 @@ export function TourProvider({ children }: { children: ReactNode }) {
     // up front would have the *first* invocation's async continuation swallowed
     // by its own cleanup (`cancelled`) while the guard stops the second, real
     // invocation from ever running it.
-    void readProps(store).then(async (props) => {
-      if (cancelled) return;
-      startedRef.current = true;
-      propsRef.current = props;
-      await sweep(props);
-      if (!preferences.onboardingSeenAt && router.state.location.pathname === '/') await start();
-    });
+    void readProps(store)
+      .then(async (props) => {
+        if (cancelled) return;
+        startedRef.current = true;
+        propsRef.current = props;
+        await sweep(props);
+        if (!preferences.onboardingSeenAt && router.state.location.pathname === '/') await start();
+        // Same policy as `enqueue`: a store read or a seed that fails must not
+        // surface as an unhandled rejection; it is logged and the app goes on
+        // without a Tour.
+      })
+      .catch(console.error);
     return () => {
       cancelled = true;
     };

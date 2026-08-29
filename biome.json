@@ -60,7 +60,13 @@
               "@/data/dexie/db.ts": "The Dexie instance is private to src/data/dexie. Go through the LocalStore (ADR 0020).",
               "@/data/dexie/DexieLocalStore.ts": "Dexie is private to src/data. Compose the store in main.tsx or go through the LocalStore (ADR 0020).",
               "@/data/dexie/legacyPreferences.ts": "Dexie is private to src/data. Compose the store in main.tsx or go through the LocalStore (ADR 0020)."
-            }
+            },
+            "patterns": [
+              {
+                "group": ["**/data/dexie/**"],
+                "message": "Dexie is private to src/data. Compose the store in main.tsx or go through the LocalStore (ADR 0020)."
+              }
+            ]
           }
         }
       }
