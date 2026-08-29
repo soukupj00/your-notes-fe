@@ -65,6 +65,10 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
   Every Destination shows the nav control in its top-left corner; a page that is *not* one shows Back, because it has a parent it was opened from.
   A Destination is not the same thing as a surface with a Feed: managing labels is a Destination and has no Feed, and Settings has neither.
 
+- **Preference** - A user's choice about how the app behaves on one Device: its Theme, Locale, density, toolbar arrangement, and the like.
+  A Preference is how the user holds the app, not something the app holds for the user, so it lives with the Device rather than in the Local Store: it is not part of a Backup and it does not Sync.
+  _Avoid_: setting (the page is Settings; what it edits are Preferences)
+
 ## Onboarding
 
 - **Tour** — A short, ordered demonstration of the app, shown once to a new user and replayable on demand.
@@ -101,7 +105,14 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
   It is how a household member joins: the Owner issues one, the newcomer spends it, and it is then gone.
 - **Device** - One installed copy of the app signed in to one Local Account.
   A Device is the unit the user recognises ("my phone") and the unit of revocation: signing out a lost Device ends its access without touching the Account or any other Device.
-- **Sync** — Reconciling the device's local Notes with the self-hosted server so changes propagate across a user's devices. Sync is bidirectional.
+- **Local Store** - The copy of everything the app holds on one Device, and the only copy the app ever reads or writes directly.
+  It is the source of truth while offline, and the app is complete with a Local Store alone: a Remote is an addition, never a requirement.
+  _Avoid_: database, cache, storage, IndexedDB (an implementation, not the concept)
+- **Remote** - The place a Local Store is reconciled with so that the same person's other Devices see the same Notes.
+  The app never reads or writes a Remote directly; it is reached only through Sync, and it is the part a self-hoster may replace with something of their own.
+  The Self-hosted Server is the Remote this project ships.
+  _Avoid_: backend, cloud, storage
+- **Sync** — Reconciling a Device's Local Store with a Remote so changes propagate across a user's devices. Sync is bidirectional.
 - **Offline Mutation Queue** - The **set** of local changes the server has not yet accepted, sent when connectivity returns.
   It is a set and not an ordered log: what the server is owed is the *current state* of each changed thing, not the history of how it got there, so editing one Note ten times offline owes the server one change, not ten.
   A deletion is owed the same way, as a Tombstone.

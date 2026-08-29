@@ -1,6 +1,7 @@
 # Database and schema
 
-All persistence is IndexedDB, accessed through **Dexie** (`src/db/db.ts`); domain models live in `src/models.ts`.
+All persistence is IndexedDB, accessed through **Dexie** (`src/db/db.ts`, moving to `src/data/dexie/` in M5 slice 1); domain models live in `src/models.ts`.
+From M5 slice 1 the app reaches it only through the `LocalStore` interface ([ADR 0020](../adr/0020-the-local-store-seam.md)): Dexie is the default implementation, an in-memory one ships beside it, and one contract test suite runs against both.
 IndexedDB was chosen over alternatives for real Blob storage, transactions, indexes, and the storage quota a notes app with media needs ([ADR 0001](../adr/0001-local-first-storage-with-dexie.md)); attachment bytes are stored as native `Blob`s, not base64 ([ADR 0007](../adr/0007-blob-over-base64-for-attachment-payloads.md)).
 
 ## Entity model
@@ -80,7 +81,7 @@ Dexie strings declare *indexes*, not columns - non-indexed fields are free, whic
 
 The v3 lesson generalizes and is the repo's canonical migration rule: adding an *optional, non-indexed* field is free; adding an *indexed* field requires backfilling every existing row or those rows become invisible to queries on it.
 
-## Planned v5: sync metadata (M5 slice 2)
+## Planned v5: sync metadata (M5 slice 3)
 
 Shape fixed by [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicted-copies.md); detail in [`src/db/PLAN.md`](../../src/db/PLAN.md).
 
@@ -88,7 +89,7 @@ Shape fixed by [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicte
 - **The Offline Mutation Queue is a query, not a table**: `where('dirty')`. There is deliberately no queue store - it would be a second source of truth a crash could leave disagreeing with the rows themselves.
 - **A `tombstones` store** (`id`, entity kind, `deletedAt`), written only by a Purge; trashing is a `state` update and syncs as an ordinary edit.
 - **Attachments carry no `rev`.** Metadata rides on the owning Note's Revision; bytes are write-once by id, so their only sync state is "are the bytes present locally" (previews sync eagerly, full bytes on demand).
-- **Cursor and account identity live in `settings`**: the opaque `_links.next` URL, `lastSyncedAt`, and the attached Account id (what makes erase-on-sign-out enforceable).
+- **Cursor and account identity live in `meta`** (the `settings` table, which Preferences leave for `localStorage` in slice 1): the opaque `_links.next` URL, `lastSyncedAt`, and the attached Account id (what makes erase-on-sign-out enforceable).
 - Prerequisite refactor: the Excalidraw save path must mint a *new* attachment id and repoint the Body, making every blob immutable by id.
 
 ## Testing the layer

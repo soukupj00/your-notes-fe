@@ -104,18 +104,19 @@ Scoped by a `/grill-with-docs` session on 2026-08-12. Key decisions: [ADR 0017](
 
 - **Server:** TypeScript + Fastify + SQLite (`better-sqlite3`) + Drizzle, in one container with Caddy for TLS. TypeScript because it makes the wire contract one shared Zod file instead of two definitions that drift; SQLite because a self-hoster's backup should be "copy one file".
 - **API:** REST with **HAL** (`application/hal+json`) for the brief's HATEOAS requirement. The sync feed is a hypermedia collection - a device stores the opaque `_links.next` URL as its cursor and never builds a query string. Response caching is `ETag` on change pages, which are immutable once complete.
-- **Change detection:** polling on focus/`online`/visibility plus a short interval while visible. An SSE hint channel (carrying "the server is at Revision N", never data, never load-bearing) is a named follow-up in slice 5, not a dependency.
+- **Change detection:** polling on focus/`online`/visibility plus a short interval while visible. An SSE hint channel (carrying "the server is at Revision N", never data, never load-bearing) is a named follow-up in slice 6, not a dependency.
 - **Contract:** owned by the backend repo, vendored here as one committed file via `pnpm contract:pull`; every response validated with Zod at the boundary, which doubles as the drift alarm.
 - **Attachments:** bytes are write-once by id, so transfer is an idempotent `PUT`. Previews sync eagerly (tens of KB - the feed is instantly correct), full bytes on demand, with a "keep everything on this device" preference. Known ceilings: no resumable upload, no per-account quota.
-- **Client:** the sync loop runs on the main thread in a `SyncProvider` sharing the app's Dexie connection. Ceiling: move to a Worker if a large first pull janks the UI.
+- **Client:** the sync loop runs on the main thread in a `SyncProvider` that reads and writes the `LocalStore` and talks to a `Remote` ([ADR 0020](./docs/adr/0020-the-local-store-seam.md)); it never touches Dexie. Ceiling: move to a Worker if a large first pull janks the UI.
 
-**Five slices**, backend-first for slice 1 only, interleaved after:
+**Six slices.** Slice 1 is this repo alone and comes first because every later slice consumes its seam; slice 2 is backend alone; the rest interleave:
 
-1. **Server skeleton** *(backend)* — Fastify + Drizzle + SQLite, the Zod contract with OpenAPI falling out of it, HAL serializer, sessions + first-run Owner + Invites, `compose.yml` with Caddy, `@fastify/static` serving the built PWA.
-2. **Client foundations** *(here)* — Dexie bump (`rev`, dirty marker, `tombstones`), the write-once Excalidraw refactor, `SyncProvider` + account context, boundary validation, and the Settings **Account** section (sign in/out, Devices with revoke) beside the storage row carried over from M4.
-3. **The loop** *(both)* — `GET /changes` with cursor links and ETags, dirty push with Revisions, conflict → Conflicted Copy + "Conflicts" tag + toast, adopt-on-first-sign-in, erase-on-sign-out, and the too-old-cursor full resync.
-4. **Attachments** *(both)* — idempotent byte upload/download, eager thumbnails, the new "known but not downloaded" attachment node state, the keep-everything preference.
-5. **Setup, docs, testing** *(both)* — the three Caddy modes with one documented happy path, first-run and Invite UX, sync status polish, the SSE channel if it still looks worth it, and the user testing the brief requires.
+1. **The Local Store seam** *(here)* — [ADR 0020](./docs/adr/0020-the-local-store-seam.md), [plan](./docs/superpowers/plans/2026-08-29-m5-slice1-local-store-seam.md). One `LocalStore` interface every read and write goes through, a Dexie implementation (default) and an in-memory one under one contract test suite, `Live<T>` + `useLive` replacing `useLiveQuery`, Preferences moved to `localStorage`, Dexie fenced by Biome, and the `Remote`/`AccountService` types declared. A pure refactor: no schema bump, no UI change.
+2. **Server skeleton** *(backend)* — Fastify + Drizzle + SQLite, the Zod contract with OpenAPI falling out of it, HAL serializer, sessions + first-run Owner + Invites, `compose.yml` with Caddy, `@fastify/static` serving the built PWA.
+3. **Client foundations** *(here)* — Dexie bump (`rev`, dirty marker, `tombstones`) in both Local Store implementations with the dirty-row query added to the contract, the write-once Excalidraw refactor, `SyncProvider` (against `LocalStore` + `Remote`) + account context, the HAL `Remote` and `AccountService` implementations, boundary validation, and the Settings **Account** section (sign in/out, Devices with revoke) beside the storage row carried over from M4.
+4. **The loop** *(both)* — `GET /changes` with cursor links and ETags, dirty push with Revisions, conflict → Conflicted Copy + "Conflicts" tag + toast, adopt-on-first-sign-in, erase-on-sign-out, and the too-old-cursor full resync.
+5. **Attachments** *(both)* — idempotent byte upload/download, eager thumbnails, the new "known but not downloaded" attachment node state, the keep-everything preference.
+6. **Setup, docs, testing** *(both)* — the three Caddy modes with one documented happy path, first-run and Invite UX, sync status polish, the SSE channel if it still looks worth it, and the user testing the brief requires.
 
 **Testing:** the client sync engine is tested here against a fake server built from the vendored contract, so conflict, resync and offline paths are deterministic. The backend tests itself in its own repo. Genuine two-device end-to-end is a manual and user-testing activity - a cross-repo Playwright pipeline would cost more than it catches.
 
@@ -126,7 +127,7 @@ Scoped by a `/grill-with-docs` session on 2026-08-12. Key decisions: [ADR 0017](
 
 ## Per-area plans
 
-- [`src/db/PLAN.md`](./src/db/PLAN.md) — schema versioning, attachment storage, sync metadata.
+- [`src/db/PLAN.md`](./src/db/PLAN.md) — schema versioning, attachment storage, sync metadata (moves to `src/data/PLAN.md` with M5 slice 1).
 - [`src/hooks/data/PLAN.md`](./src/hooks/data/PLAN.md) — attachment actions, optimistic updates, mutation queue.
 - [`src/components/editor/PLAN.md`](./src/components/editor/PLAN.md) — M1 extension work in detail.
 - [`src/context/PLAN.md`](./src/context/PLAN.md) — auth context, accessibility themes.

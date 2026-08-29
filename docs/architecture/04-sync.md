@@ -43,7 +43,8 @@ This replaced an earlier plan for an ordered intent log, which was both more wor
 
 ## The loop
 
-The client sync engine runs in a `SyncProvider` on the main thread, sharing the app's Dexie connection (ceiling: move to a Worker if a large first pull janks the UI).
+The client sync engine runs in a `SyncProvider` on the main thread, reading and writing the `LocalStore` and talking to a `Remote` ([ADR 0020](../adr/0020-the-local-store-seam.md)); it never touches Dexie (ceiling: move to a Worker if a large first pull janks the UI).
+The `Remote` carries replication only (push, pull, put/get blob); sessions, Devices and Invites are a separate, optional `AccountService` that only the Self-hosted Server implements, so a self-hoster can point Sync at a Remote of their own.
 Change detection is polling on focus / `online` / visibility, plus a short interval while visible; an SSE hint channel ("the server is at Revision N" - never data, never load-bearing) is a named follow-up, not a dependency.
 
 ```mermaid
