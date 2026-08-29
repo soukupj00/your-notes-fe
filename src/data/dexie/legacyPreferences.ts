@@ -2,6 +2,10 @@ import { PREFERENCES_STORAGE_KEY } from '@/context/PreferencesProvider.tsx';
 import type { NotesDB } from './db.ts';
 
 const LEGACY_ROW_KEY = 'preferences';
+// Duplicated from `src/lib/tour/props.ts`'s `TOUR_PROPS_META_KEY` on purpose -
+// this file lives under `src/data` and must not depend on `src/lib/tour`. If
+// you rename one, rename the other, or a legacy database's baselines end up
+// orphaned under a key nothing reads any more.
 const TOUR_PROPS_META_KEY = 'tourProps';
 
 /**
@@ -17,13 +21,17 @@ export async function migrateLegacyPreferences(db: NotesDB): Promise<void> {
   const row = await db.settings.get(LEGACY_ROW_KEY);
   if (!row) return;
   const { tourProps, ...preferences } = (row.value ?? {}) as Record<string, unknown>;
+  // localStorage first, transaction second: if `setItem` throws (quota,
+  // disabled storage) or the tab dies in between, the legacy row is still
+  // there to retry from next start. Deleting it first would lose the user's
+  // preferences for good the moment `setItem` failed.
+  if (localStorage.getItem(PREFERENCES_STORAGE_KEY) === null) {
+    localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
+  }
   await db.transaction('rw', db.settings, async () => {
     if (Array.isArray(tourProps) && tourProps.length > 0) {
       await db.settings.put({ key: TOUR_PROPS_META_KEY, value: tourProps });
     }
     await db.settings.delete(LEGACY_ROW_KEY);
   });
-  if (localStorage.getItem(PREFERENCES_STORAGE_KEY) === null) {
-    localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
-  }
 }

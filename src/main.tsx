@@ -11,11 +11,15 @@ import './i18n.ts';
 const store = createDexieLocalStore();
 
 // Lets the one-shot legacy migration land before the first synchronous
-// preferences read (src/data/dexie/legacyPreferences.ts).
-void store.meta.get('tourProps').then(() => {
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <App store={store} />
-    </StrictMode>
-  );
-});
+// preferences read (src/data/dexie/legacyPreferences.ts). Renders regardless
+// of whether it succeeded - IndexedDB refusing to open must not blank the app.
+void store.meta
+  .get('tourProps')
+  .catch((error) => console.error('Local Store not ready', error))
+  .then(() => {
+    createRoot(document.getElementById('root')!).render(
+      <StrictMode>
+        <App store={store} />
+      </StrictMode>
+    );
+  });

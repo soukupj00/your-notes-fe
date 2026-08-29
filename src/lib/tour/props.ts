@@ -37,7 +37,11 @@ type PurgeNote = (id: string) => Promise<unknown>;
 /** One live Prop and the `updatedAt` baseline the sweep compares against. */
 export type TourProp = { id: string; updatedAt: string };
 
-/** `meta` key the baselines live under: store bookkeeping, not a Preference (ADR 0020). */
+/**
+ * `meta` key the baselines live under: store bookkeeping, not a Preference (ADR 0020).
+ * Duplicated in `src/data/dexie/legacyPreferences.ts` (that file can't import
+ * from here - `src/data` must not depend on `src/lib/tour`) - rename both together.
+ */
 export const TOUR_PROPS_META_KEY = 'tourProps';
 
 export const readProps = async (store: LocalStore): Promise<TourProp[]> =>

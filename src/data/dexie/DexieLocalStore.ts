@@ -24,7 +24,12 @@ function live<T>(querier: () => T | Promise<T>): Live<T> {
 export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
   // One-shot legacy split (src/data/dexie/legacyPreferences.ts); `meta` waits on
   // it so a Tour sweep on startup cannot read `tourProps` before it has landed.
-  const ready = migrateLegacyPreferences(db);
+  // Non-poisoning: a failed migration must not permanently block every later
+  // `meta` call - the legacy row is left in place and the migration is retried
+  // on the next app start.
+  const ready = migrateLegacyPreferences(db).catch((error) =>
+    console.error('Legacy preferences migration failed', error)
+  );
 
   /** The feed's read, shared by `feed()` so the join lives in one place. */
   async function readFeed(scope: NoteFeedScope): Promise<Note[]> {

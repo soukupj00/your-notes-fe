@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NotesDB } from './db.ts';
 import { migrateLegacyPreferences } from './legacyPreferences.ts';
 
@@ -42,5 +42,18 @@ describe('migrateLegacyPreferences', () => {
     const db = new NotesDB(`legacy-${crypto.randomUUID()}`);
     await expect(migrateLegacyPreferences(db)).resolves.toBeUndefined();
     expect(localStorage.getItem('preferences')).toBeNull();
+  });
+
+  it('leaves the legacy row in place when localStorage.setItem throws', async () => {
+    const db = new NotesDB(`legacy-${crypto.randomUUID()}`);
+    await db.settings.put({ key: 'preferences', value: { version: 2, density: 'compact' } });
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota');
+    });
+
+    await expect(migrateLegacyPreferences(db)).rejects.toThrow('quota');
+
+    setItem.mockRestore();
+    expect(await db.settings.get('preferences')).toBeDefined();
   });
 });
