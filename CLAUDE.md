@@ -14,7 +14,7 @@ Open-source self-hosted PWA note-taking app (Google Keep alternative). Mobile-fi
 - [`DESIGN.md`](./DESIGN.md) — **the visual contract.** The `nightshift` direction ("Day desk, night shop"), its tokens, and its Named Rules, which are binding for any UI work. Written from measurement, not impression, so it also records six defects that must be fixed rather than ported. `.impeccable/design.json` is its machine-readable sidecar (tonal ramps, shadow/motion tokens, component snippets).
 - [`docs/adr/`](./docs/adr/) — architecture decision records.
 - Per-area docs (each folder has a `CLAUDE.md` = how it works + `PLAN.md` = what's left):
-  [`src/db`](./src/db/CLAUDE.md), [`src/hooks/data`](./src/hooks/data/CLAUDE.md), [`src/components/editor`](./src/components/editor/CLAUDE.md), [`src/context`](./src/context/CLAUDE.md).
+  [`src/data`](./src/data/CLAUDE.md), [`src/hooks/data`](./src/hooks/data/CLAUDE.md), [`src/components/editor`](./src/components/editor/CLAUDE.md), [`src/context`](./src/context/CLAUDE.md).
 
 ## Commands
 
@@ -43,13 +43,14 @@ First run on a machine needs `pnpm exec playwright install chromium`.
 
 ## Architecture
 
-### Data layer (`src/db/`, `src/hooks/data/`, `src/models.ts`)
+### Data layer (`src/data/`, `src/hooks/data/`, `src/models.ts`)
 
-All persistence is via **Dexie** (IndexedDB wrapper). The schema lives in `src/db/db.ts` as `NotesDB extends Dexie`. Domain models are in `src/models.ts` (`Note`, `Tag`, `NoteTag`, `NoteImage`, `NoteAudio`, `NoteFile`).
+All persistence goes through the `LocalStore` interface (`src/data/`, [ADR 0020](./docs/adr/0020-the-local-store-seam.md)); the default implementation is Dexie/IndexedDB, and Dexie is imported nowhere else (Biome enforces it).
+Domain models are in `src/models.ts`.
 
 Data access uses dedicated hooks in `src/hooks/data/`:
 
-- `useTags` / `useTagsForNote` — live queries via `useLiveQuery` from `dexie-react-hooks`
+- `useTags` / `useTagsForNote` - live queries via `useLive`
 - `useNoteActions` / `useTagActions` — CRUD mutations (create/update/delete)
 - `useNoteFeed` — the one feed query: lifecycle/tag scoping plus fuzzy ranked search (Fuse.js, `src/lib/note-search.ts`)
 - `useTagsForNote`, `useNoteAttachments` — relationship queries via the `noteTags` join table and the attachment stores
@@ -128,7 +129,7 @@ In the feed views that heading is `sr-only` - the visible title row was dropped 
 
 ### Backup (`src/lib/backup.ts`, `src/components/settings/`)
 
-The whole database exports to a `.zip`: `manifest.json` (notes, tags, noteTags, attachment metadata, the `settings` table) plus one entry per attachment blob at `attachments/<id>` (and `attachments/<id>.thumb`).
+The whole database exports to a `.zip`: `manifest.json` (notes, tags, noteTags, attachment metadata, and an always-empty `settings` array kept for archive compatibility) plus one entry per attachment blob at `attachments/<id>` (and `attachments/<id>.thumb`).
 Zipping is `fflate`.
 `parseBackupZip` is the only validation gate and never writes - restore is replace-all, so an unreadable archive must be rejected while the user's data is still intact.
 `restoreBackup` wipes and rewrites in one Dexie transaction, and the UI (`BackupSection`) offers a checked-by-default "save my current data first" inside the confirm dialog - cancelling or failing that save abandons the import.
@@ -140,6 +141,7 @@ Manifest rows are validated with `z.looseObject`, so unknown (future) fields sur
 Colors use **OKLCH** custom properties defined in `src/styles/globals.css`; this is the live token source for both light and dark.
 `ThemeProvider` (`src/context/themeProvider.tsx`) is a **custom** provider (not `next-themes`, despite that package being installed): it persists the choice to `localStorage` and toggles the `light`/`dark` class on `<html>`, supporting a `system` mode via `prefers-color-scheme`.
 Theme switching is done at the provider level - no per-component theme logic.
+`PreferencesProvider` reads `localStorage` synchronously, so the first render already has the user's density and motion choice - no hydration step.
 Preferences that CSS rather than React has to act on are stamped onto `<html>` by `DocumentPreferences` (`src/components/DocumentPreferences.tsx`): the `cvd` colour-blind class, `data-density`, and `data-reduced-motion`.
 The test for belonging there is whether the stylesheet needs the value - density re-values the type and rhythm tokens, and reduced motion has to overrule the `prefers-reduced-motion` media query, which JS cannot reach into.
 Every other preference is read by the component that spends it.
@@ -193,7 +195,7 @@ Feature work follows **red → green → refactor**, applied pragmatically per l
 
 - **Icons**: Always use string keys in `src/components/icons/icons.ts` — never import Lucide icons directly into extension button configs.
 - **New TipTap extensions**: Follow the per-folder pattern with `ExtensionName.ts` + `index.ts`. Add the button factory with `ActionButton` as the component.
-- **DB schema changes**: Increment the Dexie version number in `src/db/db.ts` and add a migration if existing data must be preserved.
+- **DB schema changes**: Increment the Dexie version number in `src/data/dexie/db.ts` and add a migration if existing data must be preserved.
 - **Dates**: All timestamps stored as ISO strings (`.toISOString()`).
 - **IDs**: Use `uuid` (`v4`) for all entity IDs.
 - **Tailwind v4** is in use (CSS-based config, not `tailwind.config.js` plugins). `tw-animate-css` provides animation utilities.

@@ -1,6 +1,6 @@
 # 0001 — Local-first storage with Dexie/IndexedDB
 
-- Status: Accepted
+- Status: Accepted; amended by [ADR 0020](./0020-the-local-store-seam.md) (the app no longer touches Dexie directly)
 - Date: 2026-06-15
 
 ## Context

@@ -1,8 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BackupError, type ParsedBackup, type SaveTarget } from '@/lib/backup.ts';
+import { renderWithStore as render, testStore } from '@/test/store.tsx';
 import { BackupSection } from './BackupSection.tsx';
 
 vi.mock('react-i18next', () => ({
@@ -133,7 +134,7 @@ describe('import', () => {
 
     await confirmImport();
 
-    await waitFor(() => expect(backup.restoreBackup).toHaveBeenCalledWith(parsed));
+    await waitFor(() => expect(backup.restoreBackup).toHaveBeenCalledWith(testStore, parsed));
     expect(backup.requestSaveTarget.mock.calls[0][0]).toContain('-before-import');
     expect(target.write.mock.invocationCallOrder[0]).toBeLessThan(
       backup.restoreBackup.mock.invocationCallOrder[0]
@@ -174,7 +175,7 @@ describe('import', () => {
     await userEvent.click(await screen.findByText('settings.backup.confirmImport.backupFirst'));
     await confirmImport();
 
-    await waitFor(() => expect(backup.restoreBackup).toHaveBeenCalledWith(parsed));
+    await waitFor(() => expect(backup.restoreBackup).toHaveBeenCalledWith(testStore, parsed));
     expect(backup.requestSaveTarget).not.toHaveBeenCalled();
   });
 

@@ -1,7 +1,6 @@
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
-import { db } from '@/db/db.ts';
 import { DesktopCaptureBar } from './DesktopCaptureBar.tsx';
 
 vi.mock('react-i18next', () => ({
@@ -20,9 +19,8 @@ beforeEach(() => {
   motion.reduced = false;
 });
 
-afterEach(async () => {
+afterEach(() => {
   vi.useRealTimers();
-  await db.settings.clear();
 });
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (

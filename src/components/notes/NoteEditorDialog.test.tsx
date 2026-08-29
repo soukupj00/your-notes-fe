@@ -1,9 +1,8 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { db } from '@/db/db.ts';
 import type { Note } from '@/models.ts';
-import { clearNotesDb } from '@/test/db.ts';
+import { clearStore, renderWithStore as render, testStore } from '@/test/store.tsx';
 import { NoteEditorDialog } from './NoteEditorDialog.tsx';
 import { EMPTY_CHECKLIST_BODY } from './noteDrafts.ts';
 
@@ -72,12 +71,12 @@ const closeButton = () => screen.getByRole('button', { name: 'Close' });
 const dialogSurface = () =>
   document.querySelector('[data-slot="dialog-content"]') as HTMLElement | null;
 
-afterEach(clearNotesDb);
+afterEach(clearStore);
 
 describe('NoteEditorDialog', () => {
   it('loads an existing note once and ignores later external writes (no live query)', async () => {
     const note = makeNote({ header: 'Stored header', body: 'Stored body' });
-    await db.notes.add(note);
+    await testStore.notes.add(note);
 
     render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
 
@@ -89,7 +88,7 @@ describe('NoteEditorDialog', () => {
     // never re-fed by a live query - a live query here would reset the
     // input under a typing user's cursor. So this external write must NOT
     // be reflected in the open editor.
-    await db.notes.update(note.id, { header: 'Changed elsewhere' });
+    await testStore.notes.update(note.id, () => ({ header: 'Changed elsewhere' }));
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(headerInput()).toHaveValue('Stored header');
@@ -101,8 +100,10 @@ describe('NoteEditorDialog', () => {
 
     await userEvent.type(headerInput(), 'First draft');
 
-    await waitFor(async () => expect(await db.notes.count()).toBe(1), { timeout: 2000 });
-    const notes = await db.notes.toArray();
+    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1), {
+      timeout: 2000,
+    });
+    const notes = await testStore.notes.list();
     expect(notes[0].header).toBe('First draft');
     const persistedId = notes[0].id;
 
@@ -110,12 +111,12 @@ describe('NoteEditorDialog', () => {
 
     await waitFor(
       async () => {
-        const updated = await db.notes.get(persistedId);
+        const updated = await testStore.notes.get(persistedId);
         expect(updated?.header).toBe('First draft continued');
       },
       { timeout: 2000 }
     );
-    expect(await db.notes.count()).toBe(1);
+    expect((await testStore.notes.list()).length).toBe(1);
   });
 
   it('creates a draft from a body-only edit (empty header), exactly once', async () => {
@@ -123,8 +124,10 @@ describe('NoteEditorDialog', () => {
 
     await userEvent.type(editorTextarea(), 'Body only draft');
 
-    await waitFor(async () => expect(await db.notes.count()).toBe(1), { timeout: 2000 });
-    const notes = await db.notes.toArray();
+    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1), {
+      timeout: 2000,
+    });
+    const notes = await testStore.notes.list();
     expect(notes[0].header).toBe('');
     expect(notes[0].body).toBe('Body only draft');
   });
@@ -136,12 +139,12 @@ describe('NoteEditorDialog', () => {
     await userEvent.click(closeButton());
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    expect(await db.notes.count()).toBe(0);
+    expect((await testStore.notes.list()).length).toBe(0);
   });
 
   it('deletes an existing note that is emptied out before closing', async () => {
     const note = makeNote();
-    await db.notes.add(note);
+    await testStore.notes.add(note);
     const onClose = vi.fn();
 
     render(<NoteEditorDialog noteId={note.id} onClose={onClose} />);
@@ -152,7 +155,7 @@ describe('NoteEditorDialog', () => {
     await userEvent.click(closeButton());
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    expect(await db.notes.get(note.id)).toBeUndefined();
+    expect(await testStore.notes.get(note.id)).toBeUndefined();
   });
 
   it('seeds a new checklist draft with an empty task list and persists it once edited', async () => {
@@ -162,8 +165,10 @@ describe('NoteEditorDialog', () => {
 
     await userEvent.type(editorTextarea(), 'Buy milk');
 
-    await waitFor(async () => expect(await db.notes.count()).toBe(1), { timeout: 2000 });
-    const [saved] = await db.notes.toArray();
+    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1), {
+      timeout: 2000,
+    });
+    const [saved] = await testStore.notes.list();
     expect(saved.body).toContain('Buy milk');
     expect(saved.body).toContain('data-type="taskList"');
   });
@@ -179,12 +184,14 @@ describe('NoteEditorDialog', () => {
   });
 
   it('stops writing once an edit settles (no autosave re-render loop)', async () => {
-    const addSpy = vi.spyOn(db.notes, 'add');
-    const putSpy = vi.spyOn(db.notes, 'put');
+    const addSpy = vi.spyOn(testStore.notes, 'add');
+    const putSpy = vi.spyOn(testStore.notes, 'put');
     render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
 
     await userEvent.type(headerInput(), 'Hi');
-    await waitFor(async () => expect(await db.notes.count()).toBe(1), { timeout: 2000 });
+    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1), {
+      timeout: 2000,
+    });
 
     const writesAtSettle = addSpy.mock.calls.length + putSpy.mock.calls.length;
     // Wait well past the debounce with no further edits. A loop (unstable save
@@ -210,7 +217,7 @@ describe('NoteEditorDialog', () => {
     await user.click(closeButton());
 
     await waitFor(async () => {
-      const notes = await db.notes.toArray();
+      const notes = await testStore.notes.list();
       expect(notes).toHaveLength(1); // kept, not discarded
       expect(notes[0].body).toContain('data-attachment-id="x1"');
     });
@@ -229,7 +236,7 @@ describe('NoteEditorDialog', () => {
     await user.click(closeButton());
 
     await waitFor(async () => {
-      const notes = await db.notes.toArray();
+      const notes = await testStore.notes.list();
       expect(notes).toHaveLength(1); // kept, not discarded
       expect(notes[0].body).toContain('data-attachment-id="au1"');
     });
@@ -252,10 +259,10 @@ describe('NoteEditorDialog', () => {
 
     // After both paths settle there must be exactly one Note (no silent
     // duplicate / permanent orphan).
-    await waitFor(async () => expect(await db.notes.count()).toBe(1));
+    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1));
     // And it must be a stable count, not still resolving toward 2.
     await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(await db.notes.count()).toBe(1);
+    expect((await testStore.notes.list()).length).toBe(1);
   });
 
   it('still discards a truly empty draft on close', async () => {
@@ -263,12 +270,12 @@ describe('NoteEditorDialog', () => {
     render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
     fireEvent.change(editorTextarea(), { target: { value: '' } });
     await user.click(closeButton());
-    await waitFor(async () => expect(await db.notes.count()).toBe(0));
+    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(0));
   });
 
   it('persists an edit to an existing note on close', async () => {
     const note = makeNote();
-    await db.notes.add(note);
+    await testStore.notes.add(note);
     const onClose = vi.fn();
 
     render(<NoteEditorDialog noteId={note.id} onClose={onClose} />);
@@ -279,12 +286,12 @@ describe('NoteEditorDialog', () => {
     await userEvent.click(closeButton());
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    expect((await db.notes.get(note.id))?.header).toBe('Edited header');
+    expect((await testStore.notes.get(note.id))?.header).toBe('Edited header');
   });
 
   it('labels an unsaved draft, persisting it through the same ensureNoteId queue', async () => {
     const now = new Date().toISOString();
-    await db.tags.put({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
+    await testStore.tags.put({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
 
     render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
 
@@ -292,9 +299,9 @@ describe('NoteEditorDialog', () => {
     await userEvent.click(await screen.findByRole('checkbox', { name: 'Work' }));
 
     // The draft became a real note, and the label landed on that same note.
-    await waitFor(async () => expect(await db.noteTags.count()).toBe(1));
-    const link = (await db.noteTags.toArray())[0];
-    expect(await db.notes.get(link.noteId)).toBeDefined();
+    await waitFor(async () => expect((await testStore.tags.listLinks()).length).toBe(1));
+    const link = (await testStore.tags.listLinks())[0];
+    expect(await testStore.notes.get(link.noteId)).toBeDefined();
   });
 
   // ---- Note bar (colour / pin) ---------------------------------------------
@@ -308,14 +315,14 @@ describe('NoteEditorDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'notes.color' }));
     await userEvent.click(await screen.findByRole('button', { name: 'colors.blue' }));
 
-    await waitFor(async () => expect(await db.notes.count()).toBe(1));
-    const [saved] = await db.notes.toArray();
+    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1));
+    const [saved] = await testStore.notes.list();
     expect(saved.color).toBe('blue');
   });
 
   it('writes a colour change to an existing note and tints the dialog with it', async () => {
     const note = makeNote({ color: 'green' });
-    await db.notes.add(note);
+    await testStore.notes.add(note);
 
     render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
 
@@ -325,14 +332,14 @@ describe('NoteEditorDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'notes.color' }));
     await userEvent.click(await screen.findByRole('button', { name: 'colors.red' }));
 
-    await waitFor(async () => expect((await db.notes.get(note.id))?.color).toBe('red'));
+    await waitFor(async () => expect((await testStore.notes.get(note.id))?.color).toBe('red'));
     // The tint is the picker's feedback, so it must move with the choice.
     expect(dialogSurface()).toHaveAttribute('data-note-color', 'red');
   });
 
   it('pins and unpins an existing note from the bar', async () => {
     const note = makeNote();
-    await db.notes.add(note);
+    await testStore.notes.add(note);
 
     render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
 
@@ -341,12 +348,14 @@ describe('NoteEditorDialog', () => {
 
     await userEvent.click(pin);
 
-    await waitFor(async () => expect((await db.notes.get(note.id))?.pinnedAt).toBeDefined());
+    await waitFor(async () => expect((await testStore.notes.get(note.id))?.pinnedAt).toBeDefined());
     const unpin = await screen.findByRole('button', { name: 'notes.unpin' });
     expect(unpin).toHaveAttribute('aria-pressed', 'true');
 
     await userEvent.click(unpin);
-    await waitFor(async () => expect((await db.notes.get(note.id))?.pinnedAt).toBeUndefined());
+    await waitFor(async () =>
+      expect((await testStore.notes.get(note.id))?.pinnedAt).toBeUndefined()
+    );
   });
 
   it('pins an unsaved draft through the same ensureNoteId queue', async () => {
@@ -354,14 +363,14 @@ describe('NoteEditorDialog', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'notes.pin' }));
 
-    await waitFor(async () => expect(await db.notes.count()).toBe(1));
-    const [saved] = await db.notes.toArray();
+    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1));
+    const [saved] = await testStore.notes.list();
     expect(saved.pinnedAt).toBeDefined();
   });
 
   it('offers no pin for an archived note, since pinning is meaningless there', async () => {
     const note = makeNote({ state: 'archived' });
-    await db.notes.add(note);
+    await testStore.notes.add(note);
 
     render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
     await screen.findByDisplayValue(note.header as string);
@@ -383,8 +392,10 @@ describe('the id in the URL', () => {
 
     await userEvent.type(headerInput(), 'Shopping');
 
-    await waitFor(async () => expect(await db.notes.count()).toBe(1), { timeout: 2000 });
-    const [saved] = await db.notes.toArray();
+    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1), {
+      timeout: 2000,
+    });
+    const [saved] = await testStore.notes.list();
     // Anything else and the URL would be naming a note that does not exist.
     expect(saved.id).toBe(draftId);
   });
@@ -399,12 +410,12 @@ describe('the id in the URL', () => {
 
     await waitFor(() => expect(onNoteMissing).toHaveBeenCalled());
     // Nothing was written under the dead id on the way past.
-    expect(await db.notes.count()).toBe(0);
+    expect((await testStore.notes.list()).length).toBe(0);
   });
 
   it('says nothing when the note is there', async () => {
     const note = makeNote();
-    await db.notes.add(note);
+    await testStore.notes.add(note);
     const onNoteMissing = vi.fn();
 
     render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} onNoteMissing={onNoteMissing} />);
@@ -419,7 +430,7 @@ describe('the id in the URL', () => {
 describe('the mobile app bar', () => {
   it('closes the note from the back arrow', async () => {
     const note = makeNote();
-    await db.notes.add(note);
+    await testStore.notes.add(note);
     const onClose = vi.fn();
 
     render(<NoteEditorDialog noteId={note.id} onClose={onClose} />);

@@ -2,6 +2,13 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
+## Storage
+
+The app persists to IndexedDB (via Dexie) by default.
+An in-memory store that persists nothing also ships, for tests and for deployments that want no persistence.
+See [`src/data/CLAUDE.md`](./src/data/CLAUDE.md) for bringing your own store.
+A Backup carries Notes, Tags and Attachments but not Preferences, which stay with the device.
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh

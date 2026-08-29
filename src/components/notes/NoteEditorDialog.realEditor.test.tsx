@@ -3,8 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
-import { db } from '@/db/db.ts';
-import { clearNotesDb } from '@/test/db.ts';
+import { clearStore, testStore, withStore } from '@/test/store.tsx';
 import { setViewport } from '@/test/viewport.ts';
 import { NoteEditorDialog } from './NoteEditorDialog.tsx';
 
@@ -48,12 +47,12 @@ beforeAll(() => {
 });
 
 afterEach(async () => {
-  await clearNotesDb();
+  await clearStore();
 });
 
 async function seedNote(body: string) {
   const now = new Date().toISOString();
-  await db.notes.put({
+  await testStore.notes.put({
     id: 'n1',
     header: 'Hello',
     description: '',
@@ -68,11 +67,13 @@ function openNote() {
   // The editor toolbar reads the stored Toolbar Layouts, so the real editor
   // needs the preferences provider the app always gives it.
   return render(
-    <PreferencesProvider>
-      <TooltipProvider>
-        <NoteEditorDialog noteId="n1" onClose={vi.fn()} />
-      </TooltipProvider>
-    </PreferencesProvider>
+    withStore(
+      <PreferencesProvider>
+        <TooltipProvider>
+          <NoteEditorDialog noteId="n1" onClose={vi.fn()} />
+        </TooltipProvider>
+      </PreferencesProvider>
+    )
   );
 }
 
@@ -107,11 +108,13 @@ describe('the toolbar customisation sheet, over an unsaved draft', () => {
 
   function renderDraft() {
     render(
-      <PreferencesProvider>
-        <TooltipProvider>
-          <NoteEditorDialog noteId={null} onClose={vi.fn()} />
-        </TooltipProvider>
-      </PreferencesProvider>
+      withStore(
+        <PreferencesProvider>
+          <TooltipProvider>
+            <NoteEditorDialog noteId={null} onClose={vi.fn()} />
+          </TooltipProvider>
+        </PreferencesProvider>
+      )
     );
     return userEvent.setup();
   }
@@ -148,7 +151,7 @@ describe('the toolbar customisation sheet, over an unsaved draft', () => {
 
     await roundTripTheSheet(user);
 
-    expect(await db.notes.count()).toBe(0);
+    expect(await testStore.notes.list()).toHaveLength(0);
   });
 
   it('leaves the draft open, with what was typed still in it', async () => {
@@ -164,11 +167,13 @@ describe('the toolbar customisation sheet, over an unsaved draft', () => {
   it('changes the bar behind it while it is still open', async () => {
     const user = userEvent.setup();
     render(
-      <PreferencesProvider>
-        <TooltipProvider>
-          <NoteEditorDialog noteId={null} onClose={vi.fn()} />
-        </TooltipProvider>
-      </PreferencesProvider>
+      withStore(
+        <PreferencesProvider>
+          <TooltipProvider>
+            <NoteEditorDialog noteId={null} onClose={vi.fn()} />
+          </TooltipProvider>
+        </PreferencesProvider>
+      )
     );
 
     const bar = await screen.findByTestId('editor-toolbar');

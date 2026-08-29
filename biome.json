@@ -51,7 +51,18 @@
         "noArrayIndexKey": "warn"
       },
       "style": {
-        "noNonNullAssertion": "off"
+        "noNonNullAssertion": "off",
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "dexie": "Dexie is an implementation detail of the Local Store. Import from '@/data/LocalStoreProvider.tsx' (ADR 0020).",
+              "@/data/dexie/db.ts": "The Dexie instance is private to src/data/dexie. Go through the LocalStore (ADR 0020).",
+              "@/data/dexie/DexieLocalStore.ts": "Dexie is private to src/data. Compose the store in main.tsx or go through the LocalStore (ADR 0020).",
+              "@/data/dexie/legacyPreferences.ts": "Dexie is private to src/data. Compose the store in main.tsx or go through the LocalStore (ADR 0020)."
+            }
+          }
+        }
       }
     }
   },
@@ -76,6 +87,16 @@
         "rules": {
           "suspicious": {
             "noExplicitAny": "warn"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/data/**", "src/main.tsx", "src/test/store.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": "off"
           }
         }
       }

@@ -1,12 +1,10 @@
-import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { db } from '@/db/db.ts';
 import type { Attachment, Note } from '@/models.ts';
-import { clearNotesDb } from '@/test/db.ts';
+import { clearStore, renderHookWithStore, testStore } from '@/test/store.tsx';
 import { TRASH_GRACE_DAYS, useNoteActions } from './useNoteActions.ts';
 
 function actions() {
-  return renderHook(() => useNoteActions()).result.current;
+  return renderHookWithStore(() => useNoteActions()).result.current;
 }
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString();
@@ -22,7 +20,7 @@ async function putNote(overrides: Partial<Note> = {}): Promise<Note> {
     updatedAt: now,
     ...overrides,
   };
-  await db.notes.put(note);
+  await testStore.notes.put(note);
   return note;
 }
 
@@ -37,11 +35,11 @@ async function putAttachment(noteId: string): Promise<Attachment> {
     createdAt: now,
     updatedAt: now,
   };
-  await db.attachments.put(att);
+  await testStore.attachments.add(att);
   return att;
 }
 
-afterEach(clearNotesDb);
+afterEach(clearStore);
 
 describe('lifecycle transitions', () => {
   it('pinNote sets pinnedAt and unpinNote clears it', async () => {
@@ -49,10 +47,10 @@ describe('lifecycle transitions', () => {
     const note = await putNote();
 
     await pinNote(note.id);
-    expect((await db.notes.get(note.id))?.pinnedAt).toEqual(expect.any(String));
+    expect((await testStore.notes.get(note.id))?.pinnedAt).toEqual(expect.any(String));
 
     await unpinNote(note.id);
-    expect((await db.notes.get(note.id))?.pinnedAt).toBeUndefined();
+    expect((await testStore.notes.get(note.id))?.pinnedAt).toBeUndefined();
   });
 
   it('archiveNote moves the note out of active and clears the pin', async () => {
@@ -61,7 +59,7 @@ describe('lifecycle transitions', () => {
 
     await archiveNote(note.id);
 
-    const stored = await db.notes.get(note.id);
+    const stored = await testStore.notes.get(note.id);
     expect(stored?.state).toBe('archived');
     // ADR 0009: a pin is only meaningful while active, so archiving drops it.
     expect(stored?.pinnedAt).toBeUndefined();
@@ -73,7 +71,7 @@ describe('lifecycle transitions', () => {
 
     await trashNote(note.id);
 
-    const stored = await db.notes.get(note.id);
+    const stored = await testStore.notes.get(note.id);
     expect(stored?.state).toBe('trashed');
     expect(stored?.trashedAt).toEqual(expect.any(String));
     expect(stored?.pinnedAt).toBeUndefined();
@@ -89,8 +87,8 @@ describe('lifecycle transitions', () => {
     await restoreToActive(archived.id);
     await restoreToActive(trashed.id);
 
-    expect((await db.notes.get(archived.id))?.state).toBe('active');
-    const restored = await db.notes.get(trashed.id);
+    expect((await testStore.notes.get(archived.id))?.state).toBe('active');
+    const restored = await testStore.notes.get(trashed.id);
     expect(restored?.state).toBe('active');
     // Leaving trashedAt behind would make a restored note eligible for the purge sweep.
     expect(restored?.trashedAt).toBeUndefined();
@@ -111,7 +109,7 @@ describe('undo via revertLifecycle', () => {
     if (!before) throw new Error('expected a snapshot');
     await revertLifecycle(note.id, before);
 
-    const stored = await db.notes.get(note.id);
+    const stored = await testStore.notes.get(note.id);
     expect(stored?.state).toBe('active');
     expect(stored?.pinnedAt).toBe(note.pinnedAt);
     expect(stored?.trashedAt).toBeUndefined();
@@ -127,7 +125,7 @@ describe('undo via revertLifecycle', () => {
     if (!before) throw new Error('expected a snapshot');
     await revertLifecycle(note.id, before);
 
-    expect(await db.notes.get(note.id)).toMatchObject({
+    expect(await testStore.notes.get(note.id)).toMatchObject({
       state: 'active',
       pinnedAt: note.pinnedAt,
     });
@@ -141,7 +139,7 @@ describe('undo via revertLifecycle', () => {
     if (!before) throw new Error('expected a snapshot');
     await revertLifecycle(note.id, before);
 
-    expect((await db.notes.get(note.id))?.pinnedAt).toBeUndefined();
+    expect((await testStore.notes.get(note.id))?.pinnedAt).toBeUndefined();
   });
 });
 
@@ -156,10 +154,10 @@ describe('purgeExpiredTrash', () => {
     const purged = await purgeExpiredTrash();
 
     expect(purged).toBe(1);
-    expect(await db.notes.get(expired.id)).toBeUndefined();
-    expect(await db.attachments.get(expiredAtt.id)).toBeUndefined();
-    expect(await db.notes.get(fresh.id)).toBeTruthy();
-    expect(await db.notes.get(active.id)).toBeTruthy();
+    expect(await testStore.notes.get(expired.id)).toBeUndefined();
+    expect(await testStore.attachments.get(expiredAtt.id)).toBeUndefined();
+    expect(await testStore.notes.get(fresh.id)).toBeTruthy();
+    expect(await testStore.notes.get(active.id)).toBeTruthy();
   });
 
   it('spares a note restored from trash even if its old trashedAt was expired', async () => {
@@ -170,7 +168,7 @@ describe('purgeExpiredTrash', () => {
     await restoreToActive(note.id);
 
     expect(await purgeExpiredTrash()).toBe(0);
-    expect(await db.notes.get(note.id)).toBeTruthy();
+    expect(await testStore.notes.get(note.id)).toBeTruthy();
   });
 
   it('honours a caller-supplied grace period', async () => {
@@ -179,7 +177,7 @@ describe('purgeExpiredTrash', () => {
 
     expect(await purgeExpiredTrash(30)).toBe(0);
     expect(await purgeExpiredTrash(2)).toBe(1);
-    expect(await db.notes.get(note.id)).toBeUndefined();
+    expect(await testStore.notes.get(note.id)).toBeUndefined();
   });
 });
 
@@ -195,10 +193,10 @@ describe('emptyTrash', () => {
 
     expect(await emptyTrash()).toBe(2);
 
-    expect(await db.notes.get(trashedA.id)).toBeUndefined();
-    expect(await db.notes.get(trashedB.id)).toBeUndefined();
-    expect(await db.attachments.get(att.id)).toBeUndefined();
-    expect(await db.notes.get(active.id)).toBeTruthy();
-    expect(await db.notes.get(archived.id)).toBeTruthy();
+    expect(await testStore.notes.get(trashedA.id)).toBeUndefined();
+    expect(await testStore.notes.get(trashedB.id)).toBeUndefined();
+    expect(await testStore.attachments.get(att.id)).toBeUndefined();
+    expect(await testStore.notes.get(active.id)).toBeTruthy();
+    expect(await testStore.notes.get(archived.id)).toBeTruthy();
   });
 });

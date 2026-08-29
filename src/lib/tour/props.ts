@@ -15,26 +15,40 @@
  *    baseline is *not* the seed value: the Tour's own acts write, so every act
  *    that touches a Prop calls `rebaseProp` and nothing else is exempt.
  * 3. **Orphans are swept on the next start.** A reload at step 2 ends the Tour
- *    with no teardown, so the baselines live in the preferences blob and the
+ *    with no teardown, so the baselines live in the store's `meta` and the
  *    next start runs the same purge over whatever the last run left behind.
  *
- * The functions take their writers (`createNote`, `purgeNote`) as arguments
- * rather than reaching for `useNoteActions` themselves, and they return the new
- * baselines rather than persisting them. That keeps the whole module callable
- * from a plain test with no React and no preferences plumbing; `TourProvider`
- * owns both halves.
+ * The functions take their writers (`store`, `purgeNote`) as arguments rather
+ * than reaching for `useNoteActions` themselves, and the ones that mutate
+ * return the new baselines rather than leaving the caller to re-read them.
+ * That keeps the whole module callable from a plain test with no React;
+ * `TourProvider` owns the React half.
  */
 
-import type { TourProp } from '@/context/PreferencesProvider.tsx';
-import { db } from '@/db/db.ts';
+import type { LocalStore } from '@/data/LocalStore.ts';
+import { newNote } from '@/lib/new-note.ts';
 import type { NoteColor } from '@/lib/note-colors.ts';
-import type { Note } from '@/models.ts';
 
 /** The slice of i18next's `t` the Prop copy needs. */
 type Translate = (key: string) => string;
 
-type CreateNote = (data: Partial<Note>) => Promise<Note>;
 type PurgeNote = (id: string) => Promise<unknown>;
+
+/** One live Prop and the `updatedAt` baseline the sweep compares against. */
+export type TourProp = { id: string; updatedAt: string };
+
+/**
+ * `meta` key the baselines live under: store bookkeeping, not a Preference (ADR 0020).
+ * Duplicated in `src/data/dexie/legacyPreferences.ts` (that file can't import
+ * from here - `src/data` must not depend on `src/lib/tour`) - rename both together.
+ */
+export const TOUR_PROPS_META_KEY = 'tourProps';
+
+export const readProps = async (store: LocalStore): Promise<TourProp[]> =>
+  (await store.meta.get<TourProp[]>(TOUR_PROPS_META_KEY)) ?? [];
+
+export const writeProps = (store: LocalStore, props: TourProp[]) =>
+  store.meta.set(TOUR_PROPS_META_KEY, props);
 
 // --- Body markup ------------------------------------------------------------
 //
@@ -138,42 +152,31 @@ export function propByKey(props: TourProp[], key: PropKey): TourProp | undefined
 // --- Lifecycle --------------------------------------------------------------
 
 /**
- * Seeds the three Props and records their baselines, atomically.
+ * Seeds the three Props and records their baselines.
  *
  * Created one at a time rather than in parallel so the wall's default
  * `updated desc` order is the reverse of the table above and is the same on
  * every run - a Tour that deals its own cards differently each time is a Tour
  * whose steps cannot describe what the user is looking at.
  *
- * The `record` writer is taken rather than left to the caller *after* the fact,
- * and the whole thing runs in one transaction across both stores, because a
- * Prop that exists without a baseline is a Prop nothing will ever sweep. That
- * window was not theoretical: the three notes land on the wall the instant they
- * are written, and a reload in the moment before `tourProps` followed them left
- * all three on the user's wall for good. Either the Props and their baselines
- * both exist, or neither does.
- *
- * `record` is still injected rather than reached for, for the same reason
- * `createNote` is: this module knows nothing about React or preferences.
+ * The baselines are written *before* the rows, on purpose: there is no
+ * cross-store transaction on the seam (ADR 0020), and a crash between the two
+ * writes then leaves baselines for notes that do not exist - which
+ * `purgeProps` already tolerates - rather than notes with no baseline, which
+ * would never be swept.
  */
-export async function createProps(
-  createNote: CreateNote,
-  t: Translate,
-  record: (props: TourProp[]) => Promise<void>
-): Promise<TourProp[]> {
-  return db.transaction('rw', db.notes, db.settings, async () => {
-    const props: TourProp[] = [];
-    for (const spec of PROP_SPECS) {
-      const note = await createNote({
-        header: t(`onboarding.props.${spec.key}.header`),
-        body: spec.body(t),
-        color: spec.color,
-      });
-      props.push({ id: note.id, updatedAt: note.updatedAt });
-    }
-    await record(props);
-    return props;
-  });
+export async function createProps(store: LocalStore, t: Translate): Promise<TourProp[]> {
+  const notes = PROP_SPECS.map((spec) =>
+    newNote({
+      header: t(`onboarding.props.${spec.key}.header`),
+      body: spec.body(t),
+      color: spec.color,
+    })
+  );
+  const props = notes.map(({ id, updatedAt }) => ({ id, updatedAt }));
+  await writeProps(store, props);
+  for (const note of notes) await store.notes.add(note);
+  return props;
 }
 
 /**
@@ -185,8 +188,12 @@ export async function createProps(
  * a missing row, and dropping it here would mean two places that decide what
  * "gone" means.
  */
-export async function rebaseProp(props: TourProp[], id: string): Promise<TourProp[]> {
-  const note = await db.notes.get(id);
+export async function rebaseProp(
+  store: LocalStore,
+  props: TourProp[],
+  id: string
+): Promise<TourProp[]> {
+  const note = await store.notes.get(id);
   if (!note) return props;
   return props.map((prop) => (prop.id === id ? { id, updatedAt: note.updatedAt } : prop));
 }
@@ -208,10 +215,14 @@ export async function rebaseProp(props: TourProp[], id: string): Promise<TourPro
  * kept Prop is an ordinary Note, and a baseline for a note the Tour will never
  * touch again is just a stale row waiting to purge something on a later run.
  */
-export async function purgeProps(purgeNote: PurgeNote, props: TourProp[]): Promise<string[]> {
+export async function purgeProps(
+  store: LocalStore,
+  purgeNote: PurgeNote,
+  props: TourProp[]
+): Promise<string[]> {
   const purged: string[] = [];
   for (const prop of props) {
-    const note = await db.notes.get(prop.id);
+    const note = await store.notes.get(prop.id);
     if (!note || note.updatedAt !== prop.updatedAt) continue;
     await purgeNote(prop.id);
     purged.push(prop.id);

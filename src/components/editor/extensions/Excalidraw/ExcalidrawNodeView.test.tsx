@@ -1,8 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { db } from '@/db/db.ts';
 import type { Attachment } from '@/models.ts';
+import { clearStore, renderWithStore as render, testStore } from '@/test/store.tsx';
 import { ExcalidrawNodeView } from './ExcalidrawNodeView';
 
 function att(overrides: Partial<Attachment> = {}): Attachment {
@@ -34,13 +34,11 @@ function props(over: { openExcalidraw?: () => void; deleteNode?: () => void } = 
   return { p, openExcalidraw, deleteNode };
 }
 
-afterEach(async () => {
-  await db.attachments.clear();
-});
+afterEach(clearStore);
 
 describe('ExcalidrawNodeView (preview)', () => {
   it('can open the editor on the first click while the preview is still loading', async () => {
-    await db.attachments.add(att());
+    await testStore.attachments.add(att());
     const { p, openExcalidraw } = props();
     render(<ExcalidrawNodeView {...p} />);
 
@@ -52,7 +50,7 @@ describe('ExcalidrawNodeView (preview)', () => {
   });
 
   it('sizes the border and delete overlay to the preview instead of the editor width', async () => {
-    await db.attachments.add(att());
+    await testStore.attachments.add(att());
     const { p } = props();
     render(<ExcalidrawNodeView {...p} />);
 
@@ -69,7 +67,7 @@ describe('ExcalidrawNodeView (preview)', () => {
   });
 
   it('tapping the preview opens the modal with attachmentId + onDelete', async () => {
-    await db.attachments.add(att());
+    await testStore.attachments.add(att());
     const { p, openExcalidraw } = props();
     render(<ExcalidrawNodeView {...p} />);
     const surface = await screen.findByRole('button', { name: 'editor.excalidraw.edit' });
@@ -80,7 +78,7 @@ describe('ExcalidrawNodeView (preview)', () => {
   });
 
   it('the corner-X confirm deletes the node without opening the editor', async () => {
-    await db.attachments.add(att());
+    await testStore.attachments.add(att());
     const { p, openExcalidraw, deleteNode } = props();
     render(<ExcalidrawNodeView {...p} />);
     await screen.findByRole('button', { name: 'editor.excalidraw.edit' });

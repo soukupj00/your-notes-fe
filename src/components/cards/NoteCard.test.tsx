@@ -1,9 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from '@/db/db.ts';
 import type { Note } from '@/models.ts';
-import { clearNotesDb } from '@/test/db.ts';
+import { clearStore, renderWithStore as render, testStore } from '@/test/store.tsx';
 import { NoteCard } from './NoteCard.tsx';
 
 // Keys pass through untranslated so assertions are stable.
@@ -37,7 +36,7 @@ function makeNote(overrides: Partial<Note> = {}): Note {
 
 afterEach(async () => {
   toastMock.mockReset();
-  await clearNotesDb();
+  await clearStore();
 });
 
 beforeEach(() => {
@@ -119,20 +118,20 @@ describe('NoteCard', () => {
 
   it('moves the note to trash rather than deleting it, and offers an undo', async () => {
     const note = makeNote({ pinnedAt: new Date().toISOString() });
-    await db.notes.add(note);
+    await testStore.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'notes.moveToTrash' }));
 
-    await waitFor(async () => expect((await db.notes.get(note.id))?.state).toBe('trashed'));
+    await waitFor(async () => expect((await testStore.notes.get(note.id))?.state).toBe('trashed'));
     // Trashing is recoverable - the row must still be there.
-    expect(await db.notes.get(note.id)).toBeTruthy();
+    expect(await testStore.notes.get(note.id)).toBeTruthy();
     expect(toastMock).toHaveBeenCalledWith('notes.movedToTrash', expect.anything());
 
     await undoLastToast();
 
     await waitFor(async () =>
-      expect(await db.notes.get(note.id)).toMatchObject({
+      expect(await testStore.notes.get(note.id)).toMatchObject({
         state: 'active',
         pinnedAt: note.pinnedAt,
       })
@@ -141,22 +140,24 @@ describe('NoteCard', () => {
 
   it('pins an active note from the corner control, and offers an undo that unpins it', async () => {
     const note = makeNote();
-    await db.notes.add(note);
+    await testStore.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'notes.pin' }));
 
     await waitFor(async () =>
-      expect((await db.notes.get(note.id))?.pinnedAt).toEqual(expect.any(String))
+      expect((await testStore.notes.get(note.id))?.pinnedAt).toEqual(expect.any(String))
     );
 
     await undoLastToast();
-    await waitFor(async () => expect((await db.notes.get(note.id))?.pinnedAt).toBeUndefined());
+    await waitFor(async () =>
+      expect((await testStore.notes.get(note.id))?.pinnedAt).toBeUndefined()
+    );
   });
 
   it('offers unpin on an already pinned note', async () => {
     const note = makeNote({ pinnedAt: new Date().toISOString() });
-    await db.notes.add(note);
+    await testStore.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
     const pin = screen.getByRole('button', { name: 'notes.unpin' });
@@ -164,7 +165,9 @@ describe('NoteCard', () => {
 
     await userEvent.click(pin);
 
-    await waitFor(async () => expect((await db.notes.get(note.id))?.pinnedAt).toBeUndefined());
+    await waitFor(async () =>
+      expect((await testStore.notes.get(note.id))?.pinnedAt).toBeUndefined()
+    );
   });
 
   // The Pin-Is-Always-In-Front Rule: the pin is a child of the card itself, not
@@ -180,7 +183,7 @@ describe('NoteCard', () => {
 
   it('does not open the editor when the pin is clicked', async () => {
     const note = makeNote();
-    await db.notes.add(note);
+    await testStore.notes.add(note);
     const onSelect = vi.fn();
     render(<NoteCard note={note} onSelect={onSelect} />);
 
@@ -197,29 +200,29 @@ describe('NoteCard', () => {
 
   it('archives an active note from the foot rail', async () => {
     const note = makeNote();
-    await db.notes.add(note);
+    await testStore.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'notes.archive' }));
 
-    await waitFor(async () => expect((await db.notes.get(note.id))?.state).toBe('archived'));
+    await waitFor(async () => expect((await testStore.notes.get(note.id))?.state).toBe('archived'));
     expect(toastMock).toHaveBeenCalledWith('notes.archived', expect.anything());
   });
 
   it('recolours the card from the foot rail swatch', async () => {
     const note = makeNote();
-    await db.notes.add(note);
+    await testStore.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'notes.color' }));
     await userEvent.click(await screen.findByRole('button', { name: 'colors.blue' }));
 
-    await waitFor(async () => expect((await db.notes.get(note.id))?.color).toBe('blue'));
+    await waitFor(async () => expect((await testStore.notes.get(note.id))?.color).toBe('blue'));
   });
 
   it('does not open the editor when a foot rail control is used', async () => {
     const note = makeNote();
-    await db.notes.add(note);
+    await testStore.notes.add(note);
     const onSelect = vi.fn();
     render(<NoteCard note={note} onSelect={onSelect} />);
 
@@ -237,18 +240,18 @@ describe('NoteCard', () => {
 
   it('offers restore instead of archive on the foot rail of an archived note', async () => {
     const note = makeNote({ state: 'archived' });
-    await db.notes.add(note);
+    await testStore.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
     expect(screen.queryByRole('button', { name: 'notes.archive' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'notes.restore' }));
 
-    await waitFor(async () => expect((await db.notes.get(note.id))?.state).toBe('active'));
+    await waitFor(async () => expect((await testStore.notes.get(note.id))?.state).toBe('active'));
   });
 
   it('offers only restore for a trashed note, and never permanent deletion', async () => {
     const note = makeNote({ state: 'trashed', trashedAt: new Date().toISOString() });
-    await db.notes.add(note);
+    await testStore.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
     // Trashing or pinning something already in the trash is meaningless, and
@@ -260,7 +263,7 @@ describe('NoteCard', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'notes.restore' }));
 
-    await waitFor(async () => expect((await db.notes.get(note.id))?.state).toBe('active'));
+    await waitFor(async () => expect((await testStore.notes.get(note.id))?.state).toBe('active'));
   });
 
   it('never puts an overflow menu on the rail: every control is a direct button', () => {
@@ -390,7 +393,7 @@ describe('NoteCard', () => {
     render(<NoteCard note={note} attachments={attachments} onSelect={vi.fn()} />);
 
     await waitFor(() => expect(document.querySelector('svg#from-prop')).toBeTruthy());
-    expect(await db.attachments.count()).toBe(0);
+    expect(await testStore.attachments.list()).toHaveLength(0);
   });
 
   it('opens the note when a video preview is clicked, like any other part of the card', async () => {
@@ -440,15 +443,10 @@ describe('NoteCard', () => {
       createdAt: now,
       updatedAt: now,
     }));
-    await db.tags.bulkPut(tags);
-    await db.noteTags.bulkPut(
-      tags.map((tag) => ({
-        noteId: note.id,
-        tagId: tag.id,
-        createdAt: now,
-        updatedAt: now,
-      }))
-    );
+    for (const tag of tags) await testStore.tags.add(tag);
+    for (const tag of tags) {
+      await testStore.tags.link({ noteId: note.id, tagId: tag.id, createdAt: now, updatedAt: now });
+    }
 
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
@@ -472,13 +470,13 @@ describe('NoteCard', () => {
         .join('')}</ul>`;
 
     /** The card writes to Dexie, so the stored note is what the tick has to reach. */
-    const storedBody = async (id: string) => (await db.notes.get(id))?.body;
+    const storedBody = async (id: string) => (await testStore.notes.get(id))?.body;
 
     it('ticks an item from the card and persists it', async () => {
       // The defect this whole slice starts from: the box flipped, nothing was
       // written, and reopening the note showed it unchecked again.
       const note = makeNote({ body: checklist(['Milk', false], ['Bread', false]) });
-      await db.notes.put(note);
+      await testStore.notes.put(note);
       render(<NoteCard note={note} onSelect={vi.fn()} />);
 
       await userEvent.click(screen.getAllByRole('checkbox')[0]);
@@ -490,7 +488,7 @@ describe('NoteCard', () => {
 
     it('does not open the note when the box itself is clicked', async () => {
       const note = makeNote({ body: checklist(['Milk', false]) });
-      await db.notes.put(note);
+      await testStore.notes.put(note);
       const onSelect = vi.fn();
       render(<NoteCard note={note} onSelect={onSelect} />);
 
@@ -502,7 +500,7 @@ describe('NoteCard', () => {
     it('still opens the note when the row’s text is clicked', async () => {
       // Only the box is a control. Everything else on the row is still the card.
       const note = makeNote({ body: checklist(['Milk', false]) });
-      await db.notes.put(note);
+      await testStore.notes.put(note);
       const onSelect = vi.fn();
       render(<NoteCard note={note} onSelect={onSelect} />);
 
@@ -516,7 +514,7 @@ describe('NoteCard', () => {
       // Space on a focused checkbox fires a click, which reaches the delegate by
       // bubbling. The a11y suppression in `NoteBody` rests on this test.
       const note = makeNote({ body: checklist(['Milk', false]) });
-      await db.notes.put(note);
+      await testStore.notes.put(note);
       render(<NoteCard note={note} onSelect={vi.fn()} />);
 
       screen.getAllByRole('checkbox')[0].focus();
@@ -529,7 +527,7 @@ describe('NoteCard', () => {
 
     it('unticks an item that was checked', async () => {
       const note = makeNote({ body: checklist(['Milk', true]) });
-      await db.notes.put(note);
+      await testStore.notes.put(note);
       render(<NoteCard note={note} onSelect={vi.fn()} />);
 
       await userEvent.click(screen.getAllByRole('checkbox')[0]);
@@ -543,7 +541,7 @@ describe('NoteCard', () => {
       const note = makeNote({
         body: checklist(['Milk', false], ['Bread', false], ['Eggs', false]),
       });
-      await db.notes.put(note);
+      await testStore.notes.put(note);
       render(<NoteCard note={note} onSelect={vi.fn()} />);
 
       await userEvent.click(screen.getAllByRole('checkbox')[2]);
@@ -561,7 +559,7 @@ describe('NoteCard', () => {
       const note = makeNote({
         body: checklist(['Milk', false], ['Bread', false], ['Eggs', false]),
       });
-      await db.notes.put(note);
+      await testStore.notes.put(note);
       render(<NoteCard note={note} onSelect={vi.fn()} />);
 
       await userEvent.click(screen.getAllByRole('checkbox')[0]);
@@ -577,15 +575,16 @@ describe('NoteCard', () => {
   it('renders the note’s labels as read-only pills', async () => {
     const note = makeNote();
     const now = new Date().toISOString();
-    await db.tags.bulkPut([
+    for (const tag of [
       { id: 't1', name: 'Work', color: 'blue', createdAt: now, updatedAt: now },
       { id: 't2', name: 'Ideas', createdAt: now, updatedAt: now },
       { id: 't3', name: 'Elsewhere', createdAt: now, updatedAt: now },
-    ]);
-    await db.noteTags.bulkPut([
-      { noteId: note.id, tagId: 't1', createdAt: now, updatedAt: now },
-      { noteId: note.id, tagId: 't2', createdAt: now, updatedAt: now },
-    ]);
+    ]) {
+      await testStore.tags.add(tag);
+    }
+    for (const tagId of ['t1', 't2']) {
+      await testStore.tags.link({ noteId: note.id, tagId, createdAt: now, updatedAt: now });
+    }
 
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 

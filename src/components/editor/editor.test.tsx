@@ -3,13 +3,18 @@ import { createRef, type ReactElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import { withStore } from '@/test/store.tsx';
 import { setViewport } from '@/test/viewport.ts';
 import { Editor, type EditorHandle } from './editor.tsx';
 
 // The toolbar reads the stored Toolbar Layouts, so every render needs the
 // provider; with nothing written it hydrates to defaults, which is the state
-// these tests are asserting against anyway.
-const render = (ui: ReactElement) => rtlRender(ui, { wrapper: PreferencesProvider });
+// these tests are asserting against anyway. `Editor` also reaches attachment
+// actions through the Local Store, so every render needs that provider too.
+const render = (ui: ReactElement) =>
+  rtlRender(ui, {
+    wrapper: ({ children }) => withStore(<PreferencesProvider>{children}</PreferencesProvider>),
+  });
 
 // Keys pass through untranslated so assertions are stable.
 vi.mock('react-i18next', () => ({

@@ -1,10 +1,9 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from '@/db/db.ts';
 import type { Note } from '@/models.ts';
-import { clearNotesDb } from '@/test/db.ts';
 import { renderRoute } from '@/test/renderRoute.tsx';
+import { clearStore, testStore } from '@/test/store.tsx';
 
 // Vitest hoists `vi.mock`, so these cannot come from a shared helper.
 vi.mock('react-i18next', () => ({
@@ -87,13 +86,13 @@ beforeEach(() => {
 afterEach(async () => {
   globalThis.ResizeObserver = realResizeObserver;
   localStorage.clear();
-  await clearNotesDb();
+  await clearStore();
 });
 
 describe('opening a note', () => {
   it('names the note in the URL and leaves exactly one entry to go back through', async () => {
     const note = makeNote();
-    await db.notes.add(note);
+    await testStore.notes.add(note);
     const router = renderRoute('/');
 
     const before = router.history.length;
@@ -106,7 +105,7 @@ describe('opening a note', () => {
 
   it('opens from the URL alone, so a note can be linked to', async () => {
     const note = makeNote();
-    await db.notes.add(note);
+    await testStore.notes.add(note);
 
     renderRoute(`/?note=${note.id}`);
 
@@ -117,7 +116,7 @@ describe('opening a note', () => {
   // rode in the URL, reloading an open note would re-fire them.
   it('does not carry a capture intent into a link', async () => {
     const note = makeNote();
-    await db.notes.add(note);
+    await testStore.notes.add(note);
 
     renderRoute(`/?note=${note.id}`);
 
@@ -138,14 +137,14 @@ describe('opening a note', () => {
     // Not an existing note: nothing has been written yet.
     expect(el).toHaveAttribute('data-note-id', '');
     expect(router.state.location.search).toMatchObject({ note: id });
-    expect(await db.notes.count()).toBe(0);
+    expect((await testStore.notes.list()).length).toBe(0);
   });
 });
 
 describe('closing a note', () => {
   it('pops the entry it pushed, leaving no dead stop in history', async () => {
     const note = makeNote();
-    await db.notes.add(note);
+    await testStore.notes.add(note);
     // Two entries deep, so the assertion below can tell a pop from a replace.
     // Arriving from `/` only, both leave you on `/` and look identical.
     const router = renderRoute(['/archive', '/']);
@@ -169,7 +168,7 @@ describe('closing a note', () => {
   // - which on an installed iOS PWA means relaunching it.
   it('clears the param in place when the note was opened cold', async () => {
     const note = makeNote();
-    await db.notes.add(note);
+    await testStore.notes.add(note);
     const router = renderRoute(`/?note=${note.id}`);
 
     await userEvent.click(await screen.findByText('close-editor'));
@@ -200,7 +199,7 @@ describe('the feed behind an open note', () => {
   // query would close the note.
   it('keeps the note open while the query changes', async () => {
     const note = makeNote();
-    await db.notes.add(note);
+    await testStore.notes.add(note);
     const router = renderRoute(`/?note=${note.id}`);
 
     await editor();

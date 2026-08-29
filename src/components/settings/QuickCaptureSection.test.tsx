@@ -4,8 +4,7 @@ import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QUICK_CAPTURE_ACTIONS } from '@/components/notes/quickCaptureActions.ts';
 import type { QuickCapturePref } from '@/components/notes/quickCaptureLayout.ts';
-import { PREFERENCES_KEY, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
-import { db } from '@/db/db.ts';
+import { PREFERENCES_STORAGE_KEY, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { QuickCaptureSection } from './QuickCaptureSection.tsx';
 
 vi.mock('react-i18next', () => ({
@@ -20,16 +19,16 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 );
 
 async function storedPrefs() {
-  const row = await db.settings.get(PREFERENCES_KEY);
-  if (!row) throw new Error('nothing written yet');
-  return row.value as { quickCapture: QuickCapturePref[]; noteButtonAlignment: string };
+  const raw = localStorage.getItem(PREFERENCES_STORAGE_KEY);
+  if (!raw) throw new Error('nothing written yet');
+  return JSON.parse(raw) as { quickCapture: QuickCapturePref[]; noteButtonAlignment: string };
 }
 
 const switchFor = (key: string) =>
   screen.getByRole('switch', { name: `settings.quickCapture.show:notes.capture.${key}` });
 
-afterEach(async () => {
-  await db.settings.clear();
+afterEach(() => {
+  localStorage.clear();
 });
 
 describe('QuickCaptureSection', () => {
@@ -56,16 +55,16 @@ describe('QuickCaptureSection', () => {
   });
 
   it('refuses to switch off the last start, because the dial is the only way in', async () => {
-    await db.settings.put({
-      key: PREFERENCES_KEY,
-      value: {
+    localStorage.setItem(
+      PREFERENCES_STORAGE_KEY,
+      JSON.stringify({
         version: 1,
         quickCapture: QUICK_CAPTURE_ACTIONS.map((action) => ({
           id: action.key,
           on: action.key === 'text',
         })),
-      },
-    });
+      })
+    );
     render(<QuickCaptureSection />, { wrapper });
 
     await waitFor(() => expect(switchFor('text')).toBeDisabled());

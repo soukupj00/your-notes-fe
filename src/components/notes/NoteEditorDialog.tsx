@@ -7,7 +7,7 @@ import { NoteEditorBar } from '@/components/notes/NoteEditorBar.tsx';
 import { AppBar } from '@/components/ui/AppBar.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog.tsx';
-import { db } from '@/db/db.ts';
+import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { useIsMobile } from '@/hooks/use-mobile.tsx';
@@ -83,6 +83,7 @@ export function NoteEditorDialog({
   onNoteMissing,
 }: NoteEditorDialogProps) {
   const { t } = useTranslation();
+  const store = useLocalStore();
   const { createNote, updateNote, purgeNote, pinNote, unpinNote } = useNoteActions();
   const { collectOrphans } = useAttachmentActions();
   const isMobile = useIsMobile();
@@ -134,7 +135,7 @@ export function NoteEditorDialog({
   useEffect(() => {
     if (!noteId) return;
     let active = true;
-    void db.notes.get(noteId).then((n) => {
+    void store.notes.get(noteId).then((n) => {
       if (!active) return;
       if (n) {
         setHeader(n.header ?? '');
@@ -153,7 +154,7 @@ export function NoteEditorDialog({
     return () => {
       active = false;
     };
-  }, [noteId, onNoteMissing]);
+  }, [noteId, onNoteMissing, store]);
 
   const persist = useCallback(
     async (h: string, b: string) => {

@@ -1,6 +1,10 @@
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/db/db.ts';
+import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
+import { emptyLive } from '@/data/live.ts';
+import { useLive } from '@/data/useLive.ts';
 import type { Tag } from '@/models.ts';
+
+// Module-level, so a note with no id gets a Live that delivers once and never again:
+const EMPTY = emptyLive<Tag[]>([]);
 
 /**
  * A note's labels, live.
@@ -9,16 +13,8 @@ import type { Tag } from '@/models.ts';
  * query outright - the feed joins them on when it builds each entry, and running
  * this once per card would open a live query per card only to discard it.
  */
-export function useTagsForNote(noteId: string | null | undefined) {
-  const tags: (Tag | undefined)[] | undefined = useLiveQuery(async () => {
-    if (!noteId) return [];
-
-    const noteTagRelations = await db.noteTags.where('noteId').equals(noteId).toArray();
-    const tagIds = noteTagRelations.map((rel) => rel.tagId);
-
-    if (tagIds.length === 0) return [];
-    return db.tags.bulkGet(tagIds);
-  }, [noteId]);
-
-  return (tags ?? []).filter(Boolean) as Tag[];
+export function useTagsForNote(noteId: string | null | undefined): Tag[] {
+  const store = useLocalStore();
+  const tags = useLive(() => (noteId ? store.tags.forNote(noteId) : EMPTY), [store, noteId]);
+  return tags ?? [];
 }

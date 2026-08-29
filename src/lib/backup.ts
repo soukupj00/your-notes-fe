@@ -1,7 +1,7 @@
 import { strFromU8, strToU8, type Unzipped, unzip, type Zippable, zip } from 'fflate';
 import { z } from 'zod';
-import { db } from '@/db/db.ts';
-import type { Attachment, Note, NoteTag, Setting, Tag } from '@/models.ts';
+import type { LocalStore } from '@/data/LocalStore.ts';
+import type { Attachment, Note, NoteTag, Tag } from '@/models.ts';
 
 /**
  * Backup format version. Bump it only when the *layout* changes (entry naming,
@@ -128,19 +128,8 @@ async function bytesOf(blob: Blob): Promise<Uint8Array> {
  * through a single string. They are also stored uncompressed, because PNG/WebM
  * bytes are already compressed and deflating them again only burns CPU.
  */
-export async function buildBackupZip(): Promise<Blob> {
-  const [notes, tags, noteTags, attachments, settings] = await db.transaction(
-    'r',
-    db.tables,
-    async () =>
-      Promise.all([
-        db.notes.toArray(),
-        db.tags.toArray(),
-        db.noteTags.toArray(),
-        db.attachments.toArray(),
-        db.settings.toArray(),
-      ])
-  );
+export async function buildBackupZip(store: LocalStore): Promise<Blob> {
+  const { notes, tags, noteTags, attachments } = await store.exportAll();
 
   const entries: Zippable = {};
   const attachmentMeta = [];
@@ -174,7 +163,9 @@ export async function buildBackupZip(): Promise<Blob> {
     tags,
     noteTags,
     attachments: attachmentMeta,
-    settings,
+    // Preferences left the store in ADR 0020; kept as an empty array so the
+    // manifest shape (and every archive written before) still validates.
+    settings: [],
   };
 
   entries[BACKUP_MANIFEST_NAME] = [strToU8(JSON.stringify(manifest)), { level: 6 }];
@@ -227,14 +218,20 @@ export async function parseBackupZip(data: Uint8Array): Promise<ParsedBackup> {
 }
 
 /**
- * Replace-all restore: wipes every table and writes the backup's rows in a
- * single transaction, so a failure part-way through rolls back to the data the
- * user had rather than leaving a half-restored database.
+ * Replace-all restore: wipes the store and writes the backup's rows
+ * atomically, so a failure part-way through rolls back to the data the user
+ * had rather than leaving a half-restored database.
+ *
+ * `manifest.settings` is a leftover from before Preferences left the store
+ * (ADR 0020, see `buildBackupZip`); it is read here and ignored.
  *
  * Only ever call this with the output of `parseBackupZip` - it assumes the
  * backup has already been validated.
  */
-export async function restoreBackup({ manifest, files }: ParsedBackup): Promise<void> {
+export async function restoreBackup(
+  store: LocalStore,
+  { manifest, files }: ParsedBackup
+): Promise<void> {
   const attachments: Attachment[] = manifest.attachments.map((meta) => {
     const { hasThumbnail, ...rest } = meta;
     const thumbnailBytes = hasThumbnail ? files[thumbnailPath(meta.id)] : undefined;
@@ -247,13 +244,11 @@ export async function restoreBackup({ manifest, files }: ParsedBackup): Promise<
     };
   });
 
-  await db.transaction('rw', db.tables, async () => {
-    await Promise.all(db.tables.map((table) => table.clear()));
-    await db.notes.bulkPut(manifest.notes as unknown as Note[]);
-    await db.tags.bulkPut(manifest.tags as unknown as Tag[]);
-    await db.noteTags.bulkPut(manifest.noteTags as unknown as NoteTag[]);
-    await db.attachments.bulkPut(attachments);
-    await db.settings.bulkPut(manifest.settings as Setting[]);
+  await store.replaceAll({
+    notes: manifest.notes as unknown as Note[],
+    tags: manifest.tags as unknown as Tag[],
+    noteTags: manifest.noteTags as unknown as NoteTag[],
+    attachments,
   });
 }
 

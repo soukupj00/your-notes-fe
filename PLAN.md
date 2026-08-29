@@ -66,7 +66,7 @@ Keep-simple friction-reducers layered on M2. Retro plan: [`docs/superpowers/plan
 - Deferred: photo/mic capture + audio → M3; slash commands + real VirtualKeyboard docking → M4; full cloud sync-states → M5. Dropped: block drag handles, customizable toolbars.
 
 ### M3 — Attachments & rich media
-- Images, audio, video, files, and Excalidraw drawings end to end: extension → Dexie storage → render. See [`src/db/PLAN.md`](./src/db/PLAN.md) for storage strategy.
+- Images, audio, video, files, and Excalidraw drawings end to end: extension → Dexie storage → render. See [`src/data/PLAN.md`](./src/data/PLAN.md) for storage strategy.
 - ✅ **Slice 1 - inline images end to end + storage foundation**: generic `attachments` Dexie table (blob-backed, not per-kind); `useAttachmentActions` (create/get/delete/clone, note-scoped GC, global orphan safety net); cascade delete/undo carries attachments with the note; custom `imageAttachment` TipTap node (`attachmentId`-only, no persisted `src`) with a React NodeView resolving to an object URL; paste/drop/toolbar insertion pipeline with validation and cross-note dedupe (`cloneAttachment`); `NoteBody` renders images on the home card; global GC sweep wired at `NotesHome` mount.
 - ✅ **Slice 2 - inline audio end to end**: extracted the Slice 1 node/insertion logic into a media-agnostic `extensions/attachments/` core (`createAttachmentNode`, `useAttachmentObjectUrl`, shared `insert.ts`/`deps.ts`) and rebuilt `Image` on top of it with no behavior change; custom `audioAttachment` node (body `<audio data-attachment-id>`, no `src`) reusing that core; `AudioNodeView` custom player (play/pause, scrubber, elapsed/duration) over a hidden native `<audio>`; mic recording via `useAudioRecorder` (a `MediaRecorder` state machine handling permission prompts, cancel, and error paths with guaranteed mic release) behind `AudioRecordButton`; file attach via picker/paste/drop through the shared insertion pipeline; `attachments` rows carry `kind: 'audio'` + `duration`; `NoteBody` renders a compact chip (not a full player) for audio on the home card, and `NoteCard` opens the note with autoplay intent when that chip is clicked.
 - ✅ **Slice 3 - inline video end to end**: `videoAttachment` node built on the same `attachments/` core (mirrors audio's node/insertion wiring); `VideoNodeView` uses a native `<video controls playsInline>` (no custom player skin needed); delete button on the node (`props.deleteNode()`, no confirmation yet); home card gets a pinned video play button next to the audio one (`NoteCard`'s bottom-right control is now a flex row, not a single button).
@@ -89,19 +89,45 @@ Five slices (six plan docs - 2.5 was scoped mid-milestone), each a checkable pla
 - ✅ **Slice 4 — Identity & motion** ([plan](./docs/superpowers/plans/2026-07-25-m4-slice4-identity-and-motion.md), plus [task 5](./docs/superpowers/plans/2026-08-03-m4-slice4-task5-customisable-toolbar.md), [task 5c](./docs/superpowers/plans/2026-08-07-m4-slice4-task5c-live-checklists-and-held-rank.md), [task 7](./docs/superpowers/plans/2026-08-08-m4-slice4-task7-mobile-topbar-and-back.md)): the `nightshift` redesign ([DESIGN.md](./DESIGN.md)), Motion animations, full-card colour system, data-driven customisable toolbar, checklist polish, complete Settings, mobile topbar + back.
 - ✅ **Slice 5 — Onboarding** ([plan](./docs/superpowers/plans/2026-07-25-m4-slice5-onboarding.md), plus [task 7 - timing](./docs/superpowers/plans/2026-08-10-m4-slice5-task7-tour-timing.md), [ADR 0015](./docs/adr/0015-the-tour-drives-the-app-on-disposable-props.md)): a six-step Tour that *drives* the app rather than describing it, demonstrating on disposable Props it creates and purges; `driver.js` for the spotlight with React portalled into its popover; first-load + Settings replay; wires Playwright.
 
-Deferred to pre-release/M5: single-key power shortcuts + `?` cheat sheet; merge-style import; the Settings storage row (see M5).
+Deferred to pre-release/M5: single-key power shortcuts + `?` cheat sheet; the Settings storage row (see M5).
+Merge-style import is no longer deferred: it is subsumed by **Import from other apps** ([design](./docs/superpowers/specs/2026-08-21-m5-import-from-other-apps-design.md), [ADR 0019](./docs/adr/0019-import-replaces-restore.md)) - one additive Import replacing Restore, with Google Keep and Obsidian as the first foreign Sources.
 Named remainders inside the slice-4 plans rather than dropped: a touch-target audit of the production surfaces, the Motion contract on the speed-dial and tag-filter pills, and keyboard shortcuts for the toolbar actions that have none (task 5's step 4c, which needs sign-off on the bindings rather than code).
 `navigator.storage.persist()` is no longer deferred - it landed in this closeout.
 
-### M5 — Sync (client-side)
-- Local-account/auth context, REST/HATEOAS API client, response caching, offline mutation queue, conflict resolution against Dexie. Backend lives in the separate repo.
+### M5 — Sync
+
+The first milestone that spans both repositories. The backend repo (`ni-dip-be`) is empty at the start of it, so M5 is "design a protocol, build a server, build the client half", not "wire up sync".
+
+Scoped by a `/grill-with-docs` session on 2026-08-12. Key decisions: [ADR 0017](./docs/adr/0017-note-level-last-writer-wins-with-conflicted-copies.md) (conflict model) and [ADR 0018](./docs/adr/0018-the-server-serves-the-pwa.md) (the server serves the PWA, and what that forces about auth, pairing and TLS). New glossary: Revision, Conflicted Copy, Tombstone, Owner, Invite, Device; the Offline Mutation Queue was **redefined** from an ordered intent log to a set.
+
+**The stack**, decided together because each choice constrained the next:
+
+- **Server:** TypeScript + Fastify + SQLite (`better-sqlite3`) + Drizzle, in one container with Caddy for TLS. TypeScript because it makes the wire contract one shared Zod file instead of two definitions that drift; SQLite because a self-hoster's backup should be "copy one file".
+- **API:** REST with **HAL** (`application/hal+json`) for the brief's HATEOAS requirement. The sync feed is a hypermedia collection - a device stores the opaque `_links.next` URL as its cursor and never builds a query string. Response caching is `ETag` on change pages, which are immutable once complete.
+- **Change detection:** polling on focus/`online`/visibility plus a short interval while visible. An SSE hint channel (carrying "the server is at Revision N", never data, never load-bearing) is a named follow-up in slice 6, not a dependency.
+- **Contract:** owned by the backend repo, vendored here as one committed file via `pnpm contract:pull`; every response validated with Zod at the boundary, which doubles as the drift alarm.
+- **Attachments:** bytes are write-once by id, so transfer is an idempotent `PUT`. Previews sync eagerly (tens of KB - the feed is instantly correct), full bytes on demand, with a "keep everything on this device" preference. Known ceilings: no resumable upload, no per-account quota.
+- **Client:** the sync loop runs on the main thread in a `SyncProvider` that reads and writes the `LocalStore` and talks to a `Remote` ([ADR 0020](./docs/adr/0020-the-local-store-seam.md)); it never touches Dexie. Ceiling: move to a Worker if a large first pull janks the UI.
+
+**Six slices.** Slice 1 is this repo alone and comes first because every later slice consumes its seam; slice 2 is backend alone; the rest interleave:
+
+1. **The Local Store seam** *(here)* — [ADR 0020](./docs/adr/0020-the-local-store-seam.md), [plan](./docs/superpowers/plans/2026-08-29-m5-slice1-local-store-seam.md). One `LocalStore` interface every read and write goes through, a Dexie implementation (default) and an in-memory one under one contract test suite, `Live<T>` + `useLive` replacing `useLiveQuery`, Preferences moved to `localStorage`, Dexie fenced by Biome, and the `Remote`/`AccountService` types declared. A pure refactor: no schema bump, no UI change.
+2. **Server skeleton** *(backend)* — Fastify + Drizzle + SQLite, the Zod contract with OpenAPI falling out of it, HAL serializer, sessions + first-run Owner + Invites, `compose.yml` with Caddy, `@fastify/static` serving the built PWA.
+3. **Client foundations** *(here)* — Dexie bump (`rev`, dirty marker, `tombstones`) in both Local Store implementations with the dirty-row query added to the contract, the write-once Excalidraw refactor, `SyncProvider` (against `LocalStore` + `Remote`) + account context, the HAL `Remote` and `AccountService` implementations, boundary validation, and the Settings **Account** section (sign in/out, Devices with revoke) beside the storage row carried over from M4.
+4. **The loop** *(both)* — `GET /changes` with cursor links and ETags, dirty push with Revisions, conflict → Conflicted Copy + "Conflicts" tag + toast, adopt-on-first-sign-in, erase-on-sign-out, and the too-old-cursor full resync.
+5. **Attachments** *(both)* — idempotent byte upload/download, eager thumbnails, the new "known but not downloaded" attachment node state, the keep-everything preference.
+6. **Setup, docs, testing** *(both)* — the three Caddy modes with one documented happy path, first-run and Invite UX, sync status polish, the SSE channel if it still looks worth it, and the user testing the brief requires.
+
+**Testing:** the client sync engine is tested here against a fake server built from the vendored contract, so conflict, resync and offline paths are deterministic. The backend tests itself in its own repo. Genuine two-device end-to-end is a manual and user-testing activity - a cross-repo Playwright pipeline would cost more than it catches.
+
 - **Carried in from M4:** a storage row in Settings reporting `navigator.storage.persisted()` and `estimate()`.
   The *request* landed in M4 (`src/lib/persistentStorage.ts`, fired on the user's first saved note - Firefox prompts, so it may not land during the Tour).
   Reporting the answer waits for M5 because this milestone gives that same area a sync status (last synced, queued changes, this device's account), and "is my data safe here" is one question best answered in one block.
+- **Out of scope, deliberately:** end-to-end encryption (threat model documented instead - see ADR 0018), sharing a Note between Accounts, and any email/SMTP.
 
 ## Per-area plans
 
-- [`src/db/PLAN.md`](./src/db/PLAN.md) — schema versioning, attachment storage, sync metadata.
+- [`src/data/PLAN.md`](./src/data/PLAN.md) - the Local Store: schema versioning, attachment storage, sync metadata.
 - [`src/hooks/data/PLAN.md`](./src/hooks/data/PLAN.md) — attachment actions, optimistic updates, mutation queue.
 - [`src/components/editor/PLAN.md`](./src/components/editor/PLAN.md) — M1 extension work in detail.
 - [`src/context/PLAN.md`](./src/context/PLAN.md) — auth context, accessibility themes.

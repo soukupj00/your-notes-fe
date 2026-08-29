@@ -1,16 +1,14 @@
-import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '@/db/db.ts';
-import { clearNotesDb } from '@/test/db.ts';
+import { clearStore, renderHookWithStore, testStore } from '@/test/store.tsx';
 import { useAttachmentActions } from './useAttachmentActions.ts';
 
 function actions() {
-  return renderHook(() => useAttachmentActions()).result.current;
+  return renderHookWithStore(() => useAttachmentActions()).result.current;
 }
 
 const pngFile = () => new File([new Uint8Array(4)], 'p.png', { type: 'image/png' });
 
-beforeEach(clearNotesDb);
+beforeEach(clearStore);
 
 describe('useAttachmentActions', () => {
   it('createAttachment validates then writes a row', async () => {
@@ -20,7 +18,7 @@ describe('useAttachmentActions', () => {
     expect(att.noteId).toBe(noteId);
     expect(att.kind).toBe('image');
     expect(att.mime).toBe('image/png');
-    expect(await db.attachments.get(att.id)).toBeTruthy();
+    expect(await testStore.attachments.get(att.id)).toBeTruthy();
   });
 
   it('createAttachment stores an image thumbnail in the same row', async () => {
@@ -31,7 +29,7 @@ describe('useAttachmentActions', () => {
     const att = await a.createAttachment(noteId, pngFile(), 'image', { thumbnail });
 
     expect(att).toMatchObject({ thumbnail });
-    expect(await db.attachments.get(att.id)).toMatchObject({ thumbnail });
+    expect(await testStore.attachments.get(att.id)).toMatchObject({ thumbnail });
   });
 
   it('createAttachment rejects a bad type without writing', async () => {
@@ -40,7 +38,7 @@ describe('useAttachmentActions', () => {
     await expect(a.createAttachment(crypto.randomUUID(), bad)).rejects.toMatchObject({
       code: 'unsupported-type',
     });
-    expect(await db.attachments.count()).toBe(0);
+    expect(await testStore.attachments.list()).toHaveLength(0);
   });
 
   it('getAttachment + deleteAttachment round-trip', async () => {
@@ -59,7 +57,7 @@ describe('useAttachmentActions', () => {
     expect(clone.id).not.toBe(src.id);
     expect(clone.noteId).toBe(targetNote);
     expect(clone.blob).toBeInstanceOf(Blob);
-    expect(await db.attachments.count()).toBe(2);
+    expect(await testStore.attachments.list()).toHaveLength(2);
   });
 
   it('collectOrphans removes unreferenced rows for the note, keeps referenced', async () => {
@@ -80,7 +78,7 @@ describe('useAttachmentActions', () => {
     const drop = await a.createAttachment(liveNote, pngFile());
     const missingOwner = await a.createAttachment(crypto.randomUUID(), pngFile());
     const now = new Date().toISOString();
-    await db.notes.put({
+    await testStore.notes.put({
       id: liveNote,
       header: '',
       description: '',

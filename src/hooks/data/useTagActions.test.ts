@@ -1,23 +1,22 @@
-import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { db } from '@/db/db.ts';
+import { clearStore, renderHookWithStore, testStore } from '@/test/store.tsx';
 import { useTagActions } from './useTagActions.ts';
 
-const actions = () => renderHook(() => useTagActions()).result.current;
+const actions = () => renderHookWithStore(() => useTagActions()).result.current;
 
 const linkedNoteIds = async (tagId: string) =>
-  (await db.noteTags.where('tagId').equals(tagId).toArray()).map((link) => link.noteId).sort();
+  (await testStore.tags.listLinks())
+    .filter((link) => link.tagId === tagId)
+    .map((link) => link.noteId)
+    .sort();
 
-afterEach(async () => {
-  await db.tags.clear();
-  await db.noteTags.clear();
-});
+afterEach(clearStore);
 
 describe('createTag', () => {
   it('creates a tag with a colour', async () => {
     const tag = await actions().createTag('Work', 'blue');
 
-    expect(await db.tags.get(tag.id)).toMatchObject({ name: 'Work', color: 'blue' });
+    expect(await testStore.tags.get(tag.id)).toMatchObject({ name: 'Work', color: 'blue' });
   });
 
   it('trims the name', async () => {
@@ -30,7 +29,7 @@ describe('createTag', () => {
     const second = await actions().createTag('work');
 
     expect(second.id).toBe(first.id);
-    expect(await db.tags.count()).toBe(1);
+    expect(await testStore.tags.list()).toHaveLength(1);
   });
 });
 
@@ -49,11 +48,11 @@ describe('updateTag', () => {
     const tag = await actions().createTag('Work', 'blue');
 
     await actions().updateTag(tag.id, { color: 'red' });
-    expect(await db.tags.get(tag.id)).toMatchObject({ name: 'Work', color: 'red' });
+    expect(await testStore.tags.get(tag.id)).toMatchObject({ name: 'Work', color: 'red' });
 
     // `undefined` is the "no colour" value, and must actually clear the field.
     await actions().updateTag(tag.id, { color: undefined });
-    expect((await db.tags.get(tag.id))?.color).toBeUndefined();
+    expect((await testStore.tags.get(tag.id))?.color).toBeUndefined();
   });
 
   it('returns null for an unknown tag', async () => {
@@ -69,8 +68,8 @@ describe('deleteTag', () => {
 
     await actions().deleteTag(tag.id);
 
-    expect(await db.tags.get(tag.id)).toBeUndefined();
-    expect(await db.noteTags.where('tagId').equals(tag.id).count()).toBe(0);
+    expect(await testStore.tags.get(tag.id)).toBeUndefined();
+    expect((await testStore.tags.listLinks()).filter((l) => l.tagId === tag.id)).toHaveLength(0);
   });
 });
 
@@ -86,8 +85,8 @@ describe('mergeTags', () => {
     await mergeTags(source.id, target.id);
 
     expect(await linkedNoteIds(target.id)).toEqual(['n1', 'n2', 'n3']);
-    expect(await db.tags.get(source.id)).toBeUndefined();
-    expect(await db.noteTags.where('tagId').equals(source.id).count()).toBe(0);
+    expect(await testStore.tags.get(source.id)).toBeUndefined();
+    expect((await testStore.tags.listLinks()).filter((l) => l.tagId === source.id)).toHaveLength(0);
   });
 
   it('dedupes notes that carried both tags', async () => {
@@ -100,7 +99,7 @@ describe('mergeTags', () => {
     await mergeTags(source.id, target.id);
 
     expect(await linkedNoteIds(target.id)).toEqual(['n1']);
-    expect(await db.noteTags.count()).toBe(1);
+    expect(await testStore.tags.listLinks()).toHaveLength(1);
   });
 
   it('is a no-op when source and target are the same tag', async () => {
@@ -110,7 +109,7 @@ describe('mergeTags', () => {
 
     await mergeTags(tag.id, tag.id);
 
-    expect(await db.tags.get(tag.id)).toBeDefined();
+    expect(await testStore.tags.get(tag.id)).toBeDefined();
     expect(await linkedNoteIds(tag.id)).toEqual(['n1']);
   });
 
@@ -121,7 +120,7 @@ describe('mergeTags', () => {
 
     await expect(mergeTags(source.id, 'nope')).rejects.toThrow();
 
-    expect(await db.tags.get(source.id)).toBeDefined();
+    expect(await testStore.tags.get(source.id)).toBeDefined();
     expect(await linkedNoteIds(source.id)).toEqual(['n1']);
   });
 });
@@ -134,7 +133,7 @@ describe('note assignment', () => {
     await addTagToNote('n1', tag.id);
     await addTagToNote('n1', tag.id);
 
-    expect(await db.noteTags.count()).toBe(1);
+    expect(await testStore.tags.listLinks()).toHaveLength(1);
   });
 
   it('removes a single link without touching the tag', async () => {
@@ -146,6 +145,6 @@ describe('note assignment', () => {
     await removeTagFromNote('n1', tag.id);
 
     expect(await linkedNoteIds(tag.id)).toEqual(['n2']);
-    expect(await db.tags.get(tag.id)).toBeDefined();
+    expect(await testStore.tags.get(tag.id)).toBeDefined();
   });
 });

@@ -1,13 +1,11 @@
-import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { db } from '@/db/db.ts';
 import type { Attachment, Note, NoteTag } from '@/models.ts';
-import { clearNotesDb } from '@/test/db.ts';
+import { clearStore, renderHookWithStore, testStore } from '@/test/store.tsx';
 import { useNoteActions } from './useNoteActions.ts';
 
 // The hook holds no state, so we can call its returned functions directly.
 function actions() {
-  return renderHook(() => useNoteActions()).result.current;
+  return renderHookWithStore(() => useNoteActions()).result.current;
 }
 
 function makeNote(overrides: Partial<Note> = {}): Note {
@@ -37,7 +35,7 @@ function makeAtt(noteId: string): Attachment {
   };
 }
 
-afterEach(clearNotesDb);
+afterEach(clearStore);
 
 describe('useNoteActions', () => {
   it("creates notes 'active' and unpinned, and lets callers seed lifecycle fields", async () => {
@@ -48,18 +46,21 @@ describe('useNoteActions', () => {
     expect(plain.pinnedAt).toBeUndefined();
     expect(plain.color).toBeUndefined();
     // The indexed state query is what the feed uses - a created note must land in it.
-    expect(await db.notes.where('state').equals('active').count()).toBe(1);
+    expect(await testStore.notes.listByState('active')).toHaveLength(1);
 
     const seeded = await createNote({ header: 'Seeded', state: 'archived', color: 'teal' });
-    expect(await db.notes.get(seeded.id)).toMatchObject({ state: 'archived', color: 'teal' });
+    expect(await testStore.notes.get(seeded.id)).toMatchObject({
+      state: 'archived',
+      color: 'teal',
+    });
   });
 
-  it('persists the rich-text body through create and round-trips it via Dexie', async () => {
+  it('persists the rich-text body through create and round-trips it via the store', async () => {
     const { createNote } = actions();
     const html = '<p>Hello <strong>world</strong></p>';
 
     const created = await createNote({ header: 'Note', body: html });
-    const stored = await db.notes.get(created.id);
+    const stored = await testStore.notes.get(created.id);
 
     expect(created.body).toBe(html);
     expect(stored?.body).toBe(html);
@@ -71,7 +72,7 @@ describe('useNoteActions', () => {
 
     await updateNote(created.id, { body: '<p>new</p>' });
 
-    expect((await db.notes.get(created.id))?.body).toBe('<p>new</p>');
+    expect((await testStore.notes.get(created.id))?.body).toBe('<p>new</p>');
   });
 
   it('purgeNote returns the removed noteTags and restoreNote reproduces the exact prior state', async () => {
@@ -83,18 +84,20 @@ describe('useNoteActions', () => {
       createdAt: created.createdAt,
       updatedAt: created.updatedAt,
     };
-    await db.noteTags.put(tag);
+    await testStore.tags.link(tag);
 
     const removed = await purgeNote(created.id);
-    expect(await db.notes.get(created.id)).toBeUndefined();
-    expect(await db.noteTags.where('noteId').equals(created.id).count()).toBe(0);
+    expect(await testStore.notes.get(created.id)).toBeUndefined();
+    expect((await testStore.tags.listLinks()).filter((l) => l.noteId === created.id)).toEqual([]);
     expect(removed.removedTags).toEqual([tag]);
     expect(removed.removedAttachments).toEqual([]);
 
     await restoreNote(created as Note, removed);
 
-    expect(await db.notes.get(created.id)).toEqual(created);
-    expect(await db.noteTags.where('noteId').equals(created.id).toArray()).toEqual([tag]);
+    expect(await testStore.notes.get(created.id)).toEqual(created);
+    expect((await testStore.tags.listLinks()).filter((l) => l.noteId === created.id)).toEqual([
+      tag,
+    ]);
   });
 });
 
@@ -102,25 +105,25 @@ describe('purgeNote / restoreNote cascade attachments', () => {
   it('purgeNote removes + returns the note attachments', async () => {
     const a = actions();
     const note = makeNote();
-    await db.notes.put(note);
+    await testStore.notes.put(note);
     const att = makeAtt(note.id);
-    await db.attachments.put(att);
+    await testStore.attachments.add(att);
 
     const removed = await a.purgeNote(note.id);
     expect(removed.removedAttachments.map((r) => r.id)).toEqual([att.id]);
-    expect(await db.attachments.get(att.id)).toBeUndefined();
+    expect(await testStore.attachments.get(att.id)).toBeUndefined();
   });
 
   it('restoreNote re-puts the note and its attachments', async () => {
     const a = actions();
     const note = makeNote();
-    await db.notes.put(note);
+    await testStore.notes.put(note);
     const att = makeAtt(note.id);
-    await db.attachments.put(att);
+    await testStore.attachments.add(att);
 
     const removed = await a.purgeNote(note.id);
     await a.restoreNote(note, removed);
-    expect(await db.notes.get(note.id)).toBeTruthy();
-    expect(await db.attachments.get(att.id)).toBeTruthy();
+    expect(await testStore.notes.get(note.id)).toBeTruthy();
+    expect(await testStore.attachments.get(att.id)).toBeTruthy();
   });
 });

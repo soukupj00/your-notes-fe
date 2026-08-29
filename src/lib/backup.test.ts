@@ -3,7 +3,6 @@
 // every Blob round-trip through Dexie has to run under Node's real Blob.
 import { strToU8, unzipSync, zipSync } from 'fflate';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '@/db/db.ts';
 import {
   BACKUP_MANIFEST_NAME,
   BACKUP_VERSION,
@@ -13,7 +12,7 @@ import {
   restoreBackup,
 } from '@/lib/backup.ts';
 import type { Attachment, Note, NoteTag, Tag } from '@/models.ts';
-import { clearNotesDb } from '@/test/db.ts';
+import { clearStore, testStore as store } from '@/test/store.tsx';
 
 const NOW = '2026-07-28T10:00:00.000Z';
 
@@ -49,11 +48,10 @@ const attachment: Attachment = {
 };
 
 async function seed() {
-  await db.notes.put(note);
-  await db.tags.put(tag);
-  await db.noteTags.put(noteTag);
-  await db.attachments.put(attachment);
-  await db.settings.put({ key: 'preferences', value: { version: 1, density: 'compact' } });
+  await store.notes.add(note);
+  await store.tags.add(tag);
+  await store.tags.link(noteTag);
+  await store.attachments.add(attachment);
 }
 
 async function bytesOf(blob: Blob): Promise<Uint8Array> {
@@ -66,31 +64,25 @@ function zipWith(manifest: unknown, extra: Record<string, Uint8Array> = {}): Uin
 }
 
 describe('backup', () => {
-  beforeEach(async () => {
-    await clearNotesDb();
-  });
+  beforeEach(clearStore);
 
-  it('round-trips notes, tags, relations, settings and binary attachments', async () => {
+  it('round-trips notes, tags, relations and binary attachments', async () => {
     await seed();
 
-    const zipped = await bytesOf(await buildBackupZip());
+    const zipped = await bytesOf(await buildBackupZip(store));
 
     // Wipe everything, so a passing assertion can only come from the restore.
-    await clearNotesDb();
-    expect(await db.notes.count()).toBe(0);
+    await store.clear();
+    expect(await store.notes.list()).toHaveLength(0);
 
     const parsed = await parseBackupZip(zipped);
-    await restoreBackup(parsed);
+    await restoreBackup(store, parsed);
 
-    expect(await db.notes.toArray()).toEqual([note]);
-    expect(await db.tags.toArray()).toEqual([tag]);
-    expect(await db.noteTags.toArray()).toEqual([noteTag]);
-    expect(await db.settings.get('preferences')).toEqual({
-      key: 'preferences',
-      value: { version: 1, density: 'compact' },
-    });
+    expect(await store.notes.list()).toEqual([note]);
+    expect(await store.tags.list()).toEqual([tag]);
+    expect(await store.tags.listLinks()).toEqual([noteTag]);
 
-    const restored = await db.attachments.get(attachment.id);
+    const restored = await store.attachments.get(attachment.id);
     expect(restored).toBeDefined();
     expect(restored?.mime).toBe('image/png');
     expect(restored?.name).toBe('shot.png');
@@ -102,7 +94,7 @@ describe('backup', () => {
   it('writes the attachment bytes as their own zip entries, not inside the manifest', async () => {
     await seed();
 
-    const entries = unzipSync(await bytesOf(await buildBackupZip()));
+    const entries = unzipSync(await bytesOf(await buildBackupZip(store)));
 
     expect(Object.keys(entries).sort()).toEqual([
       'attachments/att-1',
@@ -113,25 +105,25 @@ describe('backup', () => {
   });
 
   it('restores an empty database from an empty backup', async () => {
-    const zipped = await bytesOf(await buildBackupZip());
+    const zipped = await bytesOf(await buildBackupZip(store));
     const parsed = await parseBackupZip(zipped);
-    await restoreBackup(parsed);
+    await restoreBackup(store, parsed);
 
-    expect(await db.notes.count()).toBe(0);
-    expect(await db.attachments.count()).toBe(0);
+    expect(await store.notes.list()).toHaveLength(0);
+    expect(await store.attachments.list()).toHaveLength(0);
   });
 
   it('replaces existing rows rather than merging into them', async () => {
     await seed();
-    const zipped = await bytesOf(await buildBackupZip());
+    const zipped = await bytesOf(await buildBackupZip(store));
 
-    await clearNotesDb();
-    await db.notes.put({ ...note, id: 'stale-note', header: 'Should not survive' });
+    await store.clear();
+    await store.notes.add({ ...note, id: 'stale-note', header: 'Should not survive' });
 
-    await restoreBackup(await parseBackupZip(zipped));
+    await restoreBackup(store, await parseBackupZip(zipped));
 
-    expect(await db.notes.get('stale-note')).toBeUndefined();
-    expect(await db.notes.count()).toBe(1);
+    expect(await store.notes.get('stale-note')).toBeUndefined();
+    expect(await store.notes.list()).toHaveLength(1);
   });
 
   describe('validation', () => {
@@ -139,8 +131,8 @@ describe('backup', () => {
     async function expectRejectedWithDbIntact(bytes: Uint8Array, code: string) {
       await seed();
       await expect(parseBackupZip(bytes)).rejects.toMatchObject({ code });
-      expect(await db.notes.count()).toBe(1);
-      expect(await db.attachments.count()).toBe(1);
+      expect(await store.notes.list()).toHaveLength(1);
+      expect(await store.attachments.list()).toHaveLength(1);
     }
 
     it('rejects bytes that are not a zip', async () => {

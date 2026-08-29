@@ -1,9 +1,11 @@
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import DOMPurify from 'dompurify';
-import { db } from '@/db/db.ts';
+import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
+import { emptyLive } from '@/data/live.ts';
+import { useLive } from '@/data/useLive.ts';
 import { cn } from '@/lib/utils.ts';
+import type { Attachment } from '@/models.ts';
 import { AttachmentDeleteButton } from '../attachments/AttachmentDeleteButton';
 import { AttachmentUnavailable } from '../attachments/AttachmentUnavailable';
 import type { AttachmentDeps } from '../attachments/deps';
@@ -18,11 +20,18 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
   const attachmentId = props.node.attrs.attachmentId as string | null;
   const deps = (props.extension.options.getDeps as () => AttachmentDeps)();
   const editable = props.editor?.isEditable ?? false;
+  const store = useLocalStore();
 
   // undefined = loading, null = missing, object = ready.
-  const row = useLiveQuery(
-    async () => (attachmentId ? ((await db.attachments.get(attachmentId)) ?? null) : null),
-    [attachmentId]
+  const row = useLive(
+    () =>
+      attachmentId
+        ? {
+            subscribe: (next: (row: Attachment | null) => void) =>
+              store.attachments.watch(attachmentId).subscribe((r) => next(r ?? null)),
+          }
+        : emptyLive<Attachment | null>(null),
+    [store, attachmentId]
   );
 
   // Delete is a sibling of the preview surface, positioned inside the same
