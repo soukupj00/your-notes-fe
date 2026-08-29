@@ -1,8 +1,9 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { db } from '@/db/db.ts';
 import { clearNotesDb } from '@/test/db.ts';
+import { renderWithStore as render } from '@/test/store.tsx';
 import LabelsPage from './labels.tsx';
 
 vi.mock('react-i18next', () => ({

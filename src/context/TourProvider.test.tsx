@@ -1,4 +1,4 @@
-import { render, renderHook, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   DEFAULT_PREFERENCES,
@@ -9,6 +9,7 @@ import { TourProvider, useTourActive } from '@/context/TourProvider.tsx';
 import { db } from '@/db/db.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { clearNotesDb } from '@/test/db.ts';
+import { renderHookWithStore, withStore } from '@/test/store.tsx';
 
 /**
  * What is answerable about the provider *without* a browser.
@@ -54,18 +55,20 @@ describe('the abandoned-run sweep', () => {
     // A reload mid-Tour ends it with no teardown, and `onboardingSeenAt` is
     // already stamped - so there will never be another Tour start to clean up
     // from. The sweep has to happen on the next *load*.
-    const { createNote } = renderHook(() => useNoteActions()).result.current;
+    const { createNote } = renderHookWithStore(() => useNoteActions()).result.current;
     const abandoned = await createNote({ header: 'Ideas' });
     await storePreferences({
       tourProps: [{ id: abandoned.id, updatedAt: abandoned.updatedAt }],
     });
 
     render(
-      <PreferencesProvider>
-        <TourProvider>
-          <Probe />
-        </TourProvider>
-      </PreferencesProvider>
+      withStore(
+        <PreferencesProvider>
+          <TourProvider>
+            <Probe />
+          </TourProvider>
+        </PreferencesProvider>
+      )
     );
 
     await waitFor(async () => expect(await db.notes.count()).toBe(0));
@@ -76,17 +79,19 @@ describe('the abandoned-run sweep', () => {
   });
 
   it('leaves a Prop the user made their own', async () => {
-    const { createNote } = renderHook(() => useNoteActions()).result.current;
+    const { createNote } = renderHookWithStore(() => useNoteActions()).result.current;
     const kept = await createNote({ header: 'Ideas' });
     // A baseline the note no longer matches is the whole definition of "edited".
     await storePreferences({ tourProps: [{ id: kept.id, updatedAt: 'before the user typed' }] });
 
     render(
-      <PreferencesProvider>
-        <TourProvider>
-          <Probe />
-        </TourProvider>
-      </PreferencesProvider>
+      withStore(
+        <PreferencesProvider>
+          <TourProvider>
+            <Probe />
+          </TourProvider>
+        </PreferencesProvider>
+      )
     );
 
     await waitFor(async () => {

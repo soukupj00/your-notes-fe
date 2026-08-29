@@ -1,9 +1,10 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { db } from '@/db/db.ts';
 import type { Note } from '@/models.ts';
 import { clearNotesDb } from '@/test/db.ts';
+import { renderWithStore as render } from '@/test/store.tsx';
 import { NoteEditorDialog } from './NoteEditorDialog.tsx';
 import { EMPTY_CHECKLIST_BODY } from './noteDrafts.ts';
 

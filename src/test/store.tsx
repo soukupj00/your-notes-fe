@@ -1,4 +1,4 @@
-import { render, renderHook } from '@testing-library/react';
+import { type RenderHookOptions, render, renderHook } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
 import { createDexieLocalStore } from '@/data/dexie/DexieLocalStore.ts';
 import { LocalStoreProvider } from '@/data/LocalStoreProvider.tsx';
@@ -22,8 +22,12 @@ export function renderWithStore(ui: ReactElement) {
   return render(withStore(ui));
 }
 
-export function renderHookWithStore<T>(hook: () => T) {
+export function renderHookWithStore<T, P>(
+  hook: (props: P) => T,
+  options?: Omit<RenderHookOptions<P>, 'wrapper'>
+) {
   return renderHook(hook, {
+    ...options,
     wrapper: ({ children }) => (
       <LocalStoreProvider store={testStore}>{children}</LocalStoreProvider>
     ),

@@ -186,18 +186,13 @@ describe('held rank (ADR 0012)', () => {
     await putNote({ id: 'a', header: 'Apples', updatedAt: daysAgo(1) });
     await putNote({ id: 'z', header: 'Zebra', updatedAt: daysAgo(2) });
 
-    // `renderHookWithStore` renders a fixed no-args callback, so the search
-    // params it closes over are mutated and re-read on `rerender()` rather
-    // than passed as `initialProps` - the params live in this variable, not
-    // in the render function's arguments.
-    let search: NoteSearchParams = { sort: 'updated', dir: 'desc' };
-    const { result, rerender } = renderHookWithStore(() =>
-      useNoteFeed({ state: 'active' }, search)
+    const { result, rerender } = renderHookWithStore(
+      ({ search }: { search: NoteSearchParams }) => useNoteFeed({ state: 'active' }, search),
+      { initialProps: { search: { sort: 'updated', dir: 'desc' } as NoteSearchParams } }
     );
     await waitFor(() => expect(ids(result.current.notes)).toEqual(['a', 'z']));
 
-    search = { sort: 'title', dir: 'desc' };
-    rerender();
+    rerender({ search: { sort: 'title', dir: 'desc' } });
 
     await waitFor(() => expect(ids(result.current.notes)).toEqual(['z', 'a']));
   });

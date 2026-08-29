@@ -5,6 +5,7 @@ import { PREFERENCES_KEY, PreferencesProvider } from '@/context/PreferencesProvi
 import { TourProvider } from '@/context/TourProvider.tsx';
 import { ThemeProvider } from '@/context/themeProvider.tsx';
 import { db } from '@/db/db.ts';
+import { withStore } from '@/test/store.tsx';
 import SettingsPage from './settings.tsx';
 
 vi.mock('react-i18next', () => ({
@@ -44,13 +45,15 @@ const storedPrefs = async () =>
 
 function mount() {
   return render(
-    <ThemeProvider>
-      <PreferencesProvider>
-        <TourProvider>
-          <SettingsPage />
-        </TourProvider>
-      </PreferencesProvider>
-    </ThemeProvider>
+    withStore(
+      <ThemeProvider>
+        <PreferencesProvider>
+          <TourProvider>
+            <SettingsPage />
+          </TourProvider>
+        </PreferencesProvider>
+      </ThemeProvider>
+    )
   );
 }
 

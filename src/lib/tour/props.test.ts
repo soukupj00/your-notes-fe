@@ -1,4 +1,3 @@
-import { renderHook } from '@testing-library/react';
 import { Editor } from '@tiptap/core';
 import Document from '@tiptap/extension-document';
 import { TaskItem } from '@tiptap/extension-list';
@@ -12,6 +11,7 @@ import type { TourProp } from '@/context/PreferencesProvider.tsx';
 import { db } from '@/db/db.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { clearNotesDb } from '@/test/db.ts';
+import { renderHookWithStore } from '@/test/store.tsx';
 import { createProps, propByKey, purgeProps, rebaseProp } from './props.ts';
 
 afterEach(clearNotesDb);
@@ -20,7 +20,7 @@ afterEach(clearNotesDb);
 const t = (key: string) => key;
 
 function actions() {
-  return renderHook(() => useNoteActions()).result.current;
+  return renderHookWithStore(() => useNoteActions()).result.current;
 }
 
 /** What the Tour's own `record` does, close enough to assert against. */
