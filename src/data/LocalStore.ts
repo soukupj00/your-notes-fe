@@ -79,7 +79,7 @@ export interface LocalStore {
     /**
      * Every note labelled `sourceId` comes out labelled `targetId`, notes that
      * carried both keep one link, and the source is deleted. Atomic. Throws if
-     * the target does not exist.
+     * the target does not exist. Merging a tag into itself changes nothing.
      */
     merge(sourceId: string, targetId: string): Promise<void>;
     /** A note's tags, live. */

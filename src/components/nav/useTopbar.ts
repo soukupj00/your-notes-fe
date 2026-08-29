@@ -1,8 +1,9 @@
 import { useRouterState } from '@tanstack/react-router';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { useTranslation } from 'react-i18next';
 import { resolveTopbar, type TopbarConfig } from '@/components/nav/topbar.ts';
-import { db } from '@/db/db.ts';
+import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
+import { emptyLive } from '@/data/live.ts';
+import { useLive } from '@/data/useLive.ts';
 
 export type ResolvedTopbar = Omit<TopbarConfig, 'title'> & {
   /** Already a display string; `null` means the bar shows no title. */
@@ -19,11 +20,15 @@ export type ResolvedTopbar = Omit<TopbarConfig, 'title'> & {
  */
 export function useTopbar(): ResolvedTopbar {
   const { t } = useTranslation();
+  const store = useLocalStore();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const config = resolveTopbar(pathname);
 
   const tagId = config.title?.kind === 'tag' ? config.title.id : undefined;
-  const tag = useLiveQuery(() => (tagId ? db.tags.get(tagId) : undefined), [tagId]);
+  const tag = useLive(
+    () => (tagId ? store.tags.watch(tagId) : emptyLive(undefined)),
+    [store, tagId]
+  );
 
   let title: string | null = null;
   if (config.title?.kind === 'key') {

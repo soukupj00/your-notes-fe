@@ -22,7 +22,7 @@ export function renderWithStore(ui: ReactElement) {
   return render(withStore(ui));
 }
 
-export function renderHookWithStore<T, P>(
+export function renderHookWithStore<T, P = void>(
   hook: (props: P) => T,
   options?: Omit<RenderHookOptions<P>, 'wrapper'>
 ) {

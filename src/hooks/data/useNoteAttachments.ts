@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
-import type { Live } from '@/data/live.ts';
+import { emptyLive } from '@/data/live.ts';
 import { useLive } from '@/data/useLive.ts';
 import type { Attachment } from '@/models.ts';
 
@@ -8,12 +8,7 @@ import type { Attachment } from '@/models.ts';
 export type NoteAttachments = Map<string, Attachment>;
 
 // Module-level, so a note with no id gets a Live that delivers once and never again:
-const EMPTY_ROWS: Live<Attachment[]> = {
-  subscribe: (next) => {
-    queueMicrotask(() => next([]));
-    return () => {};
-  },
-};
+const EMPTY_ROWS = emptyLive<Attachment[]>([]);
 
 /** Identifies a note's rows by content, so an unchanged note can keep its Map. */
 function signatureOf(rows: Attachment[]): string {

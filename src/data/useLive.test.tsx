@@ -1,6 +1,6 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import type { Live } from './live.ts';
+import { emptyLive, type Live } from './live.ts';
 import { useLive } from './useLive.ts';
 
 /** A hand-driven Live: the test decides when values arrive. */
@@ -59,5 +59,26 @@ describe('useLive', () => {
     expect(result.current).toBe('from a');
     act(() => b.emit('from b'));
     expect(result.current).toBe('from b');
+  });
+});
+
+describe('emptyLive', () => {
+  it('delivers its value once, asynchronously', async () => {
+    const live = emptyLive('none');
+    const values: string[] = [];
+    live.subscribe((value) => values.push(value));
+
+    expect(values).toEqual([]); // not synchronous
+    await waitFor(() => expect(values).toEqual(['none']));
+  });
+
+  it('does not deliver after unsubscribe', async () => {
+    const live = emptyLive('none');
+    const values: string[] = [];
+    const unsubscribe = live.subscribe((value) => values.push(value));
+
+    unsubscribe();
+    await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
+    expect(values).toEqual([]);
   });
 });

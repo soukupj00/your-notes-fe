@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button.tsx';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog.tsx';
 import { LabeledCheckbox } from '@/components/ui/LabeledCheckbox.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
+import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import {
   BackupError,
   backupFilename,
@@ -39,6 +40,7 @@ function errorKey(error: unknown): string {
  */
 export function BackupSection() {
   const { t } = useTranslation();
+  const store = useLocalStore();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState<Busy>(null);
   const [pending, setPending] = useState<ParsedBackup | null>(null);
@@ -51,7 +53,7 @@ export function BackupSection() {
 
     setBusy('export');
     try {
-      await target.write(await buildBackupZip());
+      await target.write(await buildBackupZip(store));
       // Only claim it saved when the browser actually told us where it went;
       // the anchor fallback hands the file off and never reports back.
       if (target.confirmed) toast.success(t('settings.backup.exported'));
@@ -96,8 +98,8 @@ export function BackupSection() {
     setBusy('import');
     try {
       // A failed safety copy throws before restoreBackup, so the wipe never runs.
-      if (target) await target.write(await buildBackupZip());
-      await restoreBackup(backup);
+      if (target) await target.write(await buildBackupZip(store));
+      await restoreBackup(store, backup);
       toast.success(t('settings.backup.imported'));
     } catch (error) {
       toast.error(t(errorKey(error)));

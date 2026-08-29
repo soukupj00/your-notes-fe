@@ -1,15 +1,10 @@
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
-import type { Live } from '@/data/live.ts';
+import { emptyLive } from '@/data/live.ts';
 import { useLive } from '@/data/useLive.ts';
 import type { Tag } from '@/models.ts';
 
 // Module-level, so a note with no id gets a Live that delivers once and never again:
-const EMPTY: Live<Tag[]> = {
-  subscribe: (next) => {
-    queueMicrotask(() => next([]));
-    return () => {};
-  },
-};
+const EMPTY = emptyLive<Tag[]>([]);
 
 /**
  * A note's labels, live.
