@@ -6,8 +6,8 @@
 // values. Under jsdom, a stored Blob comes back as a plain `{}`. Node's
 // native Blob round-trips correctly and matches what a real browser does.
 import { describe, expect, it } from 'vitest';
-import { db } from '@/db/db.ts';
 import type { Attachment } from '@/models.ts';
+import { db } from './db.ts';
 
 function makeAttachment(overrides: Partial<Attachment> = {}): Attachment {
   const now = new Date().toISOString();
