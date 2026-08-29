@@ -3,6 +3,7 @@ import type { Attachment, Note, NoteState, NoteTag, Tag } from '@/models.ts';
 import type { AttachmentChanges, LocalStore, NoteFeedScope, Snapshot } from '../LocalStore.ts';
 import type { Live } from '../live.ts';
 import { db as defaultDb, type NotesDB } from './db.ts';
+import { migrateLegacyPreferences } from './legacyPreferences.ts';
 
 /** Dexie's `liveQuery` already is the contract; this only narrows its Observable to `Live<T>`. */
 function live<T>(querier: () => T | Promise<T>): Live<T> {
@@ -21,6 +22,10 @@ function live<T>(querier: () => T | Promise<T>): Live<T> {
  * database per test; the app passes nothing and gets the singleton.
  */
 export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
+  // One-shot legacy split (src/data/dexie/legacyPreferences.ts); `meta` waits on
+  // it so a Tour sweep on startup cannot read `tourProps` before it has landed.
+  const ready = migrateLegacyPreferences(db);
+
   /** The feed's read, shared by `feed()` so the join lives in one place. */
   async function readFeed(scope: NoteFeedScope): Promise<Note[]> {
     let candidates = await db.notes.where('state').equals(scope.state).toArray();
@@ -192,11 +197,16 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
     // The Dexie table is still called `settings` (no schema bump, ADR 0020);
     // `meta` is what it holds now that Preferences live in localStorage.
     meta: {
-      get: async <T>(key: string) => (await db.settings.get(key))?.value as T | undefined,
+      get: async <T>(key: string) => {
+        await ready;
+        return (await db.settings.get(key))?.value as T | undefined;
+      },
       set: async (key, value) => {
+        await ready;
         await db.settings.put({ key, value });
       },
       delete: async (key) => {
+        await ready;
         await db.settings.delete(key);
       },
     },

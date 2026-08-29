@@ -1,11 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PREFERENCES_KEY, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { TourProvider } from '@/context/TourProvider.tsx';
 import { ThemeProvider } from '@/context/themeProvider.tsx';
-import { db } from '@/db/db.ts';
-import { withStore } from '@/test/store.tsx';
+import { PREFERENCES_STORAGE_KEY } from '@/data/dexie/legacyPreferences.ts';
+import { clearStore, withStore } from '@/test/store.tsx';
 import SettingsPage from './settings.tsx';
 
 vi.mock('react-i18next', () => ({
@@ -37,11 +37,14 @@ vi.mock('@tanstack/react-router', () => ({
 
 afterEach(async () => {
   document.documentElement.classList.remove('cvd');
-  await db.settings.clear();
+  localStorage.clear();
+  await clearStore();
 });
 
 const storedPrefs = async () =>
-  (await db.settings.get(PREFERENCES_KEY))?.value as Record<string, unknown> | undefined;
+  JSON.parse(localStorage.getItem(PREFERENCES_STORAGE_KEY) ?? 'null') as
+    | Record<string, unknown>
+    | undefined;
 
 function mount() {
   return render(

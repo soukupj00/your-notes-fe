@@ -1,9 +1,8 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { db } from '@/db/db.ts';
+import { PREFERENCES_STORAGE_KEY } from '@/data/dexie/legacyPreferences.ts';
 import {
   DEFAULT_PREFERENCES,
-  PREFERENCES_KEY,
   PREFERENCES_VERSION,
   PreferencesProvider,
   usePreferences,
@@ -13,18 +12,18 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
   <PreferencesProvider>{children}</PreferencesProvider>
 );
 
-/** Render the hook and wait for the stored blob to arrive. */
+/** Render the hook. Preferences are read synchronously, so there is no hydration step. */
 async function prefs() {
   const { result } = renderHook(() => usePreferences(), { wrapper });
-  await waitFor(() => expect(result.current.hydrated).toBe(true));
   return result;
 }
 
-const store = (value: unknown) => db.settings.put({ key: PREFERENCES_KEY, value });
-const stored = async () => (await db.settings.get(PREFERENCES_KEY))?.value;
+const store = (value: unknown) =>
+  localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(value));
+const stored = async () => JSON.parse(localStorage.getItem(PREFERENCES_STORAGE_KEY) ?? 'null');
 
-afterEach(async () => {
-  await db.settings.clear();
+afterEach(() => {
+  localStorage.clear();
 });
 
 describe('defaults', () => {
@@ -33,14 +32,8 @@ describe('defaults', () => {
     expect(result.current.preferences).toEqual(DEFAULT_PREFERENCES);
   });
 
-  it('serves defaults before hydration finishes', () => {
-    const { result } = renderHook(() => usePreferences(), { wrapper });
-    expect(result.current.hydrated).toBe(false);
-    expect(result.current.preferences).toEqual(DEFAULT_PREFERENCES);
-  });
-
   it('fills missing fields of a partial blob with defaults', async () => {
-    await store({ version: PREFERENCES_VERSION, density: 'compact' });
+    store({ version: PREFERENCES_VERSION, density: 'compact' });
 
     const result = await prefs();
 
@@ -56,7 +49,7 @@ describe('graceful fallback', () => {
     ['a blob from an unknown schema version', { version: 999, density: 'compact' }],
     ['a blob with no version at all', { density: 'compact' }],
   ])('falls back to defaults for %s', async (_label, value) => {
-    await store(value);
+    store(value);
 
     const result = await prefs();
 
@@ -64,7 +57,7 @@ describe('graceful fallback', () => {
   });
 
   it('leaves the unreadable blob in place rather than overwriting it on read', async () => {
-    await store('not-an-object');
+    store('not-an-object');
     await prefs();
     expect(await stored()).toBe('not-an-object');
   });
@@ -74,7 +67,7 @@ describe('graceful fallback', () => {
     // string must not take the whole blob down with it: falling back to
     // defaults here would silently wipe the user's toolbar and density too,
     // which is a far worse outcome than losing a setting nothing ever read.
-    await store({
+    store({
       version: PREFERENCES_VERSION,
       colorBlind: 'deuteranopia',
       density: 'compact',
@@ -96,7 +89,7 @@ describe('graceful fallback', () => {
   // actions. Both are now object shapes, and a stored copy of either must cost
   // only itself.
   it('absorbs the pre-registry toolbar and quick-capture shapes without resetting their neighbours', async () => {
-    await store({
+    store({
       version: PREFERENCES_VERSION,
       toolbar: ['bold', 'italic'],
       quickCaptureButtons: ['note', 'checklist'],
@@ -114,34 +107,8 @@ describe('graceful fallback', () => {
     expect(result.current.preferences.colorBlind).toBe(true);
   });
 
-  // `tourProps` was added without a `PREFERENCES_VERSION` bump on the grounds
-  // that a new optional field with a default needs no migration. These two are
-  // that claim: every blob already on disk predates the field, and a corrupt
-  // copy of it must not cost the user their appearance settings.
-  it('reads a blob written before tourProps existed', async () => {
-    await store({ version: PREFERENCES_VERSION, density: 'compact' });
-
-    const result = await prefs();
-
-    expect(result.current.preferences.tourProps).toEqual([]);
-    expect(result.current.preferences.density).toBe('compact');
-  });
-
-  it('absorbs a corrupt tourProps without resetting its neighbours', async () => {
-    await store({
-      version: PREFERENCES_VERSION,
-      tourProps: [{ id: 'a' }],
-      density: 'compact',
-    });
-
-    const result = await prefs();
-
-    expect(result.current.preferences.tourProps).toEqual([]);
-    expect(result.current.preferences.density).toBe('compact');
-  });
-
   it('absorbs one broken Width Class without taking the other down with it', async () => {
-    await store({
+    store({
       version: PREFERENCES_VERSION,
       toolbar: {
         compact: 'not a layout',
@@ -166,7 +133,7 @@ describe('graceful fallback', () => {
         members: [{ id: 'teleport', on: false }],
       },
     ];
-    await store({ version: PREFERENCES_VERSION, toolbar: { compact: layout, wide: [] } });
+    store({ version: PREFERENCES_VERSION, toolbar: { compact: layout, wide: [] } });
 
     const result = await prefs();
 
@@ -180,7 +147,7 @@ describe('v1 → v2 migration (ADR 0013)', () => {
     // `setPreference` persists the entire parsed blob, so every existing user
     // already has `sinkCheckedItems: false` on disk and a new default would
     // reach none of them.
-    await store({
+    store({
       version: 1,
       sinkCheckedItems: false,
       density: 'compact',
@@ -199,7 +166,7 @@ describe('v1 → v2 migration (ADR 0013)', () => {
   });
 
   it('leaves a v2 blob that has opted out alone', async () => {
-    await store({ version: 2, sinkCheckedItems: false });
+    store({ version: 2, sinkCheckedItems: false });
 
     const result = await prefs();
 
@@ -211,7 +178,7 @@ describe('v1 → v2 migration (ADR 0013)', () => {
     // inspect. The migration is therefore re-applied on every read until the
     // next `setPreference` persists version 2, which is why it is idempotent.
     const v1 = { version: 1, sinkCheckedItems: false, density: 'compact' };
-    await store(v1);
+    store(v1);
 
     await prefs();
 
@@ -219,7 +186,7 @@ describe('v1 → v2 migration (ADR 0013)', () => {
   });
 
   it('persists version 2 once any preference is written', async () => {
-    await store({ version: 1, sinkCheckedItems: false, density: 'compact' });
+    store({ version: 1, sinkCheckedItems: false, density: 'compact' });
     const result = await prefs();
 
     await result.current.setPreference('density', 'comfortable');
@@ -230,7 +197,7 @@ describe('v1 → v2 migration (ADR 0013)', () => {
   });
 
   it('still rejects a version it has never heard of', async () => {
-    await store({ version: 999, sinkCheckedItems: false, density: 'compact' });
+    store({ version: 999, sinkCheckedItems: false, density: 'compact' });
 
     const result = await prefs();
 
@@ -239,7 +206,7 @@ describe('v1 → v2 migration (ADR 0013)', () => {
 });
 
 describe('setPreference', () => {
-  it('round-trips a written value through Dexie', async () => {
+  it('round-trips a written value through localStorage', async () => {
     const result = await prefs();
 
     await result.current.setPreference('density', 'compact');
@@ -281,7 +248,7 @@ describe('setPreference', () => {
   });
 
   it('writes over an unreadable blob instead of merging into it', async () => {
-    await store('not-an-object');
+    store('not-an-object');
     const result = await prefs();
 
     await result.current.setPreference('density', 'compact');
@@ -296,6 +263,18 @@ describe('setPreference', () => {
 
     const value = (await stored()) as { version: number };
     expect(value.version).toBe(PREFERENCES_VERSION);
+  });
+});
+
+describe('the storage event', () => {
+  it('picks up a blob another tab wrote', async () => {
+    const result = await prefs();
+    expect(result.current.preferences.density).toBe('comfortable');
+
+    store({ ...DEFAULT_PREFERENCES, density: 'compact' });
+    window.dispatchEvent(new StorageEvent('storage', { key: PREFERENCES_STORAGE_KEY }));
+
+    await waitFor(() => expect(result.current.preferences.density).toBe('compact'));
   });
 });
 

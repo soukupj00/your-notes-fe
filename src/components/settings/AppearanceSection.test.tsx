@@ -2,13 +2,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  PREFERENCES_KEY,
-  type Preferences,
-  PreferencesProvider,
-} from '@/context/PreferencesProvider.tsx';
+import { type Preferences, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { ThemeProvider } from '@/context/themeProvider.tsx';
-import { db } from '@/db/db.ts';
+import { PREFERENCES_STORAGE_KEY } from '@/data/dexie/legacyPreferences.ts';
 import { AppearanceSection } from './AppearanceSection.tsx';
 
 vi.mock('react-i18next', () => ({
@@ -22,14 +18,13 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 );
 
 async function storedPrefs() {
-  const row = await db.settings.get(PREFERENCES_KEY);
-  if (!row) throw new Error('nothing written yet');
-  return row.value as Preferences;
+  const raw = localStorage.getItem(PREFERENCES_STORAGE_KEY);
+  if (!raw) throw new Error('nothing written yet');
+  return JSON.parse(raw) as Preferences;
 }
 
-afterEach(async () => {
+afterEach(() => {
   localStorage.clear();
-  await db.settings.clear();
 });
 
 describe('AppearanceSection', () => {

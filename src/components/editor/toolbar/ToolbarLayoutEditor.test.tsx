@@ -2,8 +2,8 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PREFERENCES_KEY, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
-import { db } from '@/db/db.ts';
+import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import { PREFERENCES_STORAGE_KEY } from '@/data/dexie/legacyPreferences.ts';
 import { defaultToolbarLayout, toolbarPreset } from './presets';
 import { TOOLBAR_FAMILIES } from './registry';
 import { ToolbarLayoutEditor } from './ToolbarLayoutEditor';
@@ -24,9 +24,9 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 
 /** The stored Layouts, once a write has landed. Throws until one has. */
 async function storedToolbar(): Promise<{ compact: ToolbarLayout; wide: ToolbarLayout }> {
-  const row = await db.settings.get(PREFERENCES_KEY);
-  if (!row) throw new Error('nothing written yet');
-  return (row.value as { toolbar: { compact: ToolbarLayout; wide: ToolbarLayout } }).toolbar;
+  const raw = localStorage.getItem(PREFERENCES_STORAGE_KEY);
+  if (!raw) throw new Error('nothing written yet');
+  return (JSON.parse(raw) as { toolbar: { compact: ToolbarLayout; wide: ToolbarLayout } }).toolbar;
 }
 
 const familyLabel = (id: string) => `editor.toolbar.family.${id}`;
@@ -84,7 +84,7 @@ afterEach(async () => {
   // left in place it would hand fabricated rects to every test that follows,
   // and a second `stubRowGeometry` would capture the spy as its own original.
   vi.restoreAllMocks();
-  await db.settings.clear();
+  localStorage.clear();
 });
 
 describe('the family list', () => {
@@ -148,10 +148,13 @@ describe('the family list', () => {
 describe('the fold marker', () => {
   it('marks where a phone stops showing buttons, on the compact Layout only', async () => {
     // Everything on Compact is 32 buttons on a bar that fits seven.
-    await db.settings.put({
-      key: PREFERENCES_KEY,
-      value: { version: 1, toolbar: { compact: toolbarPreset('everything', 'compact'), wide: [] } },
-    });
+    localStorage.setItem(
+      PREFERENCES_STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        toolbar: { compact: toolbarPreset('everything', 'compact'), wide: [] },
+      })
+    );
     renderEditor('compact');
 
     expect(await screen.findByText(/settings\.toolbar\.fold/)).toBeInTheDocument();
@@ -274,10 +277,13 @@ describe('presets', () => {
 describe('the Width Class toggle', () => {
   it('switches which Layout the list is editing', async () => {
     const user = userEvent.setup();
-    await db.settings.put({
-      key: PREFERENCES_KEY,
-      value: { version: 1, toolbar: { compact: [], wide: toolbarPreset('minimal', 'wide') } },
-    });
+    localStorage.setItem(
+      PREFERENCES_STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        toolbar: { compact: [], wide: toolbarPreset('minimal', 'wide') },
+      })
+    );
     renderEditor('compact');
 
     // `block` is off in Wide/Minimal and on in the Compact default.
@@ -338,15 +344,12 @@ describe('a stored family this build cannot render', () => {
       },
       ...defaultToolbarLayout('wide'),
     ];
-    await db.settings.put({
-      key: PREFERENCES_KEY,
-      value: { version: 1, toolbar: { compact: [], wide: stored } },
-    });
+    localStorage.setItem(
+      PREFERENCES_STORAGE_KEY,
+      JSON.stringify({ version: 1, toolbar: { compact: [], wide: stored } })
+    );
     renderEditor('wide');
 
-    // Hydration is async and the pre-hydration render is the *default* Layout,
-    // which has the right count minus this row - so this waits rather than
-    // taking the first list it sees.
     await waitFor(() =>
       expect(screen.getAllByRole('switch')).toHaveLength(TOOLBAR_FAMILIES.length + 1)
     );

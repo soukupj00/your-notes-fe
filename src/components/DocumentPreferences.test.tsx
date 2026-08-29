@@ -1,21 +1,24 @@
 import { render, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  PREFERENCES_KEY,
-  PREFERENCES_VERSION,
-  PreferencesProvider,
-} from '@/context/PreferencesProvider.tsx';
-import { db } from '@/db/db.ts';
+import { PREFERENCES_VERSION, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import { PREFERENCES_STORAGE_KEY } from '@/data/dexie/legacyPreferences.ts';
 import { COLOR_BLIND_CLASS, DocumentPreferences } from './DocumentPreferences.tsx';
 
-const store = (value: unknown) => db.settings.put({ key: PREFERENCES_KEY, value });
+// `PreferencesProvider` only re-reads on a `storage` event (another tab's
+// write) or `setPreference` (its own). A same-tab write from outside React -
+// what this suite does to force a value into an already-mounted provider -
+// has to fire that event itself to be picked up.
+const store = (value: unknown) => {
+  localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(value));
+  window.dispatchEvent(new StorageEvent('storage', { key: PREFERENCES_STORAGE_KEY }));
+};
 
-afterEach(async () => {
+afterEach(() => {
   document.documentElement.classList.remove(COLOR_BLIND_CLASS, 'dark');
   document.documentElement.removeAttribute('data-density');
   document.documentElement.removeAttribute('data-reduced-motion');
   document.documentElement.removeAttribute('data-sink-checked');
-  await db.settings.clear();
+  localStorage.clear();
 });
 
 function tree() {

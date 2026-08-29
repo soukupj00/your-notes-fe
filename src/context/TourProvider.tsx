@@ -13,11 +13,19 @@ import {
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { TourPopover } from '@/components/tour/TourPopover.tsx';
-import { type TourProp, usePreferences } from '@/context/PreferencesProvider.tsx';
+import { usePreferences } from '@/context/PreferencesProvider.tsx';
+import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { holdBodyInert } from '@/lib/tour/inert.ts';
-import { createProps, purgeProps, rebaseProp } from '@/lib/tour/props.ts';
+import {
+  createProps,
+  purgeProps,
+  readProps,
+  rebaseProp,
+  type TourProp,
+  writeProps,
+} from '@/lib/tour/props.ts';
 import {
   changesScene,
   leaveScene,
@@ -91,8 +99,9 @@ function isDriverElement(node: Element): boolean {
 
 export function TourProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
-  const { preferences, hydrated, setPreference } = usePreferences();
-  const { createNote, purgeNote, pinNote, unpinNote } = useNoteActions();
+  const { preferences, setPreference } = usePreferences();
+  const store = useLocalStore();
+  const { purgeNote, pinNote, unpinNote } = useNoteActions();
   const reducedMotion = useReducedMotion();
   const navigate = useNavigate();
   const router = useRouter();
@@ -167,16 +176,16 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const setProps = useCallback(
     async (next: TourProp[]) => {
       propsRef.current = next;
-      await setPreference('tourProps', next);
+      await writeProps(store, next);
     },
-    [setPreference]
+    [store]
   );
 
   const rebase = useCallback(
     async (id: string) => {
-      await setProps(await rebaseProp(propsRef.current, id));
+      await setProps(await rebaseProp(store, propsRef.current, id));
     },
-    [setProps]
+    [store, setProps]
   );
 
   /**
@@ -189,7 +198,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const sweep = useCallback(
     async (props: TourProp[]) => {
       if (props.length === 0) return;
-      const purged = await purgeProps(purgeNote, props);
+      const purged = await purgeProps(store, purgeNote, props);
       await setProps([]);
       // Gone from Dexie is not gone from the wall: the Feed repaints through a
       // live query, so the cards outlive the rows by a frame or two. Since the
@@ -205,7 +214,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         { label: 'the feed to drop the purged Props' }
       );
     },
-    [purgeNote, setProps]
+    [store, purgeNote, setProps]
   );
 
   const markNavigation = useCallback(() => {
@@ -462,7 +471,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     }
 
     await sweep(propsRef.current);
-    await createProps(createNote, (key) => t(key), setProps);
+    propsRef.current = await createProps(store, (key) => t(key));
 
     releaseInertRef.current = holdBodyInert(isDriverElement);
     driverRef.current = driver(driverConfig(null));
@@ -476,8 +485,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     navigate,
     markNavigation,
     sweep,
-    setProps,
-    createNote,
+    store,
     t,
     preferences.onboardingSeenAt,
     setPreference,
@@ -506,14 +514,25 @@ export function TourProvider({ children }: { children: ReactNode }) {
   // startup sweeps in `__root.tsx`, because they are the same list and running
   // them apart would race a fresh seed against the old list's purge.
   useEffect(() => {
-    if (!hydrated || startedRef.current) return;
-    startedRef.current = true;
-    void (async () => {
-      propsRef.current = preferences.tourProps;
-      await sweep(preferences.tourProps);
+    if (startedRef.current) return;
+    let cancelled = false;
+    // `startedRef` is set once the read actually lands, not before: preferences
+    // are now read synchronously, so this effect's first run happens on the
+    // initial mount - which StrictMode double-invokes in dev. Marking the ref
+    // up front would have the *first* invocation's async continuation swallowed
+    // by its own cleanup (`cancelled`) while the guard stops the second, real
+    // invocation from ever running it.
+    void readProps(store).then(async (props) => {
+      if (cancelled) return;
+      startedRef.current = true;
+      propsRef.current = props;
+      await sweep(props);
       if (!preferences.onboardingSeenAt && router.state.location.pathname === '/') await start();
-    })();
-  }, [hydrated, preferences.tourProps, preferences.onboardingSeenAt, sweep, start, router]);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [store, preferences.onboardingSeenAt, sweep, start, router]);
 
   // A navigation the Tour did not ask for destroys it, Props and all: the app is
   // inert, so the only way one happens is the platform back button or gesture,

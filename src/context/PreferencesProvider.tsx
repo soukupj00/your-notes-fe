@@ -1,10 +1,14 @@
-import { useLiveQuery } from 'dexie-react-hooks';
-import { createContext, type ReactNode, useCallback, useContext, useMemo } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { z } from 'zod';
-import { db } from '@/db/db.ts';
-
-/** Row key of the single preferences blob inside the `settings` store. */
-export const PREFERENCES_KEY = 'preferences';
+import { PREFERENCES_STORAGE_KEY } from '@/data/dexie/legacyPreferences.ts';
 
 /**
  * Schema version of the stored blob. Bump it when a field changes shape in a
@@ -103,34 +107,10 @@ const preferencesSchema = z.object({
    * is the most irritating thing this feature can do.
    */
   onboardingSeenAt: z.string().optional(),
-  /**
-   * The Props currently on the wall, each with the `updatedAt` the Tour last
-   * left it at (CONTEXT.md, "Prop"; ADR 0015).
-   *
-   * It lives here rather than in React state so a reload, crash or closed tab
-   * mid-Tour leaves something to sweep on the next start.
-   *
-   * It stores `updatedAt` rather than bare ids because the Tour's own acts
-   * write - pinning bumps `updatedAt`, and step 2 opens the editor - so a
-   * baseline taken once at seed time would make every Prop look user-edited and
-   * nothing would ever be swept, producing exactly the litter Props exist to
-   * prevent. The Tour re-records the baseline after each of its own acts.
-   *
-   * `.catch([])` for the same field-level-absorber reason as `colorBlind` and
-   * `toolbar` above, and no `PREFERENCES_VERSION` bump: a new optional field
-   * with a default is absorbed by the schema as it stands.
-   */
-  tourProps: z
-    .array(z.object({ id: z.string(), updatedAt: z.string() }))
-    .catch([])
-    .default([]),
 });
 
 export type Preferences = z.infer<typeof preferencesSchema>;
 export type PreferenceKey = Exclude<keyof Preferences, 'version'>;
-
-/** One live Prop and the `updatedAt` baseline the sweep compares against. */
-export type TourProp = Preferences['tourProps'][number];
 
 export const DEFAULT_PREFERENCES: Preferences = preferencesSchema.parse({
   version: PREFERENCES_VERSION,
@@ -179,56 +159,53 @@ function parsePreferences(raw: unknown): Preferences {
   return parsed.success ? parsed.data : DEFAULT_PREFERENCES;
 }
 
+function readStored(): Preferences {
+  try {
+    const raw = localStorage.getItem(PREFERENCES_STORAGE_KEY);
+    return parsePreferences(raw === null ? undefined : JSON.parse(raw));
+  } catch {
+    return DEFAULT_PREFERENCES;
+  }
+}
+
 type PreferencesContextType = {
   preferences: Preferences;
-  /** False until the stored blob has been read; `preferences` is defaults meanwhile. */
-  hydrated: boolean;
   setPreference: <K extends PreferenceKey>(key: K, value: Preferences[K]) => Promise<void>;
 };
 
 const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
 
 /**
- * User preferences, persisted as one Zod-validated blob in the Dexie `settings`
- * store (not localStorage: it is the same store M5 will sync, and it survives
- * the same backup/restore path as notes).
+ * User Preferences (CONTEXT.md), one Zod-validated blob in localStorage beside
+ * Theme and Locale (ADR 0020). Read synchronously, so the first render already
+ * has the user's density and motion choice - there is no hydration step.
  *
- * Hydration is async, so children render against defaults first and re-render
- * once the blob lands - the same loading-tolerant contract as the note feed.
- * `hydrated` is there for the few consumers that must not act early (the
- * onboarding tour would otherwise flash before we know it was seen).
+ * Another tab's write arrives through the `storage` event, so two open tabs
+ * cannot disagree.
  */
 export function PreferencesProvider({ children }: { children: ReactNode }) {
-  // `.get` returns undefined for a missing row, which useLiveQuery also returns
-  // while loading; the wrapper object is what tells those two apart.
-  const result = useLiveQuery(async () => ({ row: await db.settings.get(PREFERENCES_KEY) }), []);
+  const [preferences, setPreferences] = useState<Preferences>(readStored);
 
-  const preferences = useMemo(
-    () => (result ? parsePreferences(result.row?.value) : DEFAULT_PREFERENCES),
-    [result]
-  );
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === PREFERENCES_STORAGE_KEY || event.key === null) setPreferences(readStored());
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   const setPreference = useCallback(async function setPreference<K extends PreferenceKey>(
     key: K,
     value: Preferences[K]
   ) {
-    // Read-modify-write inside a transaction: the blob is a single row, so two
-    // concurrent writes to different keys would otherwise lose one of them.
-    await db.transaction('rw', db.settings, async () => {
-      const row = await db.settings.get(PREFERENCES_KEY);
-      const current = parsePreferences(row?.value);
-      await db.settings.put({
-        key: PREFERENCES_KEY,
-        value: { ...current, version: PREFERENCES_VERSION, [key]: value },
-      });
-    });
+    // Read-modify-write against storage, not React state: a second write in
+    // the same tick must see the first, and localStorage is synchronous.
+    const next = { ...readStored(), version: PREFERENCES_VERSION, [key]: value } as Preferences;
+    localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(next));
+    setPreferences(next);
   }, []);
 
-  const value = useMemo(
-    () => ({ preferences, hydrated: result !== undefined, setPreference }),
-    [preferences, result, setPreference]
-  );
-
+  const value = useMemo(() => ({ preferences, setPreference }), [preferences, setPreference]);
   return <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>;
 }
 

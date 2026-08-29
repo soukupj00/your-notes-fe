@@ -28,8 +28,7 @@
  * app has caught up rather than guessing with a timer.
  */
 
-import type { TourProp } from '@/context/PreferencesProvider.tsx';
-import { propByKey } from './props.ts';
+import { propByKey, type TourProp } from './props.ts';
 import {
   noteCardTarget,
   resolveTourTarget,

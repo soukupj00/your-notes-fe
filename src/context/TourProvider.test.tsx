@@ -1,15 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  DEFAULT_PREFERENCES,
-  PREFERENCES_KEY,
-  PreferencesProvider,
-} from '@/context/PreferencesProvider.tsx';
+import { DEFAULT_PREFERENCES, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { TourProvider, useTourActive } from '@/context/TourProvider.tsx';
-import { db } from '@/db/db.ts';
+import { PREFERENCES_STORAGE_KEY } from '@/data/dexie/legacyPreferences.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
-import { clearNotesDb } from '@/test/db.ts';
-import { renderHookWithStore, withStore } from '@/test/store.tsx';
+import { clearStore, renderHookWithStore, testStore, withStore } from '@/test/store.tsx';
 
 /**
  * What is answerable about the provider *without* a browser.
@@ -36,15 +31,22 @@ vi.mock('@tanstack/react-router', () => ({
     select({ location: { href: 'http://localhost/' } }),
 }));
 
-afterEach(clearNotesDb);
-
 /** A finished-with profile: the Tour has been offered, so none is due. */
-async function storePreferences(overrides: Record<string, unknown>) {
-  await db.settings.put({
-    key: PREFERENCES_KEY,
-    value: { ...DEFAULT_PREFERENCES, onboardingSeenAt: '2026-08-09T10:00:00.000Z', ...overrides },
-  });
+function storePreferences(overrides: Record<string, unknown>) {
+  localStorage.setItem(
+    PREFERENCES_STORAGE_KEY,
+    JSON.stringify({
+      ...DEFAULT_PREFERENCES,
+      onboardingSeenAt: '2026-08-09T10:00:00.000Z',
+      ...overrides,
+    })
+  );
 }
+
+afterEach(async () => {
+  localStorage.clear();
+  await clearStore();
+});
 
 function Probe() {
   return <span data-testid="active">{String(useTourActive())}</span>;
@@ -57,9 +59,8 @@ describe('the abandoned-run sweep', () => {
     // from. The sweep has to happen on the next *load*.
     const { createNote } = renderHookWithStore(() => useNoteActions()).result.current;
     const abandoned = await createNote({ header: 'Ideas' });
-    await storePreferences({
-      tourProps: [{ id: abandoned.id, updatedAt: abandoned.updatedAt }],
-    });
+    await testStore.meta.set('tourProps', [{ id: abandoned.id, updatedAt: abandoned.updatedAt }]);
+    storePreferences({});
 
     render(
       withStore(
@@ -71,10 +72,9 @@ describe('the abandoned-run sweep', () => {
       )
     );
 
-    await waitFor(async () => expect(await db.notes.count()).toBe(0));
+    await waitFor(async () => expect(await testStore.notes.list()).toHaveLength(0));
     await waitFor(async () => {
-      const stored = (await db.settings.get(PREFERENCES_KEY))?.value as { tourProps: unknown[] };
-      expect(stored.tourProps).toEqual([]);
+      expect(await testStore.meta.get('tourProps')).toEqual([]);
     });
   });
 
@@ -82,7 +82,8 @@ describe('the abandoned-run sweep', () => {
     const { createNote } = renderHookWithStore(() => useNoteActions()).result.current;
     const kept = await createNote({ header: 'Ideas' });
     // A baseline the note no longer matches is the whole definition of "edited".
-    await storePreferences({ tourProps: [{ id: kept.id, updatedAt: 'before the user typed' }] });
+    await testStore.meta.set('tourProps', [{ id: kept.id, updatedAt: 'before the user typed' }]);
+    storePreferences({});
 
     render(
       withStore(
@@ -95,10 +96,9 @@ describe('the abandoned-run sweep', () => {
     );
 
     await waitFor(async () => {
-      const stored = (await db.settings.get(PREFERENCES_KEY))?.value as { tourProps: unknown[] };
-      expect(stored.tourProps).toEqual([]);
+      expect(await testStore.meta.get('tourProps')).toEqual([]);
     });
-    await expect(db.notes.get(kept.id)).resolves.toBeDefined();
+    await expect(testStore.notes.get(kept.id)).resolves.toBeDefined();
   });
 });
 

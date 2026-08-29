@@ -10,8 +10,12 @@ import './i18n.ts';
 // for bringing your own.
 const store = createDexieLocalStore();
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App store={store} />
-  </StrictMode>
-);
+// Lets the one-shot legacy migration land before the first synchronous
+// preferences read (src/data/dexie/legacyPreferences.ts).
+void store.meta.get('tourProps').then(() => {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App store={store} />
+    </StrictMode>
+  );
+});

@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PREFERENCES_KEY, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
-import { db } from '@/db/db.ts';
+import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import { PREFERENCES_STORAGE_KEY } from '@/data/dexie/legacyPreferences.ts';
 import { FLOATING_BOTTOM_BAR } from './floatingBottomBar.ts';
 import { QuickCaptureBar } from './QuickCaptureBar.tsx';
 
@@ -19,8 +19,8 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
   <PreferencesProvider>{children}</PreferencesProvider>
 );
 
-afterEach(async () => {
-  await db.settings.clear();
+afterEach(() => {
+  localStorage.clear();
 });
 
 async function openDial() {
@@ -119,10 +119,10 @@ describe('QuickCaptureBar', () => {
     });
 
     it('mirrors the whole dial, not just the button, for a left-handed layout', async () => {
-      await db.settings.put({
-        key: PREFERENCES_KEY,
-        value: { version: 1, noteButtonAlignment: 'left' },
-      });
+      localStorage.setItem(
+        PREFERENCES_STORAGE_KEY,
+        JSON.stringify({ version: 1, noteButtonAlignment: 'left' })
+      );
       const onStart = vi.fn();
       render(<QuickCaptureBar onStart={onStart} />, { wrapper });
 
