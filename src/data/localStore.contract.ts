@@ -229,6 +229,19 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
         await expect(store.tags.merge(target.id, 'missing')).rejects.toThrow();
       });
 
+      it('merge with the same source and target changes nothing', async () => {
+        const n = note();
+        const t = tag();
+        await store.notes.add(n);
+        await store.tags.add(t);
+        await store.tags.link(link(n.id, t.id));
+
+        await store.tags.merge(t.id, t.id);
+
+        expect(await store.tags.get(t.id)).toEqual(t);
+        expect(await store.tags.listLinks()).toHaveLength(1);
+      });
+
       it('all, watch and forNote are live', async () => {
         const n = note();
         await store.notes.add(n);

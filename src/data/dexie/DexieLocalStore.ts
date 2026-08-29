@@ -110,8 +110,11 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           await db.tags.delete(id);
           await db.noteTags.where('tagId').equals(id).delete();
         }),
-      merge: (sourceId, targetId) =>
-        db.transaction('rw', db.tags, db.noteTags, async () => {
+      merge: (sourceId, targetId) => {
+        // Merging a tag into itself is a no-op, not a self-delete: without this
+        // guard the deletes below would remove the tag and every link to it.
+        if (sourceId === targetId) return Promise.resolve();
+        return db.transaction('rw', db.tags, db.noteTags, async () => {
           const target = await db.tags.get(targetId);
           if (!target) throw new Error(`Cannot merge into unknown tag ${targetId}`);
           const sourceLinks = await db.noteTags.where('tagId').equals(sourceId).toArray();
@@ -130,7 +133,8 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           );
           await db.noteTags.where('tagId').equals(sourceId).delete();
           await db.tags.delete(sourceId);
-        }),
+        });
+      },
       forNote: (noteId) => live(() => tagsForNote(noteId)),
       link: (link: NoteTag) =>
         db.transaction('rw', db.noteTags, async () => {
