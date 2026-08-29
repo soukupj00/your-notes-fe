@@ -1,4 +1,4 @@
-# PLAN — `src/db` (data layer)
+# PLAN — `src/data` (the Local Store)
 
 What's left in the persistence layer. See [root PLAN.md](../../PLAN.md) for milestone context.
 
@@ -28,3 +28,4 @@ Shape fixed by [ADR 0017](../../docs/adr/0017-note-level-last-writer-wins-with-c
 - **Sync cursor and account attachment live in `meta`** (the `settings` table under its ADR 0020 name), not in a new store: the opaque `_links.next` URL the server last handed out, `lastSyncedAt`, and the id of the Account this database is attached to (which is what makes erase-on-sign-out enforceable - see [ADR 0018](../../docs/adr/0018-the-server-serves-the-pwa.md)).
 - **Prerequisite, not sync itself:** the Excalidraw save path must mint a *new* attachment id and repoint the Body, so that every blob in the database is immutable by id. The existing orphan sweep reclaims the old row.
 - Bump the Dexie `version()` and write a migration whenever the schema changes; never mutate existing stores in place without a migration. Existing rows need no backfill here - an absent `rev` correctly means "never pushed", which is what a pre-sync database is.
+- `rev`, the dirty marker and `tombstones` are added to the Dexie implementation *and* the memory implementation, with the dirty-row query added to the interface and the contract.

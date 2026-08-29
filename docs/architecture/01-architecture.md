@@ -39,7 +39,7 @@ flowchart TD
     X["Contexts (Theme, Preferences, ViewMode, Tour, Motion, PwaInstall)"]
     H["Data hooks (src/hooks/data) - live queries + mutations"]
     L["Pure logic (src/lib) - search, backup, colors, tour rules, ..."]
-    D["Dexie schema (src/db) + models (src/models.ts)"]
+    D["Local Store (src/data) + models (src/models.ts)"]
     R --> P --> C
     C --> X
     C --> H
@@ -49,10 +49,10 @@ flowchart TD
     L --> D
 ```
 
-- **`src/db` + `src/models.ts`** - the persistence layer: one `NotesDB extends Dexie` class, versioned schema, domain interfaces. See [03-database.md](./03-database.md).
-- **`src/hooks/data`** - the only place components touch the database. Live queries via `useLiveQuery` (`useTags`, `useNoteFeed`, `useTagsForNote`, `useNoteAttachments`) and mutation hooks (`useNoteActions`, `useTagActions`, attachment actions). A mutation commits in one Dexie transaction; the UI reacts through the live query, so there is no client-side cache to invalidate.
+- **`src/data` + `src/models.ts`** - the persistence layer: the `LocalStore` interface, its Dexie and in-memory implementations, domain interfaces. See [03-database.md](./03-database.md).
+- **`src/hooks/data`** - the only place components touch the Local Store. Live queries via `useLive` (`useTags`, `useNoteFeed`, `useTagsForNote`, `useNoteAttachments`) and mutation hooks (`useNoteActions`, `useTagActions`, attachment actions). A mutation is one atomic store method; the UI reacts through the live query, so there is no client-side cache to invalidate.
 - **`src/lib`** - framework-free logic: fuzzy search (`note-search.ts`), URL param validation (`note-search-params.ts`), zip backup (`backup.ts`), color tokens (`note-colors.ts`), feed ranking (`feed-rank.ts`), the Tour's rules (`lib/tour/`, deliberately importing neither React nor driver.js). This layer is where most Vitest coverage lives.
-- **Contexts** hold only what genuinely is app-global and not derivable: theme, preferences (persisted in the Dexie `settings` store), feed view mode, Tour state, motion gating, PWA install prompt.
+- **Contexts** hold only what genuinely is app-global and not derivable: theme, preferences (persisted in `localStorage`), feed view mode, Tour state, motion gating, PWA install prompt.
 - **Routes are thin.** TanStack Router file-based routes ([ADR 0008](../adr/0008-tanstack-router-over-react-router.md)) pick a Feed scope and delegate; `src/routeTree.gen.ts` is generated and committed.
 
 `App.tsx` is the composition root: Theme → Preferences → Tooltip → ViewMode providers wrap `<RouterProvider>`.

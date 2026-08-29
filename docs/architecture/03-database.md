@@ -1,8 +1,10 @@
 # Database and schema
 
-All persistence is IndexedDB, accessed through **Dexie** (`src/db/db.ts`, moving to `src/data/dexie/` in M5 slice 1); domain models live in `src/models.ts`.
-From M5 slice 1 the app reaches it only through the `LocalStore` interface ([ADR 0020](../adr/0020-the-local-store-seam.md)): Dexie is the default implementation, an in-memory one ships beside it, and one contract test suite runs against both.
+All persistence is IndexedDB, accessed through **Dexie** (`src/data/dexie/db.ts`); domain models live in `src/models.ts`.
+The app reaches it only through the `LocalStore` interface ([ADR 0020](../adr/0020-the-local-store-seam.md)): Dexie is the default implementation, an in-memory one ships beside it, and one contract test suite runs against both.
 IndexedDB was chosen over alternatives for real Blob storage, transactions, indexes, and the storage quota a notes app with media needs ([ADR 0001](../adr/0001-local-first-storage-with-dexie.md)); attachment bytes are stored as native `Blob`s, not base64 ([ADR 0007](../adr/0007-blob-over-base64-for-attachment-payloads.md)).
+
+The schema itself is unchanged by ADR 0020 - the app no longer touches it directly. Two `LocalStore` implementations exist: Dexie (below) and an in-memory one (`src/data/memory/`). Preferences left the `settings` table for `localStorage`; what remains there is bookkeeping under `meta` (the Tour's Prop baselines today).
 
 ## Entity model
 
@@ -83,7 +85,7 @@ The v3 lesson generalizes and is the repo's canonical migration rule: adding an 
 
 ## Planned v5: sync metadata (M5 slice 3)
 
-Shape fixed by [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicted-copies.md); detail in [`src/db/PLAN.md`](../../src/db/PLAN.md).
+Shape fixed by [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicted-copies.md); detail in [`src/data/PLAN.md`](../../src/data/PLAN.md).
 
 - **`rev` + an indexed dirty marker** on `notes`, `tags`, `noteTags`. `rev` is the server Revision the row last agreed with; absent means never pushed - which is exactly what a pre-sync database is, so no backfill is needed.
 - **The Offline Mutation Queue is a query, not a table**: `where('dirty')`. There is deliberately no queue store - it would be a second source of truth a crash could leave disagreeing with the rows themselves.

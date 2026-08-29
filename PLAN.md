@@ -66,7 +66,7 @@ Keep-simple friction-reducers layered on M2. Retro plan: [`docs/superpowers/plan
 - Deferred: photo/mic capture + audio → M3; slash commands + real VirtualKeyboard docking → M4; full cloud sync-states → M5. Dropped: block drag handles, customizable toolbars.
 
 ### M3 — Attachments & rich media
-- Images, audio, video, files, and Excalidraw drawings end to end: extension → Dexie storage → render. See [`src/db/PLAN.md`](./src/db/PLAN.md) for storage strategy.
+- Images, audio, video, files, and Excalidraw drawings end to end: extension → Dexie storage → render. See [`src/data/PLAN.md`](./src/data/PLAN.md) for storage strategy.
 - ✅ **Slice 1 - inline images end to end + storage foundation**: generic `attachments` Dexie table (blob-backed, not per-kind); `useAttachmentActions` (create/get/delete/clone, note-scoped GC, global orphan safety net); cascade delete/undo carries attachments with the note; custom `imageAttachment` TipTap node (`attachmentId`-only, no persisted `src`) with a React NodeView resolving to an object URL; paste/drop/toolbar insertion pipeline with validation and cross-note dedupe (`cloneAttachment`); `NoteBody` renders images on the home card; global GC sweep wired at `NotesHome` mount.
 - ✅ **Slice 2 - inline audio end to end**: extracted the Slice 1 node/insertion logic into a media-agnostic `extensions/attachments/` core (`createAttachmentNode`, `useAttachmentObjectUrl`, shared `insert.ts`/`deps.ts`) and rebuilt `Image` on top of it with no behavior change; custom `audioAttachment` node (body `<audio data-attachment-id>`, no `src`) reusing that core; `AudioNodeView` custom player (play/pause, scrubber, elapsed/duration) over a hidden native `<audio>`; mic recording via `useAudioRecorder` (a `MediaRecorder` state machine handling permission prompts, cancel, and error paths with guaranteed mic release) behind `AudioRecordButton`; file attach via picker/paste/drop through the shared insertion pipeline; `attachments` rows carry `kind: 'audio'` + `duration`; `NoteBody` renders a compact chip (not a full player) for audio on the home card, and `NoteCard` opens the note with autoplay intent when that chip is clicked.
 - ✅ **Slice 3 - inline video end to end**: `videoAttachment` node built on the same `attachments/` core (mirrors audio's node/insertion wiring); `VideoNodeView` uses a native `<video controls playsInline>` (no custom player skin needed); delete button on the node (`props.deleteNode()`, no confirmation yet); home card gets a pinned video play button next to the audio one (`NoteCard`'s bottom-right control is now a flex row, not a single button).
@@ -127,7 +127,7 @@ Scoped by a `/grill-with-docs` session on 2026-08-12. Key decisions: [ADR 0017](
 
 ## Per-area plans
 
-- [`src/db/PLAN.md`](./src/db/PLAN.md) — schema versioning, attachment storage, sync metadata (moves to `src/data/PLAN.md` with M5 slice 1).
+- [`src/data/PLAN.md`](./src/data/PLAN.md) — the Local Store: schema versioning, attachment storage, sync metadata.
 - [`src/hooks/data/PLAN.md`](./src/hooks/data/PLAN.md) — attachment actions, optimistic updates, mutation queue.
 - [`src/components/editor/PLAN.md`](./src/components/editor/PLAN.md) — M1 extension work in detail.
 - [`src/context/PLAN.md`](./src/context/PLAN.md) — auth context, accessibility themes.

@@ -17,8 +17,6 @@ User Preferences, persisted as one Zod-validated blob in `localStorage` under `P
 - **`tourProps` used to live here and does not any more.** The Tour's Prop baselines are store bookkeeping, not a Preference, and now live in the Local Store's `meta` under `TOUR_PROPS_META_KEY` - see `src/lib/tour/props.ts` (`readProps`/`writeProps`).
 - `usePreferences()` returns `{ preferences, setPreference }` and throws outside the provider.
 
-> `ThemeProvider` and `ViewModeProvider` also use `localStorage`, so all three read synchronously on first paint.
-
 ## `TourProvider.tsx`
 
 The onboarding Tour's lifecycle ([ADR 0015](../../docs/adr/0015-the-tour-drives-the-app-on-disposable-props.md)); everything it *decides* is in [`src/lib/tour/`](../lib/tour/) and tested there.

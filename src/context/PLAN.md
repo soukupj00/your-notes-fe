@@ -13,8 +13,7 @@ What's left at the provider layer. See [root PLAN.md](../../PLAN.md) for milesto
 - Add a provider for the **Local Account** (see [CONTEXT.md](../../CONTEXT.md)): signed-in state, the current Device, and sync status, consumed by the sync layer.
   There is **no token to hold**: the session is an `HttpOnly` cookie the browser sends and JavaScript cannot read ([ADR 0018](../../docs/adr/0018-the-server-serves-the-pwa.md)), so "am I signed in" is answered by asking the server once at startup, not by inspecting storage.
   There is also **no server URL to configure** - the server served this app, so its origin is the app's own.
-- **`SyncProvider` is a separate provider from the account one**, and runs the loop on the main thread over the app's Dexie connection: poll on focus / `online` / visibility plus a short interval while visible, push dirty rows, pull the change feed from the stored cursor. Keep network logic out of components - expose it through this context plus the data hooks ([`src/hooks/data/PLAN.md`](../hooks/data/PLAN.md)).
-- ~~`PreferencesProvider`'s note that it is "the store M5 will sync" needs revisiting.~~ Resolved by [ADR 0020](../../docs/adr/0020-the-local-store-seam.md): a Preference is per-Device, lives in `localStorage` beside Theme and Locale, and neither syncs nor rides in a Backup. M5 slice 1 makes the move.
+- **`SyncProvider` is a separate provider from the account one**, and runs the loop on the main thread over the app's Local Store: poll on focus / `online` / visibility plus a short interval while visible, push dirty rows, pull the change feed from the stored cursor. Keep network logic out of components - expose it through this context plus the data hooks ([`src/hooks/data/PLAN.md`](../hooks/data/PLAN.md)).
 
 ## Tests
 

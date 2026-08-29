@@ -1,10 +1,10 @@
 # CLAUDE.md — `src/hooks/data` (data-access hooks)
 
-The React interface to the Dexie layer. Components use these hooks; they should not touch `db` directly. See [`PLAN.md`](./PLAN.md) for upcoming work and [`src/db/CLAUDE.md`](../../db/CLAUDE.md) for the schema.
+The React interface to the Local Store. Components use these hooks; they should not touch the store directly. See [`PLAN.md`](./PLAN.md) for upcoming work and [`src/data/CLAUDE.md`](../../data/CLAUDE.md) for the schema.
 
 ## Two kinds of hooks
 
-**Reactive reads** — wrap `useLiveQuery` (from `dexie-react-hooks`); the component re-renders automatically when the underlying data changes. They return `[]`/`undefined` until the query resolves.
+**Reactive reads** — wrap `useLive` over a `Live<T>` from the Local Store; the component re-renders automatically when the underlying data changes. They return `[]`/`undefined` until the query resolves.
 
 | Hook | Returns | Notes |
 | ------ | --------- | ------- |
@@ -26,7 +26,7 @@ The React interface to the Dexie layer. Components use these hooks; they should 
 
 - Mutations set/refresh `updatedAt` and generate `uuid` ids (see `useNoteActions`).
 `createNote` accepts an `id` instead of minting one, which is how a draft keeps the id its URL is already showing ([ADR 0014](../../../docs/adr/0014-the-open-note-lives-in-the-url.md)): the editor's id goes into the address bar when it opens, before there is a row.
-- Relationship-aware deletes run in a `db.transaction('rw', ...)`: `purgeNote` also clears the note's `noteTags` and `attachments`, returning `{ removedTags, removedAttachments }` so callers can pass them (with the captured note) to `restoreNote` for a lossless undo; `deleteTag` clears the tag's `noteTags`.
+- Relationship-aware deletes are single atomic store methods (`notes.purge`, `tags.merge`, `tags.delete`): `purgeNote` also clears the note's `noteTags` and `attachments`, returning `{ removedTags, removedAttachments }` so callers can pass them (with the captured note) to `restoreNote` for a lossless undo; `deleteTag` clears the tag's `noteTags`.
 - `collectStartupOrphans` is **one pass over both tables**, not the note-scoped `collectOrphans` run per note: "the owning Note is gone" and "the owner's Body no longer references this row" are the same question asked of one row, so answering them together costs one transaction instead of one per note on every app start.
 `collectOrphans` stays for the note-scoped case (`NoteEditorDialog` on close); the separate missing-owner sweep is gone, folded into the same predicate.
 - **Lifecycle** ([ADR 0009](../../../docs/adr/0009-note-lifecycle-model.md)): the user-facing "delete" is `trashNote`, not `purgeNote`. Every transition returns a `LifecycleSnapshot` of the fields it was about to overwrite (including `updatedAt`); hand that back to `revertLifecycle` to undo it without a trace. `purgeNote` is the irreversible one and undoes via `restoreNote` instead. `purgeExpiredTrash` runs at app start and reclaims trashed notes older than `TRASH_GRACE_DAYS` (30), cascading their attachments.
