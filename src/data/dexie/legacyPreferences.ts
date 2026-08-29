@@ -1,7 +1,6 @@
+import { PREFERENCES_STORAGE_KEY } from '@/context/PreferencesProvider.tsx';
 import type { NotesDB } from './db.ts';
 
-/** Where Preferences live now; `PreferencesProvider` reads and writes the same key. */
-export const PREFERENCES_STORAGE_KEY = 'preferences';
 const LEGACY_ROW_KEY = 'preferences';
 const TOUR_PROPS_META_KEY = 'tourProps';
 

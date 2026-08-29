@@ -1,8 +1,8 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { PREFERENCES_STORAGE_KEY } from '@/data/dexie/legacyPreferences.ts';
 import {
   DEFAULT_PREFERENCES,
+  PREFERENCES_STORAGE_KEY,
   PREFERENCES_VERSION,
   PreferencesProvider,
   usePreferences,

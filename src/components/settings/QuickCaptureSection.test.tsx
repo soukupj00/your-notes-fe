@@ -4,8 +4,7 @@ import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QUICK_CAPTURE_ACTIONS } from '@/components/notes/quickCaptureActions.ts';
 import type { QuickCapturePref } from '@/components/notes/quickCaptureLayout.ts';
-import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
-import { PREFERENCES_STORAGE_KEY } from '@/data/dexie/legacyPreferences.ts';
+import { PREFERENCES_STORAGE_KEY, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { QuickCaptureSection } from './QuickCaptureSection.tsx';
 
 vi.mock('react-i18next', () => ({

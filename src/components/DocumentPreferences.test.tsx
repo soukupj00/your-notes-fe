@@ -1,7 +1,10 @@
 import { render, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { PREFERENCES_VERSION, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
-import { PREFERENCES_STORAGE_KEY } from '@/data/dexie/legacyPreferences.ts';
+import {
+  PREFERENCES_STORAGE_KEY,
+  PREFERENCES_VERSION,
+  PreferencesProvider,
+} from '@/context/PreferencesProvider.tsx';
 import { COLOR_BLIND_CLASS, DocumentPreferences } from './DocumentPreferences.tsx';
 
 // `PreferencesProvider` only re-reads on a `storage` event (another tab's

@@ -1,8 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_PREFERENCES, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import {
+  DEFAULT_PREFERENCES,
+  PREFERENCES_STORAGE_KEY,
+  PreferencesProvider,
+} from '@/context/PreferencesProvider.tsx';
 import { TourProvider, useTourActive } from '@/context/TourProvider.tsx';
-import { PREFERENCES_STORAGE_KEY } from '@/data/dexie/legacyPreferences.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { clearStore, renderHookWithStore, testStore, withStore } from '@/test/store.tsx';
 

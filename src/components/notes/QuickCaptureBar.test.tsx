@@ -1,8 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
-import { PREFERENCES_STORAGE_KEY } from '@/data/dexie/legacyPreferences.ts';
+import { PREFERENCES_STORAGE_KEY, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { FLOATING_BOTTOM_BAR } from './floatingBottomBar.ts';
 import { QuickCaptureBar } from './QuickCaptureBar.tsx';
 

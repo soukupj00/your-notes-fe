@@ -7,7 +7,7 @@ App-wide React context providers. See [`PLAN.md`](./PLAN.md) for upcoming work.
 
 ## `PreferencesProvider.tsx`
 
-User Preferences, persisted as one Zod-validated blob in `localStorage` under `PREFERENCES_STORAGE_KEY` ([ADR 0020](../../docs/adr/0020-the-local-store-seam.md); the key itself is defined in `src/data/dexie/legacyPreferences.ts`, which owns the one-shot migration off the old Dexie row).
+User Preferences, persisted as one Zod-validated blob in `localStorage` under `PREFERENCES_STORAGE_KEY` ([ADR 0020](../../docs/adr/0020-the-local-store-seam.md); `src/data/dexie/legacyPreferences.ts`, which owns the one-shot migration off the old Dexie row, imports the key from here rather than the other way round - nothing outside `src/data` may import from `src/data/dexie/`).
 
 - `localStorage`, not the Local Store: Preferences are a Device fact (CONTEXT.md), not something M5 syncs, and it is read synchronously so the first render already has the user's density and motion choice - no hydration step, no flash of defaults.
 - `preferencesSchema` owns the shape and every default; `PREFERENCES_VERSION` versions the blob independently, so a new preference is a code-only change.

@@ -8,7 +8,9 @@ import {
   useState,
 } from 'react';
 import { z } from 'zod';
-import { PREFERENCES_STORAGE_KEY } from '@/data/dexie/legacyPreferences.ts';
+
+/** Row key Preferences live under in `localStorage`; `legacyPreferences.ts` writes the same key. */
+export const PREFERENCES_STORAGE_KEY = 'preferences';
 
 /**
  * Schema version of the stored blob. Bump it when a field changes shape in a

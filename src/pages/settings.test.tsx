@@ -1,10 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import { PREFERENCES_STORAGE_KEY, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { TourProvider } from '@/context/TourProvider.tsx';
 import { ThemeProvider } from '@/context/themeProvider.tsx';
-import { PREFERENCES_STORAGE_KEY } from '@/data/dexie/legacyPreferences.ts';
 import { clearStore, withStore } from '@/test/store.tsx';
 import SettingsPage from './settings.tsx';
 

@@ -2,9 +2,12 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { type Preferences, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import {
+  PREFERENCES_STORAGE_KEY,
+  type Preferences,
+  PreferencesProvider,
+} from '@/context/PreferencesProvider.tsx';
 import { ThemeProvider } from '@/context/themeProvider.tsx';
-import { PREFERENCES_STORAGE_KEY } from '@/data/dexie/legacyPreferences.ts';
 import { AppearanceSection } from './AppearanceSection.tsx';
 
 vi.mock('react-i18next', () => ({
