@@ -13,6 +13,6 @@ import type { Live } from './live.ts';
 export function useLive<T>(make: () => Live<T>, deps: DependencyList): T | undefined {
   const [value, setValue] = useState<T | undefined>(undefined);
   // biome-ignore lint/correctness/useExhaustiveDependencies: deps are the caller's, by contract
-  useEffect(() => make().subscribe(setValue), deps);
+  useEffect(() => make().subscribe((value) => setValue(value)), deps);
   return value;
 }

@@ -21,14 +21,14 @@ A **Remote** is what a Local Store is reconciled with through Sync; S3 or a riva
    It is shaped by the domain (`notes.feed(scope)`, `tags.merge`, `attachments.sweepAll`), not by tables.
    Live reads return a minimal observable, `Live<T>`, consumed through one `useLive` hook; every operation that must be atomic is one method, atomic inside its implementation, so there is no `transaction()` on the interface.
    Search, sort and held rank stay in front of the seam: they are pure functions over the list it returns, and the held rank exists to answer "is the user watching", which no store can know.
-   The store is provided through React context, composed once in `App.tsx`; non-React modules take it as an argument.
+   The store is provided through React context, composed once in `main.tsx`; non-React modules take it as an argument.
    Dexie becomes a private of `src/data/dexie/`, enforced by Biome's `noRestrictedImports` rather than by convention.
 2. **`Remote`** (push, pull, put/get blob) is what the sync engine talks to, and **`AccountService`** (sessions, Devices, Invites) is a separate, optional capability that only the Self-hosted Server implements.
    The types are declared now; the implementations belong to the M5 sync slices.
 
 **Two Local Store implementations ship: Dexie (the default, the only one that persists) and in-memory.**
 One contract test suite runs against both, so the interface is proven satisfiable by something that is not Dexie, and the memory store cannot drift into a test double that passes what Dexie would fail.
-There is no user-facing switch: the choice is made by whoever builds the app, in `App.tsx`.
+There is no user-facing switch: the choice is made by whoever builds the app, in `main.tsx`.
 
 **Preferences leave the store.** A Preference is how the user holds the app, not something the app holds for the user; it joins Theme and Locale in `localStorage` and is no longer part of a Backup.
 What remains behind the seam from the old `settings` row is bookkeeping about the store's own rows - the Tour's Prop baselines, and in M5 the sync cursor and attached Account - under `meta`.
@@ -40,7 +40,8 @@ What remains behind the seam from the old `settings` row is bookkeeping about th
 - `dexie-react-hooks` leaves the dependency list.
 - The Tour's seed no longer needs a cross-store transaction: the baselines are recorded *before* the Prop rows are written, and a crash in between leaves baselines for notes that do not exist, which the sweep already tolerates.
 - Hook and component tests can run against the memory store, which is faster and free of the jsdom Blob quirk.
-- The developer story is three sentences: implement `LocalStore`, make the contract tests pass, change one line in `App.tsx`.
+- `App` takes the store as a prop, which is what lets tests render it against any implementation.
+- The developer story is three sentences: implement `LocalStore`, make the contract tests pass, change one line in `main.tsx`.
 
 ## Alternatives considered
 

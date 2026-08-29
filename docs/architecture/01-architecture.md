@@ -62,7 +62,7 @@ flowchart TD
 State placement is a deliberate architectural rule rather than convention:
 
 1. **The URL** holds everything that describes *what the user is looking at*: search query, sort, direction, tag filters, and which Note is open (`?note=`), as typed, validated search params ([ADR 0014](../adr/0014-the-open-note-lives-in-the-url.md)). Consequence: a searched feed is shareable and refresh-proof, and the platform back button closes the editor - critical in an installed PWA with no browser chrome.
-2. **IndexedDB** holds everything the user *made*: Notes, Tags, Attachments, and the preferences blob (in the `settings` store, so it can later sync). Also localStorage for strictly per-device UI state (theme choice, sidebar collapse).
+2. **IndexedDB** holds everything the user *made*: Notes, Tags, Attachments. Preferences live in `localStorage` (`PreferencesProvider`) alongside other per-device UI state (theme choice, sidebar collapse).
 3. **React state** holds only the ephemeral: one-shot open intents (start the camera, autoplay a clip) that a reloaded URL must not re-fire, dialog/hover/drag state.
 
 There is deliberately no global client-state store (no Redux/Zustand): live queries plus the URL cover what such a store usually holds.

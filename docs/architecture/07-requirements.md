@@ -29,7 +29,7 @@ Status: ✅ shipped (M0-M4) / 🔷 designed for M5.
 | FR5 ✅ | Lifecycle: archive, trash with undo window, purge after grace period | `state` field, sweeps ([ADR 0009](../adr/0009-note-lifecycle-model.md)) | Migration + lifecycle tests |
 | FR6 ✅ | Find: fuzzy search, sort, AND label filters, shareable as URL | Fuse.js + typed search params | `note-search*.test.ts` |
 | FR7 ✅ | Backup and restore the whole database as one file | `backup.ts` zip export/import | `backup.test.ts` |
-| FR8 ✅ | Customize: theme, vision mode, density, reduced motion, locale, toolbar layout, quick-capture | Preferences in Dexie `settings` | Provider + settings tests |
+| FR8 ✅ | Customize: theme, vision mode, density, reduced motion, locale, toolbar layout, quick-capture | Preferences in `localStorage` (`PreferencesProvider`) | Provider + settings tests |
 | FR9 ✅ | Onboard: a demonstrating Tour, replayable | `lib/tour/` + `TourProvider` ([ADR 0015](../adr/0015-the-tour-drives-the-app-on-disposable-props.md)) | `e2e/onboarding.spec.ts` (two breakpoints) |
 | FR10 ✅ | Install as a PWA and work fully offline | vite-plugin-pwa, Dexie | Manual verification; offline is the default data path |
 | FR11 🔷 | Local accounts: Owner on first run, Invites, private silos | [ADR 0018](../adr/0018-the-server-serves-the-pwa.md) | M5: contract tests + fake server |

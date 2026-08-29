@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createDexieLocalStore } from './DexieLocalStore.ts';
 import { NotesDB } from './db.ts';
 import { migrateLegacyPreferences } from './legacyPreferences.ts';
 
@@ -51,9 +52,24 @@ describe('migrateLegacyPreferences', () => {
       throw new Error('quota');
     });
 
-    await expect(migrateLegacyPreferences(db)).rejects.toThrow('quota');
+    try {
+      await expect(migrateLegacyPreferences(db)).rejects.toThrow('quota');
+      expect(await db.settings.get('preferences')).toBeDefined();
+    } finally {
+      setItem.mockRestore();
+    }
+  });
 
-    setItem.mockRestore();
-    expect(await db.settings.get('preferences')).toBeDefined();
+  it('meta.get never observes the pre-migration state', async () => {
+    const db = new NotesDB(`legacy-${crypto.randomUUID()}`);
+    const props = [{ id: 'p1', updatedAt: '2026-01-01T00:00:00.000Z' }];
+    await db.settings.put({
+      key: 'preferences',
+      value: { version: 2, density: 'compact', tourProps: props },
+    });
+
+    const store = createDexieLocalStore(db);
+    expect(await store.meta.get('tourProps')).toEqual(props);
+    expect(localStorage.getItem('preferences')).not.toBeNull();
   });
 });

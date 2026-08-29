@@ -83,6 +83,12 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
         expect(await store.notes.get('missing')).toBeUndefined();
       });
 
+      it('add rejects a duplicate id', async () => {
+        const n = note();
+        await store.notes.add(n);
+        await expect(store.notes.add(n)).rejects.toThrow();
+      });
+
       it('listByState and listTrashedBefore use the fields, not the caller', async () => {
         const active = note();
         const old = note({ state: 'trashed', trashedAt: '2025-01-01T00:00:00.000Z' });
@@ -226,7 +232,12 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
         expect(links.every((l) => l.tagId === target.id)).toBe(true);
         expect(links.map((l) => l.noteId).sort()).toEqual([both.id, onlySource.id].sort());
         expect(await store.tags.get(source.id)).toBeUndefined();
+
         await expect(store.tags.merge(target.id, 'missing')).rejects.toThrow();
+        // a rejected merge must not have relabelled anything: target.id is
+        // the source of this second, failing merge and must survive intact
+        expect(await store.tags.get(target.id)).toEqual(target);
+        expect(await store.tags.listLinks()).toHaveLength(2);
       });
 
       it('merge with the same source and target changes nothing', async () => {
@@ -311,6 +322,17 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
         await store.attachments.add(attachment(n2.id));
         await until(() => forNotes.latest().length === 2, 'forNotes');
         expect(forNote.latest()).toHaveLength(1);
+
+        await store.attachments.update(a1.id, {
+          duration: 7,
+          updatedAt: '2026-03-03T00:00:00.000Z',
+        });
+        await until(() => forNote.latest()[0]?.duration === 7, 'forNote to see the update');
+        await until(
+          () => forNotes.latest().find((a) => a.id === a1.id)?.duration === 7,
+          'forNotes to see the update'
+        );
+        await until(() => watched.latest()?.duration === 7, 'watch to see the update');
 
         forNote.unsubscribe();
         forNotes.unsubscribe();

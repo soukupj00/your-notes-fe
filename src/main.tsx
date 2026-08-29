@@ -13,13 +13,20 @@ const store = createDexieLocalStore();
 // Lets the one-shot legacy migration land before the first synchronous
 // preferences read (src/data/dexie/legacyPreferences.ts). Renders regardless
 // of whether it succeeded - IndexedDB refusing to open must not blank the app.
-void store.meta
-  .get('tourProps')
-  .catch((error) => console.error('Local Store not ready', error))
-  .then(() => {
-    createRoot(document.getElementById('root')!).render(
-      <StrictMode>
-        <App store={store} />
-      </StrictMode>
-    );
-  });
+// Any key works: `meta` awaits the one-shot legacy migration before reading
+// (src/data/dexie/legacyPreferences.ts), and that migration is what must land
+// before PreferencesProvider's first synchronous localStorage read. The race
+// is what keeps a blocked IndexedDB open (another tab holding an older
+// version) from blanking the app: losing it degrades to default preferences
+// for one render, never to no render.
+const ready = store.meta
+  .get('storeReady')
+  .catch((error) => console.error('Local Store not ready', error));
+const timeout = new Promise<void>((resolve) => setTimeout(resolve, 3000));
+void Promise.race([ready, timeout]).then(() => {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App store={store} />
+    </StrictMode>
+  );
+});

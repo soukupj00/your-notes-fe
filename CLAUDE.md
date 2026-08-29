@@ -129,7 +129,7 @@ In the feed views that heading is `sr-only` - the visible title row was dropped 
 
 ### Backup (`src/lib/backup.ts`, `src/components/settings/`)
 
-The whole database exports to a `.zip`: `manifest.json` (notes, tags, noteTags, attachment metadata, the `settings` table) plus one entry per attachment blob at `attachments/<id>` (and `attachments/<id>.thumb`).
+The whole database exports to a `.zip`: `manifest.json` (notes, tags, noteTags, attachment metadata, and an always-empty `settings` array kept for archive compatibility) plus one entry per attachment blob at `attachments/<id>` (and `attachments/<id>.thumb`).
 Zipping is `fflate`.
 `parseBackupZip` is the only validation gate and never writes - restore is replace-all, so an unreadable archive must be rejected while the user's data is still intact.
 `restoreBackup` wipes and rewrites in one Dexie transaction, and the UI (`BackupSection`) offers a checked-by-default "save my current data first" inside the confirm dialog - cancelling or failing that save abandons the import.
