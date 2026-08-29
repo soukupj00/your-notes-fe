@@ -1,9 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { db } from '@/db/db.ts';
-import { clearNotesDb } from '@/test/db.ts';
-import { renderWithStore as render } from '@/test/store.tsx';
+import { clearStore, renderWithStore as render, testStore } from '@/test/store.tsx';
 import LabelsPage from './labels.tsx';
 
 vi.mock('react-i18next', () => ({
@@ -14,18 +12,21 @@ vi.mock('react-i18next', () => ({
 
 async function putTag(id: string, name: string, color?: string) {
   const now = new Date().toISOString();
-  await db.tags.put({ id, name, color, createdAt: now, updatedAt: now });
+  await testStore.tags.put({ id, name, color, createdAt: now, updatedAt: now });
 }
 
 const link = async (noteId: string, tagId: string) => {
   const now = new Date().toISOString();
-  await db.noteTags.put({ noteId, tagId, createdAt: now, updatedAt: now });
+  await testStore.tags.link({ noteId, tagId, createdAt: now, updatedAt: now });
 };
 
 const linkedNoteIds = async (tagId: string) =>
-  (await db.noteTags.where('tagId').equals(tagId).toArray()).map((l) => l.noteId).sort();
+  (await testStore.tags.listLinks())
+    .filter((l) => l.tagId === tagId)
+    .map((l) => l.noteId)
+    .sort();
 
-afterEach(clearNotesDb);
+afterEach(clearStore);
 
 describe('listing', () => {
   it('says so when there are no labels', async () => {
@@ -39,8 +40,8 @@ describe('listing', () => {
     await userEvent.type(screen.getByRole('textbox', { name: 'labels.namePlaceholder' }), 'Work');
     await userEvent.click(screen.getByRole('button', { name: 'labels.create' }));
 
-    await waitFor(async () => expect(await db.tags.count()).toBe(1));
-    expect((await db.tags.toArray())[0]).toMatchObject({ name: 'Work' });
+    await waitFor(async () => expect((await testStore.tags.list()).length).toBe(1));
+    expect((await testStore.tags.list())[0]).toMatchObject({ name: 'Work' });
   });
 });
 
@@ -54,7 +55,7 @@ describe('renaming', () => {
     await userEvent.type(field, 'Job');
     await userEvent.tab();
 
-    await waitFor(async () => expect((await db.tags.get('t1'))?.name).toBe('Job'));
+    await waitFor(async () => expect((await testStore.tags.get('t1'))?.name).toBe('Job'));
   });
 
   it('snaps back rather than saving an empty name', async () => {
@@ -66,7 +67,7 @@ describe('renaming', () => {
     await userEvent.tab();
 
     expect(field).toHaveValue('Work');
-    expect((await db.tags.get('t1'))?.name).toBe('Work');
+    expect((await testStore.tags.get('t1'))?.name).toBe('Work');
   });
 });
 
@@ -78,7 +79,7 @@ describe('colour', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'labels.color:Work' }));
     await userEvent.click(await screen.findByRole('button', { name: 'colors.blue' }));
 
-    await waitFor(async () => expect((await db.tags.get('t1'))?.color).toBe('blue'));
+    await waitFor(async () => expect((await testStore.tags.get('t1'))?.color).toBe('blue'));
   });
 
   it('clears the colour with the "no colour" swatch', async () => {
@@ -88,7 +89,7 @@ describe('colour', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'labels.color:Work' }));
     await userEvent.click(await screen.findByRole('button', { name: 'colors.default' }));
 
-    await waitFor(async () => expect((await db.tags.get('t1'))?.color).toBeUndefined());
+    await waitFor(async () => expect((await testStore.tags.get('t1'))?.color).toBeUndefined());
   });
 });
 
@@ -104,8 +105,8 @@ describe('deleting', () => {
       within(dialog).getByRole('button', { name: 'labels.confirmDelete.confirm' })
     );
 
-    await waitFor(async () => expect(await db.tags.get('t1')).toBeUndefined());
-    expect(await db.noteTags.count()).toBe(0);
+    await waitFor(async () => expect(await testStore.tags.get('t1')).toBeUndefined());
+    expect((await testStore.tags.listLinks()).length).toBe(0);
   });
 
   it('does nothing when the confirm is cancelled', async () => {
@@ -118,7 +119,7 @@ describe('deleting', () => {
       within(dialog).getByRole('button', { name: 'labels.confirmDelete.cancel' })
     );
 
-    expect(await db.tags.get('t1')).toBeDefined();
+    expect(await testStore.tags.get('t1')).toBeDefined();
   });
 });
 
@@ -141,7 +142,7 @@ describe('merging', () => {
       within(dialog).getByRole('button', { name: 'labels.confirmMerge.confirm' })
     );
 
-    await waitFor(async () => expect(await db.tags.get('t1')).toBeUndefined());
+    await waitFor(async () => expect(await testStore.tags.get('t1')).toBeUndefined());
     expect(await linkedNoteIds('t2')).toEqual(['n1', 'n2']);
   });
 

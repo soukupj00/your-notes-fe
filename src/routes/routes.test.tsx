@@ -1,10 +1,9 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { db } from '@/db/db.ts';
 import type { Note } from '@/models.ts';
-import { clearNotesDb } from '@/test/db.ts';
 import { renderRoute as renderAt } from '@/test/renderRoute.tsx';
+import { clearStore, testStore } from '@/test/store.tsx';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -32,14 +31,15 @@ const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).to
 async function seed() {
   const now = new Date().toISOString();
   const base = { body: '', createdAt: now, updatedAt: now };
-  await db.notes.bulkPut([
+  const notes: Note[] = [
     { id: 'n-active', header: 'Active note', state: 'active', ...base },
     { id: 'n-archived', header: 'Archived note', state: 'archived', ...base },
     { id: 'n-trashed', header: 'Trashed note', state: 'trashed', trashedAt: daysAgo(1), ...base },
-  ]);
+  ];
+  for (const note of notes) await testStore.notes.put(note);
 }
 
-afterEach(clearNotesDb);
+afterEach(clearStore);
 
 describe('route -> note set', () => {
   it.each([
@@ -57,7 +57,7 @@ describe('route -> note set', () => {
   it('/tag/$id shows only the active notes carrying that tag', async () => {
     await seed();
     const now = new Date().toISOString();
-    await db.notes.put({
+    await testStore.notes.put({
       id: 'n-tagged',
       header: 'Tagged note',
       body: '',
@@ -65,8 +65,8 @@ describe('route -> note set', () => {
       createdAt: now,
       updatedAt: now,
     });
-    await db.tags.put({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
-    await db.noteTags.put({ noteId: 'n-tagged', tagId: 't1', createdAt: now, updatedAt: now });
+    await testStore.tags.put({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
+    await testStore.tags.link({ noteId: 'n-tagged', tagId: 't1', createdAt: now, updatedAt: now });
 
     renderAt('/tag/t1');
 
@@ -81,12 +81,14 @@ describe('search state in the URL', () => {
   async function seedSearchable() {
     const now = new Date().toISOString();
     const base = { body: '', state: 'active' as const, createdAt: now, updatedAt: now };
-    await db.notes.bulkPut([
+    for (const note of [
       { id: 'n-cake', header: 'Cake recipe', ...base },
       { id: 'n-car', header: 'Car service', ...base },
-    ]);
-    await db.tags.put({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
-    await db.noteTags.put({ noteId: 'n-car', tagId: 't1', createdAt: now, updatedAt: now });
+    ]) {
+      await testStore.notes.put(note);
+    }
+    await testStore.tags.put({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
+    await testStore.tags.link({ noteId: 'n-car', tagId: 't1', createdAt: now, updatedAt: now });
   }
 
   it('applies a query taken straight from the address bar', async () => {
@@ -216,7 +218,13 @@ describe('nav shell', () => {
 
   it('lists each tag as a link to its own feed', async () => {
     const now = new Date().toISOString();
-    await db.tags.put({ id: 't1', name: 'Work', color: 'blue', createdAt: now, updatedAt: now });
+    await testStore.tags.put({
+      id: 't1',
+      name: 'Work',
+      color: 'blue',
+      createdAt: now,
+      updatedAt: now,
+    });
 
     renderAt('/');
 
@@ -250,8 +258,8 @@ describe('trash view', () => {
     await waitFor(() => expect(screen.getAllByTestId('note-card')).toHaveLength(1));
     await userEvent.click(screen.getByRole('button', { name: 'notes.emptyTrash' }));
 
-    await waitFor(async () => expect(await db.notes.get('n-trashed')).toBeUndefined());
-    expect(await db.notes.get('n-active')).toBeTruthy();
-    expect(await db.notes.get('n-archived')).toBeTruthy();
+    await waitFor(async () => expect(await testStore.notes.get('n-trashed')).toBeUndefined());
+    expect(await testStore.notes.get('n-active')).toBeTruthy();
+    expect(await testStore.notes.get('n-archived')).toBeTruthy();
   });
 });

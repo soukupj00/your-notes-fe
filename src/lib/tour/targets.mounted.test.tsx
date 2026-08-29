@@ -8,8 +8,8 @@ import { Bold } from '@/components/editor/extensions/Bold';
 import EditorToolbar from '@/components/editor/toolbar/EditorToolbar.tsx';
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
-import { clearNotesDb } from '@/test/db.ts';
 import { renderRoute } from '@/test/renderRoute.tsx';
+import { clearStore } from '@/test/store.tsx';
 import { TOUR_TARGETS, type TourTargetName } from './targets.ts';
 
 // Vitest hoists `vi.mock`, so these cannot come from a shared helper.
@@ -37,7 +37,7 @@ const editors: Editor[] = [];
 
 afterEach(async () => {
   for (const editor of editors.splice(0)) editor.destroy();
-  await clearNotesDb();
+  await clearStore();
 });
 
 function found(name: TourTargetName) {

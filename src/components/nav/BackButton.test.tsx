@@ -1,9 +1,8 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from '@/db/db.ts';
-import { clearNotesDb } from '@/test/db.ts';
 import { renderRoute } from '@/test/renderRoute.tsx';
+import { clearStore, testStore } from '@/test/store.tsx';
 import { setViewport } from '@/test/viewport.ts';
 
 // Vitest hoists `vi.mock`, so these cannot come from a shared helper.
@@ -29,7 +28,7 @@ beforeEach(() => {
 
 afterEach(async () => {
   localStorage.clear();
-  await clearNotesDb();
+  await clearStore();
 });
 
 const back = () => screen.findByRole('button', { name: 'nav.back' });
@@ -113,7 +112,13 @@ describe('the topbar title', () => {
 
   it('resolves a tag route to the tag name', async () => {
     const now = new Date().toISOString();
-    await db.tags.put({ id: 't1', name: 'Work', color: 'blue', createdAt: now, updatedAt: now });
+    await testStore.tags.put({
+      id: 't1',
+      name: 'Work',
+      color: 'blue',
+      createdAt: now,
+      updatedAt: now,
+    });
 
     renderRoute('/tag/t1');
 

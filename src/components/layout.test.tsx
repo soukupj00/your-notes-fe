@@ -2,9 +2,8 @@ import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NAV_ITEMS } from '@/components/nav/navItems.ts';
-import { db } from '@/db/db.ts';
-import { clearNotesDb } from '@/test/db.ts';
 import { renderRoute } from '@/test/renderRoute.tsx';
+import { clearStore, testStore } from '@/test/store.tsx';
 import { setViewport } from '@/test/viewport.ts';
 
 // Vitest hoists `vi.mock`, so these cannot come from a shared helper - they have
@@ -35,7 +34,13 @@ function setViewportWidth(width: number) {
 
 async function seedTag() {
   const now = new Date().toISOString();
-  await db.tags.put({ id: 't1', name: 'Work', color: 'blue', createdAt: now, updatedAt: now });
+  await testStore.tags.put({
+    id: 't1',
+    name: 'Work',
+    color: 'blue',
+    createdAt: now,
+    updatedAt: now,
+  });
 }
 
 const primaryNav = () => screen.findByRole('navigation', { name: 'nav.primary' });
@@ -44,7 +49,7 @@ beforeEach(() => setViewportWidth(DESKTOP_WIDTH));
 
 afterEach(async () => {
   localStorage.clear();
-  await clearNotesDb();
+  await clearStore();
 });
 
 describe('nav shell contents', () => {

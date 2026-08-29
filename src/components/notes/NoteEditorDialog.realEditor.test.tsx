@@ -3,9 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
-import { db } from '@/db/db.ts';
-import { clearNotesDb } from '@/test/db.ts';
-import { withStore } from '@/test/store.tsx';
+import { clearStore, testStore, withStore } from '@/test/store.tsx';
 import { setViewport } from '@/test/viewport.ts';
 import { NoteEditorDialog } from './NoteEditorDialog.tsx';
 
@@ -49,12 +47,12 @@ beforeAll(() => {
 });
 
 afterEach(async () => {
-  await clearNotesDb();
+  await clearStore();
 });
 
 async function seedNote(body: string) {
   const now = new Date().toISOString();
-  await db.notes.put({
+  await testStore.notes.put({
     id: 'n1',
     header: 'Hello',
     description: '',
@@ -153,7 +151,7 @@ describe('the toolbar customisation sheet, over an unsaved draft', () => {
 
     await roundTripTheSheet(user);
 
-    expect(await db.notes.count()).toBe(0);
+    expect(await testStore.notes.list()).toHaveLength(0);
   });
 
   it('leaves the draft open, with what was typed still in it', async () => {
