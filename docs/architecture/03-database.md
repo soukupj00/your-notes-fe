@@ -4,7 +4,9 @@ All persistence is IndexedDB, accessed through **Dexie** (`src/data/dexie/db.ts`
 The app reaches it only through the `LocalStore` interface ([ADR 0020](../adr/0020-the-local-store-seam.md)): Dexie is the default implementation, an in-memory one ships beside it, and one contract test suite runs against both.
 IndexedDB was chosen over alternatives for real Blob storage, transactions, indexes, and the storage quota a notes app with media needs ([ADR 0001](../adr/0001-local-first-storage-with-dexie.md)); attachment bytes are stored as native `Blob`s, not base64 ([ADR 0007](../adr/0007-blob-over-base64-for-attachment-payloads.md)).
 
-The schema itself is unchanged by ADR 0020 - the app no longer touches it directly. Two `LocalStore` implementations exist: Dexie (below) and an in-memory one (`src/data/memory/`). Preferences left the `settings` table for `localStorage`; what remains there is bookkeeping under `meta` (the Tour's Prop baselines today).
+The schema itself is unchanged by ADR 0020 - the app no longer touches it directly.
+Two `LocalStore` implementations exist: Dexie (below) and an in-memory one (`src/data/memory/`).
+Preferences left the `settings` table for `localStorage`; what remains there is bookkeeping under `meta` (the Tour's Prop baselines today).
 
 ## Entity model
 

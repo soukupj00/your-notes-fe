@@ -127,7 +127,7 @@ Scoped by a `/grill-with-docs` session on 2026-08-12. Key decisions: [ADR 0017](
 
 ## Per-area plans
 
-- [`src/data/PLAN.md`](./src/data/PLAN.md) — the Local Store: schema versioning, attachment storage, sync metadata.
+- [`src/data/PLAN.md`](./src/data/PLAN.md) - the Local Store: schema versioning, attachment storage, sync metadata.
 - [`src/hooks/data/PLAN.md`](./src/hooks/data/PLAN.md) — attachment actions, optimistic updates, mutation queue.
 - [`src/components/editor/PLAN.md`](./src/components/editor/PLAN.md) — M1 extension work in detail.
 - [`src/context/PLAN.md`](./src/context/PLAN.md) — auth context, accessibility themes.

@@ -45,11 +45,12 @@ First run on a machine needs `pnpm exec playwright install chromium`.
 
 ### Data layer (`src/data/`, `src/hooks/data/`, `src/models.ts`)
 
-All persistence goes through the `LocalStore` interface (`src/data/`, [ADR 0020](./docs/adr/0020-the-local-store-seam.md)); the default implementation is Dexie/IndexedDB, and Dexie is imported nowhere else (Biome enforces it). Domain models are in `src/models.ts`.
+All persistence goes through the `LocalStore` interface (`src/data/`, [ADR 0020](./docs/adr/0020-the-local-store-seam.md)); the default implementation is Dexie/IndexedDB, and Dexie is imported nowhere else (Biome enforces it).
+Domain models are in `src/models.ts`.
 
 Data access uses dedicated hooks in `src/hooks/data/`:
 
-- `useTags` / `useTagsForNote` — live queries via `useLive`
+- `useTags` / `useTagsForNote` - live queries via `useLive`
 - `useNoteActions` / `useTagActions` — CRUD mutations (create/update/delete)
 - `useNoteFeed` — the one feed query: lifecycle/tag scoping plus fuzzy ranked search (Fuse.js, `src/lib/note-search.ts`)
 - `useTagsForNote`, `useNoteAttachments` — relationship queries via the `noteTags` join table and the attachment stores

@@ -1,4 +1,4 @@
-# PLAN — `src/data` (the Local Store)
+# PLAN - `src/data` (the Local Store)
 
 What's left in the persistence layer. See [root PLAN.md](../../PLAN.md) for milestone context.
 

@@ -4,7 +4,7 @@ The React interface to the Local Store. Components use these hooks; they should 
 
 ## Two kinds of hooks
 
-**Reactive reads** — wrap `useLive` over a `Live<T>` from the Local Store; the component re-renders automatically when the underlying data changes. They return `[]`/`undefined` until the query resolves.
+**Reactive reads** - wrap `useLive` over a `Live<T>` from the Local Store; the component re-renders automatically when the underlying data changes. They return `[]`/`undefined` until the query resolves.
 
 | Hook | Returns | Notes |
 | ------ | --------- | ------- |
