@@ -111,13 +111,15 @@ Desktop collapse state is persisted per device in `localStorage` through `useSid
 Settings is intentionally not a sidebar destination: the topbar gear is the single entry point, and it navigates straight to `/settings` on both platforms.
 The mobile quick-settings dialog that used to sit behind it is gone - it held copies of the language and theme controls, and only existed because Settings was a one-way trip before there was a back button.
 
-Quick capture is one list of five starts (`src/components/notes/quickCaptureActions.ts`) rendered two ways so they cannot drift: a `＋` speed-dial FAB on mobile (`QuickCaptureBar`) and inline icons on the desktop "Take a note" bar.
+Quick capture is one list of Starts (`src/components/notes/quickCaptureActions.ts`) rendered two ways so they cannot drift: a `＋` speed-dial FAB on mobile (`QuickCaptureBar`) and inline icons on the desktop "Take a note" bar.
 Which order the starts appear in, and which thumb the FAB sits under, are stored preferences edited in `settings/QuickCaptureSection.tsx`; the side mirrors the whole dial, not just the button.
 Its distance from the bottom edge is `floatingBottomBar.ts`, shared with a view's own floating action pill (Empty trash) because both land in that corner: 24px above the bottom safe-area inset.
 The four insets are named once in `globals.css` as `--safe-top/right/bottom/left` and are always *added to* the design's own spacing, never substituted for it.
 They only report real numbers because `index.html` carries `viewport-fit=cover`; without it they resolve to 0 in the installed PWA as much as in a tab, which is why this maths did nothing at all until M4 slice 4 task 7.
 A desktop browser reports 0 for all four and no emulator exposes a notch, so overriding those four variables on `:root` is how you see a phone's insets without a phone - and `globals.test.ts` gates the pairing.
-Media starts carry a `capture` intent that the editor auto-runs on open.
+Audio and drawing Starts carry a `capture` intent that the editor auto-runs on open.
+Image and Camera are picker Starts: the OS picker opens inside the tap itself (`useStartPicker.tsx`, one hidden input both bars share), because the tap's user activation does not survive the route change to the editor, and the chosen files travel as `initialFiles`.
+A Checklist on a Card is ticked by tapping anywhere on the row, and press-and-hold on a row opens the Note (`lib/long-press.ts`); in the editor a row is reordered by its grip (`extensions/TaskItem/`), driven by pointer events so a finger can use it.
 
 A11y: every view renders an `<h1 tabIndex={-1}>` and calls `useFocusOnMount` on it, so a navigation moves focus to the destination heading instead of stranding it on the link.
 The mobile drawer suppresses Radix's close-focus restoration so navigation focus remains on that destination heading.
