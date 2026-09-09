@@ -11,6 +11,7 @@ import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { useIsMobile } from '@/hooks/use-mobile.tsx';
+import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { useKeyboardInset } from '@/hooks/useKeyboardInset.ts';
 import { bodyHasAttachment, extractAttachmentIds } from '@/lib/attachment-html.ts';
 import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
@@ -90,6 +91,7 @@ export function NoteEditorDialog({
   const { createNote, updateNote, purgeNote, pinNote, unpinNote } = useNoteActions();
   const { collectOrphans } = useAttachmentActions();
   const isMobile = useIsMobile();
+  const finePointer = useFinePointer();
   // The sheet is the one surface the software keyboard shares the screen with,
   // so it is the one that has to know how much of it the keyboard is covering.
   useKeyboardInset();
@@ -307,12 +309,17 @@ export function NoteEditorDialog({
         {...noteColorAttrs(color)}
         // Radix gives the opening focus to the first focusable child, which is
         // now the app bar's back arrow: opening a note would put the caret on
-        // "leave" rather than in the note. Redirect it to the title. A checklist
-        // draft is left alone - `Editor autoFocus` puts the caret in the first
-        // item, and this must not race it back up to the title.
+        // "leave" rather than in the note. Redirect it to the title - except on
+        // a Coarse pointer for a note that already exists, where a focused
+        // field raises the keyboard over a note the user came to read. A new
+        // note is different: the user came to type. A checklist draft is left
+        // alone - `Editor autoFocus` puts the caret in the first item, and this
+        // must not race it back up to the title.
         onOpenAutoFocus={(event) => {
           event.preventDefault();
-          if (!focusBody) headerInputRef.current?.focus();
+          if (focusBody) return;
+          if (noteId && !finePointer) return;
+          headerInputRef.current?.focus();
         }}
         // Clicking the dialog's own padding/gaps (not a child element) drops the
         // cursor into the body, so tapping the margins feels editable too.
