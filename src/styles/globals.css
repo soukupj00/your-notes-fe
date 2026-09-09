@@ -1008,46 +1008,31 @@
   margin-block: 0;
 }
 
-/* The 44px Touch Rule (DESIGN.md) reaches into the note body. A checklist box is
-   the smallest control the app has - the native input is ~15px - and it is the
-   one a phone user aims at over and over, so it is named there as a failure to
-   fix rather than port.
+/* The checklist box on a Coarse pointer. The 44px Touch Rule (DESIGN.md) has one
+   recorded exception here, and the reason is what the rule is for: a 44px hit
+   box anchored at the row's left edge reached ~24px into the text, so a tap on
+   the first letters of an item ticked it instead of placing the caret. The box
+   is drawn at 32px and its hit box is exactly the box: what you see is what you
+   tap, and the text is the text.
 
-   Two halves, and both are needed. The row gets a 44px floor so consecutive hit
-   boxes tile instead of overlapping; without it the box above would cover the
-   checkbox below and a tap would toggle the wrong item. The label then reaches
-   44x44 through an invisible `::before` rather than by growing, the same shape
-   `CardPin` uses: a box drawn that large would either dwarf its own line of text
-   or push the text a thumb's width to the right on every item.
+   Both surfaces, deliberately. A checklist should not feel like a different
+   control depending on whether you are reading it or writing it.
 
-   Coarse pointers only. A mouse never needed the floor, and paying for it there
-   would make a twenty-item list twice as long on a laptop for nothing.
-
-   **The rule is a hit box, not a row height**, and that distinction was learned
-   from the screen. Applying both halves - a 44px row floor *and* a 44x44 box -
-   put 44px rows under 20px text, so every row carried 24px of dead space: a
-   three-item checklist spent 72px of a 216px card, and a phone-width editor read
-   as double-spaced. The floor's stated purpose was only ever to stop consecutive
-   hit boxes overlapping, and it turns out not to be the only way to get that.
-
-   Anchoring the box to the row instead does the same job for nothing: 44px wide
-   and exactly as tall as its own row, so consecutive targets tile perfectly
-   rather than overlapping, while the row keeps its natural height. Width is the
-   axis both surfaces can afford to spend on; height is the one neither can.
-
-   One treatment for both surfaces, deliberately. A checklist should not feel
-   like a different control depending on whether you are reading it or writing
-   it. */
+   32 rather than 44 was chosen on 2026-09-09 with the option of growing it if
+   mis-taps show up; grow the box, never a hidden halo over the text. */
 @media (pointer: coarse) {
-  /* The `li` is the containing block and the label is left static on purpose, so
-     the box resolves against the whole row rather than against the checkbox's
-     own dozen-or-so pixels. */
-  .prose ul[data-type="taskList"] li {
-    @apply relative;
+  .prose ul[data-type="taskList"] li > label {
+    @apply mt-0 flex h-8 w-8 flex-none items-center justify-center;
   }
 
-  .prose ul[data-type="taskList"] li > label::before {
-    @apply absolute inset-y-0 left-0 w-11 content-[''];
+  .prose ul[data-type="taskList"] li > label input[type="checkbox"] {
+    @apply m-0 size-8;
+  }
+
+  /* The row is at least as tall as its box so a one-line item is not a 20px line
+     beside a 32px square with the text riding its top edge. */
+  .prose ul[data-type="taskList"] li > div {
+    @apply min-h-8 self-center;
   }
 }
 
