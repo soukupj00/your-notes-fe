@@ -421,7 +421,8 @@
       "checklist": "Checklist",
       "audio": "Voice note",
       "drawing": "Drawing",
-      "picture": "Photo"
+      "picture": "Image",
+      "camera": "Camera"
     },
     "emptyingTrash": "Emptying trash…",
     "placeholders": {

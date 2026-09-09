@@ -6,6 +6,7 @@ import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { withStore } from '@/test/store.tsx';
 import { setViewport } from '@/test/viewport.ts';
 import { Editor, type EditorHandle } from './editor.tsx';
+import { insertImageAttachmentFiles } from './extensions/Image/insert';
 
 // The toolbar reads the stored Toolbar Layouts, so every render needs the
 // provider; with nothing written it hydrates to defaults, which is the state
@@ -24,6 +25,10 @@ vi.mock('react-i18next', () => ({
 // editor.tsx registers createExcalidraw, which statically imports the real
 // canvas lib - unmocked, it crashes under jsdom (no canvas.getContext()).
 vi.mock('@excalidraw/excalidraw', () => ({ Excalidraw: () => null, exportToSvg: vi.fn() }));
+
+// The image pipeline is its own suite; here only that the editor hands it the
+// files it was opened with.
+vi.mock('./extensions/Image/insert', () => ({ insertImageAttachmentFiles: vi.fn(async () => {}) }));
 
 describe('Editor content syncing', () => {
   // `content` is passed to useEditor once, at creation, so that the option does
@@ -154,21 +159,17 @@ describe('Editor auto-capture', () => {
     expect(await findByRole('dialog')).toBeInTheDocument();
   });
 
-  it('opens a camera-and-gallery picker when opened for a photo', async () => {
-    const click = vi.spyOn(HTMLInputElement.prototype, 'click');
-    const { findByTestId } = render(
-      <Editor content="" initialCapture="picture" getNoteId={vi.fn()} />
-    );
+  it('inserts the files a picker Start chose, once, when the editor is ready', async () => {
+    // The picker itself opened inside the tap on the feed (`useStartPicker`);
+    // what reaches the editor is the outcome.
+    const files = [new File(['x'], 'a.png', { type: 'image/png' })];
+    const { rerender } = render(<Editor content="" initialFiles={files} getNoteId={vi.fn()} />);
 
-    const input = await findByTestId('auto-capture-picture-input');
-    // `image/*` (not a narrow MIME list) so the mobile sheet offers the camera
-    // and Linux Chrome does not grey out the selection; no `capture` attribute,
-    // which would force the camera and hide the gallery.
-    expect(input).toHaveAttribute('accept', 'image/*');
-    expect(input).not.toHaveAttribute('capture');
-    // Best-effort, but it must at least be attempted without a toolbar click.
-    await waitFor(() => expect(click).toHaveBeenCalled());
-    click.mockRestore();
+    await waitFor(() => expect(insertImageAttachmentFiles).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(insertImageAttachmentFiles).mock.calls[0][1]).toBe(files);
+
+    rerender(<Editor content="<p>typed</p>" initialFiles={files} getNoteId={vi.fn()} />);
+    expect(insertImageAttachmentFiles).toHaveBeenCalledTimes(1);
   });
 
   it('does not start a capture that was never asked for', async () => {

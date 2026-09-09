@@ -1,4 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { DesktopCaptureBar } from './DesktopCaptureBar.tsx';
@@ -85,4 +86,31 @@ describe('DesktopCaptureBar', () => {
     screen.getByRole('button', { name: 'notes.createPlaceholder' }).click();
     expect(onStart).toHaveBeenCalledWith({ id: null });
   });
+
+  it.each([
+    ['picture', 'image/*', null],
+    ['camera', 'image/*', 'environment'],
+  ])(
+    '%s opens the picker inside the click and starts with the chosen files',
+    async (key, accept, capture) => {
+      // The same contract as the mobile dial's, through the same hook.
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      const onStart = vi.fn();
+      render(<DesktopCaptureBar onStart={onStart} />, { wrapper });
+      const input = screen.getByTestId('start-picker') as HTMLInputElement;
+      const click = vi.spyOn(input, 'click');
+
+      await user.click(screen.getByRole('button', { name: `notes.capture.${key}` }));
+
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(input.accept).toBe(accept);
+      expect(input.getAttribute('capture')).toBe(capture);
+      expect(onStart).not.toHaveBeenCalled();
+
+      const file = new File(['x'], 'a.png', { type: 'image/png' });
+      await user.upload(input, file);
+
+      expect(onStart).toHaveBeenCalledWith({ id: null, files: [file] });
+    }
+  );
 });

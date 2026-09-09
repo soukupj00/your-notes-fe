@@ -35,6 +35,8 @@ export type NoteOpenRequest = {
   autoplayFirstAudio?: boolean;
   /** Media capture to auto-start on open (from quick capture). */
   capture?: CaptureKind;
+  /** Files chosen by a picker Start, inserted once the editor is ready. */
+  files?: File[];
 };
 
 /**
@@ -52,6 +54,7 @@ type OpenIntent = {
   initialBody?: string;
   autoplayFirstAudio?: boolean;
   capture?: CaptureKind;
+  files?: File[];
 };
 
 /**
@@ -91,6 +94,7 @@ export function NotesView({
       initialBody: editing.initialBody,
       autoplayFirstAudio: editing.autoplayFirstAudio,
       capture: editing.capture,
+      files: editing.files,
     });
     openNote(id);
   };
@@ -162,6 +166,7 @@ export function NotesView({
             initialBody={active?.initialBody}
             autoplayFirstAudio={active?.autoplayFirstAudio}
             initialCapture={active?.capture}
+            initialFiles={active?.files}
             onClose={closeNote}
             onNoteMissing={dismissMissingNote}
           />

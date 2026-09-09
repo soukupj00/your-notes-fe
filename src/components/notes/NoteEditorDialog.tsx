@@ -62,6 +62,8 @@ type NoteEditorDialogProps = {
   autoplayFirstAudio?: boolean;
   /** Capture to start as soon as the editor is ready (from the speed-dial). */
   initialCapture?: CaptureKind;
+  /** Images from a picker Start, inserted once the editor is ready. */
+  initialFiles?: File[];
   onClose: () => void;
 };
 
@@ -79,6 +81,7 @@ export function NoteEditorDialog({
   initialBody,
   autoplayFirstAudio,
   initialCapture,
+  initialFiles,
   onClose,
   onNoteMissing,
 }: NoteEditorDialogProps) {
@@ -431,6 +434,7 @@ export function NoteEditorDialog({
           autoFocus={focusBody}
           autoplayFirstAudio={autoplayFirstAudio}
           initialCapture={initialCapture}
+          initialFiles={initialFiles}
           stickyToolbarOnMobile
           footer={isMobile ? noteBar : undefined}
           // Mobile: no bordered box, so the dialog's own padding is the only

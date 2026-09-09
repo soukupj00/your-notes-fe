@@ -113,7 +113,7 @@ function waitForTarget(target: TourTarget): Promise<Element | null> {
  *    that opens one, and `captureToggle` marks it. Above `sm:` it resolves to
  *    nothing and the step quietly becomes a spotlight with no act - the bar
  *    there *is* the five starts. That is the whole of "one step with two acts".
- * 2. **Is it open?** The five starts are on screen, which is `captureDial`, the
+ * 2. **Is it open?** The starts are on screen, which is `captureDial`, the
  *    same resolve the step uses to choose its own target.
  *
  * **Neither question may be asked of `aria-expanded`, and that is not a style

@@ -86,10 +86,13 @@ type EditorProps = {
   autoplayFirstAudio?: boolean;
   /** Start a capture as soon as the editor is ready (quick-capture speed-dial). */
   initialCapture?: CaptureKind;
+  /** Images chosen by a picker Start, inserted once when the editor is ready. */
+  initialFiles?: File[];
 };
 
-/** A capture the speed-dial can hand straight to the editor. */
-export type CaptureKind = 'audio' | 'drawing' | 'picture';
+/** A capture the speed-dial can hand straight to the editor. A picture is not
+ *  one: its picker can only open inside the tap, so it arrives as `initialFiles`. */
+export type CaptureKind = 'audio' | 'drawing';
 
 /** Imperative handle so a parent (e.g. a dialog) can drop the cursor into the body,
  *  or (e.g. a test) reach the live TipTap editor instance. */
@@ -136,6 +139,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     getNoteId,
     autoplayFirstAudio,
     initialCapture,
+    initialFiles,
   },
   ref
 ) {
@@ -145,9 +149,6 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   // Math node onClick handlers need the live editor, which does not exist yet when
   // the extensions array is built; a ref lets those closures reach it at click time.
   const editorRef = useRef<TiptapEditor | null>(null);
-  // Only rendered for an auto-started picture capture; the toolbar's own
-  // picker button keeps its own input.
-  const pictureInputRef = useRef<HTMLInputElement>(null);
 
   const { createAttachment, getAttachment, cloneAttachment, updateAttachment } =
     useAttachmentActions();
@@ -361,23 +362,26 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     });
   }, [content, editor, autoplayFirstAudio]);
 
-  // One-shot auto-capture: the speed-dial picked a medium, so open straight
+  // One-shot open intents: the speed-dial picked a medium, so open straight
   // into it instead of making the user hunt for the same button in the toolbar.
-  // Best-effort by nature - the picture picker needs the tap's user activation
-  // to still be live, and a browser that has let it lapse simply shows the
-  // editor with its toolbar, which is the same place the user was heading.
-  const captureStartedRef = useRef(false);
+  // A picker Start arrives as files, because the picker itself can only open
+  // inside the tap that chose it (`useStartPicker`).
+  const intentStartedRef = useRef(false);
   useEffect(() => {
-    if (!editor || !initialCapture || captureStartedRef.current) return;
-    captureStartedRef.current = true;
+    if (!editor || intentStartedRef.current) return;
+    if (!initialCapture && !initialFiles?.length) return;
+    intentStartedRef.current = true;
     if (initialCapture === 'drawing') {
       openExcalidraw({});
     } else if (initialCapture === 'audio') {
       editor.storage.audioAttachment.capture.requestRecording();
-    } else {
-      pictureInputRef.current?.click();
     }
-  }, [editor, initialCapture, openExcalidraw]);
+    if (initialFiles?.length) {
+      void insertImageAttachmentFiles(editor, initialFiles, attachmentDepsRef.current, (id) =>
+        editor.chain().focus().insertImageAttachment({ attachmentId: id }).run()
+      );
+    }
+  }, [editor, initialCapture, initialFiles, openExcalidraw]);
 
   useImperativeHandle(
     ref,
@@ -473,35 +477,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         {/* A link's own controls belong on the link: `openOnClick` is off inside
             the editor, so this is the only way to see where one points. */}
         {editable && <LinkBubbleMenu editor={editor} t={t} />}
-
-        {/* Checklist reorder. Mounted here rather than from the extension because
-            the grip is a React portal that needs the live editor instance. */}
       </div>
-
-      {/* Auto-started picture capture. `accept="image/*"` with no `capture`
-        attribute: the mobile sheet then offers camera *and* gallery, and Linux
-        Chrome does not grey out the selection the way a narrow MIME list makes
-        it. */}
-      {initialCapture === 'picture' && (
-        <input
-          ref={pictureInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          className="hidden"
-          data-testid="auto-capture-picture-input"
-          onChange={(event) => {
-            const files = event.target.files;
-            const ed = editorRef.current;
-            if (files?.length && ed) {
-              void insertImageAttachmentFiles(ed, files, attachmentDepsRef.current, (id) =>
-                ed.chain().focus().insertImageAttachment({ attachmentId: id }).run()
-              );
-            }
-            event.target.value = '';
-          }}
-        />
-      )}
 
       {/* One shared Excalidraw editing surface for the whole editor. The canvas
         is loaded only when opened, then cached by React for later opens. */}
