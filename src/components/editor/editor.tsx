@@ -16,6 +16,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { AudioRecorderHost } from '@/components/editor/extensions/Audio';
 import type { AttachmentDeps } from '@/components/editor/extensions/attachments/deps';
 import {
   dedupeForeignAttachments,
@@ -462,6 +463,11 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
             screen for the whole session. Ordered before the toolbar in the DOM
             and *not* given `order-last`, which is what puts the toolbar under
             it once the toolbar is sticky. */}
+        {/* The recorder, mounted for as long as the editor is editable and
+            whatever the toolbar shows - see `AudioRecorderHost`. */}
+        {editable && (
+          <AudioRecorderHost editor={editor} getDeps={() => attachmentDepsRef.current} />
+        )}
         {footer}
 
         {/* A link's own controls belong on the link: `openOnClick` is off inside

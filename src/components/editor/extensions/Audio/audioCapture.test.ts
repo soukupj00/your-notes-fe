@@ -46,3 +46,27 @@ describe('createAudioCaptureCoordinator', () => {
     expect(start).not.toHaveBeenCalled();
   });
 });
+
+describe('recording status', () => {
+  it('starts not recording and notifies subscribers on every change', () => {
+    const capture = createAudioCaptureCoordinator();
+    const seen: boolean[] = [];
+    const unsubscribe = capture.subscribe(() => seen.push(capture.isRecording()));
+
+    expect(capture.isRecording()).toBe(false);
+    capture.setRecording(true);
+    capture.setRecording(false);
+    unsubscribe();
+    capture.setRecording(true);
+
+    expect(seen).toEqual([true, false]);
+  });
+
+  it('does not notify when the value does not change', () => {
+    const capture = createAudioCaptureCoordinator();
+    const listener = vi.fn();
+    capture.subscribe(listener);
+    capture.setRecording(false);
+    expect(listener).not.toHaveBeenCalled();
+  });
+});
