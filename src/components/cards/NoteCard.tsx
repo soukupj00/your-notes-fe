@@ -14,6 +14,7 @@ import { useTagsForNote } from '@/hooks/data/useTagsForNote.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { checklistItemIndexAt, setChecklistItemChecked } from '@/lib/checklist.ts';
 import { captureRows, playRows, type RowSnapshot } from '@/lib/flip-rows.ts';
+import { attachLongPress } from '@/lib/long-press.ts';
 import { stripAttachmentNodes } from '@/lib/note-attachments.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { cn, stripHtml } from '@/lib/utils.ts';
@@ -87,13 +88,12 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
    * Ticking a checklist item without opening the note (ADR 0013).
    *
    * Delegated because the body is `innerHTML`, so there is nothing to attach a
-   * per-item handler to. The click is deliberately *not* prevented: letting the
-   * native checkbox flip is what answers the tap on the same frame, and the
-   * re-render that follows the write sets it from the attribute anyway.
+   * per-item handler to.
    *
-   * Only the box is a control. A click anywhere else on the row still opens the
-   * note, which is why this bails before `stopPropagation` unless the label was
-   * hit.
+   * The whole row is the control (CONTEXT.md, Card). The native box flips
+   * itself when it is the thing tapped; when the text is, the box is set here
+   * so the tap is answered on the same frame either way, and the re-render
+   * that follows the write sets it from the attribute regardless.
    */
   const handleChecklistClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -101,13 +101,15 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
       if (!root) return;
       const target = event.target as Element;
       const item = target.closest('li[data-type="taskItem"]');
-      if (!item || !target.closest('label')) return;
+      if (!item) return;
 
       event.stopPropagation();
 
       const index = checklistItemIndexAt(root, item);
       if (index === null) return;
       const checked = item.getAttribute('data-checked') !== 'true';
+      const box = item.querySelector<HTMLInputElement>('input[type="checkbox"]');
+      if (box) box.checked = checked;
       const nextBody = setChecklistItemChecked(bodyRef.current, index, checked);
       if (!nextBody) return;
       bodyRef.current = nextBody;
@@ -137,6 +139,20 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
     flipRef.current = null;
     if (before && root) playRows(root, before);
   }, [prose]);
+
+  // Press-and-hold on a row opens the note, because the tap now ticks it. The
+  // prose is rebuilt on every body change, but the listener sits on the
+  // container `NoteBody` keeps, so it survives the rebuild.
+  //
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `hasProse` is the trigger, not an input. The container only exists while it is true, and a ref is not a dependency React can watch, so the effect has to re-run when the body gains its first prose.
+  useEffect(() => {
+    const root = proseRef.current;
+    if (!root) return;
+    return attachLongPress(root, {
+      isTarget: (target) => target.closest('li[data-type="taskItem"]') !== null,
+      onLongPress: () => onSelect(note.id),
+    });
+  }, [note.id, onSelect, hasProse]);
 
   const open = () => onSelect(note.id);
 

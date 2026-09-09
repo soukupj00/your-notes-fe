@@ -1034,6 +1034,14 @@
   .prose ul[data-type="taskList"] li > div {
     @apply min-h-8 self-center;
   }
+
+  /* A Card row is a control on a Coarse pointer: no text selection and no
+     touch callout during the press that opens the note. Card only: in the
+     Editor the row is text and the hold is how a caret is placed. */
+  .note-card-body ul[data-type="taskList"] li {
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
 }
 
 /* A card's body is capped by `max-height`, so without this it ends in a hard cut

@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Note } from '@/models.ts';
@@ -497,8 +497,9 @@ describe('NoteCard', () => {
       expect(onSelect).not.toHaveBeenCalled();
     });
 
-    it('still opens the note when the row’s text is clicked', async () => {
-      // Only the box is a control. Everything else on the row is still the card.
+    it('ticks when the row’s text is clicked, and does not open the note', async () => {
+      // The whole row is the control (CONTEXT.md, Card): a thumb aims at the
+      // words, not at a 32px square beside them.
       const note = makeNote({ body: checklist(['Milk', false]) });
       await testStore.notes.put(note);
       const onSelect = vi.fn();
@@ -506,7 +507,34 @@ describe('NoteCard', () => {
 
       await userEvent.click(screen.getByText('Milk'));
 
+      await waitFor(async () => {
+        expect(await storedBody(note.id)).toContain('data-checked="true"');
+      });
+      expect(onSelect).not.toHaveBeenCalled();
+      expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(true);
+    });
+
+    it('opens the note from a long press on the row', async () => {
+      const note = makeNote({ body: checklist(['Milk', false]) });
+      await testStore.notes.put(note);
+      const onSelect = vi.fn();
+      render(<NoteCard note={note} onSelect={onSelect} />);
+      const row = screen.getByText('Milk').closest('li') as HTMLElement;
+
+      // Only the hold's own timer is faked: the store's reads and writes ride
+      // on the real clock, and a fake one would stall them.
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+      try {
+        row.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch' }));
+        await act(async () => {
+          vi.advanceTimersByTime(500);
+        });
+      } finally {
+        vi.useRealTimers();
+      }
+
       expect(onSelect).toHaveBeenCalledWith(note.id);
+      expect(await storedBody(note.id)).toContain('data-checked="false"');
     });
 
     it('ticks from the keyboard, because the box is a real focusable control', async () => {
