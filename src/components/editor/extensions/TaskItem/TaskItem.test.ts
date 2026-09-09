@@ -84,6 +84,33 @@ describe('TaskItem extension', () => {
     expect(editor.commands.moveTaskItem({ pos: posOf(editor, 0), to: -1 })).toBe(false);
   });
 
+  it('keeps the row element through a drag: the class it writes is not an edit', async () => {
+    // ProseMirror rebuilds a node view whose DOM mutated unless the view says
+    // to ignore it. The drag writes a class onto the `li`; a rebuild there
+    // would replace the very element the pointer is holding.
+    const mounted = new Editor({
+      element: document.body.appendChild(document.createElement('div')),
+      extensions: [Document, Paragraph, Text, TaskList, TaskItem],
+      content: list(item('A'), item('B')),
+    });
+    try {
+      const row = mounted.view.dom.querySelector('li') as HTMLElement;
+      const grip = row.querySelector('.task-item-grip') as HTMLElement;
+      expect(grip).not.toBeNull();
+
+      grip.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, pointerType: 'mouse' })
+      );
+      // Mutation observers report asynchronously.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(row.isConnected).toBe(true);
+      expect(row.classList.contains('task-item-dragging')).toBe(true);
+    } finally {
+      mounted.destroy();
+    }
+  });
+
   it('serialises no grip: the stored Body is the same markup as before', () => {
     expect(editor.getHTML()).not.toContain('button');
     expect(editor.getHTML()).not.toContain('grip');

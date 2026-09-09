@@ -108,11 +108,17 @@ export const TaskItem = TiptapTaskItem.extend<TaskItemExtensionOptions>({
       return {
         ...view,
         // The grip is ours, not the document's: ProseMirror must neither treat
-        // its events as edits nor re-render the node when it changes.
+        // its events as edits nor re-render the node when it changes. The same
+        // goes for the row's own attributes - the drag writes a class and a
+        // transform onto the `li`, and onto its neighbours for the drop marks,
+        // and a node view rebuilt in answer to that would drop the row from
+        // under the pointer mid-gesture.
         stopEvent: (event: Event) =>
           grip.contains(event.target as Node) || (view.stopEvent?.(event) ?? false),
         ignoreMutation: (mutation) =>
-          grip.contains(mutation.target) || (view.ignoreMutation?.(mutation) ?? false),
+          (mutation.type === 'attributes' && mutation.target === item) ||
+          grip.contains(mutation.target) ||
+          (view.ignoreMutation?.(mutation) ?? false),
       };
     };
   },
