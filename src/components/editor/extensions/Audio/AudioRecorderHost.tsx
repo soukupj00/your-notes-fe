@@ -52,8 +52,10 @@ export function AudioRecorderHost({ editor, getDeps }: AudioRecorderHostProps) {
     }
   }, [rec.status, rec.error, getDeps]);
 
+  // The take's promise is handed over, so the coordinator knows when the
+  // request is really answered (or torn down with this host before it was).
   const start = rec.start;
-  useEffect(() => capture.registerRecorder(() => void start()), [capture, start]);
+  useEffect(() => capture.registerRecorder(start), [capture, start]);
 
   const recording = rec.status === 'recording';
   useEffect(() => {

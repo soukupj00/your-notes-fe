@@ -36,6 +36,38 @@ describe('createAudioCaptureCoordinator', () => {
     expect(second).not.toHaveBeenCalled();
   });
 
+  it('hands a request back when the recorder answering it goes away mid-take', async () => {
+    // A recorder that unmounts while its `start` is still pending tears that
+    // take down with it (React StrictMode does exactly this on every mount in
+    // development): the request is not answered, so the next recorder takes it.
+    const coordinator = createAudioCaptureCoordinator();
+    const first = vi.fn(() => new Promise<void>(() => {}));
+    coordinator.registerRecorder(first)();
+    coordinator.requestRecording();
+    expect(first).not.toHaveBeenCalled();
+
+    const unregister = coordinator.registerRecorder(first);
+    expect(first).toHaveBeenCalledTimes(1);
+    unregister();
+    coordinator.registerRecorder(first);
+
+    expect(first).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not restart a take whose recorder unregistered after it settled', async () => {
+    const coordinator = createAudioCaptureCoordinator();
+    const start = vi.fn(async () => {});
+    const unregister = coordinator.registerRecorder(start);
+    coordinator.requestRecording();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    unregister();
+    coordinator.registerRecorder(start);
+
+    expect(start).toHaveBeenCalledTimes(1);
+  });
+
   it('ignores a request once the recorder has unregistered', () => {
     const coordinator = createAudioCaptureCoordinator();
     const start = vi.fn();

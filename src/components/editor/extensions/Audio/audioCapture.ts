@@ -3,7 +3,9 @@ export type RecorderCleanup = () => void;
 export interface AudioCaptureCoordinator {
   /** Ask for a recording to start as soon as a recorder exists. */
   requestRecording(): void;
-  registerRecorder(start: () => void): RecorderCleanup;
+  /** `start` may return the take's promise: the request counts as answered
+   *  once it settles, and is handed back if the recorder unregisters first. */
+  registerRecorder(start: () => void | Promise<void>): RecorderCleanup;
   /** Whether a take is in progress. Set by the recorder's owner; read by buttons. */
   isRecording(): boolean;
   setRecording(recording: boolean): void;
@@ -25,31 +27,49 @@ export interface AudioCaptureCoordinator {
  * request waited on a button that was not there.
  *
  * One-shot on purpose: a request is consumed by the first recorder that takes
- * it, so remounting cannot start a second take.
+ * it, so remounting cannot start a second take - with one exception. A
+ * recorder that unregisters while its take is still starting tears that take
+ * down with it (its hook releases the mic on unmount), so the request was never
+ * really answered and is handed back for the next recorder. React StrictMode
+ * does exactly this on every mount in development: without it the dial's
+ * voice note sat at "requesting" forever.
  */
 export function createAudioCaptureCoordinator(): AudioCaptureCoordinator {
   let pending = false;
-  let current: (() => void) | null = null;
+  let current: (() => void | Promise<void>) | null = null;
+  /** The recorder whose take is still starting, until that start settles. */
+  let answering: (() => void | Promise<void>) | null = null;
   let recording = false;
   const listeners = new Set<() => void>();
 
+  const fire = () => {
+    const taker = current;
+    if (!taker) return;
+    pending = false;
+    const take = taker();
+    // A synchronous recorder has settled by now; only a promise is still open.
+    if (!take) return;
+    answering = taker;
+    void take.finally(() => {
+      if (answering === taker) answering = null;
+    });
+  };
+
   return {
     requestRecording() {
-      if (current) {
-        current();
-        return;
-      }
       pending = true;
+      fire();
     },
 
     registerRecorder(start) {
       current = start;
-      if (pending) {
-        pending = false;
-        start();
-      }
+      if (pending) fire();
       return () => {
         if (current === start) current = null;
+        if (answering === start) {
+          answering = null;
+          pending = true;
+        }
       };
     },
 
