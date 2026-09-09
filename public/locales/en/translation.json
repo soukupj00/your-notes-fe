@@ -53,6 +53,9 @@
     "taskList": {
       "tooltip": "Task list"
     },
+    "taskItem": {
+      "grip": "Reorder item"
+    },
     "blockquote": {
       "tooltip": "Quote"
     },

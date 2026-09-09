@@ -53,6 +53,9 @@
     "taskList": {
       "tooltip": "Seznam úkolů"
     },
+    "taskItem": {
+      "grip": "Přesunout položku"
+    },
     "blockquote": {
       "tooltip": "Citace"
     },

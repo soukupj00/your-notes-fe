@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { attachLongPress } from './long-press';
 
 function pointer(type: string, target: Element, init: Partial<PointerEventInit> = {}) {
@@ -10,7 +10,7 @@ function pointer(type: string, target: Element, init: Partial<PointerEventInit> 
 describe('attachLongPress', () => {
   let root: HTMLDivElement;
   let row: HTMLLIElement;
-  let onLongPress: ReturnType<typeof vi.fn>;
+  let onLongPress: Mock<(target: Element) => void>;
   let detach: () => void;
 
   beforeEach(() => {
