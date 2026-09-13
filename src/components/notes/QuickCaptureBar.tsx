@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { FLOATING_BOTTOM_BAR } from '@/components/notes/floatingBottomBar.ts';
 import type { NoteOpenRequest } from '@/components/notes/NotesView.tsx';
 import { resolveQuickCapture } from '@/components/notes/quickCaptureLayout.ts';
+import { useStartPicker } from '@/components/notes/useStartPicker.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
@@ -13,7 +14,7 @@ import { NIGHTSHIFT_SPRING, resolveTransition } from '@/lib/motion.ts';
 import { cn } from '@/lib/utils.ts';
 
 /**
- * Mobile quick capture: one `＋` that expands into the five ways to start a
+ * Mobile quick capture: one `＋` that expands into the ways to start a
  * note. A Popover rather than hand-rolled state, so tap-outside and Esc close
  * it and focus is managed for free.
  */
@@ -24,6 +25,8 @@ export function QuickCaptureBar({ onStart }: { onStart: (editing: NoteOpenReques
   const transition = resolveTransition(reducedMotion);
   const { preferences } = usePreferences();
   const actions = resolveQuickCapture(preferences.quickCapture);
+  // A picker Start opens the OS picker here, inside the tap (`useStartPicker`).
+  const picker = useStartPicker(onStart);
   // Which thumb has to reach it. The dial, its labels and the popover all follow
   // the same edge, so a left-handed layout is the mirror rather than a FAB that
   // moved and a menu that did not.
@@ -74,15 +77,15 @@ export function QuickCaptureBar({ onStart }: { onStart: (editing: NoteOpenReques
               the button next to the `＋`, so the menu unrolls away from it. */}
           {/* The Tour spotlights the open dial rather than the `＋` that opened
               it: the starts unfold above the button, so a cutout over the button
-              alone would leave the five things the step is about under the
+              alone would leave the things the step is about under the
               scrim (`lib/tour/targets.ts`). */}
           <ul
             data-tour="capture-dial"
             className={cn('flex flex-col-reverse gap-2', left ? 'items-start' : 'items-end')}
           >
-            {actions.map(({ key, Icon, labelKey, editing }, index) => (
+            {actions.map((action, index) => (
               <m.li
-                key={key}
+                key={action.key}
                 initial={reducedMotion ? false : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={resolveTransition(reducedMotion, {
@@ -95,18 +98,20 @@ export function QuickCaptureBar({ onStart }: { onStart: (editing: NoteOpenReques
                   variant="secondary"
                   onClick={() => {
                     setOpen(false);
-                    onStart(editing);
+                    if (action.picker) picker.open(action);
+                    else onStart(action.editing);
                   }}
                   className="min-h-11 rounded-full border border-input bg-card shadow-rest hover:bg-accent hover:shadow-lift"
                 >
-                  <Icon className="size-5" aria-hidden />
-                  {t(labelKey)}
+                  <action.Icon className="size-5" aria-hidden />
+                  {t(action.labelKey)}
                 </Button>
               </m.li>
             ))}
           </ul>
         </PopoverContent>
       </Popover>
+      {picker.input}
     </div>
   );
 }

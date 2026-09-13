@@ -1,6 +1,5 @@
 import type { Editor as TiptapEditor } from '@tiptap/core';
 import Document from '@tiptap/extension-document';
-import { TaskItem } from '@tiptap/extension-list';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { TextStyle } from '@tiptap/extension-text-style';
@@ -33,6 +32,7 @@ import { createMathematics } from './Mathematics';
 import { OrderedList } from './OrderedList';
 import { createSlashMenu } from './SlashMenu';
 import { Strike } from './Strike';
+import { TaskItem } from './TaskItem';
 import { ChecklistFlip, TaskList } from './TaskList';
 import { TextAlign } from './TextAlign';
 import { Underline } from './Underline';
@@ -80,7 +80,7 @@ export function buildEditorExtensions({ getDeps, getEditor, animateChecklist, t 
     OrderedList,
     ListItem,
     TaskList,
-    TaskItem,
+    TaskItem.configure({ gripLabel: () => t('editor.taskItem.grip') }),
     ChecklistFlip.configure({ animate: animateChecklist ?? (() => false) }),
     Clear,
     Code,

@@ -459,3 +459,50 @@ describe('the mobile app bar', () => {
     await waitFor(() => expect(title).not.toHaveFocus());
   });
 });
+
+describe('opening focus', () => {
+  /** `useFinePointer` reads `matchMedia('(pointer: fine)')`. */
+  const setPointer = (fine: boolean) => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === '(pointer: fine)' ? fine : false,
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      onchange: null,
+      dispatchEvent: () => false,
+    }));
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('focuses the title of a new note on a Coarse pointer, because the user came to type', async () => {
+    setPointer(false);
+    render(<NoteEditorDialog noteId={null} draftId={crypto.randomUUID()} onClose={vi.fn()} />);
+    await waitFor(() => {
+      expect(headerInput()).toHaveFocus();
+    });
+  });
+
+  it('focuses nothing for an existing note on a Coarse pointer, so the keyboard stays down', async () => {
+    setPointer(false);
+    const note = makeNote({ header: 'Kept', body: '<p>text</p>' });
+    await testStore.notes.add(note);
+    render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
+    await screen.findByDisplayValue('Kept');
+    expect(headerInput()).not.toHaveFocus();
+  });
+
+  it('still focuses the title of an existing note on a Fine pointer', async () => {
+    setPointer(true);
+    const note = makeNote({ header: 'Kept', body: '<p>text</p>' });
+    await testStore.notes.add(note);
+    render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
+    await waitFor(() => {
+      expect(headerInput()).toHaveFocus();
+    });
+  });
+});

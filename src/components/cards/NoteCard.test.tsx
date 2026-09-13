@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Note } from '@/models.ts';
@@ -497,8 +497,37 @@ describe('NoteCard', () => {
       expect(onSelect).not.toHaveBeenCalled();
     });
 
-    it('still opens the note when the row’s text is clicked', async () => {
-      // Only the box is a control. Everything else on the row is still the card.
+    /** jsdom lays nothing out and its Range has no `getClientRects`; this is
+     *  where the item's text sits, so a click at (0,0) is on or off it. */
+    const layText = (rect: { left: number; right: number; top: number; bottom: number }) => {
+      Range.prototype.getClientRects = vi.fn(() => [rect] as unknown as DOMRectList);
+    };
+    afterEach(() => {
+      // @ts-expect-error restoring jsdom's absence of the method
+      Range.prototype.getClientRects = undefined;
+    });
+
+    it('ticks when the item’s text is clicked, and does not open the note', async () => {
+      // The box and the words are the control (CONTEXT.md, Card): a thumb aims
+      // at the words, not at a 32px square beside them.
+      layText({ left: 0, right: 40, top: 0, bottom: 20 });
+      const note = makeNote({ body: checklist(['Milk', false]) });
+      await testStore.notes.put(note);
+      const onSelect = vi.fn();
+      render(<NoteCard note={note} onSelect={onSelect} />);
+
+      await userEvent.click(screen.getByText('Milk'));
+
+      await waitFor(async () => {
+        expect(await storedBody(note.id)).toContain('data-checked="true"');
+      });
+      expect(onSelect).not.toHaveBeenCalled();
+      expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(true);
+    });
+
+    it('opens the note when the empty space after the text is clicked', async () => {
+      // The row is not the control: past the end of the words it is the card.
+      layText({ left: 100, right: 140, top: 0, bottom: 20 });
       const note = makeNote({ body: checklist(['Milk', false]) });
       await testStore.notes.put(note);
       const onSelect = vi.fn();
@@ -507,6 +536,30 @@ describe('NoteCard', () => {
       await userEvent.click(screen.getByText('Milk'));
 
       expect(onSelect).toHaveBeenCalledWith(note.id);
+      expect(await storedBody(note.id)).toContain('data-checked="false"');
+    });
+
+    it('opens the note from a long press on the row', async () => {
+      const note = makeNote({ body: checklist(['Milk', false]) });
+      await testStore.notes.put(note);
+      const onSelect = vi.fn();
+      render(<NoteCard note={note} onSelect={onSelect} />);
+      const row = screen.getByText('Milk').closest('li') as HTMLElement;
+
+      // Only the hold's own timer is faked: the store's reads and writes ride
+      // on the real clock, and a fake one would stall them.
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+      try {
+        row.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch' }));
+        await act(async () => {
+          vi.advanceTimersByTime(500);
+        });
+      } finally {
+        vi.useRealTimers();
+      }
+
+      expect(onSelect).toHaveBeenCalledWith(note.id);
+      expect(await storedBody(note.id)).toContain('data-checked="false"');
     });
 
     it('ticks from the keyboard, because the box is a real focusable control', async () => {

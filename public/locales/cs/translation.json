@@ -53,6 +53,9 @@
     "taskList": {
       "tooltip": "Seznam úkolů"
     },
+    "taskItem": {
+      "grip": "Přesunout položku"
+    },
     "blockquote": {
       "tooltip": "Citace"
     },
@@ -97,6 +100,7 @@
       "label": "Obrázek"
     },
     "audio": {
+      "recording": "Nahrávání",
       "play": "Přehrát",
       "pause": "Pozastavit",
       "seek": "Přetáčet",
@@ -418,7 +422,8 @@
       "checklist": "Seznam úkolů",
       "audio": "Hlasová poznámka",
       "drawing": "Kresba",
-      "picture": "Fotka"
+      "picture": "Obrázek",
+      "camera": "Fotoaparát"
     },
     "emptyingTrash": "Vyprazdňuji koš…",
     "placeholders": {

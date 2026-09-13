@@ -260,6 +260,7 @@ Mobile is the primary device, so the scarce axis is horizontal. Any card anatomy
 **The Reading-Order Rule.** DOM order is always reading order. Any packing algorithm that reorders the DOM to achieve a tighter wall is rejected, however good it looks.
 
 **The 44px Touch Rule.** Every interactive control is at least 44x44px in touch mode. The prototype currently fails this everywhere except the FAB - pin is 27px, card and topbar action buttons are 30px, and checklist boxes are 15px. Padding may be invisible, but it must be there. This is the second thing to fix in the redesign.
+One recorded exception, measured on 2026-09-09: the Checklist box is 32x32 with a hit box of exactly its own size, on both the Card and the Editor. A 44px hit box anchored at the row's edge overlapped the first letters of the item, so a tap meant to place the caret ticked the box instead. If mis-taps show up, grow the visible box; never restore an invisible halo over the text.
 
 **The Two-Layouts Rule.** Masonry and Stack are the complete set. Do not add a third feed mode, and do not let either one grow its own card variant - a card that looks different in Stack than in Masonry means the anatomy is wrong, not that Stack needs a special case.
 

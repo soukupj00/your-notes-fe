@@ -26,6 +26,14 @@ Domain glossary for the note-taking app. This file defines the **language** of t
 - **Membership** — Which Notes a Feed contains. Membership is always live: a Note that stops qualifying leaves at once, and one that starts qualifying arrives at once.
 - **Rank** — A Note's place within a Feed. Distinct from Membership, and unlike it, Rank is **held**: a Note already on screen does not change place because of something the user just did to it. Rank is recomputed only when the user is not watching the Feed. Pinning is the one exception, because moving the Note *is* the action being asked for.
 
+- **Card** — A Note as it appears on a Feed: its title, an excerpt of its Body, its Attachments' Previews, its Tags and its footer.
+  A Card is read, not edited, with one exception: a Checklist on a Card can be ticked in place, and the box and the item's words are the control, so tapping an item's text ticks it rather than opening the Note; the empty run after the words is still the Card.
+  Pressing and holding an item row opens the Note instead.
+  _Avoid_: preview (a Preview is an Attachment's stand-in on the Card, not the Card itself)
+- **Start** — One of the ways a new Note can be begun from a Feed: as text, as a Checklist, by recording Audio, by opening a Drawing, by choosing an Image, or by taking a picture with the Camera.
+  A Start may carry an intent (begin recording, open the camera) that the Editor acts on as it opens; the intent belongs to the gesture that began the Note and is never repeated by a reload.
+  The user chooses which Starts are offered and in what order.
+
 ## Note lifecycle
 
 A Note is always in exactly one **State**, and may independently be **Pinned** and carry a **Color**.

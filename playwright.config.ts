@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 const PORT = 5173;
 const BASE_URL = `http://localhost:${PORT}`;
+const MEDIA_ARGS = ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'];
 
 /**
  * End-to-end tests (ADR 0003). The suite exists because of the Tour: jsdom
@@ -42,8 +43,22 @@ export default defineConfig({
     // `sm:` and no desktop capture bar below it, and several targets are mounted
     // at both widths with one of the two invisible - so a suite that ran at one
     // width would pass while the other pointed at nothing.
-    { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
-    { name: 'mobile', use: { ...devices['Pixel 7'] } },
+    // Chromium's fake media device, so `getUserMedia` resolves headlessly and
+    // the voice-note start can be driven end to end.
+    {
+      name: 'desktop',
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: { args: MEDIA_ARGS },
+      },
+    },
+    {
+      name: 'mobile',
+      use: {
+        ...devices['Pixel 7'],
+        launchOptions: { args: MEDIA_ARGS },
+      },
+    },
   ],
   webServer: {
     command: `pnpm dev --port ${PORT} --strictPort`,

@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { NoteOpenRequest } from '@/components/notes/NotesView.tsx';
 import { resolveDesktopQuickCapture } from '@/components/notes/quickCaptureLayout.ts';
+import { useStartPicker } from '@/components/notes/useStartPicker.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useTourActive } from '@/context/TourProvider.tsx';
@@ -25,7 +26,7 @@ const CHAR_MS = 45;
 
 /**
  * The desktop "Take a note" bar: a text-cursor affordance that opens a blank
- * draft, plus the same five quick-capture starts the mobile speed-dial offers
+ * draft, plus the same quick-capture starts the mobile speed-dial offers
  * (minus plain text - the bar itself is that one), so the two cannot drift.
  *
  * The prompt cycles slowly to hint at what a note can be, each one typing
@@ -39,6 +40,8 @@ export function DesktopCaptureBar({ onStart }: { onStart: (state: NoteOpenReques
   const [index, setIndex] = useState(0);
   const { preferences } = usePreferences();
   const actions = resolveDesktopQuickCapture(preferences.quickCapture);
+  // A picker Start opens the OS picker here, inside the click (`useStartPicker`).
+  const picker = useStartPicker(onStart);
 
   // Whether a rotation has ever fired. Until one has, a prompt is *presented*
   // rather than typed: translations arrive over HTTP, so on a cold load the
@@ -99,7 +102,7 @@ export function DesktopCaptureBar({ onStart }: { onStart: (state: NoteOpenReques
 
   return (
     // `data-tour` goes on the whole bar here, not on one control: unlike the
-    // mobile dial, the bar *is* the affordance, and its five icons are the thing
+    // mobile dial, the bar *is* the affordance, and its icons are the thing
     // step 1 is describing. Its twin is `QuickCaptureBar`; both are always
     // mounted, so `lib/tour/targets.ts` picks by which one has a client rect.
     <div
@@ -123,18 +126,19 @@ export function DesktopCaptureBar({ onStart }: { onStart: (state: NoteOpenReques
         <span className="sr-only">{t('notes.createPlaceholder')}</span>
       </button>
 
-      {actions.map(({ key, Icon, labelKey, editing }) => (
+      {actions.map((action) => (
         <Button
-          key={key}
+          key={action.key}
           type="button"
           variant="ghost"
           size="icon"
-          aria-label={t(labelKey)}
-          onClick={() => onStart(editing)}
+          aria-label={t(action.labelKey)}
+          onClick={() => (action.picker ? picker.open(action) : onStart(action.editing))}
         >
-          <Icon className="size-4" />
+          <action.Icon className="size-4" />
         </Button>
       ))}
+      {picker.input}
     </div>
   );
 }

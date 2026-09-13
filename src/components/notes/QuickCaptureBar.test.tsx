@@ -37,10 +37,10 @@ describe('QuickCaptureBar', () => {
     expect(screen.queryByRole('button', { name: 'notes.capture.audio' })).not.toBeInTheDocument();
   });
 
-  it('expands into the five ways to start a note', async () => {
+  it('expands into every way to start a note', async () => {
     await openDial();
 
-    for (const key of ['text', 'checklist', 'audio', 'drawing', 'picture']) {
+    for (const key of ['text', 'checklist', 'audio', 'drawing', 'picture', 'camera']) {
       expect(await screen.findByRole('button', { name: `notes.capture.${key}` })).toBeVisible();
     }
   });
@@ -57,7 +57,6 @@ describe('QuickCaptureBar', () => {
     ],
     ['audio', { id: null, capture: 'audio' }],
     ['drawing', { id: null, capture: 'drawing' }],
-    ['picture', { id: null, capture: 'picture' }],
   ])('opens the editor in the %s state', async (key, expected) => {
     const onStart = await openDial();
 
@@ -65,6 +64,33 @@ describe('QuickCaptureBar', () => {
 
     expect(onStart).toHaveBeenCalledWith(expected);
   });
+
+  it.each([
+    ['picture', 'image/*', null],
+    ['camera', 'image/*', 'environment'],
+  ])(
+    '%s opens the picker inside the tap and starts with the chosen files',
+    async (key, accept, capture) => {
+      // The tap's user activation is the only thing that can open a picker, and
+      // it does not survive the route change to the editor - so the files, not
+      // the intent, are what travel.
+      const onStart = await openDial();
+      const input = screen.getByTestId('start-picker') as HTMLInputElement;
+      const click = vi.spyOn(input, 'click');
+
+      await userEvent.click(await screen.findByRole('button', { name: `notes.capture.${key}` }));
+
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(input.accept).toBe(accept);
+      expect(input.getAttribute('capture')).toBe(capture);
+      expect(onStart).not.toHaveBeenCalled();
+
+      const file = new File(['x'], 'a.png', { type: 'image/png' });
+      await userEvent.upload(input, file);
+
+      expect(onStart).toHaveBeenCalledWith({ id: null, files: [file] });
+    }
+  );
 
   it('collapses again once an action is taken', async () => {
     await openDial();
@@ -108,6 +134,7 @@ describe('QuickCaptureBar', () => {
         'notes.capture.audio',
         'notes.capture.drawing',
         'notes.capture.picture',
+        'notes.capture.camera',
       ]);
     });
 

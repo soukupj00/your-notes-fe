@@ -52,6 +52,7 @@ describe('resolveQuickCapture', () => {
       { id: 'checklist', on: true },
       { id: 'drawing', on: false },
       { id: 'picture', on: false },
+      { id: 'camera', on: false },
     ];
 
     expect(resolveQuickCapture(stored).map((action) => action.key)).toEqual(['audio', 'checklist']);

@@ -1,5 +1,4 @@
 import type { Editor } from '@tiptap/core';
-import { ALLOWED_IMAGE_MIME } from '@/lib/attachments.ts';
 import { AttachmentFilePickerButton } from '../attachments/AttachmentFilePickerButton';
 import type { AttachmentDeps } from '../attachments/deps';
 import { insertImageAttachmentFiles } from './insert';
@@ -10,14 +9,17 @@ export interface ImageButtonProps {
   tooltip: string;
 }
 
-/** Toolbar entry point: opens a hidden multi-file image picker (mobile camera
- *  comes free via accept="image/*"), then runs the shared insert pipeline. */
+/** Toolbar entry point: opens a hidden multi-file image picker. `accept="image/*"`
+ *  rather than the MIME whitelist, for the same two reasons as VideoButton:
+ *  Android only offers the camera for the wildcard, and Chrome on Linux greys
+ *  out valid files when specific types are listed. The whitelist is still
+ *  enforced in `validateAttachmentFile` after selection. */
 export function ImageButton({ editor, getDeps, tooltip }: ImageButtonProps) {
   return (
     <AttachmentFilePickerButton
       icon="ImagePlus"
       tooltip={tooltip}
-      accept={ALLOWED_IMAGE_MIME.join(',')}
+      accept="image/*"
       onFiles={(files) => {
         // Resolve deps after selection so the button reads the freshest getNoteId.
         void insertImageAttachmentFiles(editor, files, getDeps(), (id) =>
