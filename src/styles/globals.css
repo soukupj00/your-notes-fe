@@ -930,11 +930,13 @@
    stored markup, so the Card cannot have one. Pointer-driven, so a finger can
    use it (`extensions/TaskItem/taskItemDrag.ts`).
 
-   44x44 on a Coarse pointer and always visible there, because there is no
-   hover to reveal it. On a Fine pointer it keeps its column but only shows on
-   the row's hover, so a long list is not a wall of dots. */
+   Drawn at the line's own height (20px), because the grip must not set the
+   row's height: at 44px it made every checklist row 44px tall and the editor
+   read as double-spaced. Always visible on a Coarse pointer, because there is
+   no hover to reveal it. On a Fine pointer it keeps its column but only shows
+   on the row's hover, so a long list is not a wall of dots. */
 .tiptap ul[data-type="taskList"] li > .task-item-grip {
-  @apply -ml-1 flex size-6 flex-none cursor-grab touch-none items-center justify-center self-center rounded-md text-muted-foreground opacity-0 transition-opacity;
+  @apply -ml-1 flex size-5 flex-none cursor-grab touch-none items-center justify-center self-center rounded-md text-muted-foreground opacity-0 transition-opacity;
 }
 
 .tiptap ul[data-type="taskList"] li > .task-item-grip > svg {
@@ -946,13 +948,23 @@
   @apply opacity-100;
 }
 
+/* The 44px Touch Rule for the grip is a hit box, not a size: a 44px-wide halo
+   exactly as tall as its row, resolved against the `li`, so consecutive halos
+   tile instead of overlapping into the neighbouring row. A centred 44x44
+   `.touch-reach` would reach 12px into each neighbour on a 20px row, and a drag
+   begun near a row's edge would pick up the wrong item. */
 @media (pointer: coarse) {
-  .tiptap ul[data-type="taskList"] li > .task-item-grip {
-    @apply -ml-2 size-11 opacity-100;
+  .tiptap ul[data-type="taskList"] li {
+    @apply relative;
   }
 
-  .tiptap ul[data-type="taskList"] li > .task-item-grip > svg {
-    @apply size-5;
+  .tiptap ul[data-type="taskList"] li > .task-item-grip {
+    @apply -ml-2 opacity-100;
+  }
+
+  .tiptap ul[data-type="taskList"] li > .task-item-grip::before {
+    @apply absolute inset-y-0 w-11 content-[''];
+    left: -0.75rem;
   }
 }
 
