@@ -1054,27 +1054,28 @@
    recorded exception here, and the reason is what the rule is for: a 44px hit
    box anchored at the row's left edge reached ~24px into the text, so a tap on
    the first letters of an item ticked it instead of placing the caret. The box
-   is drawn at 32px and its hit box is exactly the box: what you see is what you
-   tap, and the text is the text.
+   is drawn at 16px - the size of the Card's rail icons, so it reads as one
+   family of controls - and its hit box is exactly the box: what you see is
+   what you tap, and the text is the text. The item's words are the other half
+   of the control on the Card, which is what lets the box stay this small.
 
    Both surfaces, deliberately. A checklist should not feel like a different
    control depending on whether you are reading it or writing it.
 
-   32 rather than 44 was chosen on 2026-09-09 with the option of growing it if
-   mis-taps show up; grow the box, never a hidden halo over the text. */
+   32px was tried first (2026-09-09) and read as too large beside the text; if
+   mis-taps show up, grow the box, never a hidden halo over the text. */
 @media (pointer: coarse) {
+  /* Box and words on one centre line, whichever of the two is taller. */
+  .prose ul[data-type="taskList"] li {
+    @apply items-center;
+  }
+
   .prose ul[data-type="taskList"] li > label {
-    @apply mt-0 flex h-8 w-8 flex-none items-center justify-center;
+    @apply mt-0 flex size-4 flex-none items-center justify-center;
   }
 
   .prose ul[data-type="taskList"] li > label input[type="checkbox"] {
-    @apply m-0 size-8;
-  }
-
-  /* The row is at least as tall as its box so a one-line item is not a 20px line
-     beside a 32px square with the text riding its top edge. */
-  .prose ul[data-type="taskList"] li > div {
-    @apply min-h-8 self-center;
+    @apply m-0 size-4;
   }
 
   /* A Card row is a control on a Coarse pointer: no text selection and no

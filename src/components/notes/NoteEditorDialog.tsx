@@ -337,7 +337,10 @@ export function NoteEditorDialog({
         // Descendant (`_`), not child (`>`): the close is written as a direct
         // child of DialogContent but does not render as one, so `>` silently
         // matches nothing - verified in a browser, not assumed.
-        // `pt-2` on the sheet, restored to the dialog's own `p-6` at `sm:`.
+        // `pt-2` and `px-4` on the sheet, restored to the dialog's own `p-6` at
+        // `sm:`. 16px at the sides rather than the modal's 24px: on a phone the
+        // horizontal axis is the scarce one, and 24px each side was a column
+        // of the note's own width spent on nothing.
         // The vendored padding is written for a centred modal, where 24px above
         // the first line is breathing room; on a full-screen sheet it is 24px of
         // a phone spent above a back arrow. 8px matches the topbar's own rhythm,
@@ -358,7 +361,7 @@ export function NoteEditorDialog({
         // the sheet did. The toolbar now owns the bottom edge and the insets
         // that go with it (`EditorToolbar`, `useKeyboardInset`), and the note
         // bar rides inside the editor column as its `footer`.
-        className="top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-3 overflow-y-auto rounded-none border-0 bg-note-surface! pt-[calc(0.5rem+var(--safe-top))] pr-[calc(1.5rem+var(--safe-right))] pb-0 pl-[calc(1.5rem+var(--safe-left))] sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-card sm:border sm:border-note-border sm:p-6 [&_[data-slot=dialog-close]]:hidden sm:[&_[data-slot=dialog-close]]:flex"
+        className="top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-3 overflow-y-auto rounded-none border-0 bg-note-surface! pt-[calc(0.5rem+var(--safe-top))] pr-[calc(1rem+var(--safe-right))] pb-0 pl-[calc(1rem+var(--safe-left))] sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-card sm:border sm:border-note-border sm:p-6 [&_[data-slot=dialog-close]]:hidden sm:[&_[data-slot=dialog-close]]:flex"
       >
         <DialogTitle className="sr-only">
           {noteId ? t('notes.editNoteTitle') : t('notes.newNoteTitle')}
