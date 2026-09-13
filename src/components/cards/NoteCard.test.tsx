@@ -497,9 +497,20 @@ describe('NoteCard', () => {
       expect(onSelect).not.toHaveBeenCalled();
     });
 
-    it('ticks when the row’s text is clicked, and does not open the note', async () => {
-      // The whole row is the control (CONTEXT.md, Card): a thumb aims at the
-      // words, not at a 32px square beside them.
+    /** jsdom lays nothing out and its Range has no `getClientRects`; this is
+     *  where the item's text sits, so a click at (0,0) is on or off it. */
+    const layText = (rect: { left: number; right: number; top: number; bottom: number }) => {
+      Range.prototype.getClientRects = vi.fn(() => [rect] as unknown as DOMRectList);
+    };
+    afterEach(() => {
+      // @ts-expect-error restoring jsdom's absence of the method
+      Range.prototype.getClientRects = undefined;
+    });
+
+    it('ticks when the item’s text is clicked, and does not open the note', async () => {
+      // The box and the words are the control (CONTEXT.md, Card): a thumb aims
+      // at the words, not at a 32px square beside them.
+      layText({ left: 0, right: 40, top: 0, bottom: 20 });
       const note = makeNote({ body: checklist(['Milk', false]) });
       await testStore.notes.put(note);
       const onSelect = vi.fn();
@@ -512,6 +523,20 @@ describe('NoteCard', () => {
       });
       expect(onSelect).not.toHaveBeenCalled();
       expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(true);
+    });
+
+    it('opens the note when the empty space after the text is clicked', async () => {
+      // The row is not the control: past the end of the words it is the card.
+      layText({ left: 100, right: 140, top: 0, bottom: 20 });
+      const note = makeNote({ body: checklist(['Milk', false]) });
+      await testStore.notes.put(note);
+      const onSelect = vi.fn();
+      render(<NoteCard note={note} onSelect={onSelect} />);
+
+      await userEvent.click(screen.getByText('Milk'));
+
+      expect(onSelect).toHaveBeenCalledWith(note.id);
+      expect(await storedBody(note.id)).toContain('data-checked="false"');
     });
 
     it('opens the note from a long press on the row', async () => {

@@ -17,6 +17,7 @@ import { captureRows, playRows, type RowSnapshot } from '@/lib/flip-rows.ts';
 import { attachLongPress } from '@/lib/long-press.ts';
 import { stripAttachmentNodes } from '@/lib/note-attachments.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
+import { pointOverText } from '@/lib/point-over-text.ts';
 import { cn, stripHtml } from '@/lib/utils.ts';
 import type { Note } from '@/models.ts';
 
@@ -90,10 +91,14 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
    * Delegated because the body is `innerHTML`, so there is nothing to attach a
    * per-item handler to.
    *
-   * The whole row is the control (CONTEXT.md, Card). The native box flips
-   * itself when it is the thing tapped; when the text is, the box is set here
-   * so the tap is answered on the same frame either way, and the re-render
-   * that follows the write sets it from the attribute regardless.
+   * The box and the item's words are the control (CONTEXT.md, Card); the empty
+   * run after the words is still the card, which is why this bails before
+   * `stopPropagation` unless one of the two was hit. Words, not the block that
+   * holds them: a `<p>` spans the row, so it is asked by the text's own line
+   * boxes. The native box flips itself when it is the thing tapped; when the
+   * text is, the box is set here so the tap is answered on the same frame
+   * either way, and the re-render that follows the write sets it from the
+   * attribute regardless.
    */
   const handleChecklistClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -102,6 +107,8 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
       const target = event.target as Element;
       const item = target.closest('li[data-type="taskItem"]');
       if (!item) return;
+      const onText = !target.closest('label') && pointOverText(item, event.clientX, event.clientY);
+      if (!target.closest('label') && !onText) return;
 
       event.stopPropagation();
 

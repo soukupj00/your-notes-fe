@@ -17,11 +17,20 @@ test.describe('checklist', () => {
     await closeNote(page);
 
     const card = page.getByRole('button', { name: /Shopping/ });
-    await card.getByText('Milk').click();
+    // On the glyphs: the paragraph spans the row, and its centre is the empty
+    // run after a short word, which is the card rather than the control.
+    await card.getByText('Milk').click({ position: { x: 6, y: 8 } });
 
     await expect(card.locator('li[data-checked="true"]')).toHaveCount(1);
     // The card was not opened by the tap.
     await expect(page.getByRole('dialog')).toHaveCount(0);
+
+    // Past the end of the words the row is the card again.
+    const bread = card.getByText('Bread');
+    const box = await bread.boundingBox();
+    if (!box) throw new Error('row not laid out');
+    await bread.click({ position: { x: box.width - 6, y: 8 } });
+    await expect(page.getByRole('dialog')).toBeVisible();
   });
 
   test('the grip reorders an item, and the order is what is saved', async ({ page }) => {
