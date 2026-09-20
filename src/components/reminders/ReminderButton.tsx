@@ -80,7 +80,7 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
           <Bell className={cn('size-4', reminder && 'fill-current')} aria-hidden />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-72 space-y-3 p-3">
+      <PopoverContent align="end" data-testid="reminder-popover" className="w-72 space-y-3 p-3">
         <div className="space-y-1">
           <label htmlFor={whenId} className="text-muted-foreground text-xs">
             {t('reminders.when')}
@@ -116,12 +116,29 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
 
         <p className="text-muted-foreground text-xs">{t('reminders.oneWay')}</p>
 
-        <div className="flex items-center justify-between gap-2">
-          {reminder ? (
+        {/* Stacked, not side by side. The two labels together are wider than
+            the popover in every locale we ship ("Aktualizovat v kalendáři" +
+            "Zrušit připomenutí"), and a row that fits today stops fitting at
+            the next translation or density. A full-width column cannot
+            overflow by construction. The primary keeps its whole sentence on
+            purpose: it is the only place the user is told that setting a
+            Reminder goes to their calendar. */}
+        <div className="flex flex-col gap-1">
+          <Button
+            type="button"
+            size="sm"
+            className="w-full"
+            disabled={!when || busy}
+            onClick={() => void submit()}
+          >
+            {t(reminder ? 'reminders.updateCalendar' : 'reminders.addToCalendar')}
+          </Button>
+          {reminder && (
             <Button
               type="button"
               variant="ghost"
               size="sm"
+              className="w-full"
               onClick={() => {
                 onClear();
                 setOpen(false);
@@ -129,12 +146,7 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
             >
               {t('reminders.clear')}
             </Button>
-          ) : (
-            <span />
           )}
-          <Button type="button" size="sm" disabled={!when || busy} onClick={() => void submit()}>
-            {t(reminder ? 'reminders.updateCalendar' : 'reminders.addToCalendar')}
-          </Button>
         </div>
       </PopoverContent>
     </Popover>
