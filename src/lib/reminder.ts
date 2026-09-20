@@ -5,8 +5,19 @@ export type Reminder = { remindAt: string; repeat?: ReminderRepeat };
 
 export const REMINDER_REPEATS: readonly ReminderRepeat[] = ['daily', 'weekly', 'monthly', 'yearly'];
 
+const REMIND_AT_SHAPE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+
+/**
+ * A backup's `remindAt` is unvalidated (`noteSchema` is a loose schema), so a
+ * hand-edited or foreign archive can put any string there. This is the one
+ * gate every reader of the field goes through - the chip, the bell and the
+ * `.ics` - so a malformed value never reaches `Intl.DateTimeFormat` or `Date`,
+ * either of which can throw or silently misread it.
+ */
 export function reminderOf(note: Pick<Note, 'remindAt' | 'repeat'>): Reminder | undefined {
-  return note.remindAt ? { remindAt: note.remindAt, repeat: note.repeat } : undefined;
+  if (!note.remindAt || !REMIND_AT_SHAPE.test(note.remindAt)) return undefined;
+  if (Number.isNaN(new Date(note.remindAt).getTime())) return undefined;
+  return { remindAt: note.remindAt, repeat: note.repeat };
 }
 
 /** A Date as `<input type="datetime-local">` spells it: local parts, to the minute. */

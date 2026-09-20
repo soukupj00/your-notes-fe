@@ -18,4 +18,10 @@ describe('newNote', () => {
       '2026-01-01T00:00:00.000Z'
     );
   });
+
+  it('carries a Reminder through, rather than dropping it silently', () => {
+    const note = newNote({ remindAt: '2030-03-04T09:00', repeat: 'weekly' });
+    expect(note.remindAt).toBe('2030-03-04T09:00');
+    expect(note.repeat).toBe('weekly');
+  });
 });

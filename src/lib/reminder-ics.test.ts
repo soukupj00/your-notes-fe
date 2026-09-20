@@ -82,6 +82,11 @@ describe('buildReminderIcs', () => {
     expect(lines(ics)).toContain('SUMMARY:a\\\\b\\; c\\, d\\ne');
   });
 
+  it('escapes a lone carriage return the same as a newline', () => {
+    const ics = buildReminderIcs({ ...base, header: 'a\rb' });
+    expect(lines(ics)).toContain('SUMMARY:a\\nb');
+  });
+
   it('folds at 75 octets without splitting a UTF-8 sequence', () => {
     const ics = buildReminderIcs({ ...base, header: 'ž'.repeat(60) });
     const bytes = new TextEncoder();

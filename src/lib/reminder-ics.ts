@@ -30,7 +30,7 @@ function escapeText(text: string): string {
     .replace(/\\/g, '\\\\')
     .replace(/;/g, '\\;')
     .replace(/,/g, '\\,')
-    .replace(/\r?\n/g, '\\n');
+    .replace(/\r\n?|\n/g, '\\n');
 }
 
 const encoder = new TextEncoder();
