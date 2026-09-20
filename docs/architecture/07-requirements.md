@@ -36,6 +36,7 @@ Status: ✅ shipped (M0-M4) / 🔷 designed for M5.
 | FR12 🔷 | Bidirectional sync across devices with offline queue | [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicted-copies.md), [04-sync.md](./04-sync.md) | M5: deterministic engine tests |
 | FR13 🔷 | Conflicts never lose text; user-resolvable Conflicted Copies | LWW + Conflicted Copy model | M5: engine tests + user testing |
 | FR14 🔷 | Device management: list, revoke, sign out with erase | Server sessions per Device | M5 |
+| FR15 🔷 | Reminders on a Note, one-shot or repeating, that fire whether or not the app is running (designed, independent of M5) | Hand-off to the user's calendar as an `.ics`; the app never notifies - [ADR 0021](../adr/0021-reminders-are-handed-off-to-the-calendar.md) | `.ics` builder unit tests; Playwright download/share acceptance; on-device check of the Hand-off |
 
 ## Non-functional requirements
 
@@ -54,7 +55,7 @@ Status: ✅ shipped (M0-M4) / 🔷 designed for M5.
 
 ## Explicit non-requirements
 
-Recorded so the paper can show scope was chosen, not forgotten: end-to-end encryption (threat model documented instead), sharing a Note between Accounts, email/SMTP anywhere, real-time collaboration, note reminders/notifications, and hierarchical organization (labels are flat, as in Keep).
+Recorded so the paper can show scope was chosen, not forgotten: end-to-end encryption (threat model documented instead), sharing a Note between Accounts, email/SMTP anywhere, real-time collaboration, notifications raised by the app itself (Web Push or otherwise - Reminders are handed to the calendar instead, [ADR 0021](../adr/0021-reminders-are-handed-off-to-the-calendar.md)), and hierarchical organization (labels are flat, as in Keep).
 
 ## For the paper
 

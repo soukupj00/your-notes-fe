@@ -21,11 +21,12 @@ What exists:
 From current secondary sources plus product knowledge; Keep is the parity target, so this list doubles as a completeness check.
 
 **Core:** free-form notes and checklists; drawings; image attachment; voice memos with transcription; flat labels (no folders, no nesting); per-note colors; pin; archive; cross-device sync via Google account; search including by attribute (color, type).
-**Beyond this project's scope, by choice** ([07-requirements.md](./07-requirements.md) non-requirements): time- and location-based reminders with Calendar integration; real-time collaborative editing of a shared note; OCR text grab from images; Workspace integration.
+**Beyond this project's scope, by choice** ([07-requirements.md](./07-requirements.md) non-requirements): location-based reminders and two-way Calendar integration (time-based Reminders are in scope, handed one-way to the user's calendar - [ADR 0021](../adr/0021-reminders-are-handed-off-to-the-calendar.md)); real-time collaborative editing of a shared note; OCR text grab from images; Workspace integration.
 **Commonly cited limitations** (secondary sources): light formatting only, poor for long-form writing; search and organisation weaken at scale; no edit history or diff; checklists are flat.
 
-YouNotes' divergences from the baseline are deliberate and two-directional: it *adds* rich text (headings, math, code), video and arbitrary file attachments, Excalidraw scenes, full-database backup, and deep customisation; it *drops* reminders, collaboration and OCR.
-The drops should be argued in the paper, not hidden: reminders are the most-missed Keep feature and the closest to genuine future work, whereas collaboration contradicts the private-silo account model.
+YouNotes' divergences from the baseline are deliberate and two-directional: it *adds* rich text (headings, math, code), video and arbitrary file attachments, Excalidraw scenes, full-database backup, and deep customisation; it *drops* collaboration, OCR and app-raised notifications.
+The drops should be argued in the paper, not hidden: collaboration contradicts the private-silo account model.
+Reminders, the most-missed Keep feature, are kept but reshaped: a web app without push cannot fire anything while closed, so a Reminder is recorded on the Note and its alarm is handed to the user's calendar ([ADR 0021](../adr/0021-reminders-are-handed-off-to-the-calendar.md)).
 
 ## 3. Self-hosted and open-source note managers
 
