@@ -50,5 +50,9 @@ Only something the operating system itself schedules can promise that, and the o
 - **How the file reaches the calendar is unverified on a device**, and is isolated for that reason behind one function, `handOff(file)`: share the file when `navigator.canShare({ files })` allows it, otherwise download it.
   Whether an installed standalone PWA on Android opens the calendar's add-event screen from either path can only be measured in the installed app; if neither does, the fix lives inside that function (a Google Calendar template link is the known third option).
 - Google Calendar reportedly ignores `VALARM` on import and applies the user's default notification, so the app controls *when the event is*, not necessarily when the phone buzzes.
-- A one-shot Reminder whose time has passed stays on the Card, muted, until the user clears it: it is a record, and nothing in the app knows whether it was acted on.
+- A one-shot Reminder whose time has passed stays on the Card, struck through, **for a day**, and after that the Note reads as having no Reminder: no chip, the bell unlit, the popover empty (amended 2026-09-20; it first stayed until cleared, and a wall of struck chips is litter).
+  This is a way of *showing* the Note and never a write, as Sinking is for a Checklist.
+  The app clearing the fields itself was rejected: it would bump `updatedAt`, reorder a feed sorted by last edit, sync as an edit in M5, and need a sweep - the timer this design exists to avoid.
+  The cost is two stale fields on the row until the next Reminder overwrites them; they travel in Backup and Sync and mean nothing.
+  A repeating Reminder never lapses, because the calendar is still firing it.
 - If M5 ever revisits push, the fields do not change; firing would be an added channel, not a new model.
