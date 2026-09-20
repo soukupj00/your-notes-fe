@@ -129,6 +129,18 @@ In the feed views that heading is `sr-only` - the visible title row was dropped 
 
 `NoteTagsBar` (pills + the "＋ Label" popover) is the one place labels are assigned; it resolves an unsaved draft's id lazily through the editor's `ensureNoteId`, the same queue attachments use. `TagPills` renders a note's labels read-only on `NoteCard`, tinted from the shared Note/Tag palette (`lib/note-colors.ts`) via `NoteColorPicker`. `/labels` (`src/pages/labels.tsx`) is the manage view: create, inline rename, colour, merge-into, delete. It is a Destination beside Archive and Trash rather than a page inside Settings - `navItems.ts` had always listed it there, and Settings no longer carries a section that only links to it.
 
+### Reminders (`src/lib/reminder*.ts`, `src/lib/hand-off.ts`, `src/components/reminders/`)
+
+A Reminder is two unindexed fields on the Note, `remindAt` and `repeat` ([ADR 0021](./docs/adr/0021-reminders-are-handed-off-to-the-calendar.md)).
+**The app never notifies** - no Notification permission, no service-worker code, no timers - because a web app without push cannot fire anything while closed; the alarm belongs to the user's calendar.
+Setting a Reminder *is* handing it off: `useNoteReminder` (`src/components/notes/useNoteReminder.ts`, beside `NoteEditorDialog` rather than inside it, which is already the app's longest file) persists the draft, builds the `.ics` (`lib/reminder-ics.ts`, hand-written - the plan of 2026-09-20 records why no package), calls `handOff`, and only then writes the fields; a dismissed share sheet writes nothing.
+The bell is lit last, after the write rather than before it: colour and pin are optimistic because the tap should answer instantly, but a lit bell over a failed write would promise an alarm that nothing recorded.
+`remindAt` is a **local wall-clock string** (`YYYY-MM-DDTHH:mm`), the one deliberate exception to the ISO-timestamp convention, written to the file as a floating time so 09:00 stays 09:00 across a DST change.
+`handOff` (share on a coarse pointer that can share files, otherwise download) is the one function whose real behaviour only exists on a device, which is why it is one function.
+The `ReminderButton` sits in `NoteEditorBar` because a draft can carry one; the Card's `ReminderChip` is a record, not a control.
+A one-shot whose time has gone is **struck through**, not faded: the chip is already at the 11px label floor, and the obvious `opacity-60` measured 2.68:1 light and 3.46:1 dark, under WCAG 1.4.3 in both themes.
+The strike is pixels only, so the past state is also in the chip's accessible name (`reminders.chipPast`).
+
 ### Backup (`src/lib/backup.ts`, `src/components/settings/`)
 
 The whole database exports to a `.zip`: `manifest.json` (notes, tags, noteTags, attachment metadata, and an always-empty `settings` array kept for archive compatibility) plus one entry per attachment blob at `attachments/<id>` (and `attachments/<id>.thumb`).
