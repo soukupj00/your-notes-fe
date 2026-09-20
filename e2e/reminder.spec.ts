@@ -56,7 +56,7 @@ test.describe('Reminders', () => {
     await page.goBack();
     const chip = page.getByTestId('reminder-chip');
     await expect(chip).toBeVisible();
-    await expect(chip).toContainText('09:00');
+    await expect(chip).toContainText(/0?9:00/);
 
     await page.reload();
     await expect(page.getByTestId('reminder-chip')).toBeVisible();

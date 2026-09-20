@@ -16,8 +16,8 @@ describe('ReminderChip', () => {
   it('names itself for assistive tech and shows the time', () => {
     render(<ReminderChip reminder={{ remindAt: '2030-03-05T09:00' }} now={now} />);
     const chip = screen.getByTestId('reminder-chip');
-    expect(chip).toHaveAccessibleName(/^reminders\.chip\|.*09:00/);
-    expect(chip).toHaveTextContent('09:00');
+    expect(chip).toHaveAccessibleName(/^reminders\.chip\|.*0?9:00/);
+    expect(chip).toHaveTextContent(/0?9:00/);
     expect(chip).toHaveAttribute('data-past', 'false');
   });
 

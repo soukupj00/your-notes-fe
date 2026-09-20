@@ -35,9 +35,10 @@ describe('reminderOf', () => {
 });
 
 describe('formatReminderTime', () => {
-  it('reads the stored string as local time', () => {
+  it('reads the stored string as local time, hour without a leading zero', () => {
     const label = formatReminderTime('2030-03-04T09:00', 'en-GB');
-    expect(label).toContain('09:00');
+    expect(label).toContain('9:00');
+    expect(label).not.toContain('09:00');
     expect(label).toContain('4 Mar');
   });
 

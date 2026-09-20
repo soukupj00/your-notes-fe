@@ -34,7 +34,7 @@ export function formatReminderTime(remindAt: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, {
     day: 'numeric',
     month: 'short',
-    hour: '2-digit',
+    hour: 'numeric',
     minute: '2-digit',
   }).format(new Date(remindAt));
 }

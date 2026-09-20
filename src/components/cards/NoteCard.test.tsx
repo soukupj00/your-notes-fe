@@ -195,7 +195,7 @@ describe('NoteCard', () => {
   it('shows a reminder as a chip, and hides it once the note is trashed', () => {
     const reminder = { remindAt: '2030-03-04T09:00', repeat: 'weekly' } as const;
     const { unmount } = render(<NoteCard note={makeNote(reminder)} onSelect={vi.fn()} />);
-    expect(screen.getByTestId('reminder-chip')).toHaveTextContent('09:00');
+    expect(screen.getByTestId('reminder-chip')).toHaveTextContent(/0?9:00/);
     unmount();
 
     // The fields stay on the row, so Restore brings the chip back - only the
