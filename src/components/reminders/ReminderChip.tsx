@@ -27,9 +27,16 @@ export function ReminderChip({ reminder, now }: { reminder: Reminder; now?: Date
     <span
       data-testid="reminder-chip"
       data-past={past}
+      // `role="img"`: the chip is one named unit, so its two truncating runs
+      // are read as the whole Reminder rather than as fragments of it - and the
+      // name carries the untruncated string the pixels may have cut.
       role="img"
       aria-label={
-        repeat ? t('reminders.chipRepeating', { when, repeat }) : t('reminders.chip', { when })
+        repeat
+          ? t('reminders.chipRepeating', { when, repeat })
+          : // A repeating Reminder is never past (`isReminderPast`), so there is
+            // no repeating-past variant to write. The strike is pixels only.
+            t(past ? 'reminders.chipPast' : 'reminders.chip', { when })
       }
       className={clsx(
         'inline-flex min-w-0 max-w-full items-center gap-1 overflow-hidden rounded-full border border-border px-2 py-[3px] text-label text-muted-foreground normal-case tracking-normal',

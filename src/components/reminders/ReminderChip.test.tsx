@@ -21,9 +21,13 @@ describe('ReminderChip', () => {
     expect(chip).toHaveAttribute('data-past', 'false');
   });
 
-  it('is muted once a one-shot has passed', () => {
+  it('is struck through once a one-shot has passed, and says so in its name', () => {
     render(<ReminderChip reminder={{ remindAt: '2030-03-04T09:00' }} now={now} />);
-    expect(screen.getByTestId('reminder-chip')).toHaveAttribute('data-past', 'true');
+    const chip = screen.getByTestId('reminder-chip');
+    expect(chip).toHaveAttribute('data-past', 'true');
+    // The strike is pixels only; the name is the whole of what a screen reader
+    // gets, so the past state has to be in it.
+    expect(chip).toHaveAccessibleName(/^reminders\.chipPast\|/);
   });
 
   it('says how it repeats, and is never past', () => {

@@ -459,6 +459,7 @@
     "oneWay": "Kalendář si uchovává vlastní kopii a připomíná sám. Zrušení nebo změna tady ji v kalendáři neodstraní.",
     "fallbackTitle": "Připomenutí z YouNotes",
     "chip": "Připomenutí: {{when}}",
+    "chipPast": "Proběhlé připomenutí: {{when}}",
     "chipRepeating": "Připomenutí: {{when}}, {{repeat}}"
   },
   "labels": {

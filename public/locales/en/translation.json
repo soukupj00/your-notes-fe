@@ -458,6 +458,7 @@
     "oneWay": "Your calendar keeps its own copy and does the reminding. Clearing or changing this here does not remove it there.",
     "fallbackTitle": "YouNotes reminder",
     "chip": "Reminder: {{when}}",
+    "chipPast": "Past reminder: {{when}}",
     "chipRepeating": "Reminder: {{when}}, {{repeat}}"
   },
   "labels": {
