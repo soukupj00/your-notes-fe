@@ -29,10 +29,10 @@ interface NoteEditorBarProps {
  * The editor's note bar: the moves that belong to the note as an object rather
  * than to the text being typed.
  *
- * It carries **labels, a Reminder, colour and pin, and nothing else**. Archive and trash
- * are deliberately absent: the card's foot rail is visible at rest on every
- * input type (revised 2026-07-31), so an editor-side copy would duplicate a
- * control that is already one tap away. The test that separates them is whether
+ * It carries **labels, a Reminder, colour and pin, and nothing else**. Archive
+ * and trash are deliberately absent: the card's foot rail is visible at rest on
+ * every input type (revised 2026-07-31), so an editor-side copy would duplicate
+ * a control that is already one tap away. The test that separates them is whether
  * an action can apply to a note that has no card yet - a draft captured from the
  * FAB can be coloured, labelled and pinned, but archiving or trashing it means
  * nothing. A Reminder passes the same test - a draft captured from the FAB can

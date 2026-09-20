@@ -382,6 +382,30 @@ describe('NoteEditorDialog', () => {
     expect((await testStore.notes.get(note.id))?.remindAt).toBeUndefined();
   });
 
+  it('leaves the bell unlit when the write fails after a successful hand-off', async () => {
+    const note = makeNote();
+    await testStore.notes.add(note);
+    const update = vi
+      .spyOn(testStore.notes, 'update')
+      .mockRejectedValueOnce(new Error('quota exceeded'));
+
+    render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
+    await waitFor(() => expect(headerInput()).toHaveValue('Original header'));
+    await setReminderFromBar();
+
+    // The calendar was given the file, so the hand-off is not what went wrong -
+    // the store is. A lit bell would promise an alarm nothing recorded.
+    await waitFor(() => expect(update).toHaveBeenCalled());
+    // The popover is modal and stays open on a failure, which puts the trigger
+    // behind it; close it to reach the bell the user would be looking at.
+    await userEvent.keyboard('{Escape}');
+    expect(await screen.findByRole('button', { name: 'reminders.button' })).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    );
+    update.mockRestore();
+  });
+
   it('pins and unpins an existing note from the bar', async () => {
     const note = makeNote();
     await testStore.notes.add(note);

@@ -263,8 +263,9 @@ export function NoteEditorDialog({
   }, [header, body, enqueueSave]);
 
   /**
-   * The note bar: labels, a Reminder, colour and pin, in the scroll flow rather than pinned
-   * - the format toolbar is the only chrome that has to stay above the keyboard.
+   * The note bar: labels, a Reminder, colour and pin, in the scroll flow rather
+   * than pinned - the format toolbar is the only chrome that has to stay above
+   * the keyboard.
    *
    * One element, rendered in one of two places, because the two breakpoints have
    * genuinely different boxes to put it in. On mobile it goes *through* the

@@ -28,6 +28,12 @@ export function useNoteReminder(
   // back are the Note's id - a few milliseconds, well inside the tap's
   // transient activation, which `navigator.share` needs.
   //
+  // The bell is lit last, after the write rather than before it: colour and pin
+  // are optimistic because the tap should answer instantly, but here the user
+  // has already waited on a share sheet and the button is `busy` throughout, so
+  // there is nothing to be optimistic about - and a lit bell over a write that
+  // failed would promise an alarm that nothing recorded.
+  //
   // An otherwise empty draft is still purged on close, as a coloured one is;
   // the calendar event then links to a Note that is gone and the app's
   // not-found path handles the link. Reminding yourself of nothing is rare
@@ -44,17 +50,26 @@ export function useNoteReminder(
         fallbackTitle: t('reminders.fallbackTitle'),
       });
       if ((await handOff(reminderFile(ics))) === 'cancelled') return false;
+      try {
+        await updateNote(id, { remindAt: next.remindAt, repeat: next.repeat });
+      } catch (error) {
+        // The same answer a dismissed share gets: the bell stays unlit and the
+        // popover stays open, so the one thing the user can do about it - try
+        // again - is where they left off. Reported rather than rethrown because
+        // the caller is a click handler, and an unhandled rejection is not a UI.
+        console.error('useNoteReminder: failed to record the Reminder', error);
+        return false;
+      }
       setReminder(next);
-      await updateNote(id, { remindAt: next.remindAt, repeat: next.repeat });
       return true;
     },
     [ensureNoteId, updateNote, headerRef, bodyRef, setReminder, t]
   );
 
   const handleReminderClear = useCallback(async () => {
-    setReminder(undefined);
     const id = await ensureNoteId();
     await updateNote(id, { remindAt: undefined, repeat: undefined });
+    setReminder(undefined);
   }, [ensureNoteId, updateNote, setReminder]);
 
   return { handleReminderSet, handleReminderClear };
