@@ -1,3 +1,4 @@
+import { clsx } from 'clsx';
 import { Check } from 'lucide-react';
 import { AnimatePresence, m } from 'motion/react';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +7,6 @@ import { useNoteSearchState } from '@/hooks/useNoteSearchState.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { resolveTransition } from '@/lib/motion.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
-import { cn } from '@/lib/utils.ts';
 
 /**
  * Label filters for the feed, shown only once a search is under way - an
@@ -37,7 +37,10 @@ export function TagFilterBar() {
                 aria-pressed={selected}
                 onClick={() => toggleTag(tag.id)}
                 {...noteColorAttrs(tag.color)}
-                className={cn(
+                // `clsx`, not `cn`, for the same reason as `OverflowCount`:
+                // tailwind-merge reads `text-label` as a text colour and drops
+                // it next to `text-note-on-chip`, taking the 11px with it.
+                className={clsx(
                   'flex min-h-11 items-center gap-1 rounded-full bg-note-chip px-3 py-1 text-label text-note-on-chip uppercase transition-shadow',
                   'hover:shadow-rest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   // Selection is carried by a real ring rather than by opacity:
