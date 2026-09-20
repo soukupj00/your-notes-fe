@@ -25,9 +25,13 @@ export function isReminderPast(reminder: Reminder, now = new Date()): boolean {
   return !reminder.repeat && new Date(reminder.remindAt) < now;
 }
 
+/**
+ * No `weekday`: it is the one part the reader can derive from the date, and in
+ * en it costs the chip ~36px of an ~86px text budget at phone width - so the
+ * run that gets cut is the time, which is the whole point of the record.
+ */
 export function formatReminderTime(remindAt: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, {
-    weekday: 'short',
     day: 'numeric',
     month: 'short',
     hour: '2-digit',

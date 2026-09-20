@@ -40,4 +40,11 @@ describe('formatReminderTime', () => {
     expect(label).toContain('09:00');
     expect(label).toContain('4 Mar');
   });
+
+  it('leaves the weekday out, so the time is never what the chip cuts', () => {
+    // Measured, not guessed: with `weekday: 'short'` the en label wants ~122px
+    // of the ~86px a chip gets on a 390px card, and what overflows is the tail
+    // - the time, which is the whole record.
+    expect(formatReminderTime('2030-03-04T09:00', 'en-GB')).not.toContain('Mon');
+  });
 });
