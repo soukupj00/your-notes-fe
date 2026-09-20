@@ -140,6 +140,8 @@ The bell is lit last, after the write rather than before it: colour and pin are 
 The `ReminderButton` sits in `NoteEditorBar` because a draft can carry one; the Card's `ReminderChip` is a record, not a control.
 A one-shot whose time has gone is **struck through**, not faded: the chip is already at the 11px label floor, and the obvious `opacity-60` measured 2.68:1 light and 3.46:1 dark, under WCAG 1.4.3 in both themes.
 The strike is pixels only, so the past state is also in the chip's accessible name (`reminders.chipPast`).
+It stays for a day and then lapses: `reminderOf` (`lib/reminder.ts`), the one gate the chip and the bell both read through, stops returning a one-shot more than 24h past - a way of showing the Note, never a write, so nothing bumps `updatedAt` and there is still no timer.
+The popover's two actions are **stacked**, not side by side: together their labels are wider than the popover in Czech, and `e2e/reminder.spec.ts` measures that every button sits inside it.
 
 ### Backup (`src/lib/backup.ts`, `src/components/settings/`)
 

@@ -51,6 +51,27 @@ describe('reminderOf', () => {
       repeat: undefined,
     });
   });
+
+  describe('a one-shot that has passed', () => {
+    const note = { remindAt: '2030-03-04T09:00' };
+
+    it('is still a Reminder for a day, so the Card can show it struck through', () => {
+      expect(reminderOf(note, new Date(2030, 2, 5, 9, 0))).toEqual({
+        remindAt: '2030-03-04T09:00',
+        repeat: undefined,
+      });
+    });
+
+    it('stops being one once it is more than a day gone', () => {
+      expect(reminderOf(note, new Date(2030, 2, 5, 9, 1))).toBeUndefined();
+    });
+
+    it('never lapses while it repeats - the calendar is still firing it', () => {
+      expect(
+        reminderOf({ remindAt: '2020-01-01T08:00', repeat: 'daily' }, new Date(2030, 2, 5, 9, 1))
+      ).toEqual({ remindAt: '2020-01-01T08:00', repeat: 'daily' });
+    });
+  });
 });
 
 describe('formatReminderTime', () => {

@@ -79,6 +79,19 @@ test.describe('Reminders', () => {
     await expect(page.getByLabel('Date and time')).toBeHidden();
 
     await page.getByRole('button', { name: 'Reminder' }).click();
+
+    // With a Reminder set the popover carries both actions, and side by side
+    // their labels are wider than the popover. Measured rather than assumed:
+    // every button must sit inside the popover's box and show its whole label.
+    const popover = page.getByTestId('reminder-popover');
+    const box = await popover.boundingBox();
+    for (const button of await popover.getByRole('button').all()) {
+      const b = await button.boundingBox();
+      expect(b?.x).toBeGreaterThanOrEqual(box?.x ?? 0);
+      expect((b?.x ?? 0) + (b?.width ?? 0)).toBeLessThanOrEqual((box?.x ?? 0) + (box?.width ?? 0));
+      expect(await button.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+    }
+
     await page.getByRole('button', { name: 'Clear reminder' }).click();
     await page.goBack();
 

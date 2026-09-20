@@ -7,16 +7,32 @@ export const REMINDER_REPEATS: readonly ReminderRepeat[] = ['daily', 'weekly', '
 
 const REMIND_AT_SHAPE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 
+/** How long a one-shot stays on show, struck through, after its time has gone. */
+const PAST_REMINDER_SHOWN_MS = 24 * 60 * 60 * 1000;
+
 /**
  * A backup's `remindAt` is unvalidated (`noteSchema` is a loose schema), so a
  * hand-edited or foreign archive can put any string there. This is the one
  * gate every reader of the field goes through - the chip, the bell and the
  * `.ics` - so a malformed value never reaches `Intl.DateTimeFormat` or `Date`,
  * either of which can throw or silently misread it.
+ *
+ * It is also where a one-shot lapses: more than a day past, the Note reads as
+ * having no Reminder - no chip, bell unlit, popover empty. That is a way of
+ * *showing* the Note, never a write (as Sinking is for a Checklist): the app
+ * clearing the fields itself would bump `updatedAt`, reorder the feed, sync as
+ * an edit and need a sweep. The stale fields simply wait to be overwritten by
+ * the next Reminder. Nothing re-renders at the 24h mark on purpose - no timers
+ * (ADR 0021) - so the chip goes on the next render after it.
  */
-export function reminderOf(note: Pick<Note, 'remindAt' | 'repeat'>): Reminder | undefined {
+export function reminderOf(
+  note: Pick<Note, 'remindAt' | 'repeat'>,
+  now = new Date()
+): Reminder | undefined {
   if (!note.remindAt || !REMIND_AT_SHAPE.test(note.remindAt)) return undefined;
-  if (Number.isNaN(new Date(note.remindAt).getTime())) return undefined;
+  const at = new Date(note.remindAt).getTime();
+  if (Number.isNaN(at)) return undefined;
+  if (!note.repeat && now.getTime() - at > PAST_REMINDER_SHOWN_MS) return undefined;
   return { remindAt: note.remindAt, repeat: note.repeat };
 }
 
