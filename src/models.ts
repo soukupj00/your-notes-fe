@@ -5,6 +5,9 @@
  */
 export type NoteState = 'active' | 'archived' | 'trashed';
 
+/** How often a Reminder repeats; absent means it happens once. */
+export type ReminderRepeat = 'daily' | 'weekly' | 'monthly' | 'yearly';
+
 export interface Note {
   id: string; // uuid v4
   header?: string;
@@ -14,6 +17,10 @@ export interface Note {
   pinnedAt?: string; // ISO; presence = pinned, value orders pinned notes. Cleared on archive/trash
   color?: string; // NoteColor token key (see lib/note-colors.ts), never a raw color value
   trashedAt?: string; // ISO; set on entry to trash, drives the 30-day purge sweep
+  // A Reminder (CONTEXT.md, ADR 0021). The app records it and never sounds it -
+  // the alarm belongs to the calendar it was handed to.
+  remindAt?: string; // LOCAL wall clock 'YYYY-MM-DDTHH:mm', deliberately not ISO/UTC: 09:00 stays 09:00 across DST
+  repeat?: ReminderRepeat; // absent = one-shot
   tags?: Tag[];
   createdAt: string; // ISO
   updatedAt: string; // ISO

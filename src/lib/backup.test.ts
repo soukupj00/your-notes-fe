@@ -23,6 +23,8 @@ const note: Note = {
   state: 'active',
   pinnedAt: NOW,
   color: 'sage',
+  remindAt: '2030-03-04T09:00',
+  repeat: 'weekly',
   createdAt: NOW,
   updatedAt: NOW,
 };
