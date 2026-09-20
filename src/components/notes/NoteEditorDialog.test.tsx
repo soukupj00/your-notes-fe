@@ -50,6 +50,13 @@ vi.mock('@/components/editor/editor.tsx', () => ({
   ),
 }));
 
+// Hand-off is the one thing the suite cannot exercise: it reaches for
+// `navigator.share` and a download. Its result is what the caller branches on.
+const handOff = vi.hoisted(() =>
+  vi.fn<(file: File) => Promise<'shared' | 'downloaded' | 'cancelled'>>(async () => 'downloaded')
+);
+vi.mock('@/lib/hand-off.ts', () => ({ handOff }));
+
 function makeNote(overrides: Partial<Note> = {}): Note {
   const now = new Date().toISOString();
   return {
@@ -335,6 +342,44 @@ describe('NoteEditorDialog', () => {
     await waitFor(async () => expect((await testStore.notes.get(note.id))?.color).toBe('red'));
     // The tint is the picker's feedback, so it must move with the choice.
     expect(dialogSurface()).toHaveAttribute('data-note-color', 'red');
+  });
+
+  // Setting a Reminder IS handing off (ADR 0021), so the two outcomes of the
+  // hand-off are the two cases worth pinning: the fields exist only afterwards.
+  async function setReminderFromBar() {
+    await userEvent.click(screen.getByRole('button', { name: 'reminders.button' }));
+    fireEvent.change(await screen.findByLabelText('reminders.when'), {
+      target: { value: '2030-03-04T09:00' },
+    });
+    await userEvent.selectOptions(screen.getByLabelText('reminders.repeat'), 'weekly');
+    await userEvent.click(screen.getByRole('button', { name: 'reminders.addToCalendar' }));
+  }
+
+  it('records a Reminder on a draft once the calendar has been given its file', async () => {
+    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+
+    await setReminderFromBar();
+
+    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1));
+    await waitFor(async () => {
+      const [saved] = await testStore.notes.list();
+      expect(saved.remindAt).toBe('2030-03-04T09:00');
+      expect(saved.repeat).toBe('weekly');
+    });
+    expect(handOff).toHaveBeenCalledTimes(1);
+  });
+
+  it('records nothing when the hand-off was dismissed', async () => {
+    handOff.mockResolvedValueOnce('cancelled');
+    const note = makeNote();
+    await testStore.notes.add(note);
+
+    render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
+    await waitFor(() => expect(headerInput()).toHaveValue('Original header'));
+    await setReminderFromBar();
+
+    await waitFor(() => expect(handOff).toHaveBeenCalled());
+    expect((await testStore.notes.get(note.id))?.remindAt).toBeUndefined();
   });
 
   it('pins and unpins an existing note from the bar', async () => {

@@ -1,9 +1,11 @@
 import { Pin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { NoteColorButton } from '@/components/color-picker/NoteColorButton.tsx';
+import { ReminderButton } from '@/components/reminders/ReminderButton.tsx';
 import { NoteTagsBar } from '@/components/tags/NoteTagsBar.tsx';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { noteControlButton } from '@/lib/note-controls.ts';
+import type { Reminder } from '@/lib/reminder.ts';
 import { cn } from '@/lib/utils.ts';
 
 interface NoteEditorBarProps {
@@ -17,19 +19,24 @@ interface NoteEditorBarProps {
   pinnable: boolean;
   onColorChange: (color?: string) => void;
   onPinToggle: () => void;
+  reminder?: Reminder;
+  /** Hands the Reminder to the calendar and saves it; false when the user backed out. */
+  onReminderSet: (next: Reminder) => Promise<boolean>;
+  onReminderClear: () => void;
 }
 
 /**
  * The editor's note bar: the moves that belong to the note as an object rather
  * than to the text being typed.
  *
- * It carries **colour, labels and pin, and nothing else**. Archive and trash
+ * It carries **labels, a Reminder, colour and pin, and nothing else**. Archive and trash
  * are deliberately absent: the card's foot rail is visible at rest on every
  * input type (revised 2026-07-31), so an editor-side copy would duplicate a
  * control that is already one tap away. The test that separates them is whether
  * an action can apply to a note that has no card yet - a draft captured from the
  * FAB can be coloured, labelled and pinned, but archiving or trashing it means
- * nothing.
+ * nothing. A Reminder passes the same test - a draft captured from the FAB can
+ * be given one (ADR 0021).
  *
  * It is not sticky. The editor's format toolbar is the only fixed chrome on
  * mobile, because formatting is a typing move and these are not; a second bar
@@ -43,6 +50,9 @@ export function NoteEditorBar({
   pinnable,
   onColorChange,
   onPinToggle,
+  reminder,
+  onReminderSet,
+  onReminderClear,
 }: NoteEditorBarProps) {
   const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
@@ -57,6 +67,13 @@ export function NoteEditorBar({
       <NoteTagsBar noteId={noteId} ensureNoteId={ensureNoteId} className="min-w-0 flex-1" />
 
       <div className="flex shrink-0 items-center gap-0.5">
+        <ReminderButton
+          reminder={reminder}
+          onSet={onReminderSet}
+          onClear={onReminderClear}
+          className={noteControlButton(reducedMotion)}
+        />
+
         <NoteColorButton
           value={color}
           onChange={onColorChange}

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { CaptureKind } from '@/components/editor/editor.tsx';
 import { Editor, type EditorHandle } from '@/components/editor/editor.tsx';
 import { NoteEditorBar } from '@/components/notes/NoteEditorBar.tsx';
+import { useNoteReminder } from '@/components/notes/useNoteReminder.ts';
 import { AppBar } from '@/components/ui/AppBar.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog.tsx';
@@ -17,6 +18,7 @@ import { bodyHasAttachment, extractAttachmentIds } from '@/lib/attachment-html.t
 import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { requestPersistentStorage } from '@/lib/persistentStorage.ts';
+import { type Reminder, reminderOf } from '@/lib/reminder.ts';
 import { stripHtml } from '@/lib/utils.ts';
 import type { NoteState } from '@/models.ts';
 
@@ -107,6 +109,7 @@ export function NoteEditorDialog({
   const [color, setColor] = useState<string | undefined>(undefined);
   const [pinnedAt, setPinnedAt] = useState<string | undefined>(undefined);
   const [state, setState] = useState<NoteState>('active');
+  const [reminder, setReminder] = useState<Reminder | undefined>(undefined);
 
   // A checklist draft opens focused in the body so the first item is ready.
   const focusBody = !noteId && !!initialBody;
@@ -146,6 +149,7 @@ export function NoteEditorDialog({
         setHeader(n.header ?? '');
         setBody(n.body ?? '');
         setColor(n.color);
+        setReminder(reminderOf(n));
         setPinnedAt(n.pinnedAt);
         setState(n.state);
         return;
@@ -204,6 +208,13 @@ export function NoteEditorDialog({
     return chained;
   }, [createNote, draftId]);
 
+  const { handleReminderSet, handleReminderClear } = useNoteReminder(
+    ensureNoteId,
+    headerRef,
+    bodyRef,
+    setReminder
+  );
+
   const enqueueSave = useCallback(
     (h: string, b: string) => {
       saveChainRef.current = saveChainRef.current.then(() => persist(h, b));
@@ -252,7 +263,7 @@ export function NoteEditorDialog({
   }, [header, body, enqueueSave]);
 
   /**
-   * The note bar: labels, colour and pin, in the scroll flow rather than pinned
+   * The note bar: labels, a Reminder, colour and pin, in the scroll flow rather than pinned
    * - the format toolbar is the only chrome that has to stay above the keyboard.
    *
    * One element, rendered in one of two places, because the two breakpoints have
@@ -273,6 +284,9 @@ export function NoteEditorDialog({
       pinnable={state === 'active'}
       onColorChange={(next) => void handleColorChange(next)}
       onPinToggle={() => void handlePinToggle()}
+      reminder={reminder}
+      onReminderSet={handleReminderSet}
+      onReminderClear={() => void handleReminderClear()}
     />
   );
 
