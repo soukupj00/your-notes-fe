@@ -34,10 +34,10 @@ export function useNoteReminder(
   // there is nothing to be optimistic about - and a lit bell over a write that
   // failed would promise an alarm that nothing recorded.
   //
-  // An otherwise empty draft is still purged on close, as a coloured one is;
-  // the calendar event then links to a Note that is gone and the app's
-  // not-found path handles the link. Reminding yourself of nothing is rare
-  // enough not to earn a rule of its own.
+  // An otherwise empty draft is kept on close, unlike a coloured one: the
+  // calendar was already handed a file linking to this Note's id, and the
+  // hand-off cannot be taken back, so purging the Note would leave that
+  // event pointing at nothing.
   const handleReminderSet = useCallback(
     async (next: Reminder): Promise<boolean> => {
       const id = await ensureNoteId();

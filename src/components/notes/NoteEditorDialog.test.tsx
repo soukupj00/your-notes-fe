@@ -369,6 +369,24 @@ describe('NoteEditorDialog', () => {
     expect(handOff).toHaveBeenCalledTimes(1);
   });
 
+  // The calendar was already handed a file linking to this note before the
+  // dialog closes; purging it here would leave that event pointing at
+  // nothing, even though the note has no header or body of its own.
+  it('keeps a draft that was given a Reminder, even with no header or body', async () => {
+    const onClose = vi.fn();
+    render(<NoteEditorDialog noteId={null} onClose={onClose} />);
+
+    await setReminderFromBar();
+    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1));
+
+    await userEvent.click(closeButton());
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    const [saved] = await testStore.notes.list();
+    expect(saved).toBeDefined();
+    expect(saved.remindAt).toBe('2030-03-04T09:00');
+  });
+
   it('records nothing when the hand-off was dismissed', async () => {
     handOff.mockResolvedValueOnce('cancelled');
     const note = makeNote();

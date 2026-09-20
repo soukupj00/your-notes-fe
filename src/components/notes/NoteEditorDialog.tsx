@@ -295,7 +295,10 @@ export function NoteEditorDialog({
     if (timerRef.current) clearTimeout(timerRef.current);
     await enqueueSave(header, body); // flush the latest edit
     // Discard a note that ended up empty (covers a draft typed then cleared).
-    if (idRef.current != null && isEmpty(header, body)) {
+    // A Reminder keeps it even so: the calendar was already handed a file
+    // linking to this note's id, and purging it would leave that event
+    // pointing at nothing.
+    if (idRef.current != null && isEmpty(header, body) && !reminder) {
       await purgeNote(idRef.current); // cascade-deletes its attachments (Task 4)
       idRef.current = null;
     } else if (idRef.current != null) {
@@ -304,7 +307,7 @@ export function NoteEditorDialog({
       await collectOrphans(idRef.current, extractAttachmentIds(body));
     }
     onClose();
-  }, [enqueueSave, header, body, purgeNote, collectOrphans, onClose]);
+  }, [enqueueSave, header, body, reminder, purgeNote, collectOrphans, onClose]);
 
   return (
     <Dialog
