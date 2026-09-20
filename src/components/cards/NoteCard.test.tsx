@@ -7,7 +7,7 @@ import { NoteCard } from './NoteCard.tsx';
 
 // Keys pass through untranslated so assertions are stable.
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en-GB' } }),
 }));
 
 const motion = { reduced: false };
@@ -190,6 +190,23 @@ describe('NoteCard', () => {
     await userEvent.click(screen.getByRole('button', { name: 'notes.pin' }));
 
     expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it('shows a reminder as a chip, and hides it once the note is trashed', () => {
+    const reminder = { remindAt: '2030-03-04T09:00', repeat: 'weekly' } as const;
+    const { unmount } = render(<NoteCard note={makeNote(reminder)} onSelect={vi.fn()} />);
+    expect(screen.getByTestId('reminder-chip')).toHaveTextContent('09:00');
+    unmount();
+
+    // The fields stay on the row, so Restore brings the chip back - only the
+    // card stops showing an appointment a note on its way out no longer keeps.
+    render(
+      <NoteCard
+        note={makeNote({ ...reminder, state: 'trashed', trashedAt: new Date().toISOString() })}
+        onSelect={vi.fn()}
+      />
+    );
+    expect(screen.queryByTestId('reminder-chip')).not.toBeInTheDocument();
   });
 
   it('hides the pin where pinning is meaningless', () => {

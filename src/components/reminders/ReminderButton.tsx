@@ -15,8 +15,12 @@ type ReminderButtonProps = {
   className?: string;
 };
 
+// `dark:[color-scheme:dark]` is the only way to reach inside a native control:
+// the calendar glyph the browser paints in a `datetime-local`, the select's
+// arrow and the picker panel itself are UA-drawn, and at the default `normal`
+// they are painted black-on-black in the night theme. Measured in Chromium.
 const FIELD =
-  'h-9 w-full rounded-control border border-input bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+  'h-9 w-full rounded-control border border-input bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:[color-scheme:dark]';
 
 /**
  * The one place a Reminder is set (ADR 0021).

@@ -6,6 +6,7 @@ import { CardActions } from '@/components/cards/CardActions.tsx';
 import { CardMedia } from '@/components/cards/CardMedia.tsx';
 import { CardPin } from '@/components/cards/CardPin.tsx';
 import { NoteBody } from '@/components/NoteBody.tsx';
+import { ReminderChip } from '@/components/reminders/ReminderChip.tsx';
 import { TagPills } from '@/components/tags/TagPills.tsx';
 import { Card } from '@/components/ui/card.tsx';
 import { type LifecycleSnapshot, useNoteActions } from '@/hooks/data/useNoteActions.ts';
@@ -18,6 +19,7 @@ import { attachLongPress } from '@/lib/long-press.ts';
 import { stripAttachmentNodes } from '@/lib/note-attachments.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { pointOverText } from '@/lib/point-over-text.ts';
+import { reminderOf } from '@/lib/reminder.ts';
 import { cn, stripHtml } from '@/lib/utils.ts';
 import type { Note } from '@/models.ts';
 
@@ -55,6 +57,10 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
   // and push its own words off the bottom of the clamp.
   const prose = stripAttachmentNodes(note.body);
   const hasProse = stripHtml(prose).trim().length > 0;
+
+  // Hidden in Trash: a Note on its way out should not look like it still has
+  // an appointment. The fields stay on the row, so Restore brings the chip back.
+  const reminder = note.state === 'trashed' ? undefined : reminderOf(note);
 
   // Every lifecycle action follows the same contract: run the transition, then
   // offer its snapshot back as a one-click undo. Sharing the wrapper keeps a
@@ -270,6 +276,8 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
             line (list view, or any card wide enough); in the grid the pills wrap
             to a line of their own and either value looks the same. */}
         <div className="coarse:mt-1 mt-3 flex flex-wrap items-center gap-2">
+          {reminder && <ReminderChip reminder={reminder} />}
+
           <TagPills tags={tags} maxVisible={3} className="min-w-0" />
 
           <CardActions

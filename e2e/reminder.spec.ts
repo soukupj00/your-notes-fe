@@ -70,6 +70,14 @@ test.describe('Reminders', () => {
     await page.getByRole('button', { name: 'Add to calendar' }).click();
     await downloading;
 
+    // The download fires during the hand-off, before the Note is written and
+    // before the popover closes. Re-clicking the bell while it is still open
+    // would toggle it shut, so wait for the popover to be gone first. The field
+    // is what to wait on rather than the primary action: that button renames
+    // itself to "Update in calendar" the moment the Reminder is recorded, which
+    // is one render *before* the popover closes.
+    await expect(page.getByLabel('Date and time')).toBeHidden();
+
     await page.getByRole('button', { name: 'Reminder' }).click();
     await page.getByRole('button', { name: 'Clear reminder' }).click();
     await page.goBack();
@@ -106,9 +114,12 @@ test.describe('Reminders', () => {
   test('a cancelled share saves nothing', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'sharing is only attempted on a coarse pointer');
     await page.addInitScript(() => {
+      const w = globalThis as unknown as { __shareCalls: number };
+      w.__shareCalls = 0;
       Object.assign(navigator, {
         canShare: () => true,
         share: async () => {
+          w.__shareCalls += 1;
           throw new DOMException('cancelled', 'AbortError');
         },
       });
@@ -117,6 +128,16 @@ test.describe('Reminders', () => {
     await openNewNote(page, isMobile);
     await setWeeklyReminder(page);
     await page.getByRole('button', { name: 'Add to calendar' }).click();
+
+    // Without this the test is an absence that was already true before the tap:
+    // Escape could land before the share was even reached, and it would pass
+    // whatever the app does with a dismissal.
+    await expect
+      .poll(() =>
+        page.evaluate(() => (globalThis as unknown as { __shareCalls: number }).__shareCalls)
+      )
+      .toBe(1);
+
     await page.keyboard.press('Escape');
     await page.goBack();
 
