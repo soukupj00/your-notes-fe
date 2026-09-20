@@ -44,6 +44,13 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
   - **Trashed** — The Note is on its way out. Held for a grace period during which it can be restored, then permanently purged by a sweep. Distinct from Archived: trashing is *discarding with an undo window*.
 - **Pinned** — A flag, orthogonal to State, marking a Note the user wants surfaced at the top of the feed. Only meaningful while Active. Archiving or trashing a Note clears its Pinned status.
 - **Color** — An optional label color a user assigns to a Note for visual grouping. Stored as a palette *token* (a named entry), never a raw color value, so the concrete shade resolves from the active Theme and Vision Mode. A Note has at most one Color; the absence of one is the default surface.
+- **Reminder** — A time the user wants to be brought back to a Note, optionally repeating (daily, weekly, monthly, yearly). Orthogonal to State, and a Note has at most one.
+  A Reminder is a time *on the clock*, not an instant: "09:00" means nine in the morning wherever the user is, and stays nine across a daylight-saving change.
+  The app **records** a Reminder and never sounds it - the alarm belongs to the user's calendar (see **Hand-off**).
+  _Avoid_: notification, alarm, alert (the app raises none), due date (a Note is not a task)
+- **Hand-off** — Giving a Reminder to the user's calendar as an event, which is what makes it fire whether or not the app is running. Setting a Reminder *is* handing it off; there is no Reminder the calendar was never offered.
+  The Hand-off is one-way: the calendar keeps its own copy, which the app can offer to replace but can never see, change or remove. The event carries the Note's title and a link back to it, never its Body.
+  _Avoid_: sync (the calendar is not a synced store), export (that is Backup's word)
 - **Purge** — The permanent, irreversible removal of a Note and its Attachments, performed by a sweep the same way Orphan Attachments are reclaimed.
   Two things are purged, and they are the only two: a **Trashed** Note once its grace period elapses, and a **Prop** once its Tour ends.
   A Prop is purged from **Active** and immediately, with no grace period, because it was never the user's to restore.

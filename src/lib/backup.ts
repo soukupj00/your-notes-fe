@@ -260,7 +260,7 @@ export function backupFilename(suffix = '', now = new Date()): string {
 
 /** Hands a Blob to the browser as a download. Fire-and-forget: the browser may
  *  still show its own "where to save?" dialog, and we never hear the outcome. */
-function downloadBlob(blob: Blob, filename: string): void {
+export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;

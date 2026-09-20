@@ -124,6 +124,13 @@ describe('unsaved drafts', () => {
 
     await waitFor(async () => expect(await linkedTagIds('created-note')).toEqual(['t1']));
     expect(ensureNoteId).toHaveBeenCalledTimes(1);
+    // Wait on the checkbox itself, not the database, before the second click:
+    // the DB write can resolve a render ahead of the checkbox's own `checked`
+    // update, and a second click that lands in that gap toggles it from its
+    // still-unchecked state instead of the checked one it is meant to undo.
+    await waitFor(() =>
+      expect(within(popover).getByRole('checkbox', { name: 'Work' })).toBeChecked()
+    );
 
     // The resolved id is remembered: a second change must not create again.
     await userEvent.click(within(popover).getByRole('checkbox', { name: 'Work' }));

@@ -50,6 +50,13 @@ vi.mock('@/components/editor/editor.tsx', () => ({
   ),
 }));
 
+// Hand-off is the one thing the suite cannot exercise: it reaches for
+// `navigator.share` and a download. Its result is what the caller branches on.
+const handOff = vi.hoisted(() =>
+  vi.fn<(file: File) => Promise<'shared' | 'downloaded' | 'cancelled'>>(async () => 'downloaded')
+);
+vi.mock('@/lib/hand-off.ts', () => ({ handOff }));
+
 function makeNote(overrides: Partial<Note> = {}): Note {
   const now = new Date().toISOString();
   return {
@@ -335,6 +342,86 @@ describe('NoteEditorDialog', () => {
     await waitFor(async () => expect((await testStore.notes.get(note.id))?.color).toBe('red'));
     // The tint is the picker's feedback, so it must move with the choice.
     expect(dialogSurface()).toHaveAttribute('data-note-color', 'red');
+  });
+
+  // Setting a Reminder IS handing off (ADR 0021), so the two outcomes of the
+  // hand-off are the two cases worth pinning: the fields exist only afterwards.
+  async function setReminderFromBar() {
+    await userEvent.click(screen.getByRole('button', { name: 'reminders.button' }));
+    fireEvent.change(await screen.findByLabelText('reminders.when'), {
+      target: { value: '2030-03-04T09:00' },
+    });
+    await userEvent.selectOptions(screen.getByLabelText('reminders.repeat'), 'weekly');
+    await userEvent.click(screen.getByRole('button', { name: 'reminders.addToCalendar' }));
+  }
+
+  it('records a Reminder on a draft once the calendar has been given its file', async () => {
+    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+
+    await setReminderFromBar();
+
+    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1));
+    await waitFor(async () => {
+      const [saved] = await testStore.notes.list();
+      expect(saved.remindAt).toBe('2030-03-04T09:00');
+      expect(saved.repeat).toBe('weekly');
+    });
+    expect(handOff).toHaveBeenCalledTimes(1);
+  });
+
+  // The calendar was already handed a file linking to this note before the
+  // dialog closes; purging it here would leave that event pointing at
+  // nothing, even though the note has no header or body of its own.
+  it('keeps a draft that was given a Reminder, even with no header or body', async () => {
+    const onClose = vi.fn();
+    render(<NoteEditorDialog noteId={null} onClose={onClose} />);
+
+    await setReminderFromBar();
+    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1));
+
+    await userEvent.click(closeButton());
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    const [saved] = await testStore.notes.list();
+    expect(saved).toBeDefined();
+    expect(saved.remindAt).toBe('2030-03-04T09:00');
+  });
+
+  it('records nothing when the hand-off was dismissed', async () => {
+    handOff.mockResolvedValueOnce('cancelled');
+    const note = makeNote();
+    await testStore.notes.add(note);
+
+    render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
+    await waitFor(() => expect(headerInput()).toHaveValue('Original header'));
+    await setReminderFromBar();
+
+    await waitFor(() => expect(handOff).toHaveBeenCalled());
+    expect((await testStore.notes.get(note.id))?.remindAt).toBeUndefined();
+  });
+
+  it('leaves the bell unlit when the write fails after a successful hand-off', async () => {
+    const note = makeNote();
+    await testStore.notes.add(note);
+    const update = vi
+      .spyOn(testStore.notes, 'update')
+      .mockRejectedValueOnce(new Error('quota exceeded'));
+
+    render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
+    await waitFor(() => expect(headerInput()).toHaveValue('Original header'));
+    await setReminderFromBar();
+
+    // The calendar was given the file, so the hand-off is not what went wrong -
+    // the store is. A lit bell would promise an alarm nothing recorded.
+    await waitFor(() => expect(update).toHaveBeenCalled());
+    // The popover is modal and stays open on a failure, which puts the trigger
+    // behind it; close it to reach the bell the user would be looking at.
+    await userEvent.keyboard('{Escape}');
+    expect(await screen.findByRole('button', { name: 'reminders.button' })).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    );
+    update.mockRestore();
   });
 
   it('pins and unpins an existing note from the bar', async () => {

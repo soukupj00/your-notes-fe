@@ -442,6 +442,26 @@
     "create": "Vytvořit „{{name}}“",
     "remove": "Odebrat štítek {{name}}"
   },
+  "reminders": {
+    "button": "Připomenutí",
+    "when": "Datum a čas",
+    "repeat": "Opakování",
+    "repeats": {
+      "none": "Neopakuje se",
+      "daily": "Denně",
+      "weekly": "Týdně",
+      "monthly": "Měsíčně",
+      "yearly": "Ročně"
+    },
+    "addToCalendar": "Přidat do kalendáře",
+    "updateCalendar": "Aktualizovat v kalendáři",
+    "clear": "Zrušit připomenutí",
+    "oneWay": "Kalendář si uchovává vlastní kopii a připomíná sám. Zrušení nebo změna tady ji v kalendáři neodstraní.",
+    "fallbackTitle": "Připomenutí z YouNotes",
+    "chip": "Připomenutí: {{when}}",
+    "chipPast": "Proběhlé připomenutí: {{when}}",
+    "chipRepeating": "Připomenutí: {{when}}, {{repeat}}"
+  },
   "labels": {
     "empty": "Zatím žádné štítky.",
     "create": "Vytvořit štítek",

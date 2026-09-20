@@ -22,6 +22,8 @@ export function newNote(data: Partial<Note>): Note {
     pinnedAt: data.pinnedAt,
     color: data.color,
     trashedAt: data.trashedAt,
+    remindAt: data.remindAt,
+    repeat: data.repeat,
     createdAt: now,
     updatedAt: now,
   };

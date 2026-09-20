@@ -441,6 +441,26 @@
     "create": "Create \"{{name}}\"",
     "remove": "Remove label {{name}}"
   },
+  "reminders": {
+    "button": "Reminder",
+    "when": "Date and time",
+    "repeat": "Repeat",
+    "repeats": {
+      "none": "Does not repeat",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "yearly": "Yearly"
+    },
+    "addToCalendar": "Add to calendar",
+    "updateCalendar": "Update in calendar",
+    "clear": "Clear reminder",
+    "oneWay": "Your calendar keeps its own copy and does the reminding. Clearing or changing this here does not remove it there.",
+    "fallbackTitle": "YouNotes reminder",
+    "chip": "Reminder: {{when}}",
+    "chipPast": "Past reminder: {{when}}",
+    "chipRepeating": "Reminder: {{when}}, {{repeat}}"
+  },
   "labels": {
     "empty": "No labels yet.",
     "create": "Create label",
