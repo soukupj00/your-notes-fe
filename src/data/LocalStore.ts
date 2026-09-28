@@ -18,10 +18,25 @@ export type NoteUpdate = { before: Note; after: Note };
 /** What `notes.purge` removed alongside the note, for a lossless undo. */
 export type PurgedRelations = { removedTags: NoteTag[]; removedAttachments: Attachment[] };
 
-/** The derived data an attachment row may be rewritten with after creation. */
-export type AttachmentChanges = Partial<
-  Pick<Attachment, 'blob' | 'preview' | 'thumbnail' | 'duration' | 'updatedAt'>
->;
+/**
+ * The derived data an attachment row may be rewritten with after creation.
+ * Never `blob`: bytes are write-once by id (ADR 0017), so new bytes are a new
+ * row, and downloaded ones arrive through `sync.received`. A new thumbnail comes
+ * only with a new `thumbnailId`, for the same reason.
+ */
+export type AttachmentChanges = Partial<Pick<Attachment, 'preview' | 'duration' | 'updatedAt'>> &
+  ({ thumbnail?: never; thumbnailId?: string } | { thumbnail: Blob; thumbnailId: string });
+
+/** An Attachment row with what Sync needs to move its bytes (M5 slice 5). */
+export type AttachmentTransfer = {
+  attachment: Attachment;
+  /** Its Note has a Revision, so the server knows it and its bytes may go up. */
+  noteOnServer: boolean;
+  /** The blob ids (its own, its `thumbnailId`) the server is known to hold. */
+  onServer: readonly string[];
+  /** The server refused its bytes for their size; nothing retries it. */
+  tooLarge: boolean;
+};
 
 /** Everything a Backup carries. `meta` is deliberately not part of it. */
 export type Snapshot = {
@@ -166,8 +181,9 @@ export interface LocalStore {
      * not owed (see `ApplyMode` for rows this Device still owes). A server
      * Tombstone removes the row - a Note with its links and Attachments, a Tag
      * with its links - without writing a local Tombstone, and drops a pending
-     * one for the same id. Attachment metadata on a Note is not applied: its
-     * rows need bytes (M5 slice 5).
+     * one for the same id. A written Note's `attachments` become its rows: a
+     * new one without bytes, a known one keeping its bytes (its thumbnail only
+     * while `thumbnailId` is unchanged), one no longer listed removed with them.
      */
     applyPage(changes: ServerChanges, mode?: ApplyMode): Promise<void>;
     /**
@@ -180,6 +196,14 @@ export interface LocalStore {
     adoptAll(): Promise<void>;
     /** How many rows and Tombstones the server is owed, live. */
     pending(): Live<number>;
+    /** Every Attachment row, bytes included, with its transfer state. */
+    transfers(): Promise<AttachmentTransfer[]>;
+    /** The server holds `blobId` (the row's own id or its `thumbnailId`). Owes nothing. */
+    onServer(id: string, blobId: string): Promise<void>;
+    /** The server refused the row's bytes for their size. Owes nothing. */
+    tooLarge(id: string): Promise<void>;
+    /** Downloaded bytes, which the server therefore holds. Owes nothing; a no-op if the row is gone. */
+    received(id: string, bytes: { blob?: Blob; thumbnail?: Blob }): Promise<void>;
   };
 
   /** A consistent copy of everything a Backup carries. */

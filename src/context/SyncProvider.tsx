@@ -14,9 +14,11 @@ import { SYNC_META_KEYS } from '@/data/LocalStore.ts';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import { useLive } from '@/data/useLive.ts';
 import { readProps } from '@/lib/tour/props.ts';
+import { downloadAttachment } from '@/sync/attachments.ts';
 import { createSyncEngine, type SyncReport } from '@/sync/engine.ts';
 import { type SyncLoop, type SyncStatus, startSyncLoop } from '@/sync/loop.ts';
 import { useAccount } from './AccountProvider.tsx';
+import { usePreferences } from './PreferencesProvider.tsx';
 import { useTourActive } from './TourProvider.tsx';
 
 export type SyncContextValue = {
@@ -30,6 +32,11 @@ export type SyncContextValue = {
   syncNow(): Promise<void>;
   /** Stops syncing and waits for a run in flight: the step before erasing this Device. */
   stop(): Promise<void>;
+  /**
+   * Fetches one Attachment's full bytes (a tap in its node view). Answers false
+   * when the server does not have them yet; rejects when signed out or unreachable.
+   */
+  download(id: string): Promise<boolean>;
 };
 
 const INACTIVE: SyncContextValue = {
@@ -39,6 +46,9 @@ const INACTIVE: SyncContextValue = {
   pending: 0,
   syncNow: async () => {},
   stop: async () => {},
+  download: async () => {
+    throw new Error('Not signed in to a server');
+  },
 };
 
 const SyncContext = createContext<SyncContextValue>(INACTIVE);
@@ -65,6 +75,13 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   // The Tour's Props are disposable (ADR 0015): nothing syncs while it runs, and
   // the engine leaves any left behind (a reload mid-Tour) out of every push.
   const touring = useTourActive();
+  // Read by the engine at each run, so turning it on needs no restart of the loop.
+  const keepEverything = usePreferences().preferences.keepEverything;
+  const keepEverythingRef = useRef(keepEverything);
+  useEffect(() => {
+    keepEverythingRef.current = keepEverything;
+    if (keepEverything) void loopRef.current?.syncNow();
+  }, [keepEverything]);
 
   // Kept in a ref so the loop's lifetime depends only on the session, the server,
   // the store and the Tour: a new `t` (a language change) must not restart syncing.
@@ -83,6 +100,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       });
     }
     if (report.keptNewer > 0) toast.info(t('sync.keptNewer'));
+    for (const name of report.tooLarge) toast.error(t('sync.tooLarge', { name }));
   };
   useEffect(() => {
     onReportRef.current = onReport;
@@ -96,6 +114,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       remote,
       deviceName: () => deviceName,
       exclude: async () => new Set((await readProps(store)).map((prop) => prop.id)),
+      keepEverything: () => keepEverythingRef.current,
     });
     void store.meta.get<string>(SYNC_META_KEYS.lastSyncedAt).then((at) => {
       if (!cancelled) setLastSyncedAt(at ?? null);
@@ -134,9 +153,10 @@ export function SyncProvider({ children }: { children: ReactNode }) {
               loopRef.current = null;
               await loop?.stop();
             },
+            download: (id: string) => downloadAttachment(store, remote!, id),
           }
         : { ...INACTIVE, pending },
-    [active, status, lastSyncedAt, pending]
+    [active, status, lastSyncedAt, pending, store, remote]
   );
 
   return <SyncContext.Provider value={value}>{children}</SyncContext.Provider>;

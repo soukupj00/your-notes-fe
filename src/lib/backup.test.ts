@@ -89,8 +89,24 @@ describe('backup', () => {
     expect(restored?.mime).toBe('image/png');
     expect(restored?.name).toBe('shot.png');
     expect(await bytesOf(restored?.blob as Blob)).toEqual(BINARY);
-    expect(restored?.blob.type).toBe('image/png');
+    expect(restored?.blob?.type).toBe('image/png');
     expect(await bytesOf(restored?.thumbnail as Blob)).toEqual(THUMB);
+  });
+
+  it('carries a synced row whose bytes were never downloaded, without them', async () => {
+    await store.notes.add(note);
+    const remote: Attachment = { ...attachment, id: 'att-remote', thumbnail: undefined };
+    delete remote.blob;
+    await store.attachments.add(remote);
+
+    const zipped = await bytesOf(await buildBackupZip(store));
+    expect(
+      Object.keys(unzipSync(zipped)).filter((name) => name.startsWith('attachments/'))
+    ).toEqual([]);
+    await restoreBackup(store, await parseBackupZip(zipped));
+    const restored = await store.attachments.get(remote.id);
+    expect(restored?.name).toBe('shot.png');
+    expect(restored?.blob).toBeUndefined();
   });
 
   it('writes the attachment bytes as their own zip entries, not inside the manifest', async () => {

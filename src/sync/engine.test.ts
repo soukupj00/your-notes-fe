@@ -83,7 +83,12 @@ describe('sync engine', () => {
     await b.engine.sync();
 
     await b.store.notes.update(n.id, () => ({ header: 'Final', updatedAt: at(2) }));
-    expect(await b.engine.sync()).toEqual({ conflicts: 0, keptNewer: 0 });
+    expect(await b.engine.sync()).toEqual({
+      conflicts: 0,
+      keptNewer: 0,
+      tooLarge: [],
+      transfersLeft: 0,
+    });
     await a.engine.sync();
     expect((await a.store.notes.get(n.id))?.header).toBe('Final');
     expect(server.sync.row(owner.id, 'note', n.id)?.rev).toBe(2);
@@ -150,7 +155,12 @@ describe('sync engine', () => {
     // The same library, adopted again without its Revisions (another Account in between).
     await a.engine.adopt(crypto.randomUUID());
     await a.engine.adopt(owner.id);
-    expect(await a.engine.sync()).toEqual({ conflicts: 0, keptNewer: 0 });
+    expect(await a.engine.sync()).toEqual({
+      conflicts: 0,
+      keptNewer: 0,
+      tooLarge: [],
+      transfersLeft: 0,
+    });
     expect(await a.store.notes.list()).toHaveLength(1);
     expect(await pendingOf(a.store)).toBe(0);
   });
@@ -167,7 +177,12 @@ describe('sync engine', () => {
     await a.engine.sync();
     await b.store.tags.put({ ...t, name: 'House' });
 
-    expect(await b.engine.sync()).toEqual({ conflicts: 0, keptNewer: 0 });
+    expect(await b.engine.sync()).toEqual({
+      conflicts: 0,
+      keptNewer: 0,
+      tooLarge: [],
+      transfersLeft: 0,
+    });
     expect(await b.store.tags.list()).toEqual([{ ...t, name: 'Home' }]);
   });
 

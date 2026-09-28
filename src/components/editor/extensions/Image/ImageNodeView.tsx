@@ -1,6 +1,7 @@
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
 import { AttachmentDeleteButton } from '../attachments/AttachmentDeleteButton';
+import { AttachmentNotDownloaded } from '../attachments/AttachmentNotDownloaded';
 import { AttachmentUnavailable } from '../attachments/AttachmentUnavailable';
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
@@ -11,7 +12,7 @@ import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
 export function ImageNodeView(props: ReactNodeViewProps) {
   const attachmentId = props.node.attrs.attachmentId as string | null;
   const deps = (props.extension.options.getDeps as () => AttachmentDeps)();
-  const state = useAttachmentObjectUrl(attachmentId, deps.getAttachment);
+  const state = useAttachmentObjectUrl(attachmentId, deps.watchAttachment);
   const canDelete = props.editor?.isEditable ?? false;
 
   // Corner overlay, matching Excalidraw's delete placement (Task 3): a
@@ -25,6 +26,18 @@ export function ImageNodeView(props: ReactNodeViewProps) {
       overlay
     />
   ) : null;
+
+  if (state.status === 'remote') {
+    return (
+      <AttachmentNotDownloaded
+        attachment={state.attachment}
+        thumbnailUrl={state.thumbnailUrl}
+        deps={deps}
+        fallbackName={deps.t('editor.image.fallbackAlt')}
+        deleteButton={deleteButton}
+      />
+    );
+  }
 
   if (state.status === 'missing') {
     return (
@@ -45,6 +58,8 @@ export function ImageNodeView(props: ReactNodeViewProps) {
         <img
           src={state.url}
           alt={state.name ?? deps.t('editor.image.fallbackAlt')}
+          width={state.attachment.width}
+          height={state.attachment.height}
           className="block h-auto max-w-full rounded-md"
         />
       )}

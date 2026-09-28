@@ -38,6 +38,7 @@ import { insertVideoAttachmentFiles } from '@/components/editor/extensions/Video
 import { EditorToolbar } from '@/components/editor/toolbar/EditorToolbar.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
+import { useSync } from '@/context/SyncProvider.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import type { AttachmentErrorCode } from '@/lib/attachments.ts';
@@ -153,8 +154,9 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   // the extensions array is built; a ref lets those closures reach it at click time.
   const editorRef = useRef<TiptapEditor | null>(null);
 
-  const { createAttachment, getAttachment, cloneAttachment, updateAttachment } =
+  const { createAttachment, getAttachment, watchAttachment, cloneAttachment, updateAttachment } =
     useAttachmentActions();
+  const { download: downloadAttachment } = useSync();
 
   // The single shared Excalidraw editing modal (the live canvas lives here, not
   // inline in the document). `attachmentId === null` is a new drawing (Save
@@ -189,7 +191,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       // One-shot read to seed the editor; the modal edits its own copy and
       // commits on Save. Fall back to an empty scene if the row is unreadable.
       void getAttachment(attachmentId).then(async (att) => {
-        const scene = att ? parseScene(await att.blob.text()) : null;
+        const scene = att?.blob ? parseScene(await att.blob.text()) : null;
         setExcalidraw({
           open: true,
           attachmentId,
@@ -212,6 +214,8 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         }),
       createAttachment,
       getAttachment,
+      watchAttachment,
+      downloadAttachment,
       cloneAttachment,
       updateAttachment,
       openExcalidraw,
@@ -222,6 +226,8 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       getNoteId,
       createAttachment,
       getAttachment,
+      watchAttachment,
+      downloadAttachment,
       cloneAttachment,
       updateAttachment,
       openExcalidraw,

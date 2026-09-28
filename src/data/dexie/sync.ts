@@ -4,9 +4,13 @@ import {
   type AcceptedRow,
   acceptedRows,
   fromServerNote,
+  markOnServer,
+  reconcileAttachments,
   settle,
+  transferOf,
   wireNote,
   wireRow,
+  withReceived,
 } from '../syncRows.ts';
 import type { NotesDB } from './db.ts';
 import { live } from './live.ts';
@@ -90,6 +94,11 @@ export function createDexieSync(db: NotesDB): LocalStore['sync'] {
           if (await keepLocal((await db.notes.get(row.id))?.dirty === 1, row.id)) continue;
           await db.notes.put(fromServerNote(row));
           await db.tombstones.delete(row.id);
+          if (!row.attachments) continue;
+          const local = await db.attachments.where('noteId').equals(row.id).toArray();
+          const { put, remove } = reconcileAttachments(row.attachments, local);
+          await db.attachments.bulkDelete(remove);
+          await db.attachments.bulkPut(put);
         }
         for (const row of changes.tags) {
           if (await keepLocal((await db.tags.get(row.id))?.dirty === 1, row.id)) continue;
@@ -147,6 +156,27 @@ export function createDexieSync(db: NotesDB): LocalStore['sync'] {
           db.tombstones.count(),
         ]);
         return counts.reduce((sum, n) => sum + n, 0);
+      }),
+
+    transfers: () =>
+      db.transaction('r', db.notes, db.attachments, async () => {
+        const rows = await db.attachments.toArray();
+        const notes = await db.notes.bulkGet([...new Set(rows.map((row) => row.noteId))]);
+        const known = new Set(notes.flatMap((n) => (n?.rev === undefined ? [] : [n.id])));
+        return rows.map((row) => transferOf(row, known.has(row.noteId)));
+      }),
+    onServer: (id, blobId) =>
+      db.transaction('rw', db.attachments, async () => {
+        const row = await db.attachments.get(id);
+        if (row) await db.attachments.put(markOnServer(row, blobId));
+      }),
+    tooLarge: async (id) => {
+      await db.attachments.update(id, { tooLarge: 1 });
+    },
+    received: (id, bytes) =>
+      db.transaction('rw', db.attachments, async () => {
+        const row = await db.attachments.get(id);
+        if (row) await db.attachments.put(withReceived(row, bytes));
       }),
   };
 }

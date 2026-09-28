@@ -29,13 +29,16 @@ async function conflictsTagId(store: LocalStore, now: string): Promise<string> {
  * Body, state, pin and colour, the original's Tags plus "Conflicts". Its
  * Attachments are cloned under new ids and the Body repointed, so each
  * Attachment keeps one owner and its bytes stay write-once by id (ADR 0017).
+ * A row this Device never downloaded is fetched first through `fetchBytes`,
+ * because nobody else could upload bytes under the clone's new id.
  * Returns the Conflicts Tag's id.
  */
 export async function keepConflictedCopy(
   store: LocalStore,
   local: Note,
   deviceName: string,
-  at = new Date()
+  at = new Date(),
+  fetchBytes: (id: string) => Promise<Blob | undefined> = async () => undefined
 ): Promise<string> {
   const now = at.toISOString();
   const id = crypto.randomUUID();
@@ -58,7 +61,10 @@ export async function keepConflictedCopy(
   await store.notes.add(copy);
   for (const { from, to } of clones) {
     const row = await store.attachments.get(from);
-    if (row) await store.attachments.add({ ...row, id: to, noteId: id });
+    if (!row) continue;
+    // ponytail: bytes the server does not have either are lost to the copy; it keeps the metadata.
+    const blob = row.blob ?? (await fetchBytes(from).catch(() => undefined));
+    await store.attachments.add({ ...row, ...(blob ? { blob } : {}), id: to, noteId: id });
   }
 
   const tagIds = (await store.tags.listLinks())

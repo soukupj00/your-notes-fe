@@ -118,7 +118,8 @@ Scoped by a `/grill-with-docs` session on 2026-08-12. Key decisions: [ADR 0017](
 4. ✅ **The loop** *(both)* ([plan](./docs/superpowers/plans/2026-09-28-m5-slice4-sync-loop.md)) — `GET /changes` with cursor links and ETags, the SSE hint endpoint and the optional `hints` method on `Remote`, dirty push with Revisions, outcomes per row, conflict → Conflicted Copy + "Conflicts" tag + toast, adopt-on-first-sign-in, erase-on-sign-out, and the too-old-cursor full resync.
    Deviations: a Tag conflict keeps the server's Tag and copies nothing; pulled Attachment metadata waits for slice 5; the Settings storage row (carried in from M4) landed here beside the sync status.
    Two feed fixes came out of it, in the backend since `7c842e6`: every page carries `_links.resume`, the cursor a caught-up Device keeps, and every `next` carries the pull's origin (`from`), so a full resync pages past swept Tombstones.
-5. **Attachments** *(both)* — idempotent byte upload/download, eager thumbnails, the new "known but not downloaded" attachment node state, the keep-everything preference.
+5. ✅ **Attachments** *(both)* ([plan](./docs/superpowers/plans/2026-09-28-m5-slice5-attachments.md)) — idempotent byte upload/download, eager thumbnails, the new "known but not downloaded" attachment node state, the keep-everything preference.
+   Deviations: the vendored contract carries the backend's `thumbnailId` line ahead of a `contract:pull`, because the HAL client's Zod parse drops keys it does not know; video posters get a `thumbnailId` too, not only image thumbnails; an image too small to have a thumbnail is fetched eagerly as its own Preview; a transfer that finds nothing yet (the other Device uploads after its push, so its hint arrives first) keeps the loop's back-off running.
 6. **Setup, docs, testing** *(both)* — the three Caddy modes with one documented happy path, first-run and Invite UX, sync status polish, and the user testing the brief requires.
 
 **Testing:** the client sync engine is tested here against a fake server built from the vendored contract, so conflict, resync and offline paths are deterministic. The backend tests itself in its own repo. Genuine two-device end-to-end is a manual and user-testing activity - a cross-repo Playwright pipeline would cost more than it catches.
@@ -127,8 +128,11 @@ Scoped by a `/grill-with-docs` session on 2026-08-12. Key decisions: [ADR 0017](
   The *request* landed in M4 (`src/lib/persistentStorage.ts`, fired on the user's first saved note - Firefox prompts, so it may not land during the Tour).
   Reporting the answer waits for M5 because this milestone gives that same area a sync status (last synced, queued changes, this device's account), and "is my data safe here" is one question best answered in one block.
 - **Out of scope, deliberately:** end-to-end encryption (threat model documented instead - see ADR 0018), sharing a Note between Accounts, and any email/SMTP.
-- **Known gaps:** a page loaded fresh and then taken offline cannot open the editor, because its code-split chunk is cached only once the service worker controls the page (after a reload).
-  Not a sync problem, found in the slice 4 two-Device run; the PWA should precache the editor or claim clients on first load.
+- **Known gaps:**
+  - A page loaded fresh and then taken offline cannot open the editor, because its code-split chunk is cached only once the service worker controls the page (after a reload).
+    Not a sync problem, found in the slice 4 two-Device run; the PWA should precache the editor or claim clients on first load.
+  - `src/components/editor/editor.tsx` is over the 500-line limit (522 lines before M5 slice 5, 528 after it).
+    Splitting it is its own change, not a sync one.
 
 ## Per-area plans
 

@@ -2,6 +2,7 @@ import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
 import { icons } from '@/components/icons';
 import { AttachmentDeleteButton } from '../attachments/AttachmentDeleteButton';
+import { AttachmentNotDownloaded } from '../attachments/AttachmentNotDownloaded';
 import { AttachmentUnavailable } from '../attachments/AttachmentUnavailable';
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
@@ -14,7 +15,7 @@ import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
 export function FileNodeView(props: ReactNodeViewProps) {
   const attachmentId = props.node.attrs.attachmentId as string | null;
   const deps = (props.extension.options.getDeps as () => AttachmentDeps)();
-  const state = useAttachmentObjectUrl(attachmentId, deps.getAttachment);
+  const state = useAttachmentObjectUrl(attachmentId, deps.watchAttachment);
   const FileIcon = icons.FileText;
   const DownloadIcon = icons.Download;
   const canDelete = props.editor?.isEditable ?? false;
@@ -30,6 +31,18 @@ export function FileNodeView(props: ReactNodeViewProps) {
       overlay
     />
   ) : null;
+
+  if (state.status === 'remote') {
+    return (
+      <AttachmentNotDownloaded
+        attachment={state.attachment}
+        thumbnailUrl={state.thumbnailUrl}
+        deps={deps}
+        fallbackName={deps.t('editor.file.fallbackName')}
+        deleteButton={deleteButton}
+      />
+    );
+  }
 
   if (state.status === 'missing') {
     return (

@@ -3,6 +3,7 @@ import { type LocalStore, SYNC_META_KEYS } from '@/data/LocalStore.ts';
 import type { PushBatch, PushOutcome, Remote, ServerChanges } from '@/data/Remote.ts';
 import { type PushedRow, pairOutcomes } from '@/data/syncRows.ts';
 import type { Note } from '@/models.ts';
+import { runTransfers } from './attachments.ts';
 import { keepConflictedCopy } from './conflictedCopy.ts';
 
 /** What one run did that the person should hear about. */
@@ -13,11 +14,16 @@ export type SyncReport = {
   conflictsTagId?: string;
   /** Purges this Device made that the server refused because another Device had edited since. */
   keptNewer: number;
+  /** Attachments the server refused for their size, by name; each is reported once. */
+  tooLarge: string[];
+  /** Attachment transfers that failed or found nothing yet; the loop runs again for them. */
+  transfersLeft: number;
 };
 
 export type SyncEngine = {
   /**
-   * One run: push what is owed, then pull what was missed. Runs never overlap:
+   * One run: push what is owed, pull what was missed, then move Attachment
+   * bytes (`attachments.ts`). Runs never overlap:
    * a call during a run waits for it, and every call made during that wait
    * shares the one run that follows.
    */
@@ -72,6 +78,7 @@ export function createSyncEngine({
   deviceName,
   batchSize = MAX_BATCH,
   exclude = async () => new Set<string>(),
+  keepEverything = () => false,
 }: {
   store: LocalStore;
   remote: Remote;
@@ -84,6 +91,8 @@ export function createSyncEngine({
    * left out of every push, with their links. Read at each push.
    */
   exclude?: () => Promise<ReadonlySet<string>>;
+  /** The "Keep everything on this device" Preference, read at each run. */
+  keepEverything?: () => boolean;
 }): SyncEngine {
   const serverWins = (changes: Partial<ServerChanges>) =>
     store.sync.applyPage({ ...none, ...changes }, 'server-wins');
@@ -95,7 +104,9 @@ export function createSyncEngine({
   async function keepLocal(id: string, report: SyncReport, server?: RevisionedNote) {
     const local = await store.notes.get(id);
     if (!local || (server && sameNote(local, server))) return;
-    report.conflictsTagId = await keepConflictedCopy(store, local, deviceName());
+    report.conflictsTagId = await keepConflictedCopy(store, local, deviceName(), new Date(), (id) =>
+      remote.getBlob(id)
+    );
     report.conflicts += 1;
   }
 
@@ -181,7 +192,7 @@ export function createSyncEngine({
   }
 
   async function run(): Promise<SyncReport> {
-    const report: SyncReport = { conflicts: 0, keptNewer: 0 };
+    const report: SyncReport = { conflicts: 0, keptNewer: 0, tooLarge: [], transfersLeft: 0 };
     await push(report);
     // A purge the server refused brings the Note back, but not its links: they
     // never changed on the server, so no later page would carry them. Reading
@@ -189,6 +200,10 @@ export function createSyncEngine({
     if (report.keptNewer > 0) await store.meta.delete(SYNC_META_KEYS.cursor);
     // After a full resync the owed rows kept through it still have to go up.
     if (await pull(report)) await push(report);
+    // Bytes last, so they never delay a run's rows (04-sync.md "Attachment transfer").
+    const moved = await runTransfers(store, remote, { keepEverything: keepEverything() });
+    report.tooLarge = moved.tooLarge;
+    report.transfersLeft = moved.left;
     await store.meta.set(SYNC_META_KEYS.lastSyncedAt, new Date().toISOString());
     return report;
   }

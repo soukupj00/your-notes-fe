@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { icons } from '@/components/icons';
 import { formatElapsed } from '@/lib/format-attachment.ts';
 import { AttachmentDeleteButton } from '../attachments/AttachmentDeleteButton';
+import { AttachmentNotDownloaded } from '../attachments/AttachmentNotDownloaded';
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
 
@@ -13,7 +14,7 @@ import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
 export function AudioNodeView(props: ReactNodeViewProps) {
   const attachmentId = props.node.attrs.attachmentId as string | null;
   const deps = (props.extension.options.getDeps as () => AttachmentDeps)();
-  const state = useAttachmentObjectUrl(attachmentId, deps.getAttachment);
+  const state = useAttachmentObjectUrl(attachmentId, deps.watchAttachment);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
@@ -94,6 +95,27 @@ export function AudioNodeView(props: ReactNodeViewProps) {
     if (el) el.currentTime = v;
     setCurrent(v);
   };
+
+  if (state.status === 'remote') {
+    // The card's delete sits over its corner, like the other kinds', not inside the player row.
+    return (
+      <AttachmentNotDownloaded
+        attachment={state.attachment}
+        deps={deps}
+        fallbackName={deps.t('editor.audio.label')}
+        deleteButton={
+          canDelete ? (
+            <AttachmentDeleteButton
+              onConfirm={() => props.deleteNode()}
+              label={deps.t('editor.audio.delete')}
+              t={deps.t}
+              overlay
+            />
+          ) : null
+        }
+      />
+    );
+  }
 
   if (state.status === 'missing') {
     return (

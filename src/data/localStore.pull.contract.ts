@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { noteTagId } from '@/contract/index.ts';
-import type { Note } from '@/models.ts';
+import { type AttachmentMeta, noteTagId } from '@/contract/index.ts';
+import type { Attachment, Note } from '@/models.ts';
 import type { LocalStore } from './LocalStore.ts';
 import type { Live } from './live.ts';
 import { attachment, link, note, syncAll, tag } from './localStore.sync.contract.ts';
@@ -10,7 +10,26 @@ const none: ServerChanges = { notes: [], tags: [], noteTags: [], tombstones: [] 
 const T1 = '2026-02-01T00:00:00.000Z';
 
 /** A Note as a page carries it: its Revision and its Attachment metadata. */
-const fromServer = (n: Note, rev: number) => ({ ...n, rev, attachments: [] });
+const fromServer = (n: Note, rev: number) => ({
+  ...n,
+  rev,
+  attachments: [] as AttachmentMeta[],
+});
+
+/**
+ * Which bytes a row has, rather than the Blobs themselves: jsdom's Blob does not
+ * survive fake-indexeddb's structured clone (see `dexie/attachments.roundtrip.test.ts`).
+ */
+const bytes = (a: Attachment | undefined) =>
+  a && { ...a, blob: a.blob && 'blob', thumbnail: a.thumbnail && 'thumbnail' };
+
+/** An Attachment as it rides on a Note: no bytes. */
+function wireMeta(a: Attachment): AttachmentMeta {
+  const meta: Partial<Attachment> = { ...a };
+  delete meta.blob;
+  delete meta.thumbnail;
+  return meta as AttachmentMeta;
+}
 
 function latest<T>(live: Live<T>) {
   const values: T[] = [];
@@ -127,28 +146,112 @@ export function describeLocalStorePullContract(makeStore: () => Promise<LocalSto
       expect(await store.sync.dirty()).toEqual(none);
     });
 
-    it('a Note from the server does not bring Attachment rows (slice 5)', async () => {
+    it("a pulled Note's attachments become rows without bytes", async () => {
       const n = note();
+      const meta = { ...wireMeta(attachment(n.id)), name: 'cat.png', size: 3 };
       await store.sync.applyPage({
         ...none,
-        notes: [
-          {
-            ...fromServer(n, 1),
-            attachments: [
-              {
-                id: crypto.randomUUID(),
-                noteId: n.id,
-                kind: 'image',
-                mime: 'image/png',
-                createdAt: T1,
-                updatedAt: T1,
-              },
-            ],
-          },
-        ],
+        notes: [{ ...fromServer(n, 1), attachments: [meta] }],
       });
+
       expect(await store.notes.get(n.id)).toEqual(n);
-      expect(await store.attachments.list()).toEqual([]);
+      expect(await store.attachments.list()).toEqual([meta]);
+      expect(await store.sync.dirty()).toEqual(none);
+    });
+
+    it('a known row takes the metadata and keeps its bytes; an unlisted one is removed', async () => {
+      const n = note();
+      await store.notes.add(n);
+      const kept = attachment(n.id);
+      const dropped = attachment(n.id);
+      await store.attachments.add(kept);
+      await store.attachments.add(dropped);
+      await syncAll(store, 1);
+
+      const renamed = { ...wireMeta(kept), name: 'renamed.png' };
+      await store.sync.applyPage({
+        ...none,
+        notes: [{ ...fromServer(n, 2), attachments: [renamed] }],
+      });
+      expect((await store.attachments.list()).map(bytes)).toEqual([
+        { ...renamed, blob: 'blob', thumbnail: 'thumbnail' },
+      ]);
+
+      // A new thumbnailId names other bytes: the old thumbnail goes, the blob stays.
+      const reposted = { ...renamed, thumbnailId: crypto.randomUUID() };
+      await store.sync.applyPage({
+        ...none,
+        notes: [{ ...fromServer(n, 3), attachments: [reposted] }],
+      });
+      expect(bytes(await store.attachments.get(kept.id))).toEqual({ ...reposted, blob: 'blob' });
+    });
+
+    it('an owed Note keeps its rows through a pull; a Note without the array leaves them', async () => {
+      const n = note();
+      await store.notes.add(n);
+      const a = attachment(n.id);
+      await store.attachments.add(a);
+      await syncAll(store, 1);
+      await store.notes.update(n.id, () => ({ header: 'mine' }));
+
+      await store.sync.applyPage({ ...none, notes: [{ ...fromServer(n, 2), attachments: [] }] });
+      expect((await store.attachments.list()).map(bytes)).toEqual([bytes(a)]);
+
+      await syncAll(store, 2);
+      const bare: Partial<ReturnType<typeof fromServer>> = fromServer(n, 3);
+      delete bare.attachments;
+      await store.sync.applyPage({ ...none, notes: [bare as ReturnType<typeof fromServer>] });
+      expect((await store.attachments.list()).map(bytes)).toEqual([bytes(a)]);
+    });
+
+    it('transfer state: which blobs the server holds, too large, received bytes', async () => {
+      const n = note();
+      await store.notes.add(n);
+      const pushed = attachment(n.id);
+      await store.attachments.add(pushed);
+      await syncAll(store, 1);
+      const unsynced = note();
+      await store.notes.add(unsynced);
+      const draft = attachment(unsynced.id);
+      await store.attachments.add(draft);
+      const meta = wireMeta(attachment(n.id));
+      await store.sync.applyPage({
+        ...none,
+        notes: [{ ...fromServer(n, 2), attachments: [wireMeta(pushed), meta] }],
+      });
+      const owedBefore = await store.sync.dirty();
+
+      await store.sync.onServer(pushed.id, pushed.thumbnailId!);
+      await store.sync.onServer(pushed.id, pushed.id);
+      await store.sync.tooLarge(draft.id);
+      const blob = new Blob(['full']);
+      const thumbnail = new Blob(['small']);
+      await store.sync.received(meta.id, { blob, thumbnail });
+      await store.sync.received('gone', { blob });
+
+      const byId = new Map((await store.sync.transfers()).map((t) => [t.attachment.id, t]));
+      expect({
+        ...byId.get(pushed.id),
+        attachment: bytes(byId.get(pushed.id)?.attachment),
+      }).toEqual({
+        attachment: bytes(pushed),
+        noteOnServer: true,
+        onServer: [pushed.thumbnailId, pushed.id],
+        tooLarge: false,
+      });
+      expect(byId.get(draft.id)).toMatchObject({ noteOnServer: false, tooLarge: true });
+      expect(bytes(byId.get(meta.id)?.attachment)).toEqual(bytes({ ...meta, blob, thumbnail }));
+      expect(byId.get(meta.id)?.onServer).toEqual([meta.id, meta.thumbnailId]);
+      // None of it is the server's business, and no read shows it.
+      expect(await store.sync.dirty()).toEqual(owedBefore);
+      expect(bytes(await store.attachments.get(pushed.id))).toEqual(bytes(pushed));
+      expect(bytes(await store.attachments.get(draft.id))).toEqual(bytes(draft));
+      // A clone of a row the server holds starts from nothing.
+      const clone = { ...(await store.attachments.get(pushed.id))!, id: crypto.randomUUID() };
+      await store.attachments.add(clone);
+      expect(
+        (await store.sync.transfers()).find((t) => t.attachment.id === clone.id)?.onServer
+      ).toEqual([]);
     });
 
     it('resetClean keeps only what is owed, the Tombstones and every Attachment', async () => {

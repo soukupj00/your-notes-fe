@@ -20,8 +20,8 @@ export function insertVideoAttachmentFiles(
   insertNode: (attachmentId: string) => void
 ): Promise<void> {
   const videoDeps = withDerivedAttachmentData(deps, 'video', async (file) => {
-    const { poster, duration } = await generateVideoPoster(file);
-    return { thumbnail: poster, duration };
+    const { poster, ...metadata } = await generateVideoPoster(file);
+    return { thumbnail: poster, ...metadata };
   });
 
   return insertAttachmentFiles(editor, files, 'video', videoDeps, insertNode);

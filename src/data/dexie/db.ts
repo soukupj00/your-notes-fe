@@ -1,11 +1,11 @@
 import Dexie, { type Table } from 'dexie';
 import type { Tombstone } from '@/data/Remote.ts';
-import type { Stored } from '@/data/syncRows.ts';
-import type { Attachment, Note, NoteTag, Setting, Tag } from '@/models.ts';
+import type { Stored, StoredAttachment } from '@/data/syncRows.ts';
+import type { Note, NoteTag, Setting, Tag } from '@/models.ts';
 
 export class NotesDB extends Dexie {
   notes!: Table<Stored<Note>, string>;
-  attachments!: Table<Attachment, string>;
+  attachments!: Table<StoredAttachment, string>;
   tags!: Table<Stored<Tag>, string>;
   noteTags!: Table<Stored<NoteTag>, [string, string]>; // composite key
   settings!: Table<Setting, string>;

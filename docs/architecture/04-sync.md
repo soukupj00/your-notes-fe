@@ -90,6 +90,12 @@ The other way round - this Device edited a Note another Device purged - the edit
 - Bytes are immutable by id, so upload is "PUT if the server lacks this id" - idempotent, retryable, no conflict rule.
 - **Previews sync eagerly** (tens of KB; the Feed is instantly correct on a new device); **full bytes on demand**, with a "keep everything on this device" preference.
 - Attachment node views gain a third state, "known but not downloaded", rendering a placeholder instead of a broken element.
+- As built (M5 slice 5): a Preview is its own blob, named by the Attachment's `thumbnailId` on the Note, so it syncs ahead of the full bytes.
+  The Device remembers which blob ids the server holds instead of asking with `HEAD`; a lost record costs one repeat `PUT`, which the server answers 204 without reading the body.
+  Uploads run after a run's pull, thumbnails before full bytes, and only for Notes the server knows.
+  A `413` is recorded on the row and reported once; nothing retries it.
+  A download that finds nothing yet (the other Device uploads after its push, so its hint can arrive first) keeps the loop's back-off running.
+  An image too small to be given a thumbnail is its own Preview and comes down with the thumbnails.
 - Known ceilings, accepted: no resumable upload, no per-account quota.
 
 ## Account boundary interactions

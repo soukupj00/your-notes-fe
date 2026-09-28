@@ -36,6 +36,7 @@ export const attachment = (noteId: string): Attachment => ({
   mime: 'image/png',
   blob: new Blob(['x']),
   thumbnail: new Blob(['t']),
+  thumbnailId: crypto.randomUUID(),
   createdAt: T0,
   updatedAt: T0,
 });

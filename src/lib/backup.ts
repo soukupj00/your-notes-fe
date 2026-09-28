@@ -68,6 +68,12 @@ const attachmentMetaSchema = z.looseObject({
   mime: z.string(),
   /** True when `attachments/<id>.thumb` must also be present. */
   hasThumbnail: z.boolean().optional(),
+  /**
+   * False for a row synced from another Device whose bytes were never downloaded
+   * (M5 slice 5): no `attachments/<id>` entry, and the server still has them.
+   * Absent in archives made before, which always carried the bytes.
+   */
+  hasBlob: z.boolean().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -141,17 +147,21 @@ export async function buildBackupZip(store: LocalStore): Promise<Blob> {
   const read = await Promise.all(
     attachments.map(async ({ blob, thumbnail, ...meta }) => ({
       meta,
-      blobBytes: await bytesOf(blob),
+      blobBytes: blob ? await bytesOf(blob) : undefined,
       thumbnailBytes: thumbnail ? await bytesOf(thumbnail) : undefined,
     }))
   );
 
   for (const { meta, blobBytes, thumbnailBytes } of read) {
-    entries[blobPath(meta.id)] = [blobBytes, { level: 0 }];
+    if (blobBytes) entries[blobPath(meta.id)] = [blobBytes, { level: 0 }];
     if (thumbnailBytes) {
       entries[thumbnailPath(meta.id)] = [thumbnailBytes, { level: 0 }];
     }
-    attachmentMeta.push({ ...meta, hasThumbnail: Boolean(thumbnailBytes) });
+    attachmentMeta.push({
+      ...meta,
+      hasThumbnail: Boolean(thumbnailBytes),
+      hasBlob: Boolean(blobBytes),
+    });
   }
 
   // Not annotated as BackupManifest: that type describes the *parsed* shape,
@@ -208,7 +218,9 @@ export async function parseBackupZip(data: Uint8Array): Promise<ParsedBackup> {
   if (!parsed.success) throw new BackupError('invalid-manifest');
 
   for (const attachment of parsed.data.attachments) {
-    if (!files[blobPath(attachment.id)]) throw new BackupError('missing-attachment');
+    if (attachment.hasBlob !== false && !files[blobPath(attachment.id)]) {
+      throw new BackupError('missing-attachment');
+    }
     if (attachment.hasThumbnail && !files[thumbnailPath(attachment.id)]) {
       throw new BackupError('missing-attachment');
     }
@@ -233,13 +245,14 @@ export async function restoreBackup(
   { manifest, files }: ParsedBackup
 ): Promise<void> {
   const attachments: Attachment[] = manifest.attachments.map((meta) => {
-    const { hasThumbnail, ...rest } = meta;
+    const { hasThumbnail, hasBlob, ...rest } = meta;
     const thumbnailBytes = hasThumbnail ? files[thumbnailPath(meta.id)] : undefined;
+    const blobBytes = hasBlob === false ? undefined : files[blobPath(meta.id)];
     return {
       // The loose schemas keep unknown fields as `unknown`, which no longer
       // structurally matches the model; the shape was validated above.
       ...(rest as unknown as Omit<Attachment, 'blob' | 'thumbnail'>),
-      blob: new Blob([toBlobPart(files[blobPath(meta.id)])], { type: meta.mime }),
+      ...(blobBytes ? { blob: new Blob([toBlobPart(blobBytes)], { type: meta.mime }) } : {}),
       ...(thumbnailBytes ? { thumbnail: new Blob([toBlobPart(thumbnailBytes)]) } : {}),
     };
   });

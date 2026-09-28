@@ -5,6 +5,7 @@ import type {
   RevisionedTag,
 } from '@/contract/index.ts';
 import type { Attachment, Note } from '@/models.ts';
+import type { AttachmentTransfer } from './LocalStore.ts';
 import type { PushBatch, PushOutcome, Tombstone } from './Remote.ts';
 
 /**
@@ -38,15 +39,102 @@ export function wireRow<T extends object>(row: Stored<T>): T & { rev?: number } 
   return copy;
 }
 
-function attachmentMeta(attachment: Attachment): AttachmentMeta {
-  const meta: Partial<Attachment> = { ...attachment };
+/**
+ * An Attachment as the store keeps it (M5 slice 5): `onServer` lists the blob ids
+ * (its own, its `thumbnailId`) the server is known to hold, and `tooLarge` marks
+ * bytes the server refused for their size. A list of ids rather than flags, so a
+ * new `thumbnailId` is not uploaded by construction.
+ */
+export type StoredAttachment = Attachment & { onServer?: string[]; tooLarge?: 1 };
+
+/** The row without its transfer state, as every read returns it. */
+export function stripAttachment(row: StoredAttachment): Attachment {
+  const copy: StoredAttachment = { ...row };
+  delete copy.onServer;
+  delete copy.tooLarge;
+  return copy;
+}
+
+function attachmentMeta(attachment: StoredAttachment): AttachmentMeta {
+  const meta: Partial<StoredAttachment> = stripAttachment(attachment);
   delete meta.blob;
   delete meta.thumbnail;
   return meta as AttachmentMeta;
 }
 
+/**
+ * A pulled Attachment as the store keeps it: the server's metadata, with the
+ * bytes and transfer state this Device already had for the id. A thumbnail is
+ * kept only while `thumbnailId` still names it.
+ */
+export function fromServerAttachment(
+  meta: AttachmentMeta,
+  local: StoredAttachment | undefined
+): StoredAttachment {
+  const row: StoredAttachment = { ...meta };
+  if (!local) return row;
+  if (local.blob) row.blob = local.blob;
+  if (local.thumbnail && local.thumbnailId === meta.thumbnailId) row.thumbnail = local.thumbnail;
+  if (local.onServer) row.onServer = local.onServer;
+  if (local.tooLarge) row.tooLarge = local.tooLarge;
+  return row;
+}
+
+/**
+ * What writing a pulled Note's `attachments` does to the rows it owns locally:
+ * each listed one is put (keeping bytes, see `fromServerAttachment`), each
+ * unlisted one is removed with its bytes.
+ */
+export function reconcileAttachments(
+  metas: readonly AttachmentMeta[],
+  local: readonly StoredAttachment[]
+): { put: StoredAttachment[]; remove: string[] } {
+  const byId = new Map(local.map((row) => [row.id, row]));
+  const listed = new Set(metas.map((meta) => meta.id));
+  return {
+    put: metas.map((meta) => fromServerAttachment(meta, byId.get(meta.id))),
+    remove: local.filter((row) => !listed.has(row.id)).map((row) => row.id),
+  };
+}
+
+/** The row as `sync.transfers()` hands it out. */
+export function transferOf(row: StoredAttachment, noteOnServer: boolean): AttachmentTransfer {
+  return {
+    attachment: stripAttachment(row),
+    noteOnServer,
+    onServer: row.onServer ?? [],
+    tooLarge: row.tooLarge === 1,
+  };
+}
+
+/** The row once the server is known to hold `blobIds`. */
+export function markOnServer(row: StoredAttachment, ...blobIds: string[]): StoredAttachment {
+  return { ...row, onServer: [...new Set([...(row.onServer ?? []), ...blobIds])] };
+}
+
+/** The row with downloaded bytes written in, each marked as held by the server. */
+export function withReceived(
+  row: StoredAttachment,
+  { blob, thumbnail }: { blob?: Blob; thumbnail?: Blob }
+): StoredAttachment {
+  const next = { ...row };
+  const ids: string[] = [];
+  if (blob) {
+    next.blob = blob;
+    ids.push(row.id);
+  }
+  if (thumbnail && row.thumbnailId) {
+    next.thumbnail = thumbnail;
+    ids.push(row.thumbnailId);
+  }
+  return markOnServer(next, ...ids);
+}
+
 /** A Note as it travels: its Attachment metadata (no bytes) on it, and no `tags` join. */
-export function wireNote(note: Stored<Note>, attachments: readonly Attachment[]): RevisionedNote {
+export function wireNote(
+  note: Stored<Note>,
+  attachments: readonly StoredAttachment[]
+): RevisionedNote {
   const row = wireRow(note);
   delete row.tags;
   return { ...row, attachments: attachments.map(attachmentMeta) };
@@ -54,7 +142,7 @@ export function wireNote(note: Stored<Note>, attachments: readonly Attachment[])
 
 /**
  * A Note as the server sent it, as the store keeps it: the server's Revision,
- * not owed, and without its Attachment metadata (rows need bytes, M5 slice 5).
+ * not owed, and without its Attachment metadata (the store writes those as rows).
  */
 export function fromServerNote(row: RevisionedNote): Stored<Note> {
   const note: RevisionedNote = { ...row };

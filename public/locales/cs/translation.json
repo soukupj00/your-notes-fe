@@ -187,6 +187,12 @@
         "font": "Písmo",
         "meta": "Lišta"
       }
+    },
+    "attachment": {
+      "download": "Stáhnout",
+      "notDownloaded": "Zatím není v tomto zařízení",
+      "notOnServer": "Na serveru zatím není. Zkuste to za chvíli.",
+      "downloadFailed": "Stažení se nezdařilo. Zkontrolujte připojení."
     }
   },
   "settings": {
@@ -676,6 +682,11 @@
     "pending_one": "{{count}} změna čeká",
     "pending_few": "{{count}} změny čekají",
     "pending_other": "{{count}} změn čeká",
-    "syncNow": "Synchronizovat"
+    "syncNow": "Synchronizovat",
+    "tooLarge": "{{name}} je příliš velký na synchronizaci",
+    "keepEverything": {
+      "label": "Mít vše v tomto zařízení",
+      "description": "Po každé synchronizaci stáhnout všechny přílohy, nejen náhledy. Zabere víc místa."
+    }
   }
 }

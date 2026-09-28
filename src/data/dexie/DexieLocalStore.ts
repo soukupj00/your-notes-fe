@@ -1,7 +1,14 @@
 import { noteTagId } from '@/contract/index.ts';
 import type { Attachment, Note, NoteState, NoteTag, Tag } from '@/models.ts';
 import type { AttachmentChanges, LocalStore, NoteFeedScope, Snapshot } from '../LocalStore.ts';
-import { owed, type Stored, strip, tombstone } from '../syncRows.ts';
+import {
+  owed,
+  type Stored,
+  type StoredAttachment,
+  strip,
+  stripAttachment,
+  tombstone,
+} from '../syncRows.ts';
 import { db as defaultDb, type NotesDB } from './db.ts';
 import { migrateLegacyPreferences } from './legacyPreferences.ts';
 import { live } from './live.ts';
@@ -26,6 +33,8 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
   const stripAll = <T extends object>(rows: Stored<T>[]): T[] => rows.map(strip);
   const stripOne = <T extends object>(row: Stored<T> | undefined): T | undefined =>
     row && strip(row);
+  const plain = (rows: StoredAttachment[]) => rows.map(stripAttachment);
+  const plainOne = (row: StoredAttachment | undefined) => row && stripAttachment(row);
 
   /** Inside a transaction over `notes`: the Note owes its Attachment metadata. No-op if it is gone. */
   const noteOwed = (noteId: string) => db.notes.update(noteId, { dirty: 1 });
@@ -111,7 +120,9 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
         db.transaction('rw', [db.notes, db.noteTags, db.attachments, db.tombstones], async () => {
           const stored = await db.notes.get(id);
           const removedTags = stripAll(await db.noteTags.where('noteId').equals(id).toArray());
-          const removedAttachments = await db.attachments.where('noteId').equals(id).toArray();
+          const removedAttachments = plain(
+            await db.attachments.where('noteId').equals(id).toArray()
+          );
           await db.notes.delete(id);
           await db.noteTags.where('noteId').equals(id).delete();
           await db.attachments.where('noteId').equals(id).delete();
@@ -198,18 +209,21 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
     },
 
     attachments: {
-      get: (id) => db.attachments.get(id),
-      watch: (id) => live(() => db.attachments.get(id)),
-      list: () => db.attachments.toArray(),
-      forNote: (noteId) => live(() => db.attachments.where('noteId').equals(noteId).toArray()),
+      get: async (id) => plainOne(await db.attachments.get(id)),
+      watch: (id) => live(async () => plainOne(await db.attachments.get(id))),
+      list: async () => plain(await db.attachments.toArray()),
+      forNote: (noteId) =>
+        live(async () => plain(await db.attachments.where('noteId').equals(noteId).toArray())),
       forNotes: (noteIds) =>
-        live(() =>
+        live(async () =>
           noteIds.length === 0
-            ? Promise.resolve([] as Attachment[])
-            : db.attachments
-                .where('noteId')
-                .anyOf([...noteIds])
-                .toArray()
+            ? ([] as Attachment[])
+            : plain(
+                await db.attachments
+                  .where('noteId')
+                  .anyOf([...noteIds])
+                  .toArray()
+              )
         ),
       add: (attachment) =>
         db.transaction('rw', db.attachments, db.notes, async () => {
@@ -281,7 +295,7 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           notes: stripAll(notes),
           tags: stripAll(tags),
           noteTags: stripAll(noteTags),
-          attachments,
+          attachments: plain(attachments),
         } satisfies Snapshot;
       }),
     replaceAll: (snapshot) =>

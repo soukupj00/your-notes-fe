@@ -70,4 +70,13 @@ describe('HalRemote', () => {
     expect(await (await remote.getBlob(id))?.text()).toBe('png');
     expect(await remote.getBlob(crypto.randomUUID())).toBeUndefined();
   });
+
+  it('a blob over the limit is too-large, a repeat is stored', async () => {
+    const { server, remote } = await signedIn();
+    server.state.blobLimit = 3;
+    const id = crypto.randomUUID();
+    expect(await remote.putBlob(id, new Blob(['large'], { type: 'text/plain' }))).toBe('too-large');
+    expect(await remote.putBlob(id, new Blob(['ok'], { type: 'text/plain' }))).toBe('stored');
+    expect(await remote.putBlob(id, new Blob(['ok'], { type: 'text/plain' }))).toBe('stored');
+  });
 });

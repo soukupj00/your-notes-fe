@@ -37,15 +37,15 @@ describe('generateImageThumbnail', () => {
       callback(thumbnail);
     });
 
-    await expect(generateImageThumbnail(new Blob(['source'], { type: 'image/png' }))).resolves.toBe(
-      thumbnail
-    );
+    await expect(
+      generateImageThumbnail(new Blob(['source'], { type: 'image/png' }))
+    ).resolves.toEqual({ thumbnail, width: 1024, height: 512 });
 
     expect(drawImage).toHaveBeenCalledWith(expect.anything(), 0, 0, 512, 256);
     expect(close).toHaveBeenCalledOnce();
   });
 
-  it('does not upscale an image whose longest edge is already 512px or less', async () => {
+  it('does not upscale an image of 512px or less, and still reports its size', async () => {
     vi.mocked(createImageBitmap).mockResolvedValue({
       width: 512,
       height: 300,
@@ -53,9 +53,9 @@ describe('generateImageThumbnail', () => {
     } as unknown as ImageBitmap);
     const toBlob = vi.spyOn(HTMLCanvasElement.prototype, 'toBlob');
 
-    await expect(generateImageThumbnail(new Blob(['small'], { type: 'image/png' }))).resolves.toBe(
-      undefined
-    );
+    await expect(
+      generateImageThumbnail(new Blob(['small'], { type: 'image/png' }))
+    ).resolves.toEqual({ width: 512, height: 300 });
 
     expect(toBlob).not.toHaveBeenCalled();
     expect(close).toHaveBeenCalledOnce();
@@ -64,6 +64,6 @@ describe('generateImageThumbnail', () => {
   it('degrades gracefully when the image cannot be decoded', async () => {
     vi.mocked(createImageBitmap).mockRejectedValue(new Error('decode failed'));
 
-    await expect(generateImageThumbnail(new Blob(['bad']))).resolves.toBeUndefined();
+    await expect(generateImageThumbnail(new Blob(['bad']))).resolves.toEqual({});
   });
 });

@@ -48,7 +48,7 @@ function waitForMediaEvent(
  */
 export async function generateVideoPoster(
   blob: Blob
-): Promise<{ poster?: Blob; duration?: number }> {
+): Promise<{ poster?: Blob; duration?: number; width?: number; height?: number }> {
   const url = URL.createObjectURL(blob);
   const video = document.createElement('video');
   video.muted = true;
@@ -66,7 +66,11 @@ export async function generateVideoPoster(
     // print and no midpoint to seek to. Resolve it once here so neither the
     // sample point nor the returned metadata has to ask again.
     const duration = Number.isFinite(video.duration) ? video.duration : undefined;
-    const metadata = { duration };
+    // The frame size is known from the metadata alone; another Device reserves it (M5 slice 5).
+    const metadata =
+      video.videoWidth > 0 && video.videoHeight > 0
+        ? { duration, width: video.videoWidth, height: video.videoHeight }
+        : { duration };
 
     // Seek before drawing: the frame at t=0 is often the encoder's blank lead-in,
     // and on a clip shorter than the sample point we take the midpoint instead.

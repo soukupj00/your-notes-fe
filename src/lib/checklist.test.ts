@@ -80,8 +80,7 @@ describe('setChecklistItemChecked', () => {
     // The card renders `stripAttachmentNodes(body)` but writes back to the whole
     // body, so the two must agree on what index 1 means. They do because
     // stripping only ever removes media nodes, never an `li`.
-    const body =
-      '<img data-attachment-id="a1">' + list(item('Milk'), item('Bread')) + '<p>tail</p>';
+    const body = `<img data-attachment-id="a1">${list(item('Milk'), item('Bread'))}<p>tail</p>`;
 
     const next = setChecklistItemChecked(body, 1, true);
 

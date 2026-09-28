@@ -24,7 +24,10 @@ What happens in a run is `src/sync/engine.ts`; when a run happens is `src/sync/l
 - **Mounted in `routes/__root.tsx`, inside `TourProvider`**, not in `App.tsx`: its one toast ("N conflicts kept as copies") links to the Conflicts Tag, so it needs the router. The `Remote` reaches it through `AccountProvider`, which `main.tsx` hands both halves of the one HAL client.
 - **It stands still while the Tour runs** (`useTourActive()`), and the engine leaves the Tour's Props out of every push, so a Prop never reaches the server even after a reload mid-Tour.
 - On a session it first **adopts** (a new Account owes the whole library), then starts the loop; on sign-out or a change of Account it stops it.
-- Exposes `{ active, status, lastSyncedAt, pending, syncNow, stop }`. `pending` is the store's live count of what the server is owed, so it is right signed out too; `stop()` waits for a run in flight, which is what makes erasing safe.
+- **Attachment bytes** (M5 slice 5) move at the end of each run (`src/sync/attachments.ts`): thumbnails up first, then blobs, every missing thumbnail down.
+  Full bytes come down on a tap through `download(id)`, or after every run while the `keepEverything` Preference is on (turning it on starts a run).
+  A blob the server refuses for its size is one toast, "<name> is too large to sync", and is never retried.
+- Exposes `{ active, status, lastSyncedAt, pending, syncNow, stop, download }`. `pending` is the store's live count of what the server is owed, so it is right signed out too; `stop()` waits for a run in flight, which is what makes erasing safe.
 - `useSync()` answers "not syncing" outside a provider, like `useAccount()`.
 - Sign-out lives in `components/account/SignOutButton.tsx`: refused while `pending > 0` (offering Sync now and a Backup), otherwise `DELETE /api/session`, `stop()`, then `store.clear()`.
 

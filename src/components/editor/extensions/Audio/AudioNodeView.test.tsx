@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Attachment } from '@/models.ts';
+import { liveRow } from '@/test/liveRow.ts';
 import { AudioNodeView } from './AudioNodeView';
 import { createAudioAutoplayCoordinator } from './audioAutoplay';
 
@@ -33,6 +34,7 @@ function props(
   get: (i: string) => Promise<Attachment | undefined>,
   opts: { isEditable?: boolean; deleteNode?: () => void } = {}
 ) {
+  const watchAttachment = liveRow(get);
   return {
     node: { attrs: { attachmentId: 'a1' } },
     editor: {
@@ -40,7 +42,9 @@ function props(
       storage: { audioAttachment: { autoplay: createAudioAutoplayCoordinator() } },
     },
     deleteNode: opts.deleteNode ?? vi.fn(),
-    extension: { options: { getDeps: () => ({ getAttachment: get, t: (k: string) => k }) } },
+    extension: {
+      options: { getDeps: () => ({ watchAttachment, t: (k: string) => k }) },
+    },
   } as unknown as Parameters<typeof AudioNodeView>[0];
 }
 

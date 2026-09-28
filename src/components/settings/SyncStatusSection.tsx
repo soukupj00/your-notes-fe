@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
+import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useSync } from '@/context/SyncProvider.tsx';
-import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
+import { SettingsRow, SettingsSection, SwitchSetting } from './SettingsSection.tsx';
 
 const when = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 const unit = (name: 'kilobyte' | 'megabyte') =>
@@ -37,13 +38,15 @@ function useStorage(): Storage | null {
 
 /**
  * "Is my data safe here?" answered in one block (PLAN.md M5): whether the
- * browser keeps this Device's copy, and - while signed in - how Sync is doing
- * and how many changes still wait for the server.
+ * browser keeps this Device's copy, and - while signed in - how Sync is doing,
+ * how many changes still wait for the server, and whether this Device keeps
+ * every Attachment's bytes or only their Previews.
  */
 export function SyncStatusSection() {
   const { t } = useTranslation();
   const storage = useStorage();
   const { active, status, lastSyncedAt, pending, syncNow } = useSync();
+  const { preferences, setPreference } = usePreferences();
   if (!storage && !active) return null;
 
   const statusText =
@@ -86,6 +89,14 @@ export function SyncStatusSection() {
             {t('sync.syncNow')}
           </Button>
         </SettingsRow>
+      )}
+      {active && (
+        <SwitchSetting
+          label={t('sync.keepEverything.label')}
+          description={t('sync.keepEverything.description')}
+          checked={preferences.keepEverything}
+          onChange={(next) => void setPreference('keepEverything', next)}
+        />
       )}
     </SettingsSection>
   );

@@ -5,7 +5,13 @@ import type { AttachmentKind } from '@/models.ts';
 import type { AttachmentDeps } from './deps';
 
 /** Derived data computed from the file before it is stored, or nothing. */
-export type DerivedAttachmentData = { thumbnail?: Blob; duration?: number };
+export type DerivedAttachmentData = {
+  thumbnail?: Blob;
+  duration?: number;
+  /** Pixels, so another Device can reserve the box before the bytes arrive (M5 slice 5). */
+  width?: number;
+  height?: number;
+};
 
 /**
  * `deps` with a `createAttachment` that validates the file and derives its card
@@ -95,8 +101,12 @@ export async function dedupeForeignAttachments(
   const noteId = await deps.getNoteId();
   const ids = extractAttachmentIds(editor.getHTML());
   for (const id of ids) {
-    const att = await deps.getAttachment(id);
+    let att = await deps.getAttachment(id);
     if (!att || att.noteId === noteId) continue;
+    // A clone takes a new id, and only this Device could ever upload bytes under it.
+    if (!att.blob && (await deps.downloadAttachment(id).catch(() => false))) {
+      att = (await deps.getAttachment(id)) ?? att;
+    }
     const clone = await deps.cloneAttachment(att, noteId);
     const positions: number[] = [];
     editor.state.doc.descendants((node, p) => {

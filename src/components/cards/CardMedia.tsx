@@ -44,7 +44,10 @@ function useVisualUrls(visuals: Resolved[]): Record<string, string> {
     for (const visual of visuals) {
       // A drawing carries its preview as SVG markup, not as bytes.
       if (!visual.row || visual.kind === 'excalidraw') continue;
-      next[visual.id] = URL.createObjectURL(visual.row.thumbnail ?? visual.row.blob);
+      // A row synced from another Device may have neither yet (its thumbnail is on the way);
+      // the card never downloads full bytes itself.
+      const bytes = visual.row.thumbnail ?? visual.row.blob;
+      if (bytes) next[visual.id] = URL.createObjectURL(bytes);
     }
     return next;
   }, [visuals]);
@@ -199,7 +202,13 @@ function useVideoPosterBackfill(visuals: Resolved[]) {
   useEffect(() => {
     let active = true;
     const pending = visuals.filter(
-      (visual) => visual.kind === 'video' && visual.row && !visual.row.thumbnail
+      // A `thumbnailId` means a poster exists and Sync is bringing it; a row
+      // without bytes has nothing to decode.
+      (visual) =>
+        visual.kind === 'video' &&
+        visual.row?.blob &&
+        !visual.row.thumbnail &&
+        !visual.row.thumbnailId
     );
 
     for (const visual of pending) {
@@ -207,7 +216,7 @@ function useVideoPosterBackfill(visuals: Resolved[]) {
       if (!row || posterAttempts.has(row.id)) continue;
       posterAttempts.add(row.id);
 
-      void generateVideoPoster(row.blob).then(({ poster, duration }) => {
+      void generateVideoPoster(row.blob!).then(({ poster, duration }) => {
         if (!active || (!poster && duration === undefined)) return;
         return updateAttachment(row.id, {
           ...(poster ? { thumbnail: poster } : {}),

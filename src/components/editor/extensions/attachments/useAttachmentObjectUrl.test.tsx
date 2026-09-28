@@ -1,6 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createMemoryLocalStore } from '@/data/memory/MemoryLocalStore.ts';
 import type { Attachment } from '@/models.ts';
+import { liveRow } from '@/test/liveRow.ts';
 import { useAttachmentObjectUrl } from './useAttachmentObjectUrl';
 
 const revoke = vi.fn();
@@ -32,8 +35,15 @@ function Probe({
   id: string | null;
   get: (i: string) => Promise<Attachment | undefined>;
 }) {
-  const s = useAttachmentObjectUrl(id, get);
-  return <div data-testid="s">{s.status === 'ready' ? `${s.url}|${s.name}` : s.status}</div>;
+  const [watch] = useState(() => liveRow(get));
+  const s = useAttachmentObjectUrl(id, watch);
+  const text =
+    s.status === 'ready'
+      ? `${s.url}|${s.name}`
+      : s.status === 'remote'
+        ? `remote|${s.thumbnailUrl ?? ''}`
+        : s.status;
+  return <div data-testid="s">{text}</div>;
 }
 
 describe('useAttachmentObjectUrl', () => {
@@ -48,12 +58,27 @@ describe('useAttachmentObjectUrl', () => {
     await waitFor(() => expect(screen.getByTestId('s').textContent).toBe('missing'));
   });
 
-  // A rejected lookup used to be an unhandled rejection that also pinned the
-  // node view on 'loading' forever - a broken attachment showed as a permanent
-  // spinner rather than as missing.
-  it('reports missing when the lookup fails', async () => {
-    render(<Probe id="a1" get={() => Promise.reject(new Error('db is gone'))} />);
-    await waitFor(() => expect(screen.getByTestId('s').textContent).toBe('missing'));
+  it('a row without bytes is remote, with its thumbnail when it has one', async () => {
+    const remote = { ...att(), blob: undefined, thumbnail: new Blob(['t']) };
+    render(<Probe id="a1" get={async () => remote} />);
+    await waitFor(() =>
+      expect(screen.getByTestId('s').textContent).toMatch(/^remote\|blob:mock\//)
+    );
+  });
+
+  it('turns ready when the bytes land, without a remount', async () => {
+    const store = createMemoryLocalStore();
+    const remote: Attachment = { ...att() };
+    delete remote.blob;
+    await store.attachments.add(remote);
+    function Live() {
+      const s = useAttachmentObjectUrl('a1', store.attachments.watch);
+      return <div data-testid="s">{s.status}</div>;
+    }
+    render(<Live />);
+    await waitFor(() => expect(screen.getByTestId('s').textContent).toBe('remote'));
+    await store.sync.received('a1', { blob: new Blob(['x']) });
+    await waitFor(() => expect(screen.getByTestId('s').textContent).toBe('ready'));
   });
 
   it('reports missing without a round trip when there is no id to resolve', () => {

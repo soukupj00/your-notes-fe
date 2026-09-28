@@ -46,6 +46,9 @@ export const AttachmentMeta = z.object({
   height: z.number().int().min(0).optional(),
   duration: z.number().min(0).optional(),
   preview: z.string().optional(),
+  // TODO contract:pull - backend feat/attachment-thumbnail-id, not yet committed; this is its exact line.
+  /** The blob holding the image's downscaled Preview, synced eagerly; the full bytes are under `id`. */
+  thumbnailId: Id.optional(),
   createdAt: IsoDateTime,
   updatedAt: IsoDateTime,
 });

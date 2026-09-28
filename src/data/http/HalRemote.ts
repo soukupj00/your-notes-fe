@@ -68,11 +68,17 @@ export function createHalRemote(hal: HalClient): Remote {
     },
     async putBlob(id, blob) {
       // 201 stored, 204 already there: bytes are write-once by id, so both are success.
-      await hal.send(await hal.link('blobs', { id }), {
-        method: 'PUT',
-        headers: { 'content-type': blob.type || 'application/octet-stream' },
-        body: blob,
-      });
+      try {
+        await hal.send(await hal.link('blobs', { id }), {
+          method: 'PUT',
+          headers: { 'content-type': blob.type || 'application/octet-stream' },
+          body: blob,
+        });
+        return 'stored';
+      } catch (error) {
+        if (error instanceof ProblemError && error.status === 413) return 'too-large';
+        throw error;
+      }
     },
     async getBlob(id) {
       try {

@@ -1,5 +1,5 @@
 import { noteTagId, parseNoteTagId } from '@/contract/index.ts';
-import type { Attachment, Note, NoteTag, Tag } from '@/models.ts';
+import type { Note, NoteTag, Tag } from '@/models.ts';
 import type { LocalStore, NoteFeedScope, Snapshot } from '../LocalStore.ts';
 import type { Live } from '../live.ts';
 import type { Tombstone } from '../Remote.ts';
@@ -7,13 +7,19 @@ import {
   type AcceptedRow,
   acceptedRows,
   fromServerNote,
+  markOnServer,
   owed,
+  reconcileAttachments,
   type Stored,
+  type StoredAttachment,
   settle,
   strip,
+  stripAttachment,
   tombstone,
+  transferOf,
   wireNote,
   wireRow,
+  withReceived,
 } from '../syncRows.ts';
 
 type Table = 'notes' | 'tags' | 'noteTags' | 'attachments' | 'meta';
@@ -26,16 +32,14 @@ const linkKey = noteTagId;
  * depends on. It is the "cache only" configuration and what the contract
  * suite proves the interface against; the app's default is Dexie.
  *
- * Attachments are handed back as the same objects they were given - there is
- * no structured clone here as there is in IndexedDB - so callers must treat
- * what they read as frozen, which they already do. Notes, Tags and NoteTags
- * come back as copies without their sync state.
+ * Every row comes back as a copy without its sync state; an Attachment's Blobs
+ * are the same objects it was given, as there is no structured clone here.
  */
 export function createMemoryLocalStore(): LocalStore {
   const notes = new Map<string, Stored<Note>>();
   const tags = new Map<string, Stored<Tag>>();
   const noteTags = new Map<string, Stored<NoteTag>>();
-  const attachments = new Map<string, Attachment>();
+  const attachments = new Map<string, StoredAttachment>();
   const tombstones = new Map<string, Tombstone>();
   const meta = new Map<string, unknown>();
 
@@ -105,6 +109,8 @@ export function createMemoryLocalStore(): LocalStore {
 
   const attachmentsFor = (noteId: string) =>
     [...attachments.values()].filter((a) => a.noteId === noteId);
+  const plain = (rows: StoredAttachment[]) => rows.map(stripAttachment);
+  const plainOne = (row: StoredAttachment | undefined) => row && stripAttachment(row);
 
   /** Links the server removes with their Note or Tag, so no Tombstones. */
   function deleteLinksWhere(predicate: (l: NoteTag) => boolean) {
@@ -139,7 +145,7 @@ export function createMemoryLocalStore(): LocalStore {
       },
       purge: async (id) => {
         const removedTags = values(noteTags).filter((l) => l.noteId === id);
-        const removedAttachments = attachmentsFor(id);
+        const removedAttachments = plain(attachmentsFor(id));
         remove(notes, id, 'note');
         deleteLinksWhere((l) => l.noteId === id);
         for (const a of removedAttachments) attachments.delete(a.id);
@@ -211,14 +217,14 @@ export function createMemoryLocalStore(): LocalStore {
     },
 
     attachments: {
-      get: async (id) => attachments.get(id),
-      watch: (id) => live(['attachments'], () => attachments.get(id)),
-      list: async () => [...attachments.values()],
-      forNote: (noteId) => live(['attachments'], () => attachmentsFor(noteId)),
+      get: async (id) => plainOne(attachments.get(id)),
+      watch: (id) => live(['attachments'], () => plainOne(attachments.get(id))),
+      list: async () => plain([...attachments.values()]),
+      forNote: (noteId) => live(['attachments'], () => plain(attachmentsFor(noteId))),
       forNotes: (noteIds) => {
         const wanted = new Set(noteIds);
         return live(['attachments'], () =>
-          [...attachments.values()].filter((a) => wanted.has(a.noteId))
+          plain([...attachments.values()].filter((a) => wanted.has(a.noteId)))
         );
       },
       add: async (attachment) => {
@@ -324,6 +330,10 @@ export function createMemoryLocalStore(): LocalStore {
           if (keepLocal(notes.get(row.id), row.id)) continue;
           notes.set(row.id, fromServerNote(row));
           tombstones.delete(row.id);
+          if (!row.attachments) continue;
+          const { put, remove } = reconcileAttachments(row.attachments, attachmentsFor(row.id));
+          for (const id of remove) attachments.delete(id);
+          for (const a of put) attachments.set(a.id, a);
         }
         for (const row of changes.tags) {
           if (keepLocal(tags.get(row.id), row.id)) continue;
@@ -375,6 +385,24 @@ export function createMemoryLocalStore(): LocalStore {
           );
           return owedRows.length + tombstones.size;
         }),
+      transfers: async () =>
+        [...attachments.values()].map((row) =>
+          transferOf(row, notes.get(row.noteId)?.rev !== undefined)
+        ),
+      onServer: async (id, blobId) => {
+        const row = attachments.get(id);
+        if (row) attachments.set(id, markOnServer(row, blobId));
+      },
+      tooLarge: async (id) => {
+        const row = attachments.get(id);
+        if (row) attachments.set(id, { ...row, tooLarge: 1 });
+      },
+      received: async (id, bytes) => {
+        const row = attachments.get(id);
+        if (!row) return;
+        attachments.set(id, withReceived(row, bytes));
+        changed('attachments');
+      },
     },
 
     exportAll: async () =>
@@ -382,7 +410,7 @@ export function createMemoryLocalStore(): LocalStore {
         notes: values(notes),
         tags: values(tags),
         noteTags: values(noteTags),
-        attachments: [...attachments.values()],
+        attachments: plain([...attachments.values()]),
       }) satisfies Snapshot,
     replaceAll: async (snapshot) => {
       const noteRev = new Map([...notes.values()].map((n) => [n.id, n.rev]));

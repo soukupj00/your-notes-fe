@@ -10,10 +10,14 @@ export type NoteAttachments = Map<string, Attachment>;
 // Module-level, so a note with no id gets a Live that delivers once and never again:
 const EMPTY_ROWS = emptyLive<Attachment[]>([]);
 
-/** Identifies a note's rows by content, so an unchanged note can keep its Map. */
+/**
+ * Identifies a note's rows by content, so an unchanged note can keep its Map.
+ * Which bytes a row holds is part of it: Sync writes a downloaded thumbnail or
+ * blob without touching `updatedAt` (it is not an edit), and the card has to see it.
+ */
 function signatureOf(rows: Attachment[]): string {
   return rows
-    .map((row) => `${row.id}@${row.updatedAt}`)
+    .map((row) => `${row.id}@${row.updatedAt}${row.blob ? '+b' : ''}${row.thumbnail ? '+t' : ''}`)
     .sort()
     .join('|');
 }

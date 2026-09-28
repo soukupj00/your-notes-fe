@@ -99,6 +99,12 @@ const preferencesSchema = z.object({
    * ranked list of options - which is real but a minority.
    */
   sinkCheckedItems: z.boolean().default(true),
+  /**
+   * Whether Sync downloads every Attachment's full bytes to this Device after
+   * each pull (04-sync.md "Attachment transfer"). Off: Previews arrive eagerly
+   * and full bytes on the first tap, which is what a phone's storage wants.
+   */
+  keepEverything: z.boolean().default(false),
   /** `system` follows `prefers-reduced-motion`; the others override it. */
   reducedMotion: z.enum(['system', 'always', 'never']).default('system'),
   /**

@@ -89,6 +89,20 @@ describe('useAttachmentsByNote', () => {
     await waitFor(() => expect(result.current.get('n1')).not.toBe(before));
   });
 
+  it('gives a note a new Map when Sync brings a row its bytes, whose updatedAt stays', async () => {
+    const synced: Attachment = { ...(await putAttachment('a1', 'n1')), id: 'a2' };
+    delete synced.blob;
+    await testStore.attachments.add(synced);
+    const { result } = renderHookWithStore(() => useAttachmentsByNote(['n1']));
+    await waitFor(() => expect(result.current.get('n1')?.size).toBe(2));
+    const before = result.current.get('n1');
+
+    await testStore.sync.received('a2', { blob: new Blob(['y']) });
+
+    await waitFor(() => expect(result.current.get('n1')).not.toBe(before));
+    expect(result.current.get('n1')?.get('a2')?.blob).toBeDefined();
+  });
+
   it('runs no query and returns nothing for an empty feed', async () => {
     await putAttachment('a1', 'n1');
 

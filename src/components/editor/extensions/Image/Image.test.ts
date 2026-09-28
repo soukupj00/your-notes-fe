@@ -9,7 +9,7 @@ import { createImage } from './Image';
 import { insertImageAttachmentFiles } from './insert.ts';
 
 vi.mock('@/lib/image-thumbnail.ts', () => ({
-  generateImageThumbnail: vi.fn(async () => undefined),
+  generateImageThumbnail: vi.fn(async () => ({})),
 }));
 
 const t = ((key: string) => key) as AttachmentDeps['t'];
@@ -21,6 +21,8 @@ function stubDeps(): AttachmentDeps {
       throw new Error('not implemented');
     }),
     getAttachment: vi.fn(async () => undefined),
+    watchAttachment: vi.fn(),
+    downloadAttachment: vi.fn(async () => false),
     cloneAttachment: vi.fn(),
     updateAttachment: vi.fn(),
     openExcalidraw: vi.fn(),
@@ -39,7 +41,7 @@ function createEditor(deps = stubDeps()) {
 describe('imageAttachment node', () => {
   let editor: Editor;
   beforeEach(() => {
-    vi.mocked(generateImageThumbnail).mockResolvedValue(undefined);
+    vi.mocked(generateImageThumbnail).mockResolvedValue({});
     editor = createEditor();
   });
   afterEach(() => editor.destroy());
@@ -108,10 +110,10 @@ describe('insertImageAttachmentFiles', () => {
     editor.destroy();
   });
 
-  it('stores a generated thumbnail with the full image attachment', async () => {
+  it('stores a generated thumbnail and the size with the full image attachment', async () => {
     const deps = stubDeps();
     const thumbnail = new Blob(['small'], { type: 'image/webp' });
-    vi.mocked(generateImageThumbnail).mockResolvedValue(thumbnail);
+    vi.mocked(generateImageThumbnail).mockResolvedValue({ thumbnail, width: 1600, height: 1000 });
     deps.createAttachment = vi.fn(async (_noteId, file) => ({
       id: 'att-with-thumbnail',
       noteId: 'note-1',
@@ -128,7 +130,11 @@ describe('insertImageAttachmentFiles', () => {
     await insertImage(editor, [png], deps);
 
     expect(generateImageThumbnail).toHaveBeenCalledWith(png);
-    expect(deps.createAttachment).toHaveBeenCalledWith('note-1', png, 'image', { thumbnail });
+    expect(deps.createAttachment).toHaveBeenCalledWith('note-1', png, 'image', {
+      thumbnail,
+      width: 1600,
+      height: 1000,
+    });
     expect(editor.getHTML()).toContain('data-attachment-id="att-with-thumbnail"');
     editor.destroy();
   });

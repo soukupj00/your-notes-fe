@@ -135,7 +135,7 @@ describe('sync loop', () => {
     const server = createFakeServer();
     const owner = server.seedOwner('ada', 'correct horse');
     const a = await device(server, owner.id, 30);
-    expect(a.reports[0]).toEqual({ conflicts: 0, keptNewer: 0 });
+    expect(a.reports[0]).toEqual({ conflicts: 0, keptNewer: 0, tooLarge: [], transfersLeft: 0 });
 
     await a.loop.stop();
     const after = a.runs();

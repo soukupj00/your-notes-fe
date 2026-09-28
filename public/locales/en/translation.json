@@ -187,6 +187,12 @@
         "font": "Font",
         "meta": "Toolbar"
       }
+    },
+    "attachment": {
+      "download": "Download",
+      "notDownloaded": "Not on this device yet",
+      "notOnServer": "Not on the server yet. Try again in a moment.",
+      "downloadFailed": "Could not download. Check your connection."
     }
   },
   "settings": {
@@ -672,6 +678,11 @@
     "error": "Could not sync. It will try again.",
     "pending_one": "{{count}} change waiting",
     "pending_other": "{{count}} changes waiting",
-    "syncNow": "Sync now"
+    "syncNow": "Sync now",
+    "tooLarge": "{{name}} is too large to sync",
+    "keepEverything": {
+      "label": "Keep everything on this device",
+      "description": "Download every attachment after each sync, not just previews. Uses more storage."
+    }
   }
 }

@@ -1,12 +1,12 @@
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
 import DOMPurify from 'dompurify';
-import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import { emptyLive } from '@/data/live.ts';
 import { useLive } from '@/data/useLive.ts';
 import { cn } from '@/lib/utils.ts';
 import type { Attachment } from '@/models.ts';
 import { AttachmentDeleteButton } from '../attachments/AttachmentDeleteButton';
+import { DownloadButton, useDownloadAttachment } from '../attachments/AttachmentNotDownloaded';
 import { AttachmentUnavailable } from '../attachments/AttachmentUnavailable';
 import type { AttachmentDeps } from '../attachments/deps';
 
@@ -20,7 +20,6 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
   const attachmentId = props.node.attrs.attachmentId as string | null;
   const deps = (props.extension.options.getDeps as () => AttachmentDeps)();
   const editable = props.editor?.isEditable ?? false;
-  const store = useLocalStore();
 
   // undefined = loading, null = missing, object = ready.
   const row = useLive(
@@ -28,10 +27,10 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
       attachmentId
         ? {
             subscribe: (next: (row: Attachment | null) => void) =>
-              store.attachments.watch(attachmentId).subscribe((r) => next(r ?? null)),
+              deps.watchAttachment(attachmentId).subscribe((r) => next(r ?? null)),
           }
         : emptyLive<Attachment | null>(null),
-    [store, attachmentId]
+    [deps.watchAttachment, attachmentId]
   );
 
   // Delete is a sibling of the preview surface, positioned inside the same
@@ -45,7 +44,7 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
     />
   ) : null;
 
-  const openEditor = () => {
+  const openCanvas = () => {
     if (!attachmentId) return;
     deps.openExcalidraw({
       attachmentId,
@@ -53,6 +52,12 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
       onReplace: (id) => props.updateAttributes({ attachmentId: id }),
     });
   };
+
+  // A drawing synced from another Device shows its preview; the scene itself is
+  // fetched on the first tap, and the canvas opens once it has landed.
+  const { busy, download } = useDownloadAttachment(deps, attachmentId ?? '', openCanvas);
+  const remote = row ? !row.blob : false;
+  const openEditor = () => (remote ? void download() : openCanvas());
 
   if (row === null) {
     return (
@@ -93,6 +98,14 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
             className={surfaceClass}
             // biome-ignore lint/security/noDangerouslySetInnerHtml: DOMPurify-sanitized SVG snapshot (see previewMarkup).
             dangerouslySetInnerHTML={previewMarkup}
+          />
+        )}
+        {remote && (
+          <DownloadButton
+            busy={busy}
+            onClick={() => void download()}
+            label={deps.t('editor.attachment.download')}
+            className="absolute bottom-2 left-2 bg-background/80 text-foreground backdrop-blur-sm"
           />
         )}
         {deleteButton}

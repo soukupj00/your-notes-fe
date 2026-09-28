@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountProvider } from '@/context/AccountProvider.tsx';
+import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { SyncProvider } from '@/context/SyncProvider.tsx';
 import { createHalAccountService } from '@/data/http/HalAccountService.ts';
 import { createHalClient } from '@/data/http/hal.ts';
@@ -32,11 +33,13 @@ function mount(server: FakeServer) {
   render(
     withStore(
       <AccountProvider service={service}>
-        <SyncProvider>
-          <AccountSection />
-          <DevicesSection />
-          <MembersSection />
-        </SyncProvider>
+        <PreferencesProvider>
+          <SyncProvider>
+            <AccountSection />
+            <DevicesSection />
+            <MembersSection />
+          </SyncProvider>
+        </PreferencesProvider>
       </AccountProvider>
     )
   );

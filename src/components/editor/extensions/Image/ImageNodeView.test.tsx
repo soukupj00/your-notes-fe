@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Attachment } from '@/models.ts';
+import { liveRow } from '@/test/liveRow.ts';
 import { ImageNodeView } from './ImageNodeView';
 
 // jsdom lacks object-URL APIs.
@@ -32,9 +33,12 @@ function makeAtt(): Attachment {
 
 // Minimal fake of the ReactNodeView props surface the component reads.
 function fakeProps(getAttachment: (id: string) => Promise<Attachment | undefined>) {
+  const watchAttachment = liveRow(getAttachment);
   return {
     node: { attrs: { attachmentId: 'a1' } },
-    extension: { options: { getDeps: () => ({ getAttachment, t: (key: string) => key }) } },
+    extension: {
+      options: { getDeps: () => ({ watchAttachment, t: (key: string) => key }) },
+    },
   } as unknown as ReactNodeViewProps;
 }
 
@@ -42,11 +46,14 @@ function editableProps(
   deleteNode: () => void,
   getAttachment: (id: string) => Promise<Attachment | undefined>
 ) {
+  const watchAttachment = liveRow(getAttachment);
   return {
     node: { attrs: { attachmentId: 'a1' } },
     deleteNode,
     editor: { isEditable: true },
-    extension: { options: { getDeps: () => ({ getAttachment, t: (key: string) => key }) } },
+    extension: {
+      options: { getDeps: () => ({ watchAttachment, t: (key: string) => key }) },
+    },
   } as unknown as ReactNodeViewProps;
 }
 
@@ -73,6 +80,24 @@ describe('ImageNodeView', () => {
     await screen.findByRole('img');
     unmount();
     await waitFor(() => expect(revoke).toHaveBeenCalled());
+  });
+});
+
+describe('ImageNodeView not downloaded', () => {
+  it('shows the thumbnail at the full image size, so nothing moves when the bytes land', async () => {
+    const remote: Attachment = {
+      ...makeAtt(),
+      thumbnail: new Blob(['t'], { type: 'image/webp' }),
+      width: 1600,
+      height: 1000,
+    };
+    delete remote.blob;
+    render(<ImageNodeView {...fakeProps(async () => remote)} />);
+
+    const img = await screen.findByRole('img');
+    expect(img).toHaveAttribute('width', '1600');
+    expect(img).toHaveAttribute('height', '1000');
+    expect(screen.getByRole('button', { name: 'editor.attachment.download' })).toBeInTheDocument();
   });
 });
 

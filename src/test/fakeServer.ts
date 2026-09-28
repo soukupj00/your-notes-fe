@@ -44,6 +44,10 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
     offline: false,
     /** Every request answers the SPA's `index.html` (a static host with no server). */
     staticHost: false,
+    /** The backend's `BLOB_LIMIT_BYTES`: a larger PUT answers 413. */
+    blobLimit: 50 * 1024 * 1024,
+    /** Every blob request, as `PUT <id>`, `GET <id>` or `HEAD <id>`. */
+    blobRequests: [] as string[],
   };
 
   const reply = <S extends z.ZodType>(schema: S, body: z.input<S>, status = 200) =>
@@ -245,15 +249,22 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
     const blobMatch = path.match(/^\/api\/blobs\/(.+)$/);
     if (blobMatch) {
       const id = decodeURIComponent(blobMatch[1]!);
+      state.blobRequests.push(`${method} ${id}`);
+      // The backend's order (`routes/blobs.ts`): size, then type, then a repeat is 204 unread.
       if (method === 'PUT') {
+        const sent = init?.body as Blob;
+        if (sent.size > state.blobLimit) return problem(413, 'Too large');
+        if (!new Headers(init?.headers).get('content-type')) {
+          return problem(400, 'Send the Content-Type of the bytes');
+        }
         if (blobs.has(id)) return empty(204);
         // Bytes, not the Blob: jsdom's Blob does not survive being a Response body.
-        const sent = init?.body as Blob;
         blobs.set(id, new Uint8Array(await sent.arrayBuffer()));
         return empty(201);
       }
       const bytes = blobs.get(id);
-      return bytes ? new Response(bytes, { status: 200 }) : problem(404, 'No such blob');
+      if (!bytes) return problem(404, 'No such blob');
+      return new Response(method === 'HEAD' ? null : bytes, { status: 200 });
     }
     return problem(404, `No route for ${method} ${path}`);
   }

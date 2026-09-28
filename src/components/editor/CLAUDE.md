@@ -83,12 +83,21 @@ Pattern A is partly adopted:
   All four media nodes (Image/Audio/Video/File) share the `attachments/` core (`createAttachmentNode`, `useAttachmentObjectUrl`, `insert.ts`, `deps.ts`), `AttachmentDeleteButton`, and the hidden-input workflow in `AttachmentFilePickerButton`.
   `AttachmentDeleteButton` binds the generic control in `src/components/ui/ConfirmDeleteButton.tsx` to the attachment confirmation copy and owns the shared overlay treatment used by visual NodeViews.
   This leaves one generic `ConfirmDeleteButton` while keeping attachment-specific presentation local to the attachment module.
+- **Known but not downloaded** (M5 slice 5) is the third state every attachment node view draws, beside ready and missing: a row synced from another Device whose full bytes are still on the server.
+  `useAttachmentObjectUrl` reads the row live through `deps.watchAttachment`, so a download (or a pull) turns it ready without reopening the Note, and answers `status: 'remote'` with the thumbnail's URL when there is one.
+  `attachments/AttachmentNotDownloaded.tsx` draws it: an image's thumbnail with a download button over it, otherwise a card with name, size and the button; Excalidraw keeps its inline SVG preview, and a tap on it downloads the scene before opening the canvas.
+  The button calls `deps.downloadAttachment`, which is `SyncProvider`'s `download`; it is neutral, never the accent, and 44px to a finger.
+  A cross-note paste of a row without bytes downloads it first, because a clone takes a new id nobody else could upload bytes under.
+  The home card never downloads: it shows the thumbnail or preview, and a thumbnail-less image is fetched with the thumbnails because it is its own Preview.
+  An image's and a video's pixel size is read at insert, where the thumbnail or poster is decoded anyway, and stored as `width`/`height`; the thumbnail, the image and the video all carry them as attributes, so the box is reserved before the bytes land.
+  A row from before that has no size and simply grows when its bytes arrive.
 - **Excalidraw** is a custom `excalidrawAttachment` node (`extensions/Excalidraw/Excalidraw.ts`), built on the same shared `createAttachmentNode` factory as Image/Audio/Video/File.
   It serializes as body `<excalidraw-drawing data-attachment-id>` with no payload; the scene itself is stored as an `application/json` blob in the Dexie `attachments` table (`kind: 'excalidraw'`), with a self-generated SVG snapshot cached in `Attachment.preview`.
   `ExcalidrawNodeView` is a passive, live-queried SVG preview with tap-to-edit and an overlaid confirm-before-delete control.
   One shared `ExcalidrawDialog`, owned by `editor.tsx` and opened through `AttachmentDeps.openExcalidraw`, contains the live canvas and imports Excalidraw's stylesheet.
   `NotesView` lazy-loads `NoteEditorDialog`, and the editor lazy-loads `ExcalidrawDialog` only when a drawing opens, so neither TipTap nor the drawing engine is part of the initial feed download.
-  Persistence is commit-on-Save: a new drawing creates its attachment and inserts its node only after Save, while editing updates the existing blob and preview without changing the body.
+  Persistence is commit-on-Save: a new drawing creates its attachment and inserts its node only after Save.
+  Editing never rewrites bytes: every Save mints a new attachment row (`commit.ts`, since M5 slice 3) and repoints the node at it through `onReplace`, so every blob stays write-once by id for Sync, and the orphan sweep removes the old row.
   Cancel discards changes, Delete removes the node through orphan GC, and both actions reuse the shared `ConfirmDialog`.
   `scene.ts` holds JSON serialization helpers and removes transient collaboration state that cannot survive JSON serialization.
   `sceneToSvgString` dynamically imports `@excalidraw/excalidraw` because eagerly importing the package touches `canvas.getContext()` at module scope, which crashes under jsdom without the native `canvas` package.

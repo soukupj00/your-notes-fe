@@ -20,15 +20,32 @@ function att(overrides: Partial<Attachment> = {}): Attachment {
   };
 }
 
-function props(over: { openExcalidraw?: () => void; deleteNode?: () => void } = {}) {
+/** Module-level so its identity holds across renders, as the editor's own deps do. */
+const watchAttachment = (id: string) => testStore.attachments.watch(id);
+
+function props(
+  over: {
+    openExcalidraw?: () => void;
+    deleteNode?: () => void;
+    downloadAttachment?: (id: string) => Promise<boolean>;
+  } = {}
+) {
   const openExcalidraw = over.openExcalidraw ?? vi.fn();
+  const downloadAttachment = over.downloadAttachment ?? vi.fn(async () => false);
   const deleteNode = over.deleteNode ?? vi.fn();
   const p = {
     node: { attrs: { attachmentId: 'a1' } },
     editor: { isEditable: true },
     deleteNode,
     extension: {
-      options: { getDeps: () => ({ openExcalidraw, t: (k: string) => k }) },
+      options: {
+        getDeps: () => ({
+          openExcalidraw,
+          watchAttachment,
+          downloadAttachment,
+          t: (k: string) => k,
+        }),
+      },
     },
   } as unknown as Parameters<typeof ExcalidrawNodeView>[0];
   return { p, openExcalidraw, deleteNode };
@@ -37,6 +54,25 @@ function props(over: { openExcalidraw?: () => void; deleteNode?: () => void } = 
 afterEach(clearStore);
 
 describe('ExcalidrawNodeView (preview)', () => {
+  it('a drawing synced without its scene shows the preview and downloads before opening', async () => {
+    const remote = att();
+    delete remote.blob;
+    await testStore.attachments.add(remote);
+    const downloadAttachment = vi.fn(async () => true);
+    const { p, openExcalidraw } = props({ downloadAttachment });
+    render(<ExcalidrawNodeView {...p} />);
+
+    const download = await screen.findByRole('button', { name: 'editor.attachment.download' });
+    expect(
+      screen.getByRole('button', { name: 'editor.excalidraw.edit' }).querySelector('svg#snap')
+    ).toBeInTheDocument();
+    await userEvent.click(download);
+    expect(downloadAttachment).toHaveBeenCalledWith('a1');
+    await waitFor(() =>
+      expect(openExcalidraw).toHaveBeenCalledWith(expect.objectContaining({ attachmentId: 'a1' }))
+    );
+  });
+
   it('can open the editor on the first click while the preview is still loading', async () => {
     await testStore.attachments.add(att());
     const { p, openExcalidraw } = props();

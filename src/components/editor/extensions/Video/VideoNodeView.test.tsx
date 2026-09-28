@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Attachment } from '@/models.ts';
+import { liveRow } from '@/test/liveRow.ts';
 import { VideoNodeView } from './VideoNodeView';
 
 beforeEach(() => {
@@ -28,11 +29,14 @@ function props(
   get: (i: string) => Promise<Attachment | undefined>,
   opts: { isEditable?: boolean; deleteNode?: () => void } = {}
 ) {
+  const watchAttachment = liveRow(get);
   return {
     node: { attrs: { attachmentId: 'v1' } },
     editor: { isEditable: opts.isEditable ?? true },
     deleteNode: opts.deleteNode ?? vi.fn(),
-    extension: { options: { getDeps: () => ({ getAttachment: get, t: (k: string) => k }) } },
+    extension: {
+      options: { getDeps: () => ({ watchAttachment, t: (k: string) => k }) },
+    },
   } as unknown as Parameters<typeof VideoNodeView>[0];
 }
 

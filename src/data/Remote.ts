@@ -65,8 +65,11 @@ export interface Remote {
   identity(): Promise<string>;
   push(batch: PushBatch): Promise<PushOutcome[]>;
   pull(cursor: string | null): Promise<PullPage>;
-  /** Idempotent: bytes are write-once by id (ADR 0017). */
-  putBlob(id: string, blob: Blob): Promise<void>;
+  /**
+   * Idempotent: bytes are write-once by id (ADR 0017). `too-large` is the one
+   * refusal worth telling apart: retrying it can never succeed.
+   */
+  putBlob(id: string, blob: Blob): Promise<'stored' | 'too-large'>;
   getBlob(id: string): Promise<Blob | undefined>;
   /**
    * Optional Live Update: calls `onHint` with the Account's Sequence whenever

@@ -61,10 +61,13 @@ export function startSyncLoop({
     running += 1;
     onStatus('syncing');
     let status: SyncStatus = 'idle';
+    let transfersLeft = 0;
     try {
       const run = engine.sync();
       inflight = run;
-      onReport(await run);
+      const report = await run;
+      transfersLeft = report.transfersLeft;
+      onReport(report);
     } catch (error) {
       // `fetch` rejects with a TypeError when nothing answered at all.
       status = error instanceof TypeError ? 'offline' : 'error';
@@ -79,7 +82,9 @@ export function startSyncLoop({
         resolve(n);
       });
     });
-    if (owed > 0 && status !== 'offline') {
+    // Bytes left to move count as owed: a thumbnail the other Device has not uploaded yet
+    // is fetched on the back-off instead of at the next poll.
+    if ((owed > 0 || transfersLeft > 0) && status !== 'offline') {
       later(backoff);
       backoff = Math.min(backoff * 2, pollMs);
     } else {
