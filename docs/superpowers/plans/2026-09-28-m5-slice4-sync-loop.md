@@ -43,7 +43,7 @@
 
 - Pulled Attachment metadata is not applied (slice 5 brings rows with "known but not downloaded" bytes).
 - The Conflicted Copy's header words are English, because the header is data that syncs to Devices in other languages.
-- **Two backend gaps, found and fixed on the backend (feat/feed-resume-link):** a caught-up page had no link to resume from (a one-page library stayed at `since=0`, re-read everything and never heard a 410), and a resync from 0 answered 410 on its second page once a Tombstone was swept. Now every page carries `_links.resume`, and every `next` carries `from`, the `since` the pull began at, which the 410 check uses. The engine keeps `next ?? resume`, with `self` as a fallback until the contract pull (marked `TODO contract:pull`, as is the local `ChangesPageWithResume` schema); it resyncs at most once per run.
+- **Two backend gaps, found and fixed on the backend (feat/feed-resume-link):** a caught-up page had no link to resume from (a one-page library stayed at `since=0`, re-read everything and never heard a 410), and a resync from 0 answered 410 on its second page once a Tombstone was swept. Now every page carries `_links.resume`, and every `next` carries `from`, the `since` the pull began at, which the 410 check uses. The engine keeps `next ?? resume` (contract pulled at backend `7c842e6`); it resyncs at most once per run.
 - The Settings storage row (carried in from M4) did not exist yet; it landed here, beside the sync status, as the root PLAN asks.
 - `SyncProvider` mounts in `routes/__root.tsx`, inside the router, because its toast links to the Conflicts Tag; `Remote` reaches it through `AccountProvider`.
 

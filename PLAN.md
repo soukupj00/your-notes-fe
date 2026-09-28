@@ -117,7 +117,7 @@ Scoped by a `/grill-with-docs` session on 2026-08-12. Key decisions: [ADR 0017](
    Deviations: `SyncProvider` moved to slice 4, where the loop it would run lands; sign out does not yet erase (slice 4); `/pair` and the Pairing Link QRs landed here rather than in slice 6.
 4. ✅ **The loop** *(both)* ([plan](./docs/superpowers/plans/2026-09-28-m5-slice4-sync-loop.md)) — `GET /changes` with cursor links and ETags, the SSE hint endpoint and the optional `hints` method on `Remote`, dirty push with Revisions, outcomes per row, conflict → Conflicted Copy + "Conflicts" tag + toast, adopt-on-first-sign-in, erase-on-sign-out, and the too-old-cursor full resync.
    Deviations: a Tag conflict keeps the server's Tag and copies nothing; pulled Attachment metadata waits for slice 5; the Settings storage row (carried in from M4) landed here beside the sync status.
-   Two feed fixes came out of it and are landing on the backend: every page carries `_links.resume`, and every `next` carries the pull's origin (`from`), so a full resync pages past swept Tombstones; the frontend reads `resume` already and drops its `self` fallback at the next contract pull.
+   Two feed fixes came out of it, in the backend since `7c842e6`: every page carries `_links.resume`, the cursor a caught-up Device keeps, and every `next` carries the pull's origin (`from`), so a full resync pages past swept Tombstones.
 5. **Attachments** *(both)* — idempotent byte upload/download, eager thumbnails, the new "known but not downloaded" attachment node state, the keep-everything preference.
 6. **Setup, docs, testing** *(both)* — the three Caddy modes with one documented happy path, first-run and Invite UX, sync status polish, and the user testing the brief requires.
 

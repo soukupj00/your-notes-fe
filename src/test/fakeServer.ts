@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import {
   AccountsResponse,
+  ChangesPage,
   CodeResponse,
   DevicesResponse,
   PushResponse,
@@ -8,7 +9,6 @@ import {
   SessionResponse,
   SetupStatus,
 } from '@/contract/index.ts';
-import { ChangesPageWithResume } from '@/data/http/HalRemote.ts';
 import type { PushBatch } from '@/data/Remote.ts';
 import { createFakeSync } from './fakeSync.ts';
 
@@ -240,7 +240,7 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
         from === null ? undefined : Number(from)
       );
       if (!page) return problem(410, 'Resync from the start');
-      return reply(ChangesPageWithResume, page);
+      return reply(ChangesPage, page);
     }
     const blobMatch = path.match(/^\/api\/blobs\/(.+)$/);
     if (blobMatch) {

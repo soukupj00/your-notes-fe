@@ -3,7 +3,7 @@
  *
  * This file is vendored verbatim by the frontend (`ni-dip-fe`) and runs in the browser,
  * so it imports nothing but `zod` and nothing from the server.
- * Vendored from ni-dip-be at commit: 27b8d90
+ * Vendored from ni-dip-be at commit: 7c842e6
  * When copying it, replace the line above with the backend commit it was taken from.
  */
 import { z } from 'zod';
@@ -358,7 +358,8 @@ export const ChangesPage = z.object({
   noteTags: z.array(RevisionedNoteTag),
   tombstones: z.array(Tombstone),
   seq: z.number().int().min(0),
-  _links: z.object({ self: Link, next: Link.optional(), stream: Link }),
+  /** Follow `next` while present; keep `resume` as the cursor for the next sync. */
+  _links: z.object({ self: Link, next: Link.optional(), resume: Link, stream: Link }),
 });
 export type ChangesPage = z.infer<typeof ChangesPage>;
 

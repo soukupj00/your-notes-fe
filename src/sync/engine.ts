@@ -173,9 +173,7 @@ export function createSyncEngine({
       await store.sync.applyPage(page);
       // Caught up, the cursor is the server's `resume` link: it answers what comes
       // after it, and the Device still never builds a URL.
-      // TODO contract:pull - drop the `self` fallback once `resume` is vendored; it
-      // only covers a server without the link (a one-page feed then stays at 0).
-      cursor = page.next ?? page.resume ?? page.self;
+      cursor = page.next ?? page.resume;
       await store.meta.set(SYNC_META_KEYS.cursor, cursor);
       await store.meta.set(SYNC_META_KEYS.seq, page.seq);
       if (page.next === null) return resynced;

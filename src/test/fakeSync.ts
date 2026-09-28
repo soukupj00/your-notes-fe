@@ -1,6 +1,5 @@
 import type { z } from 'zod';
-import { noteTagId, type PushResponse } from '@/contract/index.ts';
-import type { ChangesPageWithResume } from '@/data/http/HalRemote.ts';
+import { type ChangesPage, noteTagId, type PushResponse } from '@/contract/index.ts';
 import type { PushBatch, PushOutcome, Tombstone } from '@/data/Remote.ts';
 
 type Kind = 'note' | 'tag' | 'noteTag';
@@ -167,7 +166,7 @@ export function createFakeSync() {
     accountId: string,
     since: number,
     from?: number
-  ): z.input<typeof ChangesPageWithResume> | null {
+  ): z.input<typeof ChangesPage> | null {
     const b = book(accountId);
     const origin = from ?? since;
     if (since > b.seq || (origin > 0 && origin < b.floor)) return null;
@@ -198,7 +197,7 @@ export function createFakeSync() {
         // Equal to `next` on a full page, else the Account's Sequence, without `from`.
         resume: { href: more ? nextHref : `/api/changes?since=${b.seq}` },
       },
-    } as z.input<typeof ChangesPageWithResume>;
+    } as z.input<typeof ChangesPage>;
   }
 
   return {

@@ -51,11 +51,8 @@ export type PullPage =
        * asking it again later answers what came after it.
        */
       self: string;
-      /**
-       * Where to pick up next time: `next` on a full page, else the Account's
-       * current Sequence. `null` from a server without the link yet.
-       */
-      resume: string | null;
+      /** Where to pick up next time: `next` on a full page, else the Account's current Sequence. */
+      resume: string;
       /** The Account's Sequence when the page was read; a Live Update hint past it is news. */
       seq: number;
     } & ServerChanges)
