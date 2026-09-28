@@ -199,8 +199,8 @@ Uses **i18next** with browser language detection. Translations are loaded from `
 
 - **Lint + format: Biome** (single tool, config in `biome.json`), replacing ESLint + Prettier. Tailwind class sorting via Biome's nursery `useSortedClasses`. Biome does not format Markdown/YAML.
 - **Pre-commit (husky + lint-staged):** runs `biome check --write` on staged files — applies **safe** fixes (format, import sort, safe lint) and re-stages; remaining errors block the commit. Unsafe fixes are never auto-applied.
-- **Toolchain pinning:** Node 20 (`.nvmrc`), pnpm via `corepack` pinned by `package.json` `packageManager`. The `Dockerfile` uses `corepack enable` + `pnpm install --frozen-lockfile`.
-- **GitLab pipeline** (`.gitlab-ci.yml`): keeps the GitLab SAST + secret-detection templates and adds stages `quality` (`biome ci` + typecheck) → `test` (Vitest + Playwright, as suites land in M1) → `build` (`pnpm build`, `dist/` artifact) → `publish` (Kaniko build of the `Dockerfile`, push to `$CI_REGISTRY_IMAGE`). Self-hosters consume the published Container Registry image.
+- **Toolchain pinning:** Node 22 (`.nvmrc`), pnpm via `corepack` pinned by `package.json` `packageManager`. The `Dockerfile` uses `corepack enable` + `pnpm install --frozen-lockfile`.
+- **GitLab pipeline** (`.gitlab-ci.yml`): keeps the GitLab SAST + secret-detection templates and adds stages `quality` (`biome ci` + typecheck) → `test` (Vitest + Playwright, as suites land in M1) → `build` (`pnpm build`, `dist/` artifact) → `publish`. On the default branch and tags, `build:image` builds the `Dockerfile` with Kaniko as `$CI_REGISTRY_IMAGE:<short sha>`, `test:smoke` runs it, and crane retags it `latest` (default branch) or `vX.Y.Z` (tag); the backend image builds FROM it.
 
 ## Development methodology: pragmatic TDD
 

@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-06-15
+- Implemented 2026-09-28: `build:image`, `test:smoke` and `publish:*` in `.gitlab-ci.yml`, mirroring the backend pipeline.
 
 ## Context
 

@@ -1,3 +1,16 @@
 node_modules
 dist
 .git
+docs
+test-results
+playwright-report
+blob-report
+.pnpm-store
+.claude
+.claude-flow
+.ai
+.idea
+.superpowers
+.impeccable
+.tanstack
+*.md
