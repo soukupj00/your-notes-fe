@@ -7,11 +7,6 @@ import { createHalClient } from './hal.ts';
 const T0 = '2026-01-01T00:00:00.000Z';
 const NOTE = crypto.randomUUID();
 const empty = { notes: [], tags: [], noteTags: [], tombstones: [] };
-const links = (next?: string) => ({
-  self: { href: '/api/changes' },
-  stream: { href: '/api/changes/stream' },
-  ...(next ? { next: { href: next } } : {}),
-});
 
 async function signedIn() {
   const server = createFakeServer();
@@ -35,20 +30,34 @@ describe('HalRemote', () => {
     expect(server.state.pushed).toHaveLength(1);
   });
 
-  it('pulls from the bare link, follows `next`, and maps its absence to null', async () => {
+  it('pulls from the bare link, follows `next`, and offers `resume` once caught up', async () => {
     const { server, remote } = await signedIn();
-    server.state.feed.set(0, { ...empty, seq: 2, _links: links('/api/changes?since=1') });
-    server.state.feed.set(1, { ...empty, seq: 2, _links: links() });
+    server.sync.settings.pageSize = 1;
+    const note = (id: string) => ({ id, state: 'active' as const, createdAt: T0, updatedAt: T0 });
+    const second = crypto.randomUUID();
+    await remote.push({ ...empty, notes: [note(NOTE), note(second)] });
 
     const first = await remote.pull(null);
-    expect(first).toMatchObject({ status: 'ok', next: '/api/changes?since=1' });
+    expect(first).toMatchObject({
+      status: 'ok',
+      notes: [{ id: NOTE, rev: 1 }],
+      next: '/api/changes?since=1&from=0',
+      resume: '/api/changes?since=1&from=0',
+      seq: 2,
+    });
     const last = await remote.pull(first.status === 'ok' ? first.next : null);
-    expect(last).toEqual({ status: 'ok', ...empty, next: null });
+    expect(last).toMatchObject({
+      status: 'ok',
+      notes: [{ id: second, rev: 1 }],
+      next: null,
+      self: '/api/changes?since=1',
+      resume: '/api/changes?since=2',
+      seq: 2,
+    });
   });
 
   it('410 is cursor-too-old', async () => {
-    const { server, remote } = await signedIn();
-    server.state.feedGone = true;
+    const { remote } = await signedIn();
     expect(await remote.pull('/api/changes?since=99')).toEqual({ status: 'cursor-too-old' });
   });
 

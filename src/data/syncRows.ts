@@ -52,6 +52,16 @@ export function wireNote(note: Stored<Note>, attachments: readonly Attachment[])
   return { ...row, attachments: attachments.map(attachmentMeta) };
 }
 
+/**
+ * A Note as the server sent it, as the store keeps it: the server's Revision,
+ * not owed, and without its Attachment metadata (rows need bytes, M5 slice 5).
+ */
+export function fromServerNote(row: RevisionedNote): Stored<Note> {
+  const note: RevisionedNote = { ...row };
+  delete note.attachments;
+  return note;
+}
+
 /** A Tombstone for a row the store just removed. The store stamps `deletedAt`: it is bookkeeping. */
 export function tombstone(id: string, kind: Tombstone['kind'], rev: number | undefined): Tombstone {
   const t: Tombstone = { id, kind, deletedAt: new Date().toISOString() };
@@ -86,14 +96,22 @@ export type AcceptedRow = { rev: number } & (
   | { kind: 'tombstone'; row: Tombstone }
 );
 
+export type PushedRow =
+  | { kind: 'note'; row: RevisionedNote }
+  | { kind: 'tag'; row: RevisionedTag }
+  | { kind: 'noteTag'; row: RevisionedNoteTag }
+  | { kind: 'tombstone'; row: Tombstone };
+
 /**
- * The pushed rows the server accepted, each with its new Revision.
- * Outcomes come back one per row in input order (notes, tags, noteTags,
- * tombstones), so they pair by position; a count that does not match is the
- * server breaking the contract, and nothing is recorded.
+ * Each pushed row with the outcome the server gave it. Outcomes come back one
+ * per row in input order (notes, tags, noteTags, tombstones), so they pair by
+ * position; a count that does not match is the server breaking the contract.
  */
-export function acceptedRows(batch: PushBatch, outcomes: readonly PushOutcome[]): AcceptedRow[] {
-  const rows = [
+export function pairOutcomes(
+  batch: PushBatch,
+  outcomes: readonly PushOutcome[]
+): { pushed: PushedRow; outcome: PushOutcome }[] {
+  const rows: PushedRow[] = [
     ...batch.notes.map((row) => ({ kind: 'note' as const, row })),
     ...batch.tags.map((row) => ({ kind: 'tag' as const, row })),
     ...batch.noteTags.map((row) => ({ kind: 'noteTag' as const, row })),
@@ -102,8 +120,12 @@ export function acceptedRows(batch: PushBatch, outcomes: readonly PushOutcome[])
   if (rows.length !== outcomes.length) {
     throw new Error(`Expected ${rows.length} push outcomes, got ${outcomes.length}`);
   }
-  return rows.flatMap((pushed, i) => {
-    const outcome = outcomes[i]!;
-    return outcome.status === 'accepted' ? [{ ...pushed, rev: outcome.rev } as AcceptedRow] : [];
-  });
+  return rows.map((pushed, i) => ({ pushed, outcome: outcomes[i]! }));
+}
+
+/** The pushed rows the server accepted, each with its new Revision; nothing is recorded if they do not pair. */
+export function acceptedRows(batch: PushBatch, outcomes: readonly PushOutcome[]): AcceptedRow[] {
+  return pairOutcomes(batch, outcomes).flatMap(({ pushed, outcome }) =>
+    outcome.status === 'accepted' ? [{ ...pushed, rev: outcome.rev } as AcceptedRow] : []
+  );
 }

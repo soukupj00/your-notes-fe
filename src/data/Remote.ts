@@ -32,6 +32,12 @@ export type PushBatch = Contract.PushBatch;
  */
 export type PushOutcome = Contract.PushOutcome;
 
+/** Rows as the server holds them, in the four arrays both a push and a page carry. */
+export type ServerChanges = Pick<
+  Contract.ChangesPage,
+  'notes' | 'tags' | 'noteTags' | 'tombstones'
+>;
+
 export type PullPage =
   | ({
       status: 'ok';
@@ -40,7 +46,19 @@ export type PullPage =
        * The HAL adapter maps an absent `_links.next` to `null`.
        */
       next: string | null;
-    } & Pick<Contract.ChangesPage, 'notes' | 'tags' | 'noteTags' | 'tombstones'>)
+      /**
+       * This page's own address. Once `next` is null it is the cursor to keep:
+       * asking it again later answers what came after it.
+       */
+      self: string;
+      /**
+       * Where to pick up next time: `next` on a full page, else the Account's
+       * current Sequence. `null` from a server without the link yet.
+       */
+      resume: string | null;
+      /** The Account's Sequence when the page was read; a Live Update hint past it is news. */
+      seq: number;
+    } & ServerChanges)
   /** 410: the cursor predates the tombstone window, or is ahead of the server after a restore. Resync from 0. */
   | { status: 'cursor-too-old' };
 
@@ -53,6 +71,12 @@ export interface Remote {
   /** Idempotent: bytes are write-once by id (ADR 0017). */
   putBlob(id: string, blob: Blob): Promise<void>;
   getBlob(id: string): Promise<Blob | undefined>;
+  /**
+   * Optional Live Update: calls `onHint` with the Account's Sequence whenever
+   * another Device's push lands. A Remote without it is simply polled. Returns
+   * the unsubscribe.
+   */
+  hints?(onHint: (seq: number) => void): () => void;
 }
 
 export type Session = {

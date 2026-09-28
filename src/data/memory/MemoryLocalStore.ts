@@ -1,4 +1,4 @@
-import { noteTagId } from '@/contract/index.ts';
+import { noteTagId, parseNoteTagId } from '@/contract/index.ts';
 import type { Attachment, Note, NoteTag, Tag } from '@/models.ts';
 import type { LocalStore, NoteFeedScope, Snapshot } from '../LocalStore.ts';
 import type { Live } from '../live.ts';
@@ -6,6 +6,7 @@ import type { Tombstone } from '../Remote.ts';
 import {
   type AcceptedRow,
   acceptedRows,
+  fromServerNote,
   owed,
   type Stored,
   settle,
@@ -57,7 +58,7 @@ export function createMemoryLocalStore(): LocalStore {
     const stored = rows.get(key);
     if (!stored) return;
     rows.delete(key);
-    tombstones.set(key, tombstone(key, kind, stored.rev));
+    if (stored.rev !== undefined) tombstones.set(key, tombstone(key, kind, stored.rev));
   }
 
   function noteOwed(noteId: string) {
@@ -315,6 +316,65 @@ export function createMemoryLocalStore(): LocalStore {
         }
         changed('notes', 'tags', 'noteTags');
       },
+      applyPage: async (changes, mode = 'keep-local') => {
+        /** In a pull, a row this Device still owes (or has purged) waits for its push. */
+        const keepLocal = (stored: { dirty?: 1 } | undefined, key: string) =>
+          mode === 'keep-local' && (stored?.dirty === 1 || tombstones.has(key));
+        for (const row of changes.notes) {
+          if (keepLocal(notes.get(row.id), row.id)) continue;
+          notes.set(row.id, fromServerNote(row));
+          tombstones.delete(row.id);
+        }
+        for (const row of changes.tags) {
+          if (keepLocal(tags.get(row.id), row.id)) continue;
+          tags.set(row.id, { ...row });
+          tombstones.delete(row.id);
+        }
+        for (const row of changes.noteTags) {
+          const key = linkKey(row.noteId, row.tagId);
+          if (keepLocal(noteTags.get(key), key)) continue;
+          noteTags.set(key, { ...row });
+          tombstones.delete(key);
+        }
+        for (const gone of changes.tombstones) {
+          tombstones.delete(gone.id);
+          if (gone.kind === 'note') {
+            notes.delete(gone.id);
+            deleteLinksWhere((l) => l.noteId === gone.id);
+            for (const a of attachmentsFor(gone.id)) attachments.delete(a.id);
+          } else if (gone.kind === 'tag') {
+            tags.delete(gone.id);
+            deleteLinksWhere((l) => l.tagId === gone.id);
+          } else if (parseNoteTagId(gone.id)) {
+            noteTags.delete(gone.id);
+          }
+        }
+        changed('notes', 'tags', 'noteTags', 'attachments');
+      },
+      resetClean: async () => {
+        for (const rows of [notes, tags, noteTags] as Map<string, { dirty?: 1 }>[]) {
+          for (const [key, row] of rows) if (row.dirty !== 1) rows.delete(key);
+        }
+        changed('notes', 'tags', 'noteTags');
+      },
+      adoptAll: async () => {
+        for (const rows of [notes, tags, noteTags] as Map<string, { rev?: number; dirty?: 1 }>[]) {
+          for (const [key, row] of rows) {
+            const next = { ...row, dirty: 1 as const };
+            delete next.rev;
+            rows.set(key, next);
+          }
+        }
+        tombstones.clear();
+        changed('notes', 'tags', 'noteTags');
+      },
+      pending: () =>
+        live(['notes', 'tags', 'noteTags'], () => {
+          const owedRows = [...notes.values(), ...tags.values(), ...noteTags.values()].filter(
+            (row) => row.dirty === 1
+          );
+          return owedRows.length + tombstones.size;
+        }),
     },
 
     exportAll: async () =>

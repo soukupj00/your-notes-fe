@@ -6,7 +6,7 @@ import type { PushBatch, PushOutcome } from './Remote.ts';
 
 const T0 = '2026-01-01T00:00:00.000Z';
 
-const note = (overrides: Partial<Note> = {}): Note => ({
+export const note = (overrides: Partial<Note> = {}): Note => ({
   id: crypto.randomUUID(),
   header: 'h',
   state: 'active',
@@ -15,11 +15,21 @@ const note = (overrides: Partial<Note> = {}): Note => ({
   ...overrides,
 });
 
-const tag = (): Tag => ({ id: crypto.randomUUID(), name: 'Work', createdAt: T0, updatedAt: T0 });
+export const tag = (): Tag => ({
+  id: crypto.randomUUID(),
+  name: 'Work',
+  createdAt: T0,
+  updatedAt: T0,
+});
 
-const link = (noteId: string, tagId: string) => ({ noteId, tagId, createdAt: T0, updatedAt: T0 });
+export const link = (noteId: string, tagId: string) => ({
+  noteId,
+  tagId,
+  createdAt: T0,
+  updatedAt: T0,
+});
 
-const attachment = (noteId: string): Attachment => ({
+export const attachment = (noteId: string): Attachment => ({
   id: crypto.randomUUID(),
   noteId,
   kind: 'image',
@@ -41,7 +51,7 @@ function acceptAll(batch: PushBatch, rev: number): PushOutcome[] {
 }
 
 /** Push everything owed and have it all accepted at `rev`. */
-async function syncAll(store: LocalStore, rev = 1) {
+export async function syncAll(store: LocalStore, rev = 1) {
   const batch = await store.sync.dirty();
   await store.sync.applied(batch, acceptAll(batch, rev));
 }
@@ -163,13 +173,21 @@ export function describeLocalStoreSyncContract(makeStore: () => Promise<LocalSto
       expect(afterRestore.noteTags).toEqual([link(n.id, t.id)]);
     });
 
-    it('a Tombstone for something never pushed has no Revision', async () => {
+    it('removing something never pushed leaves nothing to tell the server', async () => {
       const t = tag();
+      const n = note();
       await store.tags.add(t);
+      await store.notes.add(n);
+      await store.tags.link(link(n.id, t.id));
+      await store.tags.unlink(n.id, t.id);
       await store.tags.delete(t.id);
-      expect((await store.sync.dirty()).tombstones).toEqual([
-        { id: t.id, kind: 'tag', deletedAt: expect.any(String) },
-      ]);
+      await store.notes.purge(n.id);
+      expect(await store.sync.dirty()).toEqual({
+        notes: [],
+        tags: [],
+        noteTags: [],
+        tombstones: [],
+      });
     });
 
     it('unlink leaves a NoteTag Tombstone under the composite id; link takes it back', async () => {

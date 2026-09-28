@@ -1,10 +1,12 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountProvider } from '@/context/AccountProvider.tsx';
+import { SyncProvider } from '@/context/SyncProvider.tsx';
 import { createHalAccountService } from '@/data/http/HalAccountService.ts';
 import { createHalClient } from '@/data/http/hal.ts';
 import { createFakeServer, type FakeServer } from '@/test/fakeServer.ts';
+import { clearStore, testStore, withStore } from '@/test/store.tsx';
 import { AccountSection } from './AccountSection.tsx';
 import { DevicesSection } from './DevicesSection.tsx';
 import { MembersSection } from './MembersSection.tsx';
@@ -16,16 +18,37 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
+vi.mock('@tanstack/react-router', () => ({ useNavigate: () => vi.fn() }));
+
+afterEach(async () => {
+  await clearStore();
+});
+
+const T0 = '2026-01-01T00:00:00.000Z';
+
+/** No `remote`: the sync loop stays off, but what the store owes still counts. */
 function mount(server: FakeServer) {
   const service = createHalAccountService(createHalClient(server.fetch));
   render(
-    <AccountProvider service={service}>
-      <AccountSection />
-      <DevicesSection />
-      <MembersSection />
-    </AccountProvider>
+    withStore(
+      <AccountProvider service={service}>
+        <SyncProvider>
+          <AccountSection />
+          <DevicesSection />
+          <MembersSection />
+        </SyncProvider>
+      </AccountProvider>
+    )
   );
   return service;
+}
+
+async function signOut() {
+  await userEvent.click(screen.getByRole('button', { name: 'account.section.signOut' }));
+  const dialog = await screen.findByRole('dialog');
+  await userEvent.click(
+    within(dialog).getByRole('button', { name: 'account.section.eraseConfirm' })
+  );
 }
 
 async function signIn(username: string, password: string) {
@@ -64,7 +87,7 @@ describe('Settings account sections', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: 'account.section.signIn' }));
 
     expect(await screen.findByText('account.section.signedInLabel ada')).toBeVisible();
-    await userEvent.click(screen.getByRole('button', { name: 'account.section.signOut' }));
+    await signOut();
     expect(await screen.findByText('account.section.signedOutLabel')).toBeVisible();
     expect(screen.queryByText('account.devices.title')).not.toBeInTheDocument();
   });
@@ -101,7 +124,7 @@ describe('Settings account sections', () => {
     await signIn('bob', 'battery staple');
     expect(await screen.findByText('account.section.signedInLabel bob')).toBeVisible();
     expect(screen.queryByText('account.members.title')).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'account.section.signOut' }));
+    await signOut();
 
     await signIn('ada', 'correct horse');
     await userEvent.click(await screen.findByRole('button', { name: 'account.members.invite' }));
@@ -129,5 +152,49 @@ describe('Settings account sections', () => {
 
     await waitFor(() => expect(bob.password).toBe('a new secret'));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('signing out erases this Device', async () => {
+    const server = createFakeServer();
+    server.seedOwner('ada', 'correct horse');
+    const id = crypto.randomUUID();
+    // A Note the server already has: on this Device, and owed to nobody.
+    await testStore.sync.applyPage({
+      notes: [{ id, state: 'active', createdAt: T0, updatedAt: T0, rev: 1, attachments: [] }],
+      tags: [],
+      noteTags: [],
+      tombstones: [],
+    });
+    mount(server);
+    await signIn('ada', 'correct horse');
+
+    await signOut();
+    expect(await screen.findByText('account.section.signedOutLabel')).toBeVisible();
+    expect(await testStore.notes.list()).toEqual([]);
+  });
+
+  it('refuses to sign out while a change is still owed, offering a way out', async () => {
+    const server = createFakeServer();
+    server.seedOwner('ada', 'correct horse');
+    await testStore.notes.add({
+      id: crypto.randomUUID(),
+      state: 'active',
+      createdAt: T0,
+      updatedAt: T0,
+    });
+    mount(server);
+    await signIn('ada', 'correct horse');
+
+    await userEvent.click(await screen.findByRole('button', { name: 'account.section.signOut' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('account.section.blockedTitle')).toBeVisible();
+    expect(within(dialog).getByText('account.section.blockedDescription 1')).toBeVisible();
+    expect(
+      within(dialog).getByRole('button', { name: 'account.section.saveBackup' })
+    ).toBeVisible();
+    expect(within(dialog).getByRole('button', { name: 'sync.syncNow' })).toBeVisible();
+    expect(await testStore.notes.list()).toHaveLength(1);
+    // Still signed in: the seeded Laptop and this Device.
+    expect(server.devices).toHaveLength(2);
   });
 });

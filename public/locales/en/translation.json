@@ -592,7 +592,15 @@
       "member": "Member",
       "thisDevice": "This Device: {{name}}",
       "signOut": "Sign out",
-      "signedOut": "Signed out."
+      "signedOut": "Signed out.",
+      "eraseTitle": "Sign out and erase this Device?",
+      "eraseDescription": "Your Notes are on your server and come back when you sign in again. This Device keeps none of them.",
+      "eraseConfirm": "Sign out and erase",
+      "blockedTitle": "Some changes are not on your server yet",
+      "blockedDescription_one": "{{count}} change on this Device has not reached your server. Signing out erases this Device, so sync first or save a backup.",
+      "blockedDescription_other": "{{count}} changes on this Device have not reached your server. Signing out erases this Device, so sync first or save a backup.",
+      "saveBackup": "Save a backup",
+      "close": "Close"
     },
     "devices": {
       "title": "Devices",
@@ -643,5 +651,27 @@
       "inviteAction": "Create my account",
       "home": "Go to my Notes"
     }
+  },
+  "sync": {
+    "conflicts_one": "{{count}} conflict kept as a copy",
+    "conflicts_other": "{{count}} conflicts kept as copies",
+    "showConflicts": "Show",
+    "keptNewer": "Kept the newer version from your server.",
+    "title": "Storage and sync",
+    "storage": {
+      "label": "Stored on this Device",
+      "persisted": "The browser keeps it even when space runs low.",
+      "notPersisted": "The browser may clear it when space runs low. Keep a backup.",
+      "used": "{{size}} used"
+    },
+    "label": "Sync",
+    "never": "Not synced yet",
+    "idle": "Last synced {{time}}",
+    "syncing": "Syncing…",
+    "offline": "Offline. Changes wait on this Device.",
+    "error": "Could not sync. It will try again.",
+    "pending_one": "{{count}} change waiting",
+    "pending_other": "{{count}} changes waiting",
+    "syncNow": "Sync now"
   }
 }

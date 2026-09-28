@@ -77,9 +77,13 @@ flowchart TD
 ```
 
 Pull side: the change feed is a HAL collection; the device stores the opaque `_links.next` URL as its cursor and never constructs a query string.
+Once caught up there is no `next`, so it keeps `_links.resume`, which the server points at the Account's current Sequence; `next` also carries where the pull began (`from`), so a full resync can page past Tombstones the server has already swept.
 Pages carry a strong `ETag` over their body and the server answers `304`, so revalidation is cheap.
 A page is not immutable, though: a re-edited row moves to a new Sequence.
-The Conflicted Copy arrives through `createNote` + `addTagToNote` - existing, already-tested machinery; the sync engine owns conflict handling, components never do.
+The sync engine (`src/sync/engine.ts`) owns conflict handling, components never do; the Conflicted Copy is written through the Local Store like any Note, its Attachments cloned under new ids so every blob keeps one owner.
+A Tag has no Conflicted Copy: the server's Tag wins, because two Tags of the same name would help nobody.
+A stale purge answers `conflict` too, and the Device takes the newer Note back instead of deleting it.
+The other way round - this Device edited a Note another Device purged - the edit is kept as a Conflicted Copy too, whether the push answers `gone` or the Tombstone arrives in a pull.
 
 ## Attachment transfer
 

@@ -7,9 +7,9 @@ The seam every read and write of persisted data goes through ([ADR 0020](../../d
 - `LocalStore.ts` - the interface. Domain-shaped, atomic per method, live reads return `Live<T>`.
 - `live.ts`, `useLive.ts` - the observable contract and its one React adapter.
 - `LocalStoreProvider.tsx` - context; `useLocalStore()` throws outside it.
-- `localStore.contract.ts` - the behaviour every implementation must have. It is the spec; both implementations run it. It also runs `localStore.sync.contract.ts`, the sync half.
+- `localStore.contract.ts` - the behaviour every implementation must have. It is the spec; both implementations run it. It also runs `localStore.sync.contract.ts` (what a write owes the server) and `localStore.pull.contract.ts` (writing what the server answers).
 - `syncRows.ts` - pure helpers both implementations share for sync state: stripping it on read, the wire shape of a Note, pairing push outcomes with the batch.
-- `dexie/` - the default implementation (IndexedDB). `db.ts` is private to this folder, enforced by Biome's `noRestrictedImports`.
+- `dexie/` - the default implementation (IndexedDB). `db.ts` is private to this folder, enforced by Biome's `noRestrictedImports`. Its `sync` half is `dexie/sync.ts`; `dexie/live.ts` is the `liveQuery` adapter both files share.
 - `memory/` - the second implementation: nothing persists, atomic by being single-threaded. It is the "cache only" configuration and what proves the interface is not Dexie in disguise.
 - `Remote.ts` - the sync seam: `Remote` (replication) and `AccountService` (sessions, Devices, Pairing), typed from the vendored contract (`src/contract/`, `pnpm contract:pull`).
 - `http/` - the Self-hosted Server's implementations of both seams. `hal.ts` is the one door: it follows the HAL root's links, parses every body with the contract (a drift throws at the boundary), and turns `application/problem+json` into `ProblemError`. Tests run against `src/test/fakeServer.ts`, whose answers are parsed by the same contract.
@@ -20,7 +20,8 @@ The seam every read and write of persisted data goes through ([ADR 0020](../../d
 - The store stamps nothing: ids and timestamps are the caller's (`lib/new-note.ts`).
 - Search, sort and held rank live in `src/hooks/data`, in front of the seam.
 - `meta` is bookkeeping about rows (Prop baselines; the sync cursor and Account under `SYNC_META_KEYS`). Preferences are not here - they are in `localStorage` (`PreferencesProvider`).
-- Sync state is store-private. `rev` and the dirty marker never leave the store on a read, and every write keeps the stored `rev`, so no caller can carry a stale Revision into a write. Writes owe the row; an Attachment write owes its Note; a removal leaves a Tombstone with the row's `rev`, and putting the row back takes it back.
+- The sync engine (`src/sync/`) is the only caller of `sync.*`. `applyPage` writes what the server answers: in `keep-local` mode (a pull) an owed row or a pending purge waits for its push, in `server-wins` mode (resolving an outcome) the server's row overwrites it. A server Tombstone removes a row without writing a local one.
+- Sync state is store-private. `rev` and the dirty marker never leave the store on a read, and every write keeps the stored `rev`, so no caller can carry a stale Revision into a write. Writes owe the row; an Attachment write owes its Note; removing a row the server has seen leaves a Tombstone with its `rev` (one never pushed leaves nothing), and putting the row back takes it back.
 - The Dexie table under `meta` is still called `settings`. No schema bump was spent on a rename.
 
 ## Bringing your own Local Store

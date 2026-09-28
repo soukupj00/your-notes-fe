@@ -12,7 +12,7 @@ import { ThemeProvider } from '@/context/themeProvider.tsx';
 import { ViewModeProvider } from '@/context/viewModeProvider.tsx';
 import type { LocalStore } from '@/data/LocalStore.ts';
 import { LocalStoreProvider } from '@/data/LocalStoreProvider.tsx';
-import type { AccountService } from '@/data/Remote.ts';
+import type { AccountService, Remote } from '@/data/Remote.ts';
 import { routeTree } from './routeTree.gen';
 
 const router = createRouter({ routeTree });
@@ -28,9 +28,11 @@ declare module '@tanstack/react-router' {
 function App({
   store,
   accountService = null,
+  remote = null,
 }: {
   store: LocalStore;
   accountService?: AccountService | null;
+  remote?: Remote | null;
 }) {
   return (
     <LocalStoreProvider store={store}>
@@ -45,7 +47,7 @@ function App({
               <PwaInstallProvider>
                 <TooltipProvider>
                   <ViewModeProvider>
-                    <AccountProvider service={accountService}>
+                    <AccountProvider service={accountService} remote={remote}>
                       <RouterProvider router={router} />
                     </AccountProvider>
                     <PwaUpdatePrompt />

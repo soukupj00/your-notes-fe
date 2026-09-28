@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
 import { AccountForm } from '@/components/account/AccountForm.tsx';
+import { SignOutButton } from '@/components/account/SignOutButton.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import {
   Dialog,
@@ -18,29 +18,15 @@ import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
  * Self-hosted Server answered, because sync is opt-in and a local-only app has
  * no account to talk about (ADR 0018).
  *
- * Sign out only ends the session. Erasing this Device's Notes on sign-out is
- * M5 slice 4, together with the push that makes it safe.
+ * Signing out erases this Device, and is refused while anything is still owed
+ * to the server (`SignOutButton`).
  */
 export function AccountSection() {
   const { t } = useTranslation();
   const { status, session, service, setSession } = useAccount();
   const [signingIn, setSigningIn] = useState(false);
-  const [busy, setBusy] = useState(false);
 
   if (!service || (status !== 'signed-in' && status !== 'signed-out')) return null;
-
-  const signOut = async () => {
-    setBusy(true);
-    try {
-      await service.signOut();
-      setSession(null);
-      toast.success(t('account.section.signedOut'));
-    } catch {
-      toast.error(t('account.errors.unknown'));
-    } finally {
-      setBusy(false);
-    }
-  };
 
   return (
     <SettingsSection title={t('account.section.title')}>
@@ -49,9 +35,7 @@ export function AccountSection() {
           label={t('account.section.signedInLabel', { username: session.username })}
           description={`${t(`account.section.${session.role}`)} · ${t('account.section.thisDevice', { name: session.deviceName })}`}
         >
-          <Button variant="outline" size="sm" disabled={busy} onClick={() => void signOut()}>
-            {t('account.section.signOut')}
-          </Button>
+          <SignOutButton />
         </SettingsRow>
       ) : (
         <SettingsRow

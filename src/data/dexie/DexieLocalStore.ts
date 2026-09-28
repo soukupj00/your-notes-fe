@@ -1,31 +1,11 @@
-import { liveQuery } from 'dexie';
 import { noteTagId } from '@/contract/index.ts';
 import type { Attachment, Note, NoteState, NoteTag, Tag } from '@/models.ts';
 import type { AttachmentChanges, LocalStore, NoteFeedScope, Snapshot } from '../LocalStore.ts';
-import type { Live } from '../live.ts';
-import {
-  type AcceptedRow,
-  acceptedRows,
-  owed,
-  type Stored,
-  settle,
-  strip,
-  tombstone,
-  wireNote,
-  wireRow,
-} from '../syncRows.ts';
+import { owed, type Stored, strip, tombstone } from '../syncRows.ts';
 import { db as defaultDb, type NotesDB } from './db.ts';
 import { migrateLegacyPreferences } from './legacyPreferences.ts';
-
-/** Dexie's `liveQuery` already is the contract; this only narrows its Observable to `Live<T>`. */
-function live<T>(querier: () => T | Promise<T>): Live<T> {
-  return {
-    subscribe(next) {
-      const subscription = liveQuery(querier).subscribe(next);
-      return () => subscription.unsubscribe();
-    },
-  };
-}
+import { live } from './live.ts';
+import { createDexieSync } from './sync.ts';
 
 /**
  * The default Local Store: IndexedDB through Dexie (ADR 0001, ADR 0020).
@@ -136,7 +116,7 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           await db.noteTags.where('noteId').equals(id).delete();
           await db.attachments.where('noteId').equals(id).delete();
           // One Tombstone: the server removes the Note's links with it.
-          if (stored) await db.tombstones.put(tombstone(id, 'note', stored.rev));
+          if (stored?.rev !== undefined) await db.tombstones.put(tombstone(id, 'note', stored.rev));
           return { removedTags, removedAttachments };
         }),
       restore: (note, removed = {}) =>
@@ -168,7 +148,7 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           await db.tags.delete(id);
           await db.noteTags.where('tagId').equals(id).delete();
           // One Tombstone: the server removes the Tag's links with it.
-          if (stored) await db.tombstones.put(tombstone(id, 'tag', stored.rev));
+          if (stored?.rev !== undefined) await db.tombstones.put(tombstone(id, 'tag', stored.rev));
         }),
       merge: (sourceId, targetId) => {
         // Merging a tag into itself is a no-op, not a self-delete: without this
@@ -194,7 +174,9 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           );
           await db.noteTags.where('tagId').equals(sourceId).delete();
           await db.tags.delete(sourceId);
-          if (source) await db.tombstones.put(tombstone(sourceId, 'tag', source.rev));
+          if (source?.rev !== undefined) {
+            await db.tombstones.put(tombstone(sourceId, 'tag', source.rev));
+          }
         });
       },
       forNote: (noteId) => live(() => tagsForNote(noteId)),
@@ -208,7 +190,9 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           const stored = await db.noteTags.get([noteId, tagId]);
           if (!stored) return;
           await db.noteTags.delete([noteId, tagId]);
-          await db.tombstones.put(tombstone(noteTagId(noteId, tagId), 'noteTag', stored.rev));
+          if (stored.rev !== undefined) {
+            await db.tombstones.put(tombstone(noteTagId(noteId, tagId), 'noteTag', stored.rev));
+          }
         }),
       listLinks: async () => stripAll(await db.noteTags.toArray()),
     },
@@ -328,74 +312,7 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           await db.attachments.bulkPut(snapshot.attachments);
         }
       ),
-    sync: {
-      dirty: () =>
-        db.transaction(
-          'r',
-          [db.notes, db.tags, db.noteTags, db.attachments, db.tombstones],
-          async () => {
-            const [notes, tags, noteTags, tombstones] = await Promise.all([
-              db.notes.where('dirty').equals(1).toArray(),
-              db.tags.where('dirty').equals(1).toArray(),
-              db.noteTags.where('dirty').equals(1).toArray(),
-              db.tombstones.toArray(),
-            ]);
-            const attachments = await db.attachments
-              .where('noteId')
-              .anyOf(notes.map((n) => n.id))
-              .toArray();
-            return {
-              notes: notes.map((n) =>
-                wireNote(
-                  n,
-                  attachments.filter((a) => a.noteId === n.id)
-                )
-              ),
-              tags: tags.map(wireRow),
-              noteTags: noteTags.map(wireRow),
-              tombstones,
-            };
-          }
-        ),
-      applied: async (batch, outcomes) => {
-        const accepted = acceptedRows(batch, outcomes);
-        return db.transaction(
-          'rw',
-          [db.notes, db.tags, db.noteTags, db.attachments, db.tombstones],
-          async () => {
-            /** Removed while the push was in flight: its Tombstone must carry the new Revision. */
-            const rebase = async (id: string, a: AcceptedRow) => {
-              const gone = await db.tombstones.get(id);
-              if (gone && gone.rev === a.row.rev) await db.tombstones.put({ ...gone, rev: a.rev });
-            };
-            for (const a of accepted) {
-              if (a.kind === 'tombstone') {
-                await db.tombstones.delete(a.row.id);
-              } else if (a.kind === 'note') {
-                const stored = await db.notes.get(a.row.id);
-                if (!stored) await rebase(a.row.id, a);
-                else {
-                  const attachments = await db.attachments
-                    .where('noteId')
-                    .equals(a.row.id)
-                    .toArray();
-                  await db.notes.put(settle(stored, wireNote(stored, attachments), a));
-                }
-              } else if (a.kind === 'tag') {
-                const stored = await db.tags.get(a.row.id);
-                if (!stored) await rebase(a.row.id, a);
-                else await db.tags.put(settle(stored, wireRow(stored), a));
-              } else {
-                const { noteId, tagId } = a.row;
-                const stored = await db.noteTags.get([noteId, tagId]);
-                if (!stored) await rebase(noteTagId(noteId, tagId), a);
-                else await db.noteTags.put(settle(stored, wireRow(stored), a));
-              }
-            }
-          }
-        );
-      },
-    },
+    sync: createDexieSync(db),
 
     clear: () =>
       db.transaction('rw', db.tables, async () => {

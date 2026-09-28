@@ -593,7 +593,16 @@
       "member": "Člen",
       "thisDevice": "Toto zařízení: {{name}}",
       "signOut": "Odhlásit se",
-      "signedOut": "Odhlášeno."
+      "signedOut": "Odhlášeno.",
+      "eraseTitle": "Odhlásit se a vymazat toto zařízení?",
+      "eraseDescription": "Vaše poznámky jsou na serveru a po dalším přihlášení se vrátí. V tomto zařízení nezůstane žádná.",
+      "eraseConfirm": "Odhlásit a vymazat",
+      "blockedTitle": "Některé změny ještě nejsou na serveru",
+      "blockedDescription_one": "{{count}} změna v tomto zařízení ještě nedorazila na server. Odhlášení zařízení vymaže, proto nejdřív synchronizujte, nebo uložte zálohu.",
+      "blockedDescription_few": "{{count}} změny v tomto zařízení ještě nedorazily na server. Odhlášení zařízení vymaže, proto nejdřív synchronizujte, nebo uložte zálohu.",
+      "blockedDescription_other": "{{count}} změn v tomto zařízení ještě nedorazilo na server. Odhlášení zařízení vymaže, proto nejdřív synchronizujte, nebo uložte zálohu.",
+      "saveBackup": "Uložit zálohu",
+      "close": "Zavřít"
     },
     "devices": {
       "title": "Zařízení",
@@ -644,5 +653,29 @@
       "inviteAction": "Vytvořit můj účet",
       "home": "Přejít na poznámky"
     }
+  },
+  "sync": {
+    "conflicts_one": "{{count}} konflikt uložen jako kopie",
+    "conflicts_few": "{{count}} konflikty uloženy jako kopie",
+    "conflicts_other": "{{count}} konfliktů uloženo jako kopie",
+    "showConflicts": "Zobrazit",
+    "keptNewer": "Ponechána novější verze z vašeho serveru.",
+    "title": "Úložiště a synchronizace",
+    "storage": {
+      "label": "Uloženo v tomto zařízení",
+      "persisted": "Prohlížeč data zachová, i když dochází místo.",
+      "notPersisted": "Prohlížeč může data smazat, když dojde místo. Mějte zálohu.",
+      "used": "Využito {{size}}"
+    },
+    "label": "Synchronizace",
+    "never": "Zatím nesynchronizováno",
+    "idle": "Naposledy synchronizováno {{time}}",
+    "syncing": "Synchronizuji…",
+    "offline": "Offline. Změny čekají v tomto zařízení.",
+    "error": "Synchronizace se nezdařila. Zkusí to znovu.",
+    "pending_one": "{{count}} změna čeká",
+    "pending_few": "{{count}} změny čekají",
+    "pending_other": "{{count}} změn čeká",
+    "syncNow": "Synchronizovat"
   }
 }

@@ -1,21 +1,22 @@
 import type { z } from 'zod';
 import {
   AccountsResponse,
-  ChangesPage,
   CodeResponse,
   DevicesResponse,
-  noteTagId,
   PushResponse,
   RootResponse,
   SessionResponse,
   SetupStatus,
 } from '@/contract/index.ts';
+import { ChangesPageWithResume } from '@/data/http/HalRemote.ts';
 import type { PushBatch } from '@/data/Remote.ts';
+import { createFakeSync } from './fakeSync.ts';
 
 type Role = 'owner' | 'member';
 type Account = { id: string; username: string; password: string; role: Role };
 type Code = { kind: 'setup' | 'device' | 'invite'; accountId: string | null; used: boolean };
 type Device = { id: string; accountId: string; name: string; at: string };
+type Jar = { cookie: string | null };
 
 const AT = '2026-09-28T10:00:00.000Z';
 const link = (href: string) => ({ href });
@@ -24,7 +25,8 @@ const link = (href: string) => ({ href });
  * A Self-hosted Server in memory, behind a `fetch`, for tests of the HAL
  * adapters and the screens on top of them. Every body it answers is parsed by
  * the vendored contract first, so it drifts from the backend no more than the
- * contract does. The cookie is one variable: one browser, one session.
+ * contract does. `fetch` is one browser; `client()` opens another, with its own
+ * cookie, so two Devices can sync against one server in a test.
  */
 export function createFakeServer({ setupCode = 'setup-code' } = {}) {
   const accounts: Account[] = [];
@@ -33,14 +35,10 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
   ]);
   const devices: Device[] = [];
   const blobs = new Map<string, Uint8Array<ArrayBuffer>>();
-  let cookie: string | null = null;
+  const sync = createFakeSync();
   let minted = 0;
 
   const state = {
-    /** Pages of the change feed, by the `since` they answer. */
-    feed: new Map<number, z.input<typeof ChangesPage>>(),
-    /** Every `since` answers 410. */
-    feedGone: false,
     pushed: [] as PushBatch[],
     /** Every request answers this network failure (an unreachable server). */
     offline: false,
@@ -61,7 +59,7 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
   const empty = (status = 204) => new Response(null, { status });
 
   const ownerExists = () => accounts.some((a) => a.role === 'owner');
-  const signedIn = () => {
+  const signedIn = (cookie: string | null) => {
     const device = devices.find((d) => d.id === cookie);
     const account = device && accounts.find((a) => a.id === device.accountId);
     return device && account ? { device, account } : null;
@@ -72,10 +70,10 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
     found.used = true;
     return found;
   }
-  function open(account: Account, name: string) {
+  function open(jar: Jar, account: Account, name: string) {
     const device = { id: crypto.randomUUID(), accountId: account.id, name, at: AT };
     devices.push(device);
-    cookie = device.id;
+    jar.cookie = device.id;
     return sessionBody(account, device, 201);
   }
   function sessionBody(account: Account, device: Device, status = 200) {
@@ -102,9 +100,15 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
     return account;
   }
 
-  async function handle(method: string, path: string, query: URLSearchParams, init?: RequestInit) {
+  async function handle(
+    jar: Jar,
+    method: string,
+    path: string,
+    query: URLSearchParams,
+    init?: RequestInit
+  ) {
     const body = typeof init?.body === 'string' ? JSON.parse(init.body) : undefined;
-    const me = signedIn();
+    const me = signedIn(jar.cookie);
 
     if (method === 'GET' && path === '/api') {
       return reply(RootResponse, {
@@ -131,7 +135,7 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
         return reply(SetupStatus, { needsSetup: true, _links: { self: link('/api/setup') } });
       }
       if (!spend(body.code, 'setup')) return problem(401, 'Wrong username, password or code');
-      return open(createAccount(body.username, body.password, 'owner'), body.deviceName);
+      return open(jar, createAccount(body.username, body.password, 'owner'), body.deviceName);
     }
     if (path === '/api/session' && method === 'POST') {
       let account: Account | undefined;
@@ -144,7 +148,7 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
         account = spent ? accounts.find((a) => a.id === spent.accountId) : undefined;
       }
       if (!account) return problem(401, 'Wrong username, password or code');
-      return open(account, body.deviceName);
+      return open(jar, account, body.deviceName);
     }
     if (path === '/api/accounts' && method === 'POST') {
       if (codes.get(body.code)?.kind !== 'invite') {
@@ -154,14 +158,14 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
         return problem(409, 'That username is taken');
       }
       spend(body.code, 'invite');
-      return open(createAccount(body.username, body.password, 'member'), body.deviceName);
+      return open(jar, createAccount(body.username, body.password, 'member'), body.deviceName);
     }
 
     if (!me) return problem(401, 'Sign in first');
 
     if (path === '/api/session') {
       if (method === 'GET') return sessionBody(me.account, me.device);
-      cookie = null;
+      jar.cookie = null;
       devices.splice(devices.indexOf(me.device), 1);
       return empty();
     }
@@ -226,27 +230,17 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
     if (path === '/api/changes' && method === 'POST') {
       const batch = body as PushBatch;
       state.pushed.push(batch);
-      const outcomes = [
-        ...batch.notes.map((n) => ({ kind: 'note' as const, id: n.id, rev: (n.rev ?? 0) + 1 })),
-        ...batch.tags.map((t) => ({ kind: 'tag' as const, id: t.id, rev: (t.rev ?? 0) + 1 })),
-        ...batch.noteTags.map((l) => ({
-          kind: 'noteTag' as const,
-          id: noteTagId(l.noteId, l.tagId),
-          rev: (l.rev ?? 0) + 1,
-        })),
-        ...batch.tombstones.map((t) => ({ kind: t.kind, id: t.id, rev: (t.rev ?? 0) + 1 })),
-      ].map((o) => ({ ...o, status: 'accepted' as const }));
-      return reply(PushResponse, {
-        outcomes,
-        seq: outcomes.length,
-        _links: { self: link('/api/changes'), changes: link('/api/changes') },
-      });
+      return reply(PushResponse, sync.push(me.account.id, me.device.id, batch));
     }
     if (path === '/api/changes' && method === 'GET') {
-      const since = Number(query.get('since') ?? 0);
-      const page = state.feed.get(since);
-      if (state.feedGone || !page) return problem(410, 'Resync from the start');
-      return reply(ChangesPage, page);
+      const from = query.get('from');
+      const page = sync.pull(
+        me.account.id,
+        Number(query.get('since') ?? 0),
+        from === null ? undefined : Number(from)
+      );
+      if (!page) return problem(410, 'Resync from the start');
+      return reply(ChangesPageWithResume, page);
     }
     const blobMatch = path.match(/^\/api\/blobs\/(.+)$/);
     if (blobMatch) {
@@ -264,17 +258,29 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
     return problem(404, `No route for ${method} ${path}`);
   }
 
-  const fetch: typeof globalThis.fetch = async (input, init) => {
-    if (state.offline) throw new TypeError('Failed to fetch');
-    if (state.staticHost) {
-      return new Response('<!doctype html>', { headers: { 'content-type': 'text/html' } });
-    }
-    const url = new URL(String(input), 'http://localhost');
-    return handle(init?.method ?? 'GET', url.pathname, url.searchParams, init);
-  };
+  /** One browser: its own cookie, its `fetch`, and its Live Update stream. */
+  function client() {
+    const jar: Jar = { cookie: null };
+    const fetch: typeof globalThis.fetch = async (input, init) => {
+      if (state.offline) throw new TypeError('Failed to fetch');
+      if (state.staticHost) {
+        return new Response('<!doctype html>', { headers: { 'content-type': 'text/html' } });
+      }
+      const url = new URL(String(input), 'http://localhost');
+      return handle(jar, init?.method ?? 'GET', url.pathname, url.searchParams, init);
+    };
+    /** What `EventSource` on the stream link would deliver to this signed-in browser. */
+    const hints = (onHint: (seq: number) => void) => {
+      const me = signedIn(jar.cookie);
+      return me ? sync.subscribe(me.account.id, me.device.id, onHint) : () => false;
+    };
+    return { fetch, hints };
+  }
 
   return {
-    fetch,
+    fetch: client().fetch,
+    client,
+    sync,
     state,
     accounts,
     devices,

@@ -13,8 +13,20 @@ Whether this Device is signed in to a Self-hosted Server (ADR 0018; M5 slice 3).
 - `status` is `checking`, `unavailable` (nothing answered: a static host, offline, or no service), `signed-out` or `signed-in`. **Nothing in the app waits on it**: sync is opt-in, so every screen renders the same whatever it hears. Only the Account, Devices and Members sections of Settings and `/pair` read it.
 - `setSession` takes what a sign-in, pairing or sign-out just answered, so no second request is needed.
 - `useAccount()` answers "no server" outside a provider instead of throwing, like `useTourActive()`: its callers are Settings sections that tests mount alone.
-- An app opened offline shows no Account section until the next start (a `ponytail:` note marks where to re-ask on `online`).
-- Composed in `App.tsx` around the router; `main.tsx` builds the one `HalAccountService`.
+- Nothing answered (opened offline, or before the server was up): it asks again on `online` and when the page becomes visible, so the app starts syncing without a restart. A signed-in Device is not re-asked.
+- Composed in `App.tsx` around the router; `main.tsx` builds one HAL client and hands it in as both `service` and `remote` (the latter for `SyncProvider`).
+
+## `SyncProvider.tsx`
+
+Runs Sync while this Device is signed in (M5 slice 4, [04-sync.md](../../docs/architecture/04-sync.md)).
+What happens in a run is `src/sync/engine.ts`; when a run happens is `src/sync/loop.ts`; both are plain TypeScript and tested against `src/test/fakeServer.ts`, which carries the backend's sync rules.
+
+- **Mounted in `routes/__root.tsx`, inside `TourProvider`**, not in `App.tsx`: its one toast ("N conflicts kept as copies") links to the Conflicts Tag, so it needs the router. The `Remote` reaches it through `AccountProvider`, which `main.tsx` hands both halves of the one HAL client.
+- **It stands still while the Tour runs** (`useTourActive()`), and the engine leaves the Tour's Props out of every push, so a Prop never reaches the server even after a reload mid-Tour.
+- On a session it first **adopts** (a new Account owes the whole library), then starts the loop; on sign-out or a change of Account it stops it.
+- Exposes `{ active, status, lastSyncedAt, pending, syncNow, stop }`. `pending` is the store's live count of what the server is owed, so it is right signed out too; `stop()` waits for a run in flight, which is what makes erasing safe.
+- `useSync()` answers "not syncing" outside a provider, like `useAccount()`.
+- Sign-out lives in `components/account/SignOutButton.tsx`: refused while `pending > 0` (offering Sync now and a Backup), otherwise `DELETE /api/session`, `stop()`, then `store.clear()`.
 
 ## `PreferencesProvider.tsx`
 

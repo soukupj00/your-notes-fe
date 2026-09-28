@@ -115,7 +115,9 @@ Scoped by a `/grill-with-docs` session on 2026-08-12. Key decisions: [ADR 0017](
 2. **Server skeleton** *(backend)* — Fastify + Drizzle + SQLite, the Zod contract with OpenAPI falling out of it, HAL serializer, sessions + first-run Owner + Invites, `compose.yml` with Caddy, `@fastify/static` serving the built PWA.
 3. ✅ **Client foundations** *(here)* ([plan](./docs/superpowers/plans/2026-09-28-m5-slice3-client-foundations.md)) — Dexie bump (`rev`, dirty marker, `tombstones`) in both Local Store implementations with the dirty-row query added to the contract, the write-once Excalidraw refactor, `SyncProvider` (against `LocalStore` + `Remote`) + account context, the HAL `Remote` and `AccountService` implementations, boundary validation, and the Settings **Account** section (sign in/out, Devices with revoke) beside the storage row carried over from M4.
    Deviations: `SyncProvider` moved to slice 4, where the loop it would run lands; sign out does not yet erase (slice 4); `/pair` and the Pairing Link QRs landed here rather than in slice 6.
-4. **The loop** *(both)* — `GET /changes` with cursor links and ETags, the SSE hint endpoint and the optional `hints` method on `Remote`, dirty push with Revisions, outcomes per row, conflict → Conflicted Copy + "Conflicts" tag + toast, adopt-on-first-sign-in, erase-on-sign-out, and the too-old-cursor full resync.
+4. ✅ **The loop** *(both)* ([plan](./docs/superpowers/plans/2026-09-28-m5-slice4-sync-loop.md)) — `GET /changes` with cursor links and ETags, the SSE hint endpoint and the optional `hints` method on `Remote`, dirty push with Revisions, outcomes per row, conflict → Conflicted Copy + "Conflicts" tag + toast, adopt-on-first-sign-in, erase-on-sign-out, and the too-old-cursor full resync.
+   Deviations: a Tag conflict keeps the server's Tag and copies nothing; pulled Attachment metadata waits for slice 5; the Settings storage row (carried in from M4) landed here beside the sync status.
+   Two feed fixes came out of it and are landing on the backend: every page carries `_links.resume`, and every `next` carries the pull's origin (`from`), so a full resync pages past swept Tombstones; the frontend reads `resume` already and drops its `self` fallback at the next contract pull.
 5. **Attachments** *(both)* — idempotent byte upload/download, eager thumbnails, the new "known but not downloaded" attachment node state, the keep-everything preference.
 6. **Setup, docs, testing** *(both)* — the three Caddy modes with one documented happy path, first-run and Invite UX, sync status polish, and the user testing the brief requires.
 
@@ -125,6 +127,8 @@ Scoped by a `/grill-with-docs` session on 2026-08-12. Key decisions: [ADR 0017](
   The *request* landed in M4 (`src/lib/persistentStorage.ts`, fired on the user's first saved note - Firefox prompts, so it may not land during the Tour).
   Reporting the answer waits for M5 because this milestone gives that same area a sync status (last synced, queued changes, this device's account), and "is my data safe here" is one question best answered in one block.
 - **Out of scope, deliberately:** end-to-end encryption (threat model documented instead - see ADR 0018), sharing a Note between Accounts, and any email/SMTP.
+- **Known gaps:** a page loaded fresh and then taken offline cannot open the editor, because its code-split chunk is cached only once the service worker controls the page (after a reload).
+  Not a sync problem, found in the slice 4 two-Device run; the PWA should precache the editor or claim clients on first load.
 
 ## Per-area plans
 

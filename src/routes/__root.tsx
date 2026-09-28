@@ -1,6 +1,7 @@
 import { createRootRoute, Outlet } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import Layout from '@/components/layout.tsx';
+import { SyncProvider } from '@/context/SyncProvider.tsx';
 import { TourProvider } from '@/context/TourProvider.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
@@ -24,12 +25,16 @@ function RootLayout() {
   // others: it navigates, so it has to be inside the router rather than around
   // it. Inside `Layout` would be wrong the other way - the Tour marks the whole
   // body inert and portals its popover past the app, so it belongs above the
-  // shell it dims.
+  // shell it dims. `SyncProvider` is inside the router for the same reason (its
+  // conflicts toast links to the Conflicts Tag), and inside the Tour so it can
+  // stand still while one runs: Props never reach the server.
   return (
     <TourProvider>
-      <Layout>
-        <Outlet />
-      </Layout>
+      <SyncProvider>
+        <Layout>
+          <Outlet />
+        </Layout>
+      </SyncProvider>
     </TourProvider>
   );
 }

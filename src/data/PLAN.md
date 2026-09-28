@@ -21,8 +21,9 @@ No schema bump: the `settings` table stays and is exposed as `meta`; the Prefere
 ## Sync metadata (M5 slice 3)
 
 Done 2026-09-28 ([plan](../../docs/superpowers/plans/2026-09-28-m5-slice3-client-foundations.md)): Dexie v5, `sync.dirty()` and an accepted-only `sync.applied()` in both implementations, the Excalidraw write-once save.
-Left for slice 4: `applyPage` (writing pulled rows without owing them), resolving `conflict` and `gone` outcomes, adopt-on-first-sign-in (owe every row), and chunking `dirty()` to `MAX_BATCH`.
-The notes below are the design that slice followed.
+Slice 4 added the rest ([plan](../../docs/superpowers/plans/2026-09-28-m5-slice4-sync-loop.md)): `applyPage` in two modes, `resetClean`, `adoptAll` and a live `pending` count; resolving outcomes and chunking live in `src/sync/engine.ts`, above the seam.
+Left for slice 5: applying pulled Attachment metadata, which needs rows whose bytes are "known but not downloaded".
+The notes below are the design both slices followed.
 
 Shape fixed by [ADR 0017](../../docs/adr/0017-note-level-last-writer-wins-with-conflicted-copies.md); see also [ADR 0001](../../docs/adr/0001-local-first-storage-with-dexie.md) and [ADR 0002](../../docs/adr/0002-separate-frontend-backend-repositories.md).
 

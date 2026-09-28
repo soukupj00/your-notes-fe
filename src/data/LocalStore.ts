@@ -1,6 +1,6 @@
 import type { Attachment, Note, NoteState, NoteTag, Tag } from '@/models.ts';
 import type { Live } from './live.ts';
-import type { PushBatch, PushOutcome } from './Remote.ts';
+import type { PushBatch, PushOutcome, ServerChanges } from './Remote.ts';
 
 /**
  * Which slice of the library a view is showing. `state` maps one-to-one onto a
@@ -39,7 +39,16 @@ export const SYNC_META_KEYS = {
   lastSyncedAt: 'sync.lastSyncedAt',
   /** The Account this database is attached to; what makes erase-on-sign-out enforceable. */
   accountId: 'sync.accountId',
+  /** The Account's Sequence at the last pull; a Live Update hint past it is news. */
+  seq: 'sync.seq',
 } as const;
+
+/**
+ * How `sync.applyPage` treats a row this Device still owes. `keep-local` (a pull)
+ * leaves an owed row or one with a pending Tombstone alone, so the next push
+ * decides it; `server-wins` (resolving a push outcome) overwrites it.
+ */
+export type ApplyMode = 'keep-local' | 'server-wins';
 
 /**
  * The Local Store (CONTEXT.md): the only way application code reads or writes
@@ -59,8 +68,9 @@ export const SYNC_META_KEYS = {
  * - Sync state is the store's alone (ADR 0017). Every write that changes a Note,
  *   Tag or NoteTag marks it owed and keeps the Revision the store holds for it;
  *   an Attachment write marks its Note owed, because its metadata rides on the
- *   Note's Revision. Removing a Note, Tag or NoteTag writes a Tombstone carrying
- *   that Revision; putting it back takes the Tombstone back. No read returns `rev`.
+ *   Note's Revision. Removing a Note, Tag or NoteTag the server has seen (it has
+ *   a Revision) writes a Tombstone carrying it; one never pushed leaves nothing
+ *   to tell. Putting it back takes the Tombstone back. No read returns `rev`.
  */
 export interface LocalStore {
   readonly notes: {
@@ -151,6 +161,25 @@ export interface LocalStore {
      * engine's to resolve (slice 4). Throws if the counts do not pair up.
      */
     applied(batch: PushBatch, outcomes: readonly PushOutcome[]): Promise<void>;
+    /**
+     * Writes the server's rows, atomically, each with the server's Revision and
+     * not owed (see `ApplyMode` for rows this Device still owes). A server
+     * Tombstone removes the row - a Note with its links and Attachments, a Tag
+     * with its links - without writing a local Tombstone, and drops a pending
+     * one for the same id. Attachment metadata on a Note is not applied: its
+     * rows need bytes (M5 slice 5).
+     */
+    applyPage(changes: ServerChanges, mode?: ApplyMode): Promise<void>;
+    /**
+     * Before a full resync (a 410): drops every Note, Tag and NoteTag that is not
+     * owed. Owed rows, Tombstones and every Attachment row stay, so a Note that
+     * comes back finds its bytes.
+     */
+    resetClean(): Promise<void>;
+    /** First sign-in to an Account: every row owed, no Revisions, no pending Tombstones. */
+    adoptAll(): Promise<void>;
+    /** How many rows and Tombstones the server is owed, live. */
+    pending(): Live<number>;
   };
 
   /** A consistent copy of everything a Backup carries. */

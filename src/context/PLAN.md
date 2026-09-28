@@ -10,7 +10,8 @@ What's left at the provider layer. See [root PLAN.md](../../PLAN.md) for milesto
 
 ## Auth / accounts context (M5 slice 2)
 
-The account half landed in M5 slice 3 as `AccountProvider.tsx` (see [CLAUDE.md](./CLAUDE.md)); `SyncProvider` is M5 slice 4.
+Both landed: `AccountProvider.tsx` in M5 slice 3 and `SyncProvider.tsx` in slice 4 (see [CLAUDE.md](./CLAUDE.md)).
+The notes below are the design they followed.
 
 - Add a provider for the **Local Account** (see [CONTEXT.md](../../CONTEXT.md)): signed-in state, the current Device, and sync status, consumed by the sync layer.
   There is **no token to hold**: the session is an `HttpOnly` cookie the browser sends and JavaScript cannot read ([ADR 0018](../../docs/adr/0018-the-server-serves-the-pwa.md)), so "am I signed in" is answered by asking the server once at startup, not by inspecting storage.

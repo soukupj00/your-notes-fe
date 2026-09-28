@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Attachment, Note, NoteTag, Tag } from '@/models.ts';
 import type { LocalStore } from './LocalStore.ts';
 import type { Live } from './live.ts';
+import { describeLocalStorePullContract } from './localStore.pull.contract.ts';
 import { describeLocalStoreSyncContract } from './localStore.sync.contract.ts';
 
 const T0 = '2026-01-01T00:00:00.000Z';
@@ -65,6 +66,7 @@ const ids = (rows: { id: string }[]) => rows.map((row) => row.id).sort();
  */
 export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>) {
   describeLocalStoreSyncContract(makeStore);
+  describeLocalStorePullContract(makeStore);
 
   describe('LocalStore contract', () => {
     let store: LocalStore;
