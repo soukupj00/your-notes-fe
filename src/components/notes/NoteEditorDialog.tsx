@@ -283,6 +283,7 @@ export function NoteEditorDialog({
       color={color}
       pinned={Boolean(pinnedAt)}
       pinnable={state === 'active'}
+      shareable={state !== 'trashed'}
       onColorChange={(next) => void handleColorChange(next)}
       onPinToggle={() => void handlePinToggle()}
       reminder={reminder}

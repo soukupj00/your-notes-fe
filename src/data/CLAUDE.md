@@ -11,8 +11,9 @@ The seam every read and write of persisted data goes through ([ADR 0020](../../d
 - `syncRows.ts` - pure helpers both implementations share for sync state: stripping it on read, the wire shape of a Note, pairing push outcomes with the batch.
 - `dexie/` - the default implementation (IndexedDB). `db.ts` is private to this folder, enforced by Biome's `noRestrictedImports`. Its `sync` half is `dexie/sync.ts`; `dexie/live.ts` is the `liveQuery` adapter both files share.
 - `memory/` - the second implementation: nothing persists, atomic by being single-threaded. It is the "cache only" configuration and what proves the interface is not Dexie in disguise.
-- `Remote.ts` - the sync seam: `Remote` (replication) and `AccountService` (sessions, Devices, Pairing), typed from the vendored contract (`src/contract/`, `pnpm contract:pull`).
+- `Remote.ts` - the sync seam: `Remote` (replication) and `AccountService` (sessions, Devices, Pairing, Share Links), typed from the vendored contract (`src/contract/`, `pnpm contract:pull`).
 - `http/` - the Self-hosted Server's implementations of both seams. `hal.ts` is the one door: it follows the HAL root's links, parses every body with the contract (a drift throws at the boundary), and turns `application/problem+json` into `ProblemError`. Tests run against `src/test/fakeServer.ts`, whose answers are parsed by the same contract.
+  `publicShare.ts` is the one read outside `AccountService`: a Share Link's page is read with no Account (`fetchSharedNote`, 404 answers `'gone'`), and its blob URLs come from the page's own `_links.blobs` template (`sharedBlobUrl`).
 
 ## Rules
 

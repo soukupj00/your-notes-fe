@@ -122,6 +122,9 @@ Scoped by a `/grill-with-docs` session on 2026-08-12. Key decisions: [ADR 0017](
    Deviations: the vendored contract carries the backend's `thumbnailId` line ahead of a `contract:pull`, because the HAL client's Zod parse drops keys it does not know; video posters get a `thumbnailId` too, not only image thumbnails; an image too small to have a thumbnail is fetched eagerly as its own Preview; a transfer that finds nothing yet (the other Device uploads after its push, so its hint arrives first) keeps the loop's back-off running.
 6. **Setup, docs, testing** *(both)* — the three Caddy modes with one documented happy path, first-run and Invite UX, sync status polish, and the user testing the brief requires.
 
+✅ **Share Links** *(both; backend slice B6, after the loop)* ([plan](./docs/superpowers/plans/2026-09-28-m5-share-links.md)): a Share button in the Note's bar with a dialog to copy or end the link, `/share/$token` as a read-only page for anyone who can reach the server, and a "Shared Notes" list in Settings.
+Deviations: `sharedBlobUrl` takes the fetched page rather than the token, because the blob template lives on the page; the public page's own address is written by hand, because the HAL root does not list it; the page renders outside the app shell and runs on an in-memory Local Store, so a stranger's browser never opens IndexedDB.
+
 **Testing:** the client sync engine is tested here against a fake server built from the vendored contract, so conflict, resync and offline paths are deterministic. The backend tests itself in its own repo. Genuine two-device end-to-end is a manual and user-testing activity - a cross-repo Playwright pipeline would cost more than it catches.
 
 - **Carried in from M4:** a storage row in Settings reporting `navigator.storage.persisted()` and `estimate()`.

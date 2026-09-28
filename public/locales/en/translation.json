@@ -684,5 +684,26 @@
       "label": "Keep everything on this device",
       "description": "Download every attachment after each sync, not just previews. Uses more storage."
     }
+  },
+  "share": {
+    "action": "Share",
+    "shared": "Shared",
+    "title": "Share this Note",
+    "description": "Anyone who can reach this server can open it, signed in or not.",
+    "stop": "Stop sharing",
+    "stopped": "No longer shared.",
+    "notSynced": "This Note has not reached your server yet. Try again in a moment.",
+    "untitled": "Untitled Note",
+    "section": {
+      "title": "Shared Notes",
+      "none": "No Note is shared."
+    },
+    "page": {
+      "loading": "Opening the Note…",
+      "gone": "Nothing is shared here",
+      "failed": "Could not open this Note. Try again later.",
+      "footer": "Shared from YouNotes",
+      "untitled": "Shared Note"
+    }
   }
 }

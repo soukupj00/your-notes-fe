@@ -96,6 +96,8 @@ export type Member = {
 };
 /** A Pairing Code, shown as a Pairing Link; it works once, until `expiresAt`. */
 export type PairingCode = { code: string; expiresAt: string };
+/** A Share Link (CONTEXT.md): build the address with the contract's `shareLink(origin, token)`. */
+export type Share = { id: string; noteId: string; token: string; createdAt: string };
 
 /**
  * Optional. Only the Self-hosted Server implements it (ADR 0018); the Settings
@@ -125,4 +127,10 @@ export interface AccountService {
   accounts(): Promise<Member[]>;
   /** Owner only. The Account's Devices stay signed in. */
   resetPassword(accountId: string, password: string): Promise<void>;
+  /** Shares a Note read-only; a Note already shared answers its existing Share. 404 until the Note has synced. */
+  share(noteId: string): Promise<Share>;
+  /** Every Share Link this Account has open, oldest first. */
+  shares(): Promise<Share[]>;
+  /** Ends a Share Link at once; the link then shows "Nothing is shared here". */
+  revokeShare(id: string): Promise<void>;
 }

@@ -688,5 +688,26 @@
       "label": "Mít vše v tomto zařízení",
       "description": "Po každé synchronizaci stáhnout všechny přílohy, nejen náhledy. Zabere víc místa."
     }
+  },
+  "share": {
+    "action": "Sdílet",
+    "shared": "Sdíleno",
+    "title": "Sdílet tuto poznámku",
+    "description": "Otevřít ji může kdokoli, kdo se dostane k tomuto serveru, přihlášený i nepřihlášený.",
+    "stop": "Přestat sdílet",
+    "stopped": "Už se nesdílí.",
+    "notSynced": "Tato poznámka ještě nedorazila na váš server. Zkuste to za chvíli.",
+    "untitled": "Poznámka bez názvu",
+    "section": {
+      "title": "Sdílené poznámky",
+      "none": "Žádná poznámka se nesdílí."
+    },
+    "page": {
+      "loading": "Otevírám poznámku…",
+      "gone": "Nic se tu nesdílí",
+      "failed": "Poznámku se nepodařilo otevřít. Zkuste to později.",
+      "footer": "Sdíleno z YouNotes",
+      "untitled": "Sdílená poznámka"
+    }
   }
 }

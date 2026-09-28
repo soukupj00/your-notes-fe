@@ -9,6 +9,7 @@ import { LanguageSection } from '@/components/settings/LanguageSection.tsx';
 import { MembersSection } from '@/components/settings/MembersSection.tsx';
 import { PwaInstallSection } from '@/components/settings/PwaInstallSection.tsx';
 import { QuickCaptureSection } from '@/components/settings/QuickCaptureSection.tsx';
+import { SharesSection } from '@/components/settings/SharesSection.tsx';
 import { ShortcutsSection } from '@/components/settings/ShortcutsSection.tsx';
 import { SyncStatusSection } from '@/components/settings/SyncStatusSection.tsx';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
@@ -89,6 +90,8 @@ export default function SettingsPage() {
       <AccountSection />
 
       <DevicesSection />
+
+      <SharesSection />
 
       <MembersSection />
     </div>

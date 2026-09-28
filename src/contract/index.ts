@@ -3,7 +3,7 @@
  *
  * This file is vendored verbatim by the frontend (`ni-dip-fe`) and runs in the browser,
  * so it imports nothing but `zod` and nothing from the server.
- * Vendored from ni-dip-be at commit: 7c842e6
+ * Vendored from ni-dip-be at commit: e2024d7
  * When copying it, replace the line above with the backend commit it was taken from.
  */
 import { z } from 'zod';
@@ -46,7 +46,6 @@ export const AttachmentMeta = z.object({
   height: z.number().int().min(0).optional(),
   duration: z.number().min(0).optional(),
   preview: z.string().optional(),
-  // TODO contract:pull - backend feat/attachment-thumbnail-id, not yet committed; this is its exact line.
   /** The blob holding the image's downscaled Preview, synced eagerly; the full bytes are under `id`. */
   thumbnailId: Id.optional(),
   createdAt: IsoDateTime,

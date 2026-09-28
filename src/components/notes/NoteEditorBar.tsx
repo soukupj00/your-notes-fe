@@ -1,6 +1,7 @@
 import { Pin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { NoteColorButton } from '@/components/color-picker/NoteColorButton.tsx';
+import { ShareButton } from '@/components/notes/ShareButton.tsx';
 import { ReminderButton } from '@/components/reminders/ReminderButton.tsx';
 import { NoteTagsBar } from '@/components/tags/NoteTagsBar.tsx';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
@@ -17,6 +18,8 @@ interface NoteEditorBarProps {
   pinned: boolean;
   /** Pinning is meaningless outside the Active state, so the control is absent there. */
   pinnable: boolean;
+  /** A trashed Note cannot be shared: the server shows nobody a trashed Note. */
+  shareable: boolean;
   onColorChange: (color?: string) => void;
   onPinToggle: () => void;
   reminder?: Reminder;
@@ -29,14 +32,15 @@ interface NoteEditorBarProps {
  * The editor's note bar: the moves that belong to the note as an object rather
  * than to the text being typed.
  *
- * It carries **labels, a Reminder, colour and pin, and nothing else**. Archive
+ * It carries **labels, a Share Link, a Reminder, colour and pin, and nothing
+ * else**. Archive
  * and trash are deliberately absent: the card's foot rail is visible at rest on
  * every input type (revised 2026-07-31), so an editor-side copy would duplicate
  * a control that is already one tap away. The test that separates them is whether
  * an action can apply to a note that has no card yet - a draft captured from the
  * FAB can be coloured, labelled and pinned, but archiving or trashing it means
  * nothing. A Reminder passes the same test - a draft captured from the FAB can
- * be given one (ADR 0021).
+ * be given one (ADR 0021), and so can a Share Link, which saves the draft first.
  *
  * It is not sticky. The editor's format toolbar is the only fixed chrome on
  * mobile, because formatting is a typing move and these are not; a second bar
@@ -48,6 +52,7 @@ export function NoteEditorBar({
   color,
   pinned,
   pinnable,
+  shareable,
   onColorChange,
   onPinToggle,
   reminder,
@@ -67,6 +72,14 @@ export function NoteEditorBar({
       <NoteTagsBar noteId={noteId} ensureNoteId={ensureNoteId} className="min-w-0 flex-1" />
 
       <div className="flex shrink-0 items-center gap-0.5">
+        {shareable && (
+          <ShareButton
+            noteId={noteId}
+            ensureNoteId={ensureNoteId}
+            className={noteControlButton(reducedMotion)}
+          />
+        )}
+
         <ReminderButton
           reminder={reminder}
           onSet={onReminderSet}

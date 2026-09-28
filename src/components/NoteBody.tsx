@@ -3,6 +3,14 @@ import { memo, useMemo } from 'react';
 import { cn } from '@/lib/utils.ts';
 
 /**
+ * The one sanitizer configuration for a Body's HTML, shared with the public
+ * Share Link page (`SharedNoteBody`), where the Body is a stranger's input.
+ */
+export function sanitizeBody(html: string): string {
+  return DOMPurify.sanitize(html, { ADD_TAGS: ['excalidraw-drawing'] });
+}
+
+/**
  * Read-only renderer for a Note's Body HTML.
  *
  * Prose only: its one caller (`NoteCard`) strips every attachment node first,
@@ -33,10 +41,7 @@ function NoteBodyRenderer({
   onClick?: React.MouseEventHandler<HTMLDivElement>;
   ref?: React.Ref<HTMLDivElement>;
 }) {
-  const markup = useMemo(
-    () => DOMPurify.sanitize(html ?? '', { ADD_TAGS: ['excalidraw-drawing'] }),
-    [html]
-  );
+  const markup = useMemo(() => sanitizeBody(html ?? ''), [html]);
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: a delegate, not a control. The interactive elements are the real <input type="checkbox"> nodes inside the markup, which bring their own role and focusability; a role here would announce a control that does not exist.

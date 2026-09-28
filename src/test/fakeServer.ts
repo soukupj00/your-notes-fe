@@ -8,6 +8,9 @@ import {
   RootResponse,
   SessionResponse,
   SetupStatus,
+  Share,
+  SharedNote,
+  SharesResponse,
 } from '@/contract/index.ts';
 import type { PushBatch } from '@/data/Remote.ts';
 import { createFakeSync } from './fakeSync.ts';
@@ -17,6 +20,7 @@ type Account = { id: string; username: string; password: string; role: Role };
 type Code = { kind: 'setup' | 'device' | 'invite'; accountId: string | null; used: boolean };
 type Device = { id: string; accountId: string; name: string; at: string };
 type Jar = { cookie: string | null };
+type ShareRow = { id: string; accountId: string; noteId: string; token: string; createdAt: string };
 
 const AT = '2026-09-28T10:00:00.000Z';
 const link = (href: string) => ({ href });
@@ -35,6 +39,7 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
   ]);
   const devices: Device[] = [];
   const blobs = new Map<string, Uint8Array<ArrayBuffer>>();
+  const shares: ShareRow[] = [];
   const sync = createFakeSync();
   let minted = 0;
 
@@ -97,6 +102,22 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
       },
       status
     );
+  }
+  const shareBody = (row: ShareRow) => ({
+    id: row.id,
+    noteId: row.noteId,
+    token: row.token,
+    createdAt: row.createdAt,
+    _links: {
+      self: link(`/api/shares/${row.id}`),
+      public: link(`/api/public/shares/${row.token}`),
+    },
+  });
+  /** The backend's `sharedNote`: the Note behind a token, unless it is gone or trashed. */
+  function sharedNote(token: string) {
+    const share = shares.find((s) => s.token === token);
+    const note = share && sync.row(share.accountId, 'note', share.noteId)?.row;
+    return note && note.state !== 'trashed' ? (note as z.input<typeof SharedNote>['note']) : null;
   }
   function createAccount(username: string, password: string, role: Role) {
     const account = { id: crypto.randomUUID(), username, password, role };
@@ -163,6 +184,30 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
       }
       spend(body.code, 'invite');
       return open(jar, createAccount(body.username, body.password, 'member'), body.deviceName);
+    }
+
+    // Share Links' public routes (backend `routes/shares.ts`): no Session, only the token.
+    const publicMatch = path.match(/^\/api\/public\/shares\/([^/]+)(?:\/blobs\/([^/]+))?$/);
+    if (publicMatch && method === 'GET') {
+      const token = decodeURIComponent(publicMatch[1]!);
+      const note = sharedNote(token);
+      if (!note) return problem(404, 'Nothing is shared here');
+      const blobId = publicMatch[2] && decodeURIComponent(publicMatch[2]);
+      if (blobId) {
+        const listed = note.attachments?.some((a) => a.id === blobId || a.thumbnailId === blobId);
+        const bytes = listed && blobs.get(blobId);
+        return bytes
+          ? new Response(bytes, { status: 200 })
+          : problem(404, 'Nothing is shared here');
+      }
+      const { rev: _rev, ...shown } = note as typeof note & { rev?: number };
+      return reply(SharedNote, {
+        note: shown,
+        _links: {
+          self: link(`/api/public/shares/${token}`),
+          blobs: { href: `/api/public/shares/${token}/blobs/{id}`, templated: true },
+        },
+      });
     }
 
     if (!me) return problem(401, 'Sign in first');
@@ -246,6 +291,36 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
       if (!page) return problem(410, 'Resync from the start');
       return reply(ChangesPage, page);
     }
+    if (path === '/api/shares' && method === 'POST') {
+      if (!sync.row(me.account.id, 'note', body.noteId)) return problem(404, 'No such Note');
+      const mine = (s: ShareRow) => s.accountId === me.account.id && s.noteId === body.noteId;
+      const existing = shares.find(mine);
+      if (existing) return reply(Share, shareBody(existing));
+      const row = {
+        id: crypto.randomUUID(),
+        accountId: me.account.id,
+        noteId: body.noteId as string,
+        token: `share-token-${++minted}`,
+        createdAt: AT,
+      };
+      shares.push(row);
+      return reply(Share, shareBody(row), 201);
+    }
+    if (path === '/api/shares' && method === 'GET') {
+      return reply(SharesResponse, {
+        _links: { self: link('/api/shares') },
+        _embedded: {
+          shares: shares.filter((s) => s.accountId === me.account.id).map(shareBody),
+        },
+      });
+    }
+    const shareMatch = path.match(/^\/api\/shares\/(.+)$/);
+    if (shareMatch && method === 'DELETE') {
+      const i = shares.findIndex((s) => s.id === shareMatch[1] && s.accountId === me.account.id);
+      if (i < 0) return problem(404, 'No such Share Link');
+      shares.splice(i, 1);
+      return empty();
+    }
     const blobMatch = path.match(/^\/api\/blobs\/(.+)$/);
     if (blobMatch) {
       const id = decodeURIComponent(blobMatch[1]!);
@@ -296,6 +371,7 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
     accounts,
     devices,
     blobs,
+    shares,
     /** Mints a code as if a signed-in Device (or the Owner, for an Invite) had shown one. */
     mintCode(kind: 'device' | 'invite', accountId: string) {
       const code = `${kind}-code-${++minted}`;

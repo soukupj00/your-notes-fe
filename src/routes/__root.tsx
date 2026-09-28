@@ -1,12 +1,24 @@
-import { createRootRoute, Outlet } from '@tanstack/react-router';
+import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import Layout from '@/components/layout.tsx';
 import { SyncProvider } from '@/context/SyncProvider.tsx';
 import { TourProvider } from '@/context/TourProvider.tsx';
+import { isSharePath } from '@/data/http/publicShare.ts';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 
+/**
+ * A Share Link's page renders bare: no startup sweeps (they write), no Tour (it
+ * seeds Props), no sync loop and no app shell. Its viewer is a stranger whose
+ * Local Store must stay untouched (CONTEXT.md "Share Link"), and who has
+ * nothing in the app to navigate to.
+ */
 function RootLayout() {
+  const shared = useLocation({ select: (location) => isSharePath(location.pathname) });
+  return shared ? <Outlet /> : <AppLayout />;
+}
+
+function AppLayout() {
   const { collectStartupOrphans } = useAttachmentActions();
   const { purgeExpiredTrash } = useNoteActions();
 

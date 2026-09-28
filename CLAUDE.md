@@ -98,7 +98,8 @@ The `icon` prop is a **string key** resolved via `src/components/icons/icons.ts`
 
 **TanStack Router** with file-based routing ([ADR 0008](./docs/adr/0008-tanstack-router-over-react-router.md)). Route modules live in `src/routes/`; the `@tanstack/router-plugin` Vite plugin (wired in both `vite.config.ts` and `vitest.config.ts`) regenerates `src/routeTree.gen.ts` from them. That file is **generated and committed** — never edit it; it is excluded from Biome and `tsc` reads it directly. Colocated `*.test.tsx` files inside `src/routes/` are excluded from generation via `routeFileIgnorePattern`.
 
-Routes: `/` (active feed), `/archive`, `/trash`, `/labels`, `/tag/$id`, `/settings`, and `/pair` (where every Pairing Link lands; the code rides in the fragment).
+Routes: `/` (active feed), `/archive`, `/trash`, `/labels`, `/tag/$id`, `/settings`, `/pair` (where every Pairing Link lands; the code rides in the fragment), and `/share/$token` (a Share Link's read-only page).
+`/share/$token` is opened by strangers, so `__root.tsx` renders it bare (no shell, no Tour, no sync loop, no startup sweeps) and `main.tsx` gives it an in-memory Local Store: it writes nothing to the viewer's IndexedDB.
 The four feed routes share one `validateSearch` (`validateNoteSearch`), which is what makes the search box, sort menu, and label filters URL-driven; the Navbar hides the search box on routes without a feed. Route modules stay thin — they pick a scope and a title and delegate to a view (`NotesView`, or a page in `src/pages/`).
 
 `App.tsx` is the composition root: providers (Theme → Preferences → Tooltip → ViewMode) wrap `<RouterProvider>`, and the `declare module '@tanstack/react-router'` block registers the router's types so `<Link to>` and params are type-checked.

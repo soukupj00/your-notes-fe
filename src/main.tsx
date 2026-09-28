@@ -5,13 +5,19 @@ import { createDexieLocalStore } from '@/data/dexie/DexieLocalStore.ts';
 import { createHalAccountService } from '@/data/http/HalAccountService.ts';
 import { createHalRemote } from '@/data/http/HalRemote.ts';
 import { createHalClient } from '@/data/http/hal.ts';
+import { isSharePath } from '@/data/http/publicShare.ts';
+import { createMemoryLocalStore } from '@/data/memory/MemoryLocalStore.ts';
 import App from './App.tsx';
 import './i18n.ts';
 
 // The Local Store the app runs on (ADR 0020). Dexie/IndexedDB is the default
 // and the only shipped implementation that persists; see src/data/CLAUDE.md
 // for bringing your own.
-const store = createDexieLocalStore();
+// A Share Link's page (`/share/<token>`) is opened by strangers and writes
+// nothing to their Local Store (CONTEXT.md), so it never even opens IndexedDB.
+const store = isSharePath(window.location.pathname)
+  ? createMemoryLocalStore()
+  : createDexieLocalStore();
 // The server that serves the PWA is the server (ADR 0018); where none answers,
 // `AccountProvider` says so and the app runs local-only.
 const hal = createHalClient();

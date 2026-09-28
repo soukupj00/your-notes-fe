@@ -4,8 +4,10 @@ import {
   CodeResponse,
   DevicesResponse,
   SessionResponse,
+  Share as ShareBody,
+  SharesResponse,
 } from '@/contract/index.ts';
-import type { AccountService, PairingCode, Session } from '../Remote.ts';
+import type { AccountService, PairingCode, Session, Share } from '../Remote.ts';
 import { type HalClient, ProblemError } from './hal.ts';
 
 const toSession = (body: SessionResponse): Session => ({
@@ -14,6 +16,13 @@ const toSession = (body: SessionResponse): Session => ({
   role: body.account.role,
   deviceId: body.device.id,
   deviceName: body.device.name,
+});
+
+const toShare = ({ id, noteId, token, createdAt }: ShareBody): Share => ({
+  id,
+  noteId,
+  token,
+  createdAt,
 });
 
 /**
@@ -99,6 +108,22 @@ export function createHalAccountService(hal: HalClient): AccountService {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ password }),
       });
+    },
+    async share(noteId) {
+      return toShare(
+        await hal.json(ShareBody, await hal.link('shares'), { method: 'POST', body: { noteId } })
+      );
+    },
+    async shares() {
+      const body = await hal.json(SharesResponse, await hal.link('shares'));
+      return body._embedded.shares.map(toShare);
+    },
+    async revokeShare(id) {
+      // The Share's own `self` link, so the route is the server's to name.
+      const body = await hal.json(SharesResponse, await hal.link('shares'));
+      const share = body._embedded.shares.find((s) => s.id === id);
+      if (!share) throw new ProblemError(404, 'No such Share Link');
+      await hal.send(share._links.self.href, { method: 'DELETE' });
     },
   };
 }
