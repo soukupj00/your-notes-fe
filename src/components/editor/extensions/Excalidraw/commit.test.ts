@@ -18,16 +18,17 @@ function deps(overrides: Partial<AttachmentDeps> = {}) {
   return {
     getNoteId: vi.fn(async () => 'note-1'),
     createAttachment: vi.fn(async () => ({ id: 'att-1' })),
+    getAttachment: vi.fn(async () => ({ id: 'att-9', preview: '<svg id="old"/>' })),
     updateAttachment: vi.fn(async () => {}),
     ...overrides,
   } as unknown as AttachmentDeps;
 }
 
 describe('commitExcalidrawScene', () => {
-  it('new drawing: creates the attachment, sets the preview, and inserts the node', async () => {
+  it('new drawing: creates the attachment, sets the preview, and places the node', async () => {
     const d = deps();
-    const insertNode = vi.fn();
-    await commitExcalidrawScene(d, null, scene, insertNode);
+    const place = vi.fn();
+    await commitExcalidrawScene(d, null, scene, place);
 
     expect(d.getNoteId).toHaveBeenCalled();
     expect(d.createAttachment).toHaveBeenCalledWith('note-1', expect.any(File), 'excalidraw');
@@ -35,30 +36,42 @@ describe('commitExcalidrawScene', () => {
       'att-1',
       expect.objectContaining({ preview: expect.stringContaining('snap') })
     );
-    expect(insertNode).toHaveBeenCalledWith('att-1');
+    expect(place).toHaveBeenCalledWith('att-1');
   });
 
-  it('edit drawing: updates the same row with blob + preview, never creates or inserts', async () => {
+  it('edit drawing: mints a new row and repoints, never rewriting the old bytes', async () => {
     const d = deps();
-    const insertNode = vi.fn();
-    await commitExcalidrawScene(d, 'att-9', scene, insertNode);
+    const place = vi.fn();
+    await commitExcalidrawScene(d, 'att-9', scene, place);
 
-    expect(d.createAttachment).not.toHaveBeenCalled();
-    expect(insertNode).not.toHaveBeenCalled();
+    expect(d.createAttachment).toHaveBeenCalledWith('note-1', expect.any(File), 'excalidraw');
+    expect(d.updateAttachment).not.toHaveBeenCalledWith('att-9', expect.anything());
     expect(d.updateAttachment).toHaveBeenCalledWith(
-      'att-9',
-      expect.objectContaining({ blob: expect.any(File), preview: expect.stringContaining('snap') })
+      'att-1',
+      expect.objectContaining({ preview: expect.stringContaining('snap') })
     );
+    expect(place).toHaveBeenCalledWith('att-1');
   });
 
-  it('still saves the scene blob when the SVG snapshot fails (preview omitted)', async () => {
+  it('an edit whose snapshot fails still saves and keeps the previous preview', async () => {
     const excalidraw = await import('@excalidraw/excalidraw');
     (excalidraw.exportToSvg as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('boom'));
     const d = deps();
-    await commitExcalidrawScene(d, 'att-9', scene, vi.fn());
+    const place = vi.fn();
+    await commitExcalidrawScene(d, 'att-9', scene, place);
 
-    const changes = (d.updateAttachment as ReturnType<typeof vi.fn>).mock.calls[0][1];
-    expect(changes.blob).toBeInstanceOf(File);
-    expect(changes.preview).toBeUndefined();
+    expect(d.createAttachment).toHaveBeenCalled();
+    expect(d.updateAttachment).toHaveBeenCalledWith('att-1', { preview: '<svg id="old"/>' });
+    expect(place).toHaveBeenCalledWith('att-1');
+  });
+
+  it('a new drawing whose snapshot fails is saved without a preview', async () => {
+    const excalidraw = await import('@excalidraw/excalidraw');
+    (excalidraw.exportToSvg as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('boom'));
+    const d = deps();
+    await commitExcalidrawScene(d, null, scene, vi.fn());
+
+    expect(d.createAttachment).toHaveBeenCalled();
+    expect(d.updateAttachment).not.toHaveBeenCalled();
   });
 });

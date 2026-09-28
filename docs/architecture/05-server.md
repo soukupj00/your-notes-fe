@@ -42,9 +42,12 @@ Chosen together, each choice constraining the next (see [`PLAN.md`](../../PLAN.m
 The brief commits to REST + HATEOAS, and ADR 0017 is what keeps that honest: nothing in the sync model needs a persistent socket.
 
 - Responses are `application/hal+json`; the sync change feed is a hypermedia collection where the device stores the opaque `_links.next` URL as its cursor and never builds a query string.
-- Completed change pages are immutable, so `ETag` response caching is correct by construction.
+- Change pages carry a strong `ETag` over their body and the server answers `304`, so revalidation is cheap; a page is not immutable, because a re-edited row moves to a new Sequence.
 - The **contract is owned by the backend repo** and vendored here as one committed file (`pnpm contract:pull`); every response is validated with Zod at the boundary, which doubles as the drift alarm between repos.
-- An SSE hint channel (server-sent "Revision N" pings; never data, never load-bearing) is a slice-5 follow-up if it still looks worth it.
+- An SSE hint endpoint is part of the API (re-evaluated 2026-08-30, [04-sync.md](./04-sync.md)): `text/event-stream`, event `id` = the Account's change sequence, no payload; Caddy flushes it without configuration and the session cookie rides on it.
+- Batch push reports an outcome per row; per-resource `PUT` with `If-Match` is later work.
+- No maintained HAL library exists for Node, so `_links` / `_embedded` are hand-rolled per resource.
+- Sessions are a table (one row per Device), because per-Device revoke needs server-side state that a stateless encrypted cookie cannot provide.
 
 ## What lands in this repo for the connection
 

@@ -2,6 +2,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/globals.css';
 import { createDexieLocalStore } from '@/data/dexie/DexieLocalStore.ts';
+import { createHalAccountService } from '@/data/http/HalAccountService.ts';
+import { createHalClient } from '@/data/http/hal.ts';
 import App from './App.tsx';
 import './i18n.ts';
 
@@ -9,6 +11,9 @@ import './i18n.ts';
 // and the only shipped implementation that persists; see src/data/CLAUDE.md
 // for bringing your own.
 const store = createDexieLocalStore();
+// The server that serves the PWA is the server (ADR 0018); where none answers,
+// `AccountProvider` says so and the app runs local-only.
+const accountService = createHalAccountService(createHalClient());
 
 // Lets the one-shot legacy migration land before the first synchronous
 // preferences read (src/data/dexie/legacyPreferences.ts). Renders regardless
@@ -26,7 +31,7 @@ const timeout = new Promise<void>((resolve) => setTimeout(resolve, 3000));
 void Promise.race([ready, timeout]).then(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <App store={store} />
+      <App store={store} accountService={accountService} />
     </StrictMode>
   );
 });

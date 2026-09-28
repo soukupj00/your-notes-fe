@@ -1,34 +1,32 @@
 import type { AttachmentDeps } from '../attachments/deps';
 import { type ExcalidrawScene, sceneToFile, sceneToSvgString } from './scene';
 
-/** Commit-on-Save orchestration shared by the Excalidraw modal. On a *new*
- *  drawing (no attachmentId) it persists the note draft, creates the attachment
- *  row, stores the SVG snapshot, and inserts the node via `insertNode`. On an
- *  *edit* it writes the scene blob + refreshed snapshot back to the same row (the
- *  node's attachmentId never changes, so the body stays clean and the live-query
- *  preview refreshes on its own). A failed snapshot render never blocks the save:
- *  the blob is still written and `preview` is simply omitted (so an existing
- *  preview is not clobbered with undefined). */
+/** Commit-on-Save orchestration shared by the Excalidraw modal. Every Save mints
+ *  a *new* attachment row (persisting the note draft first) and hands its id to
+ *  `place`: a new drawing inserts the node, an edit repoints the existing node at
+ *  it. Bytes are therefore write-once by id (ADR 0017), which is what lets sync
+ *  treat a blob upload as idempotent; the old row is left to the note-scoped
+ *  orphan sweep once the Body no longer references it. A failed snapshot render
+ *  never blocks the save: the scene is still written, and an edit carries the
+ *  previous preview forward rather than showing none. */
 export async function commitExcalidrawScene(
-  deps: Pick<AttachmentDeps, 'getNoteId' | 'createAttachment' | 'updateAttachment'>,
-  attachmentId: string | null,
+  deps: Pick<
+    AttachmentDeps,
+    'getNoteId' | 'createAttachment' | 'getAttachment' | 'updateAttachment'
+  >,
+  previousId: string | null,
   scene: ExcalidrawScene,
-  insertNode: (attachmentId: string) => void
+  place: (attachmentId: string) => void
 ): Promise<void> {
-  const preview = await sceneToSvgString(scene).catch((err) => {
+  const rendered = await sceneToSvgString(scene).catch((err) => {
     console.error('commitExcalidrawScene: SVG snapshot failed', err);
     return undefined;
   });
+  const preview =
+    rendered ?? (previousId ? (await deps.getAttachment(previousId))?.preview : undefined);
 
-  if (attachmentId == null) {
-    const noteId = await deps.getNoteId();
-    const att = await deps.createAttachment(noteId, sceneToFile(scene), 'excalidraw');
-    if (preview) await deps.updateAttachment(att.id, { preview });
-    insertNode(att.id);
-    return;
-  }
-
-  const changes: { blob?: Blob; preview?: string } = { blob: sceneToFile(scene) };
-  if (preview) changes.preview = preview;
-  await deps.updateAttachment(attachmentId, changes);
+  const noteId = await deps.getNoteId();
+  const att = await deps.createAttachment(noteId, sceneToFile(scene), 'excalidraw');
+  if (preview) await deps.updateAttachment(att.id, { preview });
+  place(att.id);
 }

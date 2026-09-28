@@ -17,6 +17,7 @@ export default defineConfig([
     'coverage/**',
     'playwright-report/**',
     'src/routeTree.gen.ts',
+    'src/contract/**',
     '**/*.d.ts',
   ]),
 

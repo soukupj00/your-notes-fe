@@ -1,5 +1,6 @@
 import type { Attachment, Note, NoteState, NoteTag, Tag } from '@/models.ts';
 import type { Live } from './live.ts';
+import type { PushBatch, PushOutcome } from './Remote.ts';
 
 /**
  * Which slice of the library a view is showing. `state` maps one-to-one onto a
@@ -30,6 +31,16 @@ export type Snapshot = {
   attachments: Attachment[];
 };
 
+/** The `meta` keys sync bookkeeping lives under (src/data/PLAN.md "Sync metadata"); slice 4 writes them. */
+export const SYNC_META_KEYS = {
+  /** The opaque `_links.next` URL the server last handed out. */
+  cursor: 'sync.cursor',
+  /** ISO time of the last completed pull. */
+  lastSyncedAt: 'sync.lastSyncedAt',
+  /** The Account this database is attached to; what makes erase-on-sign-out enforceable. */
+  accountId: 'sync.accountId',
+} as const;
+
 /**
  * The Local Store (CONTEXT.md): the only way application code reads or writes
  * persisted data. Shaped by the domain, not by tables - see ADR 0020.
@@ -45,6 +56,11 @@ export type Snapshot = {
  *   rows with their tags joined on, and the caller does the rest in memory.
  * - Rows are handed back as given. The store stamps nothing: ids and timestamps
  *   are the caller's (see `lib/new-note.ts`).
+ * - Sync state is the store's alone (ADR 0017). Every write that changes a Note,
+ *   Tag or NoteTag marks it owed and keeps the Revision the store holds for it;
+ *   an Attachment write marks its Note owed, because its metadata rides on the
+ *   Note's Revision. Removing a Note, Tag or NoteTag writes a Tombstone carrying
+ *   that Revision; putting it back takes the Tombstone back. No read returns `rev`.
  */
 export interface LocalStore {
   readonly notes: {
@@ -120,9 +136,31 @@ export interface LocalStore {
     delete(key: string): Promise<void>;
   };
 
+  /** What the server is owed; only the sync engine calls these (M5 slice 4). */
+  readonly sync: {
+    /**
+     * Every owed row in the contract's push shape, and every pending Tombstone.
+     * A Note carries its Attachment metadata (never bytes) and not its `tags`
+     * join. Not chunked: the engine splits it to `MAX_BATCH`.
+     */
+    dirty(): Promise<PushBatch>;
+    /**
+     * Records the `accepted` outcomes of pushing `batch`: each row takes its new
+     * Revision and stops being owed unless it changed while the push was in
+     * flight; an accepted Tombstone is dropped. `conflict` and `gone` are the
+     * engine's to resolve (slice 4). Throws if the counts do not pair up.
+     */
+    applied(batch: PushBatch, outcomes: readonly PushOutcome[]): Promise<void>;
+  };
+
   /** A consistent copy of everything a Backup carries. */
   exportAll(): Promise<Snapshot>;
-  /** Replaces everything a Backup carries, atomically. `meta` is untouched. */
+  /**
+   * Replaces everything a Backup carries, atomically. `meta` is untouched.
+   * Every row comes in owed, keeping the Revision of an id the store already
+   * had; pending Tombstones are dropped and none are written, so an Import never
+   * deletes anything on the server.
+   */
   replaceAll(snapshot: Snapshot): Promise<void>;
   /** Empties everything, `meta` included. Tests, and erase-on-sign-out in M5. */
   clear(): Promise<void>;

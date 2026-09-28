@@ -39,3 +39,9 @@ Everything else follows from it rather than being chosen separately:
 - **End-to-end encryption is out of scope for M5**, and the threat model is documented instead. E2EE here would protect a server disk while leaving the devices' IndexedDB and the zip backup in plaintext, so it defends only against an attacker who has the server but no device - narrow, on a box in the user's own home. Its cost is not the crypto but the recovery: with no email and no reset, a forgotten password would mean permanent, total loss, and the Owner's "reset a member's password" would become an act of destruction. Recorded as future work, with the household caveat stated plainly in the setup guide: the person who runs the server can read the database.
 - **A self-hoster who will not install Docker has a path**, because a TypeScript server can ship as a single executable. Not built in M5, but not foreclosed.
 - **Certificates remain the one hard step.** This decision removes the typed-IP screen and the CORS class of failure; it does not make TLS on a home network free. The documentation carries a single happy path rather than pretending there is no choice.
+
+## Re-evaluated 2026-08-30
+
+Taken as given in the synchronisation re-evaluation ([`docs/notes.md`](../notes.md)) and scored against; the ready-made candidates strengthened rather than weakened it.
+CouchDB's cookie sessions are stateless with no per-Device revoke, PocketBase is a bearer token with no sessions and no logout, and the only backend-in-a-box with real `HttpOnly` sessions (Appwrite) costs 15-20 containers.
+Sessions are therefore a table, one row per Device, and a stateless encrypted cookie was considered and rejected for the same reason.

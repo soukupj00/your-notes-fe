@@ -1,10 +1,23 @@
+import { noteTagId } from '@/contract/index.ts';
 import type { Attachment, Note, NoteTag, Tag } from '@/models.ts';
 import type { LocalStore, NoteFeedScope, Snapshot } from '../LocalStore.ts';
 import type { Live } from '../live.ts';
+import type { Tombstone } from '../Remote.ts';
+import {
+  type AcceptedRow,
+  acceptedRows,
+  owed,
+  type Stored,
+  settle,
+  strip,
+  tombstone,
+  wireNote,
+  wireRow,
+} from '../syncRows.ts';
 
 type Table = 'notes' | 'tags' | 'noteTags' | 'attachments' | 'meta';
 
-const linkKey = (noteId: string, tagId: string) => `${noteId} ${tagId}`;
+const linkKey = noteTagId;
 
 /**
  * A Local Store that persists nothing: plain Maps, atomic by being
@@ -12,16 +25,45 @@ const linkKey = (noteId: string, tagId: string) => `${noteId} ${tagId}`;
  * depends on. It is the "cache only" configuration and what the contract
  * suite proves the interface against; the app's default is Dexie.
  *
- * Rows are handed back as the same objects they were given - there is no
- * structured clone here as there is in IndexedDB - so callers must treat what
- * they read as frozen, which they already do.
+ * Attachments are handed back as the same objects they were given - there is
+ * no structured clone here as there is in IndexedDB - so callers must treat
+ * what they read as frozen, which they already do. Notes, Tags and NoteTags
+ * come back as copies without their sync state.
  */
 export function createMemoryLocalStore(): LocalStore {
-  const notes = new Map<string, Note>();
-  const tags = new Map<string, Tag>();
-  const noteTags = new Map<string, NoteTag>();
+  const notes = new Map<string, Stored<Note>>();
+  const tags = new Map<string, Stored<Tag>>();
+  const noteTags = new Map<string, Stored<NoteTag>>();
   const attachments = new Map<string, Attachment>();
+  const tombstones = new Map<string, Tombstone>();
   const meta = new Map<string, unknown>();
+
+  const stripOne = <T extends object>(row: Stored<T> | undefined) => row && strip(row);
+  const values = <T extends object>(rows: Map<string, Stored<T>>): T[] =>
+    [...rows.values()].map(strip);
+
+  /** The row written owed, keeping the Revision held for it, and taking back its Tombstone. */
+  function write<T extends object>(rows: Map<string, Stored<T>>, key: string, row: T) {
+    rows.set(key, owed(row, rows.get(key)?.rev ?? tombstones.get(key)?.rev));
+    tombstones.delete(key);
+  }
+
+  /** The row removed, leaving a Tombstone carrying its Revision. */
+  function remove<T extends object>(
+    rows: Map<string, Stored<T>>,
+    key: string,
+    kind: Tombstone['kind']
+  ) {
+    const stored = rows.get(key);
+    if (!stored) return;
+    rows.delete(key);
+    tombstones.set(key, tombstone(key, kind, stored.rev));
+  }
+
+  function noteOwed(noteId: string) {
+    const note = notes.get(noteId);
+    if (note) notes.set(noteId, { ...note, dirty: 1 });
+  }
 
   const listeners = new Set<{ tables: readonly Table[]; fire: () => void }>();
 
@@ -51,11 +93,11 @@ export function createMemoryLocalStore(): LocalStore {
       .filter((l) => l.noteId === noteId)
       .flatMap((l) => {
         const t = tags.get(l.tagId);
-        return t ? [t] : [];
+        return t ? [strip(t)] : [];
       });
 
   const readFeed = (scope: NoteFeedScope): Note[] =>
-    [...notes.values()]
+    values(notes)
       .filter((n) => n.state === scope.state)
       .filter((n) => !scope.tagId || noteTags.has(linkKey(n.id, scope.tagId)))
       .map((n) => ({ ...n, tags: tagsFor(n.id) }));
@@ -63,72 +105,74 @@ export function createMemoryLocalStore(): LocalStore {
   const attachmentsFor = (noteId: string) =>
     [...attachments.values()].filter((a) => a.noteId === noteId);
 
+  /** Links the server removes with their Note or Tag, so no Tombstones. */
   function deleteLinksWhere(predicate: (l: NoteTag) => boolean) {
     for (const [key, l] of noteTags) if (predicate(l)) noteTags.delete(key);
   }
 
   return {
     notes: {
-      get: async (id) => notes.get(id),
-      list: async () => [...notes.values()],
-      listByState: async (state) => [...notes.values()].filter((n) => n.state === state),
+      get: async (id) => stripOne(notes.get(id)),
+      list: async () => values(notes),
+      listByState: async (state) => values(notes).filter((n) => n.state === state),
       listTrashedBefore: async (cutoff) =>
-        [...notes.values()].filter((n) => n.trashedAt !== undefined && n.trashedAt < cutoff),
+        values(notes).filter((n) => n.trashedAt !== undefined && n.trashedAt < cutoff),
       feed: (scope) => live(['notes', 'tags', 'noteTags'], () => readFeed(scope)),
       add: async (note) => {
         if (notes.has(note.id)) throw new Error(`Note ${note.id} already exists`);
-        notes.set(note.id, note);
+        write(notes, note.id, note);
         changed('notes');
       },
       put: async (note) => {
-        notes.set(note.id, note);
+        write(notes, note.id, note);
         changed('notes');
       },
       update: async (id, change) => {
-        const before = notes.get(id);
-        if (!before) return null;
+        const stored = notes.get(id);
+        if (!stored) return null;
+        const before = strip(stored);
         const after = { ...before, ...change(before) };
-        notes.set(id, after);
+        notes.set(id, owed(after, stored.rev));
         changed('notes');
         return { before, after };
       },
       purge: async (id) => {
-        const removedTags = [...noteTags.values()].filter((l) => l.noteId === id);
+        const removedTags = values(noteTags).filter((l) => l.noteId === id);
         const removedAttachments = attachmentsFor(id);
-        notes.delete(id);
+        remove(notes, id, 'note');
         deleteLinksWhere((l) => l.noteId === id);
         for (const a of removedAttachments) attachments.delete(a.id);
         changed('notes', 'noteTags', 'attachments');
         return { removedTags, removedAttachments };
       },
       restore: async (note, removed = {}) => {
-        notes.set(note.id, note);
-        for (const l of removed.removedTags ?? []) noteTags.set(linkKey(l.noteId, l.tagId), l);
+        write(notes, note.id, note);
+        for (const l of removed.removedTags ?? []) write(noteTags, linkKey(l.noteId, l.tagId), l);
         for (const a of removed.removedAttachments ?? []) attachments.set(a.id, a);
         changed('notes', 'noteTags', 'attachments');
       },
     },
 
     tags: {
-      get: async (id) => tags.get(id),
-      watch: (id) => live(['tags'], () => tags.get(id)),
-      list: async () => [...tags.values()],
-      all: () => live(['tags'], () => [...tags.values()]),
+      get: async (id) => stripOne(tags.get(id)),
+      watch: (id) => live(['tags'], () => stripOne(tags.get(id))),
+      list: async () => values(tags),
+      all: () => live(['tags'], () => values(tags)),
       findByName: async (name) => {
         const wanted = name.trim().toLowerCase();
-        return [...tags.values()].find((t) => t.name.toLowerCase() === wanted);
+        return values(tags).find((t) => t.name.toLowerCase() === wanted);
       },
       add: async (tag) => {
         if (tags.has(tag.id)) throw new Error(`Tag ${tag.id} already exists`);
-        tags.set(tag.id, tag);
+        write(tags, tag.id, tag);
         changed('tags');
       },
       put: async (tag) => {
-        tags.set(tag.id, tag);
+        write(tags, tag.id, tag);
         changed('tags');
       },
       delete: async (id) => {
-        tags.delete(id);
+        remove(tags, id, 'tag');
         deleteLinksWhere((l) => l.tagId === id);
         changed('tags', 'noteTags');
       },
@@ -139,7 +183,7 @@ export function createMemoryLocalStore(): LocalStore {
         for (const l of [...noteTags.values()].filter((l) => l.tagId === sourceId)) {
           const key = linkKey(l.noteId, targetId);
           if (!noteTags.has(key)) {
-            noteTags.set(key, {
+            write(noteTags, key, {
               noteId: l.noteId,
               tagId: targetId,
               createdAt: l.createdAt,
@@ -148,21 +192,21 @@ export function createMemoryLocalStore(): LocalStore {
           }
         }
         deleteLinksWhere((l) => l.tagId === sourceId);
-        tags.delete(sourceId);
+        remove(tags, sourceId, 'tag');
         changed('tags', 'noteTags');
       },
       forNote: (noteId) => live(['tags', 'noteTags'], () => tagsFor(noteId)),
       link: async (link) => {
         const key = linkKey(link.noteId, link.tagId);
         if (noteTags.has(key)) return;
-        noteTags.set(key, link);
+        write(noteTags, key, link);
         changed('noteTags');
       },
       unlink: async (noteId, tagId) => {
-        noteTags.delete(linkKey(noteId, tagId));
+        remove(noteTags, linkKey(noteId, tagId), 'noteTag');
         changed('noteTags');
       },
-      listLinks: async () => [...noteTags.values()],
+      listLinks: async () => values(noteTags),
     },
 
     attachments: {
@@ -180,23 +224,31 @@ export function createMemoryLocalStore(): LocalStore {
         if (attachments.has(attachment.id))
           throw new Error(`Attachment ${attachment.id} already exists`);
         attachments.set(attachment.id, attachment);
-        changed('attachments');
+        noteOwed(attachment.noteId);
+        changed('attachments', 'notes');
       },
       update: async (id, changes) => {
         const row = attachments.get(id);
         if (!row) return;
         attachments.set(id, { ...row, ...changes });
-        changed('attachments');
+        noteOwed(row.noteId);
+        changed('attachments', 'notes');
       },
       delete: async (id) => {
+        const row = attachments.get(id);
+        if (!row) return;
         attachments.delete(id);
-        changed('attachments');
+        noteOwed(row.noteId);
+        changed('attachments', 'notes');
       },
       sweepNote: async (noteId, keep) => {
         const kept = new Set(keep);
         const orphans = attachmentsFor(noteId).filter((a) => !kept.has(a.id));
         for (const a of orphans) attachments.delete(a.id);
-        if (orphans.length) changed('attachments');
+        if (orphans.length) {
+          noteOwed(noteId);
+          changed('attachments', 'notes');
+        }
         return orphans.length;
       },
       sweepAll: async (referencedBy) => {
@@ -206,8 +258,11 @@ export function createMemoryLocalStore(): LocalStore {
         const orphans = [...attachments.values()].filter(
           (a) => !referenced.get(a.noteId)?.has(a.id)
         );
-        for (const a of orphans) attachments.delete(a.id);
-        if (orphans.length) changed('attachments');
+        for (const a of orphans) {
+          attachments.delete(a.id);
+          noteOwed(a.noteId);
+        }
+        if (orphans.length) changed('attachments', 'notes');
         return orphans.length;
       },
     },
@@ -224,21 +279,66 @@ export function createMemoryLocalStore(): LocalStore {
       },
     },
 
+    sync: {
+      dirty: async () => ({
+        notes: [...notes.values()]
+          .filter((n) => n.dirty)
+          .map((n) => wireNote(n, attachmentsFor(n.id))),
+        tags: [...tags.values()].filter((t) => t.dirty).map(wireRow),
+        noteTags: [...noteTags.values()].filter((l) => l.dirty).map(wireRow),
+        tombstones: [...tombstones.values()],
+      }),
+      applied: async (batch, outcomes) => {
+        const accepted = acceptedRows(batch, outcomes);
+        /** Removed while the push was in flight: its Tombstone must carry the new Revision. */
+        const rebase = (key: string, a: AcceptedRow) => {
+          const gone = tombstones.get(key);
+          if (gone && gone.rev === a.row.rev) tombstones.set(key, { ...gone, rev: a.rev });
+        };
+        for (const a of accepted) {
+          if (a.kind === 'tombstone') {
+            tombstones.delete(a.row.id);
+          } else if (a.kind === 'note') {
+            const stored = notes.get(a.row.id);
+            if (!stored) rebase(a.row.id, a);
+            else notes.set(a.row.id, settle(stored, wireNote(stored, attachmentsFor(a.row.id)), a));
+          } else if (a.kind === 'tag') {
+            const stored = tags.get(a.row.id);
+            if (!stored) rebase(a.row.id, a);
+            else tags.set(a.row.id, settle(stored, wireRow(stored), a));
+          } else {
+            const key = linkKey(a.row.noteId, a.row.tagId);
+            const stored = noteTags.get(key);
+            if (!stored) rebase(key, a);
+            else noteTags.set(key, settle(stored, wireRow(stored), a));
+          }
+        }
+        changed('notes', 'tags', 'noteTags');
+      },
+    },
+
     exportAll: async () =>
       ({
-        notes: [...notes.values()],
-        tags: [...tags.values()],
-        noteTags: [...noteTags.values()],
+        notes: values(notes),
+        tags: values(tags),
+        noteTags: values(noteTags),
         attachments: [...attachments.values()],
       }) satisfies Snapshot,
     replaceAll: async (snapshot) => {
+      const noteRev = new Map([...notes.values()].map((n) => [n.id, n.rev]));
+      const tagRev = new Map([...tags.values()].map((t) => [t.id, t.rev]));
+      const linkRev = new Map([...noteTags].map(([key, l]) => [key, l.rev]));
       notes.clear();
       tags.clear();
       noteTags.clear();
       attachments.clear();
-      for (const n of snapshot.notes) notes.set(n.id, n);
-      for (const t of snapshot.tags) tags.set(t.id, t);
-      for (const l of snapshot.noteTags) noteTags.set(linkKey(l.noteId, l.tagId), l);
+      tombstones.clear();
+      for (const n of snapshot.notes) notes.set(n.id, owed(n, noteRev.get(n.id)));
+      for (const t of snapshot.tags) tags.set(t.id, owed(t, tagRev.get(t.id)));
+      for (const l of snapshot.noteTags) {
+        const key = linkKey(l.noteId, l.tagId);
+        noteTags.set(key, owed(l, linkRev.get(key)));
+      }
       for (const a of snapshot.attachments) attachments.set(a.id, a);
       changed('notes', 'tags', 'noteTags', 'attachments');
     },
@@ -247,6 +347,7 @@ export function createMemoryLocalStore(): LocalStore {
       tags.clear();
       noteTags.clear();
       attachments.clear();
+      tombstones.clear();
       meta.clear();
       changed('notes', 'tags', 'noteTags', 'attachments', 'meta');
     },

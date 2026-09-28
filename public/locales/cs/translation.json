@@ -564,5 +564,85 @@
         "body": "Police do předsíně - nejdřív změřit výklenek."
       }
     }
+  },
+  "account": {
+    "deviceName": {
+      "default": "{{browser}} ({{system}})",
+      "label": "Název zařízení",
+      "hint": "Pod tímto názvem se zařízení zobrazí v seznamu zařízení."
+    },
+    "username": "Uživatelské jméno",
+    "password": "Heslo",
+    "passwordHint": "Alespoň 8 znaků.",
+    "cancel": "Zrušit",
+    "errors": {
+      "wrongCredentials": "Uživatelské jméno nebo heslo nesouhlasí.",
+      "linkUsed": "Platnost tohoto odkazu vypršela, nebo už byl použit. Požádejte o nový.",
+      "usernameTaken": "Toto uživatelské jméno je obsazené.",
+      "unreachable": "Server se nepodařilo zastihnout. Zkontrolujte, že je z tohoto zařízení dostupný, a zkuste to znovu.",
+      "unknown": "Něco se pokazilo. Zkuste to znovu."
+    },
+    "section": {
+      "title": "Účet",
+      "signedOutLabel": "Přihlásit se k serveru",
+      "signedOutDescription": "Synchronizujte poznámky z tohoto zařízení se svým serverem YouNotes.",
+      "signIn": "Přihlásit se",
+      "signInDescription": "Použijte uživatelské jméno a heslo, které jste si pro účet zvolili.",
+      "signedInLabel": "Účet: {{username}}",
+      "owner": "Vlastník",
+      "member": "Člen",
+      "thisDevice": "Toto zařízení: {{name}}",
+      "signOut": "Odhlásit se",
+      "signedOut": "Odhlášeno."
+    },
+    "devices": {
+      "title": "Zařízení",
+      "current": "Toto zařízení",
+      "lastSeen": "Naposledy {{date}}",
+      "remove": "Odebrat",
+      "removeTitle": "Odebrat {{name}}?",
+      "removeDescription": "Zařízení se odhlásí a nic jiného se nezmění.",
+      "removed": "Zařízení odebráno.",
+      "add": "Přidat zařízení",
+      "addDescription": "Zobrazí párovací odkaz, který naskenujete fotoaparátem nového zařízení."
+    },
+    "members": {
+      "title": "Členové",
+      "invite": "Pozvat",
+      "inviteDescription": "Někdo z vaší domácnosti dostane vlastní účet. Nikdo z vás neuvidí poznámky toho druhého.",
+      "you": "Vy",
+      "joined": "Od {{date}}",
+      "reset": "Nastavit nové heslo",
+      "resetTitle": "Nové heslo pro {{username}}",
+      "resetDescription": "Přihlášená zařízení zůstanou přihlášená. Nové heslo předejte osobně.",
+      "newPassword": "Nové heslo",
+      "save": "Uložit heslo",
+      "resetDone": "Heslo změněno."
+    },
+    "qr": {
+      "deviceDescription": "Naskenujte ho fotoaparátem nového zařízení. Přihlásí se k vašemu účtu bez zadávání hesla.",
+      "inviteDescription": "Druhá osoba ho naskenuje na svém telefonu a zvolí si vlastní uživatelské jméno a heslo.",
+      "expires": "Odkaz funguje jednou a deset minut.",
+      "orOpen": "Nebo otevřete tento odkaz na druhém zařízení:",
+      "copy": "Kopírovat odkaz",
+      "copied": "Odkaz zkopírován.",
+      "done": "Hotovo",
+      "failed": "Odkaz se nepodařilo vytvořit. Zkuste to znovu.",
+      "making": "Vytvářím odkaz…"
+    },
+    "pair": {
+      "checking": "Ověřuji odkaz…",
+      "missingCode": "Tento odkaz je neúplný. Naskenujte QR kód znovu.",
+      "ownerTitle": "Vytvořit vlastníka",
+      "ownerDescription": "Zvolte si uživatelské jméno a heslo. Heslo si bezpečně zapište: když už nezbude žádné přihlášené zařízení, které by ukázalo odkaz, dostanete se dovnitř jen s ním.",
+      "ownerAction": "Vytvořit vlastníka",
+      "deviceTitle": "Přidat toto zařízení",
+      "deviceDescription": "Toto zařízení se přihlásí k vašemu účtu bez hesla.",
+      "deviceAction": "Přihlásit se",
+      "inviteTitle": "Připojit se",
+      "inviteDescription": "Byli jste pozváni. Zvolte si vlastní uživatelské jméno a heslo. Vaše poznámky jsou jen vaše: nikdo jiný na tomto serveru je neuvidí.",
+      "inviteAction": "Vytvořit můj účet",
+      "home": "Přejít na poznámky"
+    }
   }
 }

@@ -20,10 +20,16 @@ No schema bump: the `settings` table stays and is exposed as `meta`; the Prefere
 
 ## Sync metadata (M5 slice 3)
 
+Done 2026-09-28 ([plan](../../docs/superpowers/plans/2026-09-28-m5-slice3-client-foundations.md)): Dexie v5, `sync.dirty()` and an accepted-only `sync.applied()` in both implementations, the Excalidraw write-once save.
+Left for slice 4: `applyPage` (writing pulled rows without owing them), resolving `conflict` and `gone` outcomes, adopt-on-first-sign-in (owe every row), and chunking `dirty()` to `MAX_BATCH`.
+The notes below are the design that slice followed.
+
 Shape fixed by [ADR 0017](../../docs/adr/0017-note-level-last-writer-wins-with-conflicted-copies.md); see also [ADR 0001](../../docs/adr/0001-local-first-storage-with-dexie.md) and [ADR 0002](../../docs/adr/0002-separate-frontend-backend-repositories.md).
 
 - **One `rev` and one dirty marker per synced row**, on `notes`, `tags` and `noteTags`. `rev` is the server's Revision the row last agreed with; absent means never pushed. The dirty marker is indexed, because "the Offline Mutation Queue" is a query over it - there is no queue table, and adding one would be a second source of truth that can disagree with the rows themselves.
-- **A `tombstones` store** (`id`, entity kind, `deletedAt`), written only by a Purge. Trashing is a `state` update and syncs as an ordinary edit ([ADR 0009](../../docs/adr/0009-note-lifecycle-model.md)), so genuine deletions are rare and mostly machine-generated.
+- **A `tombstones` store** (`id`, entity kind, `deletedAt`), written only by a Purge.
+  It also carries `rev` (the purged row's Revision), and a NoteTag's `id` is the contract's composite `noteTagId(noteId, tagId)`.
+  Trashing is a `state` update and syncs as an ordinary edit ([ADR 0009](../../docs/adr/0009-note-lifecycle-model.md)), so genuine deletions are rare and mostly machine-generated.
 - **Attachments carry no `rev`.** Their metadata rides on the owning Note's Revision, and their bytes are write-once by id, so the only per-row sync state they need is "are the bytes here yet" (for the previews-eager / bytes-on-demand policy).
 - **Sync cursor and account attachment live in `meta`** (the `settings` table under its ADR 0020 name), not in a new store: the opaque `_links.next` URL the server last handed out, `lastSyncedAt`, and the id of the Account this database is attached to (which is what makes erase-on-sign-out enforceable - see [ADR 0018](../../docs/adr/0018-the-server-serves-the-pwa.md)).
 - **Prerequisite, not sync itself:** the Excalidraw save path must mint a *new* attachment id and repoint the Body, so that every blob in the database is immutable by id. The existing orphan sweep reclaims the old row.

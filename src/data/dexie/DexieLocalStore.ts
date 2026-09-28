@@ -1,7 +1,19 @@
 import { liveQuery } from 'dexie';
+import { noteTagId } from '@/contract/index.ts';
 import type { Attachment, Note, NoteState, NoteTag, Tag } from '@/models.ts';
 import type { AttachmentChanges, LocalStore, NoteFeedScope, Snapshot } from '../LocalStore.ts';
 import type { Live } from '../live.ts';
+import {
+  type AcceptedRow,
+  acceptedRows,
+  owed,
+  type Stored,
+  settle,
+  strip,
+  tombstone,
+  wireNote,
+  wireRow,
+} from '../syncRows.ts';
 import { db as defaultDb, type NotesDB } from './db.ts';
 import { migrateLegacyPreferences } from './legacyPreferences.ts';
 
@@ -31,9 +43,37 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
     console.error('Legacy preferences migration failed', error)
   );
 
+  const stripAll = <T extends object>(rows: Stored<T>[]): T[] => rows.map(strip);
+  const stripOne = <T extends object>(row: Stored<T> | undefined): T | undefined =>
+    row && strip(row);
+
+  /** Inside a transaction over `notes`: the Note owes its Attachment metadata. No-op if it is gone. */
+  const noteOwed = (noteId: string) => db.notes.update(noteId, { dirty: 1 });
+
+  /** Inside a transaction over `notes` and `tombstones`: the Note written owed, keeping its stored Revision. */
+  async function writeNote(note: Note) {
+    const [stored, gone] = await Promise.all([db.notes.get(note.id), db.tombstones.get(note.id)]);
+    await db.notes.put(owed(note, stored?.rev ?? gone?.rev));
+    if (gone) await db.tombstones.delete(note.id);
+  }
+
+  async function writeTag(tag: Tag) {
+    const [stored, gone] = await Promise.all([db.tags.get(tag.id), db.tombstones.get(tag.id)]);
+    await db.tags.put(owed(tag, stored?.rev ?? gone?.rev));
+    if (gone) await db.tombstones.delete(tag.id);
+  }
+
+  /** A new link is owed and takes back a Tombstone for the same pair, with its Revision. */
+  async function addLinks(links: NoteTag[]) {
+    const ids = links.map((l) => noteTagId(l.noteId, l.tagId));
+    const gone = await db.tombstones.bulkGet(ids);
+    await db.noteTags.bulkPut(links.map((l, i) => owed(l, gone[i]?.rev)));
+    await db.tombstones.bulkDelete(ids);
+  }
+
   /** The feed's read, shared by `feed()` so the join lives in one place. */
   async function readFeed(scope: NoteFeedScope): Promise<Note[]> {
-    let candidates = await db.notes.where('state').equals(scope.state).toArray();
+    let candidates = stripAll(await db.notes.where('state').equals(scope.state).toArray());
     if (scope.tagId) {
       const links = await db.noteTags.where('tagId').equals(scope.tagId).toArray();
       const inTag = new Set(links.map((l) => l.noteId));
@@ -43,7 +83,7 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
     // are most of the library, so per-note index seeks would cost more than one
     // sequential read of a two-column join table.
     const [allTags, links] = await Promise.all([db.tags.toArray(), db.noteTags.toArray()]);
-    const tagById = new Map(allTags.map((t) => [t.id, t]));
+    const tagById = new Map(stripAll(allTags).map((t) => [t.id, t]));
     const tagsByNote = new Map<string, Tag[]>();
     for (const l of links) {
       const t = tagById.get(l.tagId);
@@ -59,79 +99,90 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
     const links = await db.noteTags.where('noteId').equals(noteId).toArray();
     if (links.length === 0) return [];
     const rows = await db.tags.bulkGet(links.map((l) => l.tagId));
-    return rows.filter((t): t is Tag => Boolean(t));
+    return rows.filter((t): t is Stored<Tag> => Boolean(t)).map(strip);
   }
 
   return {
     notes: {
-      get: (id) => db.notes.get(id),
-      list: () => db.notes.toArray(),
-      listByState: (state: NoteState) => db.notes.where('state').equals(state).toArray(),
+      get: async (id) => stripOne(await db.notes.get(id)),
+      list: async () => stripAll(await db.notes.toArray()),
+      listByState: async (state: NoteState) =>
+        stripAll(await db.notes.where('state').equals(state).toArray()),
       // `trashedAt` is indexed, so this is a range scan; it runs on every app start.
-      listTrashedBefore: (cutoff) => db.notes.where('trashedAt').below(cutoff).toArray(),
+      listTrashedBefore: async (cutoff) =>
+        stripAll(await db.notes.where('trashedAt').below(cutoff).toArray()),
       feed: (scope) => live(() => readFeed(scope)),
-      add: async (note) => {
-        await db.notes.add(note);
-      },
-      put: async (note) => {
-        await db.notes.put(note);
-      },
+      add: (note) =>
+        db.transaction('rw', db.notes, db.tombstones, async () => {
+          await db.notes.add(owed(note, undefined));
+          await db.tombstones.delete(note.id);
+        }),
+      put: (note) => db.transaction('rw', db.notes, db.tombstones, () => writeNote(note)),
       update: (id, change) =>
         db.transaction('rw', db.notes, async () => {
-          const before = await db.notes.get(id);
-          if (!before) return null;
+          const stored = await db.notes.get(id);
+          if (!stored) return null;
+          const before = strip(stored);
           const after = { ...before, ...change(before) };
-          await db.notes.put(after);
+          await db.notes.put(owed(after, stored.rev));
           return { before, after };
         }),
       purge: (id) =>
-        db.transaction('rw', db.notes, db.noteTags, db.attachments, async () => {
-          const removedTags = await db.noteTags.where('noteId').equals(id).toArray();
+        db.transaction('rw', [db.notes, db.noteTags, db.attachments, db.tombstones], async () => {
+          const stored = await db.notes.get(id);
+          const removedTags = stripAll(await db.noteTags.where('noteId').equals(id).toArray());
           const removedAttachments = await db.attachments.where('noteId').equals(id).toArray();
           await db.notes.delete(id);
           await db.noteTags.where('noteId').equals(id).delete();
           await db.attachments.where('noteId').equals(id).delete();
+          // One Tombstone: the server removes the Note's links with it.
+          if (stored) await db.tombstones.put(tombstone(id, 'note', stored.rev));
           return { removedTags, removedAttachments };
         }),
       restore: (note, removed = {}) =>
-        db.transaction('rw', db.notes, db.noteTags, db.attachments, async () => {
-          await db.notes.put(note);
-          if (removed.removedTags?.length) await db.noteTags.bulkPut(removed.removedTags);
+        db.transaction('rw', [db.notes, db.noteTags, db.attachments, db.tombstones], async () => {
+          await writeNote(note);
+          if (removed.removedTags?.length) await addLinks(removed.removedTags);
           if (removed.removedAttachments?.length)
             await db.attachments.bulkPut(removed.removedAttachments);
         }),
     },
 
     tags: {
-      get: (id) => db.tags.get(id),
-      watch: (id) => live(() => db.tags.get(id)),
-      list: () => db.tags.toArray(),
-      all: () => live(() => db.tags.toArray()),
+      get: async (id) => stripOne(await db.tags.get(id)),
+      watch: (id) => live(async () => stripOne(await db.tags.get(id))),
+      list: async () => stripAll(await db.tags.toArray()),
+      all: () => live(async () => stripAll(await db.tags.toArray())),
       // Through the `name` index rather than a scan: this runs per keystroke-driven create.
-      findByName: (name) => db.tags.where('name').equalsIgnoreCase(name.trim()).first(),
-      add: async (tag) => {
-        await db.tags.add(tag);
-      },
-      put: async (tag) => {
-        await db.tags.put(tag);
-      },
+      findByName: async (name) =>
+        stripOne(await db.tags.where('name').equalsIgnoreCase(name.trim()).first()),
+      add: (tag) =>
+        db.transaction('rw', db.tags, db.tombstones, async () => {
+          await db.tags.add(owed(tag, undefined));
+          await db.tombstones.delete(tag.id);
+        }),
+      put: (tag) => db.transaction('rw', db.tags, db.tombstones, () => writeTag(tag)),
       delete: (id) =>
-        db.transaction('rw', db.tags, db.noteTags, async () => {
+        db.transaction('rw', db.tags, db.noteTags, db.tombstones, async () => {
+          const stored = await db.tags.get(id);
           await db.tags.delete(id);
           await db.noteTags.where('tagId').equals(id).delete();
+          // One Tombstone: the server removes the Tag's links with it.
+          if (stored) await db.tombstones.put(tombstone(id, 'tag', stored.rev));
         }),
       merge: (sourceId, targetId) => {
         // Merging a tag into itself is a no-op, not a self-delete: without this
         // guard the deletes below would remove the tag and every link to it.
         if (sourceId === targetId) return Promise.resolve();
-        return db.transaction('rw', db.tags, db.noteTags, async () => {
+        return db.transaction('rw', db.tags, db.noteTags, db.tombstones, async () => {
           const target = await db.tags.get(targetId);
           if (!target) throw new Error(`Cannot merge into unknown tag ${targetId}`);
+          const source = await db.tags.get(sourceId);
           const sourceLinks = await db.noteTags.where('tagId').equals(sourceId).toArray();
           const targetLinks = await db.noteTags.where('tagId').equals(targetId).toArray();
           const alreadyLinked = new Set(targetLinks.map((l) => l.noteId));
           const now = new Date().toISOString();
-          await db.noteTags.bulkAdd(
+          await addLinks(
             sourceLinks
               .filter((l) => !alreadyLinked.has(l.noteId))
               .map((l) => ({
@@ -143,18 +194,23 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           );
           await db.noteTags.where('tagId').equals(sourceId).delete();
           await db.tags.delete(sourceId);
+          if (source) await db.tombstones.put(tombstone(sourceId, 'tag', source.rev));
         });
       },
       forNote: (noteId) => live(() => tagsForNote(noteId)),
       link: (link: NoteTag) =>
-        db.transaction('rw', db.noteTags, async () => {
+        db.transaction('rw', db.noteTags, db.tombstones, async () => {
           const exists = await db.noteTags.get([link.noteId, link.tagId]);
-          if (!exists) await db.noteTags.add(link);
+          if (!exists) await addLinks([link]);
         }),
-      unlink: async (noteId, tagId) => {
-        await db.noteTags.delete([noteId, tagId]);
-      },
-      listLinks: () => db.noteTags.toArray(),
+      unlink: (noteId, tagId) =>
+        db.transaction('rw', db.noteTags, db.tombstones, async () => {
+          const stored = await db.noteTags.get([noteId, tagId]);
+          if (!stored) return;
+          await db.noteTags.delete([noteId, tagId]);
+          await db.tombstones.put(tombstone(noteTagId(noteId, tagId), 'noteTag', stored.rev));
+        }),
+      listLinks: async () => stripAll(await db.noteTags.toArray()),
     },
 
     attachments: {
@@ -171,21 +227,32 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
                 .anyOf([...noteIds])
                 .toArray()
         ),
-      add: async (attachment) => {
-        await db.attachments.add(attachment);
-      },
-      update: async (id, changes: AttachmentChanges) => {
-        await db.attachments.update(id, changes);
-      },
-      delete: async (id) => {
-        await db.attachments.delete(id);
-      },
+      add: (attachment) =>
+        db.transaction('rw', db.attachments, db.notes, async () => {
+          await db.attachments.add(attachment);
+          await noteOwed(attachment.noteId);
+        }),
+      update: (id, changes: AttachmentChanges) =>
+        db.transaction('rw', db.attachments, db.notes, async () => {
+          const row = await db.attachments.get(id);
+          if (!row) return;
+          await db.attachments.update(id, changes);
+          await noteOwed(row.noteId);
+        }),
+      delete: (id) =>
+        db.transaction('rw', db.attachments, db.notes, async () => {
+          const row = await db.attachments.get(id);
+          if (!row) return;
+          await db.attachments.delete(id);
+          await noteOwed(row.noteId);
+        }),
       sweepNote: (noteId, keep) =>
-        db.transaction('rw', db.attachments, async () => {
+        db.transaction('rw', db.attachments, db.notes, async () => {
           const kept = new Set(keep);
           const rows = await db.attachments.where('noteId').equals(noteId).toArray();
           const orphans = rows.filter((r) => !kept.has(r.id));
           await db.attachments.bulkDelete(orphans.map((r) => r.id));
+          if (orphans.length) await noteOwed(noteId);
           return orphans.length;
         }),
       sweepAll: (referencedBy) =>
@@ -195,6 +262,8 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           // No entry at all means the owner is gone - an orphan for the same reason.
           const orphans = all.filter((row) => !referenced.get(row.noteId)?.has(row.id));
           await db.attachments.bulkDelete(orphans.map((r) => r.id));
+          const owners = new Set(orphans.map((r) => r.noteId).filter((id) => referenced.has(id)));
+          await Promise.all([...owners].map(noteOwed));
           return orphans.length;
         }),
     },
@@ -224,21 +293,110 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           db.noteTags.toArray(),
           db.attachments.toArray(),
         ]);
-        return { notes, tags, noteTags, attachments } satisfies Snapshot;
+        return {
+          notes: stripAll(notes),
+          tags: stripAll(tags),
+          noteTags: stripAll(noteTags),
+          attachments,
+        } satisfies Snapshot;
       }),
     replaceAll: (snapshot) =>
-      db.transaction('rw', db.notes, db.tags, db.noteTags, db.attachments, async () => {
-        await Promise.all([
-          db.notes.clear(),
-          db.tags.clear(),
-          db.noteTags.clear(),
-          db.attachments.clear(),
-        ]);
-        await db.notes.bulkPut(snapshot.notes);
-        await db.tags.bulkPut(snapshot.tags);
-        await db.noteTags.bulkPut(snapshot.noteTags);
-        await db.attachments.bulkPut(snapshot.attachments);
-      }),
+      db.transaction(
+        'rw',
+        [db.notes, db.tags, db.noteTags, db.attachments, db.tombstones],
+        async () => {
+          const [notes, tags, links] = await Promise.all([
+            db.notes.toArray(),
+            db.tags.toArray(),
+            db.noteTags.toArray(),
+          ]);
+          const noteRev = new Map(notes.map((n) => [n.id, n.rev]));
+          const tagRev = new Map(tags.map((t) => [t.id, t.rev]));
+          const linkRev = new Map(links.map((l) => [noteTagId(l.noteId, l.tagId), l.rev]));
+          await Promise.all([
+            db.notes.clear(),
+            db.tags.clear(),
+            db.noteTags.clear(),
+            db.attachments.clear(),
+            db.tombstones.clear(),
+          ]);
+          await db.notes.bulkPut(snapshot.notes.map((n) => owed(n, noteRev.get(n.id))));
+          await db.tags.bulkPut(snapshot.tags.map((t) => owed(t, tagRev.get(t.id))));
+          await db.noteTags.bulkPut(
+            snapshot.noteTags.map((l) => owed(l, linkRev.get(noteTagId(l.noteId, l.tagId))))
+          );
+          await db.attachments.bulkPut(snapshot.attachments);
+        }
+      ),
+    sync: {
+      dirty: () =>
+        db.transaction(
+          'r',
+          [db.notes, db.tags, db.noteTags, db.attachments, db.tombstones],
+          async () => {
+            const [notes, tags, noteTags, tombstones] = await Promise.all([
+              db.notes.where('dirty').equals(1).toArray(),
+              db.tags.where('dirty').equals(1).toArray(),
+              db.noteTags.where('dirty').equals(1).toArray(),
+              db.tombstones.toArray(),
+            ]);
+            const attachments = await db.attachments
+              .where('noteId')
+              .anyOf(notes.map((n) => n.id))
+              .toArray();
+            return {
+              notes: notes.map((n) =>
+                wireNote(
+                  n,
+                  attachments.filter((a) => a.noteId === n.id)
+                )
+              ),
+              tags: tags.map(wireRow),
+              noteTags: noteTags.map(wireRow),
+              tombstones,
+            };
+          }
+        ),
+      applied: async (batch, outcomes) => {
+        const accepted = acceptedRows(batch, outcomes);
+        return db.transaction(
+          'rw',
+          [db.notes, db.tags, db.noteTags, db.attachments, db.tombstones],
+          async () => {
+            /** Removed while the push was in flight: its Tombstone must carry the new Revision. */
+            const rebase = async (id: string, a: AcceptedRow) => {
+              const gone = await db.tombstones.get(id);
+              if (gone && gone.rev === a.row.rev) await db.tombstones.put({ ...gone, rev: a.rev });
+            };
+            for (const a of accepted) {
+              if (a.kind === 'tombstone') {
+                await db.tombstones.delete(a.row.id);
+              } else if (a.kind === 'note') {
+                const stored = await db.notes.get(a.row.id);
+                if (!stored) await rebase(a.row.id, a);
+                else {
+                  const attachments = await db.attachments
+                    .where('noteId')
+                    .equals(a.row.id)
+                    .toArray();
+                  await db.notes.put(settle(stored, wireNote(stored, attachments), a));
+                }
+              } else if (a.kind === 'tag') {
+                const stored = await db.tags.get(a.row.id);
+                if (!stored) await rebase(a.row.id, a);
+                else await db.tags.put(settle(stored, wireRow(stored), a));
+              } else {
+                const { noteId, tagId } = a.row;
+                const stored = await db.noteTags.get([noteId, tagId]);
+                if (!stored) await rebase(noteTagId(noteId, tagId), a);
+                else await db.noteTags.put(settle(stored, wireRow(stored), a));
+              }
+            }
+          }
+        );
+      },
+    },
+
     clear: () =>
       db.transaction('rw', db.tables, async () => {
         await Promise.all(db.tables.map((table) => table.clear()));

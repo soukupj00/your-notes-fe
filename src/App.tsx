@@ -4,6 +4,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary.tsx';
 import { PwaUpdatePrompt } from '@/components/pwa/PwaUpdatePrompt.tsx';
 import { Toaster } from '@/components/ui/sonner.tsx';
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
+import { AccountProvider } from '@/context/AccountProvider.tsx';
 import { AppMotionProvider } from '@/context/motionProvider.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { PwaInstallProvider } from '@/context/PwaInstallProvider.tsx';
@@ -11,6 +12,7 @@ import { ThemeProvider } from '@/context/themeProvider.tsx';
 import { ViewModeProvider } from '@/context/viewModeProvider.tsx';
 import type { LocalStore } from '@/data/LocalStore.ts';
 import { LocalStoreProvider } from '@/data/LocalStoreProvider.tsx';
+import type { AccountService } from '@/data/Remote.ts';
 import { routeTree } from './routeTree.gen';
 
 const router = createRouter({ routeTree });
@@ -23,7 +25,13 @@ declare module '@tanstack/react-router' {
   }
 }
 
-function App({ store }: { store: LocalStore }) {
+function App({
+  store,
+  accountService = null,
+}: {
+  store: LocalStore;
+  accountService?: AccountService | null;
+}) {
   return (
     <LocalStoreProvider store={store}>
       {/* The boundary sits inside ThemeProvider so its fallback is themed, but
@@ -37,7 +45,9 @@ function App({ store }: { store: LocalStore }) {
               <PwaInstallProvider>
                 <TooltipProvider>
                   <ViewModeProvider>
-                    <RouterProvider router={router} />
+                    <AccountProvider service={accountService}>
+                      <RouterProvider router={router} />
+                    </AccountProvider>
                     <PwaUpdatePrompt />
                     <Toaster />
                   </ViewModeProvider>

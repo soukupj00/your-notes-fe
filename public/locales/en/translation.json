@@ -563,5 +563,85 @@
         "body": "A shelf for the hallway - measure the alcove first."
       }
     }
+  },
+  "account": {
+    "deviceName": {
+      "default": "{{browser}} on {{system}}",
+      "label": "Device name",
+      "hint": "How this Device appears in your Devices list."
+    },
+    "username": "Username",
+    "password": "Password",
+    "passwordHint": "At least 8 characters.",
+    "cancel": "Cancel",
+    "errors": {
+      "wrongCredentials": "That username or password is not right.",
+      "linkUsed": "This link has expired or was already used. Ask for a new one.",
+      "usernameTaken": "That username is taken.",
+      "unreachable": "Could not reach your server. Check that this Device can reach it, then try again.",
+      "unknown": "Something went wrong. Try again."
+    },
+    "section": {
+      "title": "Account",
+      "signedOutLabel": "Sign in to your server",
+      "signedOutDescription": "Sync this Device's Notes with your YouNotes server.",
+      "signIn": "Sign in",
+      "signInDescription": "Use the username and password you chose for your account.",
+      "signedInLabel": "Signed in as {{username}}",
+      "owner": "Owner",
+      "member": "Member",
+      "thisDevice": "This Device: {{name}}",
+      "signOut": "Sign out",
+      "signedOut": "Signed out."
+    },
+    "devices": {
+      "title": "Devices",
+      "current": "This Device",
+      "lastSeen": "Last seen {{date}}",
+      "remove": "Remove",
+      "removeTitle": "Remove {{name}}?",
+      "removeDescription": "It is signed out and nothing else changes.",
+      "removed": "Device removed.",
+      "add": "Add a Device",
+      "addDescription": "Shows a Pairing Link to scan with the new Device's camera."
+    },
+    "members": {
+      "title": "Members",
+      "invite": "Invite",
+      "inviteDescription": "Someone in your household gets their own account. Neither of you sees the other's Notes.",
+      "you": "You",
+      "joined": "Joined {{date}}",
+      "reset": "Set a new password",
+      "resetTitle": "New password for {{username}}",
+      "resetDescription": "Their Devices stay signed in. Give them the new password yourself.",
+      "newPassword": "New password",
+      "save": "Save password",
+      "resetDone": "Password changed."
+    },
+    "qr": {
+      "deviceDescription": "Scan it with the new Device's camera. It signs in to your account without typing a password.",
+      "inviteDescription": "The other person scans it on their own phone and chooses their own username and password.",
+      "expires": "The link works once and for ten minutes.",
+      "orOpen": "Or open this link on the other Device:",
+      "copy": "Copy link",
+      "copied": "Link copied.",
+      "done": "Done",
+      "failed": "Could not make a link. Try again.",
+      "making": "Making a link…"
+    },
+    "pair": {
+      "checking": "Checking the link…",
+      "missingCode": "This link is incomplete. Scan the QR code again.",
+      "ownerTitle": "Create the Owner",
+      "ownerDescription": "Choose a username and a password. Write the password down somewhere safe: when no signed-in Device is left to show a link, it is the way back in.",
+      "ownerAction": "Create the Owner",
+      "deviceTitle": "Add this Device",
+      "deviceDescription": "This Device signs in to your account without a password.",
+      "deviceAction": "Sign in",
+      "inviteTitle": "Join",
+      "inviteDescription": "You were invited. Choose your own username and password. Your Notes are your own: nobody else on this server sees them.",
+      "inviteAction": "Create my account",
+      "home": "Go to my Notes"
+    }
   }
 }

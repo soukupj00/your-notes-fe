@@ -44,6 +44,14 @@ export default defineConfig({
       },
     }),
   ],
+  // The backend's `pnpm dev` (ni-dip-be), so the Account screens work under `pnpm dev`.
+  // In production the server serves the PWA itself, same origin (ADR 0018).
+  server: {
+    proxy: {
+      '/api': 'http://localhost:3000',
+      '/health': 'http://localhost:3000',
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

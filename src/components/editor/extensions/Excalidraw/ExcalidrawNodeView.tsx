@@ -13,8 +13,8 @@ import type { AttachmentDeps } from '../attachments/deps';
 /** Editor render path for excalidrawAttachment - a passive preview, never the
  *  live canvas (that lives in the shared modal, opened on tap). The whole surface
  *  is tap-to-edit; a corner-X always offers delete. The row is live-queried so a
- *  modal Save refreshes the inline preview in place with zero body churn (the
- *  node's attachmentId never changes). The home feed does not mount this at all -
+ *  modal Save, which mints a new row, repoints this node at it through
+ *  `onReplace` and the preview follows. The home feed does not mount this at all -
  *  it injects the stored SVG in NoteBody. */
 export function ExcalidrawNodeView(props: ReactNodeViewProps) {
   const attachmentId = props.node.attrs.attachmentId as string | null;
@@ -47,7 +47,11 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
 
   const openEditor = () => {
     if (!attachmentId) return;
-    deps.openExcalidraw({ attachmentId, onDelete: () => props.deleteNode() });
+    deps.openExcalidraw({
+      attachmentId,
+      onDelete: () => props.deleteNode(),
+      onReplace: (id) => props.updateAttributes({ attachmentId: id }),
+    });
   };
 
   if (row === null) {

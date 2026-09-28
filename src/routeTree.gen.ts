@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ArchiveRouteImport } from './routes/archive'
 import { Route as LabelsRouteImport } from './routes/labels'
+import { Route as PairRouteImport } from './routes/pair'
 import { Route as TrashRouteImport } from './routes/trash'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as TagIdRouteImport } from './routes/tag.$id'
@@ -29,6 +30,11 @@ const ArchiveRoute = ArchiveRouteImport.update({
 const LabelsRoute = LabelsRouteImport.update({
   id: '/labels',
   path: '/labels',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PairRoute = PairRouteImport.update({
+  id: '/pair',
+  path: '/pair',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TrashRoute = TrashRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/archive': typeof ArchiveRoute
   '/labels': typeof LabelsRoute
+  '/pair': typeof PairRoute
   '/trash': typeof TrashRoute
   '/tag/$id': typeof TagIdRoute
   '/settings/': typeof SettingsIndexRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/archive': typeof ArchiveRoute
   '/labels': typeof LabelsRoute
+  '/pair': typeof PairRoute
   '/trash': typeof TrashRoute
   '/tag/$id': typeof TagIdRoute
   '/settings': typeof SettingsIndexRoute
@@ -68,20 +76,30 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/archive': typeof ArchiveRoute
   '/labels': typeof LabelsRoute
+  '/pair': typeof PairRoute
   '/trash': typeof TrashRoute
   '/tag/$id': typeof TagIdRoute
   '/settings/': typeof SettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/archive' | '/labels' | '/trash' | '/tag/$id' | '/settings/'
+  fullPaths:
+    | '/'
+    | '/archive'
+    | '/labels'
+    | '/pair'
+    | '/trash'
+    | '/tag/$id'
+    | '/settings/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/archive' | '/labels' | '/trash' | '/tag/$id' | '/settings'
+  to:
+    '/' | '/archive' | '/labels' | '/pair' | '/trash' | '/tag/$id' | '/settings'
   id:
     | '__root__'
     | '/'
     | '/archive'
     | '/labels'
+    | '/pair'
     | '/trash'
     | '/tag/$id'
     | '/settings/'
@@ -91,6 +109,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ArchiveRoute: typeof ArchiveRoute
   LabelsRoute: typeof LabelsRoute
+  PairRoute: typeof PairRoute
   TrashRoute: typeof TrashRoute
   TagIdRoute: typeof TagIdRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
@@ -117,6 +136,13 @@ declare module '@tanstack/react-router' {
       path: '/labels'
       fullPath: '/labels'
       preLoaderRoute: typeof LabelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pair': {
+      id: '/pair'
+      path: '/pair'
+      fullPath: '/pair'
+      preLoaderRoute: typeof PairRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/trash': {
@@ -147,6 +173,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ArchiveRoute: ArchiveRoute,
   LabelsRoute: LabelsRoute,
+  PairRoute: PairRoute,
   TrashRoute: TrashRoute,
   TagIdRoute: TagIdRoute,
   SettingsIndexRoute: SettingsIndexRoute,

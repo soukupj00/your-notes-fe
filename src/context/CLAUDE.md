@@ -5,6 +5,17 @@ App-wide React context providers. See [`PLAN.md`](./PLAN.md) for upcoming work.
 > **`NotesProvider` is gone** (M4 Slice 2). The app-wide search text it held now lives in the URL as typed TanStack search params, read and written through `useNoteSearchState()` (`src/hooks/useNoteSearchState.ts`); the feed itself is `useNoteFeed(scope, search)` per route.
 > A context would have made the same state unshareable and invisible to the back button.
 
+## `AccountProvider.tsx`
+
+Whether this Device is signed in to a Self-hosted Server (ADR 0018; M5 slice 3).
+
+- It asks `AccountService.session()` **once at startup**. The session is an `HttpOnly` cookie, so there is nothing to read locally, and the server that served the app is the server, so there is no URL to configure.
+- `status` is `checking`, `unavailable` (nothing answered: a static host, offline, or no service), `signed-out` or `signed-in`. **Nothing in the app waits on it**: sync is opt-in, so every screen renders the same whatever it hears. Only the Account, Devices and Members sections of Settings and `/pair` read it.
+- `setSession` takes what a sign-in, pairing or sign-out just answered, so no second request is needed.
+- `useAccount()` answers "no server" outside a provider instead of throwing, like `useTourActive()`: its callers are Settings sections that tests mount alone.
+- An app opened offline shows no Account section until the next start (a `ponytail:` note marks where to re-ask on `online`).
+- Composed in `App.tsx` around the router; `main.tsx` builds the one `HalAccountService`.
+
 ## `PreferencesProvider.tsx`
 
 User Preferences, persisted as one Zod-validated blob in `localStorage` under `PREFERENCES_STORAGE_KEY` ([ADR 0020](../../docs/adr/0020-the-local-store-seam.md); `src/data/dexie/legacyPreferences.ts`, which owns the one-shot migration off the old Dexie row, imports the key from here rather than the other way round - nothing outside `src/data` may import from `src/data/dexie/`).

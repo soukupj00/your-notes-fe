@@ -1,9 +1,12 @@
 import { useTranslation } from 'react-i18next';
+import { AccountSection } from '@/components/settings/AccountSection.tsx';
 import { AppearanceSection } from '@/components/settings/AppearanceSection.tsx';
 import { BackupSection } from '@/components/settings/BackupSection.tsx';
+import { DevicesSection } from '@/components/settings/DevicesSection.tsx';
 import { EditorToolbarSection } from '@/components/settings/EditorToolbarSection.tsx';
 import { HelpSection } from '@/components/settings/HelpSection.tsx';
 import { LanguageSection } from '@/components/settings/LanguageSection.tsx';
+import { MembersSection } from '@/components/settings/MembersSection.tsx';
 import { PwaInstallSection } from '@/components/settings/PwaInstallSection.tsx';
 import { QuickCaptureSection } from '@/components/settings/QuickCaptureSection.tsx';
 import { ShortcutsSection } from '@/components/settings/ShortcutsSection.tsx';
@@ -75,6 +78,16 @@ export default function SettingsPage() {
 
         <BackupSection />
       </div>
+
+      {/* Where the data goes beyond this Device, beside where it lives on it.
+          Outside the Tour's `settings-local` block on purpose: these render only
+          when a Self-hosted Server answered, and a step's anchor must not change
+          size with the server. Each renders nothing when it does not apply. */}
+      <AccountSection />
+
+      <DevicesSection />
+
+      <MembersSection />
     </div>
   );
 }

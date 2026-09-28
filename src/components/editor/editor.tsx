@@ -17,7 +17,10 @@ import {
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { AudioRecorderHost } from '@/components/editor/extensions/Audio';
-import type { AttachmentDeps } from '@/components/editor/extensions/attachments/deps';
+import type {
+  AttachmentDeps,
+  ExcalidrawOpenArgs,
+} from '@/components/editor/extensions/attachments/deps';
 import {
   dedupeForeignAttachments,
   insertAttachmentFiles,
@@ -162,6 +165,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     attachmentId: string | null;
     initialScene: ExcalidrawScene | null;
     onDelete?: () => void;
+    onReplace?: (attachmentId: string) => void;
     // Bumped on every open so the dialog remounts (fresh dirty/empty state) even
     // when the same drawing - or another new one - is opened twice in a row.
     key: number;
@@ -169,8 +173,8 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   const openSeqRef = useRef(0);
 
   const openExcalidraw = useCallback(
-    (args: { attachmentId?: string; onDelete?: () => void }) => {
-      const { attachmentId, onDelete } = args;
+    (args: ExcalidrawOpenArgs) => {
+      const { attachmentId, onDelete, onReplace } = args;
       const key = ++openSeqRef.current;
       if (!attachmentId) {
         setExcalidraw({
@@ -191,6 +195,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
           attachmentId,
           initialScene: scene ?? emptyScene(),
           onDelete,
+          onReplace,
           key,
         });
       });
@@ -392,8 +397,10 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     [editor]
   );
 
-  // Commit-on-Save: create+insert for a new drawing, updateAttachment for an
-  // edit. Reads the live deps/editor via refs (the node was built once at mount).
+  const replaceExcalidraw = excalidraw.onReplace;
+  // Commit-on-Save: every Save mints a row; a new drawing inserts its node, an
+  // edit repoints the existing one. Reads the live deps/editor via refs (the node
+  // was built once at mount).
   const handleExcalidrawSave = useCallback(
     async (scene: ExcalidrawScene) => {
       try {
@@ -401,12 +408,17 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
           attachmentDepsRef.current,
           excalidraw.attachmentId,
           scene,
-          (id) =>
+          (id) => {
+            if (excalidraw.attachmentId) {
+              replaceExcalidraw?.(id);
+              return;
+            }
             editorRef.current
               ?.chain()
               .focus()
               .insertExcalidrawAttachment({ attachmentId: id })
-              .run()
+              .run();
+          }
         );
       } catch (err) {
         console.error('Editor: excalidraw save failed', err);
@@ -415,7 +427,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         setExcalidraw((s) => ({ ...s, open: false }));
       }
     },
-    [excalidraw.attachmentId]
+    [excalidraw.attachmentId, replaceExcalidraw]
   );
 
   if (!editor) {

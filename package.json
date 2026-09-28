@@ -15,6 +15,7 @@
     "check": "biome check --write .",
     "check:ci": "biome ci .",
     "format": "biome format --write .",
+    "contract:pull": "rev=$(git -C ../ni-dip-be rev-parse --short HEAD) && mkdir -p src/contract && sed \"s/<unpublished>/$rev/\" ../ni-dip-be/src/contract/index.ts > src/contract/index.ts",
     "lint": "eslint ."
   },
   "dependencies": {
@@ -83,6 +84,7 @@
     "react-i18next": "^15.7.4",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
+    "uqr": "^0.1.3",
     "uuid": "^13.0.2",
     "vite-plugin-pwa": "^1.3.0",
     "workbox-window": "^7.4.1",

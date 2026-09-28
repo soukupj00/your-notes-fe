@@ -1,6 +1,6 @@
 # 0017 - Note-level last-writer-wins, with the loser kept as a Conflicted Copy
 
-- Status: Accepted
+- Status: Accepted, amended 2026-08-30
 - Date: 2026-08-12
 
 ## Context
@@ -64,3 +64,14 @@ It makes a Yjs document the real Note and the TipTap HTML a *derived cache* - an
 Its natural transport is a WebSocket, not the REST API the brief commits to.
 It would be the largest single thing in M5 and it competes with the milestone's actual goal, which is sync that an average person can set up and rely on.
 It stays available as a later, Body-only upgrade: the Revision and the Conflicted Copy would remain correct for everything around it.
+
+## Amended 2026-08-30
+
+Re-evaluated from scratch against a wider candidate set (CouchDB + PouchDB, RxDB, Yjs + Hocuspocus, PocketBase, Zero, ElectricSQL, PowerSync, and seven transports) under explicit gates and weighted criteria; notes in [`docs/notes.md`](../notes.md), sources in [`docs/research/sync/`](../research/sync/README.md), thesis text in `ni-dip-thesys/text/design/sync.tex`.
+The decision stands and is amended as follows:
+
+- **SSE is part of the design.** "A REST API remains sufficient" still holds for data; Live Update is a `text/event-stream` hint whose event `id` is the change sequence, and polling is the Catch-up trigger and the fallback. In the frontend this is one optional method on the `Remote` seam.
+- **A stale push is `412 Precondition Failed` against `If-Match`**, with the Revision as the row's `ETag`, rather than a 409.
+- **The change feed has a per-Account sequence** distinct from per-row Revisions; the opaque cursor and the SSE event id are that sequence.
+- **Background Sync is an enhancement, never the guarantee**; it has no Safari support. Web Push is rejected as a third-party relay.
+- **Ids stay UUIDv4**; UUIDv7 considered and not adopted.

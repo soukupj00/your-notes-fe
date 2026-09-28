@@ -33,7 +33,9 @@ The honest cost of the model: concurrent edits to one Note lose no text but prod
 
 Trashing is a `state` field update ([ADR 0009](../adr/0009-note-lifecycle-model.md)) and syncs as an ordinary edit, undo window included.
 A Tombstone is written only by a Purge, so genuine deletions are rare and mostly machine-generated.
+A Tombstone carries the `rev` the Device last agreed with, and a stale purge answers `conflict`, so a purge never discards a newer edit.
 Tombstones expire on the server after 90 days; a device whose cursor predates that window is told so and performs a full resync - discarding its clean rows, keeping its dirty ones.
+A cursor older than the tombstone window, or newer than the server's Sequence (after a restore), answers `410` and the Device resyncs from 0.
 
 ## The Offline Mutation Queue is a set, not a log
 
@@ -45,7 +47,8 @@ This replaced an earlier plan for an ordered intent log, which was both more wor
 
 The client sync engine runs in a `SyncProvider` on the main thread, reading and writing the `LocalStore` and talking to a `Remote` ([ADR 0020](../adr/0020-the-local-store-seam.md)); it never touches Dexie (ceiling: move to a Worker if a large first pull janks the UI).
 The `Remote` carries replication only (push, pull, put/get blob); sessions, Devices and Invites are a separate, optional `AccountService` that only the Self-hosted Server implements, so a self-hoster can point Sync at a Remote of their own.
-Change detection is polling on focus / `online` / visibility, plus a short interval while visible; an SSE hint channel ("the server is at Revision N" - never data, never load-bearing) is a named follow-up, not a dependency.
+Live Update is an SSE hint channel: the server writes the per-Account change *sequence* as the event `id` whenever a push is accepted, the device answers a hint with the same `pull(cursor)` it would poll with, and `Last-Event-ID` makes reconnection resume from the sequence for free (re-evaluated 2026-08-30, see below).
+Catch-up is triggered by focus / `online` / visibility, and a slow poll is the fallback while the stream is down; a `Remote` without a hint stream is simply polled.
 
 ```mermaid
 flowchart TD
@@ -54,7 +57,7 @@ flowchart TD
     end
     subgraph S["Server"]
         S1["Accepts: note X becomes rev 5"]
-        S2["Rejects the stale push"]
+        S2["Answers conflict for the stale row"]
         S3["Serves the change feed"]
         S4["Accepts the copy as a new thing: rev 1"]
     end
@@ -64,9 +67,9 @@ flowchart TD
         B3["Re-inserts own version as a new Note:
         the Conflicted Copy (tagged 'Conflicts', toast)"]
     end
-    A1 -- "1: PUT note X (rev 4)" --> S1
-    B1 -- "2: PUT note X (rev 4, stale)" --> S2
-    S2 -- "3: 409 rejected (server is at rev 5)" --> B2
+    A1 -- "1: POST /api/changes: note X (rev 4)" --> S1
+    B1 -- "2: POST /api/changes: note X (rev 4, stale)" --> S2
+    S2 -- "3: 200, outcome conflict with the server row (rev 5)" --> B2
     B2 -- "4: GET changes (cursor)" --> S3
     S3 -- "5: note X @ rev 5" --> B2
     B2 --> B3
@@ -74,7 +77,8 @@ flowchart TD
 ```
 
 Pull side: the change feed is a HAL collection; the device stores the opaque `_links.next` URL as its cursor and never constructs a query string.
-Completed change pages are immutable, so `ETag` caching is safe and cheap.
+Pages carry a strong `ETag` over their body and the server answers `304`, so revalidation is cheap.
+A page is not immutable, though: a re-edited row moves to a new Sequence.
 The Conflicted Copy arrives through `createNote` + `addTagToNote` - existing, already-tested machinery; the sync engine owns conflict handling, components never do.
 
 ## Attachment transfer
@@ -90,9 +94,24 @@ The Conflicted Copy arrives through `createNote` + `addTagToNote` - existing, al
 - **Erase on sign-out**: full local wipe (the server holds everything; prevents the next user of a shared laptop adopting someone else's Notes), blocked while anything is dirty and offering the zip backup first.
 - Per-entity sync state (dirty / synced / conflicted) is exposed through the data hooks; the editor's "Saved" keeps meaning *saved locally*, shown separately, so the local-first guarantee is never conflated with sync.
 
+## Re-evaluated 2026-08-30
+
+The design was re-run from scratch against a wider candidate set - seven transports and eight server-side designs including CouchDB + PouchDB, RxDB, Yjs + Hocuspocus, PocketBase, Zero, ElectricSQL and PowerSync - under explicit gates and weighted criteria.
+Working notes: [`docs/notes.md`](../notes.md); sourced findings: [`docs/research/sync/`](../research/sync/README.md); thesis text: `ni-dip-thesys/text/design/sync.tex`.
+The model above won (148 of 165; runner-up RxDB 117) and survives removing the "fit with the existing frontend" criterion entirely.
+Five amendments came out of it:
+
+1. SSE is part of the design, not a follow-up (above).
+2. A stale push is reported per row: `POST /api/changes` returns one outcome per row inside a `200`, `conflict` carrying the server row, `gone` for a tombstoned id.
+   Per-resource `PUT` with `If-Match` is later work.
+3. The change feed has a per-Account sequence distinct from per-row Revisions; the `_links.next` cursor and the SSE event id are that sequence.
+4. The Background Sync API is a Chromium-only enhancement (no Safari support at all); the dirty set retried on `online` and on open is the guarantee everywhere. Web Push is rejected on the privacy line (a third-party relay).
+5. Ids stay UUIDv4; UUIDv7 was considered for index locality and not adopted.
+
 ## Alternatives rejected (thesis material)
 
 - **Field-level merge**: resolves the cheap fields and leaves the Body - the actual collision - on LWW anyway; per-field timestamps on every row is a poor trade for that.
+- **Ready-made sync stacks** (2026-08-30): CouchDB wins only catch-up maturity and has no per-Device session revoke; Yjs wins only merge quality and makes the HTML Body a derived cache; PocketBase equals the build on operations and has no revision, feed or tombstones; the Postgres engines are two to four services and leave writes to us; Dexie Cloud and Couchbase fail the open-source gate. Details in [`docs/notes.md`](../notes.md).
 - **CRDT (Yjs) for the Body**: the technically superior merge, rejected with reasons recorded. It would make the Yjs document the real Note and the HTML a derived cache (breaking the invariant relied on by card previews, search, backup and attachment references), wants a WebSocket rather than the brief's REST commitment, and would be the largest single item in M5, competing with the milestone's actual goal (sync an average person can set up). It remains open as a later Body-only upgrade inside the same Revision framework.
 
 ## Testing strategy

@@ -118,6 +118,17 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
   There is exactly one, it cannot be transferred, and it is a role on the server rather than a property of any Note.
 - **Invite** - A one-time permission to create a Local Account on a server that otherwise refuses to create them.
   It is how a household member joins: the Owner issues one, the newcomer spends it, and it is then gone.
+  An Invite is carried by a Pairing Link.
+- **Pairing Link** - A one-time address of the Self-hosted Server that signs in whoever opens it, shown as a QR code to scan or as text to type.
+  It is how a Device joins without a password being typed on it: the server prints one when it is first started (the person who opens it becomes the Owner), a signed-in Device shows one to add another Device of the same Local Account, and the Owner shows one to carry an Invite.
+  A Pairing Link works once and expires unopened; the password remains the way in when no Device is left to show one.
+  _Avoid_: QR code (a rendering of the Link, not the thing itself), token, magic link
+- **Pairing** - Signing a Device in by opening a Pairing Link.
+  It is a way of signing in, not a different kind of Account or Device.
+- **Share Link** - A read-only address of one Note on the Self-hosted Server that anyone who can reach the server may open, signed in or not.
+  Opening one shows the Note as the server last synced it and writes nothing to the viewer's Local Store; the Note's owner can end it at any time.
+  A Share Link shows a Note to a person; it never hands the Note to another Local Account, so Accounts stay private silos.
+  _Avoid_: public link (the server may not be public), sharing (too broad), Pairing Link (that one signs a Device in)
 - **Device** - One installed copy of the app signed in to one Local Account.
   A Device is the unit the user recognises ("my phone") and the unit of revocation: signing out a lost Device ends its access without touching the Account or any other Device.
 - **Local Store** - The copy of everything the app holds on one Device, and the only copy the app ever reads or writes directly.
@@ -128,6 +139,10 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
   The Self-hosted Server is the Remote this project ships.
   _Avoid_: backend, cloud, storage
 - **Sync** — Reconciling a Device's Local Store with a Remote so changes propagate across a user's devices. Sync is bidirectional.
+- **Live Update** - A Device that is open learning of a change made on another Device while it stays open, without the user doing anything.
+  It is a quality of Sync, not a separate mechanism: how quickly the laptop shows what the phone just wrote.
+- **Catch-up** - A Device reconciling everything it missed at the moment it opens or regains connectivity.
+  Every Device catches up; whether it also receives Live Updates while open, and how promptly, is what distinguishes one Sync design from another.
 - **Offline Mutation Queue** - The **set** of local changes the server has not yet accepted, sent when connectivity returns.
   It is a set and not an ordered log: what the server is owed is the *current state* of each changed thing, not the history of how it got there, so editing one Note ten times offline owes the server one change, not ten.
   A deletion is owed the same way, as a Tombstone.
@@ -140,6 +155,6 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
   Sync therefore never discards anything a user wrote: resolving a conflict is reading two Notes and discarding one, which is a thing the user does, not a thing the app does.
 - **Conflicted Copy** - An ordinary Note holding the version that lost a Conflict Resolution.
   It is a Note in every respect from the moment it exists; nothing about it is special except how it was born and how it is titled.
-- **Tombstone** - The record that something was deleted, kept after the thing itself is gone so that the deletion can reach devices that were offline when it happened.
+- **Tombstone** - The record that something was deleted, kept after the thing itself is gone so that the deletion can reach devices that were offline when it happened, carrying the Revision the device last agreed with so a stale deletion cannot discard a newer edit.
   Without one, a device returning from offline cannot tell "deleted elsewhere" from "not yet uploaded", and would resurrect what the user discarded.
 - **Self-hosted Server** — The backend instance, run by the user on their own network, that stores accounts and synced Notes. It lives in a separate repository and is out of scope for this frontend repo's code.
