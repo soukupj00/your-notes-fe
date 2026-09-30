@@ -1,6 +1,43 @@
-# React + TypeScript + Vite
+# YouNotes
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A self-hosted, open-source note-taking app you run yourself, as an alternative to Google Keep.
+Capture notes, checklists, drawings, photos, audio, video and files, organise them with labels and colours, and use it fully offline.
+It is a PWA: open it in a browser and install it to the home screen or desktop.
+
+This repository is the app.
+The sync server that keeps your Devices in step is [`ni-dip-be`](https://gitlab.fit.cvut.cz/soukuj26/ni-dip-be).
+
+## Syncing between your Devices
+
+Without a server, the app keeps everything on the one Device it is installed on.
+To sync between your phone and your laptop, you run the YouNotes server on a machine at home, and every Device opens the app from that server.
+
+Follow the step-by-step guide, written for people who are not programmers: [Setting up YouNotes at home](https://gitlab.fit.cvut.cz/soukuj26/ni-dip-be/-/blob/main/docs/setup.md).
+It covers the three ways to reach the server: Tailscale (recommended), your own domain, and only on your home Wi-Fi.
+
+There is no server address to type into the app.
+The server hands out the app itself, and the app syncs with whichever server it was opened from.
+So always open and install it from your server's address; a copy installed from anywhere else does not sync with your server.
+
+## Develop
+
+Needs Node 24 and pnpm through corepack (`corepack enable`).
+
+```bash
+pnpm install
+pnpm dev          # http://localhost:5173
+pnpm test         # Vitest
+pnpm test:e2e     # Playwright; first run needs `pnpm exec playwright install chromium`
+pnpm check        # Biome: lint and format
+pnpm build        # type-check and build into dist/
+```
+
+For the account and sync screens (Settings, `/pair`), run the server's `pnpm dev` in `../ni-dip-be` alongside.
+Vite forwards `/api` and `/health` to it on port 3000.
+The Pairing Link the server prints points at port 3000, so open its `/pair#<code>` on port 5173 instead.
+
+To try sync on a real phone, the server has to serve this app over `https`.
+The server's README shows how, with `pnpm build` here and Tailscale: [Try it on your phone](https://gitlab.fit.cvut.cz/soukuj26/ni-dip-be/-/blob/main/README.md#try-it-on-your-phone).
 
 ## Storage
 
@@ -9,68 +46,10 @@ An in-memory store that persists nothing also ships, for tests and for deploymen
 See [`src/data/CLAUDE.md`](./src/data/CLAUDE.md) for bringing your own store.
 A Backup carries Notes, Tags and Attachments but not Preferences, which stay with the device.
 
-Currently, two official plugins are available:
+## More
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x';
-import reactDom from 'eslint-plugin-react-dom';
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
+- [`PRODUCT.md`](./PRODUCT.md): who the app is for.
+- [`CONTEXT.md`](./CONTEXT.md): what the words mean (Note, Tag, Attachment, Device, Sync).
+- [`PLAN.md`](./PLAN.md): the roadmap.
+- [`DESIGN.md`](./DESIGN.md): the visual design rules.
+- [`docs/adr/`](./docs/adr/): the decisions and why.
