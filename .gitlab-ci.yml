@@ -7,7 +7,7 @@ stages:
 
 variables:
   PNPM_STORE_PATH: .pnpm-store
-  NODE_VERSION: "22"
+  NODE_VERSION: "24"
   SECRET_DETECTION_ENABLED: "true"
   IMAGE: $CI_REGISTRY_IMAGE
 
@@ -25,7 +25,7 @@ secret_detection:
 
 # ─── Shared setup ─────────────────────────────────────────────────────────────
 .pnpm-setup: &pnpm-setup
-  image: node:22-alpine
+  image: node:24-alpine
   before_script:
     - corepack enable
     - pnpm config set store-dir "$PNPM_STORE_PATH"
@@ -78,7 +78,7 @@ test:unit:
 
 test:e2e:
   # Not the shared *pnpm-setup: Playwright needs its browsers and their system
-  # libraries, and node:22-alpine has neither. The official image ships both, so
+  # libraries, and node:24-alpine has neither. The official image ships both, so
   # the version here must be kept in step with @playwright/test in package.json
   # or the browsers on disk will not be the ones the runner asks for.
   image: mcr.microsoft.com/playwright:v1.62.0-noble
