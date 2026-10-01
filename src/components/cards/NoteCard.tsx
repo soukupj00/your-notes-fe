@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { CardActions } from '@/components/cards/CardActions.tsx';
@@ -168,30 +168,28 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
   }, [note.id, onSelect, hasProse]);
 
   const open = () => onSelect(note.id);
+  const titleId = useId();
 
   return (
     <Card
       {...noteColorAttrs(note.color)}
       data-pinned={note.pinnedAt ? '' : undefined}
-      // Not a <button>: the card contains a menu trigger, and nesting
-      // interactive elements is invalid/inaccessible. A role="button" div with
-      // keyboard handling keeps the whole card clickable without the nesting.
-      role="button"
-      tabIndex={0}
+      // A click anywhere opens the note. Keyboards and screen readers use the open
+      // button below instead, so the card is not one button whose name swallows the
+      // rail's controls (controls nested in a button are invalid).
       onClick={open}
-      onKeyDown={(e) => {
-        // Only activate when the key originated on the card itself. React
-        // synthetic events bubble through the portalled dropdown menu, so
-        // without this an Enter/Space on the menu trigger or a menu item (e.g.
-        // Move to trash) would also open the editor.
-        if (e.target !== e.currentTarget) return;
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          open();
-        }
-      }}
-      className="group relative isolate w-full cursor-pointer break-inside-avoid gap-0 rounded-card border-0 bg-transparent py-0 text-card-foreground shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="group relative isolate w-full cursor-pointer break-inside-avoid gap-0 rounded-card border-0 bg-transparent py-0 text-card-foreground shadow-none has-[[data-slot=note-card-open]:focus-visible]:ring-2 has-[[data-slot=note-card-open]:focus-visible]:ring-ring has-[[data-slot=note-card-open]:focus-visible]:ring-offset-2 has-[[data-slot=note-card-open]:focus-visible]:ring-offset-background"
     >
+      {/* Its click bubbles to the Card's `onClick`, so it needs no handler of its own. */}
+      <button
+        type="button"
+        data-slot="note-card-open"
+        className="pointer-events-none absolute inset-0 -z-10 opacity-0"
+        aria-labelledby={note.header ? titleId : undefined}
+      >
+        {note.header ? null : t('notes.editNoteTitle')}
+      </button>
+
       {/* Only this material layer scales. Keeping text and media off the
           transformed layer prevents Chromium from bitmap-stretching them. */}
       <div
@@ -230,8 +228,9 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
           onOpen={(opts) => onSelect(note.id, opts)}
         />
 
-        {note.header ? (
+        {note.header && (
           <h2
+            id={titleId}
             dir="auto"
             /* pe-9 reserves the pin's corner so a long title never runs under
                it. Reserved rather than revealed: the card's height must not
@@ -240,8 +239,6 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
           >
             {note.header}
           </h2>
-        ) : (
-          <span className="sr-only">{t('notes.editNoteTitle')}</span>
         )}
 
         {hasProse && (
