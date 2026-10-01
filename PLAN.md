@@ -136,6 +136,7 @@ Deviations: `sharedBlobUrl` takes the fetched page rather than the token, becaus
     Not a sync problem, found in the slice 4 two-Device run; the PWA should precache the editor or claim clients on first load.
   - `src/components/editor/editor.tsx` is over the 500-line limit (522 lines before M5 slice 5, 528 after it).
     Splitting it is its own change, not a sync one.
+- [x] Fixes from the backend rework's end-to-end run (2026-10-01): docs/superpowers/plans/2026-10-01-pwa-offline-session-a11y-fixes.md
 
 ## Per-area plans
 
