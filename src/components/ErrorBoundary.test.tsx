@@ -3,15 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ErrorBoundary } from './ErrorBoundary.tsx';
 
-vi.mock('react-i18next', () => ({
-  // The boundary is a class component, so it takes `t` through the HOC.
-  withTranslation:
-    () =>
-    // biome-ignore lint/suspicious/noExplicitAny: test shim for the i18next HOC
-    (Wrapped: any) =>
-    // biome-ignore lint/suspicious/noExplicitAny: test shim for the i18next HOC
-    (props: any) => <Wrapped {...props} t={(key: string) => key} />,
-}));
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 function Boom(): never {
   throw new Error('kaboom');

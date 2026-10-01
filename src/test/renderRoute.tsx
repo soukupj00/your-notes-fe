@@ -1,5 +1,6 @@
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router';
 import { render } from '@testing-library/react';
+import { RouteError } from '@/components/CrashScreen.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { ThemeProvider } from '@/context/themeProvider.tsx';
 import { ViewModeProvider } from '@/context/viewModeProvider.tsx';
@@ -24,6 +25,7 @@ export function renderRoute(path: string | string[]) {
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: Array.isArray(path) ? path : [path] }),
+    defaultErrorComponent: RouteError,
   });
   render(
     // Same provider stack as `App.tsx`, so a component that reads preferences
