@@ -42,6 +42,7 @@ pnpm format       # biome format --write
 pnpm test         # Vitest run (unit/component/data) — wired up in M1
 pnpm test:watch   # Vitest watch mode
 pnpm test:e2e     # Playwright, specs in e2e/ (wired up in M4 slice 5)
+pnpm test:e2e:pwa   # Playwright against the production build: service worker and offline
 ```
 
 Playwright runs against `pnpm dev` (started for you by `playwright.config.ts`) at two breakpoints, `desktop` and `mobile`.

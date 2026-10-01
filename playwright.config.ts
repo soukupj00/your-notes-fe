@@ -16,9 +16,9 @@ const MEDIA_ARGS = ['--use-fake-ui-for-media-stream', '--use-fake-device-for-med
  * The dev server, not `preview`, is what these run against. `vite.config.ts`
  * declares no `devOptions` for `VitePWA`, so dev serves no service worker at
  * all - and a service worker deciding for itself when to hand back a cached
- * bundle is the last thing an acceptance suite needs. What it costs is that the
- * PWA install path is not covered here; that is `PwaInstallSection`'s own
- * problem and cannot be driven from a headless browser anyway.
+ * bundle is the last thing an acceptance suite needs. The service worker is
+ * covered by `playwright.pwa.config.ts` against the production build, and the
+ * install prompt still cannot be driven headlessly.
  *
  * Each test gets a fresh browser context, which is what "fresh profile" means
  * throughout the onboarding spec: a new context has its own empty IndexedDB, so
@@ -26,6 +26,7 @@ const MEDIA_ARGS = ['--use-fake-ui-for-media-stream', '--use-fake-device-for-med
  */
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: 'pwa/**',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

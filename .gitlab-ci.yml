@@ -96,10 +96,12 @@ test:e2e:
     policy: pull
   script:
     - pnpm test:e2e
+    - pnpm test:e2e:pwa
   artifacts:
     when: always
     paths:
       - playwright-report/
+      - playwright-report-pwa/
     expire_in: 1 week
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"

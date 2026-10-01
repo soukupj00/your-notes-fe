@@ -20,9 +20,27 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['note-128.png'],
       workbox: {
+        // A first visit installs the worker but stays uncontrolled until a reload,
+        // so a Device paired and then taken offline could not open a Note. Claiming
+        // on activate is safe under `prompt`: an update still waits for a yes.
+        clientsClaim: true,
         // Default globPatterns omit .json, which would leave the i18n locale files
         // (dist/locales/<lng>/translation.json) uncached and break translations offline.
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
+        // The two app font families are precached; KaTeX's and Excalidraw's fonts are
+        // many and rarely needed, so they are cached the first time they load.
+        globPatterns: [
+          '**/*.{js,css,html,ico,png,svg,json}',
+          '**/{bricolage-grotesque,work-sans}-*.woff2',
+        ],
+        runtimeCaching: [
+          {
+            // Hashed file names never change content, so cache-first is exact.
+            urlPattern: ({ request, sameOrigin, url }) =>
+              sameOrigin && url.pathname.startsWith('/assets/') && request.destination === 'font',
+            handler: 'CacheFirst',
+            options: { cacheName: 'fonts', expiration: { maxEntries: 60 } },
+          },
+        ],
       },
       manifest: {
         name: 'YouNotes',
