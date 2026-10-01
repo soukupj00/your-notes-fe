@@ -683,6 +683,7 @@
     "pending_few": "{{count}} změny čekají",
     "pending_other": "{{count}} změn čeká",
     "syncNow": "Synchronizovat",
+    "signedOut": "Toto zařízení už není přihlášené. Přihlaste se znovu a synchronizace bude pokračovat; změny zůstávají tady.",
     "tooLarge": "{{name}} je příliš velký na synchronizaci",
     "keepEverything": {
       "label": "Mít vše v tomto zařízení",

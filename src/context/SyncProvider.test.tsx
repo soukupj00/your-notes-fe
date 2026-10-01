@@ -95,6 +95,26 @@ describe('SyncProvider', () => {
     await waitFor(() => expect(screen.queryByText(/sync\.pending/)).not.toBeInTheDocument());
   });
 
+  it('signs this Device out when the server forgets its Session, and keeps what it owes', async () => {
+    const { server } = await mountSignedIn();
+    expect(await screen.findByText(/^sync\.idle /)).toBeVisible();
+    server.devices.splice(
+      server.devices.findIndex((d) => d.name === 'Phone'),
+      1
+    );
+    const id = crypto.randomUUID();
+    await testStore.notes.add({ id, state: 'active', createdAt: T0, updatedAt: T0 });
+
+    // No press: some run always follows (the startup run, or the Note's own debounced
+    // one), and its 401 can unmount the sync row before a press would land.
+    await waitFor(() =>
+      expect(toast).toHaveBeenCalledWith('sync.signedOut', expect.objectContaining({}))
+    );
+    expect(screen.queryByText('sync.label')).not.toBeInTheDocument();
+    expect(await testStore.notes.get(id)).toBeDefined();
+    expect((await testStore.sync.dirty()).notes.map((n) => n.id)).toContain(id);
+  });
+
   it('one toast per run that kept Conflicted Copies', async () => {
     const { server, owner } = await mountSignedIn();
     const laptop = await otherDevice(server, owner.id);

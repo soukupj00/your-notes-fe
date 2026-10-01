@@ -1,3 +1,4 @@
+import { ProblemError } from '@/data/http/hal.ts';
 import { type LocalStore, SYNC_META_KEYS } from '@/data/LocalStore.ts';
 import type { Remote } from '@/data/Remote.ts';
 import type { SyncEngine, SyncReport } from './engine.ts';
@@ -15,8 +16,9 @@ export type SyncLoop = {
  * When to sync (04-sync.md "The loop"): once at start; on a Live Update hint
  * whose Sequence is past the last pull; shortly after a local edit; when the
  * browser comes back `online`; when the page becomes visible again (Catch-up);
- * and on a slow poll while the stream is down or absent. Plain TypeScript, so
- * `SyncProvider` only has to start and stop it.
+ * and on a slow poll while the stream is down or absent. A `401` stops it and
+ * calls `onSignedOut`. Plain TypeScript, so `SyncProvider` only has to start
+ * and stop it.
  */
 export function startSyncLoop({
   engine,
@@ -24,6 +26,7 @@ export function startSyncLoop({
   store,
   onStatus,
   onReport,
+  onSignedOut,
   pollMs = 5 * 60_000,
   editDelayMs = 2_000,
   target = window,
@@ -34,6 +37,8 @@ export function startSyncLoop({
   store: LocalStore;
   onStatus: (status: SyncStatus) => void;
   onReport: (report: SyncReport) => void;
+  /** The server no longer knows this Device's Session (removed, or an older backup restored). */
+  onSignedOut?: () => void;
   pollMs?: number;
   /** How long a burst of typing settles before its edits are pushed. */
   editDelayMs?: number;
@@ -69,6 +74,15 @@ export function startSyncLoop({
       transfersLeft = report.transfersLeft;
       onReport(report);
     } catch (error) {
+      if (error instanceof ProblemError && error.status === 401) {
+        // Retrying cannot help, only signing in again can.
+        // A run queued behind this one answers 401 too, and must not say so again.
+        if (!stopped) {
+          stopped = true;
+          onSignedOut?.();
+        }
+        return;
+      }
       // `fetch` rejects with a TypeError when nothing answered at all.
       status = error instanceof TypeError ? 'offline' : 'error';
     } finally {

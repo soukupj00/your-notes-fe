@@ -63,7 +63,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const store = useLocalStore();
-  const { session, remote } = useAccount();
+  const { session, remote, setSession } = useAccount();
   const [status, setStatus] = useState<SyncStatus>('idle');
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const pending = useLive(() => store.sync.pending(), [store]) ?? 0;
@@ -102,8 +102,19 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     if (report.keptNewer > 0) toast.info(t('sync.keptNewer'));
     for (const name of report.tooLarge) toast.error(t('sync.tooLarge', { name }));
   };
+  const onSignedOutRef = useRef<() => void>(() => {});
+  const onSignedOut = () => {
+    setSession(null);
+    toast(t('sync.signedOut'), {
+      action: {
+        label: t('account.section.signIn'),
+        onClick: () => void navigate({ to: '/settings' }),
+      },
+    });
+  };
   useEffect(() => {
     onReportRef.current = onReport;
+    onSignedOutRef.current = onSignedOut;
   });
 
   useEffect(() => {
@@ -129,6 +140,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         store,
         onStatus: setStatus,
         onReport: (report) => onReportRef.current(report),
+        onSignedOut: () => onSignedOutRef.current(),
       });
     });
     return () => {
