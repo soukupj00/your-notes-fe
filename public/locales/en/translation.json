@@ -345,7 +345,8 @@
     "empty": {
       "active": {
         "title": "No notes yet",
-        "subtitle": "Your notes will show up here. Tap the button to write your first one."
+        "subtitle": "Your notes will show up here. Use the ＋ button to write your first one.",
+        "subtitleWide": "Your notes will show up here. Write your first one in “Take a note…” above."
       },
       "archived": {
         "title": "Nothing archived",
@@ -384,6 +385,12 @@
     "restore": "Restore",
     "restored": "Note restored",
     "emptyTrash": "Empty trash",
+    "confirmEmptyTrash": {
+      "title": "Empty the trash?",
+      "description": "Every note in the trash is deleted for good. This cannot be undone.",
+      "confirm": "Empty trash",
+      "cancel": "Cancel"
+    },
     "trashEmptied_one": "Deleted {{count}} note",
     "trashEmptied_other": "Deleted {{count}} notes",
     "undo": "Undo",

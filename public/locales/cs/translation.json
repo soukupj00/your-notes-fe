@@ -345,7 +345,8 @@
     "empty": {
       "active": {
         "title": "Zatím žádné poznámky",
-        "subtitle": "Vaše poznámky se objeví tady. Klepnutím na tlačítko napíšete první."
+        "subtitle": "Vaše poznámky se objeví tady. První napíšete tlačítkem ＋.",
+        "subtitleWide": "Vaše poznámky se objeví tady. První napíšete v poli „Napsat poznámku…“ výše."
       },
       "archived": {
         "title": "Archiv je prázdný",
@@ -384,6 +385,12 @@
     "restore": "Obnovit",
     "restored": "Poznámka obnovena",
     "emptyTrash": "Vysypat koš",
+    "confirmEmptyTrash": {
+      "title": "Vysypat koš?",
+      "description": "Všechny poznámky v koši se nadobro smažou. Tuto akci nelze vrátit.",
+      "confirm": "Vysypat koš",
+      "cancel": "Zrušit"
+    },
     "trashEmptied_one": "Smazána {{count}} poznámka",
     "trashEmptied_few": "Smazány {{count}} poznámky",
     "trashEmptied_other": "Smazáno {{count}} poznámek",

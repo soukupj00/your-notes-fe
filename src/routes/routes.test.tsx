@@ -257,9 +257,25 @@ describe('trash view', () => {
 
     await waitFor(() => expect(screen.getAllByTestId('note-card')).toHaveLength(1));
     await userEvent.click(screen.getByRole('button', { name: 'notes.emptyTrash' }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'notes.confirmEmptyTrash.confirm' })
+    );
 
     await waitFor(async () => expect(await testStore.notes.get('n-trashed')).toBeUndefined());
     expect(await testStore.notes.get('n-active')).toBeTruthy();
     expect(await testStore.notes.get('n-archived')).toBeTruthy();
+  });
+
+  it('asks first, and cancelling keeps the trash', async () => {
+    await seed();
+    renderAt('/trash');
+
+    await waitFor(() => expect(screen.getAllByTestId('note-card')).toHaveLength(1));
+    await userEvent.click(screen.getByRole('button', { name: 'notes.emptyTrash' }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'notes.confirmEmptyTrash.cancel' })
+    );
+
+    expect(await testStore.notes.get('n-trashed')).toBeTruthy();
   });
 });
