@@ -110,4 +110,11 @@ describe('NoteContent empty states', () => {
     expect(screen.getByText('notes.empty.filtered.title')).toBeInTheDocument();
     expect(screen.queryByText('notes.empty.trashed.title')).not.toBeInTheDocument();
   });
+
+  it('points an empty Feed at the capture surface this width shows', () => {
+    render(<NoteContent scope={{ state: 'active' }} onSelect={vi.fn()} />);
+
+    expect(screen.getByText('notes.empty.active.subtitle')).toHaveClass('sm:hidden');
+    expect(screen.getByText('notes.empty.active.subtitleWide')).toHaveClass('hidden', 'sm:block');
+  });
 });
