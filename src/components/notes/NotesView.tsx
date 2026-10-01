@@ -144,7 +144,13 @@ export function NotesView({
         <Suspense
           fallback={
             <Dialog open>
-              <DialogContent showCloseButton={false} className="flex items-center justify-center">
+              <DialogContent
+                showCloseButton={false}
+                // Leaves focus where the open came from, so the editor that
+                // replaces this can record it and hand it back on close.
+                onOpenAutoFocus={(event) => event.preventDefault()}
+                className="flex items-center justify-center"
+              >
                 <DialogTitle className="sr-only">{t('notes.loadingEditor')}</DialogTitle>
                 <DialogDescription className="sr-only">
                   {t('notes.loadingEditor')}
