@@ -22,7 +22,8 @@ Whether this Device is signed in to a Self-hosted Server (ADR 0018; M5 slice 3).
 Runs Sync while this Device is signed in (M5 slice 4, [04-sync.md](../../docs/architecture/04-sync.md)).
 What happens in a run is `src/sync/engine.ts`; when a run happens is `src/sync/loop.ts`; both are plain TypeScript and tested against `src/test/fakeServer.ts`, which carries the backend's sync rules.
 
-- **Mounted in `routes/__root.tsx`, inside `TourProvider`**, not in `App.tsx`: its one toast ("N conflicts kept as copies") links to the Conflicts Tag, so it needs the router. The `Remote` reaches it through `AccountProvider`, which `main.tsx` hands both halves of the one HAL client.
+- **Mounted in `routes/__root.tsx`, inside `TourProvider`**, not in `App.tsx`: two of its toasts link into the app ("N conflicts kept as copies" to the Conflicts Tag, a lost Session to Settings), so it needs the router.
+  The `Remote` reaches it through `AccountProvider`, which `main.tsx` hands both halves of the one HAL client.
 - **It stands still while the Tour runs** (`useTourActive()`), and the engine leaves the Tour's Props out of every push, so a Prop never reaches the server even after a reload mid-Tour.
 - On a session it first **adopts** (a new Account owes the whole library), then starts the loop; on sign-out or a change of Account it stops it.
 - A `401` from a run (the Device was removed elsewhere, or an older server backup was restored) stops the loop and calls `setSession(null)`, with one toast linking to Settings.

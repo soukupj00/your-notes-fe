@@ -49,6 +49,8 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
     offline: false,
     /** Every request answers the SPA's `index.html` (a static host with no server). */
     staticHost: false,
+    /** Every request answers a `500` problem (a server that is up but failing). */
+    broken: false,
     /** The backend's `BLOB_LIMIT_BYTES`: a larger PUT answers 413. */
     blobLimit: 50 * 1024 * 1024,
     /** Every blob request, as `PUT <id>`, `GET <id>` or `HEAD <id>`. */
@@ -352,6 +354,7 @@ export function createFakeServer({ setupCode = 'setup-code' } = {}) {
       if (state.staticHost) {
         return new Response('<!doctype html>', { headers: { 'content-type': 'text/html' } });
       }
+      if (state.broken) return problem(500, 'Broken');
       const url = new URL(String(input), 'http://localhost');
       return handle(jar, init?.method ?? 'GET', url.pathname, url.searchParams, init);
     };

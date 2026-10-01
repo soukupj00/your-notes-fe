@@ -108,7 +108,13 @@ describe('SyncProvider', () => {
     // No press: some run always follows (the startup run, or the Note's own debounced
     // one), and its 401 can unmount the sync row before a press would land.
     await waitFor(() =>
-      expect(toast).toHaveBeenCalledWith('sync.signedOut', expect.objectContaining({}))
+      expect(toast).toHaveBeenCalledWith(
+        'sync.signedOut',
+        expect.objectContaining({
+          duration: Number.POSITIVE_INFINITY,
+          action: expect.objectContaining({ label: 'account.section.signIn' }),
+        })
+      )
     );
     expect(screen.queryByText('sync.label')).not.toBeInTheDocument();
     expect(await testStore.notes.get(id)).toBeDefined();

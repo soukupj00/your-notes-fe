@@ -189,6 +189,10 @@ describe('sync loop', () => {
     server.state.offline = false;
     server.state.staticHost = true;
     await a.loop.syncNow();
+    server.state.staticHost = false;
+    server.state.broken = true;
+    await a.loop.syncNow();
     expect(a.signedOut()).toBe(0);
+    expect(a.statuses.at(-1)).toBe('error');
   });
 });

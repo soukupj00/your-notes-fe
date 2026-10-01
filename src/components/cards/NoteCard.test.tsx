@@ -108,14 +108,24 @@ describe('NoteCard', () => {
     expect(screen.getByRole('button', { name: 'notes.editNoteTitle' })).toHaveFocus();
   });
 
+  it('names a whitespace-only title as untitled', () => {
+    render(<NoteCard note={makeNote({ header: '   ' })} onSelect={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'notes.editNoteTitle' })).toBeInTheDocument();
+  });
+
+  it('focuses the open button on a click, so closing the editor returns focus here', async () => {
+    render(<NoteCard note={makeNote()} onSelect={vi.fn()} />);
+    await userEvent.click(screen.getByText('My note'));
+    expect(screen.getByRole('button', { name: 'My note' })).toHaveFocus();
+  });
+
   it('does not open the editor when a rail control is keyboard-activated', async () => {
     const note = makeNote();
     const onSelect = vi.fn();
     render(<NoteCard note={note} onSelect={onSelect} />);
 
-    // Focus a rail control and press Enter: it runs its own action, but the
-    // card's keydown handler must not also fire onSelect (guards against a
-    // portalled synthetic-event bubble reopening the editor).
+    // Focus a rail control and press Enter: it runs its own action, and its click
+    // must not bubble to the Card's `onClick` and open the editor too.
     screen.getByRole('button', { name: 'notes.color' }).focus();
     await userEvent.keyboard('{Enter}');
 
