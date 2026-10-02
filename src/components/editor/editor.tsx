@@ -40,6 +40,7 @@ import { Spinner } from '@/components/ui/Spinner.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useSync } from '@/context/SyncProvider.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
+import { useLatest } from '@/hooks/useLatest.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import type { AttachmentErrorCode } from '@/lib/attachments.ts';
 import { cn } from '@/lib/utils.ts';
@@ -214,16 +215,11 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     ]
   );
   // useEditor builds the extensions once, so they must reach the *current* deps
-  // through a stable getter over a ref, not the first-render closure.
-  const attachmentDepsRef = useRef(attachmentDeps);
-  attachmentDepsRef.current = attachmentDeps;
-  const getAttachmentDeps = useRef(() => attachmentDepsRef.current).current;
-
+  // through a stable getter, not the first-render closure.
+  const getAttachmentDeps = useLatest(attachmentDeps);
   // Same reason: the checklist FLIP plugin must see reduced motion as it is when a
   // box is ticked. It is a hard killswitch (DESIGN.md Motion).
-  const animateChecklistRef = useRef(!reducedMotion);
-  animateChecklistRef.current = !reducedMotion;
-  const getAnimateChecklist = useRef(() => animateChecklistRef.current).current;
+  const getAnimateChecklist = useLatest(!reducedMotion);
 
   // `extensions`, `editorProps` and `content` stay referentially stable, or every
   // render costs a full ProseMirror view pass: see editor/CLAUDE.md (`editor.tsx`).
@@ -244,26 +240,24 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       handlePaste: (_view: EditorView, event: ClipboardEvent) => {
         const files = event.clipboardData?.files;
         const ed = editorRef.current;
-        if (ed && files && insertTransferredAttachments(ed, files, attachmentDepsRef.current)) {
+        if (ed && files && insertTransferredAttachments(ed, files, getAttachmentDeps())) {
           return true;
         }
         // Cross-note HTML paste with existing attachment nodes: let the default
         // paste happen, then reclaim any foreign images into owned clones.
         const html = event.clipboardData?.getData('text/html');
         if (ed && html?.includes('data-attachment-id')) {
-          queueMicrotask(() => void dedupeForeignAttachments(ed, attachmentDepsRef.current));
+          queueMicrotask(() => void dedupeForeignAttachments(ed, getAttachmentDeps()));
         }
         return false;
       },
       handleDrop: (_view: EditorView, event: Event) => {
         const files = (event as DragEvent).dataTransfer?.files;
         const ed = editorRef.current;
-        return Boolean(
-          ed && files && insertTransferredAttachments(ed, files, attachmentDepsRef.current)
-        );
+        return Boolean(ed && files && insertTransferredAttachments(ed, files, getAttachmentDeps()));
       },
     }),
-    []
+    [getAttachmentDeps]
   );
 
   // Creation-time only. The `content` prop is not a controlled value: the
@@ -335,11 +329,11 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       editor.storage.audioAttachment.capture.requestRecording();
     }
     if (initialFiles?.length) {
-      void insertImageAttachmentFiles(editor, initialFiles, attachmentDepsRef.current, (id) =>
+      void insertImageAttachmentFiles(editor, initialFiles, getAttachmentDeps(), (id) =>
         editor.chain().focus().insertImageAttachment({ attachmentId: id }).run()
       );
     }
-  }, [editor, initialCapture, initialFiles, openExcalidraw]);
+  }, [editor, getAttachmentDeps, initialCapture, initialFiles, openExcalidraw]);
 
   useImperativeHandle(
     ref,
@@ -356,30 +350,21 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   const handleExcalidrawSave = useCallback(
     async (scene: ExcalidrawScene) => {
       try {
-        await commitExcalidrawScene(
-          attachmentDepsRef.current,
-          excalidraw.attachmentId,
-          scene,
-          (id) => {
-            if (excalidraw.attachmentId) {
-              replaceExcalidraw?.(id);
-              return;
-            }
-            editorRef.current
-              ?.chain()
-              .focus()
-              .insertExcalidrawAttachment({ attachmentId: id })
-              .run();
+        await commitExcalidrawScene(getAttachmentDeps(), excalidraw.attachmentId, scene, (id) => {
+          if (excalidraw.attachmentId) {
+            replaceExcalidraw?.(id);
+            return;
           }
-        );
+          editorRef.current?.chain().focus().insertExcalidrawAttachment({ attachmentId: id }).run();
+        });
       } catch (err) {
         console.error('Editor: excalidraw save failed', err);
-        attachmentDepsRef.current.onError('insert-failed');
+        getAttachmentDeps().onError('insert-failed');
       } finally {
         setExcalidraw((s) => ({ ...s, open: false }));
       }
     },
-    [excalidraw.attachmentId, replaceExcalidraw]
+    [excalidraw.attachmentId, getAttachmentDeps, replaceExcalidraw]
   );
 
   if (!editor) {
@@ -418,9 +403,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         />
 
         {/* Mounted whenever the editor is editable, whatever the toolbar shows. */}
-        {editable && (
-          <AudioRecorderHost editor={editor} getDeps={() => attachmentDepsRef.current} />
-        )}
+        {editable && <AudioRecorderHost editor={editor} getDeps={getAttachmentDeps} />}
         {footer}
 
         {/* `openOnClick` is off inside the editor, so this is the only way to see
