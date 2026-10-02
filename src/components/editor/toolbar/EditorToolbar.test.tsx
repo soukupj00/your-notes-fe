@@ -35,12 +35,8 @@ function createEditor() {
 }
 
 /**
- * Make the bar believe its row is wider than its box.
- *
- * jsdom lays nothing out, so every element measures 0 and `useEdgeFade` can
- * never discover an overflow - which since Step 8 is the only condition that
- * pins anything. These are the two numbers it reads; the returned function must
- * be called, as this repo does not set `restoreMocks`.
+ * Makes the row wider than its box: jsdom measures 0, so `useEdgeFade` never sees an
+ * overflow. Call the returned restore, as this repo does not set `restoreMocks`.
  */
 function stubOverflow({ scrollWidth, clientWidth }: { scrollWidth: number; clientWidth: number }) {
   const spies = [
@@ -193,10 +189,8 @@ describe('EditorToolbar', () => {
       renderToolbar(LAYOUT);
       const bar = screen.getByTestId('editor-toolbar');
       const pin = bar.querySelector('[data-pinned]');
-      // Padding here would latch the pin on: a bar that fit unpinned would
-      // overflow *because* it pinned, and could then never unpin. The wrapper
-      // must therefore measure exactly what its buttons measure - same gap as
-      // the bar, nothing else.
+      // Padding here would latch the pin on: a bar that fit unpinned would overflow
+      // because it pinned. The wrapper must measure exactly what its buttons measure.
       expect(pin?.className).toContain('gap-1');
       expect(pin?.className).not.toMatch(/(^|\s)-?p[xlrtby]?-/);
     } finally {

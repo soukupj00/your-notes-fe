@@ -4,17 +4,9 @@ import i18n from '@/i18n';
 type FlagComponent = typeof GB;
 
 /**
- * What a shipped locale needs beyond its code, keyed by the code.
- *
- * Flags come from `country-flag-icons`, which keys on ISO 3166-1 *country*
- * codes rather than language codes, so the mapping has to be written out. Doing
- * it statically also lets the bundler drop the package's several hundred unused
- * flag components.
- *
- * The name is the endonym - each language written in itself - because this is
- * the one control a user reaches for precisely when the current UI language is
- * one they cannot read. "Čeština" is findable from an English UI; "Czech" is
- * not findable from a Czech one.
+ * Written out because `country-flag-icons` keys on country codes, not language codes, and a static
+ * map lets the bundler drop unused flags. Names are endonyms, as this control is reached for when
+ * the UI is in a language the user cannot read.
  */
 const LOCALE_DETAILS: Record<string, { Flag: FlagComponent; name: string }> = {
   en: { Flag: GB, name: 'English' },
@@ -28,13 +20,8 @@ export type Locale = {
 };
 
 /**
- * Every locale the app ships, for the switchers in the topbar and in Settings.
- *
- * `supportedLngs` stays the single source of truth for which locales exist -
- * it is what i18next itself will actually load - so adding one is still a
- * change to `i18n.ts` plus an entry above. A code with no entry is listed under
- * its own code with no flag rather than being hidden: a translation that
- * shipped but was never described here should look unfinished, not absent.
+ * `supportedLngs` in `i18n.ts` stays the source of truth for which locales exist. A code missing
+ * above is listed by its code with no flag, so it looks unfinished rather than absent.
  */
 export function listLocales(): Locale[] {
   return (

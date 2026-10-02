@@ -11,12 +11,7 @@ declare module '@tiptap/core' {
   }
 }
 
-/**
- * Custom inline-image node (M3 Slice 1), built on the shared attachment-node
- * factory (M3 Slice 2). Unlike @tiptap/extension-image it persists NO src -
- * only `data-attachment-id`, resolved to a Blob object URL by the NodeView
- * (editor) and <NoteBody> (read-only).
- */
+/** Unlike @tiptap/extension-image it persists no src, only `data-attachment-id` (ADR 0007). */
 export function createImage(getDeps: () => AttachmentDeps) {
   return createAttachmentNode(getDeps, {
     name: 'imageAttachment',

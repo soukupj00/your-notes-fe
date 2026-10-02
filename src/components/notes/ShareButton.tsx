@@ -19,10 +19,8 @@ import type { Share } from '@/data/Remote.ts';
 import { cn } from '@/lib/utils.ts';
 
 /**
- * The note bar's Share Link control (CONTEXT.md "Share Link"). Present only
- * while signed in, because the link is the server's, and never on a trashed
- * Note, which the server would not show. A Note already shared carries the
- * pin's pressed mark, so its owner can see an open link before tapping.
+ * Only while signed in, because the link is the server's, and never on a trashed Note, which the
+ * server would not show. A shared Note carries the pressed mark, so its owner sees the open link.
  */
 export function ShareButton({
   noteId,

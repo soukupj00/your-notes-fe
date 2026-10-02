@@ -1,12 +1,10 @@
 import { moveById } from '@/lib/move-by-id.ts';
 import type { ToolbarFamilyPref, ToolbarLayout } from './types';
 
-/** Reorder the families of one Width Class. Array position is bar order. */
 export function moveFamily(layout: ToolbarLayout, activeId: string, overId: string): ToolbarLayout {
   return moveById(layout, activeId, overId);
 }
 
-/** Reorder the leaves inside one family. Other families are untouched. */
 export function moveMember(
   layout: ToolbarLayout,
   familyId: string,
@@ -20,11 +18,8 @@ export function moveMember(
 }
 
 /**
- * Change a family's own state (`on`, `collapsed`).
- *
- * Every edit here returns a *storage-shaped* Layout, unknown ids and all: the
- * settings editor writes its result straight back to the blob, so an id this
- * build cannot render must survive being edited around (ADR 0011, decision 8).
+ * Every edit here keeps the Layout storage-shaped, unknown ids and all, because
+ * Settings writes it straight back (ADR 0011, decision 8).
  */
 export function updateFamily(
   layout: ToolbarLayout,
@@ -34,7 +29,6 @@ export function updateFamily(
   return mapFamily(layout, familyId, (family) => ({ ...family, ...patch }));
 }
 
-/** Turn one leaf on or off inside its family. */
 export function setMemberOn(
   layout: ToolbarLayout,
   familyId: string,

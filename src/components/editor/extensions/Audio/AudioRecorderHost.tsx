@@ -12,8 +12,7 @@ export interface AudioRecorderHostProps {
   getDeps: () => AttachmentDeps;
 }
 
-/** RecorderError code -> translation key. 'denied' keeps the legacy 'permission'
- *  key; the rest are distinct so the toast tells the true cause. */
+/** 'denied' keeps the legacy 'permission' key. */
 const ERROR_KEY: Record<string, string> = {
   denied: 'editor.audio.errors.permission',
   unsupported: 'editor.audio.errors.unsupported',
@@ -30,17 +29,9 @@ const EXT: Record<string, string> = {
   'audio/wav': 'wav',
 };
 
-/**
- * The one recorder an editor has. Mounted by the Editor for as long as it is
- * editable, whatever the toolbar shows: the mic button used to own this, and on
- * a phone that button sits inside a collapsed menu, so a "Voice note" started
- * from the speed dial waited for a recorder that only existed once the user
- * happened to open that menu.
- *
- * Renders nothing until a take is running, then the take's controls (timer,
- * waveform, Cancel, Stop) in the editor's own flow, above the note bar and the
- * toolbar - a place that exists on every layout.
- */
+/** The editor's one recorder, mounted while the editor is editable whatever the toolbar
+ *  shows, so a voice note started from the dial never waits on a collapsed menu.
+ *  See src/components/editor/CLAUDE.md, Audio. */
 export function AudioRecorderHost({ editor, getDeps }: AudioRecorderHostProps) {
   const rec = useAudioRecorder();
   const capture = editor.storage.audioAttachment.capture;

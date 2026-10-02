@@ -14,14 +14,12 @@ import {
 import { DeleteButton, SaveButton } from '@/components/ui/EntityActionButtons';
 import { type ExcalidrawScene, emptyScene } from './scene';
 
-/** Minimal structural view of the bits of Excalidraw's imperative API we read on
- *  Save. Kept local (not imported from the package's type path) so the dialog is
- *  decoupled from the heavy lib's type surface. */
+/** Local structural type, so the dialog does not depend on the package's type paths. */
 interface ExcalidrawApi {
   getSceneElements: () => readonly unknown[];
   getAppState: () => Record<string, unknown>;
   getFiles: () => Record<string, unknown>;
-  /** Recomputes the canvas offsets Excalidraw caches. See `onAnimationEnd` below. */
+  /** Recomputes the canvas offsets Excalidraw caches. */
   refresh: () => void;
 }
 
@@ -39,10 +37,8 @@ function elementFingerprint(element: unknown): unknown {
   return element;
 }
 
-/** Excalidraw's onChange includes transient canvas state such as viewport size,
- *  zoom, and selection. Those changes are not drawing edits. Element versions
- *  change for every persisted element mutation, while the background color is
- *  the only app-state value authored as part of the drawing in this slice. */
+/** The dirty check compares only what the user authors: element versions and the
+ *  background colour. onChange also fires for viewport, zoom and selection. */
 function sceneFingerprint(scene: ExcalidrawScene): string {
   return JSON.stringify({
     elements: scene.elements.map(elementFingerprint),
@@ -52,9 +48,8 @@ function sceneFingerprint(scene: ExcalidrawScene): string {
 
 export interface ExcalidrawDialogProps {
   open: boolean;
-  /** 'new' has no attachment yet (Save creates); 'edit' updates an existing row. */
+  /** 'new' has no attachment yet, so Save creates one. */
   mode: 'new' | 'edit';
-  /** emptyScene() for 'new'; the parsed stored scene for 'edit'. */
   initialScene: ExcalidrawScene | null;
   /** Commit. Never called with an empty scene (Save is disabled then). */
   onSave: (scene: ExcalidrawScene) => void | Promise<void>;
@@ -65,12 +60,9 @@ export interface ExcalidrawDialogProps {
   t: (k: string) => string;
 }
 
-/** The single shared Excalidraw editing surface. The live canvas lives here (not
- *  inline in the ProseMirror document); the NodeView is a passive preview that
- *  opens this. Three distinct guarded verbs: Save (commit; disabled when empty),
- *  Cancel/X (discard, dirty-guarded), Delete (edit-mode only, confirm-guarded).
- *  Backdrop and Escape never dismiss. Keyed by drawing identity in the parent so
- *  local state resets on each open. */
+/** The one shared drawing surface; the node view is only a preview that opens it.
+ *  Cancel is dirty-guarded, Delete is confirm-guarded, backdrop and Escape never
+ *  dismiss. The parent keys it per drawing so its state resets on each open. */
 export function ExcalidrawDialog({
   open,
   mode,
@@ -85,34 +77,14 @@ export function ExcalidrawDialog({
     initialScene ? sceneFingerprint(initialScene) : sceneFingerprint(emptyScene())
   );
   const [dirty, setDirty] = useState(false);
-  // Save is disabled while the scene has no elements. Seeded from the initial
-  // scene (an existing drawing is immediately saveable) and kept fresh on change.
   const [hasElements, setHasElements] = useState((initialScene?.elements.length ?? 0) > 0);
   const [confirm, setConfirm] = useState<'discard' | 'delete' | null>(null);
 
   const canvasAreaRef = useRef<HTMLDivElement>(null);
 
-  /*
-   * Bound the drawable region to the canvas row.
-   *
-   * The canvas takes a pointer capture on pointerdown, and from then on every
-   * move is delivered to it regardless of what is physically under the cursor.
-   * So a stroke begun below the header kept extending as the pointer travelled
-   * up into the header, writing scene elements above the canvas top: clipped
-   * from view, unreachable without panning, and still present in the exported
-   * image. A drag could reach that strip even though a press could never start
-   * there, which is what made it feel arbitrary.
-   *
-   * Hit-testing cannot fix this - capture bypasses it - so the moves themselves
-   * have to be withheld. A capture-phase listener on `window` sees each move
-   * before it can reach the canvas (capture runs root-down, and this one is
-   * registered on open, ahead of the window listeners Excalidraw attaches when
-   * a drag begins). Above the boundary the event is stopped, so the stroke
-   * simply pauses at the edge and resumes if the pointer comes back down.
-   *
-   * Gated on a drag that started in the canvas, so ordinary pointer traffic
-   * over the header - hovering Save, aiming at the close button - is untouched.
-   */
+  // Withholds moves above the canvas during a canvas drag: pointer capture would let a
+  // stroke run into the header, off-screen but still exported.
+  // Why a capture-phase window listener: src/components/editor/CLAUDE.md, Excalidraw.
   useEffect(() => {
     if (!open) return;
     let drawing = false;
@@ -151,7 +123,7 @@ export function ExcalidrawDialog({
     const api = apiRef.current;
     if (!api) return;
     const elements = api.getSceneElements();
-    if (elements.length === 0) return; // Save never persists an empty scene.
+    if (elements.length === 0) return;
     await onSave({ elements, appState: api.getAppState(), files: api.getFiles() });
   };
 
@@ -174,27 +146,9 @@ export function ExcalidrawDialog({
           onAnimationEnd={(e) => {
             if (e.target === e.currentTarget) apiRef.current?.refresh();
           }}
-          /*
-           * `zoom-in-100` cancels the shared dialog's `zoom-in-95` entrance, and
-           * that is load-bearing rather than taste. Excalidraw sizes its canvas
-           * from `getBoundingClientRect`, which reports the *transformed* box,
-           * while a transform leaves layout size untouched - so a ResizeObserver
-           * never fires and the wrong number is never corrected. Opening mid-scale
-           * cached the container at ~98.5%, leaving the drawable surface ~18px
-           * narrower than the frame and every stroke landing off the cursor by a
-           * margin that grew with the dialog, i.e. worst on desktop. The fade is
-           * kept; only the geometry-corrupting part is dropped.
-           *
-           * Sizing is relative units only. Mobile: true fullscreen. sm+: as much
-           * of the viewport as it can take - a drawing surface has no readable
-           * line length to cap, so unlike the text editor it is not held to a
-           * content width, and `sm:max-w-none` is required to beat the shared
-           * dialog's `sm:max-w-lg`.
-           *
-           * `border-0` on mobile because a fullscreen surface has nothing to be
-           * bordered against - the shared dialog's 1px frame would sit on the
-           * screen edge. The desktop frame comes back at sm+.
-           */
+          // `zoom-in-100` is load-bearing: Excalidraw measures its canvas mid-entrance and
+          // never re-measures, so a scale animation puts every stroke off the cursor.
+          // Details: src/components/editor/CLAUDE.md, Excalidraw.
           className="data-[state=closed]:zoom-out-100 data-[state=open]:zoom-in-100 flex h-[100dvh] w-screen max-w-none flex-col gap-0 rounded-none border-0 p-0 sm:h-[92vh] sm:w-[94vw] sm:max-w-none sm:rounded-lg sm:border"
         >
           <DialogHeader className="flex shrink-0 flex-row items-center gap-2 space-y-0 border-b p-3 text-left">
@@ -228,10 +182,8 @@ export function ExcalidrawDialog({
             </Button>
           </DialogHeader>
 
-          {/* Actions live top-right (not a bottom footer) because Excalidraw owns
-              the bottom edge with its own mobile toolbar. `overflow-hidden` keeps
-              the canvas painting inside its own row; the drawable region is
-              bounded by the clamp in `useEffect` above, not by this. */}
+          {/* Actions sit in the header because Excalidraw's mobile toolbar owns the
+              bottom edge. The drag clamp above bounds the drawing, not overflow-hidden. */}
           <div ref={canvasAreaRef} className="min-h-0 flex-1 overflow-hidden">
             <Excalidraw
               initialData={initialScene as never}

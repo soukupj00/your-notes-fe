@@ -1,28 +1,7 @@
 /**
- * Props - the three Notes the Tour creates so it has something to demonstrate
- * on, and Purges when it ends (CONTEXT.md "Prop"/"Purge", ADR 0015).
- *
- * Nothing here imports `driver.js` or React. The Tour's safety rules are all in
- * this file and they are the part worth testing on their own: a bug here does
- * not make the spotlight land badly, it deletes something the user wrote.
- *
- * The rules, in the order they matter:
- *
- * 1. It **purges**, it does not trash. A Prop that went to Trash would leave
- *    the user three mystery notes to discover and clear.
- * 2. **An edited Prop is not a Prop.** The sweep purges only Props whose
- *    `updatedAt` still matches the baseline the Tour itself last recorded. The
- *    baseline is *not* the seed value: the Tour's own acts write, so every act
- *    that touches a Prop calls `rebaseProp` and nothing else is exempt.
- * 3. **Orphans are swept on the next start.** A reload at step 2 ends the Tour
- *    with no teardown, so the baselines live in the store's `meta` and the
- *    next start runs the same purge over whatever the last run left behind.
- *
- * The functions take their writers (`store`, `purgeNote`) as arguments rather
- * than reaching for `useNoteActions` themselves, and the ones that mutate
- * return the new baselines rather than leaving the caller to re-read them.
- * That keeps the whole module callable from a plain test with no React;
- * `TourProvider` owns the React half.
+ * The Notes the Tour seeds and Purges (CONTEXT.md "Prop", ADR 0015). A bug here deletes what the
+ * user wrote: the sweep purges only a Prop whose `updatedAt` matches the Tour's last baseline, so
+ * every act that writes to a Prop rebases it. A Prop is purged, never trashed.
  */
 
 import type { LocalStore } from '@/data/LocalStore.ts';
@@ -38,9 +17,8 @@ type PurgeNote = (id: string) => Promise<unknown>;
 export type TourProp = { id: string; updatedAt: string };
 
 /**
- * `meta` key the baselines live under: store bookkeeping, not a Preference (ADR 0020).
- * Duplicated in `src/data/dexie/legacyPreferences.ts` (that file can't import
- * from here - `src/data` must not depend on `src/lib/tour`) - rename both together.
+ * Store bookkeeping under `meta`, not a Preference (ADR 0020). Duplicated in
+ * `src/data/dexie/legacyPreferences.ts`, which may not import from here: rename both together.
  */
 export const TOUR_PROPS_META_KEY = 'tourProps';
 
@@ -50,18 +28,9 @@ export const readProps = async (store: LocalStore): Promise<TourProp[]> =>
 export const writeProps = (store: LocalStore, props: TourProp[]) =>
   store.meta.set(TOUR_PROPS_META_KEY, props);
 
-// --- Body markup ------------------------------------------------------------
-//
-// Bodies are TipTap HTML, written out rather than produced by an editor
-// instance: a Prop is fixed content, and mounting ProseMirror to serialise three
-// constant strings would be absurd. What that costs is the guarantee that the
-// markup is what TipTap would have emitted, so `props.test.ts` round-trips every
-// body through a headless editor and asserts it comes back unchanged.
-//
-// A checklist item carries the state twice - `data-checked` and the input's
-// `checked` - for the same reason `lib/checklist.ts` writes both: TipTap parses
-// the first and the card paints the second, and writing only one makes the two
-// surfaces disagree.
+// Bodies are hand-written TipTap HTML, so `props.test.ts` round-trips each through a headless
+// editor to prove TipTap would emit the same. A checklist item carries its state twice, as
+// `lib/checklist.ts` does: TipTap parses `data-checked`, the card paints the input's `checked`.
 
 function taskItem(label: string, checked: boolean): string {
   const box = checked ? '<input type="checkbox" checked="checked">' : '<input type="checkbox">';
@@ -85,26 +54,13 @@ function paragraph(text: string): string {
   return `<p>${text}</p>`;
 }
 
-// --- The three Props --------------------------------------------------------
-
-/**
- * Deliberately mundane content: Props are stage dressing, and they are gone in
- * five clicks. What is not arbitrary is the *shape* of each one.
- *
- * The colours are three distinct palette identities (Cool, Base, Deep in
- * DESIGN.md's terms), so the colour system reads at a glance without a step
- * spending words on it. `weekend` is the tallest card on purpose - a wall of
- * equal cards reads as a grid, and the masonry pack is one of the things step 3
- * is showing. `ideas` is the one step 2 opens and step 3 pins.
- */
-/**
- * Which Prop a step means. Two of the five steps address one in particular -
- * step 2 opens `ideas` and step 3 pins it - and they say so by name rather than
- * by position in `tourProps`, which is an array of ids that has no idea what it
- * is holding.
- */
+/** Steps name the Prop they mean, because `tourProps` is only an array of ids. */
 export type PropKey = 'groceries' | 'weekend' | 'ideas';
 
+/**
+ * Mundane content, deliberate shapes: three distinct palette identities (Cool, Base, Deep in
+ * DESIGN.md), `weekend` the tallest so the wall reads as masonry, not a grid.
+ */
 const PROP_SPECS: { key: PropKey; color?: NoteColor; body: (t: Translate) => string }[] = [
   {
     key: 'groceries',
@@ -134,36 +90,18 @@ const PROP_SPECS: { key: PropKey; color?: NoteColor; body: (t: Translate) => str
 ];
 
 /**
- * The Prop a step is talking about, or `undefined` if this run has none.
- *
- * Position is the link between the two, because `createProps` writes the specs
- * in order and `tourProps` keeps it - `props.test.ts` pins that. The alternative
- * was a third field on the stored baseline, which would have put a Prop's *name*
- * in the preferences blob for the sake of two call sites.
- *
- * `undefined` is reachable in normal use: a run restored from a half-finished
- * one, or a user who deleted a Prop mid-Tour, leaves a shorter list. The steps
- * that ask treat it as "nothing to demonstrate on" and simply do not act.
+ * Matched by position, which `createProps` writes in spec order and `props.test.ts` pins, rather
+ * than storing each Prop's name for two call sites. `undefined` is normal after a restored run or
+ * a mid-Tour delete, and the asking step then does not act.
  */
 export function propByKey(props: TourProp[], key: PropKey): TourProp | undefined {
   return props[PROP_SPECS.findIndex((spec) => spec.key === key)];
 }
 
-// --- Lifecycle --------------------------------------------------------------
-
 /**
- * Seeds the three Props and records their baselines.
- *
- * Created one at a time rather than in parallel so the wall's default
- * `updated desc` order is the reverse of the table above and is the same on
- * every run - a Tour that deals its own cards differently each time is a Tour
- * whose steps cannot describe what the user is looking at.
- *
- * The baselines are written *before* the rows, on purpose: there is no
- * cross-store transaction on the seam (ADR 0020), and a crash between the two
- * writes then leaves baselines for notes that do not exist - which
- * `purgeProps` already tolerates - rather than notes with no baseline, which
- * would never be swept.
+ * Written one at a time so the wall deals the same cards in the same order on every run. Baselines
+ * go first, as there is no cross-store transaction (ADR 0020): a crash in between leaves baselines
+ * for missing notes, which the sweep tolerates, rather than notes that would never be swept.
  */
 export async function createProps(store: LocalStore, t: Translate): Promise<TourProp[]> {
   const notes = PROP_SPECS.map((spec) =>
@@ -180,13 +118,9 @@ export async function createProps(store: LocalStore, t: Translate): Promise<Tour
 }
 
 /**
- * Re-reads one Prop's `updatedAt` into the baseline. **Every act that writes to
- * a Prop calls this** - pinning it, colouring it, or leaving its editor - or the
- * sweep will read the Tour's own writing as the user's and refuse to clean up.
- *
- * A Prop that is no longer there keeps its entry: `purgeProps` already tolerates
- * a missing row, and dropping it here would mean two places that decide what
- * "gone" means.
+ * Every act that writes to a Prop (pin, colour, leaving its editor) must call this, or the sweep
+ * reads the Tour's own write as the user's edit and keeps the Prop. A missing Prop keeps its
+ * entry, so `purgeProps` stays the one place that decides what "gone" means.
  */
 export async function rebaseProp(
   store: LocalStore,
@@ -199,21 +133,9 @@ export async function rebaseProp(
 }
 
 /**
- * Purges every Prop still matching its baseline and returns the ids it removed.
- *
- * This is both halves of the sweep: the teardown at the end of a Tour, and the
- * abandoned-run sweep at the start of the next one. They are the same question
- * asked of the same list, so they are the same call - the only difference is
- * which run left the list behind.
- *
- * Two Props are skipped, and both are correct. One the user **edited** is theirs
- * now, so it stays on their wall. One the user **deleted** is already gone (or
- * sitting in Trash with a bumped `updatedAt`, which is the edited case), so
- * there is nothing to do.
- *
- * The caller clears `tourProps` afterwards **regardless** of what came back: a
- * kept Prop is an ordinary Note, and a baseline for a note the Tour will never
- * touch again is just a stale row waiting to purge something on a later run.
+ * Both the end-of-Tour teardown and the next start's sweep of an abandoned run. Edited and deleted
+ * Props are skipped. The caller clears `tourProps` afterwards regardless of the result, so a kept
+ * Prop's stale baseline cannot purge it on a later run.
  */
 export async function purgeProps(
   store: LocalStore,

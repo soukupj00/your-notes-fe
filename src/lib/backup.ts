@@ -35,10 +35,8 @@ export class BackupError extends Error {
   }
 }
 
-// Rows are validated *loosely*: the fields below are the ones a restore cannot
-// work without (keys, the indexed `state`, timestamps), and everything else
-// passes through untouched. That way a backup taken after a future model gains
-// a field still restores it, instead of the schema quietly dropping it.
+// Loose: only the fields a restore cannot work without are checked, and everything else passes
+// through, so a field a future model gains survives a restore instead of being dropped.
 const noteSchema = z.looseObject({
   id: z.string(),
   state: z.enum(['active', 'archived', 'trashed']),
@@ -126,13 +124,8 @@ async function bytesOf(blob: Blob): Promise<Uint8Array> {
 }
 
 /**
- * Snapshots the whole database into a zip: one `manifest.json` holding every
- * row, plus one entry per attachment blob.
- *
- * Blobs stay out of the manifest deliberately - base64 inside JSON would cost a
- * third more space and force the entire (potentially hundreds of MB) payload
- * through a single string. They are also stored uncompressed, because PNG/WebM
- * bytes are already compressed and deflating them again only burns CPU.
+ * Blobs are their own zip entries, not base64 in the manifest, which would cost a third more and
+ * force hundreds of MB through one string. They are stored uncompressed, as media already is.
  */
 export async function buildBackupZip(store: LocalStore): Promise<Blob> {
   const { notes, tags, noteTags, attachments } = await store.exportAll();
@@ -140,10 +133,8 @@ export async function buildBackupZip(store: LocalStore): Promise<Blob> {
   const entries: Zippable = {};
   const attachmentMeta = [];
 
-  // Every blob read is independent, so they run together rather than paying
-  // each read's latency in series. Peak memory is unchanged - the bytes all had
-  // to be resident in `entries` before zipping either way. The writes are then
-  // replayed in table order, so an archive's layout stays deterministic.
+  // Read in parallel: every byte must be resident before zipping anyway, so peak memory is the
+  // same. Entries are then written in table order, so the archive layout stays deterministic.
   const read = await Promise.all(
     attachments.map(async ({ blob, thumbnail, ...meta }) => ({
       meta,
@@ -184,10 +175,8 @@ export async function buildBackupZip(store: LocalStore): Promise<Blob> {
 }
 
 /**
- * Validates a backup end to end *without touching the database*. Restore is
- * replace-all, so every possible rejection - unreadable zip, bad manifest,
- * attachment bytes the manifest promised but the zip lacks - has to surface
- * here, while the user's current data is still intact.
+ * The only validation gate, and it never writes: restore is replace-all, so every rejection has
+ * to surface here while the user's current data is still intact.
  */
 export async function parseBackupZip(data: Uint8Array): Promise<ParsedBackup> {
   let files: Unzipped;
@@ -230,15 +219,9 @@ export async function parseBackupZip(data: Uint8Array): Promise<ParsedBackup> {
 }
 
 /**
- * Replace-all restore: wipes the store and writes the backup's rows
- * atomically, so a failure part-way through rolls back to the data the user
- * had rather than leaving a half-restored database.
- *
- * `manifest.settings` is a leftover from before Preferences left the store
- * (ADR 0020, see `buildBackupZip`); it is read here and ignored.
- *
- * Only ever call this with the output of `parseBackupZip` - it assumes the
- * backup has already been validated.
+ * Atomic replace-all, so a failure part-way rolls back to the user's data. Only call it with
+ * `parseBackupZip`'s output, as it trusts that validation. `manifest.settings` is ignored
+ * (ADR 0020).
  */
 export async function restoreBackup(
   store: LocalStore,
@@ -286,9 +269,8 @@ export function downloadBlob(blob: Blob, filename: string): void {
 export interface SaveTarget {
   write(blob: Blob): Promise<void>;
   /**
-   * True when the browser told us where the bytes go, so a resolved `write`
-   * really means the file landed. False on the anchor fallback, where the save
-   * is fire-and-forget - callers must not claim success on that path.
+   * False on the anchor fallback, where the save is fire-and-forget: callers must not claim the
+   * file landed. True means a resolved `write` really did save it.
    */
   confirmed: boolean;
 }
@@ -307,16 +289,8 @@ type ShowSaveFilePicker = (options: {
 const isAbort = (error: unknown) => (error as { name?: string } | null)?.name === 'AbortError';
 
 /**
- * Asks the user where a file should go, **before** it has been built.
- *
- * Order matters twice. `showSaveFilePicker` needs the click's user activation,
- * which awaiting a multi-second zip would spend; and for the import safety copy
- * this call is the last point where a cancel can still abandon the whole
- * operation without anything having been touched.
- *
- * Returns null when the user cancelled. Where the API is missing the file is
- * simply downloaded and the target reports `confirmed: false`, because a plain
- * anchor download gives us no completion or cancellation signal at all.
+ * Asks where the file goes before it is built: the picker needs the click's user activation, and
+ * a cancel here (null) still abandons an import untouched. Without the API it just downloads.
  */
 export async function requestSaveTarget(filename: string): Promise<SaveTarget | null> {
   const fallback: SaveTarget = {

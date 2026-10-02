@@ -21,20 +21,15 @@ function SkipToContentLink({ children }: { children: React.ReactNode }) {
   );
 }
 
-/**
- * The nav shell (ADR 0010): the vendored shadcn `Sidebar` owns the full-height
- * left column - an icon-collapsible rail from `sm:` up, a `Sheet` drawer below
- * it - and `Navbar` is the header row inside `SidebarInset`.
- */
+/** The nav shell (ADR 0010; CLAUDE.md, Nav shell). */
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const [open, setOpen] = useSidebarOpen();
 
   return (
     <SidebarProvider open={open} onOpenChange={setOpen}>
-      {/* First thing in the tab order, visible only once focused: the sidebar
-          lists every destination plus every label, so a keyboard user would
-          otherwise tab through the whole nav on every page. */}
+      {/* The sidebar lists every destination and label, so without this a keyboard user tabs
+          through the whole nav on every page. */}
       <SkipToContentLink>{t('nav.skipToContent')}</SkipToContentLink>
 
       <Sidebar collapsible="icon">
@@ -58,20 +53,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </SidebarContent>
       </Sidebar>
 
-      {/* SidebarInset renders the `<main>` itself - we must not nest a second
-          one. The old <main> padding moves to the content wrapper rather than
-          here, so the sticky Navbar still spans the full width and sits flush
-          against the top. */}
+      {/* SidebarInset renders the `<main>` itself; do not nest a second one. */}
       <SidebarInset className="min-w-0">
         <Navbar />
-        {/* Extra bottom padding on mobile so the fixed quick-capture bar
-            (rendered by the notes feed) never covers content. */}
-        {/* `tabIndex={-1}` so the skip link can actually move focus here -
-            a plain anchor target is not focusable on its own. */}
-        {/* The gutters carry the horizontal insets so text never runs under a
-            landscape notch, and the mobile bottom padding carries the vertical
-            one: it exists to clear the fixed quick-capture bar, which now floats
-            a home-indicator's height higher than it used to. */}
+        {/* `tabIndex={-1}` so the skip link can move focus here. The mobile bottom padding
+            clears the fixed quick-capture bar. */}
         <div
           id="main-content"
           tabIndex={-1}

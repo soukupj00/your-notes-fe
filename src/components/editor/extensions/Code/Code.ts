@@ -6,7 +6,6 @@ export interface CodeExtensionOptions extends CodeOptions {
   button: (context: ButtonContext) => ButtonView;
 }
 
-/** Inline `code` mark - the short-span sibling of the block-level CodeBlock. */
 export const Code = TiptapCode.extend<CodeExtensionOptions>({
   addOptions() {
     return {

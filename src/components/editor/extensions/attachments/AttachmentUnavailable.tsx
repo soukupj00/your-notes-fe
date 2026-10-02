@@ -1,16 +1,8 @@
 import { NodeViewWrapper } from '@tiptap/react';
 import type { ReactNode } from 'react';
 
-/**
- * What a NodeView draws when its blob is gone: a dashed placeholder holding the
- * node's place so the body still says something was here, plus the delete
- * control that is the only useful thing left to do with it.
- *
- * Shared by every attachment kind whose delete button is an `overlay` one - the
- * button positions itself absolutely, which is what the wrapper's `relative` is
- * for. Audio keeps its own placeholder: its delete button is the inline variant
- * and has to sit inside the row as a flex sibling, not over it.
- */
+/** Holds a lost attachment's place, so the body still says something was here. For kinds
+ *  with an `overlay` delete button; Audio's inline button needs its own placeholder. */
 export function AttachmentUnavailable({
   label,
   deleteButton,

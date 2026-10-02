@@ -27,32 +27,21 @@ function Navbar() {
   // Settings has no feed, so it gets no search box: a control that silently
   // does nothing is worse than an absent one.
   const searchable = useIsFeedRoute();
-  // Shared with Settings → Language, so the topbar and the settings page can
-  // never end up offering different sets of languages.
+  // Shared with Settings → Language, so the two never offer different languages.
   const locales = listLocales();
   // Mobile only. Desktop needs none of it: the rail is permanently visible, so
   // it already says where you are and reaches everywhere in one click.
   const topbar = useTopbar();
 
   return (
-    // Sticky so the search box, sort menu and label filters stay reachable in a
-    // long feed - the feed's visible title row was dropped in favour of them.
-    // z-10 matches the sidebar panel and stays under QuickCaptureBar's z-40.
-    // `pt-[--safe-top]` on the header itself rather than on the rows inside it,
-    // so `bg-chrome` paints *under* the status bar instead of leaving a
-    // transparent strip above a floating bar. The horizontal insets matter only
-    // in landscape on a notched phone, where the bar would otherwise start
-    // beneath the sensor housing.
+    // z-10 matches the sidebar panel and stays under QuickCaptureBar's z-40. The safe
+    // insets pad the header itself, so `bg-chrome` paints under the status bar.
     <header className="nav-scroll-shadow sticky top-0 z-10 bg-chrome pt-[var(--safe-top)] pr-[var(--safe-right)] pl-[var(--safe-left)] sm:border-b">
-      {/* Web Navbar */}
       <div className="hidden items-center justify-between px-4 py-2 sm:flex">
-        {/* Left: the sidebar toggle. The brand lives in SidebarHeader now. */}
         <SidebarTrigger />
 
-        {/* Center: Search */}
         <div className="max-w-md flex-1 px-4">{searchable && <SearchInput enableShortcut />}</div>
 
-        {/* Right: Icons */}
         <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -94,16 +83,13 @@ function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Navbar. One rule shapes it: the drawer trigger belongs to
-          Destinations, and a page with a parent gets back (`topbar.ts`). No logo
-          here either - it clutters the bar and lives in SidebarHeader, so it
-          still shows inside the drawer the trigger opens. */}
+      {/* A Destination gets the drawer trigger, a page with a parent gets back
+          (`topbar.ts`). */}
       <div className="sm:hidden">
         <AppBar
           left={topbar.kind === 'destination' ? <SidebarTrigger /> : <BackButton />}
-          // The search box takes the middle only when there is no title to put
-          // there; with a title it drops to its own row below, so it stays
-          // full-bleed instead of being squeezed between two 44px controls.
+          // With a title, search drops to its own row rather than squeeze between
+          // two 44px controls.
           center={
             topbar.title ? (
               <span className="truncate font-medium text-title">{topbar.title}</span>
@@ -111,11 +97,6 @@ function Navbar() {
               searchable && <SearchInput />
             )
           }
-          // The gear goes straight to Settings, the same as it does on desktop.
-          // It used to open a mini-dialog holding a copy of the language and
-          // theme controls, which existed because Settings was a one-way trip
-          // on a phone - there was no back button to come home with. Now there
-          // is, so the copy is just a second place for a setting to live.
           right={
             topbar.kind === 'destination' && (
               <Button variant="ghost" size="icon" className={CHROME_ICON_BUTTON} asChild>

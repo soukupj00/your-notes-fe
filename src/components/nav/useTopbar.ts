@@ -11,12 +11,8 @@ export type ResolvedTopbar = Omit<TopbarConfig, 'title'> & {
 };
 
 /**
- * `resolveTopbar` plus the one title it cannot resolve on its own.
- *
- * The tag lookup is a second subscription to a row the tag route is already
- * watching. That duplication is deliberate: the alternative is threading the
- * name up from the view into the bar above it, which is the parent-write this
- * whole approach exists to avoid, and the cost is one indexed `get`.
+ * The tag title is a deliberate second subscription to a row the tag route already watches:
+ * threading the name up from the view is the parent-write `resolveTopbar` exists to avoid.
  */
 export function useTopbar(): ResolvedTopbar {
   const { t } = useTranslation();
@@ -34,9 +30,8 @@ export function useTopbar(): ResolvedTopbar {
   if (config.title?.kind === 'key') {
     title = t(config.title.key);
   } else if (config.title?.kind === 'tag') {
-    // The lookup resolves a frame late, and can fail outright if the tag was
-    // deleted in another tab. Same fallback the route's own heading uses, so the
-    // bar and the heading never disagree.
+    // Late by a frame, or missing if the tag was deleted elsewhere. Same fallback as the
+    // route's heading, so the two never disagree.
     title = tag?.name ?? t('nav.labels');
   }
 

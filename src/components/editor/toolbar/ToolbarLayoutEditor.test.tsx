@@ -46,12 +46,8 @@ function renderEditor(initialWidthClass: WidthClass = 'wide') {
 }
 
 /**
- * Give the sortable rows a vertical geometry.
- *
- * jsdom reports every rect as 0x0, and `@dnd-kit`'s keyboard sensor decides
- * where a lifted row can go by comparing rects - so without this the keyboard
- * path would be untestable rather than broken. Rows are stacked in DOM order at
- * their real 44px height; everything else keeps the empty rect jsdom gives it.
+ * jsdom reports 0x0 rects and dnd-kit's keyboard sensor compares rects, so rows are
+ * stacked in DOM order at their real 44px height; everything else stays 0x0.
  */
 const ROW_HEIGHT = 44;
 function stubRowGeometry() {
@@ -146,7 +142,7 @@ describe('the family list', () => {
 
 describe('the fold marker', () => {
   it('marks where a phone stops showing buttons, on the compact Layout only', async () => {
-    // Everything on Compact is 32 buttons on a bar that fits seven.
+    // Everything on Compact is 32 buttons on a bar that fits six.
     localStorage.setItem(
       PREFERENCES_STORAGE_KEY,
       JSON.stringify({
@@ -170,7 +166,7 @@ describe('the fold marker', () => {
     renderEditor('compact');
     await screen.findAllByRole('switch');
 
-    // The tuned Compact default is exactly the seven slots a phone shows.
+    // The tuned Compact default is exactly the six slots a phone shows.
     expect(screen.queryByText(/settings\.toolbar\.fold/)).not.toBeInTheDocument();
   });
 });

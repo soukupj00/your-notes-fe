@@ -15,20 +15,14 @@ type ReminderButtonProps = {
   className?: string;
 };
 
-// `dark:[color-scheme:dark]` is the only way to reach inside a native control:
-// the calendar glyph the browser paints in a `datetime-local`, the select's
-// arrow and the picker panel itself are UA-drawn, and at the default `normal`
-// they are painted black-on-black in the night theme. Measured in Chromium.
+// `dark:[color-scheme:dark]` is the only way into the UA-drawn parts of native controls (picker
+// glyph, select arrow, picker panel), which otherwise paint black-on-black at night.
 const FIELD =
   'h-9 w-full rounded-control border border-input bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:[color-scheme:dark]';
 
 /**
- * The one place a Reminder is set (ADR 0021).
- *
- * There is a single primary action and it both saves and hands off, because a
- * Reminder the calendar was never offered is a chip that promises an alarm
- * nothing will sound. The inputs are the platform's own: a phone brings its
- * native date wheel, and no picker library is involved.
+ * One primary action that both saves and hands off (ADR 0021): a Reminder the calendar was
+ * never offered would promise an alarm nothing sounds. Native inputs, no picker library.
  */
 export function ReminderButton({ reminder, onSet, onClear, className }: ReminderButtonProps) {
   const { t } = useTranslation();
@@ -116,13 +110,8 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
 
         <p className="text-muted-foreground text-xs">{t('reminders.oneWay')}</p>
 
-        {/* Stacked, not side by side. The two labels together are wider than
-            the popover in every locale we ship ("Aktualizovat v kalendáři" +
-            "Zrušit připomenutí"), and a row that fits today stops fitting at
-            the next translation or density. A full-width column cannot
-            overflow by construction. The primary keeps its whole sentence on
-            purpose: it is the only place the user is told that setting a
-            Reminder goes to their calendar. */}
+        {/* Stacked, not side by side (CLAUDE.md, Reminders). The primary keeps its whole sentence:
+            it is the only place the user learns a Reminder goes to their calendar. */}
         <div className="flex flex-col gap-1">
           <Button
             type="button"

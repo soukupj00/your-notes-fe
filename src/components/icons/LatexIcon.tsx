@@ -1,10 +1,6 @@
 import type * as React from 'react';
 
-/**
- * The "TeX" wordmark (uppercase T, lowered E, uppercase X) - the canonical LaTeX/TeX
- * logo, drawn as an SVG so it renders crisply at toolbar-icon size and inherits the
- * current text color. Used for the Mathematics (LaTeX) toolbar button.
- */
+/** The TeX wordmark, as an SVG that inherits the text colour. */
 export function LatexIcon({ className, ...props }: React.SVGProps<SVGSVGElement>) {
   return (
     <svg

@@ -4,10 +4,7 @@ import { Button } from '@/components/ui/button.tsx';
 import { useViewMode } from '@/context/viewModeProvider.tsx';
 import { cn } from '@/lib/utils.ts';
 
-/**
- * Flips the note feed between Masonry and single-column Stack. The icon shows the
- * layout you'll switch *to* (Keep-style), and the accessible label names it.
- */
+/** The icon shows the layout you will switch to, Keep-style, and the accessible label names it. */
 export function ViewModeToggle({ className }: { className?: string }) {
   const { t } = useTranslation();
   const { viewMode, setViewMode } = useViewMode();

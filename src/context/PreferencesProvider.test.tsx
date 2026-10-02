@@ -63,10 +63,8 @@ describe('graceful fallback', () => {
   });
 
   it('absorbs the old enum shape of colorBlind without resetting its neighbours', async () => {
-    // `colorBlind` shipped as an enum before the single-mode decision. A stored
-    // string must not take the whole blob down with it: falling back to
-    // defaults here would silently wipe the user's toolbar and density too,
-    // which is a far worse outcome than losing a setting nothing ever read.
+    // `colorBlind` was an enum before the single-mode decision. A stored string must cost only
+    // itself: falling back to defaults would also wipe the user's toolbar and density.
     store({
       version: PREFERENCES_VERSION,
       colorBlind: 'deuteranopia',
@@ -83,11 +81,9 @@ describe('graceful fallback', () => {
     expect(result.current.preferences.noteButtonAlignment).toBe('left');
   });
 
-  // The same absorber, for the same reason, on the field that changed shape
-  // with the customisable toolbar: `toolbar` was a flat `string[]` of extension
-  // names and `quickCaptureButtons` an array of keys that never matched the
-  // actions. Both are now object shapes, and a stored copy of either must cost
-  // only itself.
+  // The same absorber on the fields the customisable toolbar reshaped: `toolbar` was a flat
+  // `string[]` and `quickCaptureButtons` keys that matched no action. A stored copy of either
+  // costs only itself.
   it('absorbs the pre-registry toolbar and quick-capture shapes without resetting their neighbours', async () => {
     store({
       version: PREFERENCES_VERSION,
@@ -143,10 +139,8 @@ describe('graceful fallback', () => {
 
 describe('v1 → v2 migration (ADR 0013)', () => {
   it('opts a v1 blob into sinking without touching its other settings', async () => {
-    // The whole reason a migration is needed rather than a changed default:
-    // `setPreference` persists the entire parsed blob, so every existing user
-    // already has `sinkCheckedItems: false` on disk and a new default would
-    // reach none of them.
+    // Why a migration and not a changed default: `setPreference` persists the whole blob, so every
+    // existing user already stores `sinkCheckedItems: false` and a new default would reach none.
     store({
       version: 1,
       sinkCheckedItems: false,

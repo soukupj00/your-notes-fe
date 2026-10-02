@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button.tsx';
 import { usePwaInstall } from '@/context/PwaInstallProvider.tsx';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
-/** Browser-gated app installation control. Unsupported and installed browsers see nothing. */
+/** Unsupported and already-installed browsers see nothing. */
 export function PwaInstallSection() {
   const { t } = useTranslation();
   const { canInstall, install } = usePwaInstall();

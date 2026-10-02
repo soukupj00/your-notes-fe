@@ -8,7 +8,6 @@ export function ThemeModeToggleButton() {
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
 
-  // Determine current mode (system resolves to OS preference)
   const isDark = theme === 'dark';
 
   const handleToggle = () => {

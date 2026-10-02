@@ -19,12 +19,11 @@ export interface ConfirmDialogProps {
   cancelLabel: string;
   /** Invoked once, only on confirm. The dialog closes itself first. */
   onConfirm: () => void;
-  /** Style the confirm button as destructive (default: true - most uses delete something). */
+  /** Defaults to true: most uses delete something. */
   destructive?: boolean;
-  /** Optional content between the description and the buttons, for a choice
-   *  that belongs to the confirmation itself (e.g. "back up first"). */
+  /** A choice that belongs to the confirmation itself, e.g. "back up first". */
   body?: ReactNode;
-  /** Optional trigger rendered inside the dialog, for the uncontrolled-feeling cases. */
+  /** A trigger, for the cases that want to feel uncontrolled. */
   children?: ReactNode;
 }
 

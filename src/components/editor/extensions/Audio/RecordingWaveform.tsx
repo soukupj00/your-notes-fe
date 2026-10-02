@@ -1,25 +1,17 @@
 import { useEffect, useRef } from 'react';
 
-/** Number of amplitude bars visible in the scrolling history. */
 const BAR_COUNT = 40;
 const BAR_GAP_RATIO = 0.35;
 /** How often a new bar is sampled - a voice-memo cadence, not per-frame. */
 const SAMPLE_INTERVAL_MS = 80;
 /** Bars never fully flatten, so silence still reads as "listening". */
 const MIN_BAR_HEIGHT_RATIO = 0.12;
-/** Applied to sqrt(peak) (see readPeak) so quiet speech still reads as tall
- *  bars instead of a near-flat line - a straight linear gain leaves normal
- *  speaking volume looking barely audible. */
+/** Applied to sqrt(peak): a linear gain leaves normal speaking volume looking barely audible. */
 const AMPLITUDE_GAIN = 1.6;
 
-/** Live mic amplitude history. Taps the recording MediaStream with a Web Audio
- *  AnalyserNode, samples one peak amplitude value on an interval, and renders
- *  it as a scrolling bar history (voice-memo style) instead of redrawing a raw
- *  time-domain waveform every animation frame - the raw oscilloscope is
- *  inherently jittery since `smoothingTimeConstant` does not apply to
- *  time-domain data. Owns its AudioContext lifecycle: the context and the
- *  sampling interval are torn down when the stream changes or the component
- *  unmounts, so no audio graph outlives the mic. */
+/** A scrolling bar history sampled on an interval, not a per-frame raw waveform, which
+ *  jitters because `smoothingTimeConstant` skips time-domain data. The AudioContext is
+ *  closed with the stream, so no audio graph outlives the mic. */
 export function RecordingWaveform({ stream }: { stream: MediaStream | null }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -39,10 +31,7 @@ export function RecordingWaveform({ stream }: { stream: MediaStream | null }) {
     const data = new Uint8Array(analyser.frequencyBinCount);
     const bars: number[] = [];
 
-    // Peak (not RMS) within the buffer: RMS averages over the whole window
-    // including near-zero crossings, which flattens ordinary speech to a
-    // barely-visible line. A single-sample peak reacts to the loudest instant
-    // in each ~12ms window, which is what a voice-memo bar should track.
+    // Peak, not RMS: RMS averages in the zero crossings and flattens ordinary speech.
     const readPeak = () => {
       analyser.getByteTimeDomainData(data);
       let peak = 0;
@@ -64,8 +53,6 @@ export function RecordingWaveform({ stream }: { stream: MediaStream | null }) {
       const barWidth = slot * (1 - BAR_GAP_RATIO);
       const minHeight = height * MIN_BAR_HEIGHT_RATIO;
       bars.forEach((amp, i) => {
-        // sqrt compresses the 0-1 range so quiet talking (small amp) still
-        // gets a visible boost, not just loud peaks.
         const scaled = Math.min(1, Math.sqrt(amp) * AMPLITUDE_GAIN);
         const barHeight = Math.max(minHeight, scaled * height);
         const x = i * slot + (slot - barWidth) / 2;

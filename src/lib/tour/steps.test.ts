@@ -11,19 +11,9 @@ import { tourTargetSelector } from './targets.ts';
 import { TOUR_WAIT_MS } from './waitFor.ts';
 
 /**
- * The steps are tested against a paper app: a few divs carrying the same
- * `data-tour` names the real one does, and a `TourStage` that mutates them the
- * way the router and Dexie eventually would.
- *
- * That is the whole point of the stage existing. A step's act is "open this
- * note, then wait for the toolbar to appear", and whether the toolbar comes from
- * TipTap or from a `setTimeout` here changes nothing about the step - so the one
- * thing worth pinning, that every act has an inverse and the app ends where it
- * started, is answerable with no app at all.
- *
- * What is *not* answerable here is anything about a rect, since jsdom measures
- * everything as 0x0 - hence the prototype patch below, and hence
- * `e2e/onboarding.spec.ts` for the half that needs a browser.
+ * A paper app: divs with the real `data-tour` names and a `TourStage` that mutates them, which is
+ * enough to pin that every act has an inverse. jsdom measures 0x0, hence the rect patch below and
+ * `e2e/onboarding.spec.ts` for whatever needs a real browser.
  */
 
 beforeAll(() => {
@@ -42,15 +32,8 @@ const PROPS = [
 ];
 
 /**
- * The narrow layout: a `＋` that is both what step 1 points at and what opens
- * the dial, and no dial until it is pressed.
- *
- * The dial's contents are *absent* rather than hidden, because that is what
- * Radix does with a closed popover, and it is the whole basis of how a step
- * reads the dial's state now. It used to be modelled with `aria-expanded` on
- * the `＋`, which was wrong in a way no test could see: driver.js writes that
- * same attribute onto whatever it spotlights, so in the real app it read "open"
- * from the first frame and step 1's exit spent its entire wait budget.
+ * The narrow layout: a `＋` that step 1 points at and that opens the dial. A closed dial is absent,
+ * as Radix leaves it, and that absence is how a step reads its state: never `aria-expanded`.
  */
 const FEED = `
   <button data-tour="capture" data-tour-toggle></button>
@@ -211,12 +194,9 @@ describe('step 1, the capture affordance', () => {
   });
 
   it('does not mistake something else marking the bar for an open dial', async () => {
-    // The regression this file could not see before. The spotlight library
-    // stamps `aria-expanded="true"` (plus `aria-haspopup` and `aria-controls`)
-    // onto whatever it highlights - which at step 1 is the capture bar itself.
-    // Read that, and the wide layout's exit clicks a `div` with no handler and
-    // then waits out the full budget for an attribute it does not own: three
-    // dead seconds per run, and the only symptom a Tour that felt slow.
+    // driver.js stamps `aria-expanded="true"` onto whatever it highlights, here the capture bar.
+    // Reading it made the wide layout's exit click a `div` with no handler and then wait out
+    // the full budget: three dead seconds per run.
     const { stage, calls } = paperApp();
     document.body.innerHTML = DESKTOP_FEED;
     const bar = document.querySelector('[data-tour="capture"]')!;
@@ -309,13 +289,8 @@ describe('a run with nothing to demonstrate on', () => {
 });
 
 describe('every step round-trips', () => {
-  // The contract behind Back: `exit` is an inverse, not a second forward move.
-  // A step that left the app somewhere new would make Back a way of walking
-  // sideways through the app, and would leave the Tour's own litter behind.
-  //
-  // Settled first, because one act deliberately does not wait for itself: step
-  // 1 presses the dial shut and moves on. "Where it found it" is where the app
-  // ends up, not where it is in the frame the act returned.
+  // The contract behind Back: `exit` is an inverse, or Back walks sideways and leaves litter.
+  // Settled before comparing, because step 1 deliberately does not await closing the dial.
   it.each(TOUR_STEPS.map((current) => [current.key, current] as const))(
     '%s leaves the app where it found it',
     async (_key, current) => {
@@ -360,10 +335,8 @@ describe('moving between steps', () => {
   });
 
   it('unwinds the step that opened the scene as well, when ending on a continuation', async () => {
-    // Skipping or finishing on step 6 has to undo step 4's navigation, because
-    // step 4 is where the scene was entered and the two after it have nothing of
-    // their own. `leaveScene` walks the `continues` chain rather than counting,
-    // so this holds however many looks at Settings the Tour grows.
+    // Ending on step 6 must undo step 4's navigation, where the scene was entered.
+    // `leaveScene` walks the `continues` chain, so this holds however long it grows.
     const { stage, calls } = paperApp();
     await step('toolbar').enter?.(stage);
     calls.length = 0;
@@ -375,10 +348,8 @@ describe('moving between steps', () => {
 });
 
 describe('stageRadiusOf', () => {
-  // Set as the longhand, not as `border-radius`: jsdom does not expand the
-  // shorthand into its four corners, so a shorthand here reads back as 0 and
-  // would be testing nothing. Browsers do expand it, which is what the real
-  // `rounded-card` and `rounded-full` classes rely on.
+  // Set as the longhand: jsdom does not expand `border-radius` into its corners, so the
+  // shorthand would read back as 0 and test nothing. Browsers do expand it.
   function withRadius(radius: string) {
     const element = document.createElement('div');
     element.style.borderTopLeftRadius = radius;

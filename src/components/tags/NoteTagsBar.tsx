@@ -16,13 +16,8 @@ type NoteTagsBarProps = {
 };
 
 /**
- * A note's labels plus the control that changes them: removable pills next to
- * the "＋ Label" popover.
- *
- * Assignment needs a persisted note, but the editor opens drafts that don't
- * exist yet - so the id is resolved lazily through `ensureNoteId` on the first
- * change and remembered here (the parent's `noteId` prop stays null: it holds
- * the draft id in a ref, not in state).
+ * A draft's id is resolved lazily through `ensureNoteId` (CLAUDE.md, Tags) and remembered here,
+ * because the parent's `noteId` prop stays null for the whole open.
  */
 export function NoteTagsBar({ noteId, ensureNoteId, className }: NoteTagsBarProps) {
   const [resolvedId, setResolvedId] = useState(noteId);
@@ -61,17 +56,7 @@ export function NoteTagsBar({ noteId, ensureNoteId, className }: NoteTagsBarProp
   };
 
   return (
-    /*
-     * A column, not a wrapping row: the trigger keeps its own line and the pills
-     * flow underneath it.
-     *
-     * The pills are a single `<ul>`, so in one wrapping row they are one flex
-     * item - the moment they outgrow the space beside the trigger the whole
-     * block drops to the next line, and anything after it (the editor bar's
-     * colour and pin) is pushed down again. Stacking makes the trigger's
-     * position independent of how many labels a note carries, which also keeps
-     * the popover anchored where the user last clicked.
-     */
+    /* A column, so the trigger and its popover stay put however many labels a note carries. */
     <div className={cn('flex min-w-0 flex-col items-start gap-1.5', className)}>
       <TagPopover
         tags={tags}

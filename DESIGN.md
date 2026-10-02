@@ -162,6 +162,9 @@ By night the same identity survives as a single neon value that drives the card'
 - **Parchment** (`{colors.canvas-day}`, raised `{colors.canvas-day-raised}`, highest `{colors.canvas-day-high}`): The day canvas and its two lifted surfaces. Warm, hue 84.
 - **Room** (`{colors.canvas-night}`, recessed `{colors.canvas-night-recessed}`, raised `{colors.canvas-night-raised}`): The night canvas. Cool, hue 265. Note that night recesses *darker* to sink a surface where day raises *lighter* - depth reverses with the light, geometry does not.
 - **Rule** (`{colors.rule-day}` / `{colors.rule-night}`): Hairline borders and dividers.
+- **Rule Control** (`oklch(62% 0.025 80)` / `oklch(52% 0.022 265)`, `--rule-control`): The border of a control whose border *is* its shape, such as a text input, a segmented track or the "no colour" swatch.
+  Rule is for dividers and card edges, which never carry a shape alone, and measures only 1.32:1 against the day canvas.
+  Rule Control clears WCAG 1.4.11's 3:1 non-text floor by day against both canvas (3.25:1) and raised (3.56:1).
 - **Ink** (`{colors.ink-day}` / `{colors.ink-night}`), **Ink Soft** (`{colors.ink-day-soft}` / `{colors.ink-night-soft}`): Body and secondary text. Near-neutral in both themes by design.
 
 ### Named Rules
@@ -179,9 +182,9 @@ The original day amber `oklch(58% 0.14 68)` sat in the dead zone between them an
 
 Brightening it to a yellow-amber is the intuitive fix and it *does* solve constraint 1 spectacularly (`oklch(82% 0.16 85)` with dark text measures 10.24:1). But it fails constraint 2 at **1.58:1 against the parchment canvas** - the pill dissolves into the background and stops reading as a button. Verified on the wall: the dark label inside still looks fine, which is exactly what makes this failure easy to miss in a screenshot.
 
-The night theme has no such tension, because a bright accent on a near-black room clears both trivially (10.82:1 against canvas, 10.15:1 on text). **This is the measured justification for the "changes its light" thesis:** the day accent must be deep and the night accent bright, because the canvas underneath them is inverted.
+The night theme has no such tension, because a bright accent on a near-black room clears both trivially (9.99:1 against canvas, 10.16:1 on its label). **This is the measured justification for the "changes its light" thesis:** the day accent must be deep and the night accent bright, because the canvas underneath them is inverted.
 
-Resolved day tone: **`oklch(54% 0.112 80)`** - the hue moved from 68 to 80 so it reads as gold rather than brown, while the lightness stays low enough to hold its edge. Measures 4.96:1 on white text and 4.55:1 against the canvas. Signal (`oklch(51% 0.13 150)`) also passes both (5.24 / 4.81) and remains available as an accent choice, but amber stays the default because it carries the lamplight metaphor.
+Resolved day tone: **`oklch(54% 0.112 80)`** - the hue moved from 68 to 80 so it reads as gold rather than brown, while the lightness stays low enough to hold its edge. Measures 4.99:1 on its label (`oklch(99% 0.008 84)`, not pure white) and 4.57:1 against the canvas. Signal (`oklch(51% 0.13 150)`) also passes both (5.24 / 4.81) and remains available as an accent choice, but amber stays the default because it carries the lamplight metaphor.
 
 Audit test for any new accent: measure it against **both** its on-accent text and its canvas, in **both** themes. Four numbers, all of them above their floor.
 
@@ -192,6 +195,8 @@ Measured on the shipping palette by simulating dichromacy and scoring the *close
 Nine identities cannot survive that, because dichromacy erases most of the hue axis and there is nothing else left to separate them.
 
 So the colour-blind palette is not a re-tint of the default one. It is the same nine identities re-valued to carry identity on **lightness first and hue second**, which necessarily breaks the cohesion above. Its numbers: worst dichromatic pair dE **0.0345** by day and **0.0784** at night, greyscale **0.0110**.
+The values are not hand-picked.
+They come from a search that maximised the closest colliding pair under simulated deuteranopia, protanopia and tritanopia, constrained to stay inside sRGB, to hold each hue within 12 degrees of its name, and to keep chroma even enough that the nine still read as one set.
 
 Two consequences that are binding on anyone touching this:
 
@@ -262,6 +267,11 @@ Mobile is the primary device, so the scarce axis is horizontal. Any card anatomy
 **The 44px Touch Rule.** Every interactive control is at least 44x44px in touch mode. The prototype currently fails this everywhere except the FAB - pin is 27px, card and topbar action buttons are 30px, and checklist boxes are 15px. Padding may be invisible, but it must be there. This is the second thing to fix in the redesign.
 One recorded exception, measured on 2026-09-09: the Checklist box is 16x16 (the Card rail's icon size) with a hit box of exactly its own size, on both the Card and the Editor; on the Card the item's words are the other half of the control. A 44px hit box anchored at the row's edge overlapped the first letters of the item, so a tap meant to place the caret ticked the box instead, and a 32px box read as too large beside the text. If mis-taps show up, grow the visible box; never restore an invisible halo over the text.
 
+**The One-Density-Bundle Rule.** Compact density is one control that moves type and rhythm together, not a spacing control plus a font-size control.
+Shrinking the gap while keeping 1.04rem titles gives a denser wall of cards that are each still the same size, which is not what "more wall at once" means.
+One bundle also keeps the states the contrast and 44px gates were measured against at two rather than a matrix.
+The touch floor is not part of it: compact asks for more information per screen, never for smaller hit boxes, so the 44px Touch Rule holds in both densities.
+
 **The Two-Layouts Rule.** Masonry and Stack are the complete set. Do not add a third feed mode, and do not let either one grow its own card variant - a card that looks different in Stack than in Masonry means the anatomy is wrong, not that Stack needs a special case.
 
 **The Layout-Switch Is Animated Rule.** Switching between Masonry and Stack **animates**: every card travels from its old slot to its new one rather than the wall re-rendering underneath the user. The layout toggle is direct manipulation exactly like pinning, and it is the more dramatic of the two, so it is the one that most needs continuity - a card the user was looking at must remain trackable by eye all the way to its new position.
@@ -276,7 +286,7 @@ Depth is **material, and it reverses with the light**.
 
 By day the system is a soft-shadow one: a hairline `1px` border plus a barely-there drop shadow (`0 1px 2px oklch(40% 0.03 70 / 0.09)`) lifts a card off the parchment, deepening to `0 10px 26px .../0.16` on hover. Surfaces get *lighter* to come forward.
 
-By night shadow stops working, because a black shadow on a near-black room is invisible. Depth is carried by **glow** instead: a card's identity colour emits `0 0 30px -8px` at 70% mix, and surfaces get *darker* to recede (the recessed night canvas is darker than the base, where the raised day canvas is lighter than the base). Hover intensifies the glow to `0 0 46px -10px` at 82%.
+By night shadow stops working, because a black shadow on a near-black room is invisible. Depth is carried by **glow** instead: a card's identity colour lights it from above (`0 -4px 20px -7px` at 58% mix, with a faint `0 3px 10px -6px` at 30% below), and surfaces get *darker* to recede (the recessed night canvas is darker than the base, where the raised day canvas is lighter than the base). Hover intensifies the glow to `0 -4px 24px -8px` at 72% and `0 4px 13px -7px` at 40%.
 
 **The Glow-Carries-Depth-Not-The-Edge Rule.** The night identity is light *around* a card, not a line drawn on it. The first production wall shipped a 52% identity border over a narrow `0 0 18px -4px` glow whose negative spread ate most of its own radius; measured on screen, the edge read as a hot ring and the glow was effectively invisible, which is the opposite of what this section describes. The resting edge sits at 34% and the glow carries the depth. Pinned is the one card allowed a full-identity edge, and that is what makes it separable now that the resting edge has stepped back.
 
@@ -286,13 +296,21 @@ This is the one place the two themes legitimately diverge in mechanism, and it i
 
 - **Rest, day** (`0 1px 2px oklch(40% 0.03 70 / 0.09)`): Every card and raised surface at rest.
 - **Hover, day** (`0 10px 26px oklch(40% 0.03 70 / 0.16)`): Card hover, FAB.
-- **Rest, night** (`0 2px 6px oklch(0% 0 0 / 0.5)` + `0 0 30px -8px` identity glow at 70%, border at 34% identity): Every card at rest.
-- **Hover, night** (`0 14px 32px oklch(0% 0 0 / 0.6)` + `0 0 46px -10px` identity glow at 82%, border at 58% identity): Card hover.
-- **Pinned, night** (`0 0 38px -8px` identity glow at 88%, border at full identity): Pinned state.
+- **Rest, night** (`0 2px 6px oklch(0% 0 0 / 0.5)` + identity glow `0 -4px 20px -7px` at 58% and `0 3px 10px -6px` at 30%, border at 34% identity): Every card at rest.
+- **Hover, night** (`0 14px 32px oklch(0% 0 0 / 0.6)` + identity glow `0 -4px 24px -8px` at 72% and `0 4px 13px -7px` at 40%, border at 58% identity): Card hover.
+- **Pinned, night** (the resting shadows with the identity glow lit to 85% and 45%, border at full identity): Pinned state.
 
 ### Named Rules
 
 **The Glow-Is-Night-Only Rule.** Glow never appears in the day theme; shadow never carries depth in the night theme. A card that glows on parchment looks like a bug, and a card relying on a drop shadow at midnight looks flat.
+
+**The Glow-Stays-In-The-Gutter Rule.** The night glow is directional and bounded by the feed gutter.
+A symmetric glow big enough to read at rest was, on hover, wider than the 0.85rem (13.6px) gutter, so a lit card bled over its neighbours.
+Two shadows do the work instead, a stronger one lifting off the top edge and a faint one below, each with a negative spread that eats most of its blur.
+A shadow's visible reach on a side is `blur / 2 + spread ± offset`: at rest the glow reaches 7px up, 3px sideways and 2px down, on hover 8px, 4px and 3.5px, plus about 3px from the surface's 1.02 hover scale.
+The worst case, a hovered card below a resting one, is 8 + 3 + 2 = 13px, inside the 13.6px gutter, so these numbers are a ceiling, not a preference.
+Pinned keeps the resting geometry and only lights it harder: it separates by brightness and its full-identity edge, never by reaching further into its neighbours.
+Computed from the current tokens, night ink holds about 13.1:1 on every card surface, and identity text on a chip ranges from 5.77:1 to 6.54:1.
 
 ## Shapes
 
@@ -322,6 +340,10 @@ The signature component and the whole product surface.
 ### Card anatomy
 
 Five anatomies were built and reviewed on the wall. **Foot rail (A) is the direction**: actions bottom-right revealed on hover, pin top-right, both always visible on touch, and the label row reserves space for them so nothing jumps.
+
+On a coarse pointer the rail's controls are 36px discs inside 44px hit boxes, so each carries about 4px of invisible padding above and below.
+The card therefore trims its own bottom padding there and keeps only 4px above the rail, which lands the visible gap at about 8px on both sides of the icons; the full card padding had left 18px below them, visibly bottom-heavy on a phone.
+The rail row centres its items rather than bottom-aligning them: beside 44px controls, 21px label pills sat 11px below the icons' centre line wherever the two shared a line.
 
 The other four were each tested and rejected, and the reasons are recorded so they are not re-proposed:
 

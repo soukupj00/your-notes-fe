@@ -13,35 +13,18 @@ import {
 import { useTags } from '@/hooks/data/useTags.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
 
-/**
- * The rail is 4rem wide, so this padding is what is left for the buttons inside
- * it: `px-4` leaves exactly 32px, which fits their `size-8` and is 12px short of
- * the 44px floor a Coarse pointer imposes (ADR 0016). A phone in landscape is
- * wide enough for the desktop rail *and* Coarse, and there the buttons
- * overflowed their slot to the right, dragging the first glyphs of their labels
- * into a rail that is supposed to hold icons only.
- *
- * Collapsed, the rail makes room instead of opting out of the floor. 44px hit
- * boxes hung off 32px buttons at this menu's 36px pitch would have overlapped
- * their neighbours by 8px, and a mis-tap in navigation is a worse bug than the
- * one being fixed. At `px-2` there is 48px of content, the button centres in it,
- * and the pitch becomes 48px.
- */
+// A landscape phone brings a Coarse pointer's 44px floor to the desktop rail (ADR 0016).
+// Collapsed, `px-2` leaves a 48px slot, where 44px hit boxes at the default pitch would overlap.
 const GROUP_PADDING = 'px-4 group-data-[collapsible=icon]:px-2';
 
-/**
- * The nav link list, rendered by both the desktop sidebar and the mobile
- * drawer. It closes the drawer itself on selection, so callers do not have to
- * know the drawer exists.
- */
+/** Closes the drawer itself on selection, so callers need not know a drawer exists. */
 export function SideNav() {
   const { t } = useTranslation();
   const tags = useTags();
   const { setOpenMobile, isMobile, state } = useSidebar();
   const closeDrawer = () => setOpenMobile(false);
-  // Collapse is a "give me my screen back" gesture, not a lossless compaction:
-  // the rail carries the four destinations only (ADR 0010). `state` tracks the
-  // desktop rail, so the drawer must not inherit a collapse chosen on a laptop.
+  // The collapsed rail carries the destinations only (ADR 0010). `state` tracks the desktop
+  // rail, so the drawer must not inherit a collapse chosen on a laptop.
   const showLabels = tags.length > 0 && (isMobile || state === 'expanded');
 
   const activeProps = {
@@ -60,8 +43,7 @@ export function SideNav() {
                   <Link
                     to={to}
                     onClick={closeDrawer}
-                    // The router marks the matching link for us; `exact` keeps
-                    // "/" from staying highlighted on every nested route.
+                    // `exact` so "/" is not highlighted on every nested route.
                     activeProps={activeProps}
                     activeOptions={{ exact: to === '/' }}
                   >
@@ -89,12 +71,8 @@ export function SideNav() {
                       onClick={closeDrawer}
                       activeProps={activeProps}
                     >
-                      {/* The dot is the *only* carrier of a label's identity in
-                          the rail, so it must not be the palest thing on the
-                          surface - which is what it was, filled with the card
-                          tint. It takes the identity's strongest value instead
-                          (the day edge, the night neon) over a control-grade
-                          boundary that gives the shape its own 3:1. */}
+                      {/* The dot is a label's only identity in the rail, so it takes the identity's
+                          strongest value over a 3:1 boundary rather than the pale card tint. */}
                       <span
                         {...noteColorAttrs(tag.color)}
                         className="size-3 shrink-0 rounded-full border border-input bg-note-swatch-ring"

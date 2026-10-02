@@ -1,20 +1,16 @@
 import type * as Contract from '@/contract/index.ts';
 
 /**
- * The Remote seam (CONTEXT.md "Remote"; ADR 0020). What the sync engine talks
- * to. The wire shapes come from the vendored contract (`src/contract/`, pulled
- * with `pnpm contract:pull`); this file only adds what the seam needs on top.
- * The `rev` fields on local rows land with the Dexie bump in M5 slice 3.
+ * The Remote seam (CONTEXT.md, ADR 0020) the sync engine talks to. Wire shapes come from the
+ * vendored contract (`src/contract/`, `pnpm contract:pull`); this file adds only the seam's own.
  */
 
 /** A row plus the Revision (ADR 0017) it was last in agreement with. Absent = never pushed. */
 export type Revisioned<T> = T & { rev?: number };
 
 /**
- * The record that something was purged, so the deletion reaches offline devices.
- * `id` is the Note's or Tag's id, or for a NoteTag `noteTagId(noteId, tagId)` from the
- * contract, i.e. `${noteId}:${tagId}`.
- * `rev` is the Revision the Device last agreed with for what it purged; absent = never pushed.
+ * Records a purge so the deletion reaches offline Devices. A NoteTag's `id` is the contract's
+ * `noteTagId(noteId, tagId)`; `rev` is the Revision last agreed with, absent = never pushed.
  */
 export type Tombstone = Contract.Tombstone;
 
@@ -25,10 +21,9 @@ export type Tombstone = Contract.Tombstone;
 export type PushBatch = Contract.PushBatch;
 
 /**
- * One per pushed row, in input order: notes, tags, noteTags, tombstones.
- * `id` for a noteTag is `noteTagId(noteId, tagId)`, the same form as its Tombstone.
- * `conflict` carries the server row; a stale note or tag Tombstone answers `conflict`
- * too, so a purge never discards a newer edit. `gone` means the id is tombstoned.
+ * One per pushed row, in input order: notes, tags, noteTags, tombstones. `conflict` carries the
+ * server row, and a stale Tombstone answers it too, so a purge never discards a newer edit.
+ * `gone` means the id is tombstoned.
  */
 export type PushOutcome = Contract.PushOutcome;
 

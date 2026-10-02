@@ -50,17 +50,12 @@ describe('the topbar left slot', () => {
 
     await waitFor(() => expect(appBar()).not.toBeNull());
     expect(within(appBar()).getByRole('button', { name: 'nav.back' })).toBeInTheDocument();
-    // Deliberate: Settings is somewhere you exit and is absent from
-    // `navItems.ts`, so the drawer it would open does not list the page you are
-    // standing on. It trades the trigger for a way out.
+    // Deliberate: Settings is not in `navItems.ts`, so it trades the drawer trigger for a way out.
     expect(within(appBar()).queryByRole('button', { name: 'nav.toggle' })).not.toBeInTheDocument();
   });
 
-  // The regression this file exists for now. Labels is in `navItems.ts` - the
-  // drawer lists it beside Notes, Archive and Trash - and it was the only one of
-  // the four offering back instead, to a parent the user had very likely never
-  // been on. It lived at `/settings/labels` then; being a Destination is what
-  // decides the control either way, not where the URL sits.
+  // The regression this file guards: Labels is a Destination in `navItems.ts`, so it gets the
+  // trigger, not Back to a parent the user had likely never been on.
   it('is the drawer trigger on the labels Destination', async () => {
     renderRoute('/labels');
 

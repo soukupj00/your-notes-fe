@@ -8,7 +8,6 @@ export interface MathematicsExtensionOptions {
   button: (context: ButtonContext) => ButtonView;
 }
 
-/** Prompt for LaTeX and insert an inline math node at the cursor. */
 function insertMath(editor: Editor, t: TFunction) {
   const latex = window.prompt(t('editor.math.prompt'), '');
   if (latex) {
@@ -16,7 +15,6 @@ function insertMath(editor: Editor, t: TFunction) {
   }
 }
 
-/** Prompt to edit the LaTeX of an existing math node (wired via onClick below). */
 function editMath(
   editor: Editor,
   kind: 'inlineMath' | 'blockMath',
@@ -37,12 +35,6 @@ function editMath(
   }
 }
 
-/**
- * The Mathematics extension (bundles inline + block math). Registering it enables
- * KaTeX rendering and the `$...$` / `$$...$$` input rules, so users can write LaTeX
- * directly. Adds a Pattern A toolbar button that prompts for LaTeX and inserts an
- * inline math node.
- */
 export const Mathematics = TiptapMathematics.extend({
   addOptions() {
     return {
@@ -62,12 +54,7 @@ export const Mathematics = TiptapMathematics.extend({
   },
 });
 
-/**
- * Build the configured Mathematics extension. `getEditor` returns the live editor
- * (not yet available when the extensions array is first constructed), and `t`
- * translates the prompt. Clicking a rendered math node prompts to edit its LaTeX;
- * invalid LaTeX renders as an error instead of throwing (`throwOnError: false`).
- */
+/** `getEditor` is a getter because the editor does not exist yet when this is built. */
 export function createMathematics(getEditor: () => Editor | null, t: TFunction) {
   return Mathematics.extend({
     // Bound here rather than on the base extension because inserting math needs

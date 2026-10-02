@@ -2,6 +2,7 @@
 
 The customisable toolbar was planned as `prefs.toolbar: string[]` of TipTap extension names, but extension names are not buttons (`heading` yields three, `textAlign` three, `history` two), so that shape cannot express "H1 alone", "all three headings" or "one heading dropdown".
 We introduce a **Toolbar Item** registry with a stable id space of its own, group Items into **Families** that are shown either expanded or collapsed, and store one **Toolbar Layout** per **Width Class** as structured per-family records rather than a flat array of ids.
+The numbered decisions that code comments cite as "ADR 0011, decision N" are the list under Decisions in [the plan that implemented this](../superpowers/plans/2026-08-03-m4-slice4-task5-customisable-toolbar.md#decisions).
 
 ## Considered options
 

@@ -4,7 +4,6 @@ import { AttachmentError, validateAttachmentFile } from '@/lib/attachments.ts';
 import type { AttachmentKind } from '@/models.ts';
 import type { AttachmentDeps } from './deps';
 
-/** Derived data computed from the file before it is stored, or nothing. */
 export type DerivedAttachmentData = {
   thumbnail?: Blob;
   duration?: number;
@@ -13,16 +12,9 @@ export type DerivedAttachmentData = {
   height?: number;
 };
 
-/**
- * `deps` with a `createAttachment` that validates the file and derives its card
- * metadata in the same step that stores it.
- *
- * Image and video both need this - a picture wants a thumbnail, a clip wants a
- * poster frame and its length - and both need it *atomically* with the write, so
- * a row can never exist without the preview the feed expects. `deriveData` is
- * the only difference between them, and it is best-effort by contract: whatever
- * it fails to produce it simply omits, and the attachment is stored regardless.
- */
+/** Derives card data (thumbnail, poster, length) in the same step as the write, so a row
+ *  never exists without the preview the feed expects. `deriveData` is best-effort: what it
+ *  cannot produce is omitted and the attachment is stored anyway. */
 export function withDerivedAttachmentData(
   deps: AttachmentDeps,
   kind: AttachmentKind,
@@ -36,9 +28,7 @@ export function withDerivedAttachmentData(
       const validationError = validateAttachmentFile(file, kind);
       if (validationError) throw new AttachmentError(validationError);
       const derived = await deriveData(file);
-      // Whatever could not be derived is left off entirely rather than passed as
-      // an explicit `undefined`: the options argument says "here is extra data",
-      // and a key with nothing behind it is not that.
+      // The options argument means "here is extra data", so empty keys are left off.
       const options = Object.fromEntries(
         Object.entries(derived).filter(([, value]) => value !== undefined)
       ) as DerivedAttachmentData;
@@ -55,9 +45,7 @@ const MIME_PREFIX: Partial<Record<AttachmentKind, string>> = {
   video: 'video/',
 };
 
-/** Validate -> createAttachment -> insert node, for each file matching the
- *  kind's MIME prefix. One getNoteId() per batch (a draft persists once).
- *  insertNode inserts the kind's TipTap node for a new attachment id. */
+/** One getNoteId() per batch, so a draft is persisted once for several files. */
 export async function insertAttachmentFiles(
   _editor: Editor,
   files: FileList | File[],
@@ -91,9 +79,8 @@ export async function insertAttachmentFiles(
   }
 }
 
-/** Clone-on-insert for foreign attachments (cross-note copy/paste). Any
- *  attachment node (image or audio) whose row is owned by another note is
- *  re-pointed at a fresh owned clone; every node sharing an old id is rewritten. */
+/** Cross-note paste: every node whose row another note owns is repointed at a fresh
+ *  clone this note owns. */
 export async function dedupeForeignAttachments(
   editor: Editor,
   deps: AttachmentDeps

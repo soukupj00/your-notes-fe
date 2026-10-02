@@ -16,9 +16,8 @@ import { useAccount } from '@/context/AccountProvider.tsx';
 import { pairingLink } from '@/contract/index.ts';
 
 /**
- * A QR code as one SVG path. Black on white in both themes on purpose: it is
- * read by a camera, not a person, and not every scanner reads an inverted code.
- * The four-module border is the quiet zone the QR specification asks for.
+ * Black on white in both themes: not every scanner reads an inverted code. The
+ * four-module border is the quiet zone the QR specification asks for.
  */
 export function PairingQr({ value, label }: { value: string; label: string }) {
   const { data } = useMemo(() => encode(value, { border: 4 }), [value]);
@@ -38,11 +37,7 @@ export function PairingQr({ value, label }: { value: string; label: string }) {
   );
 }
 
-/**
- * A settings button that mints a Pairing Code and shows it as a Pairing Link:
- * a QR to scan and the address to type. A fresh code each time it opens,
- * because each one works once and for ten minutes.
- */
+/** Mints a fresh code each time it opens, because each one works once and for ten minutes. */
 export function PairingLinkButton({ kind, label }: { kind: 'device' | 'invite'; label: string }) {
   const { t } = useTranslation();
   const { service } = useAccount();

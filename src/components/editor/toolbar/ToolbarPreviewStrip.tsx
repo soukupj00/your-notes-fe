@@ -12,16 +12,8 @@ interface ToolbarPreviewStripProps {
 }
 
 /**
- * What the bar will look like, drawn from the registry rather than from a live
- * editor.
- *
- * Settings has no note open to preview against, and mounting a real TipTap
- * instance to show eight icons would pull the whole editor into the settings
- * route's bundle. So this is deliberately a **picture**: the same icons in the
- * same order, no actions, no active state.
- *
- * It is `aria-hidden` because it restates the list below it, which is the real
- * control and is already announced in order.
+ * A picture of the bar from the registry: a live TipTap would pull the editor into the
+ * settings bundle. `aria-hidden`, because the list below is the real control.
  */
 export function ToolbarPreviewStrip({ layout, widthClass }: ToolbarPreviewStripProps) {
   const { t } = useTranslation();
@@ -33,12 +25,8 @@ export function ToolbarPreviewStrip({ layout, widthClass }: ToolbarPreviewStripP
   );
 
   return (
-    // `data-tour` sits here rather than on `EditorToolbarSection` around it: the
-    // section measures 880px on an 839px phone, so a spotlight over it can never
-    // be seen whole, and the Tour is `inert` so nobody can scroll to the rest.
-    // This strip is also the better target - it is a picture of the bar the step
-    // is talking about. Only Settings mounts the strip (`showPreview`), so there
-    // is one of these in the document.
+    // `data-tour` is here, not on the section, which is taller than a phone screen
+    // while the inert Tour cannot scroll. Only Settings mounts the strip, so it is unique.
     <div data-tour="settings-toolbar" className="flex flex-col gap-1 p-3">
       <span className="text-muted-foreground text-xs">{t('settings.toolbar.preview')}</span>
       <div
@@ -46,11 +34,7 @@ export function ToolbarPreviewStrip({ layout, widthClass }: ToolbarPreviewStripP
         data-testid="toolbar-preview"
         className={cn(
           'flex items-center gap-1 rounded-control border bg-background p-1',
-          // The real compact bar scrolls rather than wrapping and spreads across
-          // the width it has, and the preview has to make the same promises - a
-          // wrapped or left-bunched preview would show a bar the phone never
-          // draws. `justify-between` is inert once the strip overflows, exactly
-          // as it is on the bar itself.
+          // Mirrors the real compact bar, or it would show a bar the phone never draws.
           compact
             ? 'justify-between overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
             : 'flex-wrap'
@@ -61,8 +45,7 @@ export function ToolbarPreviewStrip({ layout, widthClass }: ToolbarPreviewStripP
           return (
             <span key={key} className="flex items-center">
               {compact && index === COMPACT_FOLD_SLOTS && (
-                // Where the phone's screen ends, drawn in the picture itself so
-                // the count and the shape agree.
+                // The fold, drawn so the count and the picture agree.
                 <span className="mr-1 h-7 w-px shrink-0 bg-border" />
               )}
               <span className="flex size-7 shrink-0 items-center justify-center rounded-control text-muted-foreground">

@@ -7,16 +7,9 @@ import type { TFunction } from '../button-types';
 import { SlashMenuList, type SlashMenuListHandle } from './SlashMenuList';
 import { filterSlashItems, type SlashItem } from './slashItems';
 
-/**
- * `/` at the start of an empty block opens a filtered list of blocks and media.
- *
- * This is the keyboard insertion surface: everything the toolbar offers should
- * be reachable without leaving the text, which matters most on mobile, where
- * the toolbar competes with the virtual keyboard for room.
- *
- * `startOfLine` is what keeps it from firing on a URL path or a date typed
- * mid-sentence.
- */
+/** Everything the toolbar offers, reachable without leaving the text: on mobile the toolbar
+ *  competes with the virtual keyboard. `startOfLine` keeps it from firing on a URL path or a
+ *  date typed mid-sentence. */
 export function createSlashMenu(getDeps: () => AttachmentDeps, t: TFunction) {
   return Extension.create({
     name: 'slashMenu',
@@ -39,13 +32,8 @@ export function createSlashMenu(getDeps: () => AttachmentDeps, t: TFunction) {
   });
 }
 
-/**
- * Bridges the Suggestion plugin's imperative lifecycle to a React list.
- *
- * The popup is positioned with floating-ui against the caret rect rather than
- * mounted inline, so it can escape the editor's overflow and flip above the
- * caret near the bottom of the screen.
- */
+/** Positioned with floating-ui against the caret, not mounted inline, so it escapes the
+ *  editor's overflow and flips above the caret near the bottom of the screen. */
 function createRenderer(t: TFunction): SuggestionOptions<SlashItem>['render'] {
   return () => {
     let component: ReactRenderer<SlashMenuListHandle> | null = null;

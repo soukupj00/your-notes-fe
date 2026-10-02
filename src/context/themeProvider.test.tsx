@@ -35,10 +35,8 @@ describe('ThemeProvider', () => {
     expect(document.documentElement).not.toHaveClass('light');
   });
 
-  // The system chrome (Android's status bar, a browser tab's toolbar) can only
-  // be told a colour through this tag, and the manifest's copy is stamped at
-  // build time - so a theme switched at runtime reaches the platform here or
-  // nowhere.
+  // This tag is the only way to colour the system chrome at runtime: the manifest's colour is
+  // fixed at build time.
   it('hands the resolved background to the platform as theme-color', () => {
     document.documentElement.style.setProperty('--background', 'oklch(17% 0.012 265)');
 

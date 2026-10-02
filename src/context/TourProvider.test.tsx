@@ -10,17 +10,9 @@ import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { clearStore, renderHookWithStore, testStore, withStore } from '@/test/store.tsx';
 
 /**
- * What is answerable about the provider *without* a browser.
- *
- * Not much, and deliberately so. jsdom applies no CSS and measures every element
- * as 0x0, so `resolveTourTarget` finds nothing, the spotlight has no rect to cut
- * and no step can be shown at all - which is why the Tour's own behaviour is
- * `e2e/onboarding.spec.ts`, at two real viewports. Everything decidable without
- * a rect was moved to `src/lib/tour/` and is tested there.
- *
- * What is left here is the pair of promises the rest of the app leans on: that
- * the startup sweep clears up after a run nobody finished, and that a component
- * asking whether the Tour is running gets an answer even where there is no Tour.
+ * Only what needs no browser: jsdom measures everything as 0x0, so the Tour itself is tested in
+ * `e2e/onboarding.spec.ts`. Left here: the startup sweep after an unfinished run, and
+ * `useTourActive` without a provider.
  */
 
 vi.mock('react-i18next', () => ({

@@ -62,9 +62,7 @@ describe('editor text style selects', () => {
     expect(editor.getAttributes('textStyle').fontSize).toBe('24px');
   });
 
-  // Both selects used to read "Default" when nothing was set, which said nothing
-  // about which control you were looking at - and on a phone, where there is no
-  // hover, the tooltip that disambiguated them never appears at all.
+  // Both used to read "Default", and on a phone the tooltip that told them apart never appears.
   it('distinguishes the two selects on the closed trigger, without a tooltip', () => {
     const editor = createEditor();
     render(

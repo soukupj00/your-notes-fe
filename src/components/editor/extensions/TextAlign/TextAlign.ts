@@ -11,11 +11,7 @@ const ICONS: Record<Alignment, ButtonView['componentProps']['icon']> = {
   right: 'AlignRight',
 };
 
-/**
- * Upstream binds these already (`Mod-Shift-l/e/r`); we simply never showed them,
- * so three working shortcuts were invisible. No new bindings here - just the
- * hints for the ones that exist.
- */
+/** Hints for upstream's existing bindings; nothing new is bound here. */
 const SHORTCUTS: Record<Alignment, string[]> = {
   left: ['Mod', 'Shift', 'L'],
   center: ['Mod', 'Shift', 'E'],
@@ -26,14 +22,8 @@ export interface TextAlignExtensionOptions extends TextAlignOptions {
   button: (context: ButtonContext) => ButtonView[];
 }
 
-/**
- * Paragraph/heading alignment, contributing one button per alignment (the
- * Heading pattern). `justify` is left out: it reads badly at note width and
- * would be a fourth button nobody reaches for.
- *
- * `types` has to name the block nodes that carry the attribute; without it the
- * commands silently no-op.
- */
+/** `justify` is left out: it reads badly at note width. Without `types` naming the blocks
+ *  that carry the attribute, the commands silently no-op. */
 export const TextAlign = TiptapTextAlign.extend<TextAlignExtensionOptions>({
   addOptions() {
     return {

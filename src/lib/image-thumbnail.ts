@@ -5,10 +5,8 @@ const WEBP_QUALITY = 0.75;
 export type ImageDerivation = { thumbnail?: Blob; width?: number; height?: number };
 
 /**
- * Downscale an image for card-feed rendering, and read its size while it is
- * decoded anyway (M5 slice 5: another Device reserves the picture's box before
- * its bytes arrive). No thumbnail when no downscale is needed or generation
- * fails, so callers fall back to the source blob; no size when it cannot be decoded.
+ * Also reads the size while decoding anyway, so another Device can reserve the picture's box before
+ * its bytes arrive (M5 slice 5). No thumbnail when none is needed or it fails: use the source blob.
  */
 export async function generateImageThumbnail(blob: Blob): Promise<ImageDerivation> {
   let bitmap: ImageBitmap | undefined;

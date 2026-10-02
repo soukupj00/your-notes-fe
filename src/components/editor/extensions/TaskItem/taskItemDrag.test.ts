@@ -1,12 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { dropIndex } from './taskItemDrag';
 
-/**
- * `dropIndex` turns "dropped after N of these rows" into the child index the
- * item takes once it has been removed from the list. The rows it may land among
- * are its own group (ADR 0013: with sinking on, checked and unchecked are shown
- * apart, so an item only ever moves within its half), in visual order.
- */
+/** An item lands only among its own group, in visual order: with sinking on, checked and
+ *  unchecked rows are shown apart (ADR 0013). */
 describe('dropIndex', () => {
   it('moves down: dropped after a later row', () => {
     // stored [A B C D], drag A after C -> [B C A D]

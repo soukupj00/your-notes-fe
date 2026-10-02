@@ -14,11 +14,6 @@ type TagPillsProps = {
   className?: string;
 };
 
-/**
- * A note's labels as pills, tinted from the shared Note/Tag palette so a label
- * reads the same wherever it appears. Read-only on cards, removable in the
- * editor.
- */
 export function TagPills({ tags, onRemove, maxVisible, className }: TagPillsProps) {
   const { t } = useTranslation();
   if (tags.length === 0) return null;
@@ -32,20 +27,11 @@ export function TagPills({ tags, onRemove, maxVisible, className }: TagPillsProp
         <li
           key={tag.id}
           {...noteColorAttrs(tag.color)}
-          /* The chip form from DESIGN.md: pill, uppercase label at the 11px
-             floor, filled from the label's own identity with identity-derived
-             text. `text-label` carries the tracking and weight with it.
-
-             `min-w-0` is load-bearing: a flex item's default `min-width: auto`
-             refuses to shrink below its content, so without it the `truncate`
-             below never engages and one long label ("Personalfinanceand-
-             budgeting2026") runs straight past the card's edge. */
+          /* `min-w-0` is load-bearing: without it the flex item will not shrink, `truncate`
+             never engages, and one long label runs past the card's edge. */
           className="flex min-w-0 max-w-full items-center gap-1 rounded-full bg-note-chip py-1 pr-2 pl-2.5 text-label text-note-on-chip uppercase"
         >
-          {/* `text-label` carries 0.1em tracking, which CSS adds *after* the
-              last glyph too. Left unbalanced that reads as a chip padded wider
-              on the right than the left, so the trailing space is pulled back
-              and the left padding carries the difference instead. */}
+          {/* Pulls back the tracking CSS adds after the last glyph, which looked lopsided. */}
           <span className="-me-[0.1em] truncate">{tag.name}</span>
           {onRemove && (
             <button

@@ -8,9 +8,13 @@ Open-source self-hosted PWA note-taking app (Google Keep alternative). Mobile-fi
 
 ## Hard rules
 
-- Comments are short, plain and high level.
-  Clean names and small functions say what the code does; a comment adds only what the code cannot: why, a decision (link the ADR), or a trap.
-  Never narrate the next line, and write no comment where the code is already clear.
+- Comments are for the human developer reading the code, never for agents.
+  Agents get their context from the `.md` files (this file, `CONTEXT.md`, `DESIGN.md`, the ADRs, `docs/`), so a comment never briefs an agent.
+- Code explains itself first: clean names and small functions say what the code does.
+  A comment adds only what the code cannot say: why, a decision (link the ADR), a trap, or a constraint from outside the code.
+- A comment is one to three lines.
+  An explanation that needs more belongs in the area's `CLAUDE.md`, `CONTEXT.md` or an ADR, with a one-line pointer in the code.
+- Never narrate the next line, never explain styling or layout (Tailwind classes), and write no comment where the code is already clear.
 
 ## Documentation map
 
@@ -130,6 +134,11 @@ Its distance from the bottom edge is `floatingBottomBar.ts`, shared with a view'
 The four insets are named once in `globals.css` as `--safe-top/right/bottom/left` and are always *added to* the design's own spacing, never substituted for it.
 They only report real numbers because `index.html` carries `viewport-fit=cover`; without it they resolve to 0 in the installed PWA as much as in a tab, which is why this maths did nothing at all until M4 slice 4 task 7.
 A desktop browser reports 0 for all four and no emulator exposes a notch, so overriding those four variables on `:root` is how you see a phone's insets without a phone - and `globals.test.ts` gates the pairing.
+The software keyboard gets the same treatment: `useKeyboardInset` publishes how much of the layout viewport it covers as `--keyboard-inset` on `<html>`, which `globals.css` declares as `0px` until the first measurement.
+It exists because iOS Safari ignores `interactive-widget=resizes-content` and draws the keyboard over the page, so a bar pinned to the bottom of a full-height sheet sits behind it.
+`window.visualViewport` reports the truth on both platforms, so it is one mechanism rather than a platform branch: on Android the layout viewport has already shrunk and the inset comes out near 0.
+`offsetTop` is part of the sum because iOS scrolls the page to keep the focused field visible, which moves the visual viewport's origin as well as its height.
+It is one CSS variable rather than React state because there is one keyboard and its consumers are CSS lengths, which state could only reach by re-rendering the editor on every frame of the keyboard's slide.
 Audio and drawing Starts carry a `capture` intent that the editor auto-runs on open.
 Image and Camera are picker Starts: the OS picker opens inside the tap itself (`useStartPicker.tsx`, one hidden input both bars share), because the tap's user activation does not survive the route change to the editor, and the chosen files travel as `initialFiles`.
 A Checklist on a Card is ticked by tapping its box or its words (`lib/point-over-text.ts` asks the text's own line boxes, since the block spans the row); the empty run after the words is still the card, and press-and-hold on a row opens the Note (`lib/long-press.ts`); in the editor a row is reordered by its grip (`extensions/TaskItem/`), driven by pointer events so a finger can use it.
@@ -154,6 +163,8 @@ The `ReminderButton` sits in `NoteEditorBar` because a draft can carry one; the 
 A one-shot whose time has gone is **struck through**, not faded: the chip is already at the 11px label floor, and the obvious `opacity-60` measured 2.68:1 light and 3.46:1 dark, under WCAG 1.4.3 in both themes.
 The strike is pixels only, so the past state is also in the chip's accessible name (`reminders.chipPast`).
 It stays for a day and then lapses: `reminderOf` (`lib/reminder.ts`), the one gate the chip and the bell both read through, stops returning a one-shot more than 24h past - a way of showing the Note, never a write, so nothing bumps `updatedAt` and there is still no timer.
+A lapsed one-shot's fields are never cleared, because that write would reorder the feed and sync as an edit; they wait to be overwritten by the next Reminder, and the chip goes on the first render after the 24h mark.
+`reminderOf` is also the validation gate for every reader of the fields, the `.ics` included: a backup's `remindAt` is unvalidated because `noteSchema` is loose, and a malformed value would make `Intl.DateTimeFormat` throw.
 The popover's two actions are **stacked**, not side by side: together their labels are wider than the popover in Czech, and `e2e/reminder.spec.ts` measures that every button sits inside it.
 
 ### Backup (`src/lib/backup.ts`, `src/components/settings/`)
@@ -171,8 +182,9 @@ Colors use **OKLCH** custom properties defined in `src/styles/globals.css`; this
 `ThemeProvider` (`src/context/themeProvider.tsx`) is a **custom** provider (not `next-themes`, despite that package being installed): it persists the choice to `localStorage` and toggles the `light`/`dark` class on `<html>`, supporting a `system` mode via `prefers-color-scheme`.
 Theme switching is done at the provider level - no per-component theme logic.
 `PreferencesProvider` reads `localStorage` synchronously, so the first render already has the user's density and motion choice - no hydration step.
-Preferences that CSS rather than React has to act on are stamped onto `<html>` by `DocumentPreferences` (`src/components/DocumentPreferences.tsx`): the `cvd` colour-blind class, `data-density`, and `data-reduced-motion`.
-The test for belonging there is whether the stylesheet needs the value - density re-values the type and rhythm tokens, and reduced motion has to overrule the `prefers-reduced-motion` media query, which JS cannot reach into.
+Preferences that CSS rather than React has to act on are stamped onto `<html>` by `DocumentPreferences` (`src/components/DocumentPreferences.tsx`): the `cvd` colour-blind class, `data-density`, `data-reduced-motion` and `data-sink-checked`.
+The test for belonging there is whether the stylesheet needs the value - density re-values the type and rhythm tokens, reduced motion has to overrule the `prefers-reduced-motion` media query, which JS cannot reach into, and checklist Sinking is entirely a CSS rule ([ADR 0013](./docs/adr/0013-checklist-sinking-is-presentation-not-storage.md)) that `data-sink-checked` alone switches off.
+`DocumentPreferences` is deliberately separate from `ThemeProvider`: the classes and attributes compose in CSS (`.dark.cvd`, `:root[data-density]`), so neither needs to know the other exists, and folding them together would make `ThemeProvider` read Preferences and reorder the providers in `App.tsx`.
 Every other preference is read by the component that spends it.
 The 44px Touch Rule has two mechanisms and they are not interchangeable: `.touch-target` grows a control to 44px (right for an icon button), `.touch-reach` gives it a 44px hit box via an invisible centred `::before` and leaves it its own size (right whenever the control's shape is part of what it says, such as a switch).
 
@@ -184,10 +196,25 @@ It **demonstrates**: every step drives the real app, and the user presses Next, 
 - It acts on **Props** — three Notes it creates at the start and Purges at the end (`CONTEXT.md`), because a fresh install has an empty Feed and nothing to spotlight.
 The rules live in `lib/tour/props.ts` and they are the part worth reading before changing anything: a bug there does not land a spotlight badly, it deletes something the user wrote.
 A Prop is only purged while its `updatedAt` still matches the baseline the Tour last recorded, so **every act that writes to a Prop rebases it** — the `TourStage` handed to a step only offers the rebasing writers, so a step cannot forget.
-The baselines live in the `tourProps` preference rather than React state so a reload mid-Tour leaves something to sweep, and the seed writes notes and baselines in **one transaction** across both stores.
+The baselines live in the Local Store's `meta` under `tourProps` ([ADR 0020](./docs/adr/0020-the-local-store-seam.md)) rather than React state, so a reload mid-Tour leaves something to sweep.
+The seed writes the baselines **before** the Prop rows, because the Local Store has no cross-store transaction: a crash in between leaves baselines for Notes that do not exist, which the sweep tolerates, rather than Notes no sweep would ever find.
 - **Nothing in `src/lib/tour/` imports `driver.js` or React.** That separation is what makes the steps, the targets, the Prop rules and the inert marking testable at all; `TourProvider` is the only place that knows a spotlight library exists.
 - **A step is a scene, not a layer.** Moving between steps is `exit` the one being left, then `enter` the one arriving, in both directions — the app's state is not additive (step 2's editor covers the wall step 3 points at). Steps 4-6 are Settings looked at three times and say so with `continues`; step 4 is where that scene is entered, so `leaveScene` walks the chain back to it.
+  `exit` is the strict inverse of `enter`, not a second forward move, so Back is a true inverse; `lib/tour/steps.test.ts` pins that every act has one.
+- Step 1 opens the mobile speed dial by clicking the `＋`, because the dial's state lives inside `QuickCaptureBar` with no API to call.
+  Whether the dial is open is read from whether its Starts are on screen, never from `aria-expanded`: driver.js stamps `aria-expanded`, `aria-haspopup` and `aria-controls` onto whatever it highlights, so ARIA on a spotlit element belongs to the spotlight.
+  Opening is awaited, because driver.js measures the target's rect once and a half-unfolded dial gets half a cutout.
+  Closing is not, because step 2's editor covers the screen anyway (on a 4x-throttled phone that wait was 430 ms of the 1363 ms from step 1 to step 2).
+  That is safe only because Back from step 2 closes the editor and awaits it; if that stops being true, the symptom is step 1 spotlighting the `＋` instead of the Starts.
 - **Everything except the popover is `inert`** for the Tour's lifetime (`lib/tour/inert.ts`), which traps focus, blocks the pointer and stops step 2 raising a phone's keyboard, all with one attribute.
+  A `MutationObserver` keeps it a standing rule, because most of what must be marked (the editor dialog, the dial's popover, toasts, driver.js's own overlay) mounts after the Tour starts.
+  `inert` blocks hit testing, not dispatch: a programmatic `.click()` inside an inert subtree still runs its React handler, which is how step 1 opens the dial, and Radix's open-focus attempt fails silently rather than looping (both verified in Chromium at both breakpoints).
+  An element that was already inert is left alone and never released, so the Tour cannot hand back interactivity the app had taken away.
+- The Settings anchors (`data-tour` wrappers) are declared in `src/pages/settings.tsx` rather than inside a section, so no section has to know the Tour exists.
+  They wrap rather than mark, because a step points at a block of related rows and a bare `div` changes no layout.
+  Editor toolbar and quick capture are two steps, not one block: together they measure 1296px on an 839px phone, and nobody can scroll an `inert` app.
+  The toolbar step aims at the preview strip (`settings-toolbar`, marked by `ToolbarPreviewStrip` itself), because `EditorToolbarSection` alone is 880px.
+  `HelpSection` sits between the shortcuts and the closing pair, which keeps `PwaInstallSection` and `BackupSection` adjacent for the last step.
 - Targets are resolved by **first match with a non-zero rect** (`lib/tour/targets.ts`), because several of the app's surfaces are mounted twice with CSS hiding one.
 - Waiting is always on a **DOM condition, never a timer** (`lib/tour/waitFor.ts`): reduced motion is a hard killswitch, so a fixed wait is wrong in both directions at once.
 - `onboardingSeenAt` is stamped when the Tour is **offered**, before a single Prop exists — not on completion, which would re-arm it after every reload.
@@ -197,6 +224,10 @@ The baselines live in the `tourProps` preference rather than React state so a re
 
 Uses **i18next** with browser language detection. Translations are loaded from `/public/locales/<lng>/translation.json`. Fallback language is `en`. The `t()` function is passed into extension button factories for tooltip translations.
 `src/i18n.test.ts` gates the bundles against each other: the same base keys in every locale (plural suffixes differ by language, so they are folded), and every key the Tour *composes* at render time resolving in both.
+The chosen language is a Preference in the `CONTEXT.md` sense, but not a `PreferencesProvider` field: i18next's language detector owns it and keeps it in `localStorage` itself.
+Like every Preference it is a Device fact, so it is not in the backup `.zip` and does not sync.
+It was kept out while Preferences lived in Dexie, where it would have flashed English on every cold load; [ADR 0020](./docs/adr/0020-the-local-store-seam.md) moved Preferences to `localStorage`, so that reason no longer holds.
+Settings → Language is a Select rather than the segmented control the other settings use, because the list grows with every accepted translation and a segmented control stops working at about four options.
 
 ### Path alias
 

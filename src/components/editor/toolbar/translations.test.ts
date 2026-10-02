@@ -59,17 +59,8 @@ function createEditor() {
 }
 
 /**
- * Every name the toolbar can put on screen has to exist in every locale.
- *
- * This is here because `editor.heading.level` did not. It was an interpolated
- * key nobody ever added to a translation file, so all three heading buttons wore
- * the raw key as their tooltip and i18next logged a `missingKey` for each one -
- * and since the bar rebuilds every button on every editor update (`isActive` has
- * to be live), that was a warning per heading leaf per keystroke.
- *
- * A missing key is invisible in a unit test that stubs `t` with the identity
- * function, which is what every other test here does, and it is invisible on
- * screen too if you happen to read English. It needs its own gate.
+ * Every name the toolbar can show must exist in every locale. `editor.heading.level` did
+ * not, and the identity `t` every other test stubs cannot see that, so it needs its own gate.
  */
 describe('toolbar translations', () => {
   describe.each(LOCALES)('%s', (locale) => {

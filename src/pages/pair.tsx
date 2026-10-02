@@ -9,17 +9,14 @@ import type { Session } from '@/data/Remote.ts';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
 
 /**
- * Which of the three links this is. The server never says what kind a code is,
- * so the page asks what it can: a server without an Owner can only have printed
- * a setup code; otherwise a device code is tried first, and a refusal means an
- * Invite (a refused code is not spent, so trying costs nothing).
+ * The server never says what kind a code is. With no Owner it can only be the setup code;
+ * otherwise a device code is tried first and a refusal means an Invite (a refused code is not spent).
  */
 type Mode = 'checking' | 'owner' | 'device' | 'invite' | 'unreachable' | 'missing';
 
 /**
- * `/pair#<code>`: where every Pairing Link lands (backend `docs/setup.md`
- * sections 5 to 7). The code rides in the fragment so it never reaches a server
- * log. The person lands on the right form without choosing one.
+ * Where every Pairing Link lands (backend `docs/setup.md` sections 5 to 7).
+ * The code rides in the fragment so it never reaches a server log.
  */
 export default function PairPage() {
   const { t } = useTranslation();

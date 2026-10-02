@@ -3,16 +3,9 @@ import { downloadBlob } from '@/lib/backup.ts';
 export type HandOffResult = 'shared' | 'downloaded' | 'cancelled';
 
 /**
- * Gives a file to whatever on this device can act on it (ADR 0021, Hand-off).
- *
- * This is the one function whose behaviour is NOT verified by the test suite,
- * because what matters - does an installed PWA on Android land the user on the
- * calendar's add-event screen? - only exists on a device. It is isolated here
- * so that answer changes one file. The known third option, if neither path
- * reaches the calendar, is a Google Calendar template link.
- *
- * `cancelled` is a result, not an error: the caller must not record a Reminder
- * the calendar was never given.
+ * Only a device can verify this (ADR 0021), so it is isolated to one file; a Google Calendar
+ * template link is the known fallback. `cancelled` is a result, not an error: the caller must not
+ * record a Reminder the calendar was never given.
  */
 export async function handOff(file: File): Promise<HandOffResult> {
   const coarse = window.matchMedia?.('(pointer: coarse)').matches;

@@ -12,12 +12,7 @@ export interface ColorExtensionOptions extends ColorOptions {
   button: (context: ButtonContext) => ColorButtonView;
 }
 
-/**
- * Wraps the upstream `Color` extension (from `@tiptap/extension-text-style`, name `color`,
- * backs `setColor` / `unsetColor` on the `textStyle` mark) with a Pattern A `button` that
- * returns the {@link TextColorButton} popover trigger. `TextStyle` must also be registered
- * for the color attribute to exist.
- */
+/** `TextStyle` must also be registered, or the color attribute does not exist. */
 export const Color = TiptapColor.extend<ColorExtensionOptions>({
   addOptions() {
     return {

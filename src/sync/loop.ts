@@ -13,12 +13,8 @@ export type SyncLoop = {
 };
 
 /**
- * When to sync (04-sync.md "The loop"): once at start; on a Live Update hint
- * whose Sequence is past the last pull; shortly after a local edit; when the
- * browser comes back `online`; when the page becomes visible again (Catch-up);
- * and on a slow poll while the stream is down or absent. A `401` stops it and
- * calls `onSignedOut`. Plain TypeScript, so `SyncProvider` only has to start
- * and stop it.
+ * When to sync (04-sync.md "The loop"): at start, on a hint past the last pull, after a local edit,
+ * on `online`, on becoming visible, and on a slow poll. A `401` stops it and calls `onSignedOut`.
  */
 export function startSyncLoop({
   engine,

@@ -24,17 +24,10 @@ const DEFAULT_VALUE = '__default__';
 
 interface StyleOption {
   value: string;
-  /**
-   * i18n key for the full name, shown in the open menu. Absent for an option
-   * whose value is already its name - a size renders as "16px" in every locale.
-   */
+  /** Absent when the value is its own name, as "16px" is in every locale. */
   labelKey?: string;
-  /**
-   * What the closed trigger shows. It has to be short enough for a toolbar and
-   * distinct enough to read at a glance - "Default" on both selects told the
-   * user nothing about which control they were looking at, and on a phone,
-   * where the tooltip never appears, it was the only thing they had.
-   */
+  /** Shown on the closed trigger, distinct per select: on a phone, with no tooltip,
+   *  "Default" on both told the user nothing. */
   short: string;
 }
 
@@ -66,7 +59,6 @@ const OPTIONS: Record<EditorTextStyleVariant, StyleOption[]> = {
   ],
 };
 
-/** Registry keys, per the icon convention - never an imported component. */
 const ICONS: Record<EditorTextStyleVariant, IconName> = {
   fontFamily: 'Type',
   fontSize: 'CaseSensitive',
@@ -86,11 +78,7 @@ function updateTextStyle(editor: Editor, variant: EditorTextStyleVariant, value:
   else chain.setFontSize(value).run();
 }
 
-/**
- * A menu row previews what it does: a family renders in its own face, a size at
- * its own size. Scanning the list is then reading the answer rather than
- * decoding a name.
- */
+/** Each row previews itself: a family in its own face, a size at its own size. */
 function previewStyle(
   variant: EditorTextStyleVariant,
   option: StyleOption
@@ -101,7 +89,6 @@ function previewStyle(
     : { fontSize: option.value, lineHeight: 1.2 };
 }
 
-/** Shared toolbar select for the font-related attributes on the textStyle mark. */
 export function EditorTextStyleSelect({ editor, tooltip, t, variant }: EditorTextStyleSelectProps) {
   const currentValue: string = editor.getAttributes('textStyle')[variant] || '';
   const options = OPTIONS[variant];

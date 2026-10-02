@@ -6,7 +6,6 @@ interface TextColorButtonProps {
   tooltip?: string;
 }
 
-/** Pattern A adapter for the shared editor color-mark picker. */
 export function TextColorButton(props: TextColorButtonProps) {
   return <EditorColorPickerButton {...props} variant="text" />;
 }

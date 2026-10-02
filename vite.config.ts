@@ -24,10 +24,9 @@ export default defineConfig({
         // so a Device paired and then taken offline could not open a Note. Claiming
         // on activate is safe under `prompt`: an update still waits for a yes.
         clientsClaim: true,
-        // Default globPatterns omit .json, which would leave the i18n locale files
-        // (dist/locales/<lng>/translation.json) uncached and break translations offline.
-        // The two app font families are precached; KaTeX's and Excalidraw's fonts are
-        // many and rarely needed, so they are cached the first time they load.
+        // The default patterns omit .json, which would leave the locale files uncached offline.
+        // Only the two app font families are precached; KaTeX's and Excalidraw's many, rarely
+        // needed fonts are cached the first time they load.
         globPatterns: [
           '**/*.{js,css,html,ico,png,svg,json}',
           '**/{bricolage-grotesque,work-sans}-*.woff2',
@@ -47,12 +46,9 @@ export default defineConfig({
         short_name: 'YouNotes',
         start_url: '/',
         display: 'standalone',
-        // The dark `--canvas` from `globals.css`, because `App.tsx` opens on
-        // `defaultTheme="dark"`. A manifest is stamped at build time and cannot
-        // read a token, so this is the one place the value is restated - and it
-        // only has to hold until React mounts, after which `themeProvider`
-        // writes the live one to `<meta name="theme-color">`. The purple it
-        // replaced predated the nightshift palette and appeared nowhere in it.
+        // The dark `--canvas` from `globals.css`, since the app opens dark. A manifest cannot read
+        // a token, so it is restated here; it only has to hold until `themeProvider` mounts and
+        // writes the live `theme-color`.
         background_color: '#0d0f15',
         theme_color: '#0d0f15',
         icons: [

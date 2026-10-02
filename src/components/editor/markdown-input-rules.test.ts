@@ -14,12 +14,8 @@ import { OrderedList } from './extensions/OrderedList';
 import { TaskList } from './extensions/TaskList';
 
 /**
- * The markdown shorthands a user is most likely to reach for out of habit.
- *
- * These come from the upstream extensions, so the point of the suite is not to
- * re-test TipTap - it is to prove the shorthands survive *our* composition. The
- * list extensions in particular are wrapped, and a wrapper that forgets
- * `...this.parent?.()` silently drops every input rule with no other symptom.
+ * Not re-testing TipTap: proves the markdown shorthands survive our composition, since a
+ * wrapper that forgets `...this.parent?.()` silently drops every input rule.
  */
 function createEditor() {
   return new Editor({

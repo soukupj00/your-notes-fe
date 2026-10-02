@@ -15,17 +15,12 @@ import { live } from './live.ts';
 import { createDexieSync } from './sync.ts';
 
 /**
- * The default Local Store: IndexedDB through Dexie (ADR 0001, ADR 0020).
- *
- * `db` is a parameter only so the contract test can spin up a throwaway
- * database per test; the app passes nothing and gets the singleton.
+ * The default Local Store (ADR 0001, ADR 0020). `db` is a parameter only so the contract test
+ * can use a throwaway database per test.
  */
 export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
-  // One-shot legacy split (src/data/dexie/legacyPreferences.ts); `meta` waits on
-  // it so a Tour sweep on startup cannot read `tourProps` before it has landed.
-  // Non-poisoning: a failed migration must not permanently block every later
-  // `meta` call - the legacy row is left in place and the migration is retried
-  // on the next app start.
+  // `meta` waits on the legacy split so a startup Tour sweep cannot read `tourProps` before it
+  // lands. A failure is logged, not rethrown: `meta` stays usable and the split retries next start.
   const ready = migrateLegacyPreferences(db).catch((error) =>
     console.error('Legacy preferences migration failed', error)
   );
@@ -60,7 +55,6 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
     await db.tombstones.bulkDelete(ids);
   }
 
-  /** The feed's read, shared by `feed()` so the join lives in one place. */
   async function readFeed(scope: NoteFeedScope): Promise<Note[]> {
     let candidates = stripAll(await db.notes.where('state').equals(scope.state).toArray());
     if (scope.tagId) {

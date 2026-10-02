@@ -8,11 +8,8 @@ function clock(wholeSeconds: number): string {
 }
 
 /**
- * A clip's total length.
- *
- * Rounded, because a badge states a finished quantity and 59.6s of audio is a
- * minute long. Returns null for a row that never had its duration computed, so
- * callers can omit the badge rather than print a placeholder.
+ * Rounded, because a badge states a finished quantity: 59.6s of audio is a minute long. `null`
+ * when the duration was never computed, so callers omit the badge.
  */
 export function formatDuration(seconds: number | undefined): string | null {
   if (seconds === undefined || !Number.isFinite(seconds) || seconds < 0) return null;
@@ -20,12 +17,8 @@ export function formatDuration(seconds: number | undefined): string | null {
 }
 
 /**
- * A running playhead or recording timer.
- *
- * Floored rather than rounded, which is the whole reason this is not
- * `formatDuration`: a counter that rounds reads `0:01` before the first second
- * has passed and reaches its own total a half-second early. Unknown time is
- * `0:00`, because a live counter has to show something.
+ * A running playhead or timer, floored unlike `formatDuration`: a rounding counter reads `0:01`
+ * before a second has passed. Unknown time is `0:00`, as a live counter must show something.
  */
 export function formatElapsed(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return '0:00';

@@ -157,10 +157,8 @@ describe('toolbar presets', () => {
     for (const width of widths) {
       for (const preset of presets) {
         const meta = toolbarPreset(preset, width).find((family) => family.id === 'meta');
-        // The phone's Balanced bar is the one place the gear costs a slot the
-        // editing controls need - six is all a 360px screen fits, and
-        // `/settings` reaches the same editor. Everywhere else there is room,
-        // so the in-editor way back stays.
+        // The phone's Balanced bar is the one place the gear costs a slot editing needs
+        // (six fit on 360px, and `/settings` reaches the same editor).
         const expected = !(width === 'compact' && preset === 'balanced');
         expect(meta?.on, `${width}/${preset}`).toBe(expected);
         if (expected) expect(meta?.members).toEqual([{ id: 'customize', on: true }]);

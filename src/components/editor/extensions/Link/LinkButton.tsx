@@ -10,23 +10,13 @@ export interface LinkButtonProps {
   editor: Editor;
   t: TFunction;
   tooltip: string;
-  /**
-   * Passed in rather than written here, so the button view carries it like every
-   * other Pattern A button does. Anything reading shortcuts off the resolved
-   * view - the registry's pin test, the Settings shortcut list - would otherwise
-   * see `link` as having none.
-   */
+  /** Passed in like every Pattern A button, so the registry's pin test and the Settings
+   *  shortcut list find `link`'s shortcut on the resolved view. */
   shortcutKeys?: string[];
 }
 
-/**
- * Toolbar entry point for links: a popover that takes a URL and applies it to
- * the selection (or, with a collapsed cursor, inserts the URL as its own link
- * text - otherwise the command would mark nothing and appear to do nothing).
- *
- * Editing and removing an existing link happen from the bubble menu that
- * appears on one, not from here.
- */
+/** With a collapsed cursor the URL is inserted as its own link text, or the command would
+ *  mark nothing. Editing and removing a link happen in the bubble menu. */
 export function LinkButton({ editor, t, tooltip, shortcutKeys }: LinkButtonProps) {
   const [open, setOpen] = useState(false);
   const [href, setHref] = useState('');

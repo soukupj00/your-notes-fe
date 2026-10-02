@@ -7,9 +7,8 @@ import type {
 import type { ToolbarFamily, ToolbarFamilyId, ToolbarItem } from './types';
 
 /**
- * The families, in the order a fresh Layout lays them out. Order here is also
- * the reconciliation anchor: an Item or family absent from a stored blob is
- * inserted at its registry position (decision 8).
+ * In a fresh Layout's order, which is also the reconciliation anchor: an Item or
+ * family absent from a stored blob is inserted at its registry position (decision 8).
  */
 export const TOOLBAR_FAMILIES: ToolbarFamily[] = [
   {
@@ -89,17 +88,10 @@ export const TOOLBAR_FAMILIES: ToolbarFamily[] = [
 ];
 
 /**
- * Every Toolbar Item, grouped by family and ordered as a fresh Layout renders
- * them.
- *
- * The ids are a fresh space rather than the extension names they replace
- * (`Mathematics` -> `math`, `backgroundColor` -> `highlight`, `horizontalRule` ->
- * `divider`, `imageAttachment` -> `image`, ...). The `extension` field keeps the
- * link to TipTap, so the id space stays ours even though the extension names are
- * upstream's - which is the whole point of ADR 0011.
+ * In a fresh Layout's order. The ids are our own space, not the upstream extension
+ * names (`Mathematics` -> `math`); `extension` keeps the link to TipTap (ADR 0011).
  */
 export const TOOLBAR_ITEMS: ToolbarItem[] = [
-  // history
   {
     id: 'undo',
     family: 'history',
@@ -118,7 +110,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     labelKey: 'editor.redo',
     shortcut: ['Mod', 'Shift', 'Z'],
   },
-  // style
   {
     id: 'h1',
     family: 'style',
@@ -146,7 +137,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     labelKey: 'editor.heading.h3',
     shortcut: ['Mod', 'Alt', '3'],
   },
-  // format
   {
     id: 'bold',
     family: 'format',
@@ -203,7 +193,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     labelKey: 'editor.clearFormatting.tooltip',
     shortcut: ['Mod', '\\'],
   },
-  // colour
   {
     id: 'text-color',
     family: 'colour',
@@ -219,7 +208,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     labelKey: 'editor.highlight.tooltip',
     shortcut: ['Mod', 'Shift', 'H'],
   },
-  // list
   {
     id: 'bullet-list',
     family: 'list',
@@ -244,7 +232,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     labelKey: 'editor.taskList.tooltip',
     shortcut: ['Mod', 'Shift', '9'],
   },
-  // block
   {
     id: 'blockquote',
     family: 'block',
@@ -276,7 +263,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     labelKey: 'editor.math.tooltip',
     shortcut: ['Mod', 'Shift', 'M'],
   },
-  // align
   {
     id: 'align-left',
     family: 'align',
@@ -304,7 +290,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     labelKey: 'editor.textAlign.right',
     shortcut: ['Mod', 'Shift', 'R'],
   },
-  // media
   {
     id: 'image',
     family: 'media',
@@ -340,7 +325,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     icon: 'PenTool',
     labelKey: 'editor.excalidraw.label',
   },
-  // font
   {
     id: 'font-family',
     family: 'font',
@@ -355,15 +339,10 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     icon: 'CaseSensitive',
     labelKey: 'editor.fontSize.tooltip',
   },
-  // meta - the one Item with no extension behind it: it opens the settings sheet.
   { id: 'customize', family: 'meta', icon: 'Settings2', labelKey: 'editor.toolbar.customize' },
 ];
 
-/**
- * The one Item the app owns rather than an extension: it opens the customisation
- * sheet instead of editing the note, so it resolves to no button view and the
- * bar draws it itself.
- */
+/** The one app-owned Item: it opens the customisation sheet, so the bar draws it itself. */
 export const CUSTOMIZE_ITEM_ID = 'customize';
 
 const ITEMS_BY_ID = new Map(TOOLBAR_ITEMS.map((item) => [item.id, item]));
@@ -377,18 +356,11 @@ export function getToolbarFamily(id: string): ToolbarFamily | undefined {
   return FAMILIES_BY_ID.get(id as ToolbarFamilyId);
 }
 
-/** The family's Items in registry order. */
 export function itemsInFamily(familyId: ToolbarFamilyId): ToolbarItem[] {
   return TOOLBAR_ITEMS.filter((item) => item.family === familyId);
 }
 
-/**
- * Whether this editor can draw the Item at all.
- *
- * The bar drops what it cannot draw *before* anything downstream cares about
- * position - an unmounted extension must not leave a gap, a trigger that opens
- * an empty popover, or (worse) become the pinned first family.
- */
+/** An unmounted extension must not leave a gap, an empty popover, or the pinned family. */
 export function canRenderItem(
   item: ToolbarItem,
   context: { editor: Editor; t: TFunction }
@@ -397,12 +369,8 @@ export function canRenderItem(
 }
 
 /**
- * Resolve an Item to the live button view its extension contributes.
- *
- * Returns `undefined` for an Item whose extension is not mounted (or exposes no
- * `button`), and for `customize`, which the toolbar renders itself. Callers skip
- * what they cannot resolve, so an unregistered extension is a missing button,
- * never a crash.
+ * `undefined` for `customize` and for an extension that is not mounted or has no
+ * `button`: callers skip it, so a missing extension is a missing button, never a crash.
  */
 export function resolveItemButton(
   item: ToolbarItem,

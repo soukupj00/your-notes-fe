@@ -10,7 +10,6 @@ import type {
   WidthClass,
 } from './types';
 
-/** One family as the bar should draw it: either its leaves loose, or one trigger. */
 export interface ResolvedFamily {
   family: ToolbarFamily;
   collapsed: boolean;
@@ -19,11 +18,8 @@ export interface ResolvedFamily {
 }
 
 /**
- * Bring a stored Layout up to date with the registry without losing anything.
- *
- * The result is still storage-shaped (it keeps ids this build does not know) so
- * it is safe to write straight back; `resolveLayout` is what turns it into
- * something renderable.
+ * Brings a stored Layout up to date with the registry without losing anything. Still
+ * storage-shaped (unknown ids kept), so it is safe to write straight back.
  */
 export function reconcileLayout(
   stored: ToolbarLayout | undefined,
@@ -38,9 +34,8 @@ export function reconcileLayout(
       members: [],
     };
 
-  // Nothing stored - absent, or the empty array the schema defaults to - means
-  // "never customised", and the answer to that is the whole default arrangement,
-  // not a bar reconstructed in registry order.
+  // Nothing stored (absent or the schema's empty array) means never customised: the
+  // answer is the whole default arrangement, not a bar rebuilt in registry order.
   const families = reconcileOrder(
     stored?.length ? stored : defaults,
     TOOLBAR_FAMILIES.map((family) => family.id),
@@ -64,11 +59,8 @@ export function reconcileLayout(
 }
 
 /**
- * The bar's render list: families that are on and have at least one leaf on, in
- * the user's order, each carrying the leaves it should draw.
- *
- * A family whose every leaf is off is dropped rather than rendered empty - an
- * expanded one would be a gap, and a collapsed one a trigger that opens nothing.
+ * A family whose every leaf is off is dropped, not rendered empty: expanded it would
+ * be a gap, and collapsed a trigger that opens nothing.
  */
 export function resolveLayout(
   stored: ToolbarLayout | undefined,

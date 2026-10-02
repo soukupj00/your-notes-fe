@@ -59,12 +59,8 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            // Themed like every other icon button (muted at rest, muted bg on
-            // hover) instead of shadcn's opacity-only default, which ignored the
-            // colour tokens and looked washed out in dark mode.
-            // The disc stays 32px; the *touch target* is 44px, grown with an
-            // invisible inset overlay rather than a bigger disc, so the visual
-            // weight of a close button does not have to pay for reachability.
+            // Vendored edit: themed from the colour tokens, and the `before:` inset grows the
+            // 32px disc's hit box to 44px (the 44px Touch Rule).
             className="absolute top-4 right-4 flex size-8 items-center justify-center rounded-md text-muted-foreground ring-offset-background transition-colors before:absolute before:-inset-1.5 before:content-[''] hover:bg-muted hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0"
           >
             <XIcon />

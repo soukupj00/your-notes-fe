@@ -8,11 +8,8 @@ import type { Attachment, Note } from '@/models.ts';
 import type { AttachmentTransfer } from './LocalStore.ts';
 import type { PushBatch, PushOutcome, Tombstone } from './Remote.ts';
 
-/**
- * Pure helpers both Local Store implementations share for sync state (M5 slice 3).
- * The state itself is store-private: no read hands `rev` or `dirty` back, so no
- * caller can carry a stale Revision into a write.
- */
+// Helpers both Local Store implementations share for sync state, which no read returns
+// (src/data/CLAUDE.md, "Sync state is store-private").
 
 /** A row as the store keeps it: the Revision it last agreed with, and whether the server is owed it. */
 export type Stored<T> = T & { rev?: number; dirty?: 1 };
@@ -25,14 +22,12 @@ export function strip<T extends object>(row: Stored<T>): T {
   return copy;
 }
 
-/** `row` marked owed, carrying `rev` only when there is one. */
 export function owed<T extends object>(row: T, rev: number | undefined): Stored<T> {
   const next: Stored<T> = { ...strip(row as Stored<T>), dirty: 1 };
   if (rev !== undefined) next.rev = rev;
   return next;
 }
 
-/** The row as it travels: its `rev`, no dirty marker. */
 export function wireRow<T extends object>(row: Stored<T>): T & { rev?: number } {
   const copy: Stored<T> = { ...row };
   delete copy.dirty;
@@ -40,10 +35,8 @@ export function wireRow<T extends object>(row: Stored<T>): T & { rev?: number } 
 }
 
 /**
- * An Attachment as the store keeps it (M5 slice 5): `onServer` lists the blob ids
- * (its own, its `thumbnailId`) the server is known to hold, and `tooLarge` marks
- * bytes the server refused for their size. A list of ids rather than flags, so a
- * new `thumbnailId` is not uploaded by construction.
+ * `onServer` lists the blob ids (its own, its `thumbnailId`) the server is known to hold: ids
+ * rather than flags, so a new `thumbnailId` starts out not uploaded. `tooLarge`: refused for size.
  */
 export type StoredAttachment = Attachment & { onServer?: string[]; tooLarge?: 1 };
 
@@ -80,11 +73,7 @@ export function fromServerAttachment(
   return row;
 }
 
-/**
- * What writing a pulled Note's `attachments` does to the rows it owns locally:
- * each listed one is put (keeping bytes, see `fromServerAttachment`), each
- * unlisted one is removed with its bytes.
- */
+/** A pulled Note's `attachments` against its local rows: unlisted ones go with their bytes. */
 export function reconcileAttachments(
   metas: readonly AttachmentMeta[],
   local: readonly StoredAttachment[]
@@ -107,7 +96,6 @@ export function transferOf(row: StoredAttachment, noteOnServer: boolean): Attach
   };
 }
 
-/** The row once the server is known to hold `blobIds`. */
 export function markOnServer(row: StoredAttachment, ...blobIds: string[]): StoredAttachment {
   return { ...row, onServer: [...new Set([...(row.onServer ?? []), ...blobIds])] };
 }

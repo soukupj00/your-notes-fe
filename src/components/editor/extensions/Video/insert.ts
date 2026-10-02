@@ -3,16 +3,9 @@ import { generateVideoPoster } from '@/lib/video-poster.ts';
 import type { AttachmentDeps } from '../attachments/deps.ts';
 import { insertAttachmentFiles, withDerivedAttachmentData } from '../attachments/insert.ts';
 
-/**
- * Video-specific insertion step, mirroring `insertImageAttachmentFiles`: capture
- * a poster frame and the clip length before storing, then hand off to the shared
- * media pipeline.
- *
- * A video's bytes are a container the feed must never decode, so the card has no
- * preview to show unless one was captured up front. Poster capture is
- * best-effort - a clip the browser cannot decode is still stored, and the card
- * falls back to a neutral plane.
- */
+/** The feed never decodes a video, so the card has a preview only if a poster was captured
+ *  here, before storing. Best-effort: an undecodable clip is still stored, and the card
+ *  falls back to a neutral plane. */
 export function insertVideoAttachmentFiles(
   editor: Editor,
   files: FileList | File[],

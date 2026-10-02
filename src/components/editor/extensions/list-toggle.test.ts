@@ -26,7 +26,6 @@ function createEditor(content = CONTENT) {
   });
 }
 
-/** Invoke the toolbar button action for the given extension name. */
 function clickButton(editor: Editor, name: string) {
   const ext = editor.extensionManager.extensions.find((e) => e.name === name);
   if (!ext) throw new Error(`${name} not registered`);
@@ -36,7 +35,6 @@ function clickButton(editor: Editor, name: string) {
   view.componentProps.action?.();
 }
 
-/** Place a collapsed cursor inside the list item whose text matches `word`. */
 function placeCursorIn(editor: Editor, word: string) {
   let pos = 0;
   editor.state.doc.descendants((node, p) => {
@@ -59,7 +57,6 @@ describe('whole-list toggling (collapsed cursor)', () => {
     expect((html.match(/data-type="taskItem"/g) || []).length).toBe(3);
     // no leftover plain <ul>/<li> fragments from a partial conversion
     expect(html).not.toMatch(/<li(?![^>]*taskItem)/);
-    // surrounding blocks are untouched
     expect(html).toContain('<p>before</p>');
     expect(html).toContain('<p>after</p>');
   });

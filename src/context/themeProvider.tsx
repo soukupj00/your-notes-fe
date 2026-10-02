@@ -21,26 +21,9 @@ const initialState: ThemeProviderState = {
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 /**
- * Hand the resolved theme's background to the platform, as `theme-color`.
- *
- * This is the colour the system chrome takes: Android's status bar (and, below
- * Android 15, the button bar), and a browser tab's toolbar. Without it the only
- * value the platform ever sees is the manifest's, which is stamped at build time
- * and so cannot follow a theme the user switches at runtime.
- *
- * It is written here, from the class this effect just applied, rather than as
- * two `media="(prefers-color-scheme: …)"` tags in `index.html`: those follow the
- * OS, and this app's theme is an explicit choice that is allowed to disagree
- * with it.
- *
- * Read from the token rather than restated as a literal - `globals.css` is the
- * single live source for both themes (the `src/themes.ts` duplicate was deleted
- * for this reason), and a custom property's computed value is already
- * `var()`-substituted, so this is the real colour and not the word `var`.
- *
- * Deliberately the note's *frame* and never a note's own tint: a note colour set
- * here would have to be unset on every path out of the editor, and the one that
- * forgot would leave the whole app wearing it.
+ * Paints the system chrome (`theme-color`) with the theme's `--background`, from JS because the
+ * app's theme may disagree with the OS. Never a note's tint: every path out of the editor would
+ * have to unset it. Details in src/context/CLAUDE.md.
  */
 function paintSystemChrome(root: HTMLElement) {
   const color = getComputedStyle(root).getPropertyValue('--background').trim();

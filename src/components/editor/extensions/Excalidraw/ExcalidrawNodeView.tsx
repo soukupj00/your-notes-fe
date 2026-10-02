@@ -10,12 +10,8 @@ import { DownloadButton, useDownloadAttachment } from '../attachments/Attachment
 import { AttachmentUnavailable } from '../attachments/AttachmentUnavailable';
 import type { AttachmentDeps } from '../attachments/deps';
 
-/** Editor render path for excalidrawAttachment - a passive preview, never the
- *  live canvas (that lives in the shared modal, opened on tap). The whole surface
- *  is tap-to-edit; a corner-X always offers delete. The row is live-queried so a
- *  modal Save, which mints a new row, repoints this node at it through
- *  `onReplace` and the preview follows. The home feed does not mount this at all -
- *  it injects the stored SVG in NoteBody. */
+/** A passive preview; the live canvas is the shared dialog, opened on tap. Live-queried, so
+ *  when a Save repoints the node at a new row the preview follows. */
 export function ExcalidrawNodeView(props: ReactNodeViewProps) {
   const attachmentId = props.node.attrs.attachmentId as string | null;
   const deps = (props.extension.options.getDeps as () => AttachmentDeps)();
@@ -33,8 +29,7 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
     [deps.watchAttachment, attachmentId]
   );
 
-  // Delete is a sibling of the preview surface, positioned inside the same
-  // shrink-wrapped frame. A delete tap never reaches the surface's open handler.
+  // A sibling of the surface, not a child, so a delete tap never opens the canvas.
   const deleteButton = editable ? (
     <AttachmentDeleteButton
       onConfirm={() => props.deleteNode()}

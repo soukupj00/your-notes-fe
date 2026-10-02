@@ -12,13 +12,8 @@ interface NoteColorButtonProps {
 }
 
 /**
- * The palette popover's trigger: one swatch grid reachable from every surface
- * that can recolour a note.
- *
- * It is a shared component rather than a repeated block because the grid it
- * opens carries accessibility affordances that must not exist on one mount and
- * not another - the per-swatch colour names, its own `TooltipProvider`, and the
- * 44px swatch box.
+ * Shared rather than repeated, so the grid's accessibility (per-swatch names, its own
+ * `TooltipProvider`, 44px swatches) is the same on every surface that recolours a note.
  */
 export function NoteColorButton({ value, onChange, className }: NoteColorButtonProps) {
   const { t } = useTranslation();
@@ -27,9 +22,8 @@ export function NoteColorButton({ value, onChange, className }: NoteColorButtonP
     <Popover>
       <PopoverTrigger
         aria-label={t('notes.color')}
-        // Every mount sits inside a larger click target - a click on the card
-        // opens the editor, and the dialog forwards stray clicks into the
-        // body - so the trigger always keeps its click.
+        // Every mount sits inside a larger click target (the card opens the editor,
+        // the dialog forwards stray clicks into the body), so the trigger keeps its click.
         onClick={(e) => e.stopPropagation()}
         className={className}
       >

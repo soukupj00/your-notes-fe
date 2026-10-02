@@ -7,13 +7,9 @@ export const NOTE_SORT_DIRECTIONS = ['desc', 'asc'] as const;
 export type NoteSortDirection = (typeof NOTE_SORT_DIRECTIONS)[number];
 
 /**
- * The feed's search/filter state, as it lives in the URL. Every field is
- * optional so an untouched feed stays at a clean `/` - the router serialises
- * exactly what the object holds, so carrying defaults here would stamp
- * `?sort=updated&dir=desc` onto every link.
- *
- * `.catch()` per field rather than on the object: a hand-edited `?sort=banana`
- * should lose the bad field, not the whole (possibly carefully typed) query.
+ * All optional, because the router serialises whatever the object holds: defaults here would
+ * stamp `?sort=updated&dir=desc` onto every link. `.catch()` per field, so `?sort=banana` loses
+ * only that field.
  */
 const noteSearchParamsSchema = z.object({
   q: z.string().optional().catch(undefined),
@@ -21,13 +17,8 @@ const noteSearchParamsSchema = z.object({
   dir: z.enum(NOTE_SORT_DIRECTIONS).optional().catch(undefined),
   tags: z.array(z.string()).optional().catch(undefined),
   /**
-   * Which note is open, if any ([ADR 0014](../../docs/adr/0014-the-open-note-lives-in-the-url.md)).
-   *
-   * It rides on the feed routes' params but is *not* feed state: it never
-   * reaches `ResolvedNoteSearch`, has no default, and filtering has no opinion
-   * about it. It lives here because this is the one schema those four routes
-   * validate against, and a second `validateSearch` would be a second place for
-   * them to drift.
+   * The open note (ADR 0014). Not feed state, so it never reaches `ResolvedNoteSearch`; it lives
+   * here because a second `validateSearch` on the feed routes would be a second place to drift.
    */
   note: z.string().optional().catch(undefined),
 });
@@ -59,10 +50,7 @@ export function resolveNoteSearch(params: NoteSearchParams | undefined): Resolve
   };
 }
 
-/**
- * Feed shape → URL shape, dropping anything that equals the default so the
- * address bar only ever shows what the user actually changed.
- */
+/** Drops anything equal to the default, so the address bar shows only what the user changed. */
 export function toNoteSearchParams(search: ResolvedNoteSearch): NoteSearchParams {
   return {
     q: search.q.trim() ? search.q : undefined,

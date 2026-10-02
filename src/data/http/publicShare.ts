@@ -5,12 +5,8 @@ import { ProblemError } from './hal.ts';
 export const isSharePath = (pathname: string) => pathname.startsWith('/share/');
 
 /**
- * What a Share Link shows (CONTEXT.md "Share Link"), read with no Account.
- * Not on `AccountService`: whoever opens the link is a stranger to the server.
- *
- * The one address written by hand: the HAL root does not list the public route,
- * and a stranger has no link to follow to it. Everything past it (the blobs)
- * comes from the page's own `_links`.
+ * A Share Link's page, read with no Account because the opener is a stranger to the server.
+ * The one address written by hand: the HAL root does not list the public route.
  */
 export async function fetchSharedNote(
   token: string,

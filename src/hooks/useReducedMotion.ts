@@ -15,17 +15,8 @@ function getSnapshot(): boolean {
 }
 
 /**
- * Whether decorative motion should be suppressed.
- *
- * The stored `reducedMotion` preference wins when it is an explicit
- * `always`/`never`; `system` (the default) defers to the OS media query. This is
- * the JS-side counterpart to the `prefers-reduced-motion` blocks in
- * `globals.css` - use it for motion that only exists in a component's state
- * (timers, rotations), not for CSS transitions the stylesheet can already gate.
- *
- * `useSyncExternalStore` rather than an effect: a media query is exactly the
- * external store it exists for, and mirroring it into state would mean a
- * setState-in-effect on every mount.
+ * Whether decorative motion should be suppressed. Use it for motion that lives in component
+ * state (timers, rotations); `globals.css` already gates CSS transitions.
  */
 export function useReducedMotion(): boolean {
   const { preferences } = usePreferences();

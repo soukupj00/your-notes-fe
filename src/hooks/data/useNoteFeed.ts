@@ -44,10 +44,8 @@ function comparatorFor(sort: NoteSortField, dir: NoteSortDirection) {
 }
 
 /**
- * Pinned notes always head the feed, whatever the sort or the search ranking -
- * a pin is the user saying "keep this in front of me". Within the shelf they
- * stay in pin order (newest pin first) rather than adopting the sort: sorting
- * by title should not reshuffle a shelf the user arranged by pinning.
+ * Pinned notes head the feed under any sort or search, in pin order rather than the sort:
+ * the user arranged that shelf by pinning, so sorting by title must not reshuffle it.
  */
 function floatPinned(notes: Note[]): Note[] {
   const pinned = notes.filter((note) => note.pinnedAt).sort(byPinnedAt);
@@ -59,18 +57,13 @@ function floatPinned(notes: Note[]): Note[] {
 const EMPTY_NOTES: Note[] = [];
 const EMPTY_IDS: readonly string[] = [];
 
-/** Whether a stored order still describes this list, position for position. */
 function sameOrder(ids: readonly string[], notes: readonly Note[]): boolean {
   return ids.length === notes.length && ids.every((id, index) => id === notes[index].id);
 }
 
 /**
- * Counts the times the document has become visible again.
- *
- * Folded into the rank key so returning to a backgrounded tab re-ranks the wall
- * (ADR 0012). It is the one "the user is not watching" signal a route change
- * cannot supply: a PWA tab stays open for days, so without it the held order
- * would go stale for as long as the tab lives.
+ * Counts the times the document became visible again, so returning to the tab re-ranks the wall
+ * (ADR 0012). A PWA tab stays open for days; without it the held order would go stale.
  */
 function useVisibilityEpoch(): number {
   const [epoch, setEpoch] = useState(0);
@@ -87,25 +80,9 @@ function useVisibilityEpoch(): number {
 }
 
 /**
- * The single reactive query behind every note list. Scope first (state, and
- * optionally a tag), then the search text, then ordering.
- *
- * Search is applied *within* the current scope, so a query on `/archive`
- * searches the archive. Trashed notes are therefore never searchable from a
- * normal view - they are only reachable from `/trash` itself (ADR 0009).
- *
- * The live query depends on the *scope* only; the search state (text, sort,
- * tag filters) is applied afterwards against a memoised Fuse index, so typing
- * or toggling a filter re-scores in memory instead of re-hitting IndexedDB and
- * rebuilding the index.
- *
- * **Membership is live, rank is held** (ADR 0012). A live query refires for
- * *any* write to the notes table, and every mutation bumps `updatedAt`, so on
- * the default `updated desc` sort the wall would re-order itself the instant
- * the user recoloured a card, ticked a checkbox, or typed in the open editor.
- * Notes still join and leave the feed at once; what is held is where the ones
- * already on screen sit. The order is re-taken only when the user is not
- * watching: on mount, on a search-param change, and on returning to the tab.
+ * The one live query behind every note list: scope, then search within it (so Trash is only
+ * reachable from `/trash`, ADR 0009), then order. Membership is live, rank is held (ADR 0012);
+ * the full design is in src/hooks/data/CLAUDE.md.
  */
 export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
   const { q, sort, dir, tags } = resolveNoteSearch(search);
@@ -118,8 +95,6 @@ export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
   const store = useLocalStore();
   const notesInScope = useLive(() => store.notes.feed(scope), [store, scope.state, scope.tagId]);
 
-  // A note's tags ride along with it from the store: the index needs their
-  // names at build time, and the pill filters need their ids.
   const entries = useMemo(
     () =>
       notesInScope?.map<FeedEntry>((note) => ({
@@ -161,30 +136,16 @@ export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
     return allowedIds ? matched.filter((note) => allowedIds.has(note.id)) : matched;
   }, [entries, index, trimmed, sort, dir, allowedIds]);
 
-  // State rather than a ref: the order last shown has to be *read* while
-  // rendering, and a ref may be neither read nor written during render.
-  // Tagged with the params it was captured under, so a stale order is
-  // recognised at read time rather than through a reset effect that would run
-  // after the memo it is meant to precede.
+  // State, not a ref, because it is read during render. Tagged with its `rankKey` so a stale order
+  // is spotted at read time; a reset effect would run after the memo it must precede.
   const [held, setHeld] = useState<{ key: string; ids: readonly string[] } | null>(null);
   const heldIds = held?.key === rankKey ? held.ids : EMPTY_IDS;
 
   const ranked = useMemo(() => mergeHeldOrder(fresh, heldIds), [fresh, heldIds]);
 
-  // Recorded *before* pinning, which is what keeps pinning live (ADR 0012's one
-  // exception). Holding the post-float order instead would pin a note to the
-  // front permanently: unpinning it would find it already at rank 0 and leave
-  // it there, so the pin could never be taken back.
-  //
-  // Adjusted during render rather than from an effect. This is React's
-  // documented way to derive state from a changed input: the re-render happens
-  // before anything commits, so it costs a second pass rather than a second
-  // paint - where an effect would setState after committing and show the
-  // unstable order for a frame first.
-  //
-  // The equality check is what terminates it. Storing the order feeds straight
-  // back into the memo that produced it, so without bailing out on an unchanged
-  // result the two would re-trigger each other forever.
+  // Recorded before `floatPinned`, so an unpin puts the note back (ADR 0012's one exception). Set
+  // during render, React's derive-state pattern, so the unstable order never paints; the equality
+  // check is what stops it re-triggering forever.
   if (!sameOrder(heldIds, ranked) || held?.key !== rankKey) {
     setHeld({ key: rankKey, ids: ranked.map((note) => note.id) });
   }

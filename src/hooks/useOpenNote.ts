@@ -3,14 +3,8 @@ import { useCallback } from 'react';
 import type { NoteSearchParams } from '@/lib/note-search-params.ts';
 
 /**
- * Which note is open, read from and written to the URL
+ * Which note is open, kept in the URL so the platform back button closes it
  * ([ADR 0014](../../docs/adr/0014-the-open-note-lives-in-the-url.md)).
- *
- * The same reasoning as the search box in slice 2: an open note is a place the
- * user navigated to, so it belongs in the address bar. What it buys is the
- * platform back button - the editor is a full-screen sheet on a phone, and
- * while it lived in `useState` the system back gesture navigated the router out
- * from under it instead of closing it.
  */
 export function useOpenNote() {
   const { note } = useSearch({ strict: false }) as NoteSearchParams;
@@ -45,11 +39,8 @@ export function useOpenNote() {
   }, [canGoBack, navigate, router]);
 
   /**
-   * Drop a `note` that points at nothing, without touching history.
-   *
-   * Reachable in normal use: closing an empty draft purges it (or never creates
-   * it), so the entry the user just came from now names a note that does not
-   * exist. Tapping forward, or reloading a stale tab, lands on it.
+   * Drops a `note` that points at nothing, without touching history. Reachable: closing an empty
+   * draft purges it, so going forward or reloading a stale tab lands on a missing note.
    */
   const dismissMissingNote = useCallback(() => {
     void navigate({

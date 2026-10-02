@@ -44,22 +44,13 @@ interface BuildOptions {
   getDeps: () => AttachmentDeps;
   /** The live editor, which does not exist yet while this array is built. */
   getEditor: () => TiptapEditor | null;
-  /** Read live, for the same reason as `getDeps`: reduced motion can be
-   *  switched while a note is open, but this array is built once. Optional
-   *  because a caller with no preferences to hand (a headless test) should get
-   *  the quieter answer, not an animation it never asked for. */
+  /** Read live, like `getDeps`. Optional, so a headless test gets no animation. */
   animateChecklist?: () => boolean;
   t: TFunction;
 }
 
-/**
- * Every extension the note editor mounts, in one place.
- *
- * Extracted from `editor.tsx` so the toolbar registry can be tested against the
- * *real* mounted set: a registry id that names an extension nobody registers is a
- * button that silently never appears, which is exactly the class of bug the
- * `videoAttachment` omission was.
- */
+/** Lives outside `editor.tsx` so the toolbar registry is tested against the real mounted
+ *  set: an id naming an unregistered extension is a button that silently never appears. */
 export function buildEditorExtensions({ getDeps, getEditor, animateChecklist, t }: BuildOptions) {
   return [
     Document,
@@ -89,8 +80,7 @@ export function buildEditorExtensions({ getDeps, getEditor, animateChecklist, t 
     TextAlign,
     createLink(t),
     Typography,
-    // Undo/redo. Registered for its commands *and* its buttons: without it a
-    // phone, which has no Ctrl+Z, has no way to undo at all.
+    // Registered for its buttons too: a phone has no Ctrl+Z, so they are its only undo.
     History,
     createSlashMenu(getDeps, t),
     // Only the body gets a placeholder - the title input has its own, and a

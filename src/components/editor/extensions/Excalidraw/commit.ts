@@ -1,14 +1,9 @@
 import type { AttachmentDeps } from '../attachments/deps';
 import { type ExcalidrawScene, sceneToFile, sceneToSvgString } from './scene';
 
-/** Commit-on-Save orchestration shared by the Excalidraw modal. Every Save mints
- *  a *new* attachment row (persisting the note draft first) and hands its id to
- *  `place`: a new drawing inserts the node, an edit repoints the existing node at
- *  it. Bytes are therefore write-once by id (ADR 0017), which is what lets sync
- *  treat a blob upload as idempotent; the old row is left to the note-scoped
- *  orphan sweep once the Body no longer references it. A failed snapshot render
- *  never blocks the save: the scene is still written, and an edit carries the
- *  previous preview forward rather than showing none. */
+/** Every Save mints a new row and hands its id to `place`, so bytes stay write-once by id
+ *  (ADR 0017) and the orphan sweep removes the old row. A failed snapshot never blocks the
+ *  save: an edit carries the previous preview forward. */
 export async function commitExcalidrawScene(
   deps: Pick<
     AttachmentDeps,

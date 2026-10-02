@@ -36,12 +36,7 @@ function useStorage(): Storage | null {
   return storage;
 }
 
-/**
- * "Is my data safe here?" answered in one block (PLAN.md M5): whether the
- * browser keeps this Device's copy, and - while signed in - how Sync is doing,
- * how many changes still wait for the server, and whether this Device keeps
- * every Attachment's bytes or only their Previews.
- */
+/** "Is my data safe here?" answered in one block (PLAN.md M5). */
 export function SyncStatusSection() {
   const { t } = useTranslation();
   const storage = useStorage();

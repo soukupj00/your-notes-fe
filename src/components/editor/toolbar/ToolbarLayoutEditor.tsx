@@ -21,33 +21,14 @@ const WIDTH_CLASSES: WidthClass[] = ['compact', 'wide'];
 const PRESETS: ToolbarPresetId[] = ['minimal', 'balanced', 'everything'];
 
 interface ToolbarLayoutEditorProps {
-  /**
-   * Which Layout opens first. Defaults to the window's own Width Class, which is
-   * the one the user is looking at while they edit.
-   */
   initialWidthClass?: WidthClass;
-  /**
-   * Draw a static picture of the resulting bar above the list.
-   *
-   * On in Settings, which has no note open; off in the sheet over the editor,
-   * where the real bar is a few pixels away and updating live - a second,
-   * lesser copy of it there would be noise.
-   */
+  /** On in Settings, which has no note open; off over the editor, whose real bar is live. */
   showPreview?: boolean;
 }
 
 /**
- * The one editor for a Toolbar Layout, mounted both in Settings and in the sheet
- * over the editor dialog (ADR 0011, decision 10).
- *
- * It edits **one Width Class at a time** rather than one list with overflow
- * rules: a phone and a desktop want different bars, and a single list would have
- * to guess which one an edit meant.
- *
- * Every change writes straight through to the stored blob. There is no draft and
- * no Save: the bar behind the sheet is the preview, and a settings screen that
- * could be abandoned half-applied would need a discard prompt for a decision
- * nobody is making.
+ * Mounted in Settings and over the editor (ADR 0011, decision 10). It edits one Width
+ * Class at a time and writes straight through: the bar behind the sheet is the preview.
  */
 export function ToolbarLayoutEditor({ initialWidthClass, showPreview }: ToolbarLayoutEditorProps) {
   const { t } = useTranslation();
@@ -56,9 +37,8 @@ export function ToolbarLayoutEditor({ initialWidthClass, showPreview }: ToolbarL
   const [widthClass, setWidthClass] = useState<WidthClass>(initialWidthClass ?? windowWidthClass);
   const [openFamilyId, setOpenFamilyId] = useState<string | null>(null);
 
-  // Reconciled rather than raw: the stored blob may be empty (never customised)
-  // or predate half the registry, and the editor has to show every family the
-  // user could turn on, not only the ones they have already met.
+  // Reconciled, because the stored blob may be empty or predate half the registry,
+  // and the editor must show every family the user could turn on.
   const layout = reconcileLayout(preferences.toolbar[widthClass], widthClass);
   const write = (next: ToolbarLayout) =>
     setPreference('toolbar', { ...preferences.toolbar, [widthClass]: next });
@@ -84,9 +64,8 @@ export function ToolbarLayoutEditor({ initialWidthClass, showPreview }: ToolbarL
             <ChevronLeft className="size-4" aria-hidden />
             {t('settings.toolbar.back')}
           </Button>
-          {/* The Width Class travels into the drill-in: these switches apply to
-              one of the two Layouts, and a leaf list with no width on it is the
-              easiest place in the feature to edit the wrong one. */}
+          {/* The width is named here, or a leaf list is the easiest place to edit
+              the wrong one of the two Layouts. */}
           <span className="ml-auto truncate text-muted-foreground text-xs">
             {familyName(openFamily.id)} · {t(`settings.toolbar.width.${widthClass}`)}
           </span>
@@ -139,10 +118,8 @@ export function ToolbarLayoutEditor({ initialWidthClass, showPreview }: ToolbarL
             type="button"
             variant="outline"
             size="sm"
-            // A preset is a stamp, not a mode (decision 9): it writes a whole
-            // Layout and nothing remembers that it did, so there is no active
-            // state to show and no separate Reset - re-stamping Balanced *is*
-            // the reset, and one button per outcome beats two that agree.
+            // A stamp, not a mode (decision 9): nothing remembers it, so there is no
+            // active state and no Reset button; re-stamping Balanced is the reset.
             onClick={() => write(toolbarPreset(preset, widthClass))}
           >
             {t(`settings.toolbar.preset.${preset}`)}
@@ -179,13 +156,7 @@ export function ToolbarLayoutEditor({ initialWidthClass, showPreview }: ToolbarL
   );
 }
 
-/**
- * Where a 360px phone stops showing buttons.
- *
- * Not a limit - a Layout may run past it, and the bar scrolls. It is here so the
- * arrangement is made against the real constraint rather than discovered on the
- * phone afterwards.
- */
+/** Where a 360px phone stops showing buttons: a marker, not a limit (`COMPACT_FOLD_SLOTS`). */
 function FoldMarker() {
   const { t } = useTranslation();
   return (
@@ -207,7 +178,6 @@ interface FamilyRowProps {
   onCollapse: (collapsed: boolean) => void;
 }
 
-/** One family: drag to order, tap the name to drill in, collapse it, or turn it off. */
 function FamilyRow({ family, name, onOpen, onToggle, onCollapse }: FamilyRowProps) {
   const { t } = useTranslation();
   const registryFamily = getToolbarFamily(family.id);
@@ -272,7 +242,7 @@ interface LeafListProps {
   onToggle: (memberId: string, on: boolean) => void;
 }
 
-/** A family's buttons: one flat, single-level list, so nested drag never exists. */
+/** Flat and single-level, so nested drag never exists. */
 function LeafList({ family, nameOf, onReorder, onToggle }: LeafListProps) {
   const { t } = useTranslation();
   const registryFamily = getToolbarFamily(family.id);

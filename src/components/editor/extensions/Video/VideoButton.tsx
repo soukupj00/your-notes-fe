@@ -9,11 +9,9 @@ export interface VideoButtonProps {
   tooltip: string;
 }
 
-/** Toolbar entry point: opens a hidden multi-file video picker, then runs the
- *  shared insert pipeline. `accept="video/*"` (not the explicit MIME whitelist):
- *  Chrome on Linux greys out valid files when a specific type like `video/mp4`
- *  is listed, and mobile camera capture comes free with the wildcard. The
- *  whitelist is still enforced in `validateAttachmentFile` after selection. */
+/** `accept="video/*"`, not the MIME whitelist: Chrome on Linux greys out valid files when a
+ *  specific type is listed, and mobile camera capture comes with the wildcard. The whitelist
+ *  is still enforced by `validateAttachmentFile`. */
 export function VideoButton({ editor, getDeps, tooltip }: VideoButtonProps) {
   return (
     <AttachmentFilePickerButton

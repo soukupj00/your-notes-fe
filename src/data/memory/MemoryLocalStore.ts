@@ -27,13 +27,9 @@ type Table = 'notes' | 'tags' | 'noteTags' | 'attachments' | 'meta';
 const linkKey = noteTagId;
 
 /**
- * A Local Store that persists nothing: plain Maps, atomic by being
- * single-threaded, live by re-reading after every write to a table a Live
- * depends on. It is the "cache only" configuration and what the contract
- * suite proves the interface against; the app's default is Dexie.
- *
- * Every row comes back as a copy without its sync state; an Attachment's Blobs
- * are the same objects it was given, as there is no structured clone here.
+ * Persists nothing (src/data/CLAUDE.md): atomic by being single-threaded, live by re-reading after
+ * a write to a table a Live reads. Rows come back as copies, but an Attachment's Blobs are the
+ * same objects it was given: there is no structured clone here.
  */
 export function createMemoryLocalStore(): LocalStore {
   const notes = new Map<string, Stored<Note>>();

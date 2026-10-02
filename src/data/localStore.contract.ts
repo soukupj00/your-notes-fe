@@ -41,7 +41,6 @@ function attachment(noteId: string, overrides: Partial<Attachment> = {}): Attach
   };
 }
 
-/** Collects every value a Live delivers, so a test can assert on the sequence. */
 function collect<T>(live: Live<T>) {
   const values: T[] = [];
   const unsubscribe = live.subscribe((value) => values.push(value));
