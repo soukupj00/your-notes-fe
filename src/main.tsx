@@ -13,16 +13,15 @@ import './i18n.ts';
 // The Local Store the app runs on (ADR 0020). Dexie/IndexedDB is the default
 // and the only shipped implementation that persists; see src/data/CLAUDE.md
 // for bringing your own.
-// A Share Link's page (`/share/<token>`) is opened by strangers and writes
-// nothing to their Local Store (CONTEXT.md), so it never even opens IndexedDB.
-const store = isSharePath(window.location.pathname)
-  ? createMemoryLocalStore()
-  : createDexieLocalStore();
+// A Share Link's page (`/share/<token>`) is opened by strangers: it writes nothing to
+// their Local Store and has no Account, so it never opens IndexedDB or asks for a Session.
+const shared = isSharePath(window.location.pathname);
+const store = shared ? createMemoryLocalStore() : createDexieLocalStore();
 // The server that serves the PWA is the server (ADR 0018); where none answers,
 // `AccountProvider` says so and the app runs local-only.
 const hal = createHalClient();
-const accountService = createHalAccountService(hal);
-const remote = createHalRemote(hal);
+const accountService = shared ? null : createHalAccountService(hal);
+const remote = shared ? null : createHalRemote(hal);
 
 // Lets the one-shot legacy migration land before the first synchronous
 // preferences read (src/data/dexie/legacyPreferences.ts). Renders regardless

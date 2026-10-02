@@ -56,14 +56,15 @@ const SyncContext = createContext<SyncContextValue>(INACTIVE);
 /**
  * Runs the sync loop (`src/sync/loop.ts`) while this Device is signed in, and
  * says how it is going. Mounted in `routes/__root.tsx`, inside the router,
- * because its one toast links to the Conflicts Tag. It never blocks a screen:
- * signed out or with no server, it is inactive and every value is at rest.
+ * because two of its toasts link into the app (to the Conflicts Tag and to
+ * Settings). It never blocks a screen: signed out or with no server, it is
+ * inactive and every value is at rest.
  */
 export function SyncProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const store = useLocalStore();
-  const { session, remote } = useAccount();
+  const { session, remote, setSession } = useAccount();
   const [status, setStatus] = useState<SyncStatus>('idle');
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const pending = useLive(() => store.sync.pending(), [store]) ?? 0;
@@ -102,8 +103,25 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     if (report.keptNewer > 0) toast.info(t('sync.keptNewer'));
     for (const name of report.tooLarge) toast.error(t('sync.tooLarge', { name }));
   };
+  const onSignedOutRef = useRef<() => void>(() => {});
+  const onSignedOut = () => {
+    setSession(null);
+    // Stays until dismissed: it is the only notice that this Device stopped syncing.
+    toast(t('sync.signedOut'), {
+      duration: Number.POSITIVE_INFINITY,
+      action: {
+        label: t('account.section.signIn'),
+        onClick: () => void navigate({ to: '/settings' }),
+      },
+      cancel: {
+        label: t('account.section.close'),
+        onClick: () => undefined,
+      },
+    });
+  };
   useEffect(() => {
     onReportRef.current = onReport;
+    onSignedOutRef.current = onSignedOut;
   });
 
   useEffect(() => {
@@ -129,6 +147,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         store,
         onStatus: setStatus,
         onReport: (report) => onReportRef.current(report),
+        onSignedOut: () => onSignedOutRef.current(),
       });
     });
     return () => {

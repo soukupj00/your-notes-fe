@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { closeNote, newTextNote, skipTour, startNote } from './helpers';
+import { card, closeNote, newTextNote, skipTour, startNote } from './helpers.ts';
 
 test.describe('checklist', () => {
   test.beforeEach(async ({ page }) => {
@@ -16,17 +16,17 @@ test.describe('checklist', () => {
     await page.getByRole('textbox', { name: 'Title' }).fill('Shopping');
     await closeNote(page);
 
-    const card = page.getByRole('button', { name: /Shopping/ });
+    const shopping = card(page, 'Shopping');
     // On the glyphs: the paragraph spans the row, and its centre is the empty
     // run after a short word, which is the card rather than the control.
-    await card.getByText('Milk').click({ position: { x: 6, y: 8 } });
+    await shopping.getByText('Milk').click({ position: { x: 6, y: 8 } });
 
-    await expect(card.locator('li[data-checked="true"]')).toHaveCount(1);
+    await expect(shopping.locator('li[data-checked="true"]')).toHaveCount(1);
     // The card was not opened by the tap.
     await expect(page.getByRole('dialog')).toHaveCount(0);
 
     // Past the end of the words the row is the card again.
-    const bread = card.getByText('Bread');
+    const bread = shopping.getByText('Bread');
     const box = await bread.boundingBox();
     if (!box) throw new Error('row not laid out');
     await bread.click({ position: { x: box.width - 6, y: 8 } });
@@ -61,8 +61,8 @@ test.describe('checklist', () => {
     await expect(rows).toHaveText(['Two', 'Three', 'One']);
 
     await closeNote(page);
-    const card = page.getByRole('button', { name: /Order/ });
-    await expect(card.locator('li[data-type="taskItem"]')).toHaveText(['Two', 'Three', 'One']);
+    const order = card(page, 'Order');
+    await expect(order.locator('li[data-type="taskItem"]')).toHaveText(['Two', 'Three', 'One']);
   });
 
   test('a long press on a card row opens the note', async ({ page, isMobile }) => {
@@ -76,7 +76,7 @@ test.describe('checklist', () => {
     await page.keyboard.type('Item');
     await closeNote(page);
 
-    const row = page.getByRole('button', { name: /Held/ }).locator('li[data-type="taskItem"]');
+    const row = card(page, 'Held').locator('li[data-type="taskItem"]');
     const box = await row.boundingBox();
     if (!box) throw new Error('row not laid out');
     const cdp = await page.context().newCDPSession(page);

@@ -345,7 +345,8 @@
     "empty": {
       "active": {
         "title": "Zatím žádné poznámky",
-        "subtitle": "Vaše poznámky se objeví tady. Klepnutím na tlačítko napíšete první."
+        "subtitle": "Vaše poznámky se objeví tady. První napíšete tlačítkem ＋.",
+        "subtitleWide": "Vaše poznámky se objeví tady. První napíšete do pole nahoře."
       },
       "archived": {
         "title": "Archiv je prázdný",
@@ -384,6 +385,12 @@
     "restore": "Obnovit",
     "restored": "Poznámka obnovena",
     "emptyTrash": "Vysypat koš",
+    "confirmEmptyTrash": {
+      "title": "Vysypat koš?",
+      "description": "Všechny poznámky v koši se nadobro smažou. Tuto akci nelze vrátit.",
+      "confirm": "Vysypat koš",
+      "cancel": "Zrušit"
+    },
     "trashEmptied_one": "Smazána {{count}} poznámka",
     "trashEmptied_few": "Smazány {{count}} poznámky",
     "trashEmptied_other": "Smazáno {{count}} poznámek",
@@ -683,6 +690,7 @@
     "pending_few": "{{count}} změny čekají",
     "pending_other": "{{count}} změn čeká",
     "syncNow": "Synchronizovat",
+    "signedOut": "Toto zařízení už není přihlášené. Přihlaste se znovu a synchronizace bude pokračovat; změny zůstávají tady.",
     "tooLarge": "{{name}} je příliš velký na synchronizaci",
     "keepEverything": {
       "label": "Mít vše v tomto zařízení",

@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { CardActions } from '@/components/cards/CardActions.tsx';
@@ -153,6 +153,17 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
     if (before && root) playRows(root, before);
   }, [prose]);
 
+  // Every open focuses the open button first: the editor returns focus to
+  // whatever had it, so a pointer open would otherwise close back onto `body`.
+  const openRef = useRef<HTMLButtonElement>(null);
+  const select = useCallback(
+    (...opts: [opts?: { autoplayFirstAudio?: boolean }]) => {
+      openRef.current?.focus({ preventScroll: true });
+      onSelect(note.id, ...opts);
+    },
+    [note.id, onSelect]
+  );
+
   // Press-and-hold on a row opens the note, because the tap now ticks it. The
   // prose is rebuilt on every body change, but the listener sits on the
   // container `NoteBody` keeps, so it survives the rebuild.
@@ -163,35 +174,34 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
     if (!root) return;
     return attachLongPress(root, {
       isTarget: (target) => target.closest('li[data-type="taskItem"]') !== null,
-      onLongPress: () => onSelect(note.id),
+      onLongPress: () => select(),
     });
-  }, [note.id, onSelect, hasProse]);
+  }, [select, hasProse]);
 
-  const open = () => onSelect(note.id);
+  const title = note.header?.trim();
+  const titleId = useId();
 
   return (
     <Card
       {...noteColorAttrs(note.color)}
       data-pinned={note.pinnedAt ? '' : undefined}
-      // Not a <button>: the card contains a menu trigger, and nesting
-      // interactive elements is invalid/inaccessible. A role="button" div with
-      // keyboard handling keeps the whole card clickable without the nesting.
-      role="button"
-      tabIndex={0}
-      onClick={open}
-      onKeyDown={(e) => {
-        // Only activate when the key originated on the card itself. React
-        // synthetic events bubble through the portalled dropdown menu, so
-        // without this an Enter/Space on the menu trigger or a menu item (e.g.
-        // Move to trash) would also open the editor.
-        if (e.target !== e.currentTarget) return;
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          open();
-        }
-      }}
-      className="group relative isolate w-full cursor-pointer break-inside-avoid gap-0 rounded-card border-0 bg-transparent py-0 text-card-foreground shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      // A click anywhere opens the note. Keyboards and screen readers use the open
+      // button below instead, so the card is not one button whose name swallows the
+      // rail's controls (controls nested in a button are invalid).
+      onClick={() => select()}
+      className="group relative isolate w-full cursor-pointer break-inside-avoid gap-0 rounded-card border-0 bg-transparent py-0 text-card-foreground shadow-none has-[[data-slot=note-card-open]:focus-visible]:ring-2 has-[[data-slot=note-card-open]:focus-visible]:ring-ring has-[[data-slot=note-card-open]:focus-visible]:ring-offset-2 has-[[data-slot=note-card-open]:focus-visible]:ring-offset-background"
     >
+      {/* Its click bubbles to the Card's `onClick`, so it needs no handler of its own. */}
+      <button
+        type="button"
+        ref={openRef}
+        data-slot="note-card-open"
+        className="pointer-events-none absolute inset-0 -z-10 opacity-0"
+        aria-labelledby={title ? titleId : undefined}
+      >
+        {title ? null : t('notes.editNoteTitle')}
+      </button>
+
       {/* Only this material layer scales. Keeping text and media off the
           transformed layer prevents Chromium from bitmap-stretching them. */}
       <div
@@ -223,15 +233,11 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
       <div className="relative z-10 p-[var(--card-pad)] coarse:pb-1">
         {/* Above the title, as in the lab: what a note *looks* like is the
             fastest way to recognise it again in a wall. */}
-        <CardMedia
-          noteId={note.id}
-          body={note.body}
-          attachments={attachments}
-          onOpen={(opts) => onSelect(note.id, opts)}
-        />
+        <CardMedia noteId={note.id} body={note.body} attachments={attachments} onOpen={select} />
 
-        {note.header ? (
+        {title && (
           <h2
+            id={titleId}
             dir="auto"
             /* pe-9 reserves the pin's corner so a long title never runs under
                it. Reserved rather than revealed: the card's height must not
@@ -240,8 +246,6 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
           >
             {note.header}
           </h2>
-        ) : (
-          <span className="sr-only">{t('notes.editNoteTitle')}</span>
         )}
 
         {hasProse && (

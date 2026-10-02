@@ -25,8 +25,8 @@ import { expect, type Page, test } from '@playwright/test';
  *
  * The Tour marks every direct child of `document.body` except the popover
  * `inert`, and `inert` takes its subtree out of the accessibility tree. So while
- * the Tour is up, a note card is not a button as far as `getByRole` is
- * concerned. `getByText` reads the DOM instead and is unaffected - and the same
+ * the Tour is up, a Card's open button is not a button as far as `getByRole`
+ * is concerned. `getByText` reads the DOM instead and is unaffected - and the same
  * property makes the popover's own buttons unambiguous, since nothing else in
  * the document has a role at all.
  */

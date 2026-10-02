@@ -60,7 +60,7 @@ describe('NoteCard', () => {
   it('carries the stored colour token on the card identity surface', () => {
     render(<NoteCard note={makeNote({ color: 'blue' })} onSelect={vi.fn()} />);
 
-    const card = screen.getByRole('heading', { name: 'My note' }).closest('[role="button"]');
+    const card = screen.getByRole('heading', { name: 'My note' }).closest('[data-slot="card"]');
     expect(card).toHaveAttribute('data-note-color', 'blue');
     expect(card?.querySelector('[data-slot="note-card-surface"]')).toBeInTheDocument();
   });
@@ -69,7 +69,7 @@ describe('NoteCard', () => {
     render(<NoteCard note={makeNote()} onSelect={vi.fn()} />);
 
     expect(
-      screen.getByRole('heading', { name: 'My note' }).closest('[role="button"]')
+      screen.getByRole('heading', { name: 'My note' }).closest('[data-slot="card"]')
     ).toHaveAttribute('data-note-color', 'default');
   });
 
@@ -82,16 +82,41 @@ describe('NoteCard', () => {
     expect(surface).toHaveClass('group-hover:border-note-border-hover');
   });
 
-  it('opens the editor when the card itself is keyboard-activated', async () => {
+  it("opens the editor from the keyboard through the title's button", async () => {
     const note = makeNote();
     const onSelect = vi.fn();
     render(<NoteCard note={note} onSelect={onSelect} />);
 
-    const card = screen.getByText('My note').closest('[role="button"]') as HTMLElement;
-    card.focus();
+    screen.getByRole('button', { name: 'My note' }).focus();
     await userEvent.keyboard('{Enter}');
 
     expect(onSelect).toHaveBeenCalledWith(note.id);
+  });
+
+  it("names the open button by the title alone, never by the rail's controls", () => {
+    render(<NoteCard note={makeNote()} onSelect={vi.fn()} />);
+
+    const open = screen.getByRole('button', { name: 'My note' });
+    expect(open).toHaveAttribute('data-slot', 'note-card-open');
+    expect(screen.queryByRole('button', { name: /My note.+notes\./ })).not.toBeInTheDocument();
+  });
+
+  it('puts the open button first in the tab order, and names an untitled one', async () => {
+    render(<NoteCard note={makeNote({ header: '' })} onSelect={vi.fn()} />);
+
+    await userEvent.tab();
+    expect(screen.getByRole('button', { name: 'notes.editNoteTitle' })).toHaveFocus();
+  });
+
+  it('names a whitespace-only title as untitled', () => {
+    render(<NoteCard note={makeNote({ header: '   ' })} onSelect={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'notes.editNoteTitle' })).toBeInTheDocument();
+  });
+
+  it('focuses the open button on a click, so closing the editor returns focus here', async () => {
+    render(<NoteCard note={makeNote()} onSelect={vi.fn()} />);
+    await userEvent.click(screen.getByText('My note'));
+    expect(screen.getByRole('button', { name: 'My note' })).toHaveFocus();
   });
 
   it('does not open the editor when a rail control is keyboard-activated', async () => {
@@ -99,9 +124,8 @@ describe('NoteCard', () => {
     const onSelect = vi.fn();
     render(<NoteCard note={note} onSelect={onSelect} />);
 
-    // Focus a rail control and press Enter: it runs its own action, but the
-    // card's keydown handler must not also fire onSelect (guards against a
-    // portalled synthetic-event bubble reopening the editor).
+    // Focus a rail control and press Enter: it runs its own action, and its click
+    // must not bubble to the Card's `onClick` and open the editor too.
     screen.getByRole('button', { name: 'notes.color' }).focus();
     await userEvent.keyboard('{Enter}');
 
@@ -176,7 +200,7 @@ describe('NoteCard', () => {
     const note = makeNote({ body: '<img data-attachment-id="x1">' });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    const card = screen.getByRole('heading', { name: 'My note' }).closest('[role="button"]');
+    const card = screen.getByRole('heading', { name: 'My note' }).closest('[data-slot="card"]');
     const pin = screen.getByRole('button', { name: 'notes.pin' });
     expect(pin.parentElement).toBe(card);
   });

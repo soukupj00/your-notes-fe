@@ -1,4 +1,5 @@
 import { createRouter, RouterProvider } from '@tanstack/react-router';
+import { RouteError } from '@/components/CrashScreen.tsx';
 import { DocumentPreferences } from '@/components/DocumentPreferences.tsx';
 import { ErrorBoundary } from '@/components/ErrorBoundary.tsx';
 import { PwaUpdatePrompt } from '@/components/pwa/PwaUpdatePrompt.tsx';
@@ -15,7 +16,7 @@ import { LocalStoreProvider } from '@/data/LocalStoreProvider.tsx';
 import type { AccountService, Remote } from '@/data/Remote.ts';
 import { routeTree } from './routeTree.gen';
 
-const router = createRouter({ routeTree });
+const router = createRouter({ routeTree, defaultErrorComponent: RouteError });
 
 // Registering the router's types globally is what makes `<Link to="…">`,
 // params, and search params type-checked across the app (ADR 0008).

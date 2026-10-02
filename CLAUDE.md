@@ -42,9 +42,11 @@ pnpm format       # biome format --write
 pnpm test         # Vitest run (unit/component/data) — wired up in M1
 pnpm test:watch   # Vitest watch mode
 pnpm test:e2e     # Playwright, specs in e2e/ (wired up in M4 slice 5)
+pnpm test:e2e:pwa # Playwright against the production build: service worker and offline
 ```
 
 Playwright runs against `pnpm dev` (started for you by `playwright.config.ts`) at two breakpoints, `desktop` and `mobile`.
+`e2e/pwa/` is the exception: `playwright.config.ts` skips it, and `playwright.pwa.config.ts` runs it against `pnpm build && pnpm preview` at one width, because `pnpm dev` serves no service worker.
 Vitest includes `src/**` only and Playwright's `testDir` is `e2e/`, so neither runner sees the other's files; `tsconfig.node.json` is what typechecks `e2e/` and the two Vite configs.
 First run on a machine needs `pnpm exec playwright install chromium`.
 
@@ -106,6 +108,7 @@ The `icon` prop is a **string key** resolved via `src/components/icons/icons.ts`
 
 Routes: `/` (active feed), `/archive`, `/trash`, `/labels`, `/tag/$id`, `/settings`, `/pair` (where every Pairing Link lands; the code rides in the fragment), and `/share/$token` (a Share Link's read-only page).
 `/share/$token` is opened by strangers, so `__root.tsx` renders it bare (no shell, no Tour, no sync loop, no startup sweeps) and `main.tsx` gives it an in-memory Local Store: it writes nothing to the viewer's IndexedDB.
+`main.tsx` also gives it no Account (no `AccountService`, no `Remote`), so it never asks the server for a Session.
 The four feed routes share one `validateSearch` (`validateNoteSearch`), which is what makes the search box, sort menu, and label filters URL-driven; the Navbar hides the search box on routes without a feed. Route modules stay thin — they pick a scope and a title and delegate to a view (`NotesView`, or a page in `src/pages/`).
 
 `App.tsx` is the composition root: providers (Theme → Preferences → Tooltip → ViewMode) wrap `<RouterProvider>`, and the `declare module '@tanstack/react-router'` block registers the router's types so `<Link to>` and params are type-checked.

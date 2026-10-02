@@ -132,10 +132,11 @@ Deviations: `sharedBlobUrl` takes the fetched page rather than the token, becaus
   Reporting the answer waits for M5 because this milestone gives that same area a sync status (last synced, queued changes, this device's account), and "is my data safe here" is one question best answered in one block.
 - **Out of scope, deliberately:** end-to-end encryption (threat model documented instead - see ADR 0018), sharing a Note between Accounts, and any email/SMTP.
 - **Known gaps:**
-  - A page loaded fresh and then taken offline cannot open the editor, because its code-split chunk is cached only once the service worker controls the page (after a reload).
-    Not a sync problem, found in the slice 4 two-Device run; the PWA should precache the editor or claim clients on first load.
   - `src/components/editor/editor.tsx` is over the 500-line limit (522 lines before M5 slice 5, 528 after it).
     Splitting it is its own change, not a sync one.
+
+✅ **Fixes from the backend rework's end-to-end run (2026-10-01)** ([plan](./docs/superpowers/plans/2026-10-01-pwa-offline-session-a11y-fixes.md)).
+Deviations: the font runtime route is limited to `/assets/`; the Card's open button is an invisible full-size button, not `sr-only`; the crash heading takes focus on mount.
 
 ## Per-area plans
 

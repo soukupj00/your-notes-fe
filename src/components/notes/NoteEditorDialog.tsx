@@ -118,6 +118,9 @@ export function NoteEditorDialog({
   // The title field, so the dialog can hand it the opening focus. See
   // `onOpenAutoFocus` below - the app bar's back arrow now precedes it.
   const headerInputRef = useRef<HTMLInputElement>(null);
+  // Radix hands focus back only to a `DialogTrigger`, and this dialog opens from
+  // the URL with none, so it remembers what had focus (a Card's open button).
+  const openerRef = useRef<HTMLElement | null>(null);
 
   // The id we persist to: the prop for an existing note, or null until a draft
   // is first saved. A ref (not state) so serialized saves see it synchronously.
@@ -335,10 +338,17 @@ export function NoteEditorDialog({
         // alone - `Editor autoFocus` puts the caret in the first item, and this
         // must not race it back up to the title.
         onOpenAutoFocus={(event) => {
+          if (document.activeElement instanceof HTMLElement) {
+            openerRef.current = document.activeElement;
+          }
           event.preventDefault();
           if (focusBody) return;
           if (noteId && !finePointer) return;
           headerInputRef.current?.focus();
+        }}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          openerRef.current?.focus({ preventScroll: true });
         }}
         // Clicking the dialog's own padding/gaps (not a child element) drops the
         // cursor into the body, so tapping the margins feels editable too.
