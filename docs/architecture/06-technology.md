@@ -27,7 +27,7 @@ There is no client-state library: Dexie live queries + URL params + small contex
 | Technology | Role | Rationale |
 |---|---|---|
 | Dexie 4 + dexie-react-hooks | IndexedDB wrapper + `useLiveQuery` | Versioned schema with migrations, transactions, and reactive queries without a cache layer ([ADR 0001](../adr/0001-local-first-storage-with-dexie.md)) |
-| uuid (v4) | Entity ids | Collision-free across devices - the property adopt-on-sign-in relies on |
+| `crypto.randomUUID` (through `lib/rows.ts`) | Entity ids | Collision-free across devices - the property adopt-on-sign-in relies on |
 | fflate | Zip backup | Small, fast; whole-database export/import |
 
 ## Editor
