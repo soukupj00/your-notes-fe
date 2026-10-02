@@ -10,7 +10,7 @@ This folder was the focus of **M1** (see [root PLAN.md](../../../PLAN.md)). Goal
 - [~] **Playwright** E2E + `test:e2e` script — **deferred** (resource-heavy; UI is tested manually for now).
 - Reuse `fake-indexeddb` for any test that touches the data layer.
 
-> Extension tests run **headless**: build a `new Editor({ extensions })` from `@tiptap/core`, drive commands / the `button` factory, and assert `editor.getHTML()` / `isActive(...)`. Markdown input rules are exercised via `editor.view.someProp('handleTextInput', ...)`. See `extensions/Bold/Bold.test.ts` for the template.
+> Extension tests run **headless**: build a `new Editor({ extensions })` from `@tiptap/core`, drive commands / the `button` factory, and assert `editor.getHTML()` / `isActive(...)`. Markdown input rules are exercised via `editor.view.someProp('handleTextInput', ...)`. See `extensions/formatting.test.ts` for the template.
 
 ## 2. Cleanup
 
@@ -19,7 +19,7 @@ This folder was the focus of **M1** (see [root PLAN.md](../../../PLAN.md)). Goal
 
 ## 3. Standardize on Pattern A
 
-- Flesh out each stub extension as `Tiptap<X>.extend()` with a `button` option returning `ActionButton` + a **string** `icon` + i18n `tooltip` + `shortcutKeys` (model on `extensions/Bold/Bold.ts` and `extensions/history/History.ts`).
+- Flesh out each stub extension as `withButton(Tiptap<X>, ...)` with a `button` option returning `ActionButton` + a **string** `icon` + i18n `tooltip` + `shortcutKeys` (model on `extensions/formatting.ts` and `extensions/history/History.ts`).
 - Register the wrapped extensions in `editor.tsx` (replace the direct upstream imports). Done so far: `Bold`, `Italic`, `Strike`, `Underline`, `Clear`, `BulletList`, `OrderedList`, `ListItem`, `TaskList`, `Heading`, `Blockquote`, `Mathematics`.
 - Migrate `menus/toolbars/FormatSection.tsx` and `ListSection.tsx` to **consume extension-provided buttons** instead of defining `formatActions` arrays with inline Lucide icons. **Both done** — thin wrappers over `menus/ExtensionButtonBar.tsx` (resolves each extension's `button` by name; handles single or array returns). The legacy `ToolbarSection.tsx` was removed. Toolbar sections: `HeadingSection` (H1-H3, at the start), `FormatSection` (marks + `color` + `backgroundColor`), `ListSection`, `BlocksSection` (`Blockquote` + `Mathematics`), `FontSection` (`fontFamily` + `fontSize`), divided by vertical `Separator`s. The color/highlight/font buttons are Pattern A extensions, so no legacy toolbar items remain. Mobile-first hiding is generic via `ButtonView.hideOnMobile` (`ExtensionButtonBar` wraps such buttons in `hidden sm:inline-flex`). The applied **Balanced preset** keeps H1, Bold, Italic, Underline, Color, Highlight, and the three list buttons on mobile and hides H2/H3, Strike, Clear, Blockquote, Mathematics, FontFamily, FontSize; the section `Separator`s are `hidden sm:block` so the mobile bar has no dividers. Remaining: fine-tune the set after on-device testing.
 
@@ -27,7 +27,7 @@ This folder was the focus of **M1** (see [root PLAN.md](../../../PLAN.md)). Goal
 
 1. Basic marks — **Bold** ✅, **Italic** ✅, **Strike** ✅, **Underline** ✅, **Clear formatting** ✅.
 2. Lists & blocks — **BulletList** ✅, **OrderedList** ✅, **ListItem** ✅ (structural, no button), **Heading** ✅ (H1–H3 buttons at toolbar start), **Blockquote** ✅ (markdown `>` showcase), **TaskList** ✅.
-3. Styling — all on the `textStyle` mark via `@tiptap/extension-text-style`: **Color** ✅ (text color; `TextColorButton` popover over the shared `ColorPickerPanel`), **Highlight** ✅ (`BackgroundColor`; `HighlightButton`, same panel, `HIGHLIGHT_COLORS`), **FontFamily** ✅ + **FontSize** ✅ (shadcn `Select` dropdowns, own `FontSection`).
+3. Styling - all on the `textStyle` mark via `@tiptap/extension-text-style`: **Color** ✅ (text color; `EditorColorPickerButton` with `variant: 'text'` over the shared `ColorPickerPanel`), **Highlight** ✅ (`BackgroundColor`; `EditorColorPickerButton` with `variant: 'highlight'`, same panel, `HIGHLIGHT_COLORS`), **FontFamily** ✅ + **FontSize** ✅ (shadcn `Select` dropdowns).
 4. Math — **Mathematics** ✅ (KaTeX via bundled `@tiptap/extension-mathematics`; write LaTeX with `$$…$$` / `$$$…$$$`, button prompt-inserts, click a node to edit; `katex` CSS imported in `editor.tsx`).
 5. Media — **Image**, **Video**, **Attachment** (depends on attachment storage, `src/db/PLAN.md`).
 6. **Excalidraw** drawing — last (heaviest integration).

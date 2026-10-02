@@ -2,6 +2,7 @@ import type { Editor } from '@tiptap/core';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { icons } from '@/components/icons';
+import { useLatest } from '@/hooks/useLatest.ts';
 import { formatElapsed } from '@/lib/format-attachment.ts';
 import type { AttachmentDeps } from '../attachments/deps';
 import { RecordingWaveform } from './RecordingWaveform';
@@ -37,11 +38,14 @@ export function AudioRecorderHost({ editor, getDeps }: AudioRecorderHostProps) {
   const capture = editor.storage.audioAttachment.capture;
   const Square = icons.Square;
 
+  // Read through a stable getter: a parent handing in a new `getDeps` each render must not
+  // re-run this effect, or one error toasts on every keystroke.
+  const deps = useLatest(getDeps());
   useEffect(() => {
     if (rec.status === 'error') {
-      toast(getDeps().t(ERROR_KEY[rec.error ?? 'failed'] ?? ERROR_KEY.failed));
+      toast(deps().t(ERROR_KEY[rec.error ?? 'failed'] ?? ERROR_KEY.failed));
     }
-  }, [rec.status, rec.error, getDeps]);
+  }, [rec.status, rec.error, deps]);
 
   // The take's promise is handed over, so the coordinator knows when the
   // request is really answered (or torn down with this host before it was).
@@ -57,25 +61,25 @@ export function AudioRecorderHost({ editor, getDeps }: AudioRecorderHostProps) {
   const onStop = async () => {
     const out = await rec.stop();
     if (!out) return;
-    const deps = getDeps();
+    const d = deps();
     try {
-      const noteId = await deps.getNoteId();
+      const noteId = await d.getNoteId();
       const ext = EXT[out.mime.split(';')[0]] ?? 'webm';
       const file = new File([out.blob], `recording.${ext}`, { type: out.mime });
       // The recorder already measured this; persisting it is what lets a card
       // show a clip's length without decoding the audio on the feed.
-      const att = await deps.createAttachment(noteId, file, 'audio', {
+      const att = await d.createAttachment(noteId, file, 'audio', {
         duration: out.durationMs / 1000,
       });
       editor.chain().focus().insertAudioAttachment({ attachmentId: att.id }).run();
     } catch {
-      deps.onError('insert-failed');
+      d.onError('insert-failed');
     }
   };
 
   if (!recording) return null;
 
-  const t = getDeps().t;
+  const t = deps().t;
   return (
     <fieldset className="my-2 flex flex-col gap-3 rounded-md border border-border bg-card p-3 shadow-rest">
       <legend className="sr-only">{t('editor.audio.recording')}</legend>

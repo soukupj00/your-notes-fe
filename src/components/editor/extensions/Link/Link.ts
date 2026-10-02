@@ -1,16 +1,10 @@
 import { type LinkOptions, Link as TiptapLink } from '@tiptap/extension-link';
-import type { ComponentProps } from 'react';
-import type { ButtonContext, TFunction } from '../button-types';
+import type { ButtonContext, ButtonView, TFunction } from '../button-types';
 import { LinkButton } from './LinkButton';
 import { applyLink, createLinkPromptCoordinator, type LinkPromptCoordinator } from './linkPrompt';
 
-interface LinkButtonView {
-  component: typeof LinkButton;
-  componentProps: ComponentProps<typeof LinkButton>;
-}
-
 export interface LinkExtensionOptions extends LinkOptions {
-  button: (context: ButtonContext) => LinkButtonView;
+  button: (context: ButtonContext) => ButtonView<typeof LinkButton>;
 }
 
 declare module '@tiptap/core' {
@@ -31,7 +25,7 @@ export function createLink(t: TFunction) {
         autolink: true,
         linkOnPaste: true,
         defaultProtocol: 'https',
-        button: ({ editor, t: translate }: ButtonContext) => ({
+        button: ({ editor, t: translate }: ButtonContext): ButtonView<typeof LinkButton> => ({
           component: LinkButton,
           componentProps: {
             editor,

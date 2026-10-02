@@ -35,5 +35,6 @@ describe('FontFamily extension', () => {
     expect(typeof result.component).toBe('function');
     expect(result.componentProps.tooltip).toBe('editor.fontFamily.tooltip');
     expect(result.componentProps.editor).toBe(editor);
+    expect(result.componentProps.variant).toBe('fontFamily');
   });
 });

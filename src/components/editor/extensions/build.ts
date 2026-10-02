@@ -7,35 +7,37 @@ import { Typography } from '@tiptap/extension-typography';
 import { Placeholder } from '@tiptap/extensions';
 import { createAudio } from './Audio';
 import type { AttachmentDeps } from './attachments/deps';
-import { Blockquote } from './Blockquote';
-import { Bold } from './Bold';
-import { BulletList } from './BulletList';
 import type { TFunction } from './button-types';
 import { Clear } from './Clear';
-import { Code } from './Code';
-import { CodeBlock } from './CodeBlock';
 import { Color } from './Color';
 import { ColorPreview } from './color-preview';
 import { createExcalidraw } from './Excalidraw';
 import { createFile } from './File';
 import { FontFamily } from './FontFamily';
 import { FontSize } from './FontSize';
+import {
+  Blockquote,
+  Bold,
+  BulletList,
+  Code,
+  CodeBlock,
+  HorizontalRule,
+  Italic,
+  OrderedList,
+  Strike,
+  Underline,
+} from './formatting';
 import { Heading } from './Heading';
 import { Highlight } from './Highlight';
-import { HorizontalRule } from './HorizontalRule';
 import { History } from './history';
 import { createImage } from './Image';
-import { Italic } from './Italic';
 import { createLink } from './Link';
 import { ListItem } from './ListItem';
 import { createMathematics } from './Mathematics';
-import { OrderedList } from './OrderedList';
 import { createSlashMenu } from './SlashMenu';
-import { Strike } from './Strike';
 import { TaskItem } from './TaskItem';
 import { ChecklistFlip, TaskList } from './TaskList';
 import { TextAlign } from './TextAlign';
-import { Underline } from './Underline';
 import { createVideo } from './Video';
 
 interface BuildOptions {

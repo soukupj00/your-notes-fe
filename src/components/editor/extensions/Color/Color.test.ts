@@ -35,5 +35,6 @@ describe('Color extension', () => {
     expect(typeof result.component).toBe('function');
     expect(result.componentProps.tooltip).toBe('editor.textColor.tooltip');
     expect(result.componentProps.editor).toBe(editor);
+    expect(result.componentProps.variant).toBe('text');
   });
 });

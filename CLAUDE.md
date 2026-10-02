@@ -80,31 +80,21 @@ The `NotesProvider` that used to hold the query is gone: a searched feed is now 
 
 Built on **TipTap v3**. The core `Editor` component (`editor.tsx`) composes extensions and renders `EditorContent`.
 
-Each editor extension lives in its own folder under `src/components/editor/extensions/<ExtensionName>/`. The pattern is:
+Most toolbar extensions are the upstream TipTap extension plus an `ActionButton` `button` option, built by `withButton` (`src/components/editor/extensions/withButton.ts`); a custom component types its option `ButtonView<typeof X>`:
 
-1. A TypeScript file that extends the upstream TipTap extension and adds a `button` option:
+```ts
+export const Bold = withButton(TiptapBold, ({ editor, t }) => ({
+  component: ActionButton,
+  componentProps: { action, isActive, icon: 'Bold', tooltip: t('editor.bold.tooltip'), shortcutKeys: ['Mod', 'B'], toggle: true },
+}));
+```
 
-   ```ts
-   export const Bold = TiptapBold.extend<BoldOptions>({
-     addOptions() {
-       return {
-         ...this.parent?.(),
-         button: ({ editor, t }) => ({
-           component: ActionButton,
-           componentProps: { action, isActive, icon: "Bold", tooltip, shortcutKeys },
-         }),
-       };
-     },
-   });
-   ```
-
-2. An `index.ts` that re-exports it.
-
+The one-button marks and blocks are declarations in `extensions/formatting.ts`; an extension with more than its declaration (a node view, a plugin, a coordinator) has a folder `extensions/<Name>/` with `<Name>.ts` and an `index.ts` re-export.
 The `icon` prop is a **string key** resolved via `src/components/icons/icons.ts`, which maps names to Lucide icon components. When adding a new icon for a toolbar button, add it to that registry.
 
 `ActionButton` (`src/components/ui/ActionButton.tsx`) is the shared toolbar button: wraps a Radix Toggle/Button with Tooltip and resolves the icon string from the registry.
-
-> **Canonical vs. legacy.** This per-extension pattern (Pattern A) is the **canonical** one — see [ADR 0004](./docs/adr/0004-canonical-editor-toolbar-pattern.md). So far `Bold`, `BulletList`, `Heading`, `Blockquote`, `Mathematics`, and `history` use it (each with a headless Vitest test) and are registered as the wrapped versions in `editor.tsx`; the remaining extension folders are still stubs or upstream registrations. The legacy toolbars (`menus/toolbars/FormatSection.tsx`, `ListSection.tsx`) use a centralized `formatActions` array with inline Lucide imports; they are being migrated to consume extension-provided buttons. See [`src/components/editor/PLAN.md`](./src/components/editor/PLAN.md).
+Pattern A (extension-owned buttons, [ADR 0004](./docs/adr/0004-canonical-editor-toolbar-pattern.md)) is the only pattern; the toolbar itself is the registry in `toolbar/` ([ADR 0011](./docs/adr/0011-toolbar-items-and-families.md)).
+See [`src/components/editor/CLAUDE.md`](./src/components/editor/CLAUDE.md).
 
 ### Routing (`src/routes/`, `src/routeTree.gen.ts`)
 
@@ -254,7 +244,7 @@ Feature work follows **red → green → refactor**, applied pragmatically per l
 ## Key conventions
 
 - **Icons**: Always use string keys in `src/components/icons/icons.ts` — never import Lucide icons directly into extension button configs.
-- **New TipTap extensions**: Follow the per-folder pattern with `ExtensionName.ts` + `index.ts`. Add the button factory with `ActionButton` as the component.
+- **New TipTap extensions**: `withButton(Upstream, ctx => view)` for an `ActionButton`, a `ButtonView<typeof X>` option for a custom component; a one-button mark or block is a declaration in `extensions/formatting.ts`, anything with more than its declaration gets a folder with `<Name>.ts` + `index.ts`.
 - **DB schema changes**: Increment the Dexie version number in `src/data/dexie/db.ts` and add a migration if existing data must be preserved.
 - **Dates**: All timestamps stored as ISO strings (`.toISOString()`).
 - **IDs and timestamps**: ids are minted only by `mintId` in `src/lib/rows.ts` (`crypto.randomUUID`; a secure context is already a requirement, ADR 0018). Every Note, Tag, NoteTag and Attachment is born through one of its factories, which stamps both timestamps; a later write stamps `updatedAt` itself, as an ISO string.

@@ -4,13 +4,9 @@ import { TaskItem } from '@tiptap/extension-list';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { afterEach, describe, expect, it } from 'vitest';
-import { BulletList } from './extensions/BulletList';
-import { Code } from './extensions/Code';
-import { CodeBlock } from './extensions/CodeBlock';
+import { BulletList, Code, CodeBlock, HorizontalRule, OrderedList } from './extensions/formatting';
 import { Heading } from './extensions/Heading';
-import { HorizontalRule } from './extensions/HorizontalRule';
 import { ListItem } from './extensions/ListItem';
-import { OrderedList } from './extensions/OrderedList';
 import { TaskList } from './extensions/TaskList';
 
 /**
