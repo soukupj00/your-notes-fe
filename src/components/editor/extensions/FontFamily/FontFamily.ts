@@ -15,12 +15,7 @@ export interface FontFamilyExtensionOptions extends FontFamilyOptions {
   button: (context: ButtonContext) => FontFamilyButtonView;
 }
 
-/**
- * Wraps the upstream `FontFamily` extension (from `@tiptap/extension-text-style`, name
- * `fontFamily`, backs `setFontFamily` / `unsetFontFamily` on the `textStyle` mark) with a
- * Pattern A `button` that returns the {@link FontFamilyButton} dropdown. `TextStyle` must
- * also be registered for the font-family attribute to exist.
- */
+/** `TextStyle` must also be registered, or the fontFamily attribute does not exist. */
 export const FontFamily = TiptapFontFamily.extend<FontFamilyExtensionOptions>({
   addOptions() {
     return {

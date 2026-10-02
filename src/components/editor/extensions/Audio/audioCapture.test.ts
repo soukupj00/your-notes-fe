@@ -13,7 +13,7 @@ describe('createAudioCaptureCoordinator', () => {
   });
 
   it('holds the request until a recorder registers', () => {
-    // The editor asks as soon as it is ready; the mic button may mount after.
+    // The editor asks as soon as it is ready; the recorder host may mount after.
     const coordinator = createAudioCaptureCoordinator();
     coordinator.requestRecording();
 

@@ -5,24 +5,9 @@ const BASE_URL = `http://localhost:${PORT}`;
 const MEDIA_ARGS = ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'];
 
 /**
- * End-to-end tests (ADR 0003). The suite exists because of the Tour: jsdom
- * returns zeroed client rects, so the spotlight's only real failure mode - a
- * hole cut over nothing - is invisible to Vitest, and every act in the Tour is a
- * gesture against the real app rather than a call into a unit.
- *
- * Specs live in `e2e/`, which is outside Vitest's `src/**` include glob, so the
- * two runners cannot pick up each other's files.
- *
- * The dev server, not `preview`, is what these run against. `vite.config.ts`
- * declares no `devOptions` for `VitePWA`, so dev serves no service worker at
- * all - and a service worker deciding for itself when to hand back a cached
- * bundle is the last thing an acceptance suite needs. The service worker is
- * covered by `playwright.pwa.config.ts` against the production build, and the
- * install prompt still cannot be driven headlessly.
- *
- * Each test gets a fresh browser context, which is what "fresh profile" means
- * throughout the onboarding spec: a new context has its own empty IndexedDB, so
- * `onboardingSeenAt` is unset and the Tour is due.
+ * Runs on `pnpm dev`, which serves no service worker, so no cached bundle can stand in for the
+ * code under test; `playwright.pwa.config.ts` covers the worker. How this suite splits from
+ * Vitest: CLAUDE.md "Commands" and ADR 0003.
  */
 export default defineConfig({
   testDir: './e2e',
@@ -40,12 +25,9 @@ export default defineConfig({
     locale: 'en-GB',
   },
   projects: [
-    // Both, deliberately. Step 1 of the Tour has no speed dial to open above
-    // `sm:` and no desktop capture bar below it, and several targets are mounted
-    // at both widths with one of the two invisible - so a suite that ran at one
-    // width would pass while the other pointed at nothing.
-    // Chromium's fake media device, so `getUserMedia` resolves headlessly and
-    // the voice-note start can be driven end to end.
+    // Both widths, deliberately: several targets are mounted at both with one invisible, so one
+    // width would pass while the other pointed at nothing. The fake media device lets
+    // `getUserMedia` resolve headlessly.
     {
       name: 'desktop',
       use: {

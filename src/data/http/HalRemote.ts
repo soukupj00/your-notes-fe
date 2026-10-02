@@ -3,10 +3,7 @@ import { ChangesPage, PushResponse, SessionResponse } from '@/contract/index.ts'
 import type { Remote } from '../Remote.ts';
 import { type HalClient, ProblemError } from './hal.ts';
 
-/**
- * `Remote` over the Self-hosted Server's HAL API: replication only, no loop
- * (the `SyncProvider` that drives it is M5 slice 4).
- */
+/** `Remote` over the Self-hosted Server's HAL API: replication only, `SyncProvider` runs the loop. */
 export function createHalRemote(hal: HalClient): Remote {
   return {
     async identity() {

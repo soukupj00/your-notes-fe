@@ -13,12 +13,8 @@ export interface QuickCapturePref {
 const ACTION_IDS = QUICK_CAPTURE_ACTIONS.map((action) => action.key);
 
 /**
- * The stored quick-capture list, brought up to date with the shipped actions.
- *
- * Deliberately **not** the toolbar's model: no families, no Width Classes. Five
- * buttons on one dial have nothing to group and nothing to overflow, and the
- * cost of the richer model would be paid by every reader of this file for a
- * capability the surface cannot use.
+ * Deliberately not the toolbar's model (no families, no Width Classes): a handful of buttons on
+ * one dial have nothing to group and nothing to overflow.
  */
 export function reconcileQuickCapture(stored: QuickCapturePref[] | undefined): QuickCapturePref[] {
   const defaults = QUICK_CAPTURE_ACTIONS.map((action) => ({ id: action.key, on: true }));
@@ -28,10 +24,8 @@ export function reconcileQuickCapture(stored: QuickCapturePref[] | undefined): Q
 }
 
 /**
- * The starts to draw, in the user's order.
- *
- * An id the build no longer ships is kept in storage by `reconcileQuickCapture`
- * and dropped here, so an arrangement survives an action being renamed away.
+ * An id the build no longer ships stays in storage but is dropped here, so an arrangement
+ * survives an action being renamed away.
  */
 export function resolveQuickCapture(stored: QuickCapturePref[] | undefined): QuickCaptureAction[] {
   return reconcileQuickCapture(stored)
@@ -41,10 +35,8 @@ export function resolveQuickCapture(stored: QuickCapturePref[] | undefined): Qui
 }
 
 /**
- * The same list minus plain text, for the desktop bar whose own text field *is*
- * that start. A derivation rather than a second stored list: two lists would be
- * two things to keep in step, and the user never asked for a desktop dial that
- * differs from their phone's.
+ * Minus plain text, which the desktop bar's own field is. Derived rather than stored twice:
+ * nobody asked for a desktop dial that differs from their phone's.
  */
 export function resolveDesktopQuickCapture(
   stored: QuickCapturePref[] | undefined

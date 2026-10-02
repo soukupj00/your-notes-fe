@@ -12,9 +12,8 @@ type Decision =
   | { status: 'gone' };
 
 /**
- * The backend's sync rules, copied from `ni-dip-be/src/sync/decide.ts` as the
- * spec this fake answers by (backend PLAN.md "Sync rules"). Keep it a copy, not
- * a re-derivation: if the two disagree, the backend is right and this changes.
+ * Copied from `ni-dip-be/src/sync/decide.ts` (backend PLAN.md "Sync rules"). Keep it a copy,
+ * not a re-derivation: if the two disagree, the backend is right and this changes.
  */
 export function decide(
   incoming: Incoming,
@@ -54,9 +53,8 @@ const withoutRev = (row: object) => {
 };
 
 /**
- * One server's rows per Account, with a Revision and a Sequence each, the way
- * the backend keeps them (rows are the feed; no change log). `pageSize` is the
- * backend's `PAGE_SIZE`, small in tests so paging is exercised.
+ * One server's rows per Account, each with a Revision and a Sequence, as the backend keeps them:
+ * the rows are the feed, with no change log. `pageSize` is the backend's `PAGE_SIZE`, kept small.
  */
 export function createFakeSync() {
   const books = new Map<string, Book>();
@@ -158,9 +156,8 @@ export function createFakeSync() {
   }
 
   /**
-   * A page after `since`, or `null` for a 410. `from` is where the pull began
-   * (backend feat/feed-resume-link): every `next` carries it, and the floor is
-   * checked against it, so a pull that began at 0 can page past swept Tombstones.
+   * A page after `since`, or `null` for a 410. Every `next` carries `from`, where the pull began,
+   * and the floor is checked against it, so a pull from 0 can page past swept Tombstones.
    */
   function pull(
     accountId: string,

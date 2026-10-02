@@ -3,9 +3,7 @@ import { generateImageThumbnail } from '@/lib/image-thumbnail.ts';
 import type { AttachmentDeps } from '../attachments/deps.ts';
 import { insertAttachmentFiles, withDerivedAttachmentData } from '../attachments/insert.ts';
 
-/** Image-specific insertion step: generate the card Preview and read the size
- *  before atomically storing both with the authoritative image, then use the
- *  shared media pipeline. */
+/** Stores the card Preview and the pixel size atomically with the image. */
 export function insertImageAttachmentFiles(
   editor: Editor,
   files: FileList | File[],

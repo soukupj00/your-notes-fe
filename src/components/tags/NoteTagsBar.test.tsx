@@ -76,9 +76,7 @@ describe('assigning labels', () => {
     const popover = await openPopover();
     await userEvent.type(within(popover).getByRole('textbox'), 'Home');
 
-    // The non-matching existing label drops out of the list...
     expect(within(popover).queryByRole('checkbox', { name: 'Work' })).not.toBeInTheDocument();
-    // ...and the create row offers exactly what was typed.
     await userEvent.click(within(popover).getByRole('button', { name: 'tags.create:Home' }));
 
     await waitFor(async () => expect((await testStore.tags.list()).length).toBe(2));
@@ -124,10 +122,8 @@ describe('unsaved drafts', () => {
 
     await waitFor(async () => expect(await linkedTagIds('created-note')).toEqual(['t1']));
     expect(ensureNoteId).toHaveBeenCalledTimes(1);
-    // Wait on the checkbox itself, not the database, before the second click:
-    // the DB write can resolve a render ahead of the checkbox's own `checked`
-    // update, and a second click that lands in that gap toggles it from its
-    // still-unchecked state instead of the checked one it is meant to undo.
+    // Wait on the checkbox, not the database: the write can land a render before `checked`
+    // updates, and a second click in that gap would toggle from the stale state.
     await waitFor(() =>
       expect(within(popover).getByRole('checkbox', { name: 'Work' })).toBeChecked()
     );

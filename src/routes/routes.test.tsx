@@ -72,7 +72,6 @@ describe('route -> note set', () => {
 
     await waitFor(() => expect(screen.getAllByTestId('note-card')).toHaveLength(1));
     expect(screen.getByTestId('note-card')).toHaveTextContent('Tagged note');
-    // The tag name is the page heading.
     expect(await screen.findByRole('heading', { level: 1, name: 'Work' })).toBeInTheDocument();
   });
 });

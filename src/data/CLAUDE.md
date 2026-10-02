@@ -21,14 +21,14 @@ The seam every read and write of persisted data goes through ([ADR 0020](../../d
 - The store stamps nothing: ids and timestamps are the caller's (`lib/new-note.ts`).
 - Search, sort and held rank live in `src/hooks/data`, in front of the seam.
 - `meta` is bookkeeping about rows (Prop baselines; the sync cursor and Account under `SYNC_META_KEYS`). Preferences are not here - they are in `localStorage` (`PreferencesProvider`).
-- The sync engine (`src/sync/`) is the only caller of `sync.*`. `applyPage` writes what the server answers: in `keep-local` mode (a pull) an owed row or a pending purge waits for its push, in `server-wins` mode (resolving an outcome) the server's row overwrites it. A server Tombstone removes a row without writing a local one.
+- The sync engine (`src/sync/`) is the only caller of `sync.*`. `applyPage` writes what the server answers: in `keep-local` mode (a pull) an owed row or a pending purge waits for its push, in `server-wins` mode (resolving an outcome) the server's row overwrites it. A server Tombstone removes a row (a Note with its links and Attachments, a Tag with its links) without writing a local one, and drops a pending local Tombstone for the same id.
   A written Note's `attachments` become its rows: new ones without bytes, known ones keeping theirs (a thumbnail only while `thumbnailId` is unchanged), unlisted ones removed.
   `syncRows.ts` holds that rule once for both stores.
 - An Attachment's transfer state is store-private too (M5 slice 5): `onServer`, the blob ids the server is known to hold (its own id, its `thumbnailId`), and `tooLarge`.
   No read returns them, so a clone never inherits "already uploaded", and none of `sync.onServer`, `tooLarge` or `received` owes the Note, because none changes what it says.
   `attachments.update` cannot take `blob`, and takes a `thumbnail` only with a new `thumbnailId` (`AttachmentChanges`), so an id never gets new bytes; downloaded bytes arrive through `sync.received`.
   `blob` is optional: a row pulled from another Device has metadata and, soon after, its thumbnail, but its full bytes only once someone asks.
-- Sync state is store-private. `rev` and the dirty marker never leave the store on a read, and every write keeps the stored `rev`, so no caller can carry a stale Revision into a write. Writes owe the row; an Attachment write owes its Note; removing a row the server has seen leaves a Tombstone with its `rev` (one never pushed leaves nothing), and putting the row back takes it back.
+- Sync state is store-private. `rev` and the dirty marker never leave the store on a read, and every write keeps the stored `rev`, so no caller can carry a stale Revision into a write. Writes owe the row; an Attachment write owes its Note, because an Attachment's metadata rides on the Note's Revision; removing a row the server has seen leaves a Tombstone with its `rev` (one never pushed leaves nothing), and putting the row back takes it back.
 - The Dexie table under `meta` is still called `settings`. No schema bump was spent on a rename.
 
 ## Bringing your own Local Store

@@ -5,10 +5,8 @@ import { extractAttachmentIds } from '@/lib/attachment-html.ts';
 import { AttachmentError, validateAttachmentFile } from '@/lib/attachments.ts';
 import type { Attachment, AttachmentKind } from '@/models.ts';
 
-// Mutations close over the store from context, which the provider creates
-// once, so they are memoized on it alone - the editor's insert handlers and
-// the dialog's autosave depend on stable identities (see useNoteActions for
-// the same rationale).
+// Memoized on the store alone, which the provider creates once: the editor's insert handlers and
+// the dialog's autosave depend on stable identities.
 export function useAttachmentActions() {
   const store = useLocalStore();
 
@@ -29,7 +27,7 @@ export function useAttachmentActions() {
         mime: file.type,
         blob: file, // a File is a Blob; persist directly (ADR 0007)
         thumbnail: options.thumbnail,
-        // The thumbnail's own blob id on the server (M5 slice 5): it syncs ahead of the bytes.
+        // The thumbnail's own blob id on the server, so it syncs ahead of the full bytes.
         thumbnailId: options.thumbnail ? uuid() : undefined,
         duration: options.duration,
         width: options.width,
@@ -70,11 +68,9 @@ export function useAttachmentActions() {
     [store]
   );
 
-  // Write-back for an attachment's derived data, on the same row the Body
-  // already references by id. Two callers: Excalidraw stores the SVG preview on
-  // the row a Save just minted (a Save never rewrites bytes; see
-  // Excalidraw/commit.ts); the card backfills a poster and duration onto a
-  // video stored before posters were captured at insert.
+  // Derived data written back onto the row the Body already references. Callers: Excalidraw's SVG
+  // preview on the row a Save just minted (Excalidraw/commit.ts), and the card backfilling a poster
+  // and duration onto a video stored before posters were captured.
   const updateAttachment = useCallback(
     (
       id: string,
@@ -98,14 +94,8 @@ export function useAttachmentActions() {
     [store]
   );
 
-  // Startup GC: the saved Body is authoritative because no editor undo stack
-  // survives a reload. Reconcile every live Note as well as missing owners.
-  //
-  // One pass over both tables rather than the note-scoped sweep per note: the
-  // missing-owner and unreferenced-row cases are the same question asked of one
-  // row ("is anything still pointing at this?"), and answering them together
-  // costs one transaction instead of a full attachments read plus one indexed
-  // read and one transaction per note, on every app start.
+  // Startup GC, where the saved Body is authoritative because no editor undo stack survives a
+  // reload. One pass over both tables, not a sweep per note: see src/hooks/data/CLAUDE.md.
   const collectStartupOrphans = useCallback(
     () => store.attachments.sweepAll((note) => extractAttachmentIds(note.body)),
     [store]

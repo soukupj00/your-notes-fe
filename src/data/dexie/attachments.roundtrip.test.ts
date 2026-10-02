@@ -1,10 +1,6 @@
 // @vitest-environment node
-//
-// This file is forced to the `node` environment (overriding the project's
-// default `jsdom`) because jsdom's Blob polyfill is not recognized by
-// Node's native structuredClone, which fake-indexeddb relies on to persist
-// values. Under jsdom, a stored Blob comes back as a plain `{}`. Node's
-// native Blob round-trips correctly and matches what a real browser does.
+// Not jsdom: fake-indexeddb's structuredClone turns jsdom's Blob into `{}`, while Node's
+// native Blob round-trips as a real browser's does.
 import { describe, expect, it } from 'vitest';
 import type { Attachment } from '@/models.ts';
 import { db } from './db.ts';

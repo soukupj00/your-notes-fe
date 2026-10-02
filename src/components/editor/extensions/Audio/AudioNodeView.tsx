@@ -8,9 +8,7 @@ import { AttachmentNotDownloaded } from '../attachments/AttachmentNotDownloaded'
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
 
-/** Editor render path for audioAttachment: a hidden native <audio> (decode/seek
- *  engine) skinned with a themed play/pause + time + scrubber. Object-URL
- *  lifecycle handled by the shared hook. */
+/** A hidden native <audio> decodes and seeks; the visible controls are ours. */
 export function AudioNodeView(props: ReactNodeViewProps) {
   const attachmentId = props.node.attrs.attachmentId as string | null;
   const deps = (props.extension.options.getDeps as () => AttachmentDeps)();
@@ -31,10 +29,8 @@ export function AudioNodeView(props: ReactNodeViewProps) {
     />
   ) : null;
 
-  // Callback ref: the hidden <audio> only mounts once state resolves 'ready'
-  // (after the loading commit), so a plain useEffect with [] would run while the
-  // element is still null and wire nothing. Attaching here fires exactly when the
-  // element mounts; React 19 runs the returned cleanup when it unmounts.
+  // A callback ref, because the <audio> mounts only once the URL is ready: an effect with []
+  // would run while it is still null. React 19 runs the returned cleanup on unmount.
   const bindAudio = useCallback((el: HTMLAudioElement | null) => {
     audioRef.current = el;
     if (!el) return;
@@ -57,9 +53,8 @@ export function AudioNodeView(props: ReactNodeViewProps) {
     };
   }, []);
 
-  // Best-effort autoplay: the browser's native media events are the only
-  // source of truth for the control state. A rejected play() therefore leaves
-  // the Play icon showing instead of reporting playback that never started.
+  // Native media events are the only source of truth for the controls, so a rejected
+  // autoplay leaves the Play icon showing rather than claiming playback.
   const attemptPlay = useCallback(() => {
     const el = audioRef.current;
     if (!el) return;
@@ -72,9 +67,7 @@ export function AudioNodeView(props: ReactNodeViewProps) {
 
   const autoplay = props.editor.storage.audioAttachment.autoplay;
 
-  // Synchronize this mounted media element with the external TipTap autoplay
-  // coordinator. Registration covers both load orderings and unregisters when
-  // the node view is no longer ready or unmounts.
+  // The autoplay coordinator covers either load order (audioAutoplay.ts).
   useEffect(() => {
     if (state.status !== 'ready' || !attachmentId) return;
     return autoplay.registerReadyAudio(attachmentId, attemptPlay);
@@ -97,7 +90,6 @@ export function AudioNodeView(props: ReactNodeViewProps) {
   };
 
   if (state.status === 'remote') {
-    // The card's delete sits over its corner, like the other kinds', not inside the player row.
     return (
       <AttachmentNotDownloaded
         attachment={state.attachment}

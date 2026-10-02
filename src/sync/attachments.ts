@@ -17,11 +17,9 @@ export type TransferPlan = {
 };
 
 /**
- * What a run moves (04-sync.md "Attachment transfer"), from the rows alone.
- * Uploads: bytes the server is not known to hold, of rows whose Note it knows,
- * every thumbnail before any full blob so another Device's Feed is right first.
- * Downloads: every missing thumbnail (and an image with none, which is its own);
- * every other missing full blob only when this Device keeps everything, smallest first.
+ * What a run moves, from the rows alone (04-sync.md "Attachment transfer"). Up: thumbnails before
+ * full blobs, only for Notes the server knows. Down: every missing thumbnail (an image with none is
+ * its own); other full blobs only when this Device keeps everything, smallest first.
  */
 export function plan(
   rows: readonly AttachmentTransfer[],

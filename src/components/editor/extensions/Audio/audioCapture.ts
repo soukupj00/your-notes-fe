@@ -13,27 +13,9 @@ export interface AudioCaptureCoordinator {
   subscribe(listener: () => void): () => void;
 }
 
-/**
- * Bridges "start recording" (asked for by the editor from the speed-dial's
- * intent, or by the toolbar's mic button) to the one recorder the editor owns
- * (`AudioRecorderHost`). The two mount independently, so a request is held
- * until a recorder registers - the same pending-then-fire shape as
- * `audioAutoplay`.
- *
- * It also carries the recording status the other way, so a mic button in a
- * collapsed toolbar menu - or none at all - can still tell whether a take is
- * running. The recorder used to live in that button, which meant a phone's
- * collapsed media menu had no recorder until it was opened, and the dial's
- * request waited on a button that was not there.
- *
- * One-shot on purpose: a request is consumed by the first recorder that takes
- * it, so remounting cannot start a second take - with one exception. A
- * recorder that unregisters while its take is still starting tears that take
- * down with it (its hook releases the mic on unmount), so the request was never
- * really answered and is handed back for the next recorder. React StrictMode
- * does exactly this on every mount in development: without it the dial's
- * voice note sat at "requesting" forever.
- */
+/** Holds a "start recording" request until `AudioRecorderHost` registers, and carries the
+ *  recording status back to the buttons. One-shot, but handed back if the recorder unmounts
+ *  mid-start, as StrictMode does. See src/components/editor/CLAUDE.md, Audio. */
 export function createAudioCaptureCoordinator(): AudioCaptureCoordinator {
   let pending = false;
   let current: (() => void | Promise<void>) | null = null;

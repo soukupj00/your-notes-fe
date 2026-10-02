@@ -7,10 +7,7 @@ import { HIGHLIGHT_COLORS } from '@/components/color-picker/palettes.ts';
 import type { ButtonContext } from '../button-types';
 import { HighlightButton } from './HighlightButton';
 
-/**
- * What `Mod+Shift+H` applies. Yellow, because a highlighter is yellow - the
- * shortcut is for the common case, and the picker is still there for the rest.
- */
+/** What `Mod+Shift+H` applies: the common case, the picker covers the rest. */
 const SHORTCUT_COLOR =
   HIGHLIGHT_COLORS.colors.find((color) => color.label === 'Yellow')?.cssValue ?? '#fef08a';
 
@@ -23,12 +20,7 @@ export interface HighlightExtensionOptions extends BackgroundColorOptions {
   button: (context: ButtonContext) => HighlightButtonView;
 }
 
-/**
- * Wraps the upstream `BackgroundColor` extension (from `@tiptap/extension-text-style`, name
- * `backgroundColor`, backs `setBackgroundColor` / `unsetBackgroundColor` on the `textStyle`
- * mark) with a Pattern A `button` that returns the {@link HighlightButton} popover trigger.
- * `TextStyle` must also be registered for the backgroundColor attribute to exist.
- */
+/** `TextStyle` must also be registered, or the backgroundColor attribute does not exist. */
 export const Highlight = TiptapBackgroundColor.extend<HighlightExtensionOptions>({
   addOptions() {
     return {
@@ -44,9 +36,8 @@ export const Highlight = TiptapBackgroundColor.extend<HighlightExtensionOptions>
     } as unknown as HighlightExtensionOptions;
   },
 
-  // The shortcut toggles rather than opening the picker: a popover cannot be
-  // opened from a keyboard shortcut when its button is inside a collapsed
-  // family, and "highlight this" is what the key is reached for anyway.
+  // Toggles rather than opening the picker: a popover cannot open from a shortcut while its
+  // button sits in a collapsed family.
   addKeyboardShortcuts() {
     return {
       'Mod-Shift-h': () =>

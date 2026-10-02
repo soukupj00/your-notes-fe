@@ -4,10 +4,8 @@ const PORT = 4173;
 const BASE_URL = `http://localhost:${PORT}`;
 
 /**
- * The service worker's own behaviour, against the production build. `pnpm dev`
- * serves no worker (see `playwright.config.ts`), so offline can only be tested
- * on `vite preview`. Never reuses a running server: a stale build would pass.
- * One width, because what the worker caches does not depend on it.
+ * The service worker against the production build, since `pnpm dev` serves none. Never reuses a
+ * running server, as a stale build would pass; one width, as what the worker caches does not vary.
  */
 export default defineConfig({
   testDir: './e2e/pwa',

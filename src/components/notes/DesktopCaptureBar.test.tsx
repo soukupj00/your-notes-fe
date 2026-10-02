@@ -28,10 +28,8 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
   <PreferencesProvider>{children}</PreferencesProvider>
 );
 
-// The prompt types itself in through a MotionValue, which writes to the DOM
-// outside React on rAF - so the visible glyphs are mid-string at any moment a
-// fake clock can reach. `data-prompt` is the rotation's own contract: which
-// prompt, and when. The reveal between them is Motion's business.
+// The MotionValue writes glyphs outside React on rAF, so a fake clock only ever sees them
+// mid-string. `data-prompt` is the rotation's contract; the reveal is Motion's business.
 const promptKey = () => screen.getByTestId('capture-prompt').getAttribute('data-prompt');
 
 describe('DesktopCaptureBar', () => {

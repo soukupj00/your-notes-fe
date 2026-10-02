@@ -14,22 +14,9 @@ interface CardActionsProps {
 }
 
 /**
- * The card's foot rail (DESIGN.md → Card anatomy, "Foot rail (A)").
- *
- * Every control is a direct icon: the note's one lifecycle move *out* of its
- * current state, the move *down* to the trash where one exists, and the colour
- * swatch. The strip is always visible so every action is immediately
- * discoverable and available on every input type.
- *
- * There is no `⋮`. An overflow menu that holds a single item is a click in
- * front of a button, and the actions here are all recoverable through the undo
- * toast the card offers on every transition - so none of them needs the extra
- * step a menu implies.
- *
- * Permanent deletion is deliberately *not* here. The trash is the confirmation:
- * a note sits there until it expires or the user empties it from `/trash`, and
- * a one-click purge on a card in a wall is a different risk from an explicit
- * "empty the trash".
+ * Foot rail A (DESIGN.md, Card anatomy): always visible, and no `⋮` menu because every action
+ * here is undoable from its toast. Permanent delete is deliberately absent: the trash is the
+ * confirmation, emptied explicitly from `/trash`.
  */
 export function CardActions({
   note,
@@ -41,13 +28,11 @@ export function CardActions({
   const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
 
-  // The same icon button the editor's note bar uses, so the two surfaces
-  // cannot drift apart (`lib/note-controls.ts`).
+  // Shared with the editor's note bar so the two cannot drift.
   const railButton = noteControlButton(reducedMotion);
 
-  // Archived and trashed both leave by the same door (`restoreToActive`) but
-  // read as different moves, so each takes its own icon: putting a note back on
-  // the desk is not the same gesture as pulling it out of the bin.
+  // Both leave through `restoreToActive`, but un-archiving and un-trashing are different
+  // gestures, so each has its own icon.
   const isActive = note.state === 'active';
   const LeaveIcon = isActive ? Archive : note.state === 'archived' ? ArchiveRestore : RotateCcw;
 
@@ -68,7 +53,6 @@ export function CardActions({
         <LeaveIcon className="size-4" aria-hidden />
       </button>
 
-      {/* Trashing something already in the trash is meaningless. */}
       {note.state !== 'trashed' && (
         <button
           type="button"

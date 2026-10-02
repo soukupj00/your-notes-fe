@@ -24,7 +24,12 @@ vi.mock('@tanstack/react-router', () => ({ useNavigate: () => vi.fn() }));
 const tour = vi.hoisted(() => ({ active: false }));
 vi.mock('./TourProvider.tsx', () => ({ useTourActive: () => tour.active }));
 vi.mock('sonner', () => ({
-  toast: Object.assign(vi.fn(), { info: vi.fn(), success: vi.fn(), error: vi.fn() }),
+  toast: Object.assign(vi.fn(), {
+    info: vi.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
+    dismiss: vi.fn(),
+  }),
 }));
 
 afterEach(async () => {
@@ -111,6 +116,7 @@ describe('SyncProvider', () => {
       expect(toast).toHaveBeenCalledWith(
         'sync.signedOut',
         expect.objectContaining({
+          id: 'sync-signed-out',
           duration: Number.POSITIVE_INFINITY,
           action: expect.objectContaining({ label: 'account.section.signIn' }),
         })

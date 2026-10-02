@@ -11,9 +11,8 @@ import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 const lastSeen = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
 /**
- * The signed-in Account's Devices (backend `docs/setup.md` section 6): each can
- * be removed, which signs it out and changes nothing else, and "Add a Device"
- * shows a Pairing Link. This Device is signed out from the Account section.
+ * Removing a Device signs it out and changes nothing else (backend `docs/setup.md`
+ * section 6). This Device signs out from the Account section instead.
  */
 export function DevicesSection() {
   const { t } = useTranslation();

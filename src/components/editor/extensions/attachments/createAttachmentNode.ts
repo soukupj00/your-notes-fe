@@ -6,26 +6,17 @@ import type { TFunction } from '../button-types';
 import type { AttachmentDeps } from './deps';
 
 export interface AttachmentNodeConfig {
-  /** TipTap node name, e.g. 'imageAttachment'. */
   name: string;
-  /** parseHTML tag selector, e.g. 'img[data-attachment-id]'. */
   parseTag: string;
   /** renderHTML tag, e.g. 'img'. No src is ever emitted (ADR 0007). */
   renderTag: string;
-  /** Command name that inserts this node, e.g. 'insertImageAttachment'. */
   insertCommandName: string;
   nodeView: ComponentType<ReactNodeViewProps>;
-  /** Pattern A button factory (custom component). */
   button: (ctx: { editor: Editor; getDeps: () => AttachmentDeps; t: TFunction }) => unknown;
 }
 
-/**
- * Shared TipTap node mechanics for every media attachment (image, audio, ...):
- * one `attachmentId` attribute, id-only parse/render (no src), the getDeps
- * stable-getter option wiring (so the toolbar button/NodeView read live deps -
- * Slice 1's frozen-deps fix), a React NodeView, and an insert command. Per-type
- * concerns (tag, NodeView, button, command name) come from config.
- */
+/** The node mechanics every media attachment shares; per-type parts come from config.
+ *  Deps are read through `getDeps`, so the button and node view always see live ones. */
 export function createAttachmentNode(getDeps: () => AttachmentDeps, config: AttachmentNodeConfig) {
   return Node.create({
     name: config.name,
@@ -71,12 +62,9 @@ export function createAttachmentNode(getDeps: () => AttachmentDeps, config: Atta
         ({ chain }: { chain: () => ChainedCommands }) =>
           chain()
             .insertContent({ type: name, attrs })
-            // A block atom leaves a NodeSelection on itself after insertContent.
-            // Without a cursor after it, the next insert (the picker loop or a
-            // second file) replaces the selected node instead of appending, so
-            // only the last attachment survived. Drop the selection after the
-            // node - adding a trailing paragraph when it lands at the document
-            // end - so attachments stack. Mirrors TipTap's own HorizontalRule.
+            // A block atom keeps a NodeSelection on itself, so the next insert replaced it and
+            // only the last of several files survived. Move the cursor past it, adding a
+            // paragraph at the document end. Mirrors TipTap's own HorizontalRule.
             .command(({ tr, dispatch }) => {
               if (dispatch) {
                 const { $to } = tr.selection;

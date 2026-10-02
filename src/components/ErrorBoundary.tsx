@@ -4,15 +4,8 @@ import { CrashScreen } from '@/components/CrashScreen.tsx';
 type State = { error: Error | null };
 
 /**
- * Top-level crash barrier.
- *
- * An installed PWA that white-screens has no address bar to retype and no
- * obvious way out, so an uncaught render error must still leave the user a
- * button. Reload rather than "try again": the error escaped React's render, so
- * the surviving in-memory state is not to be trusted - notes themselves are
- * safe in IndexedDB, which is what makes a reload cheap here.
- *
- * A class component because that is still the only way to catch render errors.
+ * Reload rather than retry: the error escaped React's render, so in-memory state is not to be
+ * trusted. A class because that is still the only way to catch render errors.
  */
 export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
   state: State = { error: null };

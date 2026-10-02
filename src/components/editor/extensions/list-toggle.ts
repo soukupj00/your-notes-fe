@@ -3,13 +3,8 @@ import { Selection } from '@tiptap/pm/state';
 
 const LIST_NODE_TYPES = ['bulletList', 'orderedList', 'taskList'];
 
-/**
- * Returns a text-selection range spanning the entire list the cursor sits in, or
- * null if the cursor is not inside a list. Walks up to the nearest ancestor list
- * node and snaps the list's content boundaries inward to valid text positions with
- * `Selection.near` (selecting the raw node boundaries directly misbehaves once the
- * list is not the first node in the document).
- */
+/** `Selection.near` snaps the list's bounds to valid text positions: selecting the raw node
+ *  boundaries misbehaves once the list is not the document's first node. */
 function wholeListSelection(editor: Editor): { from: number; to: number } | null {
   const { $from } = editor.state.selection;
   const { doc } = editor.state;
@@ -23,16 +18,9 @@ function wholeListSelection(editor: Editor): { from: number; to: number } | null
   return null;
 }
 
-/**
- * Toggle a list type operating on the WHOLE list when the selection is collapsed
- * inside one. Switching bullet <-> ordered already converts the whole list because
- * they share `listItem`, but switching to/from `taskList` (which uses `taskItem`)
- * would otherwise convert only the current item and split the list. Expanding a
- * collapsed cursor to the full list first makes every list-type switch (and
- * toggle-off) act on the entire list, consistently.
- *
- * With a real (non-empty) selection, the caller's selection is respected as-is.
- */
+/** A collapsed cursor converts the whole list: switching to or from `taskList` (which uses
+ *  `taskItem`) would otherwise convert one item and split the list. A real selection is
+ *  respected as-is. */
 export function toggleWholeList(
   editor: Editor,
   applyToggle: (chain: ChainedCommands) => ChainedCommands

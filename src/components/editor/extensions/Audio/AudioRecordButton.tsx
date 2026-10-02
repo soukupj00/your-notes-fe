@@ -9,11 +9,8 @@ export interface AudioRecordButtonProps {
   tooltip: string;
 }
 
-/** Toolbar entry point for audio. A request, not a recorder: the recorder is
- *  `AudioRecorderHost`, mounted by the Editor whatever the toolbar shows, so
- *  this button can sit inside a collapsed menu or be switched off entirely and
- *  a take still has an owner. File uploads (including .mp3 etc.) go through the
- *  generic File extension's toolbar button instead - this is record-only. */
+/** A request, not a recorder: `AudioRecorderHost` owns the take, so this button can sit in a
+ *  collapsed menu or be switched off. Record-only; uploads go through the File button. */
 export function AudioRecordButton({ editor, tooltip }: AudioRecordButtonProps) {
   const capture = editor.storage.audioAttachment.capture;
   const recording = useSyncExternalStore(capture.subscribe, capture.isRecording, () => false);

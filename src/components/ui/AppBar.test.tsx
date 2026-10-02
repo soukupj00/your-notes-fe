@@ -21,9 +21,8 @@ describe('AppBar', () => {
     expect(bar().children).toHaveLength(1);
   });
 
-  // The sides hold 44px controls. Flex shrinks the sides before the middle
-  // unless told otherwise, which is exactly the wrong way round: a long title
-  // must wrap or truncate, never squeeze a touch target below the floor.
+  // Flex shrinks the sides first, but a long title must truncate rather than squeeze
+  // a 44px control below the floor.
   it('lets only the middle flex', () => {
     render(<AppBar left="L" center="C" right="R" />);
 

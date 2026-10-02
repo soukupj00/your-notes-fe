@@ -21,11 +21,8 @@ function renderButton(
 }
 
 /**
- * Answer `(pointer: fine)` - the desktop signal - however this test needs it.
- *
- * The shared setup stubs `matchMedia` as never matching, which is the right
- * default (a keyboard hint is suppressed unless we know there is a keyboard) but
- * makes the desktop branch unreachable without this.
+ * The shared setup stubs `matchMedia` as never matching, so without this the desktop
+ * `(pointer: fine)` branch is unreachable.
  */
 function stubPointer(fine: boolean) {
   vi.spyOn(window, 'matchMedia').mockImplementation(
@@ -54,17 +51,15 @@ describe('ActionButton', () => {
     expect(screen.getByRole('button', { name: 'Bullet list' })).toHaveAttribute('data-state', 'on');
   });
 
-  // The media/undo buttons are not toggles, so they used to fall through to the
-  // Button `default` variant and render as filled primary (purple) slabs beside
-  // the flat toggle buttons. They must stay ghost.
+  // Non-toggle buttons used to fall through to Button's filled `default` variant
+  // beside the flat toggles. They must stay ghost.
   it('renders a non-toggle button flat, not as a filled primary button', () => {
     renderButton({ icon: 'Mic', tooltip: 'Record audio' });
     expect(screen.getByRole('button', { name: 'Record audio' })).not.toHaveClass('bg-primary');
   });
 
-  // `Toggle` styles its on state off `data-[state=on]`, but a `PopoverTrigger
-  // asChild` writes its own `open`/`closed` over that attribute - so link, the
-  // colour triggers and every collapsed family trigger lost their highlight.
+  // A `PopoverTrigger asChild` writes `open`/`closed` over `data-state`, so every
+  // button that opens a popover lost its highlight.
   it('carries its active styling as a class, not only as data-state', () => {
     renderButton({ icon: 'Baseline', tooltip: 'Text color', toggle: true, isActive: () => true });
     expect(screen.getByRole('button', { name: 'Text color' })).toHaveClass('bg-accent');
@@ -99,9 +94,8 @@ describe('ActionButton', () => {
 
   describe('as a row in a collapsed family menu', () => {
     it('takes its name from the menu rather than from whoever rendered it', () => {
-      // The point of the context: `link`, the attachment pickers and the colour
-      // triggers are custom components that *wrap* an ActionButton, so they can
-      // never be handed a label directly - and used to render as bare icons.
+      // The point of the context: `link`, the attachment pickers and the colour triggers
+      // wrap an ActionButton, so they can never be handed a label directly.
       renderButton({ icon: 'Link2', tooltip: 'Link' }, { menuRowLabel: 'Link' });
       expect(screen.getByRole('button', { name: 'Link' })).toHaveTextContent('Link');
     });

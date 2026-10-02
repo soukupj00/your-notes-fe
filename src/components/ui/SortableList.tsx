@@ -22,7 +22,7 @@ import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { cn } from '@/lib/utils.ts';
 
 interface SortableListProps {
-  /** Every row's id, in current order. Also what the announcements count against. */
+  /** In current order; the announcements count positions against it. */
   ids: string[];
   /** Called with the dragged row and the row it was dropped onto. */
   onReorder: (activeId: string, overId: string) => void;
@@ -32,13 +32,8 @@ interface SortableListProps {
 }
 
 /**
- * A keyboard-operable, drag-reorderable vertical list.
- *
- * Order is user data here, not decoration, so the keyboard sensor is not
- * optional and there are deliberately **no** parallel up/down buttons: two ways
- * to reorder is two things to keep in step, and the keyboard sensor already
- * makes the drag handle a real control (Space to lift, arrows to move, Space to
- * drop) rather than a mouse-only affordance.
+ * Order is user data, so the keyboard sensor is mandatory, and there are deliberately
+ * no up/down buttons: two ways to reorder would be two things to keep in step.
  */
 export function SortableList({ ids, onReorder, nameOf, children }: SortableListProps) {
   const { t } = useTranslation();
@@ -92,11 +87,8 @@ interface SortableRowProps {
 }
 
 /**
- * One row: a drag handle plus whatever the list puts in it.
- *
- * The handle is the **only** drag origin. These rows carry switches, menus and
- * a drill-in target, and a row that drags from anywhere would swallow the first
- * few pixels of every one of those gestures.
+ * The handle is the only drag origin: rows carry switches, menus and a drill-in, and
+ * a row that dragged from anywhere would swallow the start of those gestures.
  */
 export function SortableRow({ id, handleLabel, className, children }: SortableRowProps) {
   const reducedMotion = useReducedMotion();
@@ -114,7 +106,6 @@ export function SortableRow({ id, handleLabel, className, children }: SortableRo
       data-dragging={isDragging || undefined}
       className={cn(
         'flex min-h-11 items-center gap-1 bg-card px-2',
-        // Lifted out of the flow of its neighbours while it is being carried.
         isDragging && 'relative z-10 rounded-md shadow-lift',
         className
       )}

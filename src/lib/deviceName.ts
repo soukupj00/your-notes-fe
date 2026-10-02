@@ -22,9 +22,8 @@ const first = (table: [RegExp, string][], ua: string) =>
   table.find(([pattern]) => pattern.test(ua))?.[1];
 
 /**
- * The browser and system a Device name is made of ("Chrome" on "Android"), read
- * from the user agent. Only a suggestion: the person can type anything, so a
- * wrong guess (an iPad reporting itself as a Mac) costs one edit.
+ * Only a suggested Device name the person can edit, so a wrong guess (an iPad reporting itself as
+ * a Mac) costs one edit.
  */
 export function platformOf(ua: string): { browser: string; system?: string } {
   const system = first(SYSTEMS, ua);

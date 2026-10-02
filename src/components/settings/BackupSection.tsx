@@ -28,15 +28,8 @@ function errorKey(error: unknown): string {
 }
 
 /**
- * Export / import of the whole database as a zip.
- *
- * Import is replace-all, so the confirmation carries its own safety net: the
- * archive is fully validated before the dialog opens, the dialog names what is
- * about to be traded, and the "back up first" choice lives on that same screen
- * rather than ambushing the user with a second save dialog after they commit.
- *
- * Both flows ask for a destination *before* building any bytes, so a cancel at
- * the picker abandons the operation with nothing written and nothing wiped.
+ * Import is replace-all, so the archive is validated before the dialog opens and "back up
+ * first" lives in that dialog. Both flows pick a destination first: CLAUDE.md (Backup).
  */
 export function BackupSection() {
   const { t } = useTranslation();

@@ -1,19 +1,9 @@
 import { vi } from 'vitest';
 
 /**
- * Put a test in a viewport: a width for the layout queries, a pointer for the
- * affordance ones (ADR 0016).
- *
- * jsdom evaluates no media query at all - `matchMedia` answers `false` to
- * everything, whatever `window.innerWidth` says - so setting the width alone
- * stopped being enough the moment `useIsMobile` started reading the query
- * instead of re-measuring the window. Reading the query is the point: it is the
- * signal the stylesheet uses, so JS and CSS cannot disagree.
- *
- * The pointer follows the width by default, which is the common case a test
- * means (a 1024px window is a desktop with a mouse; a 360px one is a phone).
- * Pass it explicitly for the two devices that break the correlation - a
- * touchscreen laptop, and a phone held sideways.
+ * A width for the layout queries and a pointer for the affordance ones (ADR 0016). jsdom's
+ * `matchMedia` answers `false` to everything, so setting the width alone is not enough.
+ * Pass `finePointer` for a touchscreen laptop or a phone held sideways.
  */
 export function setViewport(width: number, { finePointer = width >= 640 } = {}) {
   window.innerWidth = width;

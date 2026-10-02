@@ -16,14 +16,8 @@ afterEach(() => {
 /** What `findToggledItem` reported, per round of transactions. */
 type Report = { label: string; checked: boolean } | null;
 
-/**
- * Drives a real editor and records what `findToggledItem` saw.
- *
- * The animation itself needs real layout and so belongs to a manual gate; the
- * detection is the half with the subtlety in it (documents compared rather than
- * steps read, old positions mapped forward) and is exercised here against real
- * ProseMirror states rather than hand-built ones.
- */
+/** Records what `findToggledItem` saw against real ProseMirror states. The animation
+ *  needs real layout, so it is a manual gate. */
 function probe() {
   const reports: Report[] = [];
 

@@ -2,17 +2,14 @@ import { type TaskItemOptions, TaskItem as TiptapTaskItem } from '@tiptap/extens
 import { startTaskItemDrag } from './taskItemDrag';
 
 export interface TaskItemExtensionOptions extends TaskItemOptions {
-  /** Accessible name for the grip. Read at render time so the locale is live. */
+  /** A getter, so the grip's accessible name follows the live locale. */
   gripLabel: () => string;
 }
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     taskItem: {
-      /**
-       * Move the task item at `pos` so it becomes child `to` of its list, `to`
-       * being counted after the item has been removed.
-       */
+      /** `to` is the child index counted after the item has been removed. */
       moveTaskItem: (attrs: { pos: number; to: number }) => ReturnType;
     };
   }
@@ -24,15 +21,9 @@ const GRIP_SVG =
   '<circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/>' +
   '<circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>';
 
-/**
- * The upstream task item plus the two things a checklist needs to be reordered
- * by hand: a `moveTaskItem` command, and a grip in the editable node view that
- * drives it by pointer events (touch and mouse alike) or by arrow keys.
- *
- * The grip lives in the node view's DOM only. `renderHTML` is the upstream one,
- * so the stored Body and the Card's markup are unchanged, and the Card's
- * `.prose` rules never see a grip.
- */
+/** Adds `moveTaskItem` and a reorder grip driven by pointer or arrow keys. The grip lives
+ *  only in the editable node view; `renderHTML` stays upstream's, so the stored Body and
+ *  the Card never carry it. */
 export const TaskItem = TiptapTaskItem.extend<TaskItemExtensionOptions>({
   addOptions() {
     // The same cast `TaskList` makes: the parent's options are typed optional.
@@ -92,7 +83,6 @@ export const TaskItem = TiptapTaskItem.extend<TaskItemExtensionOptions>({
       grip.addEventListener('pointerdown', (event) => {
         startTaskItemDrag({ event, item, onDrop: move });
       });
-      // The keyboard path, so a grip that can be focused can also be used.
       grip.addEventListener('keydown', (event) => {
         if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
         event.preventDefault();
@@ -107,12 +97,9 @@ export const TaskItem = TiptapTaskItem.extend<TaskItemExtensionOptions>({
 
       return {
         ...view,
-        // The grip is ours, not the document's: ProseMirror must neither treat
-        // its events as edits nor re-render the node when it changes. The same
-        // goes for the row's own attributes - the drag writes a class and a
-        // transform onto the `li`, and onto its neighbours for the drop marks,
-        // and a node view rebuilt in answer to that would drop the row from
-        // under the pointer mid-gesture.
+        // The grip is ours, not the document's. Row attribute changes are not edits either:
+        // the drag writes a class and transform onto each `li`, and a rebuilt node view
+        // would drop the row from under the pointer.
         stopEvent: (event: Event) =>
           grip.contains(event.target as Node) || (view.stopEvent?.(event) ?? false),
         ignoreMutation: (mutation) =>

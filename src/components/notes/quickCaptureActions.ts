@@ -21,7 +21,6 @@ export interface StartPicker {
 export type QuickCaptureAction = {
   key: QuickCaptureActionKey;
   Icon: LucideIcon;
-  /** i18n key for the action's accessible name and its speed-dial label. */
   labelKey: string;
   /** The editor state this action opens - a body seed, a capture, or neither.
    *  For a picker Start, the bar adds the chosen `files` to it. */
@@ -30,16 +29,8 @@ export type QuickCaptureAction = {
 };
 
 /**
- * The ways to start a note, defined once so the mobile speed-dial and the
- * desktop quick-action row cannot drift. Order is deliberate: plain text first
- * (the common case), media after.
- *
- * A picker Start opens the OS picker in the tap itself and hands the files to
- * the editor, because the tap's user activation is the only thing that can
- * open a picker and it does not survive the route change to the editor.
- *
- * `picture` keeps its key although it is labelled "Image": the key is what a
- * user's stored dial order is written in.
+ * Plain text first, media after (CLAUDE.md, Nav shell). `picture` keeps its key although it is
+ * labelled "Image": stored dial orders are written in keys.
  */
 export const QUICK_CAPTURE_ACTIONS: QuickCaptureAction[] = [
   { key: 'text', Icon: SquarePen, labelKey: 'notes.capture.text', editing: { id: null } },

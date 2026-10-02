@@ -6,18 +6,13 @@ import { AttachmentUnavailable } from '../attachments/AttachmentUnavailable';
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
 
-/** Editor render path for videoAttachment: a native <video controls> at the
- *  resolved object URL. Unlike audio, video needs no custom player skin -
- *  native controls give scrubbing, fullscreen, volume, and mute for free. */
+/** Native controls, unlike audio: they give scrubbing, fullscreen and volume for free. */
 export function VideoNodeView(props: ReactNodeViewProps) {
   const attachmentId = props.node.attrs.attachmentId as string | null;
   const deps = (props.extension.options.getDeps as () => AttachmentDeps)();
   const state = useAttachmentObjectUrl(attachmentId, deps.watchAttachment);
   const canDelete = props.editor?.isEditable ?? false;
 
-  // Corner overlay, matching Excalidraw's delete placement (Task 3): a
-  // semi-opaque pill sits atop the content surface instead of taking flex
-  // space next to it, so it stays legible over any video frame.
   const deleteButton = canDelete ? (
     <AttachmentDeleteButton
       onConfirm={() => props.deleteNode()}

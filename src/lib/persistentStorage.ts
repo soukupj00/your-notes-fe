@@ -1,19 +1,10 @@
-/**
- * Asks the browser to make this origin's storage persistent.
- *
- * Everything the user owns lives in IndexedDB, which is best-effort by default:
- * Chrome evicts under storage pressure and Safari clears it after seven days
- * without a visit to the origin, which for a note app on a phone is an ordinary
- * fortnight. The only recourse is a zip the user may never have exported.
- *
- * Asked when the user first saves a note of their own, not at app start:
- * Firefox shows a permission prompt, and a fresh user should not meet one
- * before they have written anything - during the Tour, which is where an
- * app-start call would land it. A Tour's Props never reach here, because the
- * only caller is the editor's dirty-gated save path.
- */
 let asked = false;
 
+/**
+ * IndexedDB is best-effort: Chrome evicts under pressure and Safari clears it after seven unvisited
+ * days. Asked on the user's first own save, not at start, so Firefox's prompt never meets a fresh
+ * user mid-Tour; Props never reach the editor's dirty-gated save path that calls this.
+ */
 export async function requestPersistentStorage(): Promise<void> {
   if (asked) return;
   asked = true;

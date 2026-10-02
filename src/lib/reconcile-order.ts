@@ -1,24 +1,7 @@
 /**
- * Bring a stored, user-ordered list up to date with the registry that defines
- * what may be in it, without losing either side's information.
- *
- * This is ADR 0011's decision 8, and it is shared by the toolbar and by quick
- * capture because both are "a list the user arranged, against a list the app
- * ships" - and because getting it subtly different in two places is how a
- * feature grows two behaviours.
- *
- * It cuts both ways:
- *
- * - A registry id missing from the stored list is **new**, not hidden, so a
- *   button shipped next release appears for a user who arranged their bar last
- *   year. Anything else would make new work invisible to exactly the users who
- *   care most.
- * - A stored id missing from the registry is **kept**, so a temporarily
- *   unregistered extension (a lazy chunk that failed, a build that dropped one)
- *   cannot quietly erase an arrangement the user built by hand.
- *
- * Missing entries are processed in registry order, so a run of several new ones
- * lands in the right order relative to each other too.
+ * ADR 0011 decision 8, shared by the toolbar and quick capture. A registry id missing from the
+ * stored list is new, so it appears; a stored id missing from the registry is kept, so a failed
+ * lazy chunk cannot erase an arrangement the user built by hand.
  */
 export function reconcileOrder<T extends { id: string }>(
   stored: T[],

@@ -10,11 +10,9 @@ import { createMemoryLocalStore } from '@/data/memory/MemoryLocalStore.ts';
 import App from './App.tsx';
 import './i18n.ts';
 
-// The Local Store the app runs on (ADR 0020). Dexie/IndexedDB is the default
-// and the only shipped implementation that persists; see src/data/CLAUDE.md
-// for bringing your own.
-// A Share Link's page (`/share/<token>`) is opened by strangers: it writes nothing to
-// their Local Store and has no Account, so it never opens IndexedDB or asks for a Session.
+// The Local Store (ADR 0020); to bring your own, see src/data/CLAUDE.md.
+// A Share Link's page is opened by strangers: it writes nothing to their Local Store and has no
+// Account, so it never opens IndexedDB or asks for a Session.
 const shared = isSharePath(window.location.pathname);
 const store = shared ? createMemoryLocalStore() : createDexieLocalStore();
 // The server that serves the PWA is the server (ADR 0018); where none answers,
@@ -23,15 +21,9 @@ const hal = createHalClient();
 const accountService = shared ? null : createHalAccountService(hal);
 const remote = shared ? null : createHalRemote(hal);
 
-// Lets the one-shot legacy migration land before the first synchronous
-// preferences read (src/data/dexie/legacyPreferences.ts). Renders regardless
-// of whether it succeeded - IndexedDB refusing to open must not blank the app.
-// Any key works: `meta` awaits the one-shot legacy migration before reading
-// (src/data/dexie/legacyPreferences.ts), and that migration is what must land
-// before PreferencesProvider's first synchronous localStorage read. The race
-// is what keeps a blocked IndexedDB open (another tab holding an older
-// version) from blanking the app: losing it degrades to default preferences
-// for one render, never to no render.
+// Any `meta` read waits for the legacy migration, which must land before PreferencesProvider's
+// first synchronous localStorage read. The timeout keeps a blocked IndexedDB (another tab on an
+// older version) from blanking the app: losing the race costs default preferences for one render.
 const ready = store.meta
   .get('storeReady')
   .catch((error) => console.error('Local Store not ready', error));

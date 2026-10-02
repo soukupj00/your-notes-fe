@@ -10,13 +10,8 @@ import { History } from './History';
 
 const deps = { getAttachment: vi.fn(), t: (k: string) => k } as unknown as AttachmentDeps;
 
-/**
- * Deleting an attachment node is an ordinary document edit, so undo has to bring
- * it back. That only holds because the attachment *row* is not deleted with the
- * node - orphan collection is deferred to save (see `collectOrphans`). If GC
- * ever moves back to delete-time, undo would restore a node pointing at bytes
- * that no longer exist, and these tests are what should fail.
- */
+/** Undo can restore a deleted attachment node only because orphan rows are collected at save,
+ *  not at delete (`collectOrphans`). If that ever moves to delete-time, these tests must fail. */
 function createEditor() {
   return new Editor({
     extensions: [Document, Paragraph, Text, createAudio(() => deps), History],
@@ -24,14 +19,8 @@ function createEditor() {
   });
 }
 
-/**
- * Close the current history group.
- *
- * ProseMirror groups edits made within `newGroupDelay` (500ms) into one undo
- * step, and a test does everything in the same tick - so without this, inserting
- * and deleting collapse into a single step and undo would appear to work for the
- * wrong reason. In the app the two are always seconds apart.
- */
+/** ProseMirror groups edits within 500ms into one undo step, so without this a test's insert
+ *  and delete collapse into one, and undo would pass for the wrong reason. */
 function endUndoStep(editor: Editor) {
   editor.view.dispatch(closeHistory(editor.state.tr));
 }

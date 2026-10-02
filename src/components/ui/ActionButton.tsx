@@ -11,20 +11,9 @@ import type { ButtonViewReturnComponentProps } from '@/types';
 import { getShortcutKeys } from '@/utils/platform.ts';
 
 /**
- * The name a button takes when it is a row in a menu rather than an icon on a
- * bar, or `null` on a bar.
- *
- * Context rather than a prop because the button that needs the name is often not
- * the one the menu renders: `link`, the five attachment pickers and the colour
- * triggers are all custom components that *wrap* an `ActionButton`, so a prop
- * would have to be threaded through - and remembered by - every one of them,
- * and by every one added later. The menu states the name once, and whichever
- * `ActionButton` ends up being the row picks it up.
- *
- * The one hazard is that a component's own popover stays inside this provider
- * (a React portal keeps its place in the tree), so an `ActionButton` rendered
- * *inside* a leaf's popover would also draw itself as a row. None do today -
- * their popovers hold inputs, swatches and plain `Button`s.
+ * A button's name as a menu row, or `null` on a bar; why context: editor/CLAUDE.md.
+ * Trap: a portal keeps its tree place, so an `ActionButton` inside a leaf's popover
+ * would draw as a row too. None do today.
  */
 const MenuRowLabelContext = React.createContext<string | null>(null);
 
@@ -34,29 +23,18 @@ export interface ActionButtonProps {
   disabled?: boolean;
   shortcutKeys?: string[];
   className?: string;
-  /**
-   * Inline styles, for the one thing a class cannot express: a value only known
-   * at runtime. The colour triggers wear the colour they would apply.
-   */
+  /** For runtime-only values: the colour triggers wear the colour they would apply. */
   style?: React.CSSProperties;
   loading?: boolean;
   tooltip?: string;
   tooltipOptions?: TooltipContentProps;
-  /** Click handler */
   action?: ButtonViewReturnComponentProps['action'];
-  /** Active state checker */
   isActive?: ButtonViewReturnComponentProps['isActive'];
   icon?: IconName;
   children?: React.ReactNode;
   asChild?: boolean;
-  /** Use Toggle instead of Button */
   toggle?: boolean;
-  /**
-   * Show the floating tooltip. Turn it off where the label is already visible -
-   * inside a menu, a tooltip is both redundant and mispositioned, because it
-   * floats over the popover rather than beside the row it describes. `tooltip`
-   * is still the accessible name either way.
-   */
+  /** Off where the label is already visible. `tooltip` stays the accessible name either way. */
   showTooltip?: boolean;
 }
 
@@ -82,25 +60,16 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
   ) => {
     const Comp = asChild ? Slot : toggle ? Toggle : Button;
     const menuRowLabel = React.useContext(MenuRowLabelContext);
-    // A shortcut is only actionable on a machine that has the keys. On a phone
-    // or tablet it is noise in the one place a touch user reads the button's
-    // name, so it is suppressed rather than shown and ignored.
+    // On a touch device a shortcut is noise in the one place the user reads the
+    // button's name, so it is hidden.
     const finePointer = useFinePointer();
 
-    // Non-toggle toolbar buttons (media pickers, undo/redo, the mic) fall through
-    // to Button's `default` variant, which is what made them read as filled purple
-    // slabs beside the flat toggle buttons. Neutralise it here rather than passing
-    // `variant`: `Comp` is a union, and only `Toggle`'s narrower variant type is
-    // visible to TS at the call site. These classes win via tailwind-merge and
-    // give the same rest/hover treatment as a Toggle in its off state.
+    // Flattens Button's filled `default` variant with classes rather than `variant`,
+    // because `Comp` is a union and TS only sees Toggle's narrower variant type.
     const flatButton = !toggle && 'bg-transparent text-foreground shadow-none';
 
-    // `Toggle` styles its on state off `data-[state=on]`, which is only reliable
-    // when nothing else owns that attribute. A `PopoverTrigger asChild` does own
-    // it - it writes `open`/`closed` over ours - so every button that opens a
-    // popover (link, the colour triggers, a collapsed family) silently lost its
-    // active highlight. Carrying the same styling as a class makes the active
-    // state the button's own business again, whoever it is wrapped in.
+    // A class, not just `data-[state=on]`: a `PopoverTrigger asChild` overwrites
+    // `data-state` with `open`/`closed`, which hid the active highlight.
     const activeToggle = toggle && isActive?.() && 'bg-accent text-accent-foreground';
 
     const Icon = icon ? icons[icon] : undefined;
@@ -121,8 +90,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
               flatButton,
               'hover:bg-muted hover:text-foreground',
               activeToggle,
-              // A menu row is a full-width label, not a square. Applied before
-              // `className` so a caller can still override it.
+              // Before `className`, so a caller can still override the menu-row shape.
               menuRowLabel !== null && 'h-9 w-full justify-start gap-2 px-2',
               className
             )}
@@ -136,22 +104,14 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
           </Comp>
         </TooltipTrigger>
 
-        {/* Inside a menu the name is already on the row, so a tooltip would be
-            both redundant and mispositioned - it floats over the popover rather
-            than beside the row it describes. */}
+        {/* Inside a menu the name is already on the row, and a tooltip would float
+            over the popover rather than beside the row. */}
         {tooltip && showTooltip && menuRowLabel === null && (
           <TooltipContent side="top" align="center" {...tooltipOptions}>
             <div className="flex max-w-[200px] flex-col items-center gap-1 text-center">
               <span>{tooltip}</span>
-              {/* The shortcut sits on the tooltip's accent surface, so its
-                  colour has to come from that surface's own pairing. It used to
-                  be `text-muted-foreground`, which is page ink and measured
-                  around 1.1:1 against the accent in *both* themes - a soft grey
-                  is simply the wrong distance from a mid-lightness orange either
-                  way. `text-primary-foreground` is the tone the surface is
-                  guaranteed legible against; hierarchy comes from the letter
-                  spacing and the separate line rather than from dimming, since
-                  there is no headroom to dim into. */}
+              {/* Not `text-muted-foreground`: page ink measured ~1.1:1 on the accent
+                  surface in both themes. Hierarchy comes from spacing, not dimming. */}
               {finePointer && !!shortcutKeys?.length && (
                 <span className="text-primary-foreground text-xs tracking-wide">
                   {getShortcutKeys(shortcutKeys)

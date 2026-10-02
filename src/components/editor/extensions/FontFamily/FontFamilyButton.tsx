@@ -8,7 +8,6 @@ interface FontFamilyButtonProps {
   t: TFunction;
 }
 
-/** Pattern A adapter for the shared editor text-style select. */
 export function FontFamilyButton(props: FontFamilyButtonProps) {
   return <EditorTextStyleSelect {...props} variant="fontFamily" />;
 }

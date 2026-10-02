@@ -24,14 +24,9 @@ async function conflictsTagId(store: LocalStore, now: string): Promise<string> {
 }
 
 /**
- * Keeps this Device's version of a Note that lost a Conflict Resolution as a
- * Conflicted Copy (CONTEXT.md): a new Note, new id, never pushed, with the same
- * Body, state, pin and colour, the original's Tags plus "Conflicts". Its
- * Attachments are cloned under new ids and the Body repointed, so each
- * Attachment keeps one owner and its bytes stay write-once by id (ADR 0017).
- * A row this Device never downloaded is fetched first through `fetchBytes`,
- * because nobody else could upload bytes under the clone's new id.
- * Returns the Conflicts Tag's id.
+ * Keeps this Device's losing version as a Conflicted Copy (CONTEXT.md), tagged "Conflicts".
+ * Attachments are cloned under new ids so each keeps one owner (ADR 0017); bytes not downloaded
+ * here are fetched first, as nobody else could upload them under the new id. Returns the Tag's id.
  */
 export async function keepConflictedCopy(
   store: LocalStore,

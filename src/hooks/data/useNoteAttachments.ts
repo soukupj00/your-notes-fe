@@ -7,7 +7,7 @@ import type { Attachment } from '@/models.ts';
 /** The rows a card joins onto the attachment references it read from the Body. */
 export type NoteAttachments = Map<string, Attachment>;
 
-// Module-level, so a note with no id gets a Live that delivers once and never again:
+// Module-level, so a note with no id gets a Live that delivers once and never again.
 const EMPTY_ROWS = emptyLive<Attachment[]>([]);
 
 /**
@@ -27,16 +27,8 @@ function toMap(rows: Attachment[]): NoteAttachments {
 }
 
 /**
- * Every attachment row owned by a note, keyed by id.
- *
- * A Map rather than an array because the caller already knows the order and the
- * kinds - it read them out of the Body - and only needs the bytes and metadata
- * to join onto them. Live, so a drawing re-saved in the editor refreshes its
- * card preview without a feed reload.
- *
- * `noteId` is nullable so a caller that has the rows already - or whose Body
- * references no attachment at all - can skip the query outright, the same way
- * `useTagsForNote` lets the feed pre-join labels.
+ * A note's attachment rows by id: the caller already read order and kinds from the Body.
+ * `noteId` is nullable so a caller that has the rows, or has none in its Body, skips the query.
  */
 export function useNoteAttachments(noteId: string | null): NoteAttachments {
   const store = useLocalStore();
@@ -52,18 +44,8 @@ export function useNoteAttachments(noteId: string | null): NoteAttachments {
 }
 
 /**
- * The same join for a whole feed, as one live query instead of one per card.
- *
- * The reason this is not simply "group the rows" is identity. A single query
- * refires for *any* attachment write, so a naive grouping would hand every card
- * a brand-new Map each time one drawing was saved - and `CardMedia` mints its
- * object URLs off that Map, so every thumbnail on screen would be revoked and
- * re-minted, which reads as the whole feed flickering.
- *
- * So a note whose rows are unchanged keeps the exact Map (and the exact row
- * objects) it was given before, and only the note that actually changed gets a
- * new one. `useNoteAttachments.test.ts` locks that guarantee down; without it
- * this hook is a visible regression rather than an optimisation.
+ * The same join for a whole feed, as one live query. A note with unchanged rows keeps its exact
+ * Map, or any attachment write would re-mint every thumbnail on screen (src/hooks/data/CLAUDE.md).
  */
 export function useAttachmentsByNote(noteIds: readonly string[]): Map<string, NoteAttachments> {
   const store = useLocalStore();
@@ -73,21 +55,9 @@ export function useAttachmentsByNote(noteIds: readonly string[]): Map<string, No
 
   const rows = useLive(() => store.attachments.forNotes(noteIds), [store, key]);
 
-  /*
-   * The signature table, held in state rather than in a ref.
-   *
-   * `useState` with a lazy initialiser is the same thing a ref would be - one
-   * mutable instance created once and owned by this hook - but `react-hooks`
-   * (v7, compiler-grade) forbids touching `ref.current` during render, and this
-   * table has to be consulted *while* the Map is being built. A ref would need
-   * an effect, which is a commit too late: the Map is the render's own output.
-   *
-   * Mutating it in render is sound because the table is a pure memo keyed by
-   * content, not state the UI reads. Running the block twice with the same rows
-   * (StrictMode, a discarded concurrent render) mints on the first pass and hits
-   * the cache on the second, so the result is identical both times - the table
-   * only ever decides *which* equal Map you get back, never what is in it.
-   */
+  // State, not a ref: the lint rules forbid `ref.current` in render, and this table is read while
+  // the Map is built. Mutating it in render is safe: it is a content-keyed memo, so a repeated
+  // render (StrictMode) returns an equal Map.
   const [cache] = useState(
     () => new Map<string, { signature: string; attachments: NoteAttachments }>()
   );

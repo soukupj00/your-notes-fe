@@ -1,14 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* The `nightshift` typefaces (DESIGN.md → Typography): a tight display grotesque
-   for titles against a calm workhorse for body. Self-hosted via @fontsource, not
-   a CDN, because the app has to render the same offline as online.
-   Both packages are the `wght`-only variable cut, split by unicode-range, so a
-   Latin user downloads ~41KB + ~50KB and nothing else. The three-axis
-   (`opsz`+`wdth`+`wght`) cut of Bricolage is 131KB for the Latin subset alone,
-   and its optical-size axis defaults to 14 against our 16.6px title - not a
-   90KB difference anyone can see. */
+/* The `nightshift` typefaces, self-hosted rather than from a CDN so the app renders the same
+   offline. Why the `wght`-only cut: DESIGN.md, Typography. */
 @import "@fontsource-variable/bricolage-grotesque";
 @import "@fontsource-variable/work-sans";
 
@@ -19,22 +13,13 @@
    follow the in-app theme toggle rather than the OS setting. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* The 44px Touch Rule's own signal, as a utility variant. `pointer: coarse` is
-   the question the rule actually asks - is a thumb driving this - which is not
-   the same question as "is the viewport narrow", so it must not be spelled as a
-   width breakpoint. Already the gate on the checklist touch floor further down;
-   this makes it reachable from a class too. */
+/* The 44px Touch Rule asks whether a thumb is driving, which is `pointer: coarse`, never a
+   width breakpoint (ADR 0016). */
 @custom-variant coarse (@media (pointer: coarse));
 
-/* Note identities are element-scoped: the `data-note-color` element defines
-   these values, not `:root`. They therefore cannot be aliases in `@theme` -
-   colour theme variables are resolved at the root and would freeze before the
-   per-element identity exists. Custom utilities keep evaluation on the element
-   while retaining readable Tailwind class names and variant support. */
-/* The fallbacks matter for the editor, which is note-tinted inside its dialog
-   but may be mounted anywhere: without them a surface outside a
-   `[data-note-color]` subtree would resolve to nothing and render transparent
-   rather than simply uncoloured. */
+/* Utilities, not `@theme` aliases: identities are set on the `data-note-color` element, and
+   `@theme` colours resolve at the root. The fallbacks keep an editor mounted outside such an
+   element uncoloured rather than transparent. */
 @utility bg-note-surface {
   background-color: var(--note-surface, var(--background));
 }
@@ -67,41 +52,17 @@
 }
 
 @layer base {
-  /*
-   * The four safe-area insets, named once.
-   *
-   * `index.html` carries `viewport-fit=cover`, without which every `env()`
-   * below resolves to 0 - in the installed PWA as well as in a tab. That is
-   * what it did for the whole of M3 and M4: `floatingBottomBar.ts` was written
-   * against these values and computed a flat 24px everywhere, so the quick
-   * capture `＋` never actually cleared Android's gesture handle.
-   *
-   * Routed through variables rather than spelled `env()` at each site for two
-   * reasons. One, there are five consumers and they have to agree. Two, and
-   * more usefully: a desktop browser reports 0 for all four and no emulator
-   * here exposes a notch, so overriding these on `:root` is the only way to see
-   * a phone's insets without a phone. `globals.test.ts` does exactly that, and
-   * so should any manual pass.
-   */
+  /* The four safe-area insets, named once. Why variables, and why they need `viewport-fit=cover`:
+     CLAUDE.md, "Nav shell". */
   :root {
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-right: env(safe-area-inset-right, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --safe-left: env(safe-area-inset-left, 0px);
 
-    /*
-     * How much of the layout viewport the software keyboard covers. Written by
-     * `useKeyboardInset`, which measures `window.visualViewport`; declared here
-     * so every consumer has a real length before the first measurement and on
-     * the browsers that expose no visual viewport at all.
-     *
-     * It is 0 wherever `interactive-widget=resizes-content` is honoured
-     * (Chrome/Android), because there the layout viewport has already shrunk
-     * and there is nothing left to subtract. It is the keyboard's height on
-     * iOS Safari, which ignores that hint and draws the keyboard over the page.
-     * Same variable either way - the platform difference is in the number, not
-     * in the stylesheet.
-     */
+    /* The software keyboard's cover, written by `useKeyboardInset`. 0 where
+       `interactive-widget=resizes-content` is honoured (Chrome/Android); the keyboard's
+       height on iOS Safari, which draws it over the page. */
     --keyboard-inset: 0px;
   }
 
@@ -110,28 +71,13 @@
     color: var(--foreground);
   }
 
-  /* Native buttons otherwise keep the platform's default arrow cursor. Keep
-     this at the shared base seam so Radix toggles and bespoke media controls
-     behave consistently without every component carrying the same utility. */
+  /* Native buttons otherwise keep the arrow cursor; set once here, not per component. */
   button:not(:disabled) {
     cursor: pointer;
   }
 
-  /*
-   * The default border colour is the theme's rule, not the element's ink.
-   *
-   * Tailwind v4's preflight resets every element to `border: 0 solid` and sets
-   * no colour, so a bare `border` / `border-b` inherits `currentColor` - the
-   * element's *text* colour. A hairline meant to be a quiet edge then comes out
-   * at full ink strength and, worse, inverts with the theme in the wrong
-   * direction: white text in the dark theme drew a white frame. Every such
-   * border in the app wants `--border`, which is why it is cheaper to make that
-   * the default than to spell `border-border` at each of the call sites.
-   *
-   * `currentColor` stays as the fallback so the declaration degrades to the
-   * upstream behaviour rather than to nothing, and `border-current` remains the
-   * explicit opt-in for the rare border that really should follow the ink.
-   */
+  /* Preflight leaves a bare `border` at `currentColor`, the ink, which drew white frames in
+     the dark theme. Every such border wants `--border`; `border-current` opts back in to ink. */
   *,
   ::after,
   ::before,
@@ -143,39 +89,24 @@
   /*
    * ── nightshift: the day desk ──────────────────────────────────────────────
    *
-   * DESIGN.md is the contract; this block is its light half. The primitives
-   * come first and the semantic tokens are mapped onto them, so the two themes
-   * differ only in the primitives - which is what makes the toggle read as dusk
-   * falling on a room you already know rather than as a second product.
-   *
-   * Day is warm parchment (hue ~72-84) and surfaces get *lighter* to come
-   * forward. Depth is a hairline plus a barely-there drop shadow; glow does not
-   * exist here (The Glow-Is-Night-Only Rule).
+   * DESIGN.md is the contract. Semantic tokens map onto the primitives, so the
+   * two themes differ only in the primitives.
    */
   :root {
-    /* Three surface planes. `canvas` is the wall, `chrome` is the topbar and
-       rail, `raised` is anything lifted off the wall: cards, popovers, inputs,
-       the capture bar. By day chrome and raised both sit *above* the canvas. */
+    /* `canvas` is the wall, `chrome` the topbar and rail, `raised` anything lifted off the wall. */
     --canvas: oklch(96% 0.015 84);
     --canvas-chrome: oklch(97.6% 0.011 84);
     --canvas-raised: oklch(99.2% 0.006 84);
 
-    /* Hairlines. `rule` is for dividers and card edges, which are never the
-       sole carrier of a shape. `rule-control` is for a control whose border
-       *is* its shape - a text input, a segmented track - and is sized to clear
-       1.4.11's 3:1 non-text floor against both canvas (3.25:1) and raised
-       (3.56:1), which `rule` at 1.32:1 does not. */
+    /* `rule` for dividers and card edges; `rule-control` for a control whose border is its
+       shape (an input, a segmented track), so it clears WCAG 1.4.11's 3:1. */
     --rule: oklch(87% 0.018 80);
     --rule-control: oklch(62% 0.025 80);
 
     --ink: oklch(26% 0.02 72);
     --ink-soft: oklch(50% 0.02 72);
 
-    /* The one accent, and it is chrome only: brand mark, active rail item, FAB,
-       focus ring (The One Accent Rule). Deep rather than bright, because it has
-       to clear 4.5:1 on its own label (4.98:1) *and* 3:1 against the parchment
-       behind it (4.56:1) - brightening it to a yellow-amber solves the first
-       and fails the second at 1.58:1 (The Two-Constraint Rule). */
+    /* The one accent, chrome only (The One Accent Rule). Deep by day: The Two-Constraint Rule. */
     --accent-tone: oklch(54% 0.112 80);
     --on-accent-tone: oklch(99% 0.008 84);
 
@@ -195,18 +126,16 @@
     --primary: var(--accent-tone);
     --primary-foreground: var(--on-accent-tone);
 
-    /* shadcn's `secondary` is the fill of a secondary *button*, so it must not
-       take the accent - carrying the accent is what marks something as chrome.
-       It is lifted paper with ink on it instead. */
+    /* shadcn's `secondary` fills a secondary button, so it must not take the accent, which
+       marks chrome. */
     --secondary: var(--canvas-raised);
     --secondary-foreground: var(--ink);
 
     --muted: color-mix(in oklab, var(--ink) 7%, var(--canvas));
     --muted-foreground: var(--ink-soft);
 
-    /* shadcn's `accent` is the hover/active wash, not the brand accent. Nine
-       percent of ink, per the material change that every hover owes alongside
-       its scale so the affordance survives reduced motion. */
+    /* shadcn's `accent` is the hover wash, not the brand accent: the material change every
+       hover owes, so the affordance survives reduced motion. */
     --accent: color-mix(in oklab, var(--ink) 9%, transparent);
     --accent-foreground: var(--ink);
 
@@ -222,11 +151,8 @@
     --warning: var(--accent-tone);
     --info: oklch(51% 0.088 208);
 
-    /* The vendored shadcn Sidebar styles itself off its own `--sidebar-*` set.
-       These alias the semantic tokens above rather than introducing a second
-       palette (ADR 0010). The rail is chrome, so it takes the chrome plane -
-       lighter than the wall by day, darker by night - and the colour-blind
-       variants will reach it for free. */
+    /* The vendored Sidebar's own set, aliased to the tokens above rather than a second palette
+       (ADR 0010). The rail is chrome, so it takes the chrome plane. */
     --sidebar: var(--canvas-chrome);
     --sidebar-foreground: var(--foreground);
     --sidebar-primary: var(--primary);
@@ -236,10 +162,8 @@
     --sidebar-border: var(--border);
     --sidebar-ring: var(--ring);
 
-    /* The uncoloured note, so a card can always read `--note-*` whether or not
-       an identity is assigned. Per-identity values and the derivation that turns
-       them into a surface, an edge, a chip and a glow are below the two theme
-       blocks, because they are selectors rather than variables. */
+    /* The uncoloured note, so a card can always read `--note-*`. The identities and their
+       derivation are selectors, so they sit below the two theme blocks. */
     --note-tint: var(--canvas-raised);
     --note-edge: var(--rule);
   }
@@ -248,11 +172,7 @@
    * ── nightshift: the same desk, lit ────────────────────────────────────────
    *
    * Only the primitives move. Every semantic mapping above is inherited, so a
-   * component cannot be styled correctly in one theme and wrong in the other.
-   *
-   * Night is a cool near-black room (hue ~250-265) and depth reverses: surfaces
-   * get *darker* to recede, and a card's identity colour becomes an outer glow,
-   * because a black shadow on a near-black room is invisible.
+   * component cannot be right in one theme and wrong in the other.
    */
   .dark {
     --canvas: oklch(17% 0.012 265);
@@ -265,12 +185,7 @@
     --ink: oklch(93% 0.006 250);
     --ink-soft: oklch(68% 0.01 250);
 
-    /* Same hue as the day amber, four steps up in lightness. Night has no
-       two-constraint tension - a bright accent on a near-black room clears both
-       floors trivially (10.16:1 on its label, 9.99:1 against canvas) - and that
-       asymmetry *is* the measured justification for "changes its light": the day
-       accent must be deep and the night one bright because the canvas beneath
-       them is inverted. */
+    /* The day amber's hue, bright: night has no two-constraint tension (DESIGN.md). */
     --accent-tone: oklch(80% 0.169 75);
     --on-accent-tone: oklch(16% 0.03 75);
 
@@ -290,36 +205,12 @@
   /*
    * ── Note and Tag identities (ADR 0009) ────────────────────────────────────
    *
-   * A Note stores only a token name (`red`, `teal`, …) and everything visual
-   * resolves from CSS, per theme, so a colour-blind variant can re-value the
-   * whole palette by overriding this block alone.
-   *
-   * The selector is `data-note-color` on the element rather than an inline
-   * style, and that is load-bearing: the two themes derive *different things*
-   * from an identity - a flooding tint by day, an edge and a glow by night -
-   * which an inline `background-color` cannot express. One attribute in, five
-   * theme-correct values out.
-   *
-   * Each identity therefore declares the minimum: two values by day (the tint
-   * that floods the card and the deeper edge around it) and *one* by night (the
-   * neon), because at night the surface, border, chip and glow are all mixes of
-   * that single value. Colour is an index, not decoration - a person finds a
-   * note again by remembering it was the green one.
+   * A Note stores a token name and CSS resolves the rest per theme. An attribute, not an
+   * inline style: day derives a tint and an edge, night a single neon every mix starts from.
    */
 
-  /* Day: the identity is pigment. Soft tints on warm paper.
-     Every identity shares one lightness and one chroma, differing only in hue,
-     which is what lets them read as one paper stock in nine colours.
-     Both numbers are the strongest the *whole set* can reach inside sRGB: at
-     91.5% every hue can hold 0.0427, and the binding hue is blue. That is why
-     the tints sit lower than the surrounding paper - at the old 94.6% the
-     honest ceiling is 0.0248, which is barely a tint at all.
-     They previously declared per-identity values up to 0.062, but five of the
-     nine were outside sRGB and were being silently gamut-mapped, so yellow
-     rendered at more than twice red's chroma from authored values 0.006 apart.
-     See DESIGN.md, The Authored-Value-Is-The-Rendered-Value Rule.
-     91.5% is also the floor: one step deeper and `--ink-soft` drops under
-     4.5:1 on the tint (4.45:1 at 90.5%). It measures 4.60:1 here. */
+  /* Day: the identity is pigment, one lightness and chroma for every hue. Why these numbers:
+     DESIGN.md, Tertiary and The Authored-Value-Is-The-Rendered-Value Rule. */
   [data-note-color="red"] {
     --note-tint: oklch(91.5% 0.0427 24);
     --note-edge: oklch(78.5% 0.1135 24);
@@ -360,14 +251,8 @@
     --note-edge: oklch(82% 0.016 80);
   }
 
-  /*
-   * Night: the identity stops being pigment and becomes light. One neon value
-   * per identity, at a shared lightness of 76% with chroma at the sRGB maximum
-   * for that hue - so the nine read as one strip light rather than nine
-   * unrelated brightnesses, and so what is specified is what the browser
-   * actually paints (the lab's values sat outside sRGB and were quietly
-   * chroma-reduced, which is how two of them came to fail their chip-text floor).
-   */
+  /* Night: the identity is light. One neon each at a shared 76%, chroma at the hue's sRGB
+     maximum, so the nine read as one strip light and paint as specified. */
   .dark [data-note-color="red"] {
     --note-neon: oklch(76% 0.143 24);
   }
@@ -398,11 +283,7 @@
     --note-neon: oklch(76% 0.025 84);
   }
 
-  /*
-   * The day derivation. The tint floods the card, the edge draws it, and the
-   * chip is that edge at 48% over the tint. Text stays ink: colour touches the
-   * card's surface, border, chip and edge and stops there.
-   */
+  /* The day derivation. Text stays ink (The Neon-Is-Chrome Rule). */
   [data-note-color] {
     --note-surface: var(--note-tint);
     --note-border: var(--note-edge);
@@ -417,41 +298,16 @@
        affordance survives reduced motion with the scale switched off. */
     --note-border-hover: color-mix(in oklab, var(--note-edge) 88%, var(--accent-tone));
 
-    /* A swatch is not a small card. The card's night surface is a 7% wash, so
-       nine cards differ by a whisper and read as identical at swatch size - the
-       dot in a picker or a rail has to show the identity itself. By day it can
-       simply be the card's own paint. */
+    /* A swatch shows the identity itself: at night a card is a 7% wash, too faint to tell
+       nine apart at dot size. By day it is simply the card's paint. */
     --note-swatch: var(--note-tint);
     --note-swatch-ring: var(--note-edge);
   }
 
   /*
-   * The night derivation. Everything is a mix of the one neon: the surface is a
-   * 7% wash of it into the raised plane (so the card stays near-black), the
-   * border 52%, the chip 18% with the neon itself as the chip's text, and the
-   * card emits a glow because a black shadow on a near-black room is invisible.
-   *
-   * Measured after the nine-key reconciliation: ink remains about 13.1:1 on
-   * every surface and neon-on-chip ranges from 5.77:1 to 6.54:1.
-   *
-   * The border/glow balance was re-cut after the first production wall: at a
-   * 52% edge the identity read as a hot *ring* drawn on the card, and the glow
-   * behind it - narrow, with a -4px spread eating most of its radius - was
-   * effectively invisible. Depth in the night theme is supposed to be light
-   * *around* a card, so the edge steps back and the glow steps forward.
-   *
-   * The glow is then *directional and gutter-bound*, which is the second re-cut.
-   * A symmetric glow big enough to read at rest was, on hover, wider than the
-   * 0.85rem (13.6px) feed gutter, so a lit card bled over its neighbours. Two
-   * shadows now do the work: a stronger one lifting off the top edge, and a
-   * faint one below, both with a spread that eats most of their blur.
-   *
-   * The budget, since it is not obvious from the values: visible extent on a
-   * side is `blur / 2 + spread ± offset`. Rest reaches 7px up, 3px sideways,
-   * 2px down; hover 8px / 4px / 3.5px, plus ~3px from the surface's own 1.02
-   * hover scale. Worst case is a hovered card against a resting neighbour:
-   * 8 + 3 + 2 = 13px, inside the 13.6px gutter. Anything larger overlaps, so
-   * these numbers are a ceiling, not a preference.
+   * The night derivation: everything mixes the one neon, and the card glows because a black
+   * shadow vanishes in a dark room. The glow geometry is a ceiling, not a preference: a hovered
+   * card must stay inside the 13.6px feed gutter (DESIGN.md, Elevation & Depth).
    */
   .dark [data-note-color] {
     --note-surface: color-mix(in oklch, var(--note-neon) 7%, var(--canvas-raised));
@@ -473,9 +329,7 @@
     --note-swatch-ring: var(--note-neon);
   }
 
-  /* The uncoloured note is DESIGN.md's Base identity: neutral paper by day and
-     a cool blue-grey edge and glow by night. `gray` remains a separate persisted
-     choice and takes a warmer silver light above. */
+  /* The uncoloured note is DESIGN.md's Base identity; `gray` is a separate, chosen silver. */
   [data-note-color="default"] {
     --note-tint: var(--canvas-raised);
     --note-edge: var(--rule);
@@ -490,9 +344,7 @@
     --note-swatch-ring: var(--rule-control);
   }
 
-  /* Pinned is a stronger version of the same material, not a new colour. The
-     corner control itself lands with Task 4; this lets today's menu-based pin
-     state remain visible without inventing a temporary card anatomy. */
+  /* Pinned is a stronger version of the same material, not a new colour. */
   [data-note-color][data-pinned] {
     --note-border: color-mix(in oklab, var(--note-edge) 70%, var(--ink));
   }
@@ -512,27 +364,8 @@
   /*
    * ── The colour-blind palette ──────────────────────────────────────────────
    *
-   * `.cvd` on <html> composes with `light`/`dark` rather than replacing them:
-   * colour vision and a preference for a dark room are independent, so making
-   * this a third theme would force a user to trade one for the other.
-   *
-   * It re-values only the three identity primitives. Everything downstream -
-   * surface, border, chip, media plane, swatch, glow, and the tag pills - is
-   * already derived from them, so nine identities change without a single
-   * component knowing this mode exists.
-   *
-   * The values are not hand-picked. They come from a search that maximised the
-   * *closest colliding pair* under simulated deuteranopia, protanopia and
-   * tritanopia, constrained to stay inside sRGB, to hold each hue within 12° of
-   * its name, and to keep chroma even enough that the nine still read as one
-   * set. Measured against the default palette, the worst dichromatic pair
-   * improves from dE 0.0022 to 0.0345 by day and 0.0032 to 0.0784 by night.
-   *
-   * What it costs: the default palette holds lightness almost constant (a 1%
-   * window by day, flat 76% at night) so the nine read as one paper stock and
-   * one strip light. Dichromacy erases most of the hue axis, so hue alone
-   * cannot carry nine identities - lightness has to do the work instead, and
-   * the cards visibly stop matching. That trade is the mode.
+   * A modifier on `light`/`dark`, not a theme, re-valuing only the identity primitives.
+   * Why and at what cost: DESIGN.md, The Constant-Lightness-Is-A-Choice-With-A-Bill Rule.
    */
   .cvd [data-note-color="red"] {
     --note-tint: oklch(86% 0.072 25);
@@ -599,31 +432,14 @@
     --note-neon: oklch(81% 0.004 84);
   }
 
-  /* Spreading the day tints across an 11% lightness band drags the darkest of
-     them under the muted-text floor: `--ink-soft` at 50% measures 3.83:1 on the
-     new red, where the default palette clears 5.2:1. The mode therefore deepens
-     muted ink to 43%, which restores the worst case to 5.17:1. Night needs no
-     equivalent - its neons never become a text background. */
+  /* The widest day tints drag `--ink-soft` under 4.5:1, so this mode deepens it (DESIGN.md,
+     the same Rule). Night's neons are never a text background. */
   .cvd:not(.dark) {
     --ink-soft: oklch(43% 0.02 72);
   }
 
-  /* The 44px floor applies to touch input, not to every mouse-sized desktop
-     control. Shared controls expose stable data slots; bespoke controls opt in
-     with `.touch-target`. Layout stays compact with a mouse while a coarse
-     pointer always receives a real, measurable hit box.
-
-     Two mechanisms, because the Touch Rule has two shapes and using the wrong
-     one deforms the control. `.touch-target` *grows* the element, which is
-     right for an icon button - it is a square either way, and a bigger square
-     is a bigger button. `.touch-reach` leaves the element its own size and
-     hangs an invisible 44x44 `::before` off its centre, which is the shape
-     `CardPin` and the checklist label already use.
-
-     A switch needs the second one, and shipped with the first: the track is a
-     20x36 `rounded-full` pill, so a 44x44 minimum turned every switch on every
-     phone into a circle with a dot in it. Reach for `.touch-reach` whenever the
-     control's *shape* is part of what it says. */
+  /* The 44px floor, for a coarse pointer only. `.touch-target` grows a control, `.touch-reach`
+     gives it a hit box and keeps its shape; which to use: CLAUDE.md, "Theming". */
   @media (pointer: coarse) {
     [data-slot="button"],
     [data-sidebar="menu-button"],
@@ -653,21 +469,12 @@
 }
 
 @theme {
-  /* Typography (DESIGN.md → Typography). `--font-sans` is the Tailwind default
-     family, so setting it re-faces the whole app in one line; `font-display` is
-     opt-in and belongs only on titles and the brand mark. */
+  /* `font-display` is opt-in, for titles and the brand mark only. */
   --font-sans: "Work Sans Variable", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
 
-  /* Three roles, not a ramp. Each carries its own leading, tracking and weight
-     so `text-title` is the whole treatment rather than a size that then needs
-     three more utilities to finish it.
-
-     Hierarchy deliberately rests on size + weight + colour together, never on
-     the display face alone: Bricolage covers Latin only, so a Cyrillic or Greek
-     title renders in the fallback face without its tight tracking and heavy
-     display weight and must still read as the most important thing on its card
-     (The Fallback-Survives Rule). */
+  /* Three roles, not a ramp, each a whole treatment. Hierarchy rests on size, weight and
+     colour together, never the display face alone (The Fallback-Survives Rule). */
   --text-title: 1.04rem;
   --text-title--line-height: 1.2;
   --text-title--letter-spacing: -0.015em;
@@ -676,23 +483,18 @@
   --text-body: 0.855rem;
   --text-body--line-height: 1.45;
 
-  /* 11px, and this is the floor - The Label Floor Rule. The lab rendered
-     metadata at 9.92px, which is unscannable on a phone even at 7.45:1. */
+  /* 11px is the floor (The Label Floor Rule). */
   --text-label: 0.6875rem;
   --text-label--line-height: 1.2;
   --text-label--letter-spacing: 0.1em;
   --text-label--font-weight: 500;
 
-  /* One radius across the whole system, and it is identical in both themes -
-     the single strongest signal that day and night are the same skeleton.
-     `pill` is Tailwind's own `rounded-full`, so it needs no token. */
+  /* Identical in both themes (DESIGN.md, Shapes). `pill` is Tailwind's `rounded-full`. */
   --radius-card: 16px;
   --radius-control: 10px;
 
-  /* Depth, as two named steps rather than shadcn's `shadow-sm`/`shadow-md`
-     ladder. The values switch with the theme (drop shadow by day, deeper black
-     by night), so a component asks for "at rest" or "lifted" and gets whichever
-     mechanism the current light uses. */
+  /* Two named depth steps rather than shadcn's ladder: a component asks for rest or lift and
+     gets whichever mechanism the current theme uses. */
   --shadow-rest: var(--elevation-rest);
   --shadow-lift: var(--elevation-lift);
 
@@ -748,35 +550,14 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* The two spacing values density re-cuts, as tokens rather than as literals
-     on the components that spend them. They are shorthand strings, not a
-     spacing scale, so they stay plain custom properties: `--card-pad` is a
-     four-sided shorthand and `--feed-gap` is read back by
-     `useNoteFeedLayout` through `getComputedStyle().rowGap`, which is what
-     lets JS masonry follow density without being told about it. */
+  /* The two spacing values density re-cuts. `useNoteFeedLayout` reads `--feed-gap` back
+     through `getComputedStyle().rowGap`, which is how JS masonry follows density. */
   --feed-gap: 0.85rem;
   --card-pad: 0.9rem 1rem 0.85rem;
 }
 
-/*
- * Density (DESIGN.md → "generous by default … with a compact mode for people
- * who want more wall at once").
- *
- * One control, not a spacing control plus a font-size control. DESIGN.md
- * specifies compact as a single bundle - type *and* rhythm move together - and
- * that is the honest shape: shrinking the gap while leaving 1.04rem titles
- * gives a denser wall of cards that are each still the same size, which is not
- * what "more wall at once" means. It also keeps the states the contrast and
- * 44px gates were measured against at two rather than at a matrix.
- *
- * Unlayered on purpose: `@theme` emits its half onto `:root` inside the theme
- * cascade layer, and an unlayered rule beats every layer regardless of the
- * `:root` vs `:root[…]` specificity that would decide it otherwise.
- *
- * The touch floor is deliberately *not* in here. Compact is a request for more
- * information per screen, never a request for smaller hit boxes, so the 44px
- * coarse-pointer rule stays where it is and applies to both densities.
- */
+/* Compact density: type and rhythm move as one bundle. Unlayered, so it beats `@theme`'s
+   layered `:root`. The touch floor is not here: compact never shrinks a hit box. */
 :root[data-density="compact"] {
   --text-title: 0.94rem;
   --text-body: 0.8rem;
@@ -784,15 +565,8 @@
   --card-pad: 0.65rem 0.75rem 0.6rem;
 }
 
-/* Rich-text content styling (headings, lists, blockquote, code, etc.) comes from the
-   @tailwindcss/typography `prose` classes applied to the editor in editor.tsx. Only
-   TipTap-specific structures that prose does not know about are styled here, scoped
-   to the editor (`.tiptap`) so nothing leaks to the rest of the app. */
-
-/* Map the typography plugin's palette onto the app theme tokens so prose content
-   matches the active theme in both light and dark (the tokens switch via the
-   .light/.dark class) instead of prose's built-in grays. This is why the editor
-   uses plain `prose` rather than `dark:prose-invert`. */
+/* Rich text is styled by `@tailwindcss/typography`; how and why it is overridden below:
+   src/components/editor/CLAUDE.md, "Content styling". Prose follows the theme tokens. */
 .prose {
   --tw-prose-body: var(--foreground);
   --tw-prose-headings: var(--foreground);
@@ -815,25 +589,8 @@
 }
 
 /* ---- Note rhythm -------------------------------------------------------
-
-   `@tailwindcss/typography` is set for long-form articles on a wide page, and
-   its defaults are the wrong instrument for a note. Measured on a ten-block
-   note before this block existed: 584px of editor for ~13 lines of text, so
-   **46% of the surface was inter-block margin**. Paragraphs sat 16px apart
-   around 24px lines, an `h2` carried 32px above it, and a bullet's own `<p>`
-   inherited the full 16px paragraph margins inside its `<li>`.
-
-   A note is not an article. Its paragraphs are usually single lines, often
-   list-like, and the surface is a phone. So the plugin's vertical rhythm is
-   replaced wholesale with one small scale, applied to `.prose` and therefore to
-   **both** surfaces at once - the editor and the card preview render the same
-   markup, and a note that reads one way while being written and another way on
-   the wall is the drift this file keeps closing.
-
-   Type comes from the app's own tokens rather than prose-sm's. The plugin was
-   setting 14px/1.71 where DESIGN.md's Body is `0.855rem`/1.45, so editor text
-   was both larger and looser than the same text on its card. DESIGN.md names
-   Body as "all running text", and the editor is running text. */
+   One small block scale and the app's Body type replace prose's article rhythm, on both the
+   editor and the card (src/components/editor/CLAUDE.md, "Content styling"). */
 .prose {
   --note-block-gap: 0.5rem;
   --note-heading-lead: 1rem;
@@ -856,10 +613,7 @@
   margin-bottom: 0;
 }
 
-/* List items are rows, not paragraphs. Their inner `<p>` is a TipTap structural
-   wrapper the user never asked for, so it must not bring paragraph spacing into
-   a list - the task-list rule further up was already doing this for checklists
-   alone, and every other list needs it for the same reason. */
+/* List items are rows: TipTap's structural `<p>` inside them must not bring paragraph spacing. */
 .prose :where(li) {
   margin-block: 0.125rem;
 }
@@ -883,29 +637,14 @@
   margin-bottom: 0;
 }
 
-/* The editable element gets a browser focus outline by default, which reads as a
-   stray border hugging the text/checkboxes when the editor is active. The editor
-   already has its own container framing, so suppress it. */
+/* The editor's container already frames it; the browser outline would be a stray border. */
 .tiptap:focus,
 .tiptap:focus-visible {
   outline: none;
 }
 
-/* Task lists (TipTap TaskList/TaskItem): render the checkbox and text on one line,
-   overriding prose's default list indent/markers.
-
-   Scoped to `.prose`, not to `.tiptap`, because a checklist has two surfaces: the
-   editor and the card preview, which renders the same stored markup. While these
-   rules were editor-only, every checklist on the feed fell back to prose's own
-   list styling - a bullet *and* a checkbox, with the text wrapped onto the line
-   below it.
-
-   Note the cost, since it is invisible from here and surprising later: making a
-   row `flex` defeats `-webkit-line-clamp`, which only counts line boxes when a
-   block's children are block-level. That is why `NoteCard`'s six-line clamp does
-   nothing on a checklist and the card caps its height with `max-height` instead.
-   Measured across `list-item`, `block`, `flex` and `grid`; only the first two
-   clamp, and neither puts the checkbox beside its text. */
+/* Task lists, scoped to `.prose` so the editor and the card render them alike. Trap: a `flex`
+   row defeats `-webkit-line-clamp`, which is why `NoteCard` caps a checklist with `max-height`. */
 .prose ul[data-type="taskList"] {
   @apply list-none p-0;
 }
@@ -926,15 +665,8 @@
   @apply my-0;
 }
 
-/* The reorder grip. Editor only by construction: it is node-view DOM, never
-   stored markup, so the Card cannot have one. Pointer-driven, so a finger can
-   use it (`extensions/TaskItem/taskItemDrag.ts`).
-
-   Drawn at the line's own height (20px), because the grip must not set the
-   row's height: at 44px it made every checklist row 44px tall and the editor
-   read as double-spaced. Always visible on a Coarse pointer, because there is
-   no hover to reveal it. On a Fine pointer it keeps its column but only shows
-   on the row's hover, so a long list is not a wall of dots. */
+/* The reorder grip is node-view DOM, so editor only (`extensions/TaskItem/`). Drawn at the
+   line's 20px so it never sets the row's height; a 44px grip read as double-spacing. */
 .tiptap ul[data-type="taskList"] li > .task-item-grip {
   @apply -ml-1 flex size-5 flex-none cursor-grab touch-none items-center justify-center self-center rounded-md text-muted-foreground opacity-0 transition-opacity;
 }
@@ -948,11 +680,8 @@
   @apply opacity-100;
 }
 
-/* The 44px Touch Rule for the grip is a hit box, not a size: a 44px-wide halo
-   exactly as tall as its row, resolved against the `li`, so consecutive halos
-   tile instead of overlapping into the neighbouring row. A centred 44x44
-   `.touch-reach` would reach 12px into each neighbour on a 20px row, and a drag
-   begun near a row's edge would pick up the wrong item. */
+/* The grip's 44px is a halo as tall as its row, so halos tile. A centred 44x44 `.touch-reach`
+   would reach into the next row, and a drag there would pick up the wrong item. */
 @media (pointer: coarse) {
   .tiptap ul[data-type="taskList"] li {
     @apply relative;
@@ -980,39 +709,20 @@
   box-shadow: 0 2px 0 0 var(--primary);
 }
 
-/* The checkbox is the app's most-tapped control and was the one place the system
-   accent still showed through - Chrome's own blue, which is in no palette this
-   app defines. `accent-color` re-tints the native control without replacing it,
-   so it keeps the platform's checkmark, focus ring and forced-colours behaviour. */
+/* Replaces the browser's blue and keeps the native checkmark, focus ring and forced colours. */
 .prose ul[data-type="taskList"] li > label input[type="checkbox"] {
   accent-color: var(--primary);
 }
 
-/* A finished item recedes rather than vanishes: struck through, and its colour
-   transitioning to muted over the same beat the row takes to travel.
-
-   The strike itself is deliberately not animated. `text-decoration` is not an
-   animatable property, and faking it with a scaling gradient would draw a line
-   across the text at the very moment the row is gliding downwards - two
-   animations competing for one eye. One motion, one meaning. */
+/* A finished item fades to muted as its row travels; the strike is not animated (ADR 0013). */
 .prose ul[data-type="taskList"] li[data-checked="true"] > div {
   @apply text-muted-foreground line-through;
   transition: color 150ms ease-out;
 }
 
 /* ---- Sinking (ADR 0013) -------------------------------------------------
-
-   Checked items are *shown* at the bottom of their list; the stored order is
-   always the order the user typed, so unchecking returns an item to exactly
-   where it was authored rather than to an approximation of it.
-
-   Gated on `[data-sink-checked]`, which `DocumentPreferences` stamps on <html>:
-   the whole mechanism is CSS, so this attribute is the only thing that can
-   switch it off.
-
-   The child combinator throughout is load-bearing. A nested checklist is its
-   own list with its own seam, and without `>` the outer list would sort and
-   divide its descendants' items too. */
+   Checked items are shown last while the stored order stays as typed. The `>`
+   combinators are load-bearing: without them a nested checklist sorts the outer list. */
 [data-sink-checked] .prose ul[data-type="taskList"] {
   @apply flex flex-col;
 }
@@ -1025,18 +735,8 @@
   order: 1;
 }
 
-/* The divider is a pseudo-element parked between the two blocks.
-
-   It has to be, and the reason is worth stating because the obvious selector
-   looks like it would work: sibling combinators read *DOM* order, while `order`
-   changes only *visual* order, so `li[data-checked="false"] + li[data-checked="true"]`
-   draws the line wherever the two happen to be adjacent in the markup, which is
-   not the seam. No selector can express "the first element with `order: 1`".
-
-   A pseudo-element on the list is itself a flex item, so it can take an `order`
-   of its own and sit exactly between the blocks. It adds nothing to the stored
-   Body and is safe inside `contenteditable`, because a pseudo-element cannot be
-   selected, edited or deleted and ProseMirror never sees it. */
+/* A pseudo-element, because sibling selectors read DOM order and `order` is only visual;
+   as a flex item it can sit at the seam (ADR 0013). */
 [data-sink-checked] .prose ul[data-type="taskList"]::after {
   @apply border-border border-t;
   content: "";
@@ -1048,36 +748,17 @@
     border-top-width 150ms ease-out;
 }
 
-/* A list that is all done, or none done, has no seam to mark.
-
-   It has to give up its *space* as well as its ink. Fading alone left the
-   pseudo-element occupying 16px at the foot of every uniform checklist -
-   invisible, and indistinguishable from a layout bug. Margin and border-width
-   are both animatable, so collapsing them alongside the opacity keeps the
-   divider arriving with a fade on the first tick rather than snapping in, which
-   is what `display: none` would have cost. */
+/* A list all done or none done has no seam, so the divider gives up its space too. Collapsing
+   animatable margin and border, not `display: none`, keeps it fading in rather than snapping. */
 [data-sink-checked] .prose ul[data-type="taskList"]:not(:has(> li[data-checked="true"]))::after,
 [data-sink-checked] .prose ul[data-type="taskList"]:not(:has(> li[data-checked="false"]))::after {
   @apply border-t-0 opacity-0;
   margin-block: 0;
 }
 
-/* The checklist box on a Coarse pointer. The 44px Touch Rule (DESIGN.md) has one
-   recorded exception here, and the reason is what the rule is for: a 44px hit
-   box anchored at the row's left edge reached ~24px into the text, so a tap on
-   the first letters of an item ticked it instead of placing the caret. The box
-   is drawn at 16px - the size of the Card's rail icons, so it reads as one
-   family of controls - and its hit box is exactly the box: what you see is
-   what you tap, and the text is the text. The item's words are the other half
-   of the control on the Card, which is what lets the box stay this small.
-
-   Both surfaces, deliberately. A checklist should not feel like a different
-   control depending on whether you are reading it or writing it.
-
-   32px was tried first (2026-09-09) and read as too large beside the text; if
-   mis-taps show up, grow the box, never a hidden halo over the text. */
+/* The 44px Touch Rule's one recorded exception (DESIGN.md): the box's hit box is exactly its
+   16px, on both surfaces. If mis-taps show up, grow the box, never a hidden halo over the text. */
 @media (pointer: coarse) {
-  /* Box and words on one centre line, whichever of the two is taller. */
   .prose ul[data-type="taskList"] li {
     @apply items-center;
   }
@@ -1099,36 +780,20 @@
   }
 }
 
-/* A card's body is capped by `max-height`, so without this it ends in a hard cut
-   straight through whatever glyph the limit lands on - a half-row of sliced
-   letters reading as a rendering fault rather than as "there is more".
-
-   A mask rather than an overlaid gradient: the card's surface is a tinted,
-   themed material (and a note colour re-tints it), so a fade painted *over* the
-   text would need to know that colour to blend into it. Dissolving the text
-   itself is colour-agnostic and correct on every note identity in both themes.
-
-   `data-clipped` is set by `NoteCard` only when the body actually overflows,
-   because fading the last line of a note that ends naturally would promise more
-   text that is not there. */
+/* A capped body fades instead of slicing a glyph; a mask needs no knowledge of the note's
+   colour (ADR 0013). `NoteCard` sets `data-clipped` only on a real overflow. */
 .note-card-body[data-clipped] {
   mask-image: linear-gradient(to bottom, #000 calc(100% - 1.75rem), transparent 100%);
 }
 
-/* While a color/highlight picker is open (`.color-picking` toggled on the editor by the
-   picker buttons), the editor is blurred but the text stays selected. The native selection
-   highlight would sit on top of the live preview / freshly-committed color and mask it on
-   every selected line. Making the selection transparent lets those colors show across the
-   whole multi-line selection until the picker closes and the selection clears. */
+/* While a colour picker is open the text stays selected, and the native highlight would hide
+   the colour being previewed. */
 .tiptap.color-picking ::selection {
   background-color: transparent;
 }
 
-/* The sticky Navbar grows a shadow over the first ~48px of scroll, so the feed
-   reads as sliding under the bar rather than colliding with it. A scroll-driven
-   animation costs no JS: no scroll handler, no IntersectionObserver, and nothing
-   to stub in the test setup. Firefox has `animation-timeline` in preview only,
-   so it gets the sticky header and its border-b with no shadow (ADR 0010). */
+/* The feed slides under the Navbar's growing shadow. Scroll-driven, so no JS; Firefox lacks
+   `animation-timeline` and gets no shadow (ADR 0010). */
 @supports (animation-timeline: scroll()) {
   @keyframes nav-scroll-shadow {
     from {
@@ -1145,14 +810,8 @@
     animation-range: 0 48px;
   }
 
-  /* The shadow is a depth cue tied to scroll position, not a transition, but it
-     is still motion driven by the user's scroll - pin it to the end state.
-
-     The stored preference is authoritative over the OS query in both
-     directions, mirroring `useReducedMotion` on the JS side: `always` pins the
-     shadow whatever the OS says, `never` keeps it animating even on a machine
-     that asks for reduced motion, and `system` (the default, and the state
-     before the preference has hydrated) falls through to the query. */
+  /* Still motion, so reduced motion pins it. The stored preference beats the OS query both
+     ways, as `useReducedMotion` does; `system` falls through to the query. */
   @media (prefers-reduced-motion: reduce) {
     :root:not([data-reduced-motion="never"]) .nav-scroll-shadow {
       animation: none;
@@ -1167,14 +826,8 @@
 /*
  * ── The Tour ────────────────────────────────────────────────────────────────
  *
- * `driver.js` ships its own look, and none of it belongs here: a white box with
- * a black scrim is the one thing DESIGN.md's two themes agree is wrong. What is
- * kept is the geometry - driver measures a rect, cuts a hole and places a box
- * beside it - and everything painted is the app's own.
- *
- * The scrim is never plain black. By day it is warm ink, the same hue as the
- * text on the parchment behind it; by night it is the recessed chrome plane, so
- * dimming reads as the room going quiet rather than as a sheet of tarpaulin.
+ * Only driver.js's geometry is kept; everything painted is the app's. The scrim
+ * is never plain black: warm ink by day, the recessed chrome plane by night.
  */
 :root {
   --tour-scrim: color-mix(in oklab, var(--ink) 62%, transparent);
@@ -1192,24 +845,14 @@
     0 0 24px 2px color-mix(in oklab, var(--accent-tone) 45%, transparent);
 }
 
-/* The ring is drawn on the spotlit element itself rather than as a stroke on the
-   overlay path, because that path outlines the viewport as well as the hole and
-   would frame the whole screen. It lands inside the cutout's own padding.
-
-   No `!important` needed to beat the target's own `shadow-lift`: Tailwind's
-   utilities live in `@layer utilities` and everything in this block is
-   unlayered, which wins over any layer whatever its specificity. */
+/* The ring sits on the spotlit element: a stroke on the overlay path would frame the viewport too.
+   Unlayered, so it beats the target's `shadow-lift` utility without `!important`. */
 .driver-active-element {
   box-shadow: var(--tour-cutout-ring);
 }
 
-/* Driver's popover wrapper is reduced to a positioner. It keeps the arrow and
-   the placement; the surface, the width and the type are `TourPopover`'s.
-
-   The padding is the safe-area inset: driver clamps the box to `innerHeight`,
-   which under `viewport-fit=cover` includes the notch and the home indicator, so
-   reserving them here is what keeps the popover clear of both. It is invisible
-   because the wrapper paints nothing. */
+/* Driver's wrapper is only a positioner; `TourPopover` paints the rest. The padding reserves
+   the safe-area insets, as driver clamps to an `innerHeight` that includes the notch. */
 .driver-popover.tour-popover {
   min-width: 0;
   max-width: none;

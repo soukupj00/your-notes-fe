@@ -16,14 +16,8 @@ export const PRESENCE_TRANSITION = {
 } satisfies Transition;
 
 /**
- * The transition to actually hand a `motion` component, given the user's
- * reduced-motion preference.
- *
- * Every animated surface owes the preference the same answer, and the answer is
- * "arrive instantly", not "do not animate" - dropping the transition entirely
- * would leave the element wherever it was, while a zero-duration one still
- * lands it in the right place. One function so a new animated surface cannot
- * honour the preference by halves.
+ * Reduced motion means "arrive instantly", not "do not animate": a zero-duration transition still
+ * lands the element in place. One function so no surface honours the preference by halves.
  */
 export function resolveTransition(reducedMotion: boolean, base: Transition = NIGHTSHIFT_SPRING) {
   return reducedMotion ? INSTANT_TRANSITION : base;

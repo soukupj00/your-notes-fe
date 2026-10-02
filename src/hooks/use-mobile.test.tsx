@@ -3,11 +3,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { useIsMobile } from './use-mobile.tsx';
 
 /**
- * A `MediaQueryList` whose `matches` a test can flip, plus the change event.
- *
- * The point of the fake is that it lets the query and `window.innerWidth`
- * *disagree*, which is the only state in which the bug below is visible - and a
- * state a real browser passes through on a phone rotation.
+ * A `MediaQueryList` whose `matches` a test can flip, so the query and `window.innerWidth` can
+ * disagree: the state a phone passes through on rotation, and the only one the bug shows in.
  */
 function stubMatchMedia(initial: boolean) {
   const listeners = new Set<() => void>();

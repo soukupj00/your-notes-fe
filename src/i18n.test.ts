@@ -3,17 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { TOUR_STEPS } from '@/lib/tour/steps.ts';
 
 /**
- * That the two bundles say the same things.
- *
- * `en` is the fallback, so a key missing from `cs` is invisible in English and
- * shows up in Czech as an English sentence in the middle of a Czech screen -
- * which is the failure nobody testing in their own language will ever see. A key
- * missing from `en` is worse: the fallback of the fallback is the raw key.
- *
- * The Tour gets its own check on top, because its keys are *built* rather than
- * written: `onboarding.steps.<step.key>.title` is composed at render time from
- * the step list, so renaming a step is a rename in two files and nothing else
- * would notice.
+ * A key missing from `cs` shows as English mid-Czech-screen, and one missing from `en` (the
+ * fallback) as the raw key. The Tour's keys are composed from the step list at render time, so
+ * they get their own check: renaming a step is a rename in two files that nothing else notices.
  */
 
 const LOCALES = ['en', 'cs'] as const;
@@ -26,10 +18,8 @@ const bundles = Object.fromEntries(
 ) as Record<(typeof LOCALES)[number], Record<string, unknown>>;
 
 /**
- * i18next's plural suffixes, which are *not* the same set in every language and
- * so cannot be compared literally: English needs `_one`/`_other` and Czech also
- * needs `_few` (2-4 is its own form). What both bundles must carry is the same
- * base key, which is what the lookup actually asks for.
+ * Plural suffixes differ by language (Czech adds `_few`), so keys are compared by their base,
+ * which is what a lookup asks for.
  */
 const PLURAL_SUFFIX = /_(zero|one|two|few|many|other)$/;
 

@@ -10,9 +10,8 @@ import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 type Row = Share & { header: string | undefined };
 
 /**
- * Every Share Link the Account has open, so none is forgotten (backend
- * `docs/setup.md` section 11: one opens for anyone who can reach the server).
- * Headers come from this Device's own copy of each Note.
+ * Every open Share Link, so none is forgotten: one opens for anyone who can reach the
+ * server (backend `docs/setup.md` section 11). Headers come from this Device's copy.
  */
 export function SharesSection() {
   const { t } = useTranslation();

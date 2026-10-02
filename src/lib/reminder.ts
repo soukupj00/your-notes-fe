@@ -11,19 +11,9 @@ const REMIND_AT_SHAPE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 const PAST_REMINDER_SHOWN_MS = 24 * 60 * 60 * 1000;
 
 /**
- * A backup's `remindAt` is unvalidated (`noteSchema` is a loose schema), so a
- * hand-edited or foreign archive can put any string there. This is the one
- * gate every reader of the field goes through - the chip, the bell and the
- * `.ics` - so a malformed value never reaches `Intl.DateTimeFormat` or `Date`,
- * either of which can throw or silently misread it.
- *
- * It is also where a one-shot lapses: more than a day past, the Note reads as
- * having no Reminder - no chip, bell unlit, popover empty. That is a way of
- * *showing* the Note, never a write (as Sinking is for a Checklist): the app
- * clearing the fields itself would bump `updatedAt`, reorder the feed, sync as
- * an edit and need a sweep. The stale fields simply wait to be overwritten by
- * the next Reminder. Nothing re-renders at the 24h mark on purpose - no timers
- * (ADR 0021) - so the chip goes on the next render after it.
+ * The one gate for the chip, the bell and the `.ics`: a backup's `remindAt` is unvalidated, and a
+ * malformed value would throw in `Intl` or `Date`. A one-shot over a day past reads as none, a view
+ * and never a write, with no timer (CLAUDE.md "Reminders", ADR 0021).
  */
 export function reminderOf(
   note: Pick<Note, 'remindAt' | 'repeat'>,
@@ -42,11 +32,8 @@ export function toLocalInput(date: Date): string {
 }
 
 /**
- * Only a one-shot can be past. A repeating Reminder is still being fired by the
- * calendar, so muting it on the Card would say something false.
- *
- * `new Date('YYYY-MM-DDTHH:mm')` - no zone suffix - is parsed as local time by
- * the spec, which is exactly the wall-clock reading the field stores.
+ * Only a one-shot can be past: the calendar is still firing a repeating one. `new Date()` parses a
+ * zone-less `YYYY-MM-DDTHH:mm` as local time, which is the wall clock the field stores.
  */
 export function isReminderPast(reminder: Reminder, now = new Date()): boolean {
   return !reminder.repeat && new Date(reminder.remindAt) < now;

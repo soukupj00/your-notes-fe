@@ -1,9 +1,5 @@
-/**
- * The child index an item takes after being removed and dropped after `slot` of
- * its `candidates` - the rows it may land among, as **stored** indices in
- * **visual** order. Indices above the item's own shift down by one once it is
- * gone, which is the whole of the arithmetic.
- */
+/** `candidates` are stored indices in visual order. Indices above the item's own shift
+ *  down by one once it is removed, which is all the arithmetic there is. */
 export function dropIndex(stored: number, candidates: number[], slot: number): number {
   if (candidates.length === 0) return stored;
   const afterRemoval = (index: number) => (index > stored ? index - 1 : index);
@@ -14,7 +10,6 @@ export function dropIndex(stored: number, candidates: number[], slot: number): n
 export interface TaskItemDragArgs {
   /** The pointerdown that begins the gesture, on the grip. */
   event: PointerEvent;
-  /** The `<li>` being dragged. */
   item: HTMLElement;
   /** Called on drop with the child index for `moveTaskItem`, or not at all when nothing moved. */
   onDrop: (to: number) => void;
@@ -24,17 +19,9 @@ const DRAGGING = 'task-item-dragging';
 const DROP_BEFORE = 'task-item-drop-before';
 const DROP_AFTER = 'task-item-drop-after';
 
-/**
- * Reorder by pointer, not by HTML5 drag. HTML5 drag never fires on touch, which
- * is why the previous grip could not move a row on a phone; pointer events are
- * the one model a finger and a mouse share.
- *
- * The row travels with the pointer (a transform, so the document is untouched
- * until the drop) and a line marks the slot it will land in. The slot is
- * chosen among the row's own group - with sinking on, checked rows are shown
- * apart from unchecked ones (ADR 0013), so a row only ever lands among rows it
- * is displayed with, and `dropIndex` maps the visual slot back to stored order.
- */
+/** Pointer events, not HTML5 drag, which never fires on touch. The row follows the pointer
+ *  by transform until the drop, and lands only among rows shown in its own group: with
+ *  sinking on, checked rows sit apart (ADR 0013). */
 export function startTaskItemDrag({ event, item, onDrop }: TaskItemDragArgs): void {
   const list = item.parentElement;
   if (!list) return;

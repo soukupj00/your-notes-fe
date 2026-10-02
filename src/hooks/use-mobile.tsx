@@ -7,20 +7,13 @@ const MOBILE_BREAKPOINT = 640;
 const QUERY = `(max-width: ${MOBILE_BREAKPOINT - 1}px)`;
 
 export function useIsMobile() {
-  // Read synchronously on first render (the `ViewModeProvider` pattern). As
-  // generated this started `false`, so a phone painted the desktop sidebar
-  // branch for a frame before switching to the `Sheet`.
+  // Read synchronously so a phone never paints the desktop sidebar for a frame first.
   const [isMobile, setIsMobile] = React.useState(() => window.matchMedia(QUERY).matches);
 
   React.useEffect(() => {
     const mql = window.matchMedia(QUERY);
-    // The query, not `window.innerWidth`. This listener answers the question the
-    // event asked, and it is the same question the stylesheet asks, so JS and
-    // CSS cannot disagree about which layout is in effect. Re-measuring the
-    // window here could: on an Android rotation the metrics are not guaranteed
-    // to have landed by the time the query changes, and there is no second event
-    // to correct a wrong answer - which left a rotated phone with the wide
-    // toolbar (wrapping, four rows) pinned to the bottom by the correct CSS.
+    // The query, not `window.innerWidth`, so JS and CSS agree: on an Android rotation the
+    // window metrics can lag the query, and no second event corrects them (ADR 0016).
     const onChange = () => {
       setIsMobile(mql.matches);
     };

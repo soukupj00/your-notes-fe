@@ -1,11 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { captureRows, playRows } from './flip-rows.ts';
 
-/**
- * jsdom has no layout, so every rect is zero and the arithmetic under test would
- * be invisible. Stubbing per element is the same approach the dnd-kit tests use;
- * `vi.restoreAllMocks` puts the prototypes back afterwards.
- */
+/** jsdom has no layout, so rects are stubbed per element; `vi.restoreAllMocks` undoes it. */
 function layout(element: Element, top: number, height = 20) {
   vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({
     top,

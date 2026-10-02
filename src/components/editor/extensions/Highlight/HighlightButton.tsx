@@ -7,7 +7,6 @@ interface HighlightButtonProps {
   shortcutKeys?: string[];
 }
 
-/** Pattern A adapter for the shared editor color-mark picker. */
 export function HighlightButton(props: HighlightButtonProps) {
   return <EditorColorPickerButton {...props} variant="highlight" />;
 }

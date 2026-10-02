@@ -58,35 +58,18 @@ type EditorProps = {
   content?: string;
   editable?: boolean;
   onUpdate?: (content: string) => void;
-  /** Focus the editor body on mount (cursor at end). */
   autoFocus?: boolean;
-  /**
-   * On mobile, pin the toolbar to the bottom of the scroll container so it rides
-   * above the virtual keyboard (see the sheet's `interactive-widget` viewport
-   * meta). Desktop keeps the toolbar on top.
-   */
+  /** Mobile only: pin the toolbar to the bottom so it rides above the virtual keyboard. */
   stickyToolbarOnMobile?: boolean;
   /**
-   * Rendered inside the editor's own column, after the content and *before* the
-   * toolbar.
-   *
-   * It exists so the note bar (labels, colour, pin) can sit above a sticky
-   * toolbar rather than below it. A sticky element cannot leave its parent's
-   * box, so while the bar was a sibling *after* this component the toolbar
-   * bottomed out at this column's edge - roughly 80px above the keyboard, with
-   * the note bar and the sheet's own padding stacked underneath it. Handing the
-   * bar in rather than pinning a second one keeps the rule the mobile editor was
-   * built on: the format toolbar is the only fixed chrome, because formatting is
-   * a typing move and a second permanent strip costs the axis a phone has least
-   * of.
+   * The note bar, rendered inside this column so it sits above the sticky toolbar,
+   * which cannot leave its parent's box. Why it is not pinned: editor/CLAUDE.md.
    */
   footer?: React.ReactNode;
-  /** Extra classes for the editor root (e.g. `flex-1` inside a full-screen sheet). */
   className?: string;
-  /** Resolves the owning note id for image inserts (creating a draft note if needed). */
+  /** Resolves the owning note id for attachment inserts, creating the draft note if needed. */
   getNoteId?: () => Promise<string>;
-  /** Best-effort: autoplay the first audioAttachment node once the editor is
-   *  ready (set when the note was opened via its card's audio chip). */
+  /** Set when the note was opened from its card's audio chip. Best-effort. */
   autoplayFirstAudio?: boolean;
   /** Start a capture as soon as the editor is ready (quick-capture speed-dial). */
   initialCapture?: CaptureKind;
@@ -98,11 +81,9 @@ type EditorProps = {
  *  one: its picker can only open inside the tap, so it arrives as `initialFiles`. */
 export type CaptureKind = 'audio' | 'drawing';
 
-/** Imperative handle so a parent (e.g. a dialog) can drop the cursor into the body,
- *  or (e.g. a test) reach the live TipTap editor instance. */
+/** `getEditor` exists for tests that need the live TipTap instance. */
 export type EditorHandle = { focus: () => void; getEditor: () => TiptapEditor | null };
 
-/** Route pasted or dropped media files through the matching attachment insertion flow. */
 function insertTransferredAttachments(
   editor: TiptapEditor,
   files: FileList,
@@ -158,10 +139,9 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     useAttachmentActions();
   const { download: downloadAttachment } = useSync();
 
-  // The single shared Excalidraw editing modal (the live canvas lives here, not
-  // inline in the document). `attachmentId === null` is a new drawing (Save
-  // creates); otherwise we edit that row. `onDelete` funnels the modal's Delete
-  // and the preview's corner-X through the same node removal.
+  // One shared Excalidraw modal; the live canvas never lives inline in the doc.
+  // `attachmentId: null` is a new drawing that Save creates. `onDelete` is the
+  // same node removal as the preview's corner X.
   const [excalidraw, setExcalidraw] = useState<{
     open: boolean;
     attachmentId: string | null;
@@ -188,8 +168,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         });
         return;
       }
-      // One-shot read to seed the editor; the modal edits its own copy and
-      // commits on Save. Fall back to an empty scene if the row is unreadable.
+      // One-shot read: the modal edits its own copy and commits on Save.
       void getAttachment(attachmentId).then(async (att) => {
         const scene = att?.blob ? parseScene(await att.blob.text()) : null;
         setExcalidraw({
@@ -234,36 +213,21 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       t,
     ]
   );
-  // useEditor builds the node (and its stored getter) exactly once, so all three
-  // entry points must reach the *current* attachmentDeps through a stable getter over
-  // a ref, not the first-render closure. The ref is refreshed every render; the
-  // getter identity never changes (mirrors createMathematics's live-editor ref).
+  // useEditor builds the extensions once, so they must reach the *current* deps
+  // through a stable getter over a ref, not the first-render closure.
   const attachmentDepsRef = useRef(attachmentDeps);
   attachmentDepsRef.current = attachmentDeps;
   const getAttachmentDeps = useRef(() => attachmentDepsRef.current).current;
 
-  // Same shape, same reason: the checklist FLIP plugin is built once but has to
-  // see the preference as it is at the moment a checkbox is ticked, not as it
-  // was when the note opened. Reduced motion is a hard killswitch (DESIGN.md),
-  // so it is read here rather than inside the plugin.
+  // Same reason: the checklist FLIP plugin must see reduced motion as it is when a
+  // box is ticked. It is a hard killswitch (DESIGN.md Motion).
   const animateChecklistRef = useRef(!reducedMotion);
   animateChecklistRef.current = !reducedMotion;
   const getAnimateChecklist = useRef(() => animateChecklistRef.current).current;
 
-  /*
-   * `extensions`, `editorProps` and `content` are all stabilised for one reason:
-   * TipTap re-checks its options on every render (`useEditor` is called with no
-   * deps, so the editor is never recreated) and any key that fails reference
-   * equality costs a `setOptions` -> `view.setProps` -> full ProseMirror view
-   * pass, stacked on top of the one the keystroke already triggered. Event
-   * handlers are exempt from that comparison, so `onUpdate` may stay inline.
-   *
-   * Nothing here needs to be reactive: every live value already reaches the
-   * built extensions through a stable getter over a ref (see above), and the
-   * translator resolves the current language at call time rather than at build
-   * time - so a captured `t` is not stale, provided its consumers call it
-   * lazily (see `createLink`).
-   */
+  // `extensions`, `editorProps` and `content` stay referentially stable, or every
+  // render costs a full ProseMirror view pass: see editor/CLAUDE.md (`editor.tsx`).
+  // Event handlers are exempt from TipTap's option check, so `onUpdate` stays inline.
   const extensions = useMemo(
     () =>
       buildEditorExtensions({
@@ -317,10 +281,8 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     },
     editorProps,
     shouldRerenderOnTransaction: true,
-    // Client-only SPA (no SSR): render the editor view after commit, not during
-    // React's render phase. With `true`, content that mounts a React node view
-    // (e.g. AudioNodeView) makes TipTap call flushSync mid-render -> "flushSync
-    // was called from inside a lifecycle method" on any note with audio.
+    // With `true`, a React node view (e.g. AudioNodeView) makes TipTap call flushSync
+    // mid-render: "flushSync was called from inside a lifecycle method".
     immediatelyRender: false,
   });
 
@@ -328,25 +290,14 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     editorRef.current = editor;
   }, [editor]);
 
-  // Best-effort autoplay-on-open: find the first audioAttachment node and ask
-  // the audio extension's coordinator to play it. The coordinator handles both
-  // load orderings because the note body and attachment blob are independent
-  // IndexedDB reads.
-  // Guarded by a ref (not just the effect's deps) so it fires at most once per
-  // editor instance - an existing note's real body only lands via the
-  // setContent below (it's loaded async and seeded as '' at mount), so the
-  // scan must run against the doc setContent just applied, not the pre-load
-  // one; a seeded draft's content is already there at mount, so this still
-  // fires on the very first run for that case too.
+  // Autoplay fires at most once per editor. The audio coordinator handles either
+  // load order, since the body and the blob are independent IndexedDB reads.
   const autoplayScannedRef = useRef(false);
   useEffect(() => {
     if (!editor) return;
-    // setContent mounts React node views (AudioNodeView); with
-    // shouldRerenderOnTransaction, the resulting transaction forces a
-    // synchronous React re-render, during which TipTap mounts the node view via
-    // flushSync -> "flushSync was called from inside a lifecycle method". Run it
-    // in a microtask so the mount never happens inside React's render/commit
-    // phase. The autoplay scan must see the applied doc, so it runs after.
+    // A microtask keeps setContent's node-view mount out of React's render and commit
+    // phase, where TipTap's flushSync throws. The autoplay scan runs after it so it
+    // sees the applied doc.
     queueMicrotask(() => {
       if (content !== editor.getHTML()) {
         editor.commands.setContent(content ?? '');
@@ -361,10 +312,8 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
           }
           return true;
         });
-        // Only latch the guard once something is actually found: the real body
-        // for an existing note lands via a LATER setContent (loaded async,
-        // seeded as '' at mount), so an empty first pass must not block that
-        // later scan.
+        // Latch only on a hit: an existing note's body lands through a later
+        // setContent (it mounts as ''), so an empty first pass must not block it.
         if (firstAudioId) {
           autoplayScannedRef.current = true;
           editor.storage.audioAttachment.autoplay.requestAutoplay(firstAudioId);
@@ -373,10 +322,8 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     });
   }, [content, editor, autoplayFirstAudio]);
 
-  // One-shot open intents: the speed-dial picked a medium, so open straight
-  // into it instead of making the user hunt for the same button in the toolbar.
-  // A picker Start arrives as files, because the picker itself can only open
-  // inside the tap that chose it (`useStartPicker`).
+  // One-shot open intents from the speed-dial. A picker Start arrives as files,
+  // because the picker can only open inside the tap that chose it (`useStartPicker`).
   const intentStartedRef = useRef(false);
   useEffect(() => {
     if (!editor || intentStartedRef.current) return;
@@ -404,9 +351,8 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   );
 
   const replaceExcalidraw = excalidraw.onReplace;
-  // Commit-on-Save: every Save mints a row; a new drawing inserts its node, an
-  // edit repoints the existing one. Reads the live deps/editor via refs (the node
-  // was built once at mount).
+  // Commit-on-Save: every Save mints a new row. A new drawing inserts its node,
+  // an edit repoints the existing one.
   const handleExcalidrawSave = useCallback(
     async (scene: ExcalidrawScene) => {
       try {
@@ -440,8 +386,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     return null;
   }
 
-  // Clicking the empty area below the text (not on the text itself or a control)
-  // drops the cursor at the end, so the whole content region feels editable.
+  // So the empty space below the text also reads as editable.
   const focusOnEmptyClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest('.tiptap') || target.closest('button, input, [role="button"], a, select')) {
@@ -458,10 +403,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         className={cn('relative flex flex-col rounded-xl border p-4', className)}
         onMouseDown={editable ? focusOnEmptyClick : undefined}
       >
-        {/* Toolbar. Desktop: on top (DOM order). Mobile + stickyToolbarOnMobile:
-          ordered last and pinned to the bottom of the scroll container. Which
-          buttons it holds is the user's stored Layout, not a hardcoded list -
-          see `toolbar/EditorToolbar.tsx` and ADR 0011. */}
+        {/* First in the DOM; with `stickyOnMobile` it is ordered under the note bar. */}
         {editable && (
           <EditorToolbar
             editor={editor}
@@ -470,35 +412,22 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
           />
         )}
 
-        {/* Editable area. `flex-1` lets it fill a full-screen sheet so a
-          sticky-bottom toolbar sits at the screen edge even with little text;
-          `cursor-text` makes the empty space read as editable. */}
         <EditorContent
           editor={editor}
           className="prose prose-sm min-h-[150px] max-w-none flex-1 cursor-text focus:outline-none"
         />
 
-        {/* The note bar, when a caller hands one in. It is in the flow rather
-            than pinned: `EditorContent` above is `flex-1`, so on a note that
-            fits it is pushed down and sits just above the toolbar exactly as it
-            used to, and on a long one it scrolls away instead of taxing the
-            screen for the whole session. Ordered before the toolbar in the DOM
-            and *not* given `order-last`, which is what puts the toolbar under
-            it once the toolbar is sticky. */}
-        {/* The recorder, mounted for as long as the editor is editable and
-            whatever the toolbar shows - see `AudioRecorderHost`. */}
+        {/* Mounted whenever the editor is editable, whatever the toolbar shows. */}
         {editable && (
           <AudioRecorderHost editor={editor} getDeps={() => attachmentDepsRef.current} />
         )}
         {footer}
 
-        {/* A link's own controls belong on the link: `openOnClick` is off inside
-            the editor, so this is the only way to see where one points. */}
+        {/* `openOnClick` is off inside the editor, so this is the only way to see
+            where a link points. */}
         {editable && <LinkBubbleMenu editor={editor} t={t} />}
       </div>
 
-      {/* One shared Excalidraw editing surface for the whole editor. The canvas
-        is loaded only when opened, then cached by React for later opens. */}
       {excalidraw.open && (
         <Suspense
           fallback={

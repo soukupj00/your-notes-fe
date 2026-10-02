@@ -12,10 +12,6 @@ declare module '@tiptap/core' {
   }
 }
 
-/** Custom Excalidraw-drawing node on the shared factory. Serializes as
- *  <excalidraw-drawing data-attachment-id> (no scene payload); the NodeView is
- *  the interactive canvas. Reuses createAttachmentNode unchanged - only the tag,
- *  NodeView, button, and command name differ from image/audio/video. */
 export function createExcalidraw(getDeps: () => AttachmentDeps) {
   return createAttachmentNode(getDeps, {
     name: 'excalidrawAttachment',

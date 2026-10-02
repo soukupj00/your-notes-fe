@@ -1,12 +1,8 @@
 import type { AttachmentKind } from '@/models.ts';
 
 /**
- * An attachment the Body references, in document order.
- *
- * The card summarises attachments rather than rendering them inline (see
- * `CardMedia`), so it needs to know *what* a note carries before the Dexie rows
- * resolve - and it needs the kind even for a row that has since been deleted.
- * The Body is the authority on both order and kind; the row only supplies bytes.
+ * The Body is the authority on order and kind, because the card (`CardMedia`) needs both before
+ * the rows resolve, even for a deleted row. The row only supplies bytes.
  */
 export interface BodyAttachment {
   id: string;
@@ -22,10 +18,8 @@ const KIND_BY_TAG: Record<string, AttachmentKind> = {
   'excalidraw-drawing': 'excalidraw',
 };
 
-// Same trust model as `attachment-html.ts`: the Body is our own editor output
-// and we only ever read attribute values, never execute the markup. Kept as its
-// own `g`-flagged const because `matchAll` needs the flag and `.test()` callers
-// must not inherit its stateful `lastIndex`.
+// Same trust model as `attachment-html.ts`. Its own `g` const, because `matchAll` needs the flag
+// and `.test()` callers must not inherit its stateful `lastIndex`.
 const ATTACHMENT_NODE_RE =
   /<(img|video|audio|a|excalidraw-drawing)\b[^>]*\bdata-attachment-id="([^"]+)"/gi;
 
@@ -36,11 +30,7 @@ const VOID_ATTACHMENT_RE = /<img\b[^>]*\bdata-attachment-id="[^"]+"[^>]*>/gi;
 const PAIRED_ATTACHMENT_RE =
   /<(video|audio|a|excalidraw-drawing)\b[^>]*\bdata-attachment-id="[^"]+"[^>]*>[\s\S]*?<\/\1>/gi;
 
-/**
- * Every attachment the Body references, in document order, deduplicated by id.
- * An unknown tag is skipped rather than guessed at, so a future node type shows
- * up as "no preview" instead of as the wrong preview.
- */
+/** Skips an unknown tag, so a future node type shows "no preview" rather than the wrong one. */
 export function extractBodyAttachments(html: string | null | undefined): BodyAttachment[] {
   if (!html) return [];
   const seen = new Set<string>();
@@ -55,11 +45,8 @@ export function extractBodyAttachments(html: string | null | undefined): BodyAtt
 }
 
 /**
- * The Body with every attachment node removed, leaving the prose.
- *
- * The card renders the summary and the text as two separate blocks, so without
- * this the text preview would show each attachment a second time - and an
- * image-heavy note would push its own words off the bottom of the clamp.
+ * The card shows the attachment summary separately, so without this the preview repeats each
+ * attachment and an image-heavy note pushes its own words out of the clamp.
  */
 export function stripAttachmentNodes(html: string | null | undefined): string {
   if (!html) return '';

@@ -17,11 +17,6 @@ type ViewModeProviderState = {
 
 const ViewModeContext = createContext<ViewModeProviderState | undefined>(undefined);
 
-/**
- * Persists the feed layout choice to localStorage (same pattern as
- * `themeProvider`). Kept out of `NotesProvider` so it carries no Dexie
- * dependency and stays trivially testable.
- */
 export function ViewModeProvider({
   children,
   storageKey = 'notes-view-mode',

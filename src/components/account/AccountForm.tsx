@@ -9,9 +9,8 @@ import { platformOf } from '@/lib/deviceName.ts';
 export type AccountValues = { username: string; password: string; deviceName: string };
 
 /**
- * The translation key for what went wrong. A 401 means a wrong password when
- * one was typed, and a spent or expired link when a Pairing Link was followed:
- * the server says only that it is wrong, never why (ADR 0001).
+ * A 401 means a wrong password when one was typed, and a spent or expired link when a
+ * Pairing Link was followed: the server never says why (backend ADR 0001).
  */
 export function accountErrorKey(error: unknown, via: 'password' | 'link'): string {
   if (error instanceof ProblemError) {
@@ -31,7 +30,6 @@ function useDefaultDeviceName(): string {
   return system ? t('account.deviceName.default', { browser, system }) : browser;
 }
 
-/** A labelled input, with an optional hint under it, at the 44px touch size. */
 export function Field({
   label,
   hint,
@@ -60,9 +58,8 @@ export function Field({
 }
 
 /**
- * The one form behind signing in, creating the Owner, joining by Invite and
- * pairing: a username and password when `credentials` says so, and always the
- * Device name. `onSubmit` throws to show an error; `via` says what a 401 means.
+ * The one form behind sign-in, creating the Owner, joining by Invite and pairing.
+ * `onSubmit` throws to show an error; `via` says what a 401 means.
  */
 export function AccountForm({
   credentials,

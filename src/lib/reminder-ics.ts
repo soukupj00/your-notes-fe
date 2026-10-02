@@ -2,13 +2,9 @@ import type { Reminder } from '@/lib/reminder.ts';
 import { stripHtml } from '@/lib/utils.ts';
 
 /**
- * The calendar file for a Hand-off (ADR 0021), written by hand on purpose.
- *
- * iCalendar is hard where it has time zones, recurrence expansion and parsing.
- * This event has none of the three: the start is a floating wall-clock time,
- * the calendar expands the one RRULE, and nothing is ever read back. What is
- * left - a dozen fixed lines, TEXT escaping and folding - is smaller than any
- * library's input validation. See the plan of 2026-09-20 for the survey.
+ * Hand-written on purpose (ADR 0021): with a floating start, one RRULE the calendar expands and
+ * nothing read back, what is left is smaller than a library's input validation. The plan of
+ * 2026-09-20 has the survey.
  */
 export type ReminderEvent = {
   noteId: string;

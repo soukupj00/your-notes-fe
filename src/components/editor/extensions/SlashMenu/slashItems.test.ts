@@ -100,8 +100,7 @@ describe('slash item commands', () => {
     expect(editor.getText()).not.toContain('/bullet');
   });
 
-  // Decision 13: one id space, so a menu entry can never name an action the bar
-  // does not have - which is how `math` came to be a button with no slash item.
+  // Decision 13: one id space. `math` was once a bar button with no slash item.
   it('names only actions the registry knows', () => {
     for (const slashItem of SLASH_ITEMS) {
       expect(getToolbarItem(slashItem.key), slashItem.key).toBeDefined();

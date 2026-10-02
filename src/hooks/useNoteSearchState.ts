@@ -11,9 +11,8 @@ import {
 const FEED_ROUTES = ['/', '/archive', '/trash', '/tag/$id'] as const;
 
 /**
- * Whether the current route can be searched. The search box lives in the
- * Navbar, above the outlet, so it has to ask: on `/settings` there is no feed
- * to filter and a search box that does nothing is worse than no search box.
+ * The search box sits in the Navbar above the outlet, so it asks: off a feed route there is
+ * nothing to filter, and a search box that does nothing is worse than none.
  */
 export function useIsFeedRoute(): boolean {
   const matchRoute = useMatchRoute();
@@ -21,15 +20,8 @@ export function useIsFeedRoute(): boolean {
 }
 
 /**
- * The feed's search state, read from and written to the URL.
- *
- * The URL is the single source of truth (there is no search context any more):
- * a query survives a refresh, is shareable, and the back button steps through
- * filter changes. `to: '.'` keeps whichever feed route is current.
- *
- * `replace` exists because typing is not navigation - a nine-character query
- * should not leave nine entries in the history. Text edits replace; deliberate
- * filter changes (sort, tag pills) push, so back undoes them.
+ * The feed's search state, with the URL as the single source of truth. Text edits `replace`
+ * (typing is not navigation); sort and tag changes push, so back undoes them.
  */
 export function useNoteSearchState() {
   const params = useSearch({ strict: false }) as NoteSearchParams;
@@ -38,15 +30,12 @@ export function useNoteSearchState() {
 
   const setSearch = useCallback(
     (patch: Partial<ResolvedNoteSearch>, options?: { replace?: boolean }) => {
-      // Fire-and-forget: the router owns the transition, there is nothing to await.
       void navigate({
         to: '.',
         search: (prev: NoteSearchParams) => ({
           ...toNoteSearchParams({ ...resolveNoteSearch(prev), ...patch }),
-          // `note` is not feed state, so `toNoteSearchParams` does not know
-          // about it and would drop it. Carried explicitly: on desktop the feed
-          // and its search box sit behind the open editor, so without this,
-          // typing a query - or toggling a sort - would close the note.
+          // `note` is not feed state, so carry it across: on desktop the search box sits behind
+          // the open editor, and dropping it would close the note (ADR 0014).
           note: prev.note,
         }),
         replace: options?.replace ?? false,

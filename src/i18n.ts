@@ -4,13 +4,13 @@ import HttpBackend from 'i18next-http-backend';
 import { initReactI18next } from 'react-i18next';
 
 i18n
-  .use(HttpBackend) // loads translations from /locales/{{lng}}/translation.json
-  .use(LanguageDetector) // detects user language (browser/localStorage)
-  .use(initReactI18next) // passes i18n down to react-i18next
+  .use(HttpBackend)
+  .use(LanguageDetector)
+  .use(initReactI18next)
   .init({
     fallbackLng: 'en',
     supportedLngs: ['en', 'cs'], // folders under public/locales
-    debug: import.meta.env.DEV, // only debug in dev mode
+    debug: import.meta.env.DEV,
     interpolation: {
       escapeValue: false, // react already escapes
     },

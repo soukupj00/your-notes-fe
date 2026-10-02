@@ -95,10 +95,8 @@ describe('ToolbarFamilyMenu', () => {
   });
 
   it('names a leaf whose button is a custom component, not just a plain one', async () => {
-    // `link` wraps an `ActionButton` in its own URL popover rather than being
-    // one, and so did the five attachment pickers and the two colour triggers:
-    // no prop could reach the button, and every one of them drew as a bare,
-    // nameless icon in a menu sized for labelled rows.
+    // `link` wraps an `ActionButton` rather than being one, like the attachment pickers
+    // and colour triggers: no prop could reach the button, so each drew nameless.
     const editor = new Editor({
       extensions: [Document, Paragraph, Text, Bold, createLink(t)],
       content: '<p>hello</p>',

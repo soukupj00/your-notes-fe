@@ -19,16 +19,8 @@ interface ToolbarFamilyMenuProps {
 }
 
 /**
- * Which icon a collapsed trigger wears.
- *
- * A state-reporting family shows whichever of its leaves is currently active -
- * `H2` inside a heading, the active list type, the current alignment - and falls
- * back to its own icon when none is (`¶` for `style`, which is the honest answer
- * to "what block am I in", not a blank).
- *
- * Collapsing costs information; this is what pays it back. Families where
- * several leaves can be active at once (`format`) do not report, because a
- * trigger showing only the first would be lying.
+ * A state-reporting family wears its active leaf's icon (`H2` inside a heading), else
+ * its own. Collapsing costs information; this pays it back (decision 6).
  */
 export function triggerIcon(
   family: ToolbarFamily,
@@ -44,12 +36,8 @@ export function triggerIcon(
 }
 
 /**
- * One collapsed family: a single trigger on the bar, with the family's **real**
- * leaf buttons inside its popover.
- *
- * The leaves are not re-implemented as menu items - they are the same
- * `ActionButton`s, with the same `isActive`, tooltips and shortcuts, so a
- * collapsed family behaves exactly like an expanded one with one extra tap.
+ * The popover holds the family's real leaf buttons, not re-implemented menu items, so a
+ * collapsed family behaves exactly like an expanded one plus a tap.
  */
 export const ToolbarFamilyMenu: React.FC<ToolbarFamilyMenuProps> = ({
   family,
@@ -59,9 +47,8 @@ export const ToolbarFamilyMenu: React.FC<ToolbarFamilyMenuProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
 
-  // A trigger that opens an empty popover is worse than no trigger. The bar
-  // already filters unmountable leaves out, so this is the standalone guard for
-  // a caller that does not.
+  // An empty popover is worse than no trigger. The bar already filters, so this
+  // guards a caller that does not.
   const resolvable = items.filter((item) => canRenderItem(item, { editor, t }));
   if (resolvable.length === 0) return null;
 
@@ -76,9 +63,7 @@ export const ToolbarFamilyMenu: React.FC<ToolbarFamilyMenuProps> = ({
           className="w-auto shrink-0 gap-0.5 px-1.5"
           data-testid={`toolbar-family-${family.id}`}
         >
-          {/* The chevron is what makes a menu look like a menu rather than a
-              button whose icon keeps changing under the user. The same one the
-              preview strip draws, so the picture in Settings matches the bar. */}
+          {/* The same chevron the preview strip draws, so Settings matches the bar. */}
           <ChevronDown className="size-3 opacity-60" aria-hidden />
         </ActionButton>
       </PopoverTrigger>

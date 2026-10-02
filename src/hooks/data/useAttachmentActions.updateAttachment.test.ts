@@ -1,12 +1,6 @@
 // @vitest-environment node
-//
-// Separate node-env file: fake-indexeddb loses Blob content on read-back under
-// jsdom (round-tripped blob comes back as an empty plain object, not a real
-// Blob), so the `.text()` assertion below needs Node's Blob. @testing-library/
-// react's renderHook requires `document` (jsdom), so hooks are invoked here via
-// a one-shot `renderToStaticMarkup` capture instead - these hooks only wrap
-// stable useCallback closures with no state/effects, so a single synchronous
-// render is enough to read their return value.
+// Node, because fake-indexeddb under jsdom reads a Blob back as an empty object. Without jsdom
+// there is no `renderHook`, so the stateless hook is read through one `renderToStaticMarkup`.
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it } from 'vitest';

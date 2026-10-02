@@ -6,8 +6,7 @@ import { renderRoute } from '@/test/renderRoute.tsx';
 import { clearStore, testStore } from '@/test/store.tsx';
 import { setViewport } from '@/test/viewport.ts';
 
-// Vitest hoists `vi.mock`, so these cannot come from a shared helper - they have
-// to be declared in every file that needs them.
+// Vitest hoists `vi.mock`, so these cannot come from a shared helper.
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => (key === 'navbar.logo' ? 'YouNotes' : key),
@@ -164,10 +163,7 @@ describe('below the nav breakpoint', () => {
     await waitFor(() => expect(heading).toHaveFocus());
   });
 
-  // The gear used to open a mini-dialog holding copies of the language and
-  // theme controls. That existed because Settings was a one-way trip on a phone
-  // - there was no back button to come home with. There is one now, so the gear
-  // goes to the one place a setting lives, exactly as it does on desktop.
+  // The gear goes straight to Settings on every width (CLAUDE.md, Nav shell).
   it('goes straight to the settings page from the gear', async () => {
     renderRoute('/');
 

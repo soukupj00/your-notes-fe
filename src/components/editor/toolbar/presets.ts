@@ -4,10 +4,7 @@ import type { ToolbarFamilyId, ToolbarLayout, WidthClass } from './types';
 /** The three stamps offered in the settings editor. Reset re-stamps `balanced`. */
 export type ToolbarPresetId = 'minimal' | 'balanced' | 'everything';
 
-/**
- * How one family appears in a preset. `leaves` omitted means every leaf is on;
- * a family absent from the spec is off entirely.
- */
+/** `leaves` omitted means every leaf is on; a family absent from the spec is off. */
 interface FamilySpec {
   family: ToolbarFamilyId;
   collapsed?: boolean;
@@ -15,13 +12,8 @@ interface FamilySpec {
 }
 
 /**
- * Expand a preset spec into a full Layout.
- *
- * Every family and leaf in the registry appears in the result, on or off, so a
- * stamped Layout is complete and the settings editor can show the user what they
- * turned off as readily as what they turned on. Families named in the spec come
- * first in the order the spec lists them; the rest follow in registry order,
- * switched off.
+ * Every registry family and leaf appears, on or off, so Settings shows what is off as
+ * readily as what is on. Spec families come first; the rest follow in registry order, off.
  */
 export function buildLayout(spec: FamilySpec[]): ToolbarLayout {
   const listed = new Set(spec.map((entry) => entry.family));
@@ -41,26 +33,8 @@ export function buildLayout(spec: FamilySpec[]): ToolbarLayout {
 }
 
 /**
- * Compact / Balanced - the phone default: undo and redo as two real buttons at
- * the left edge, then five collapsed families.
- *
- * `history` is expanded rather than collapsed because a phone has no Ctrl+Z, so
- * undo is the one control that may not cost a tap to *reach* before it costs a
- * tap to use - and being first, it is also the pinned family, so it stays put
- * while the rest of the bar scrolls under it. Redo comes with it: they are one
- * gesture pair, and a menu holding two buttons is a menu for the sake of one.
- *
- * `meta` (the gear) is off here. It is a door to a settings screen, not an
- * editing control, and on the one bar where slots are scarce it was spending a
- * slot to duplicate a route `/settings` already offers. Switching it back on is
- * one toggle in that same screen.
- *
- * That leaves six slots, which is exactly what a 360px phone fits
- * (`COMPACT_FOLD_SLOTS`), so `colour`, `block`, `align` and `font` are off
- * rather than collapsed. `colour` is the one that had to give: at one slot it
- * would put the bar past the fold on day one, and text colour and highlight are
- * the most decorative of the set. All four stay reachable through the slash
- * menu, a keyboard shortcut, or by being switched on.
+ * The phone default: six slots, what a 360px phone fits (`COMPACT_FOLD_SLOTS`).
+ * Why these families and not the rest: editor/CLAUDE.md (the compact default).
  */
 const COMPACT_BALANCED: FamilySpec[] = [
   { family: 'history' },
@@ -78,10 +52,6 @@ const COMPACT_MINIMAL: FamilySpec[] = [
   { family: 'meta' },
 ];
 
-/**
- * Wide / Balanced - roughly today's desktop bar plus undo/redo, with alignment
- * and the two font selects folded into menus.
- */
 const WIDE_BALANCED: FamilySpec[] = [
   { family: 'history' },
   { family: 'style' },
@@ -119,7 +89,6 @@ export function toolbarPreset(preset: ToolbarPresetId, widthClass: WidthClass): 
   return buildLayout(SPECS[widthClass][preset]);
 }
 
-/** The out-of-the-box arrangement for a user who has never customised anything. */
 export function defaultToolbarLayout(widthClass: WidthClass): ToolbarLayout {
   return toolbarPreset('balanced', widthClass);
 }

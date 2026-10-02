@@ -1,9 +1,6 @@
 import type { IconName } from '@/components/icons';
 
-/**
- * Which of the two stored Layouts is in effect. Named after the window, not the
- * device: a narrow desktop window is `compact` too (ADR 0011).
- */
+/** Named after the window, not the device: a narrow desktop window is `compact` too (ADR 0011). */
 export type WidthClass = 'compact' | 'wide';
 
 /** The ten groups every Toolbar Item belongs to. A leaf cannot leave its family. */
@@ -20,50 +17,26 @@ export type ToolbarFamilyId =
   | 'meta';
 
 /**
- * One leaf of the toolbar: a stable id, how it presents itself in the settings
- * editor, and where its behaviour comes from.
- *
- * Behaviour is *not* here - it stays with the extension (Pattern A, ADR 0004).
- * `extension` + `buttonIndex` say which of that extension's button views this id
- * is, because a single extension can contribute several (Heading yields three,
- * `undoRedo` two).
+ * One leaf of the toolbar. Behaviour stays with the extension (Pattern A, ADR 0004);
+ * `extension` + `buttonIndex` pick which of its buttons this is, as Heading yields three.
  */
 export interface ToolbarItem {
-  /**
-   * Stable id. Once shipped this is persisted user data, so a rename is a
-   * migration - see ADR 0011.
-   */
+  /** Persisted user data once shipped, so a rename is a migration (ADR 0011). */
   id: string;
   family: ToolbarFamilyId;
-  /**
-   * TipTap extension name owning the Pattern A `button` factory. Absent for the
-   * one app-owned Item (`customize`), which has no editing behaviour to own.
-   */
+  /** Absent only for the app-owned `customize`, which has no editing behaviour. */
   extension?: string;
-  /** Index into the extension's button array when it yields more than one. */
   buttonIndex?: number;
-  /**
-   * Icon for the settings editor, which lists Items without a live editor to
-   * resolve their real button views against. The live bar uses the button's own.
-   */
+  /** For Settings, which has no live editor; the live bar uses the button's own icon. */
   icon: IconName;
   /**
-   * i18n key for the action's **name**, shown in the settings editor and in the
-   * slash menu (ADR 0011, decision 13).
-   *
-   * A name, not a tooltip: a toolbar button promises "Insert image", but a list
-   * of things you can turn on or insert calls it "Image".
+   * The action's name in Settings and the slash menu (ADR 0011, decision 13).
+   * A name, not a tooltip: "Image", not "Insert image".
    */
   labelKey: string;
   /**
-   * The key combination this action answers to, in `ActionButton`'s spelling
-   * (`['Mod', 'Shift', 'Z']`). Absent for the actions that have none.
-   *
-   * A copy of the extension's own `shortcutKeys`, and deliberately so: the
-   * shortcut list in Settings has no live editor to resolve buttons against, for
-   * the same reason `ToolbarPreviewStrip` draws a picture rather than mounting
-   * TipTap. `shortcuts.test.ts` pins the copy to the real button in both
-   * directions, so the two cannot drift.
+   * A deliberate copy of the extension's `shortcutKeys` for Settings, pinned to the
+   * real button by `shortcuts.test.ts`. Why a copy: editor/CLAUDE.md.
    */
   shortcut?: string[];
 }
@@ -73,9 +46,8 @@ export interface ToolbarFamily {
   id: ToolbarFamilyId;
   labelKey: string;
   /**
-   * When true, a collapsed trigger shows the icon of whichever leaf is currently
-   * active, so collapsing costs less information (decision 6). Action-only
-   * families (nothing to be "in") keep the static `icon`.
+   * A collapsed trigger shows the active leaf's icon, so collapsing loses less
+   * (decision 6). Action-only families keep the static `icon`.
    */
   reportsState: boolean;
   /** Trigger icon when the family reports no state, and its settings-row icon. */
@@ -101,8 +73,7 @@ export interface ToolbarFamilyPref {
 }
 
 /**
- * One Width Class's arrangement. Ids are plain strings, not the registry unions:
- * a blob written by a later release may name Items this build has never heard of,
- * and those must survive a round-trip rather than be dropped (decision 8).
+ * Ids are plain strings, not the registry unions: Items written by a later release
+ * must survive a round-trip through this build (decision 8).
  */
 export type ToolbarLayout = ToolbarFamilyPref[];

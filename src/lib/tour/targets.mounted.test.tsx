@@ -23,15 +23,8 @@ vi.mock('@/i18n', () => ({
 }));
 
 /**
- * That each named target is actually *on* something, and spelled the way
- * `targets.ts` spells it.
- *
- * This is the drift guard and nothing more. Whether the right one of a pair is
- * *visible* at a given width cannot be asked here at all: jsdom applies no CSS
- * and measures every element as 0x0, so `hidden sm:flex` and `sm:hidden` are
- * indistinguishable and `resolveTourTarget` would return `null` for both. That
- * half is the acceptance suite's, which runs at two real viewports in a real
- * browser.
+ * The drift guard: each named target is on something, spelled as `targets.ts` spells it. Which
+ * of a pair is visible cannot be asked here, as jsdom applies no CSS; the e2e suite checks that.
  */
 const editors: Editor[] = [];
 
@@ -63,12 +56,9 @@ describe('every named tour target is mounted somewhere', () => {
     expect(found('captureDial')).toHaveLength(0);
   });
 
-  // Three anchors, not two. The toolbar and quick-capture steps used to share
-  // one `settings-customisation` block wrapping both sections, which measured
-  // 1296px on an 839px phone - unspotlightable, and unscrollable because the
-  // Tour holds the app `inert`. The toolbar anchor is deliberately *inside*
-  // `EditorToolbarSection` (on `ToolbarPreviewStrip`) rather than around it,
-  // since the section alone is still 880px.
+  // Three anchors, not one shared block: that block was 1296px on an 839px phone, which the inert
+  // Tour cannot scroll. The toolbar anchor is on `ToolbarPreviewStrip`, inside its section,
+  // because the section alone is still 880px.
   it('marks the toolbar, quick-capture and local-data blocks in Settings', async () => {
     renderRoute('/settings');
     await screen.findByRole('heading', { level: 1 });

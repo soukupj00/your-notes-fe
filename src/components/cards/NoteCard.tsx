@@ -25,10 +25,7 @@ import type { Note } from '@/models.ts';
 
 interface NoteCardProps {
   note: Note;
-  /**
-   * The note's attachment rows, when the feed joined them on in one query.
-   * Absent means the card resolves its own, the same fallback its labels use.
-   */
+  /** Rows the feed already joined on; absent means the card resolves its own. */
   attachments?: NoteAttachments;
   onSelect: (id: string, opts?: { autoplayFirstAudio?: boolean }) => void;
 }
@@ -45,16 +42,11 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
     trashNote,
     restoreToActive,
   } = useNoteActions();
-  // The feed joins each note's labels on when it builds the entry
-  // (`useNoteFeed`), so a card in the feed reads them off the note and skips the
-  // query - otherwise every card would open a live query only to discard it. A
-  // card handed a bare note still resolves its own labels.
+  // A feed card reads the labels `useNoteFeed` joined on; only a bare note opens its own query.
   const liveTags = useTagsForNote(note.tags ? null : note.id);
   const tags = note.tags ?? liveTags;
 
-  // Attachments are summarised by CardMedia, so the text preview renders the
-  // prose only - otherwise an image-heavy note would show each attachment twice
-  // and push its own words off the bottom of the clamp.
+  // CardMedia summarises attachments, so the preview is prose only and shows nothing twice.
   const prose = stripAttachmentNodes(note.body);
   const hasProse = stripHtml(prose).trim().length > 0;
 
@@ -62,9 +54,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
   // an appointment. The fields stay on the row, so Restore brings the chip back.
   const reminder = note.state === 'trashed' ? undefined : reminderOf(note);
 
-  // Every lifecycle action follows the same contract: run the transition, then
-  // offer its snapshot back as a one-click undo. Sharing the wrapper keeps a
-  // new action from shipping without an undo.
+  // One wrapper for every lifecycle action, so a new one cannot ship without an undo.
   const withUndo =
     (run: (id: string) => Promise<LifecycleSnapshot | null>, message: string) => async () => {
       const before = await run(note.id);
@@ -80,9 +70,8 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
   const handleTrash = withUndo(trashNote, t('notes.movedToTrash'));
   const handleRestore = withUndo(restoreToActive, t('notes.restored'));
 
-  // Read at click time, so two quick ticks compose instead of the second one
-  // being computed from a body the first has already superseded. Written from an
-  // effect rather than during render, and again from the handler itself.
+  // Read at click time and written by the handler too, so two quick ticks compose
+  // instead of the second being computed from a body the first already replaced.
   const bodyRef = useRef(note.body ?? '');
   useEffect(() => {
     bodyRef.current = note.body ?? '';
@@ -92,19 +81,9 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
   const flipRef = useRef<RowSnapshot | null>(null);
 
   /**
-   * Ticking a checklist item without opening the note (ADR 0013).
-   *
-   * Delegated because the body is `innerHTML`, so there is nothing to attach a
-   * per-item handler to.
-   *
-   * The box and the item's words are the control (CONTEXT.md, Card); the empty
-   * run after the words is still the card, which is why this bails before
-   * `stopPropagation` unless one of the two was hit. Words, not the block that
-   * holds them: a `<p>` spans the row, so it is asked by the text's own line
-   * boxes. The native box flips itself when it is the thing tapped; when the
-   * text is, the box is set here so the tap is answered on the same frame
-   * either way, and the re-render that follows the write sets it from the
-   * attribute regardless.
+   * Ticks a checklist item in place (ADR 0013), delegated because the body is `innerHTML`.
+   * Only the box and the item's words are the control (CONTEXT.md, Card); anything else falls
+   * through to the card. The box is set here too, so a tap on the words answers on this frame.
    */
   const handleChecklistClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -127,25 +106,19 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
       if (!nextBody) return;
       bodyRef.current = nextBody;
 
-      // Measured now, while the DOM still shows the old order. The write is what
-      // moves it: the live query echoes a new body, `NoteBody` re-renders, and
-      // the CSS `order` rule re-lays-out the list.
+      // Measured before the write, whose echoed body re-renders and lets CSS `order` move the rows.
       flipRef.current = reducedMotion ? null : captureRows(root);
       void updateNote(note.id, { body: nextBody });
     },
     [note.id, updateNote, reducedMotion]
   );
 
-  // Runs after the rebuilt markup is in the DOM but before paint, which is the
-  // only moment the rows can be animated from where they used to be. The rebuild
-  // replaces every node, so this relies on rows matching by index rather than by
-  // identity - see `flip-rows.ts`.
-  //
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `prose` is the trigger, not an input. The effect reads only refs; it has to run when the body markup has just been re-rendered, and that is precisely what a change in `prose` means. Dropping it would leave the effect running once and never animating.
+  // Before paint is the only moment the rows can animate from where they were. The rebuild
+  // replaces every node, so rows match by index, not identity (`flip-rows.ts`).
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `prose` is the trigger; the effect reads only refs and must rerun after each body re-render.
   useLayoutEffect(() => {
     const root = proseRef.current;
-    // Only a body that really overflows gets the fade: dissolving the last line
-    // of a note that simply ends would promise text that is not there.
+    // Fade only real overflow: on a note that simply ends it would promise text that is not there.
     if (root) root.toggleAttribute('data-clipped', root.scrollHeight > root.clientHeight + 1);
 
     const before = flipRef.current;
@@ -164,11 +137,9 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
     [note.id, onSelect]
   );
 
-  // Press-and-hold on a row opens the note, because the tap now ticks it. The
-  // prose is rebuilt on every body change, but the listener sits on the
-  // container `NoteBody` keeps, so it survives the rebuild.
-  //
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `hasProse` is the trigger, not an input. The container only exists while it is true, and a ref is not a dependency React can watch, so the effect has to re-run when the body gains its first prose.
+  // Press-and-hold opens the note, because a tap on a row ticks it. The listener sits on the
+  // container `NoteBody` keeps, so it survives the prose being rebuilt.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `hasProse` is the trigger; the container exists only while it is true, and a ref cannot be watched.
   useEffect(() => {
     const root = proseRef.current;
     if (!root) return;
@@ -185,9 +156,8 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
     <Card
       {...noteColorAttrs(note.color)}
       data-pinned={note.pinnedAt ? '' : undefined}
-      // A click anywhere opens the note. Keyboards and screen readers use the open
-      // button below instead, so the card is not one button whose name swallows the
-      // rail's controls (controls nested in a button are invalid).
+      // A click anywhere opens the note. Keyboards and screen readers use the open button
+      // instead, so the card is not one button swallowing the rail's controls (invalid nesting).
       onClick={() => select()}
       className="group relative isolate w-full cursor-pointer break-inside-avoid gap-0 rounded-card border-0 bg-transparent py-0 text-card-foreground shadow-none has-[[data-slot=note-card-open]:focus-visible]:ring-2 has-[[data-slot=note-card-open]:focus-visible]:ring-ring has-[[data-slot=note-card-open]:focus-visible]:ring-offset-2 has-[[data-slot=note-card-open]:focus-visible]:ring-offset-background"
     >
@@ -202,8 +172,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
         {title ? null : t('notes.editNoteTitle')}
       </button>
 
-      {/* Only this material layer scales. Keeping text and media off the
-          transformed layer prevents Chromium from bitmap-stretching them. */}
+      {/* Only this layer scales (DESIGN.md, Scale-The-Surface-Never-The-Text Rule). */}
       <div
         data-slot="note-card-surface"
         aria-hidden
@@ -214,9 +183,8 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
         )}
       />
 
-      {/* Outside the content layer so it stacks above the media too - the pin is
-          never occluded by an attachment. Only shown for a note that can be
-          pinned: pinning is meaningless in the archive and the trash. */}
+      {/* Outside the content layer so it stacks above media (DESIGN.md, Pin-Is-Always-In-Front
+          Rule). Active only: pinning means nothing in Archive or Trash. */}
       {note.state === 'active' && (
         <CardPin
           pinned={Boolean(note.pinnedAt)}
@@ -224,24 +192,14 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
         />
       )}
 
-      {/* The foot rail's buttons carry ~4px of invisible touch padding below
-          their 36px discs, so the card's own 13.6px bottom padding stacked into
-          a ~18px gap under the icons against ~8px above them - visibly
-          bottom-heavy on a phone. Trimming it here rather than in `--card-pad`
-          keeps the token honest: the other three sides frame content, this one
-          frames a control that already brings its own margin. */}
       <div className="relative z-10 p-[var(--card-pad)] coarse:pb-1">
-        {/* Above the title, as in the lab: what a note *looks* like is the
-            fastest way to recognise it again in a wall. */}
+        {/* Above the title: how a note looks is the fastest way to recognise it in a wall. */}
         <CardMedia noteId={note.id} body={note.body} attachments={attachments} onOpen={select} />
 
         {title && (
           <h2
             id={titleId}
             dir="auto"
-            /* pe-9 reserves the pin's corner so a long title never runs under
-               it. Reserved rather than revealed: the card's height must not
-               change when the pointer arrives. */
             className="wrap-break-word mb-1.5 line-clamp-3 min-w-0 max-w-full text-pretty pe-9 font-display text-foreground text-title"
           >
             {note.header}
@@ -253,32 +211,13 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
             ref={proseRef}
             html={prose}
             onClick={handleChecklistClick}
-            // `line-clamp-6` only bounds prose. A checklist row is `display:flex`
-            // (globals.css), and `-webkit-line-clamp` counts line boxes only when
-            // a block's children are block-level, so the clamp silently does
-            // nothing on a checklist - measured, not assumed. `max-height` is the
-            // bound that actually holds, and it is expressed in rows on a coarse
-            // pointer because there a row is a 44px control, not a line of text.
+            // `line-clamp-6` silently does nothing on a checklist, whose rows are flex (measured),
+            // so `max-height` is the bound that actually holds.
             className="note-card-body wrap-anywhere line-clamp-6 max-h-[calc(6*1.45em)] min-w-0 max-w-full overflow-hidden text-body text-foreground [&_*]:max-w-full [&_li]:text-body [&_p]:text-body"
           />
         )}
 
-        {/* Foot rail A from DESIGN.md. Labels get the flexible side; controls
-            keep their real 44px hit areas and wrap below rather than squeezing
-            the note's scarce horizontal axis. The rail owns its own `ml-auto`,
-            which is what keeps it right-aligned on a note with no labels at
-            all, so the pills do not need a matching `mr-auto`. */}
-        {/* The rail's buttons already carry ~4px of invisible touch padding above
-            and below their 36px discs, so the gap the eye sees is this margin
-            plus that. 12px read as a hole on a phone, where the card is the
-            scarce surface; 4px lands the visible gap at the same ~8px the rail
-            keeps below itself. */}
-        {/* `items-center`, not `items-end`. A pill is 21px and a control is 44px
-            on a coarse pointer, so bottom-aligning them put the label 11px below
-            the icons' centre line - which read, correctly, as a label sagging to
-            the bottom of the card. It only showed where the two share a flex
-            line (list view, or any card wide enough); in the grid the pills wrap
-            to a line of their own and either value looks the same. */}
+        {/* Foot rail A (DESIGN.md, Card anatomy). */}
         <div className="coarse:mt-1 mt-3 flex flex-wrap items-center gap-2">
           {reminder && <ReminderChip reminder={reminder} />}
 

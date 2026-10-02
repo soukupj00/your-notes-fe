@@ -2,11 +2,7 @@ import type { ReactNode } from 'react';
 import { Switch } from '@/components/ui/switch.tsx';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx';
 
-/**
- * One titled group of settings. Sections are the page's only structure - each
- * later slice drops its controls into an existing section (or adds one) rather
- * than inventing its own layout.
- */
+/** Sections are the page's only structure: new controls join one rather than invent a layout. */
 export function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="mb-8">
@@ -16,14 +12,13 @@ export function SettingsSection({ title, children }: { title: string; children: 
   );
 }
 
-/** A labelled row inside a section: what it does on the left, the control on the right. */
 export function SettingsRow({
   label,
   description,
   children,
 }: {
   label: string;
-  /** Optional second line under the label, for rows whose consequence needs saying. */
+  /** For rows whose consequence needs saying. */
   description?: string;
   children: ReactNode;
 }) {
@@ -39,13 +34,8 @@ export function SettingsRow({
 }
 
 /**
- * A settings row whose control is a segmented picker over a closed set.
- *
- * Shared for one reason worth naming: Radix's ToggleGroup clears its value when
- * the *active* item is pressed again, which for a setting means a tap on
- * "Compact" while compact turns the app into no density at all. Every segmented
- * setting needs the same guard, so it lives here rather than being remembered
- * at each call site.
+ * Radix's ToggleGroup clears its value when the active item is pressed again, and a
+ * setting must never become empty, so the guard lives here once.
  */
 export function SegmentedSetting<T extends string>({
   label,
@@ -80,13 +70,7 @@ export function SegmentedSetting<T extends string>({
   );
 }
 
-/**
- * A settings row whose control is one on/off switch.
- *
- * `touch-reach` rather than `touch-target`: a switch's shape is part of what it
- * says, so it keeps its own size and gets its 44px hit box invisibly (DESIGN.md
- * → The 44px Touch Rule).
- */
+/** `touch-reach`, not `touch-target`: a switch keeps its own shape (the 44px Touch Rule). */
 export function SwitchSetting({
   label,
   description,

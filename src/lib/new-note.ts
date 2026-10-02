@@ -2,14 +2,8 @@ import { v4 as uuid } from 'uuid';
 import type { Note } from '@/models.ts';
 
 /**
- * Builds a Note row from a partial, without persisting it. Shared by
- * `useNoteActions.createNote` and the Tour's Prop seed, so there is one place
- * that knows the defaults.
- *
- * An id may be supplied rather than minted: a note's id goes into the URL the
- * moment its editor opens, before there is anything worth persisting
- * (ADR 0014). `trashedAt` is carried through so a note seeded straight into the
- * trash still has the timestamp the purge sweep keys off.
+ * The one place that knows a Note's defaults. An id may be supplied because it enters the URL when
+ * the editor opens (ADR 0014); `trashedAt` passes through for the purge sweep to key off.
  */
 export function newNote(data: Partial<Note>): Note {
   const now = new Date().toISOString();

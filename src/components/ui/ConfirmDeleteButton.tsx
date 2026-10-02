@@ -4,7 +4,6 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { cn } from '@/lib/utils.ts';
 
 export interface ConfirmDeleteButtonProps {
-  /** Invoked once, only when the user confirms. */
   onConfirm: () => void;
   /** Accessible label for the trash trigger, e.g. "Delete label Work". */
   label: string;
@@ -12,9 +11,7 @@ export interface ConfirmDeleteButtonProps {
   description: string;
   confirmLabel: string;
   cancelLabel: string;
-  /** Extra classes for the trigger button (merged over the default look). */
   triggerClassName?: string;
-  /** Extra classes for the trash icon (merged over the default size). */
   iconClassName?: string;
 }
 

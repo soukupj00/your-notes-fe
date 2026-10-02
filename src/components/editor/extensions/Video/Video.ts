@@ -12,8 +12,6 @@ declare module '@tiptap/core' {
   }
 }
 
-/** Custom video-attachment node built on the shared factory. Body serializes as
- *  <video data-attachment-id> (no src); the NodeView is a native <video controls>. */
 export function createVideo(getDeps: () => AttachmentDeps) {
   return createAttachmentNode(getDeps, {
     name: 'videoAttachment',

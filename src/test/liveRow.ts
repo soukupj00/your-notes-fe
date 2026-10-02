@@ -1,9 +1,8 @@
 import type { Live } from '@/data/live.ts';
 
 /**
- * An async lookup as the live read node views take (`AttachmentDeps.watchAttachment`),
- * for fixtures without a store: it delivers the lookup's answer once. Build it once
- * per render, since a new function each render re-subscribes.
+ * An async lookup shaped as node views' live read (`AttachmentDeps.watchAttachment`), for fixtures
+ * without a store. Build it once per render: a new function each render re-subscribes.
  */
 export function liveRow<T>(get: (id: string) => Promise<T>): (id: string) => Live<T> {
   return (id) => ({

@@ -7,11 +7,7 @@ import { AttachmentUnavailable } from '../attachments/AttachmentUnavailable';
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
 
-/** Editor render path for fileAttachment. Files are not inline-renderable, so
- *  this shows a generic file icon, the original filename, and an open/download
- *  link (opens the Blob object URL in a new tab; non-viewable types download).
- *  Object-URL lifecycle handled by the shared hook. Delete is guarded by the
- *  shared AttachmentDeleteButton (editor-only, same as audio/video/image). */
+/** A file is not inline-renderable, so it gets an icon, its name and an open/download link. */
 export function FileNodeView(props: ReactNodeViewProps) {
   const attachmentId = props.node.attrs.attachmentId as string | null;
   const deps = (props.extension.options.getDeps as () => AttachmentDeps)();
@@ -20,9 +16,6 @@ export function FileNodeView(props: ReactNodeViewProps) {
   const DownloadIcon = icons.Download;
   const canDelete = props.editor?.isEditable ?? false;
 
-  // Corner overlay, matching Excalidraw/Image/Video's delete placement (Task
-  // 3): a semi-opaque pill sits atop the row instead of taking flex space
-  // next to the download link.
   const deleteButton = canDelete ? (
     <AttachmentDeleteButton
       onConfirm={() => props.deleteNode()}

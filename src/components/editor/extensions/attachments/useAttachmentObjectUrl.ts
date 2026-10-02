@@ -13,14 +13,9 @@ export type AttachmentUrlState =
 
 const NO_ROW = emptyLive<Attachment | null>(null);
 
-/**
- * Resolves attachmentId -> Blob -> object URL for a React NodeView, revoking the
- * URL on unmount / id change (ADR 0007 lifecycle). Shared by image, audio,
- * video and file. The row is read live (M5 slice 5), so a download or a pull
- * turns a `remote` row `ready` without reopening the Note. Pass a STABLE
- * `watchAttachment` (the useAttachmentActions one is) so it is not
- * re-subscribed every render.
- */
+/** Revokes the URL on unmount or id change (ADR 0007). The row is read live, so a download or
+ *  a pull turns `remote` into `ready` without reopening the Note. `watchAttachment` must be
+ *  stable, or it is re-subscribed every render. */
 export function useAttachmentObjectUrl(
   attachmentId: string | null,
   watchAttachment: AttachmentDeps['watchAttachment']
@@ -48,7 +43,6 @@ export function useAttachmentObjectUrl(
     [url]
   );
 
-  // A node carrying no attachment id has nothing to resolve.
   if (!attachmentId || row === null) return { status: 'missing' };
   if (row === undefined) return { status: 'loading' };
   if (!row.blob) return { status: 'remote', attachment: row, thumbnailUrl: url };

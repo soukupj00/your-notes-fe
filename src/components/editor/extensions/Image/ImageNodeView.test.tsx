@@ -31,7 +31,6 @@ function makeAtt(): Attachment {
   };
 }
 
-// Minimal fake of the ReactNodeView props surface the component reads.
 function fakeProps(getAttachment: (id: string) => Promise<Attachment | undefined>) {
   const watchAttachment = liveRow(getAttachment);
   return {

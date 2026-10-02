@@ -8,7 +8,6 @@ interface AttachmentFilePickerButtonProps {
   onFiles: (files: File[]) => void;
 }
 
-/** Shared hidden-input workflow for editor attachment toolbar buttons. */
 export function AttachmentFilePickerButton({
   icon,
   tooltip,

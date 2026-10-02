@@ -4,7 +4,6 @@ export const MAX_RECORDING_MS = 5 * 60 * 1000;
 
 const CANDIDATE_MIME = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
 
-/** First MediaRecorder mime the browser supports, or null if unsupported. */
 function pickAudioMimeType(): string | null {
   if (typeof MediaRecorder === 'undefined') return null;
   for (const m of CANDIDATE_MIME) {
@@ -13,14 +12,8 @@ function pickAudioMimeType(): string | null {
   return null;
 }
 
-/**
- * Ask the Permissions API whether the mic is already settled, so an
- * auto-started recording can fail fast with a real explanation instead of
- * calling `getUserMedia` and getting a silent no-op where the browser
- * remembers a past refusal. Returns `null` when the browser cannot answer
- * (Firefox and Safari do not expose the `microphone` descriptor), in which
- * case the only way to find out is to ask for the stream.
- */
+/** Lets an auto-started take fail fast where the browser remembers a refusal, instead of a
+ *  silent getUserMedia no-op. `null` when the browser cannot answer (Firefox, Safari). */
 async function queryMicrophonePermission(): Promise<PermissionState | null> {
   try {
     if (typeof navigator === 'undefined' || !navigator.permissions?.query) return null;
@@ -35,12 +28,9 @@ async function queryMicrophonePermission(): Promise<PermissionState | null> {
 
 export type RecorderStatus = 'idle' | 'requesting' | 'recording' | 'error';
 
-/** Why start() failed. Distinct codes so the UI can tell a genuine refusal
- *  ('denied') apart from "no mic present" ('no-device') - the latter rejects
- *  instantly with no permission prompt, which must not read as a denial. */
+/** 'no-device' rejects instantly with no prompt, so it must not read as a denial. */
 export type RecorderError = 'unsupported' | 'denied' | 'no-device' | 'in-use' | 'failed';
 
-/** Map a getUserMedia rejection to a RecorderError via its DOMException name. */
 function mapGetUserMediaError(err: unknown): RecorderError {
   const name = err instanceof DOMException ? err.name : '';
   switch (name) {
@@ -63,15 +53,14 @@ export interface AudioRecorder {
   elapsedMs: number;
   error: RecorderError | null;
   supported: boolean;
-  /** Live mic stream while recording (for waveform visualization), else null. */
+  /** For the waveform; null when not recording. */
   stream: MediaStream | null;
   start: () => Promise<void>;
   stop: () => Promise<{ blob: Blob; mime: string; durationMs: number } | null>;
   cancel: () => void;
 }
 
-/** Wraps getUserMedia + MediaRecorder as a small state machine. Releases the
- *  mic (stops all tracks) on stop/cancel/unmount. Auto-stops at MAX_RECORDING_MS. */
+/** Releases the mic on stop, cancel and unmount, and auto-stops at MAX_RECORDING_MS. */
 export function useAudioRecorder(): AudioRecorder {
   const supported =
     typeof navigator !== 'undefined' &&
@@ -126,8 +115,7 @@ export function useAudioRecorder(): AudioRecorder {
       }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (startGenerationRef.current !== myGeneration) {
-        // Unmounted or cancelled while permission was pending: release the
-        // mic we just acquired and bail without touching any refs/status.
+        // Unmounted or cancelled while permission was pending: release the mic and bail.
         stream.getTracks().forEach((t) => {
           t.stop();
         });

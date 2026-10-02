@@ -24,8 +24,6 @@ declare module '@tiptap/core' {
   }
 }
 
-/** Custom audio-attachment node built on the shared factory. Body serializes as
- *  <audio data-attachment-id> (no src); the NodeView is a custom player. */
 export function createAudio(getDeps: () => AttachmentDeps) {
   return createAttachmentNode(getDeps, {
     name: 'audioAttachment',

@@ -87,8 +87,6 @@ describe('AudioNodeView', () => {
   // (state resolves ready AFTER first commit), not only on first render.
   it('advances the scrubber and total time from media events after the element mounts', async () => {
     render(<AudioNodeView {...props(async () => att())} />);
-    // Wait for the hidden <audio> to actually mount (state resolves 'ready'
-    // after the first commit) so the effect has attached its listeners.
     await waitFor(() => expect(document.querySelector('audio')).not.toBeNull());
     const audio = document.querySelector('audio') as HTMLAudioElement;
 
