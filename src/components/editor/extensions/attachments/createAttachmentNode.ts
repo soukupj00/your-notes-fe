@@ -2,7 +2,7 @@ import { type ChainedCommands, type Editor, mergeAttributes, Node } from '@tipta
 import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 import { type ReactNodeViewProps, ReactNodeViewRenderer } from '@tiptap/react';
 import type { ComponentType } from 'react';
-import type { TFunction } from '../button-types';
+import type { AnyButtonView, TFunction } from '../button-types';
 import type { AttachmentDeps } from './deps';
 
 export interface AttachmentNodeConfig {
@@ -12,7 +12,7 @@ export interface AttachmentNodeConfig {
   renderTag: string;
   insertCommandName: string;
   nodeView: ComponentType<ReactNodeViewProps>;
-  button: (ctx: { editor: Editor; getDeps: () => AttachmentDeps; t: TFunction }) => unknown;
+  button: (ctx: { editor: Editor; getDeps: () => AttachmentDeps; t: TFunction }) => AnyButtonView;
 }
 
 /** The node mechanics every media attachment shares; per-type parts come from config.
