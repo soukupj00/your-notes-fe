@@ -1,6 +1,7 @@
 import type { LocalStore } from '@/data/LocalStore.ts';
 import { extractAttachmentIds } from '@/lib/attachment-html.ts';
-import type { Note } from '@/models.ts';
+import { cloneAttachment, mintId, newNote, newNoteTag, newTag } from '@/lib/rows.ts';
+import type { Attachment, Note } from '@/models.ts';
 
 /**
  * The Tag every Conflicted Copy carries, so `/tag/$id` is the place to review
@@ -18,9 +19,9 @@ export function conflictedHeader(header: string | undefined, deviceName: string,
 async function conflictsTagId(store: LocalStore, now: string): Promise<string> {
   const found = await store.tags.findByName(CONFLICTS_TAG_NAME);
   if (found) return found.id;
-  const id = crypto.randomUUID();
-  await store.tags.add({ id, name: CONFLICTS_TAG_NAME, createdAt: now, updatedAt: now });
-  return id;
+  const tag = newTag(CONFLICTS_TAG_NAME, undefined, now);
+  await store.tags.add(tag);
+  return tag.id;
 }
 
 /**
@@ -36,38 +37,32 @@ export async function keepConflictedCopy(
   fetchBytes: (id: string) => Promise<Blob | undefined> = async () => undefined
 ): Promise<string> {
   const now = at.toISOString();
-  const id = crypto.randomUUID();
-  const copy: Note = {
-    ...local,
-    id,
-    header: conflictedHeader(local.header, deviceName, at),
-    createdAt: now,
-    updatedAt: now,
-  };
-  delete copy.tags;
+  const id = mintId();
 
-  const clones: { from: string; to: string }[] = [];
+  const clones: { from: string; clone: Attachment }[] = [];
   for (const from of extractAttachmentIds(local.body)) {
-    if (await store.attachments.get(from)) clones.push({ from, to: crypto.randomUUID() });
-  }
-  for (const { from, to } of clones) {
-    copy.body = copy.body?.replaceAll(`data-attachment-id="${from}"`, `data-attachment-id="${to}"`);
-  }
-  await store.notes.add(copy);
-  for (const { from, to } of clones) {
     const row = await store.attachments.get(from);
     if (!row) continue;
     // ponytail: bytes the server does not have either are lost to the copy; it keeps the metadata.
     const blob = row.blob ?? (await fetchBytes(from).catch(() => undefined));
-    await store.attachments.add({ ...row, ...(blob ? { blob } : {}), id: to, noteId: id });
+    clones.push({ from, clone: cloneAttachment(blob ? { ...row, blob } : row, id, now) });
   }
+  let body = local.body;
+  for (const { from, clone } of clones) {
+    body = body?.replaceAll(`data-attachment-id="${from}"`, `data-attachment-id="${clone.id}"`);
+  }
+
+  await store.notes.add(
+    newNote({ ...local, id, header: conflictedHeader(local.header, deviceName, at), body }, now)
+  );
+  for (const { clone } of clones) await store.attachments.add(clone);
 
   const tagIds = (await store.tags.listLinks())
     .filter((l) => l.noteId === local.id)
     .map((l) => l.tagId);
   const conflicts = await conflictsTagId(store, now);
   for (const tagId of new Set([...tagIds, conflicts])) {
-    await store.tags.link({ noteId: id, tagId, createdAt: now, updatedAt: now });
+    await store.tags.link(newNoteTag(id, tagId, now));
   }
   return conflicts;
 }
