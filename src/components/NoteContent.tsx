@@ -53,7 +53,17 @@ export function NoteContent({
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-24 text-center text-muted-foreground">
         <p className="font-medium text-foreground text-lg">{t(`notes.empty.${key}.title`)}</p>
-        <p className="max-w-xs text-sm">{t(`notes.empty.${key}.subtitle`)}</p>
+        {key === 'active' ? (
+          // The capture surface depends on width (ADR 0016): the dial below `sm:`, the bar above.
+          <>
+            <p className="max-w-xs text-sm sm:hidden">{t('notes.empty.active.subtitle')}</p>
+            <p className="hidden max-w-xs text-sm sm:block">
+              {t('notes.empty.active.subtitleWide')}
+            </p>
+          </>
+        ) : (
+          <p className="max-w-xs text-sm">{t(`notes.empty.${key}.subtitle`)}</p>
+        )}
       </div>
     );
   }

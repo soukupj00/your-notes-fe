@@ -47,6 +47,7 @@ async function device(server: FakeServer, accountId: string, pollMs = 60_000) {
   };
   const statuses: SyncStatus[] = [];
   const reports: SyncReport[] = [];
+  let signedOut = 0;
   const loop = startSyncLoop({
     engine,
     remote,
@@ -55,10 +56,13 @@ async function device(server: FakeServer, accountId: string, pollMs = 60_000) {
     editDelayMs: 10,
     onStatus: (s) => statuses.push(s),
     onReport: (r) => reports.push(r),
+    onSignedOut: () => {
+      signedOut += 1;
+    },
   });
   loops.push(loop);
   await until(() => statuses.at(-1) === 'idle', 'the first run');
-  return { store, loop, statuses, reports, runs: () => runs };
+  return { store, loop, statuses, reports, runs: () => runs, signedOut: () => signedOut };
 }
 
 describe('sync loop', () => {
@@ -141,5 +145,54 @@ describe('sync loop', () => {
     const after = a.runs();
     await new Promise((resolve) => setTimeout(resolve, 80));
     expect(a.runs()).toBe(after);
+  });
+
+  it('stops, and says so once, when the server no longer knows the Session', async () => {
+    const server = createFakeServer();
+    const owner = server.seedOwner('ada', 'correct horse');
+    const a = await device(server, owner.id, 30);
+    // What "Remove" in another Device's Settings does to this one.
+    server.devices.splice(
+      server.devices.findIndex((d) => d.name === 'Phone'),
+      1
+    );
+
+    await a.loop.syncNow();
+    expect(a.signedOut()).toBe(1);
+    const after = a.runs();
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    expect(a.runs()).toBe(after);
+    expect(a.signedOut()).toBe(1);
+  });
+
+  it('says so once when overlapping runs both find the Session gone', async () => {
+    const server = createFakeServer();
+    const owner = server.seedOwner('ada', 'correct horse');
+    const a = await device(server, owner.id);
+    server.devices.splice(
+      server.devices.findIndex((d) => d.name === 'Phone'),
+      1
+    );
+
+    await Promise.all([a.loop.syncNow(), a.loop.syncNow()]);
+    expect(a.runs()).toBe(3);
+    expect(a.signedOut()).toBe(1);
+  });
+
+  it('an unreachable or broken server never signs the Device out', async () => {
+    const server = createFakeServer();
+    const owner = server.seedOwner('ada', 'correct horse');
+    const a = await device(server, owner.id);
+
+    server.state.offline = true;
+    await a.loop.syncNow();
+    server.state.offline = false;
+    server.state.staticHost = true;
+    await a.loop.syncNow();
+    server.state.staticHost = false;
+    server.state.broken = true;
+    await a.loop.syncNow();
+    expect(a.signedOut()).toBe(0);
+    expect(a.statuses.at(-1)).toBe('error');
   });
 });

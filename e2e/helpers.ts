@@ -60,3 +60,10 @@ export async function closeNote(page: Page) {
   if (await back.isVisible()) await back.click();
   else await page.getByRole('button', { name: 'Close' }).click();
 }
+
+/** A Card on the wall, found by its title. */
+export function card(page: Page, title: string) {
+  return page.locator('[data-slot="card"]', {
+    has: page.getByRole('heading', { name: title }),
+  });
+}

@@ -592,4 +592,15 @@ describe('opening focus', () => {
       expect(headerInput()).toHaveFocus();
     });
   });
+
+  it('hands focus back to what had it when the editor opened', async () => {
+    setPointer(true);
+    const opener = document.body.appendChild(document.createElement('button'));
+    opener.focus();
+    const { unmount } = render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+    await waitFor(() => expect(headerInput()).toHaveFocus());
+    unmount();
+    await waitFor(() => expect(opener).toHaveFocus());
+    opener.remove();
+  });
 });

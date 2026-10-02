@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { NotesView } from '@/components/notes/NotesView.tsx';
 import { Button } from '@/components/ui/button.tsx';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import { TRASH_GRACE_DAYS, useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { validateNoteSearch } from '@/lib/note-search-params.ts';
@@ -14,6 +15,7 @@ function EmptyTrashButton() {
   // Purging cascades into every trashed note's attachments, so it is not
   // instant on a full trash - say so rather than leaving a dead button.
   const [purging, setPurging] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   const handleEmpty = async () => {
     setPurging(true);
@@ -27,10 +29,20 @@ function EmptyTrashButton() {
   };
 
   return (
-    <Button variant="ghost" size="sm" className="gap-1" disabled={purging} onClick={handleEmpty}>
-      {purging && <Spinner />}
-      {purging ? t('notes.emptyingTrash') : t('notes.emptyTrash')}
-    </Button>
+    <ConfirmDialog
+      open={confirming}
+      onOpenChange={setConfirming}
+      title={t('notes.confirmEmptyTrash.title')}
+      description={t('notes.confirmEmptyTrash.description')}
+      confirmLabel={t('notes.confirmEmptyTrash.confirm')}
+      cancelLabel={t('notes.confirmEmptyTrash.cancel')}
+      onConfirm={() => void handleEmpty()}
+    >
+      <Button variant="ghost" size="sm" className="gap-1" disabled={purging}>
+        {purging && <Spinner />}
+        {purging ? t('notes.emptyingTrash') : t('notes.emptyTrash')}
+      </Button>
+    </ConfirmDialog>
   );
 }
 
