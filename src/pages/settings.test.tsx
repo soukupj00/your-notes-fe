@@ -22,10 +22,8 @@ vi.mock('@/i18n', () => ({
   },
 }));
 
-// `HelpSection` can start the Tour and the page links out to it; neither is
-// what this file is about, and rendering either for real would drag in a router.
-// The three hooks are `TourProvider`'s, which the mount below wraps the page in
-// so the replay row has a Tour to ask about.
+// The page links out (`Link`) and `TourProvider` navigates (the three hooks); neither is what
+// this file tests, so the router is stubbed.
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, ...props }: { children: React.ReactNode }) => <a {...props}>{children}</a>,
   useNavigate: () => vi.fn(),

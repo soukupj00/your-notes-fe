@@ -8,12 +8,8 @@ import { cn } from '@/lib/utils.ts';
 import type { Attachment } from '@/models.ts';
 import type { AttachmentDeps } from './deps';
 
-/**
- * A download tap for an Attachment known through Sync whose bytes are not on
- * this Device (04-sync.md "Attachment transfer"). Writes the bytes into the
- * row; the node view reads it live, so it turns into the real thing by itself.
- * `onDone` runs after a download that landed (Excalidraw opens its canvas).
- */
+/** Writes the bytes into the row (docs/architecture/04-sync.md); the node view reads it
+ *  live, so it turns ready by itself. `onDone` runs only after a download that landed. */
 export function useDownloadAttachment(deps: AttachmentDeps, id: string, onDone?: () => void) {
   const [busy, setBusy] = useState(false);
   const download = async () => {
@@ -31,7 +27,7 @@ export function useDownloadAttachment(deps: AttachmentDeps, id: string, onDone?:
   return { busy, download };
 }
 
-/** The download button itself: neutral, never the accent (DESIGN.md One Accent Rule), 44px to a finger. */
+/** Neutral, never the accent (DESIGN.md One Accent Rule). */
 export function DownloadButton({
   busy,
   onClick,
@@ -62,11 +58,6 @@ export function DownloadButton({
   );
 }
 
-/**
- * What an image, audio, video or file node draws while its bytes are still on
- * the server: an image's or video's Preview when there is one, with the
- * download button over it; otherwise a card with the name, the size and the button.
- */
 export function AttachmentNotDownloaded({
   attachment,
   thumbnailUrl,
@@ -84,8 +75,7 @@ export function AttachmentNotDownloaded({
   const label = deps.t('editor.attachment.download');
   const name = attachment.name ?? fallbackName;
 
-  // A picture's Preview stands in for it at the size the real thing will take,
-  // when the row knows it (M5 slice 5), so nothing jumps when the bytes land.
+  // Sized like the real thing when the row knows it, so nothing jumps when the bytes land.
   if (thumbnailUrl && (attachment.kind === 'image' || attachment.kind === 'video')) {
     return (
       <NodeViewWrapper

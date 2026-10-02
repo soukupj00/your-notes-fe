@@ -19,16 +19,7 @@ const NoteEditorDialog = lazy(() =>
   }))
 );
 
-/**
- * A request to open the editor. `id` is the note to edit, or null to start a
- * new draft; `initialBody` seeds that draft (e.g. a checklist from quick
- * capture); `autoplayFirstAudio` carries the "opened via an audio chip" intent
- * through to the editor.
- *
- * It has no "closed" case any more. It used to be the editor's *state* and so
- * included `null`; since ADR 0014 the URL says whether a note is open, and this
- * only ever describes a start.
- */
+/** How an open starts; `id: null` starts a draft. Whether one is open is the URL's (ADR 0014). */
 export type NoteOpenRequest = {
   id: string | null;
   initialBody?: string;
@@ -40,13 +31,8 @@ export type NoteOpenRequest = {
 };
 
 /**
- * The one-shot half of an open, kept in React state rather than the URL.
- *
- * Identity belongs in the address bar; *intent* does not. "Start the camera",
- * "autoplay the first clip" and "seed an empty checklist" all describe a single
- * gesture, and a reload of `?note=x` must not re-fire the camera or replay the
- * audio. `for` scopes the intent to the note it was made about, so a back
- * button that lands on a different note cannot inherit it.
+ * The one-shot half of an open, kept out of the URL so a reload cannot re-fire it (CLAUDE.md,
+ * Data layer). `for` scopes it to its note, so Back onto a different note cannot inherit it.
  */
 type OpenIntent = {
   for: string;
@@ -57,12 +43,7 @@ type OpenIntent = {
   files?: File[];
 };
 
-/**
- * The shared feed view behind `/`, `/archive`, `/trash` and `/tag/$id`. The
- * route supplies the scope and the (screen-reader-only) title; everything else
- * - card list, quick capture, editor dialog - is identical, so the views cannot
- * drift. The layout toggle and sort control live in the Navbar's search bar.
- */
+/** Behind `/`, `/archive`, `/trash` and `/tag/$id`; routes supply only scope and title. */
 export function NotesView({
   scope,
   title,
@@ -71,8 +52,7 @@ export function NotesView({
 }: {
   scope: NoteFeedScope;
   title: string;
-  /** View-specific actions (e.g. Empty trash): a row on desktop, a floating
-   *  pill in the quick-capture slot on mobile. */
+  /** View-specific actions, e.g. Empty trash. */
   toolbar?: ReactNode;
   showCapture?: boolean;
 }) {
@@ -81,11 +61,8 @@ export function NotesView({
   const { openNoteId, openNote, closeNote, dismissMissingNote } = useOpenNote();
   const [intent, setIntent] = useState<OpenIntent | null>(null);
 
-  // A note's id is minted here, at open, rather than by `createNote` on the
-  // first keystroke. That is what lets the URL be right from the first frame:
-  // the alternative is `?note=new` swapped for `?note=<uuid>` mid-typing, and
-  // since the id is this dialog's React key *and* its load-effect dependency,
-  // the swap would remount the editor under the user's cursor.
+  // The id is minted at open, not on first save, so the URL never swaps under a typing user
+  // (CLAUDE.md, Data layer).
   const start = (editing: NoteOpenRequest) => {
     const id = editing.id ?? crypto.randomUUID();
     setIntent({
@@ -99,23 +76,18 @@ export function NotesView({
     openNote(id);
   };
 
-  // Intent only applies to the note it was made about; anything else - a cold
-  // load, a forward tap, a shared link - opens plain.
+  // A cold load, a forward tap or a shared link opens plain.
   const active = intent?.for === openNoteId ? intent : null;
 
   return (
     <div className="relative">
-      {/* The heading is visually gone but still the route's focus target: a
-          navigation has to land somewhere, and stranding focus on the link that
-          was clicked is what `useFocusOnMount` exists to prevent. */}
+      {/* Visually hidden, but still the focus target a navigation lands on. */}
       <h1 ref={headingRef} tabIndex={-1} className="sr-only">
         {title}
       </h1>
 
-      {/* View-specific actions (e.g. Empty trash). One node, two positions: a
-          right-aligned row above the feed on desktop, and the quick-capture
-          bar's floating pill on mobile, where there is no longer a title row to
-          hang it from. Rendering it twice would duplicate the controls. */}
+      {/* One node in two positions, a row on desktop and a floating pill on mobile:
+          rendering it twice would duplicate the controls. */}
       {toolbar && (
         <div
           className={cn(
@@ -164,8 +136,7 @@ export function NotesView({
           }
         >
           <NoteEditorDialog
-            // The id never changes for the life of an open, so this key cannot
-            // remount the editor mid-edit.
+            // Stable for the life of an open, so this key cannot remount the editor mid-edit.
             key={openNoteId}
             noteId={active?.isDraft ? null : openNoteId}
             draftId={openNoteId}

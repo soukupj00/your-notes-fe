@@ -10,23 +10,15 @@ import type { Tag } from '@/models.ts';
 type TagPopoverProps = {
   /** Every existing tag, unfiltered. */
   tags: Tag[];
-  /** Ids of the tags currently on the note. */
   assignedIds: Set<string>;
   onToggle: (tag: Tag) => void;
   /** Create-on-the-fly, then assign. Only offered when the name is unused. */
   onCreate: (name: string) => void;
-  /** Custom trigger (e.g. a menu item on the card). Defaults to a "＋ Label" button. */
+  /** Defaults to a "＋ Label" button. */
   trigger?: ReactNode;
 };
 
-/**
- * The one label-assignment surface: filter the existing tags, tick the ones
- * that belong on this note, or create a new one from whatever you typed.
- *
- * Presentational on purpose - it holds only the filter text. Data and
- * persistence live in `NoteTagsBar`, so the card's `⋮` menu can mount the same
- * popover against the same handlers.
- */
+/** Presentational on purpose: it holds only the filter text, and `NoteTagsBar` owns the data. */
 export function TagPopover({ tags, assignedIds, onToggle, onCreate, trigger }: TagPopoverProps) {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
@@ -45,12 +37,8 @@ export function TagPopover({ tags, assignedIds, onToggle, onCreate, trigger }: T
 
   return (
     /*
-     * `modal` is load-bearing, not a behaviour choice: this popover's usual home
-     * is inside the note editor's Dialog, which mounts `react-remove-scroll`.
-     * That blocks wheel events for every node outside the dialog's own subtree,
-     * and the popover portals to `body` - so a non-modal one renders its
-     * scrollable tag list and then ignores the mouse wheel entirely. A modal
-     * popover registers its own content as the scrollable shard.
+     * `modal` is load-bearing: the editor Dialog's `react-remove-scroll` blocks the wheel outside
+     * its subtree, and this portals to `body`. Modal registers its content as a scrollable shard.
      */
     <Popover modal>
       <PopoverTrigger asChild>

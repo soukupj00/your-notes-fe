@@ -5,14 +5,7 @@ import { handOff } from '@/lib/hand-off.ts';
 import type { Reminder } from '@/lib/reminder.ts';
 import { buildReminderIcs, reminderFile } from '@/lib/reminder-ics.ts';
 
-/**
- * The two writes behind the editor's bell (ADR 0021).
- *
- * They live beside `NoteEditorDialog` rather than inside it because the rule
- * below is the whole feature, and the dialog is already the app's longest file.
- * The dialog keeps what it already owns - the Reminder field beside colour and
- * pin, the id, and the two mirrors of the text the save chain maintains.
- */
+/** The two writes behind the editor's bell (ADR 0021; CLAUDE.md, Reminders). */
 export function useNoteReminder(
   ensureNoteId: () => Promise<string>,
   headerRef: RefObject<string>,
@@ -22,22 +15,9 @@ export function useNoteReminder(
   const { t } = useTranslation();
   const { updateNote } = useNoteActions();
 
-  // Setting IS handing off (ADR 0021): the fields are written only after the
-  // calendar has been given the file, and a dismissed share sheet writes
-  // nothing. The draft is persisted first because the event's UID and its link
-  // back are the Note's id - a few milliseconds, well inside the tap's
-  // transient activation, which `navigator.share` needs.
-  //
-  // The bell is lit last, after the write rather than before it: colour and pin
-  // are optimistic because the tap should answer instantly, but here the user
-  // has already waited on a share sheet and the button is `busy` throughout, so
-  // there is nothing to be optimistic about - and a lit bell over a write that
-  // failed would promise an alarm that nothing recorded.
-  //
-  // An otherwise empty draft is kept on close, unlike a coloured one: the
-  // calendar was already handed a file linking to this Note's id, and the
-  // hand-off cannot be taken back, so purging the Note would leave that
-  // event pointing at nothing.
+  // Fields are written only after the calendar took the file, and the bell lights only after
+  // the write (CLAUDE.md, Reminders). The draft is persisted first because the event's UID is the
+  // Note's id; that takes milliseconds, well inside the tap activation `navigator.share` needs.
   const handleReminderSet = useCallback(
     async (next: Reminder): Promise<boolean> => {
       const id = await ensureNoteId();
@@ -53,10 +33,8 @@ export function useNoteReminder(
       try {
         await updateNote(id, { remindAt: next.remindAt, repeat: next.repeat });
       } catch (error) {
-        // The same answer a dismissed share gets: the bell stays unlit and the
-        // popover stays open, so the one thing the user can do about it - try
-        // again - is where they left off. Reported rather than rethrown because
-        // the caller is a click handler, and an unhandled rejection is not a UI.
+        // Same answer as a dismissed share: the bell stays unlit and the popover open, ready to
+        // retry. Logged, not rethrown, because the caller is a click handler.
         console.error('useNoteReminder: failed to record the Reminder', error);
         return false;
       }

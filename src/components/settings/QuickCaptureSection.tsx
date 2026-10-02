@@ -13,11 +13,8 @@ import { moveById } from '@/lib/move-by-id.ts';
 const ALIGNMENTS: Preferences['noteButtonAlignment'][] = ['left', 'right'];
 
 /**
- * The quick-capture starts: which ways of starting a note the `＋` offers, in
- * what order, and which thumb it sits under.
- *
- * The same sortable rows as the toolbar over a deliberately plainer model - one
- * flat ordered list, no families and no Width Classes (ADR 0011, decision 14).
+ * The toolbar's sortable rows over a deliberately plainer model: one flat ordered list,
+ * no families and no Width Classes (ADR 0011, decision 14).
  */
 export function QuickCaptureSection() {
   const { t } = useTranslation();

@@ -6,16 +6,9 @@ export interface LinkPromptCoordinator {
   registerButton(open: () => void): () => void;
 }
 
-/**
- * Bridges the `Mod+K` shortcut to the `LinkButton` that owns the URL popover.
- *
- * Unlike the audio coordinator this one is **not** pending-then-fire: a link
- * request that nobody takes must not sit around waiting for a toolbar to
- * remount, it must fall back immediately. `requestOpen` reports whether it
- * landed, so the extension can prompt instead - which is the case whenever
- * `format` is collapsed and the button is only rendered inside a closed menu.
- * A shortcut that silently does nothing is worse than an ugly prompt.
- */
+/** Unlike the audio coordinator, not pending-then-fire: an untaken request falls back to a
+ *  prompt at once (no button is mounted while `format` is collapsed), because a shortcut
+ *  that silently does nothing is worse than an ugly prompt. */
 export function createLinkPromptCoordinator(): LinkPromptCoordinator {
   let current: (() => void) | null = null;
 
@@ -35,11 +28,8 @@ export function createLinkPromptCoordinator(): LinkPromptCoordinator {
   };
 }
 
-/**
- * Apply a link from a typed URL. The collapsed-cursor branch inserts the URL as
- * its own link text, because `setLink` on an empty selection marks nothing and
- * would look like the command failed.
- */
+/** With a collapsed cursor the URL becomes its own link text, because `setLink` on an empty
+ *  selection marks nothing and looks like a failure. */
 export function applyLink(editor: Editor, url: string): void {
   const href = url.trim();
   if (!href) {

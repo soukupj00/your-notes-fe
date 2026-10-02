@@ -1,12 +1,10 @@
-/** The subset of an Excalidraw scene we persist. `files` holds Excalidraw's own
- *  embedded-asset map (kept verbatim; no UI for it this slice). */
+/** `files` is Excalidraw's own embedded-asset map, kept verbatim. */
 export interface ExcalidrawScene {
   elements: readonly unknown[];
   appState: Record<string, unknown>;
   files: Record<string, unknown>;
 }
 
-/** A fresh, empty scene for a newly inserted drawing. */
 export function emptyScene(): ExcalidrawScene {
   return { elements: [], appState: { viewBackgroundColor: '#ffffff' }, files: {} };
 }
@@ -47,11 +45,8 @@ export function parseScene(text: string): ExcalidrawScene | null {
   }
 }
 
-/** Render a scene to a standalone SVG string for the lightweight card snapshot.
- *  The one place that pulls the heavy exporter; never called on the card path.
- *  Dynamic import: merely importing @excalidraw/excalidraw at module scope
- *  eagerly evaluates its bundled entry, which calls canvas.getContext() and
- *  crashes under jsdom without the native canvas package. */
+/** The one place that loads the heavy exporter, never on the card path. A dynamic import,
+ *  because the package calls canvas.getContext() at module scope, which crashes under jsdom. */
 export async function sceneToSvgString(scene: ExcalidrawScene): Promise<string> {
   const { exportToSvg } = await import('@excalidraw/excalidraw');
   const svg = await exportToSvg({

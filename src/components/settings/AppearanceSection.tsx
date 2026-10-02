@@ -7,7 +7,6 @@ const THEMES: Theme[] = ['system', 'light', 'dark'];
 const DENSITIES: Preferences['density'][] = ['comfortable', 'compact'];
 const REDUCED_MOTION: Preferences['reducedMotion'][] = ['system', 'always', 'never'];
 
-/** Theme and palette: the settings about how the app looks rather than what it does. */
 export function AppearanceSection() {
   const { t } = useTranslation();
 
@@ -37,11 +36,8 @@ function ThemeSetting() {
 }
 
 /**
- * Density is one control carrying both rhythm and type size, as DESIGN.md
- * specifies compact: tightening the gaps while leaving the type alone would
- * give a denser wall of cards that are each still the same size, which is not
- * what asking for more wall at once means. The values themselves live in
- * `globals.css` behind `:root[data-density="compact"]`.
+ * One control carries both rhythm and type size, as DESIGN.md specifies compact. The
+ * values live in `globals.css` under `:root[data-density="compact"]`.
  */
 function DensitySetting() {
   const { t } = useTranslation();
@@ -62,11 +58,8 @@ function DensitySetting() {
 }
 
 /**
- * Three states rather than a switch, because the honest default is neither on
- * nor off: a user who has already asked their OS for reduced motion should not
- * have to ask this app separately, and a user whose OS asks for it system-wide
- * should still be able to allow motion here. `system` is what the other two
- * override.
+ * Three states, not a switch: `system` follows the OS, and either explicit choice
+ * overrides it in both directions.
  */
 function ReducedMotionSetting() {
   const { t } = useTranslation();

@@ -98,10 +98,8 @@ function ResetPasswordButton({ member }: { member: Member }) {
 }
 
 /**
- * Owner only (backend `docs/setup.md` sections 7 and 10): every Account on the
- * server, a password reset for each member, and an Invite, shown as a Pairing
- * Link, that gives someone in the household an Account of their own.
- * A member who joins appears on the next visit.
+ * Owner only (backend `docs/setup.md` sections 7 and 10). A member who joins appears
+ * on the next visit.
  */
 export function MembersSection() {
   const { t } = useTranslation();

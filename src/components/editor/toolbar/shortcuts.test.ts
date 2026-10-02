@@ -79,11 +79,8 @@ describe('toolbar keyboard shortcuts', () => {
   });
 
   /**
-   * The Settings shortcut list reads `shortcut` off the registry, because that
-   * screen has no editor to resolve buttons against (the same reason
-   * `ToolbarPreviewStrip` draws a picture). The copy is only safe while it
-   * agrees with the button in **both** directions: a stale entry teaches a key
-   * that does nothing, a missing one hides a key that works.
+   * Settings reads the registry's copy, so it must agree with the button both ways:
+   * a stale entry teaches a key that does nothing, a missing one hides a key that works.
    */
   it('mirrors every button shortcut in the registry', () => {
     const editor = createEditor();

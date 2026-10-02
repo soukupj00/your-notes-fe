@@ -29,22 +29,9 @@ interface NoteEditorBarProps {
 }
 
 /**
- * The editor's note bar: the moves that belong to the note as an object rather
- * than to the text being typed.
- *
- * It carries **labels, a Share Link, a Reminder, colour and pin, and nothing
- * else**. Archive
- * and trash are deliberately absent: the card's foot rail is visible at rest on
- * every input type (revised 2026-07-31), so an editor-side copy would duplicate
- * a control that is already one tap away. The test that separates them is whether
- * an action can apply to a note that has no card yet - a draft captured from the
- * FAB can be coloured, labelled and pinned, but archiving or trashing it means
- * nothing. A Reminder passes the same test - a draft captured from the FAB can
- * be given one (ADR 0021), and so can a Share Link, which saves the draft first.
- *
- * It is not sticky. The editor's format toolbar is the only fixed chrome on
- * mobile, because formatting is a typing move and these are not; a second bar
- * above the keyboard would cost permanent vertical space on the scarce axis.
+ * Only actions that make sense on a draft with no card yet, so archive and trash stay on the
+ * card's always-visible rail. Not sticky: the format toolbar is the only chrome that stays
+ * above the keyboard.
  */
 export function NoteEditorBar({
   noteId,
@@ -63,11 +50,7 @@ export function NoteEditorBar({
   const reducedMotion = useReducedMotion();
 
   return (
-    /* Two columns rather than one wrapping row: the labels block takes the
-       flexible side and grows downward as pills wrap, while the controls stay
-       level with the "＋ Label" trigger on the first line. A wrapping row put
-       them on a third line below the pills, so adding a label moved every
-       control on the bar. */
+    /* Two columns, so adding a label never moves the controls. */
     <div data-slot="note-editor-bar" className="flex items-start gap-2">
       <NoteTagsBar noteId={noteId} ensureNoteId={ensureNoteId} className="min-w-0 flex-1" />
 
@@ -101,8 +84,7 @@ export function NoteEditorBar({
             onClick={onPinToggle}
             className={noteControlButton(
               reducedMotion,
-              // Pinned reads as chrome, so it takes the accent - the same
-              // signal as the card's pin and the active rail item.
+              // Pinned is chrome, so it takes the accent, like the card's pin.
               pinned &&
                 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
             )}

@@ -108,9 +108,8 @@ describe('QuickCaptureBar', () => {
     it('rides on the shared floating geometry rather than its own', () => {
       render(<QuickCaptureBar onStart={vi.fn()} />, { wrapper });
 
-      // The `＋` and a view's action pill land in the same corner and may never
-      // sit at different heights, so both take the offsets from one constant.
-      // Asserting the constant is applied is what stops the two drifting.
+      // The `＋` and a view's action pill share one constant; asserting it is applied is what
+      // stops the two drifting to different heights.
       for (const token of FLOATING_BOTTOM_BAR.split(' ')) {
         expect(strip()).toHaveClass(token);
       }
@@ -122,11 +121,8 @@ describe('QuickCaptureBar', () => {
         'ul'
       );
 
-      // Visual order is bottom-to-top, because the dial radiates out of the `＋`.
-      // It is `flex-col-reverse` rather than a reversed array precisely so the
-      // DOM keeps the order the user arranged in settings - that order is a
-      // priority, and reversing the array would put the primary start last for
-      // anyone reading by tab or by screen reader.
+      // Bottom-to-top on screen, but `flex-col-reverse` keeps the DOM in the user's order, which is
+      // what tab and screen readers follow.
       expect(list).toHaveClass('flex-col-reverse');
       expect(Array.from(list?.querySelectorAll('button') ?? []).map((b) => b.textContent)).toEqual([
         'notes.capture.text',

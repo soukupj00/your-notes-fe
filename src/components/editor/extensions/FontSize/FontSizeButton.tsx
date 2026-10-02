@@ -8,7 +8,6 @@ interface FontSizeButtonProps {
   t: TFunction;
 }
 
-/** Pattern A adapter for the shared editor text-style select. */
 export function FontSizeButton(props: FontSizeButtonProps) {
   return <EditorTextStyleSelect {...props} variant="fontSize" />;
 }

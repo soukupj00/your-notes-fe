@@ -8,12 +8,8 @@ const SAMPLE_SECONDS = 0.6;
 const DECODE_TIMEOUT_MS = 8000;
 
 /**
- * Resolve once the element fires `event`, or `false` on `error` or timeout.
- *
- * `start` runs after the listeners are attached, because assigning `src` or
- * `currentTime` can settle synchronously on an already-buffered clip. The
- * timeout is what keeps a codec the browser never finishes decoding from
- * holding the insert open forever.
+ * `start` runs after the listeners are attached, because assigning `src` or `currentTime` can
+ * settle synchronously on an already-buffered clip.
  */
 function waitForMediaEvent(
   video: HTMLVideoElement,
@@ -33,18 +29,8 @@ function waitForMediaEvent(
 }
 
 /**
- * A still frame from a video, downscaled for card rendering, plus the clip's
- * duration.
- *
- * A video attachment has no natural card preview: its bytes are a container the
- * feed must not decode, so without a stored poster the card can only show a
- * neutral plane. Capturing one frame once, at insert time, buys every later
- * render for free - the same trade `generateImageThumbnail` makes.
- *
- * Returns `{}` rather than throwing when the browser cannot decode the clip
- * (an unsupported codec, a corrupt file, a headless environment with no video
- * pipeline). A missing poster is a softer failure than a rejected attachment,
- * so the caller stores the video regardless and the card falls back.
+ * Captured once at insert, because the feed must not decode a video to preview it. Returns `{}`
+ * on a clip the browser cannot decode: a missing poster is softer than a rejected attachment.
  */
 export async function generateVideoPoster(
   blob: Blob
@@ -62,9 +48,7 @@ export async function generateVideoPoster(
     });
     if (!loaded) return {};
 
-    // A live stream reports `Infinity`, which is a real clip with no length to
-    // print and no midpoint to seek to. Resolve it once here so neither the
-    // sample point nor the returned metadata has to ask again.
+    // A live stream reports `Infinity`: no length to print and no midpoint to seek to.
     const duration = Number.isFinite(video.duration) ? video.duration : undefined;
     // The frame size is known from the metadata alone; another Device reserves it (M5 slice 5).
     const metadata =
@@ -72,8 +56,6 @@ export async function generateVideoPoster(
         ? { duration, width: video.videoWidth, height: video.videoHeight }
         : { duration };
 
-    // Seek before drawing: the frame at t=0 is often the encoder's blank lead-in,
-    // and on a clip shorter than the sample point we take the midpoint instead.
     const target = duration === undefined ? 0 : Math.min(SAMPLE_SECONDS, Math.max(0, duration / 2));
     const seeked = await waitForMediaEvent(video, 'seeked', () => {
       video.currentTime = target;

@@ -26,11 +26,9 @@ const AT = '2026-09-28T10:00:00.000Z';
 const link = (href: string) => ({ href });
 
 /**
- * A Self-hosted Server in memory, behind a `fetch`, for tests of the HAL
- * adapters and the screens on top of them. Every body it answers is parsed by
- * the vendored contract first, so it drifts from the backend no more than the
- * contract does. `fetch` is one browser; `client()` opens another, with its own
- * cookie, so two Devices can sync against one server in a test.
+ * A Self-hosted Server in memory, behind a `fetch`. Every answer is parsed by the vendored
+ * contract, so it drifts from the backend no more than the contract does. `fetch` is one browser;
+ * `client()` opens another with its own cookie, so two Devices can sync against one server.
  */
 export function createFakeServer({ setupCode = 'setup-code' } = {}) {
   const accounts: Account[] = [];

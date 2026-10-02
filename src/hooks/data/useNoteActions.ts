@@ -8,12 +8,8 @@ import type { Note } from '@/models.ts';
 export const TRASH_GRACE_DAYS = 30;
 
 /**
- * The lifecycle fields a transition touches, captured *before* it runs. Every
- * lifecycle action returns one, so an undo toast can hand it straight back to
- * `revertLifecycle`. `updatedAt` is part of the snapshot on purpose: a
- * transition bumps it (lifecycle changes are real changes, and M5 sync will
- * need to see them), so an undo has to put the old value back or "undo" would
- * still leave the note looking freshly edited.
+ * The lifecycle fields a transition is about to overwrite, for an undo to pass `revertLifecycle`.
+ * `updatedAt` is included so an undone transition does not leave the note looking freshly edited.
  */
 export type LifecycleSnapshot = Pick<Note, 'state' | 'pinnedAt' | 'trashedAt' | 'updatedAt'>;
 
@@ -30,9 +26,8 @@ function graceCutoff(days = TRASH_GRACE_DAYS) {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 }
 
-// The functions close over the store from context, which the provider creates
-// once, so they are memoized on it alone. Stable identities matter:
-// NoteEditorDialog's autosave effect depends (transitively) on these.
+// Memoized on the store alone, which the provider creates once: NoteEditorDialog's autosave
+// effect depends on these identities.
 export function useNoteActions() {
   const store = useLocalStore();
 
@@ -45,9 +40,7 @@ export function useNoteActions() {
     [store]
   );
 
-  // RESTORE a previously captured note verbatim (for delete-undo): keeps the
-  // original id/timestamps and re-links its noteTags + attachments, so undoing
-  // a delete reproduces the exact prior state.
+  // Puts a purged note back verbatim (original id and timestamps, tags and attachments re-linked).
   const restoreNote = useCallback(
     async (note: Note, removed: Partial<PurgedRelations> = {}) => {
       await store.notes.restore(note, removed);
@@ -67,17 +60,13 @@ export function useNoteActions() {
     [store]
   );
 
-  // PURGE a note and its relationships - the permanent, irreversible removal
-  // (CONTEXT.md "Purge"). Returns the removed noteTags + attachments so the
-  // caller can pass them (with the captured note) to restoreNote for a lossless
-  // undo. Normal user-facing deletion goes through trashNote instead.
+  // The irreversible removal (CONTEXT.md "Purge"); returns what it removed so `restoreNote` can
+  // undo it. The user-facing delete is `trashNote`.
   const purgeNote = useCallback((id: string) => store.notes.purge(id), [store]);
 
   // ---- Lifecycle (ADR 0009) -------------------------------------------------
 
-  // Every transition is the same shape: snapshot the lifecycle fields, write
-  // the new ones, in one atomic update. Sharing one implementation keeps the
-  // "snapshot before write" invariant in one place.
+  // One atomic update that snapshots before it writes, shared so no transition skips the snapshot.
   const transition = useCallback(
     async (
       id: string,
@@ -95,8 +84,8 @@ export function useNoteActions() {
   /** Undo any lifecycle transition by writing its snapshot back verbatim. */
   const revertLifecycle = useCallback(
     async (id: string, snapshot: LifecycleSnapshot) => {
-      // Spread rather than merge: `pinnedAt`/`trashedAt` are absent-means-unset,
-      // so an undo must be able to clear a field the transition set.
+      // Every field is written, `undefined` included: `pinnedAt` and `trashedAt` mean unset when
+      // absent, so an undo must be able to clear a field the transition set.
       const result = await store.notes.update(id, () => ({
         state: snapshot.state,
         pinnedAt: snapshot.pinnedAt,

@@ -10,17 +10,9 @@ const DEFAULT_DELAY_MS = 500;
 const SLOP_PX = 10;
 
 /**
- * Press-and-hold on a touch pointer, attached once to a container and delegated
- * to whichever descendant `isTarget` accepts - the same shape as the Card's
- * click delegate, because the rows it watches are `innerHTML` with no React
- * elements to hand a handler to.
- *
- * Mouse pointers are ignored: press-and-hold with a mouse is how text is
- * selected, and the Card's rows are readable text.
- *
- * After a press fires, the click and contextmenu the platform sends next are
- * swallowed once, so opening the Note does not also tick the row underneath and
- * Android's long-press menu does not appear over the dialog.
+ * Delegated from a container because the rows are `innerHTML` with no React elements. Mouse is
+ * ignored, as holding a mouse is how text is selected. After a press, the next click and
+ * contextmenu are swallowed so the row is not ticked and Android's menu does not open.
  */
 export function attachLongPress(el: HTMLElement, opts: LongPressOptions): () => void {
   const delay = opts.delayMs ?? DEFAULT_DELAY_MS;

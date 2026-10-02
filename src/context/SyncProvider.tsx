@@ -53,12 +53,13 @@ const INACTIVE: SyncContextValue = {
 
 const SyncContext = createContext<SyncContextValue>(INACTIVE);
 
+// One id, so a second sign-out replaces the toast and a sign-in can take it away.
+const SIGNED_OUT_TOAST = 'sync-signed-out';
+
 /**
- * Runs the sync loop (`src/sync/loop.ts`) while this Device is signed in, and
- * says how it is going. Mounted in `routes/__root.tsx`, inside the router,
- * because two of its toasts link into the app (to the Conflicts Tag and to
- * Settings). It never blocks a screen: signed out or with no server, it is
- * inactive and every value is at rest.
+ * Runs the sync loop while this Device is signed in and says how it is going; signed out
+ * or with no server it is inactive. Mounted in `routes/__root.tsx`, inside the router,
+ * because two of its toasts link into the app (the Conflicts Tag, Settings).
  */
 export function SyncProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
@@ -108,6 +109,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     setSession(null);
     // Stays until dismissed: it is the only notice that this Device stopped syncing.
     toast(t('sync.signedOut'), {
+      id: SIGNED_OUT_TOAST,
       duration: Number.POSITIVE_INFINITY,
       action: {
         label: t('account.section.signIn'),
@@ -123,6 +125,9 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     onReportRef.current = onReport;
     onSignedOutRef.current = onSignedOut;
   });
+  useEffect(() => {
+    if (accountId) toast.dismiss(SIGNED_OUT_TOAST);
+  }, [accountId]);
 
   useEffect(() => {
     if (!accountId || !remote || touring) return;

@@ -12,12 +12,8 @@ import {
 } from '@/lib/note-search-params.ts';
 
 /**
- * Sort control in the search bar's right corner. Field and direction are two
- * separate choices - "title" is as likely to be wanted Z→A as A→Z - and both
- * live in the URL, so a sorted feed survives a refresh and is shareable.
- *
- * The same single-select `ToggleGroup` the theme switcher uses, so the two
- * behave and read identically (Radix exposes it as a radiogroup).
+ * Field and direction are separate choices, since "title" is as likely wanted Z→A as A→Z.
+ * The same single-select `ToggleGroup` as the theme switcher, so the two behave alike.
  */
 export function SortMenu() {
   const { t } = useTranslation();

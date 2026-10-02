@@ -1,16 +1,7 @@
 /**
- * Move the entry with `activeId` to where `overId` currently sits.
- *
- * The one reorder primitive every sortable list uses - the toolbar's families
- * and leaves, and the quick-capture starts - and it lives beside
- * `reconcileOrder` for the same reason: both answer "the user arranged this
- * list", and getting either subtly different in two places is how a feature
- * grows two behaviours.
- *
- * Deliberately `id`-based rather than index-based: `@dnd-kit` reports a drag as
- * two ids, and translating those to indices at every call site is where an
- * off-by-one lives. An id the list does not hold is a no-op rather than a throw
- * - a drag can end over nothing at all.
+ * The one reorder primitive for every sortable list, so "the user arranged this" behaves one way.
+ * By id because `@dnd-kit` reports a drag as two ids. An unknown id is a no-op, as a drag can end
+ * over nothing.
  */
 export function moveById<T extends { id: string }>(
   list: T[],

@@ -2,11 +2,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { noteCardTarget, resolveTourTarget, tourTargetSelector } from './targets.ts';
 
 /**
- * jsdom measures nothing - every element reports a 0x0 rect and no CSS is
- * applied - so the rects are stubbed per element here. That is the whole reason
- * `e2e/tour-targets.spec.ts` exists as well: this file proves the resolver picks
- * the element it is told is visible, and only a real browser can say which one
- * that actually is.
+ * jsdom measures every element as 0x0, so rects are stubbed per element. This proves the resolver
+ * picks the element it is told is visible; `e2e/onboarding.spec.ts` proves which one really is.
  */
 function measure(element: Element, visible: boolean) {
   element.getBoundingClientRect = () =>

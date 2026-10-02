@@ -295,9 +295,8 @@ describe('NoteCard', () => {
     await testStore.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    // Trashing or pinning something already in the trash is meaningless, and
-    // purging is not a card action at all - the trash itself is the
-    // confirmation, so a note only leaves for good from /trash or by expiring.
+    // Trash and pin mean nothing in the trash, and purging is never a card action: the trash
+    // itself is the confirmation.
     expect(screen.queryByRole('button', { name: 'notes.moveToTrash' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'notes.pin' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'notes.deleteForever' })).not.toBeInTheDocument();
@@ -313,10 +312,7 @@ describe('NoteCard', () => {
     expect(screen.queryByRole('button', { name: 'notes.menu' })).not.toBeInTheDocument();
   });
 
-  // Attachments are summarised by CardMedia rather than rendered inline, so
-  // these assert the *grouping* contract: one block per kind, each standing in
-  // for its siblings, so a card's height follows the layout and not what the
-  // user happened to attach.
+  // CardMedia's grouping contract: one block per kind, each standing in for its siblings.
   const mediaSlots = (slot: string) =>
     document.querySelectorAll(`[data-slot="card-media-${slot}"]`);
 
@@ -405,10 +401,8 @@ describe('NoteCard', () => {
     ).toBeTruthy();
   });
 
-  // The feed joins every card's rows in one query and hands them down. If a card
-  // silently fell back to its own query, nothing would look wrong - the N+1 would
-  // just be back - so this pins the rows coming from the prop by leaving the
-  // database empty and still expecting a drawing to render.
+  // A card silently falling back to its own query would look fine (the N+1 would just be back),
+  // so the database is left empty and the drawing must still render from the prop.
   it('draws from the rows the feed handed it, without querying for its own', async () => {
     const now = new Date().toISOString();
     const note = makeNote({
@@ -514,8 +508,7 @@ describe('NoteCard', () => {
     const storedBody = async (id: string) => (await testStore.notes.get(id))?.body;
 
     it('ticks an item from the card and persists it', async () => {
-      // The defect this whole slice starts from: the box flipped, nothing was
-      // written, and reopening the note showed it unchecked again.
+      // The original defect: the box flipped, nothing was written, and the note reopened unchecked.
       const note = makeNote({ body: checklist(['Milk', false], ['Bread', false]) });
       await testStore.notes.put(note);
       render(<NoteCard note={note} onSelect={vi.fn()} />);

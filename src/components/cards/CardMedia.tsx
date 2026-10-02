@@ -15,28 +15,16 @@ import type { Attachment, AttachmentKind } from '@/models.ts';
 /** Kinds whose whole point is the picture, so they share one thumbnail wall. */
 const VISUAL_KINDS: readonly AttachmentKind[] = ['image', 'video', 'excalidraw'];
 
-/**
- * Thumbnails shown before the wall starts counting instead. Four, because the
- * fifth tile is smaller than a thumbnail needs to be at card width, and past
- * that a count carries more information than another postage stamp.
- */
+// Four: a fifth tile is too small at card width, and past that a count says more.
 const GRID_CAP = 4;
 
 /** A Body reference joined to its stored row; the row is absent while it loads. */
 type Resolved = BodyAttachment & { row?: Attachment };
 
 /**
- * Object URLs for every visual that has bytes.
- *
- * Minted during render rather than in an effect: an effect would need a
- * `setState` to publish them, which costs an extra render of every card in the
- * feed and paints one empty frame first. The effect here owns only the revoke,
- * and its cleanup closes over the *previous* map, so a set is released exactly
- * when it stops being displayed.
- *
- * Relies on `visuals` being referentially stable across renders (see the memos
- * in `CardMedia` and in `useNoteAttachments`) - re-minting on every render
- * would visibly flicker every thumbnail in the feed.
+ * Minted during render, not in an effect, which would re-render every card and paint an empty
+ * frame first; the effect only revokes the previous set. Needs a referentially stable `visuals`,
+ * or every thumbnail in the feed flickers.
  */
 function useVisualUrls(visuals: Resolved[]): Record<string, string> {
   const urls = useMemo(() => {
@@ -62,21 +50,11 @@ function useVisualUrls(visuals: Resolved[]): Record<string, string> {
   return urls;
 }
 
-/** Shared recessed plane every preview block sits on. */
 const BLOCK = 'relative overflow-hidden rounded-control bg-note-media';
 
 /**
- * Whether this visual has something to draw yet.
- *
- * The one place the "is there art?" question is answered, because two callers
- * ask it and must not disagree: `VisualArt` picks between the artwork and a
- * blank plane, and `VisualHero` decides whether to reserve a 4:3 box so the card
- * does not grow the moment the bytes land.
- *
- * A video's bytes are a container, not an image - handing them to an `<img>`
- * produces a broken-image glyph - so only a captured poster counts as art. A
- * clip stored before posters existed has none until `useVideoPosterBackfill`
- * gives it one.
+ * Shared so `VisualArt` and `VisualHero` cannot disagree. A video's bytes are a container an
+ * `<img>` cannot draw, so only its poster counts as art.
  */
 function hasArt(visual: Resolved, url?: string): boolean {
   if (visual.kind === 'excalidraw') return Boolean(visual.row?.preview);
@@ -100,9 +78,7 @@ function VisualArt({
       <span
         className={cn(
           'block size-full',
-          // The blank plane reads differently per kind: a poster-less video is a
-          // settled state and takes the media ground, while an image whose blob
-          // has not arrived is still loading and says so.
+          // A poster-less video is a settled state; an image without its blob is still loading.
           visual.kind === 'video' && 'bg-note-media',
           visual.kind === 'image' && 'animate-pulse bg-muted',
           className
@@ -116,9 +92,7 @@ function VisualArt({
     return (
       <span
         className={cn(
-          // A drawing is ink on paper, so it needs a light ground even at night -
-          // but a pure-white field is the brightest thing in the night theme and
-          // reads as a hole in the wall. Dim the paper instead of inverting it.
+          // Dimmed paper at night: a pure-white field reads as a hole in the wall.
           'block size-full bg-[oklch(97%_0.008_84)] dark:bg-[oklch(84%_0.012_84)] [&_svg]:size-full [&_svg]:object-contain',
           className
         )}
@@ -142,11 +116,7 @@ function VisualArt({
   );
 }
 
-/**
- * A single picture, clip or sketch. Height is the note's own aspect ratio
- * clamped at 4:3 of the card, so a landscape photo shows uncropped while a tall
- * portrait can never turn one card into three cards' worth of column.
- */
+// Height is capped so a tall portrait cannot take three cards' worth of column.
 function VisualHero({ visual, url }: { visual: Resolved; url?: string }) {
   const duration = formatDuration(visual.row?.duration);
 
@@ -154,16 +124,13 @@ function VisualHero({ visual, url }: { visual: Resolved; url?: string }) {
     <div
       data-slot="card-media-visual"
       data-kind={visual.kind}
-      // Nothing to draw yet reserves the box rather than collapsing to nothing;
-      // the reserve is released once the artwork has landed.
+      // Reserves the box until the art lands, so the card does not grow under the reader.
       className={cn(BLOCK, !hasArt(visual, url) && 'aspect-[4/3]')}
     >
       <VisualArt visual={visual} url={url} className="max-h-[min(14rem,75cqw)] w-full" />
 
-      {/* No kind label. The play badge already says "video" and a drawing shows
-          itself; a word printed over the artwork is chrome on the one part of
-          the card that was carrying meaning on its own. Duration stays, because
-          length is information the picture cannot give. */}
+      {/* No kind label over the art: the play badge says video and a drawing shows itself.
+          Duration stays, because the picture cannot say how long. */}
       {visual.kind === 'video' && (
         <span
           aria-hidden
@@ -182,19 +149,12 @@ function VisualHero({ visual, url }: { visual: Resolved; url?: string }) {
   );
 }
 
-// Ids already attempted this session. A poster is generated at most once per
-// video ever (the result is persisted) and at most once per session when the
-// browser cannot decode the clip at all, so a broken codec never becomes a loop.
+// Once per id per session, so a clip the browser cannot decode never becomes a loop.
 const posterAttempts = new Set<string>();
 
 /**
- * Captures a poster for any video stored before posters were captured at insert.
- *
- * Videos added from now on arrive with one (see `Video/insert.ts`), so this only
- * ever runs for pre-existing data, once, and then persists itself out of
- * existence. That is the whole reason it is acceptable here: the feed must not
- * decode video on every render, but decoding each clip exactly once - after
- * which the card reads a stored WebP like any photo - is not a per-render cost.
+ * Posters for videos stored before `Video/insert.ts` captured one. The feed must not decode
+ * video per render, but decoding each old clip once and persisting the result is not that cost.
  */
 function useVideoPosterBackfill(visuals: Resolved[]) {
   const { updateAttachment } = useAttachmentActions();
@@ -231,7 +191,6 @@ function useVideoPosterBackfill(visuals: Resolved[]) {
   }, [visuals, updateAttachment]);
 }
 
-/** Several pictures collapse into one capped wall of equal tiles. */
 function VisualGrid({ visuals, urls }: { visuals: Resolved[]; urls: Record<string, string> }) {
   const shown = visuals.slice(0, GRID_CAP);
   const hidden = visuals.length - shown.length;
@@ -278,7 +237,6 @@ const WAVE = [
   38, 72, 24, 96, 38, 58, 18, 44, 80, 30, 62, 92, 26, 50, 70, 34, 88, 20, 56, 76, 32, 64, 42, 28,
 ];
 
-/** Every voice note on a card collapses into one player plus a count. */
 function AudioRow({
   extra,
   duration,
@@ -311,7 +269,6 @@ function AudioRow({
       <span className="flex h-6 min-w-0 flex-1 items-center gap-px" aria-hidden>
         {WAVE.map((height, index) => (
           <span
-            // Position is the identity: this is one fixed decorative envelope.
             // biome-ignore lint/suspicious/noArrayIndexKey: positional waveform bar
             key={index}
             className="min-w-px flex-1 rounded-px bg-muted-foreground/55"
@@ -328,13 +285,7 @@ function AudioRow({
   );
 }
 
-/**
- * Every attached file collapses into one row plus a count.
- *
- * Informational, not a control: a file opens from inside the opened note, and
- * the whole card already opens the note - a button here would be a second way
- * to do the identical thing, sitting on top of the card's own click target.
- */
+// Informational, not a control: the whole card already opens the note, where the file opens.
 function FileRow({ row, extra }: { row?: Attachment; extra: number }) {
   const { t } = useTranslation();
   const type = formatFileType(row?.name, row?.mime);
@@ -366,22 +317,14 @@ interface CardMediaProps {
   body: string | null | undefined;
   /** Opens the note; every preview is a way into the note, never a player of its own. */
   onOpen: (opts?: { autoplayFirstAudio?: boolean }) => void;
-  /**
-   * The note's rows, when the feed has already joined them on in one query.
-   * Absent means resolve them here - a card mounted outside a feed still works.
-   */
+  /** Rows the feed already joined on; absent means the card resolves its own. */
   attachments?: NoteAttachments;
 }
 
 /**
- * The card's answer to "a note can hold eleven blocks, so what does it show?".
- *
- * Kinds are *grouped* rather than listed in document order: visuals collapse
- * into one hero or one capped wall, voice notes into one player, files into one
- * row, each carrying a `+N` for the siblings it stands in for. That keeps a
- * card's height a function of the layout instead of a function of what the user
- * happened to attach - and a predictable height is what makes the masonry wall
- * scannable. The feed's job is recognising which note to open, not reading it.
+ * Kinds are grouped, not listed in Body order: visuals into one hero or capped wall, voice notes
+ * into one player, files into one row, each with a `+N`. A card's height then follows the layout,
+ * not what was attached, which keeps the wall scannable.
  */
 export function CardMedia({ noteId, body, onOpen, attachments }: CardMediaProps) {
   const refs = useMemo(() => extractBodyAttachments(body), [body]);

@@ -12,9 +12,8 @@ export function useTagActions() {
   const store = useLocalStore();
 
   /**
-   * CREATE a tag, or return the existing one when the name is already taken.
-   * Names are compared case-insensitively: create-on-the-fly runs from a free
-   * text field, so typing "work" must not mint a second copy of "Work".
+   * Returns the existing tag when the name is taken, case-insensitively: create-on-the-fly runs
+   * from a free-text field, so typing "work" must not mint a second "Work".
    */
   const createTag = async (name: string, color?: string) => {
     const trimmed = name.trim();
@@ -27,8 +26,6 @@ export function useTagActions() {
     return newTag;
   };
 
-  // Absent keys are left alone; a present `color: undefined` is the "no colour"
-  // value and clears the field.
   const updateTag = async (id: string, changes: TagChanges) => {
     const tag = await store.tags.get(id);
     if (!tag) return null;
@@ -46,14 +43,8 @@ export function useTagActions() {
   const deleteTag = (id: string) => store.tags.delete(id);
 
   /**
-   * MERGE `source` into `target`: every note labelled `source` comes out
-   * labelled `target`, and `source` is deleted. Notes that carried both keep
-   * the one target link - the composite `[noteId+tagId]` key would reject a
-   * blind re-link, so existing links are filtered out first. The self-merge
-   * no-op guard lives in the store.
-   *
-   * One transaction throughout: a half-applied merge would drop notes off both
-   * tags at once.
+   * Relabels every `source` note as `target` and deletes `source`, in one store transaction:
+   * a half-applied merge would drop notes off both tags.
    */
   const mergeTags = (sourceId: string, targetId: string) => store.tags.merge(sourceId, targetId);
 

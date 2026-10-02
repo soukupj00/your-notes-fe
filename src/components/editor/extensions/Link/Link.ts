@@ -19,18 +19,9 @@ declare module '@tiptap/core' {
   }
 }
 
-/**
- * Links, with a custom-component button (the URL popover) rather than an
- * `ActionButton`, since applying a link needs a value, not a toggle.
- *
- * `openOnClick: false` because the editor is an editing surface: clicking a
- * link there should place the cursor, not navigate away from an unsaved note.
- * Autolink and link-on-paste stay on - pasting a URL onto selected text is the
- * single most common way a link gets made.
- *
- * A factory (the `createMathematics` shape) because `Mod+K`'s fallback prompt
- * needs a translated label, and an extension is built once, outside React.
- */
+/** `openOnClick: false`: a click in the editor places the cursor rather than leaving an
+ *  unsaved note. A factory (the `createMathematics` shape) because the `Mod+K` fallback
+ *  prompt needs `t`, and the extension is built once, outside React. */
 export function createLink(t: TFunction) {
   return TiptapLink.extend<LinkExtensionOptions>({
     addOptions() {
@@ -58,16 +49,11 @@ export function createLink(t: TFunction) {
 
     addKeyboardShortcuts() {
       return {
-        // The universal link shortcut. TipTap binds nothing here, and returning
-        // true keeps the browser's own Ctrl+K out of the way inside the editor.
+        // Returning true keeps the browser's own Ctrl+K out of the editor.
         'Mod-k': () => {
           if (this.storage.prompt.requestOpen()) return true;
-          // No button is mounted - the whole `format` family is collapsed, so
-          // the popover lives inside a closed menu. Ask directly rather than
-          // let the shortcut silently do nothing.
-          // Resolved here rather than when the extension is built: the array is
-          // built once per editor, so a label read at build time would keep the
-          // language the note was opened in.
+          // No button is mounted (its family is collapsed), so prompt directly. `t` is
+          // called here, not at build time, so the label follows the current language.
           const url = window.prompt(t('editor.link.url'), '');
           if (url !== null) applyLink(this.editor, url);
           return true;

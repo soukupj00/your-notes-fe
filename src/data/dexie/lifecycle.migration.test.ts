@@ -5,10 +5,8 @@ import { NotesDB } from './db.ts';
 const NAME = 'LifecycleMigrationTestDB';
 
 /**
- * Recreate a *pre-v3* database by hand. The v1/v2 schemas are duplicated here
- * on purpose: the point of the test is that a database written by the shipped
- * v2 app survives the v3 upgrade, so it must be built from the old schema
- * literally rather than from whatever `NotesDB` declares today.
+ * A pre-v3 database built from the v1/v2 schemas literally, not from today's `NotesDB`:
+ * the point is that a database the shipped v2 app wrote survives the v3 upgrade.
  */
 async function seedLegacyDatabase(rows: Record<string, unknown>[]) {
   const legacy = new Dexie(NAME);
@@ -59,7 +57,6 @@ describe('Dexie v3 lifecycle upgrade', () => {
 
     expect(migrated?.state).toBe('active');
     expect(migrated).not.toHaveProperty('checklist');
-    // Untouched content survives the upgrade.
     expect(migrated?.header).toBe('legacy-1');
   });
 

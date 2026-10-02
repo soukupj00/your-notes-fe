@@ -12,19 +12,8 @@ import { listLocales } from '@/lib/locales.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
 /**
- * The app's language.
- *
- * Not a `PreferencesProvider` field, and that is deliberate. i18next's detector
- * already persists the choice to `localStorage`, which is read *synchronously*
- * before first paint; the preferences blob lives in Dexie and hydrates a frame
- * later, so moving language there would show every non-English user a flash of
- * English on every cold load. It is the same reason `ThemeProvider` is still on
- * `localStorage`. The cost is real and worth stating: language does not travel
- * in the backup `.zip` and will not sync in M5.
- *
- * A Select rather than the segmented control the other settings use: this list
- * grows with every translation the project accepts, and a segmented control
- * stops working at about four options.
+ * Not a `PreferencesProvider` field: i18next's detector owns the language and keeps it in
+ * `localStorage` itself (CLAUDE.md, i18n). A Select, because the list outgrows a segmented control.
  */
 export function LanguageSection() {
   const { t } = useTranslation();

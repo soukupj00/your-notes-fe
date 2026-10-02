@@ -6,18 +6,12 @@ import { AttachmentUnavailable } from '../attachments/AttachmentUnavailable';
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
 
-/** Editor render path for imageAttachment. Object-URL lifecycle lives in the
- *  shared useAttachmentObjectUrl hook; delete is guarded by the shared
- *  AttachmentDeleteButton (editor-only, same as audio/video). */
 export function ImageNodeView(props: ReactNodeViewProps) {
   const attachmentId = props.node.attrs.attachmentId as string | null;
   const deps = (props.extension.options.getDeps as () => AttachmentDeps)();
   const state = useAttachmentObjectUrl(attachmentId, deps.watchAttachment);
   const canDelete = props.editor?.isEditable ?? false;
 
-  // Corner overlay, matching Excalidraw's delete placement (Task 3): a
-  // semi-opaque pill sits atop the content surface instead of taking flex
-  // space next to it, so it stays legible over any image.
   const deleteButton = canDelete ? (
     <AttachmentDeleteButton
       onConfirm={() => props.deleteNode()}

@@ -152,18 +152,15 @@ describe('resolveLayout', () => {
     const wide = resolveLayout(undefined, 'wide').map((entry) => entry.family.id);
     const compact = resolveLayout(undefined, 'compact').map((entry) => entry.family.id);
     expect(wide).not.toEqual(compact);
-    // Wide has slots to spare, so it keeps the in-editor way back into the
-    // settings. Compact does not: six is all a 360px phone fits, and the gear
-    // is a door to a screen `/settings` already reaches, not an editing
-    // control. It is one toggle away for anyone who wants it there.
+    // Wide has room for the in-editor way back. Compact does not: six slots, and the
+    // gear is a door to a screen `/settings` already reaches, not an editing control.
     expect(wide).toContain('meta');
     expect(compact).not.toContain('meta');
   });
 
   it('opens the phone bar with undo and redo as real buttons', () => {
-    // A phone has no Ctrl+Z, so undo may not cost a tap to *reach* before it
-    // costs one to use - and being first, history is also the pinned family,
-    // so it stays put while the rest of the bar scrolls under it.
+    // A phone has no Ctrl+Z, so undo may not cost a tap to reach; being first,
+    // history is also the pinned family.
     const compact = resolveLayout(undefined, 'compact');
     expect(compact[0]?.family.id).toBe('history');
     expect(compact[0]?.collapsed).toBe(false);

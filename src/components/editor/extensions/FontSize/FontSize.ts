@@ -12,12 +12,7 @@ export interface FontSizeExtensionOptions extends FontSizeOptions {
   button: (context: ButtonContext) => FontSizeButtonView;
 }
 
-/**
- * Wraps the upstream `FontSize` extension (from `@tiptap/extension-text-style`, name
- * `fontSize`, backs `setFontSize` / `unsetFontSize` on the `textStyle` mark) with a
- * Pattern A `button` that returns the {@link FontSizeButton} dropdown. `TextStyle` must
- * also be registered for the font-size attribute to exist.
- */
+/** `TextStyle` must also be registered, or the fontSize attribute does not exist. */
 export const FontSize = TiptapFontSize.extend<FontSizeExtensionOptions>({
   addOptions() {
     return {

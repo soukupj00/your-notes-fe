@@ -14,12 +14,8 @@ import { useAccount } from '@/context/AccountProvider.tsx';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
 /**
- * Who this Device is signed in as, or a way to sign in. Renders nothing when no
- * Self-hosted Server answered, because sync is opt-in and a local-only app has
- * no account to talk about (ADR 0018).
- *
- * Signing out erases this Device, and is refused while anything is still owed
- * to the server (`SignOutButton`).
+ * Renders nothing when no Self-hosted Server answered: sync is opt-in (ADR 0018).
+ * Signing out erases this Device and is refused while anything is owed (`SignOutButton`).
  */
 export function AccountSection() {
   const { t } = useTranslation();

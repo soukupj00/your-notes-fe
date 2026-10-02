@@ -2,19 +2,15 @@ import { ConfirmDeleteButton as BaseConfirmDeleteButton } from '@/components/ui/
 import type { TFunction } from '../button-types';
 
 export interface AttachmentDeleteButtonProps {
-  /** Invoked once, only when the user confirms. In every NodeView this is
-   *  `() => props.deleteNode()` - editor-only, never touches Dexie. */
+  /** Runs only on confirm. Editor-only (`deleteNode()`): it never touches the database. */
   onConfirm: () => void;
-  /** Per-kind aria-label for the trigger, e.g. t('editor.video.delete'). */
   label: string;
-  /** Resolves the shared attachments.confirmDelete.* dialog strings. */
   t: TFunction;
-  /** Positions a prominent delete control over a visual attachment preview. */
+  /** Over a visual preview, rather than inline in a row. */
   overlay?: boolean;
 }
 
-/** Binds the generic confirmation control to attachment copy and presentation.
- *  Node removal stays editor-only - blob GC still happens at dialog close
+/** Removing the node leaves the row: orphans are collected when the dialog closes
  *  (collectOrphans). */
 export function AttachmentDeleteButton({
   t,

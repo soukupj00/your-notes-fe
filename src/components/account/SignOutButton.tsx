@@ -17,11 +17,8 @@ import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import { backupFilename, buildBackupZip, requestSaveTarget } from '@/lib/backup.ts';
 
 /**
- * Sign out, which erases this Device (04-sync.md "Account boundary"): the server
- * holds everything, and the next person on a shared laptop must not adopt this
- * one's Notes. So it is refused while anything is still owed to the server -
- * that would be the one copy of it - and the refusal offers the ways out: sync
- * now, or save a Backup first.
+ * Signing out erases this Device (04-sync.md "Account boundary"), so it is refused while
+ * anything owed to the server exists only here; the refusal offers sync or a Backup.
  */
 export function SignOutButton() {
   const { t } = useTranslation();

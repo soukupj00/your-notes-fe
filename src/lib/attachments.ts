@@ -1,6 +1,6 @@
 import type { AttachmentKind } from '@/models.ts';
 
-/** Image MIME types we accept in Slice 1. SVG excluded (script surface). */
+/** SVG is excluded because it can carry script. */
 export const ALLOWED_IMAGE_MIME = [
   'image/png',
   'image/jpeg',
@@ -9,13 +9,11 @@ export const ALLOWED_IMAGE_MIME = [
   'image/avif',
 ] as const;
 
-/** Per-image size cap: 10 MB. */
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 export type AttachmentErrorCode = 'unsupported-type' | 'too-large' | 'insert-failed';
 
-/** Thrown by createAttachment when a file fails validation; carries a code so
- *  the caller can map it to a translated toast. */
+/** Carries a code so the caller can map a failed attachment to a translated toast. */
 export class AttachmentError extends Error {
   code: AttachmentErrorCode;
 
@@ -26,7 +24,6 @@ export class AttachmentError extends Error {
   }
 }
 
-/** Returns the failure code, or null when the file is a valid image. Pure. */
 export function validateImageFile(file: File): AttachmentErrorCode | null {
   if (!ALLOWED_IMAGE_MIME.includes(file.type as (typeof ALLOWED_IMAGE_MIME)[number])) {
     return 'unsupported-type';
@@ -37,7 +34,7 @@ export function validateImageFile(file: File): AttachmentErrorCode | null {
   return null;
 }
 
-/** Audio MIME types accepted for attachment (recorder output is always allowed). */
+/** Must include every `CANDIDATE_MIME` the in-app recorder (`useAudioRecorder`) can pick. */
 const ALLOWED_AUDIO_MIME = [
   'audio/webm',
   'audio/ogg',
@@ -46,23 +43,19 @@ const ALLOWED_AUDIO_MIME = [
   'audio/wav',
 ] as const;
 
-/** Per-audio size cap: 25 MB. */
 export const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 
-/** Video MIME types accepted for attachment. */
 const ALLOWED_VIDEO_MIME = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'] as const;
 
-/** Per-video size cap: 100 MB. */
 export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 
-/** Per-file size cap: 50 MB. Generous relative to media caps because a file
- *  attachment can be any document (PDFs, archives, ...). Adjustable. */
+/** Larger than the media caps because a file can be any document (PDFs, archives). */
 export const MAX_FILE_BYTES = 50 * 1024 * 1024;
 
-/** Excalidraw scenes are stored as a JSON document (reuses the Blob-based attachments table). */
+/** An Excalidraw scene is stored as a JSON Blob in the same attachments table. */
 const EXCALIDRAW_MIME = 'application/json';
 
-/** Per-scene size cap: 25 MB. Enforced at creation only. */
+/** Enforced at creation only. */
 export const MAX_EXCALIDRAW_BYTES = 25 * 1024 * 1024;
 
 function baseMimeType(file: File): string {
@@ -79,7 +72,6 @@ function validateWhitelistedFile(
   return null;
 }
 
-/** Kind-dispatched file validation. Returns the failure code or null. Pure. */
 export function validateAttachmentFile(
   file: File,
   kind: AttachmentKind
@@ -95,8 +87,7 @@ export function validateAttachmentFile(
     return validateWhitelistedFile(file, ALLOWED_VIDEO_MIME, MAX_VIDEO_BYTES);
   }
   if (kind === 'file') {
-    // No MIME whitelist: a file attachment accepts any type. Only the size cap
-    // gates it (unlike image/audio/video, which whitelist their MIME).
+    // Deliberately no MIME whitelist: a file attachment can be any type.
     if (file.size > MAX_FILE_BYTES) return 'too-large';
     return null;
   }

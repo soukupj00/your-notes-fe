@@ -25,11 +25,8 @@ const TIE_TOLERANCE = 0.5;
 const STACK_MAX_WIDTH = 704;
 
 /**
- * Resolves both feed modes to the same x/y/width placement contract.
- *
- * Items remain in input order. Masonry only chooses the shortest visual column
- * for each next item, so callers can preserve DOM order as reading order while
- * still packing the wall tightly.
+ * Items keep input order and masonry only picks the shortest column for each, so DOM order stays
+ * the reading order while the wall still packs tightly.
  */
 export function calculateNoteFeedLayout({
   mode,

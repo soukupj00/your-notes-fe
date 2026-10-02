@@ -8,20 +8,9 @@ import { setViewport } from '@/test/viewport.ts';
 import { NoteEditorDialog } from './NoteEditorDialog.tsx';
 
 /**
- * Opening a note card, with the *real* TipTap editor.
- *
- * `NoteEditorDialog.test.tsx` swaps the editor for a textarea, which is right
- * for testing autosave but means nothing there ever mounts the toolbar, the
- * bubble menu, or the ProseMirror plugins. A render loop shipped through that
- * gap: `BubbleMenu`'s update effect dispatches a transaction whenever its
- * `shouldShow`/`options` props change identity, and the editor runs with
- * `shouldRerenderOnTransaction: true`, so passing fresh literals became
- * render -> effect -> dispatch -> render and every note click died with
- * "Maximum update depth exceeded".
- *
- * It needs the dialog rather than a bare editor: the async note load setting
- * `header`/`body` state is what pumps the cycle hard enough to trip React's
- * limit.
+ * The real TipTap editor, which the textarea mock never mounts: a "Maximum update depth" loop
+ * (`BubbleMenu` props changing identity) once shipped through that gap. The dialog's async note
+ * load is what drives such a loop hard enough to trip React's limit, so it renders the dialog.
  */
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -36,11 +25,8 @@ vi.mock('@/hooks/useReducedMotion.ts', () => ({
 // The real canvas lib crashes under jsdom (no canvas.getContext()).
 vi.mock('@excalidraw/excalidraw', () => ({ Excalidraw: () => null, exportToSvg: vi.fn() }));
 
-// Once the bubble menu is actually visible (the linked-note case) TipTap
-// measures the caret through `posToDOMRect`, which walks down to
-// `getClientRects` - unimplemented in jsdom, and it throws from inside a
-// ProseMirror plugin view where nothing can catch it. A layout shim, not a
-// behaviour stub: jsdom does no layout, so every rect would be zero anyway.
+// A visible bubble menu measures the caret via `getClientRects`, which jsdom lacks and which
+// throws uncatchably inside a plugin view. A layout shim: jsdom's rects would be zero anyway.
 beforeAll(() => {
   Range.prototype.getClientRects = () => Object.assign([], { item: () => null });
   Range.prototype.getBoundingClientRect = () => new DOMRect();
@@ -120,11 +106,8 @@ describe('the toolbar customisation sheet, over an unsaved draft', () => {
   }
 
   /**
-   * Opens the sheet, changes something in it, and closes it again.
-   *
-   * Two dialogs are open while it runs: the note, and the sheet layered over it.
-   * The sheet is the one that must not navigate - routing to Settings would
-   * either destroy this draft or force the `ensureNoteId` race Task 4 refused.
+   * The sheet layered over the note must not navigate: routing to Settings would destroy the
+   * draft or force it to be created early through `ensureNoteId`.
    */
   async function roundTripTheSheet(user: ReturnType<typeof userEvent.setup>) {
     await user.click(await screen.findByTestId('toolbar-customize'));
@@ -139,12 +122,8 @@ describe('the toolbar customisation sheet, over an unsaved draft', () => {
     );
   }
 
-  // These were one test, which asserted an empty notes table on a draft that had
-  // just been typed into - so it was really asserting that the whole sheet
-  // round-trip finished inside the 600ms autosave debounce, and it failed on a
-  // loaded machine when it did not. Autosaving a dirty draft is correct
-  // behaviour; what the sheet must not do is create the note *itself*, which is
-  // only answerable on a draft that has nothing to save.
+  // Only a draft with nothing to save can show the sheet does not create the note itself; a
+  // typed-into draft would race the 600ms autosave and flake on a loaded machine.
   it('opens and closes without creating the draft', async () => {
     const user = renderDraft();
     await screen.findByPlaceholderText('notes.titlePlaceholder');

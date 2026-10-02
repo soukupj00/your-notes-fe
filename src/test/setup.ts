@@ -3,17 +3,9 @@ import '@testing-library/jest-dom/vitest';
 import { cleanup, configure } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 
-// Testing Library gives `findBy*` and `waitFor` one second, which is generous
-// for a component and not generous at all for the handful of tests that render
-// the whole app: a route render here pulls a lazy chunk, opens Dexie and waits
-// on a live query, and 125 test files run in parallel on however many cores the
-// machine has. Those tests passed alone and failed perhaps one run in three
-// under load - a timeout, never a wrong assertion.
-//
-// Raising the budget costs nothing a passing test can feel, since these are
-// polls that resolve as soon as the condition holds; what it buys is that a red
-// suite means something is broken. A test that genuinely hangs still fails, five
-// seconds later.
+// The default one second flaked the whole-app tests under parallel load (a timeout, never a
+// wrong assertion). These are polls that resolve as soon as they hold, so a passing test does
+// not pay for the bigger budget.
 configure({ asyncUtilTimeout: 5000 });
 
 // Stable browser API shims shared by Radix-based component tests.

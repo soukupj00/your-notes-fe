@@ -19,10 +19,8 @@ export class ProblemError extends Error {
 export type Rel = keyof RootResponse['_links'];
 
 /**
- * The one door to the Self-hosted Server. It starts at the HAL root (`GET /api`)
- * and follows its links, so no route is written down twice; every body is
- * parsed with the vendored contract, which makes a drift between the repos a
- * thrown `ZodError` at the boundary rather than a wrong value inside the app.
+ * The one door to the Self-hosted Server: it follows the HAL root's links, so no route is written
+ * twice, and parses every body with the contract, so a drift throws here instead of corrupting.
  */
 export type HalClient = {
   /** The root's `rel` link, with a templated link's `{name}`s filled in. */

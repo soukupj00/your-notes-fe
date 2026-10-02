@@ -1,7 +1,6 @@
 /**
- * The single lifecycle stage a Note occupies (ADR 0009). Mutually exclusive -
- * a Note is never two of these at once. Pinning is modelled separately
- * (`Note.pinnedAt`) because it is orthogonal to the stage.
+ * The one lifecycle stage a Note is in (ADR 0009). Pinning is orthogonal to it, so it is
+ * `Note.pinnedAt` instead.
  */
 export type NoteState = 'active' | 'archived' | 'trashed';
 
@@ -20,7 +19,7 @@ export interface Note {
   // A Reminder (CONTEXT.md, ADR 0021). The app records it and never sounds it -
   // the alarm belongs to the calendar it was handed to.
   remindAt?: string; // LOCAL wall clock 'YYYY-MM-DDTHH:mm', deliberately not ISO/UTC: 09:00 stays 09:00 across DST
-  repeat?: ReminderRepeat; // absent = one-shot
+  repeat?: ReminderRepeat;
   tags?: Tag[];
   createdAt: string; // ISO
   updatedAt: string; // ISO
@@ -35,33 +34,27 @@ export interface Tag {
 }
 
 export interface NoteTag {
-  noteId: string; // Foreign key to Note.id
-  tagId: string; // Foreign key to Tag.id
+  noteId: string;
+  tagId: string;
   createdAt: string; // ISO
   updatedAt: string; // ISO
 }
 
-/**
- * A row in the generic `settings` key-value store: app-level state that is not
- * a domain entity. Currently one row, the user preferences blob (see
- * `context/PreferencesProvider.tsx`), whose shape is owned by a Zod schema
- * rather than by this file - hence the caller-supplied `T`.
- */
+/** A row of the `settings` table, which is the Local Store's `meta`; the caller owns `T`. */
 export interface Setting<T = unknown> {
   key: string;
   value: T;
 }
 
-export type AttachmentKind = 'image' | 'audio' | 'video' | 'file' | 'excalidraw'; // grows per slice
+export type AttachmentKind = 'image' | 'audio' | 'video' | 'file' | 'excalidraw';
 
 /**
- * A binary attachment (starting with inline images in M3 Slice 1). Bytes live
- * here as a native Blob (ADR 0007); the Note body references it by id via
- * <img data-attachment-id>. One row is owned by exactly one Note (noteId).
+ * Bytes live here as a native Blob (ADR 0007); the Note body references the row by id via
+ * `<img data-attachment-id>`. Exactly one Note owns a row.
  */
 export interface Attachment {
   id: string; // uuid v4
-  noteId: string; // FK to Note.id
+  noteId: string;
   kind: AttachmentKind;
   mime: string; // e.g. 'image/png'
   blob?: Blob; // the authoritative full-size bytes; absent = known (synced metadata) but not downloaded
@@ -71,7 +64,7 @@ export interface Attachment {
   size?: number; // bytes
   width?: number; // image/video (computed in a later processing slice)
   height?: number; // image/video
-  duration?: number; // audio/video (later slices)
+  duration?: number; // audio/video
   preview?: string; // excalidraw: rendered SVG snapshot of the scene, stored at save-time for cheap card rendering (no canvas re-mount)
   createdAt: string; // ISO
   updatedAt: string; // ISO

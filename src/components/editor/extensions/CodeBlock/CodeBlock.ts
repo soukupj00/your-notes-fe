@@ -6,11 +6,8 @@ export interface CodeBlockExtensionOptions extends CodeBlockOptions {
   button: (context: ButtonContext) => ButtonView;
 }
 
-/**
- * Plain (unhighlighted) code block. Deliberately not the lowlight variant:
- * syntax highlighting would pull a language grammar bundle into a note-taking
- * app for a block that is mostly used to hold a command or a snippet verbatim.
- */
+/** Plain, not the lowlight variant: highlighting would pull in a grammar bundle for a block
+ *  that mostly holds a command or a snippet verbatim. */
 export const CodeBlock = TiptapCodeBlock.extend<CodeBlockExtensionOptions>({
   addOptions() {
     return {

@@ -11,7 +11,6 @@ const MASONRY_SKELETONS =
   'grid grid-cols-1 gap-[var(--feed-gap)] min-[22rem]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
 const STACK_SKELETONS = 'grid grid-cols-1 gap-[var(--feed-gap)]';
 
-/** Which `notes.empty.*` copy block describes an empty feed in this scope. */
 function emptyKeyFor(scope: NoteFeedScope): string {
   if (scope.state === 'archived') return 'archived';
   if (scope.state === 'trashed') return 'trashed';

@@ -2,14 +2,8 @@ import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils.ts';
 
 /**
- * A real checkbox wrapped in its label, so the whole row is one hit target with
- * native keyboard and label-click behaviour.
- *
- * A native `<input type="checkbox">` rather than Radix's, which renders as a
- * `<button>` that a `<label>` cannot activate natively - the label text would be
- * dead to clicks. The input is visually hidden and a styled span stands in, so it
- * still looks like every other checkbox in the app. This is the app's only
- * checkbox; the vendored Radix one was removed once nothing used it.
+ * A native checkbox inside its label, so the whole row is one hit target. Not Radix's:
+ * that renders a `<button>`, which a `<label>` cannot activate natively.
  */
 export function LabeledCheckbox({
   label,
@@ -21,12 +15,8 @@ export function LabeledCheckbox({
   label: string;
   checked: boolean;
   onToggle: () => void;
-  /** Extra classes for the `<label>` row, for callers that are a list row. */
   className?: string;
-  /**
-   * Extra classes for the text itself. A one-line row wants `truncate`; a label
-   * that is a whole sentence must be allowed to wrap, so this is not a default.
-   */
+  /** A one-line row wants `truncate`, but a sentence must wrap, so it is not a default. */
   labelClassName?: string;
 }) {
   return (

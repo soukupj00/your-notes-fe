@@ -14,23 +14,16 @@ import { ShortcutsSection } from '@/components/settings/ShortcutsSection.tsx';
 import { SyncStatusSection } from '@/components/settings/SyncStatusSection.tsx';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
 
-/**
- * Settings shell: a heading and the sections, in order.
- *
- * Every section owns its own `SettingsSection` wrapper and its own controls
- */
+/** Every section owns its `SettingsSection` wrapper and controls; this page only orders them. */
 export default function SettingsPage() {
   const { t } = useTranslation();
   const headingRef = useFocusOnMount<HTMLHeadingElement>();
 
   return (
     <div className="mx-auto max-w-2xl">
-      {/* Visually the topbar's job on mobile, this heading's job on desktop -
-          where the bar carries no title, because the rail already does. It stays
-          in the DOM either way: it is the route's focus target
-          (`useFocusOnMount`) and the document outline, neither of which a span
-          in the bar could take over without moving focus above `#main-content`
-          and stranding the skip link past it. */}
+      {/* Hidden on mobile, where the topbar carries the title, but always in the DOM: it is the
+          route's focus target and outline. A title in the bar would move focus above
+          `#main-content` and strand the skip link. */}
       <h1
         ref={headingRef}
         tabIndex={-1}
@@ -43,19 +36,8 @@ export default function SettingsPage() {
 
       <AppearanceSection />
 
-      {/* The Tour's Settings targets are declared here rather than inside a
-          section, so no section has to know the Tour exists and the anchors are
-          legible in one place. They wrap rather than mark, because a step points
-          at a *block* of related rows and a bare `div` changes no layout.
-
-          These two used to be one `settings-customisation` block covering both
-          sections, and it could not work: the pair measures 1296px on an 839px
-          phone, the app is `inert` for the Tour's lifetime so the user cannot
-          scroll to the rest, and `EditorToolbarSection` alone is still 880px.
-          Two steps pointing at two things that fit beats one step pointing at a
-          hole whose bottom edge is off-screen. The toolbar step aims at the
-          preview strip inside the section (`settings-toolbar`, marked by
-          `ToolbarPreviewStrip` itself) rather than at this wrapper. */}
+      {/* The Tour's Settings anchors wrap sections here, so no section knows the Tour exists.
+          Why they are split the way they are: CLAUDE.md, "The Tour". */}
       <EditorToolbarSection />
 
       <div data-tour="settings-quick-capture">
@@ -64,27 +46,20 @@ export default function SettingsPage() {
 
       <ShortcutsSection />
 
-      {/* Deliberately between the shortcuts and the closing pair: it is the
-          other "learn the app" surface, and putting it here keeps
-          `PwaInstallSection` + `BackupSection` adjacent for the Tour's own last
-          step to point at. */}
+      {/* The other "learn the app" surface, placed so the Tour's last step can point at the
+          closing pair as one block. */}
       <HelpSection />
 
-      {/* `PwaInstallSection` renders nothing unless the browser is offering an
-          install, so it cannot be step 5's anchor on its own - and step 5 is the
-          one carrying the fact that the data is local, which may not be the step
-          that goes missing. `BackupSection` always renders and holds the
-          actionable half of the same message. */}
+      {/* `PwaInstallSection` may render nothing, so it cannot anchor step 6 alone;
+          `BackupSection` always renders and carries the same "your data is local" message. */}
       <div data-tour="settings-local">
         <PwaInstallSection />
 
         <BackupSection />
       </div>
 
-      {/* Where the data goes beyond this Device, beside where it lives on it.
-          Outside the Tour's `settings-local` block on purpose: these render only
-          when a Self-hosted Server answered, and a step's anchor must not change
-          size with the server. Each renders nothing when it does not apply. */}
+      {/* Outside `settings-local` on purpose: these render only when a Self-hosted Server
+          answered, and a Tour step's anchor must not change size with the server. */}
       <SyncStatusSection />
 
       <AccountSection />

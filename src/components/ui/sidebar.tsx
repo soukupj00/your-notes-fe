@@ -65,8 +65,6 @@ const SidebarProvider = React.forwardRef<
     const isMobile = useIsMobile();
     const [openMobile, setOpenMobile] = React.useState(false);
 
-    // This is the internal state of the sidebar.
-    // We use openProp and setOpenProp for control from outside the component.
     const [_open, _setOpen] = React.useState(defaultOpen);
     const open = openProp ?? _open;
     const setOpen = React.useCallback(
@@ -83,7 +81,6 @@ const SidebarProvider = React.forwardRef<
       [setOpenProp, open]
     );
 
-    // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
       return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
     }, [isMobile, setOpen]);
@@ -91,8 +88,6 @@ const SidebarProvider = React.forwardRef<
     // ADR 0010: upstream's Cmd/Ctrl+B window listener is deleted - it collides
     // with TipTap's bold.
 
-    // We add a state so that we can do data-state="expanded" or "collapsed".
-    // This makes it easier to style the sidebar with Tailwind classes.
     const state = open ? 'expanded' : 'collapsed';
 
     const contextValue = React.useMemo<SidebarContextProps>(
@@ -183,9 +178,8 @@ const Sidebar = React.forwardRef<
             className="w-(--sidebar-width) border-r-0 bg-sidebar p-0 text-sidebar-foreground outline-none [&>button]:hidden"
             style={{ '--sidebar-width': SIDEBAR_WIDTH_MOBILE } as React.CSSProperties}
             side={side}
-            // ADR 0010: Radix would restore focus to the trigger on close, which
-            // yanks it back off the destination heading `useFocusOnMount` just
-            // moved it to when a nav link both navigates and closes the drawer.
+            // ADR 0010: no focus restore on close, or it yanks focus off the destination
+            // heading `useFocusOnMount` just moved it to.
             onCloseAutoFocus={(event) => event.preventDefault()}
           >
             <SheetHeader className="sr-only">
@@ -194,11 +188,8 @@ const Sidebar = React.forwardRef<
               <SheetTitle>{t('nav.primary')}</SheetTitle>
               <SheetDescription>{t('nav.drawerDescription')}</SheetDescription>
             </SheetHeader>
-            {/* The drawer is full-height and flush to the left edge, so under
-                `viewport-fit=cover` its brand row would sit under the status bar
-                and, in landscape, its links under the sensor housing. Padding
-                the inner column rather than the panel keeps `bg-sidebar`
-                painting edge to edge behind them. */}
+            {/* Under `viewport-fit=cover` the drawer reaches under the status bar and the
+                sensor housing; the column pads, so `bg-sidebar` still paints edge to edge. */}
             <div className="flex h-full w-full flex-col pt-[var(--safe-top)] pb-[var(--safe-bottom)] pl-[var(--safe-left)]">
               {children}
             </div>
@@ -233,7 +224,6 @@ const Sidebar = React.forwardRef<
             side === 'left'
               ? 'left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]'
               : 'right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]',
-            // Adjust the padding for floating and inset variants.
             variant === 'floating' || variant === 'inset'
               ? 'p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]'
               : 'group-data-[collapsible=icon]:w-[var(--sidebar-width-icon)] group-data-[side=left]:border-r group-data-[side=right]:border-l',
@@ -241,11 +231,8 @@ const Sidebar = React.forwardRef<
           )}
           {...props}
         >
-          {/* The rail is `fixed inset-y-0 left-0`, so it owns a screen edge on
-              every side but one. A phone in landscape is wider than `sm:` and so
-              gets *this*, not the drawer - which is exactly where the sensor
-              housing sits. Padding the column rather than the panel keeps
-              `bg-sidebar` painting under the housing behind the links. */}
+          {/* A landscape phone is wider than `sm:` and gets this rail, beside the sensor
+              housing; same column padding as the drawer. */}
           <div
             data-sidebar="sidebar"
             className="flex h-full w-full flex-col bg-sidebar pt-[var(--safe-top)] pb-[var(--safe-bottom)] pl-[var(--safe-left)] group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
@@ -407,17 +394,9 @@ const SidebarMenuItem = React.forwardRef<HTMLLIElement, React.ComponentProps<'li
 );
 SidebarMenuItem.displayName = 'SidebarMenuItem';
 
-// Vendored edit: `group-data-[collapsible=icon]:[&>span:last-child]:hidden` and
-// `justify-center`. Upstream relies on the button being exactly 32px wide for
-// the label to fall outside `overflow-hidden`, which stops being true the moment
-// anything gives the button a different width - and the 44px Coarse floor
-// (ADR 0016) does exactly that, leaving ~12px of label showing in a rail that is
-// meant to be icons only. Hiding the label outright is what makes the collapsed
-// rail independent of the arithmetic; `justify-center` then centres the icon in
-// whatever width the button ends up with, and `mx-auto` centres that button in
-// its slot. Without the last one a 44px button sits at the left of a 48px slot
-// and the four nav icons land 2px off the brand mark above them, which in a
-// 64px rail is a visible jog.
+// Vendored edit (ADR 0016): collapsed, the label is hidden and the icon centred.
+// Upstream hid it only while the button was exactly 32px, which the 44px Coarse floor
+// breaks; without `mx-auto` the nav icons sit 2px off the brand mark.
 const sidebarMenuButtonVariants = cva(
   'peer/menu-button group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center [&>span:last-child]:truncate group-data-[collapsible=icon]:[&>span:last-child]:hidden [&>svg]:size-4 [&>svg]:shrink-0',
   {
@@ -500,12 +479,9 @@ const SidebarMenuButton = React.forwardRef<
 );
 SidebarMenuButton.displayName = 'SidebarMenuButton';
 
-// ADR 0010: upstream's `SidebarMenuSkeleton` is deleted - unused, and its
-// `Math.random()` inside a `useMemo` trips this repo's react-hooks/purity rule.
-// On the same grounds this vendoring also drops `SidebarRail`, `SidebarInput`,
-// `SidebarFooter`, `SidebarSeparator`, `SidebarGroupAction`, `SidebarMenuAction`,
-// `SidebarMenuBadge` and the `SidebarMenuSub*` trio: this app's nav is one flat
-// menu with no sub-levels, and nothing rendered any of them.
+// ADR 0010: unused upstream parts are deleted (`SidebarMenuSkeleton` also trips the
+// react-hooks/purity rule): `SidebarRail`, `SidebarInput`, `SidebarFooter`, `SidebarSeparator`,
+// `SidebarGroupAction`, `SidebarMenuAction`, `SidebarMenuBadge`, `SidebarMenuSub*`.
 
 export {
   Sidebar,

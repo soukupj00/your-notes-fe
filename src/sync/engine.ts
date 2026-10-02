@@ -22,17 +22,14 @@ export type SyncReport = {
 
 export type SyncEngine = {
   /**
-   * One run: push what is owed, pull what was missed, then move Attachment
-   * bytes (`attachments.ts`). Runs never overlap:
-   * a call during a run waits for it, and every call made during that wait
-   * shares the one run that follows.
+   * One run: push what is owed, pull what was missed, then move Attachment bytes. Runs never
+   * overlap: a call during a run waits, and every call made meanwhile shares the one that follows.
    */
   sync(): Promise<SyncReport>;
   /**
-   * Attaches the store to `accountId`. The first time (or after another
-   * Account), every row becomes owed and the cursor is forgotten, so the next
-   * run uploads the library and pulls the Account from the start. Answers
-   * whether it adopted.
+   * Attaches the store to `accountId`. The first time, or after another Account, every row becomes
+   * owed and the cursor is forgotten, so the next run uploads the library and pulls from the start.
+   * Answers whether it adopted.
    */
   adopt(accountId: string): Promise<boolean>;
 };

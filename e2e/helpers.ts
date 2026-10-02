@@ -1,14 +1,9 @@
 import type { Page } from '@playwright/test';
 
 /**
- * A fresh context has empty storage, so the Tour is due (ADR 0015) and would
- * mark everything but its popover `inert`. These specs are about the app the
- * Tour demonstrates, not the Tour, so the offer is recorded as already made.
- * The blob is the Preferences schema's own shape: `version` is a literal.
- *
- * A string rather than a function: `tsconfig.node.json` has no DOM lib, so a
- * callback naming `localStorage` would not typecheck, and the script runs in
- * the page either way.
+ * A fresh context is offered the Tour, which makes the app `inert`, so the offer is recorded as made
+ * in the Preferences schema's own shape. A string, not a function: `tsconfig.node.json` has no DOM
+ * lib, so a callback naming `localStorage` would not typecheck.
  */
 export async function skipTour(page: Page) {
   await page.addInitScript(

@@ -7,10 +7,8 @@ import {
 } from '@/context/PreferencesProvider.tsx';
 import { COLOR_BLIND_CLASS, DocumentPreferences } from './DocumentPreferences.tsx';
 
-// `PreferencesProvider` only re-reads on a `storage` event (another tab's
-// write) or `setPreference` (its own). A same-tab write from outside React -
-// what this suite does to force a value into an already-mounted provider -
-// has to fire that event itself to be picked up.
+// `PreferencesProvider` re-reads only on a `storage` event or its own setter, so this suite's
+// same-tab writes from outside React have to fire that event themselves.
 const store = (value: unknown) => {
   localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(value));
   window.dispatchEvent(new StorageEvent('storage', { key: PREFERENCES_STORAGE_KEY }));

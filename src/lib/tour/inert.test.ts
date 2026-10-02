@@ -2,10 +2,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { holdBodyInert } from './inert.ts';
 
 /**
- * `inert` is the only thing standing between a demonstration and a user who can
- * half-drive the app from under the scrim, so what is pinned here is the whole
- * of its contract: everything is marked, the exemption holds, latecomers are
- * caught, and nothing the app had already made inert is handed back.
+ * `inert` alone stops a user half-driving the app under the scrim, so its whole contract is pinned:
+ * everything marked, the exemption held, latecomers caught, nothing already inert handed back.
  */
 
 const releases: (() => void)[] = [];

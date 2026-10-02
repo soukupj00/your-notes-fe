@@ -6,42 +6,22 @@ import type { TFunction } from '../button-types';
 import { insertImageAttachmentFiles } from '../Image/insert';
 
 export interface SlashItem {
-  /**
-   * The **Toolbar Item id** this menu entry inserts (ADR 0011, decision 13).
-   *
-   * The registry owns the icon and the name; this file owns only what differs
-   * per surface. That is why there is no `icon` or `labelKey` here: two lists
-   * naming the same action were how the menu drifted from the bar in the first
-   * place (Math was a toolbar button with no slash item at all).
-   */
+  /** The Toolbar Item id (ADR 0011, decision 13). Icon and name come from the registry,
+   *  so the menu cannot drift from the bar. */
   key: string;
   /** Extra words the filter should match, so "bullet" finds "Bullet list". */
   keywords: string[];
-  /**
-   * `range` covers the typed `/query`; every item must consume it.
-   *
-   * This is the half that cannot be shared with the toolbar: a slash run has a
-   * query to delete first, and a toolbar action must not delete anything.
-   *
-   * `t` is here for the one item that has to speak to the user before it can
-   * act - Math prompts for LaTeX, and a hardcoded English prompt would be the
-   * only untranslated string in the editor.
-   */
+  /** Must delete the typed `/query` (`range`) first, which is why it is not shared
+   *  with the toolbar action. `t` is for Math's LaTeX prompt. */
   run: (ctx: { editor: Editor; range: Range; deps: AttachmentDeps; t: TFunction }) => void;
 }
 
-/** The registry's name for a slash item, which is the one both surfaces show. */
 export function slashItemLabelKey(item: SlashItem): string {
   return getToolbarItem(item.key)?.labelKey ?? item.key;
 }
 
-/**
- * Open a throwaway file picker.
- *
- * The toolbar's media buttons own persistent hidden inputs, but a slash-menu
- * item has no element of its own to hang one on. Creating it inside the
- * activation keeps the user gesture alive, which is what `click()` needs.
- */
+/** A throwaway input, because a slash item has no element to own one. It is created
+ *  inside the user's activation, which `click()` needs. */
 function pickFiles(accept: string, onFiles: (files: File[]) => void): void {
   const input = document.createElement('input');
   input.type = 'file';
@@ -58,12 +38,7 @@ function consume(editor: Editor, range: Range) {
   return editor.chain().focus().deleteRange(range);
 }
 
-/**
- * Everything the slash menu can insert: blocks first (the common case), media
- * after. This is the keyboard-only counterpart to the toolbar, so the two lists
- * are meant to stay in step - an item added here should have a toolbar button
- * and vice versa.
- */
+/** Blocks first, media after. Every item should have a toolbar button and vice versa. */
 export const SLASH_ITEMS: SlashItem[] = [
   {
     key: 'h1',
@@ -125,8 +100,7 @@ export const SLASH_ITEMS: SlashItem[] = [
   {
     key: 'audio',
     keywords: ['recording', 'voice', 'mic'],
-    // Recording is owned by the toolbar's mic button, reached through the same
-    // storage coordinator the quick-capture speed-dial uses.
+    // Asks AudioRecorderHost to start, the same way the quick-capture dial does.
     run: ({ editor, range }) => {
       consume(editor, range).run();
       editor.storage.audioAttachment.capture.requestRecording();
@@ -157,13 +131,9 @@ export const SLASH_ITEMS: SlashItem[] = [
     },
   },
   {
-    // The drift this rewrite uncovered: `math` was a toolbar button with no way
-    // to reach it from the keyboard at all.
     key: 'math',
     keywords: ['latex', 'formula', 'equation', 'tex'],
     run: ({ editor, range, t }) => {
-      // The same prompt the toolbar button uses, so the two surfaces ask the
-      // same question.
       const latex = window.prompt(t('editor.math.prompt'), '');
       if (!latex) return;
       consume(editor, range).insertInlineMath({ latex }).run();
@@ -179,12 +149,8 @@ export const SLASH_ITEMS: SlashItem[] = [
   },
 ];
 
-/**
- * Filter the menu for a typed query. Matching is on the label *and* the
- * keywords, so `/bullet` finds "Bulleted list" and `/todo` finds "Checklist" -
- * a menu that only matched its own visible labels would make the user guess
- * our wording.
- */
+/** Matches keywords as well as the label, so `/todo` finds "Checklist" and the user
+ *  never has to guess our wording. */
 export function filterSlashItems(
   query: string,
   t: (key: string) => string,

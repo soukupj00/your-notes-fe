@@ -12,17 +12,14 @@ export type NoteFeedScope = {
   tagId?: string;
 };
 
-/** What `notes.update` hands back: the row as it was and as it now is. */
 export type NoteUpdate = { before: Note; after: Note };
 
 /** What `notes.purge` removed alongside the note, for a lossless undo. */
 export type PurgedRelations = { removedTags: NoteTag[]; removedAttachments: Attachment[] };
 
 /**
- * The derived data an attachment row may be rewritten with after creation.
- * Never `blob`: bytes are write-once by id (ADR 0017), so new bytes are a new
- * row, and downloaded ones arrive through `sync.received`. A new thumbnail comes
- * only with a new `thumbnailId`, for the same reason.
+ * Never `blob`: bytes are write-once by id (ADR 0017), so new bytes are a new row and
+ * downloaded ones arrive through `sync.received`. A new thumbnail needs a new `thumbnailId`.
  */
 export type AttachmentChanges = Partial<Pick<Attachment, 'preview' | 'duration' | 'updatedAt'>> &
   ({ thumbnail?: never; thumbnailId?: string } | { thumbnail: Blob; thumbnailId: string });
@@ -46,7 +43,6 @@ export type Snapshot = {
   attachments: Attachment[];
 };
 
-/** The `meta` keys sync bookkeeping lives under (src/data/PLAN.md "Sync metadata"); slice 4 writes them. */
 export const SYNC_META_KEYS = {
   /** The opaque `_links.next` URL the server last handed out. */
   cursor: 'sync.cursor',
@@ -66,26 +62,9 @@ export const SYNC_META_KEYS = {
 export type ApplyMode = 'keep-local' | 'server-wins';
 
 /**
- * The Local Store (CONTEXT.md): the only way application code reads or writes
- * persisted data. Shaped by the domain, not by tables - see ADR 0020.
- *
- * Rules every implementation must keep, and `localStore.contract.ts` checks:
- *
- * - Every method that touches more than one row is atomic: it lands whole or
- *   not at all. There is no `transaction()` here on purpose.
- * - A `Live<T>` delivers the current value and then a new one after every
- *   write that could have changed it. Over-delivering is allowed; missing one
- *   is a bug.
- * - Search, sort and rank are not the store's job. `feed` returns the scoped
- *   rows with their tags joined on, and the caller does the rest in memory.
- * - Rows are handed back as given. The store stamps nothing: ids and timestamps
- *   are the caller's (see `lib/new-note.ts`).
- * - Sync state is the store's alone (ADR 0017). Every write that changes a Note,
- *   Tag or NoteTag marks it owed and keeps the Revision the store holds for it;
- *   an Attachment write marks its Note owed, because its metadata rides on the
- *   Note's Revision. Removing a Note, Tag or NoteTag the server has seen (it has
- *   a Revision) writes a Tombstone carrying it; one never pushed leaves nothing
- *   to tell. Putting it back takes the Tombstone back. No read returns `rev`.
+ * The only way app code reads or writes persisted data (ADR 0020). Its rules are in
+ * src/data/CLAUDE.md and `localStore.contract.ts` checks them.
+ * A `Live` may over-deliver but must never miss a write that changed its value.
  */
 export interface LocalStore {
   readonly notes: {
@@ -123,7 +102,6 @@ export interface LocalStore {
      * the target does not exist. Merging a tag into itself changes nothing.
      */
     merge(sourceId: string, targetId: string): Promise<void>;
-    /** A note's tags, live. */
     forNote(noteId: string): Live<Tag[]>;
     /** Idempotent on `[noteId+tagId]`: an existing link is left as it is. */
     link(link: NoteTag): Promise<void>;
@@ -150,11 +128,7 @@ export interface LocalStore {
     sweepAll(referencedBy: (note: Note) => Iterable<string>): Promise<number>;
   };
 
-  /**
-   * Bookkeeping about the store's own rows - the Tour's Prop baselines today,
-   * the sync cursor and attached Account in M5. Not Preferences: those live
-   * with the Device, outside the store (CONTEXT.md, "Preference").
-   */
+  /** Bookkeeping about the store's own rows. Preferences live with the Device (CONTEXT.md). */
   readonly meta: {
     get<T>(key: string): Promise<T | undefined>;
     set<T>(key: string, value: T): Promise<void>;
@@ -170,20 +144,14 @@ export interface LocalStore {
      */
     dirty(): Promise<PushBatch>;
     /**
-     * Records the `accepted` outcomes of pushing `batch`: each row takes its new
-     * Revision and stops being owed unless it changed while the push was in
-     * flight; an accepted Tombstone is dropped. `conflict` and `gone` are the
-     * engine's to resolve (slice 4). Throws if the counts do not pair up.
+     * Records the `accepted` outcomes: a row takes its new Revision and stops being owed unless
+     * it changed mid-push, and an accepted Tombstone is dropped. `conflict` and `gone` are the
+     * engine's to resolve. Throws if the counts do not pair up.
      */
     applied(batch: PushBatch, outcomes: readonly PushOutcome[]): Promise<void>;
     /**
-     * Writes the server's rows, atomically, each with the server's Revision and
-     * not owed (see `ApplyMode` for rows this Device still owes). A server
-     * Tombstone removes the row - a Note with its links and Attachments, a Tag
-     * with its links - without writing a local Tombstone, and drops a pending
-     * one for the same id. A written Note's `attachments` become its rows: a
-     * new one without bytes, a known one keeping its bytes (its thumbnail only
-     * while `thumbnailId` is unchanged), one no longer listed removed with them.
+     * Writes the server's rows atomically, with its Revisions and not owed (`ApplyMode` covers owed
+     * rows). Tombstones and a Note's `attachments` follow the rules in src/data/CLAUDE.md.
      */
     applyPage(changes: ServerChanges, mode?: ApplyMode): Promise<void>;
     /**
@@ -209,10 +177,9 @@ export interface LocalStore {
   /** A consistent copy of everything a Backup carries. */
   exportAll(): Promise<Snapshot>;
   /**
-   * Replaces everything a Backup carries, atomically. `meta` is untouched.
-   * Every row comes in owed, keeping the Revision of an id the store already
-   * had; pending Tombstones are dropped and none are written, so an Import never
-   * deletes anything on the server.
+   * Replaces everything a Backup carries, atomically, leaving `meta`. Every row comes in owed
+   * with the Revision the store had for its id; pending Tombstones are dropped and none written,
+   * so an Import never deletes anything on the server.
    */
   replaceAll(snapshot: Snapshot): Promise<void>;
   /** Empties everything, `meta` included. Tests, and erase-on-sign-out in M5. */

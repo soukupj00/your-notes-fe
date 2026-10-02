@@ -2,11 +2,8 @@ import { readFile } from 'node:fs/promises';
 import { expect, type Page, test } from '@playwright/test';
 
 /**
- * Reminders' acceptance test (ADR 0021), written before the feature.
- *
- * The app never notifies, so there is nothing to wait for at the reminder's
- * time. What can be pinned is the Hand-off: the tap that sets a Reminder must
- * produce a calendar file, and the record must survive on the Card.
+ * Reminders' acceptance test (ADR 0021). The app never notifies, so what can be pinned is the
+ * Hand-off: setting a Reminder produces a calendar file, and the Card keeps the record.
  */
 
 /** A fresh profile is offered the Tour, which makes the whole app inert. */
@@ -70,12 +67,8 @@ test.describe('Reminders', () => {
     await page.getByRole('button', { name: 'Add to calendar' }).click();
     await downloading;
 
-    // The download fires during the hand-off, before the Note is written and
-    // before the popover closes. Re-clicking the bell while it is still open
-    // would toggle it shut, so wait for the popover to be gone first. The field
-    // is what to wait on rather than the primary action: that button renames
-    // itself to "Update in calendar" the moment the Reminder is recorded, which
-    // is one render *before* the popover closes.
+    // Re-clicking the bell while the popover is open would toggle it shut, so wait for it to close.
+    // Wait on the field, not the primary action: that renames itself one render before the close.
     await expect(page.getByLabel('Date and time')).toBeHidden();
 
     await page.getByRole('button', { name: 'Reminder' }).click();

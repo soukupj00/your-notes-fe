@@ -12,11 +12,8 @@ type State =
   | { status: 'failed' };
 
 /**
- * `/share/$token`: one Note, read-only, for whoever holds the link (CONTEXT.md
- * "Share Link"). The viewer is a stranger, so the page renders outside the app
- * shell (`routes/__root.tsx`), writes nothing to their Local Store (`main.tsx`
- * gives it an in-memory one), and offers no way in: there is nothing to sign
- * in to that would show them more.
+ * One Note, read-only, for a stranger holding the link (CONTEXT.md "Share Link"). It offers no
+ * way in: signing in would show them nothing more. Why it renders bare: CLAUDE.md, "Routing".
  */
 export default function SharePage({ token }: { token: string }) {
   const { t } = useTranslation();

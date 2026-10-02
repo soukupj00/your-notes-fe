@@ -16,26 +16,20 @@ type NoteFeedProps = {
 };
 
 /**
- * One semantic feed and one placement path for both Masonry and Stack.
- *
- * The DOM remains in feed order. Only each item's x/y/width target changes, so
- * switching layouts or reordering notes preserves visual continuity without
- * changing reading or keyboard order.
+ * One placement path for Masonry and Stack (DESIGN.md, Layout): only each card's x/y/width
+ * target changes, so DOM order stays reading order through every switch.
  */
 export function NoteFeed({ notes, mode, label, onSelect }: NoteFeedProps) {
   const ids = useMemo(() => notes.map((note) => note.id), [notes]);
-  // One query for the whole wall rather than one per card. Each note keeps its
-  // own Map identity across refires, so a write to one note does not re-mint
-  // every other card's thumbnails (see `useAttachmentsByNote`).
+  // One query for the whole wall. Each note keeps its Map identity across refires, so a write
+  // to one note does not re-mint every other card's thumbnails.
   const attachmentsByNote = useAttachmentsByNote(ids);
   const reducedMotion = useReducedMotion();
   const { containerRef, layout, ready, supported } = useNoteFeedLayout(mode, ids);
   const layoutTransition = resolveTransition(reducedMotion);
   const presenceTransition = resolveTransition(reducedMotion, PRESENCE_TRANSITION);
 
-  // ResizeObserver is the progressive-enhancement seam. Without measurement,
-  // Stack remains a complete, readable, DOM-ordered feed rather than an
-  // overlapping imitation of Masonry.
+  // Without ResizeObserver, a plain Stack is the honest fallback rather than a broken Masonry.
   if (!supported) {
     return (
       <ul
@@ -73,10 +67,8 @@ export function NoteFeed({ notes, mode, label, onSelect }: NoteFeedProps) {
         {notes.map((note) => {
           const placement = layout.placements[note.id];
 
-          // A new card has to exist before ResizeObserver can measure it, but it
-          // must not appear at the absolute-positioning origin while that first
-          // placement is being calculated. Measure it invisibly at the final
-          // column width, then mount Motion only once x/y/width are all known.
+          // A new card must exist to be measured but must not flash at the origin meanwhile,
+          // so it is measured invisibly and gets Motion only once it is placed.
           if (!placement) {
             return (
               <li
@@ -96,10 +88,8 @@ export function NoteFeed({ notes, mode, label, onSelect }: NoteFeedProps) {
           }
 
           return (
-            // These measured values are animation targets, not static styles.
-            // A layout-effect measurement can commit before Motion captures a
-            // projection snapshot, which makes static left/top/width changes
-            // jump directly to their destination instead of animating.
+            // Animation targets, not static styles: a measurement can commit before Motion's
+            // snapshot, and static left/top/width would then jump instead of animating.
             <m.li
               key={note.id}
               data-note-feed-id={note.id}

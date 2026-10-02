@@ -70,15 +70,8 @@ const realResizeObserver = globalThis.ResizeObserver;
 
 beforeEach(() => {
   window.innerWidth = 1024;
-  // Take ResizeObserver away, which puts `NoteFeed` on its documented
-  // no-measurement path: a plain DOM-ordered stack.
-  //
-  // This is not a convenience. The global test setup stubs ResizeObserver with
-  // a no-op, so `supported` is true but nothing is ever measured - and an
-  // unmeasured masonry card renders inside an `aria-hidden`, `invisible` `li`
-  // until its placement lands. A card is therefore *unclickable* in jsdom under
-  // the default view mode, which is why nothing had covered opening a note from
-  // the feed before now.
+  // Without ResizeObserver `NoteFeed` renders a plain stack. Needed: the global no-op observer
+  // never measures, so masonry cards stay in an invisible `aria-hidden` `li` and cannot be clicked.
   // @ts-expect-error deliberately removing the global for this suite
   globalThis.ResizeObserver = undefined;
 });

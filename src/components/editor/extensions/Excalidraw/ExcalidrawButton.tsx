@@ -9,9 +9,7 @@ export interface ExcalidrawButtonProps {
   tooltip: string;
 }
 
-/** Toolbar entry point. Opens the shared *empty* Excalidraw modal - nothing is
- *  created or inserted until the user hits Save (commit-on-Save). Unlike
- *  image/audio/video/file there is no file picker and no eager attachment. */
+/** Opens an empty drawing: nothing is created or inserted until Save (commit-on-Save). */
 export function ExcalidrawButton({ getDeps, tooltip }: ExcalidrawButtonProps) {
   return (
     <ActionButton icon="PenTool" tooltip={tooltip} action={() => getDeps().openExcalidraw({})} />

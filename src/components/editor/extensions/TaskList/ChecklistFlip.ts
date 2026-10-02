@@ -6,34 +6,18 @@ import type { EditorView } from '@tiptap/pm/view';
 import { captureRows, playRows, type RowSnapshot } from '@/lib/flip-rows.ts';
 
 export interface ChecklistFlipOptions {
-  /**
-   * Whether a toggle should animate. Read on every toggle rather than captured
-   * once: reduced motion can be switched while a note is open, and the
-   * extensions array is built once per editor.
-   */
+  /** Read on every toggle, not captured: reduced motion can change while a note is open. */
   animate: () => boolean;
 }
 
-/** A task item whose checkbox just changed, and which way. */
 interface Toggled {
   pos: number;
   checked: boolean;
 }
 
-/**
- * The task item whose `checked` attribute changed in this round of
- * transactions, or `null` if none did.
- *
- * Deliberately compares documents instead of reading the steps. A checkbox
- * toggle reaches the document as `setNodeMarkup`, which prosemirror expresses as
- * a structural step rather than as "this attribute changed", so a step-shaped
- * test would be reading an implementation detail of a library two levels down.
- * Old positions are mapped forward first, so the comparison survives a toggle
- * that arrives alongside an edit elsewhere in the note.
- *
- * Exported for its own tests: it is the subtle half of this extension, and the
- * half jsdom can actually exercise (the animation needs real layout).
- */
+/** Compares documents rather than reading steps, because a toggle arrives as a structural
+ *  `setNodeMarkup` step. Old positions are mapped forward first, so an edit elsewhere in
+ *  the same round does not hide the toggle. */
 export function findToggledItem(
   transactions: readonly Transaction[],
   oldState: EditorState,
@@ -62,25 +46,9 @@ export function findToggledItem(
   return toggled;
 }
 
-/**
- * Animates a checklist re-settling when an item is ticked.
- *
- * Sinking itself is a CSS `order` rule (ADR 0013), which means the document
- * never changes shape and this extension moves nothing: the row is already in
- * its new slot by the time the browser paints. What is missing without this is
- * the *travel* - `order` re-lays-out instantly, so the row teleports and the
- * eye loses it. FLIP puts the journey back.
- *
- * The timing is the reason this is a plugin rather than a React effect.
- * `appendTransaction` runs while the new state is being applied but **before**
- * the view writes it to the DOM, so it is the last moment the old geometry can
- * be read; the plugin view's `update` runs immediately after, when the new
- * geometry is available. Nothing else in ProseMirror's lifecycle straddles the
- * DOM write like that.
- *
- * It returns `null` from `appendTransaction` always - it appends no transaction
- * and exists purely for that timing.
- */
+/** Animates a ticked row's travel; the sinking itself is CSS `order` (ADR 0013).
+ *  A plugin for its timing: old geometry is read before the DOM write, new after.
+ *  See src/components/editor/CLAUDE.md, Checklist behaviour. */
 export const ChecklistFlip = Extension.create<ChecklistFlipOptions>({
   name: 'checklistFlip',
 

@@ -31,11 +31,8 @@ vi.mock('@/components/editor/editor.tsx', () => ({
     getNoteId?: () => Promise<string>;
   }) => (
     <>
-      {/* Controlled (not defaultValue): the real Editor's content is driven by
-          the parent's `body` state, and a plain uncontrolled defaultValue would
-          desync from React's change tracking once that state updates the DOM
-          out from under it (e.g. the async note-load after mount), causing
-          later onChange events to silently stop firing. */}
+      {/* Controlled, not defaultValue: once the async note-load rewrites an uncontrolled
+          textarea, later onChange events silently stop firing. */}
       <textarea
         data-testid="editor"
         value={content ?? ''}
@@ -90,11 +87,8 @@ describe('NoteEditorDialog', () => {
     expect(await screen.findByDisplayValue('Stored header')).toBe(headerInput());
     expect(editorTextarea()).toHaveValue('Stored body');
 
-    // Simulate another tab/sync writing to this same note while the dialog
-    // is open. Guardrail 1 is that the dialog loads content once and is
-    // never re-fed by a live query - a live query here would reset the
-    // input under a typing user's cursor. So this external write must NOT
-    // be reflected in the open editor.
+    // Another tab writes to this note while it is open. The dialog loads once and is never
+    // re-fed by a live query, which would reset a typing user's cursor, so this must not show.
     await testStore.notes.update(note.id, () => ({ header: 'Changed elsewhere' }));
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -215,12 +209,10 @@ describe('NoteEditorDialog', () => {
     const user = userEvent.setup();
     render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
 
-    // An image-only body: no header, no text, just an attachment node.
     fireEvent.change(editorTextarea(), {
       target: { value: '<img data-attachment-id="x1">' },
     });
 
-    // Close the dialog (flushes the final save + runs the empty-note check).
     await user.click(closeButton());
 
     await waitFor(async () => {
@@ -234,12 +226,10 @@ describe('NoteEditorDialog', () => {
     const user = userEvent.setup();
     render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
 
-    // An audio-only body: no header, no text, just an attachment node.
     fireEvent.change(editorTextarea(), {
       target: { value: '<audio data-attachment-id="au1"></audio>' },
     });
 
-    // Close the dialog (flushes the final save + runs the empty-note check).
     await user.click(closeButton());
 
     await waitFor(async () => {
@@ -252,20 +242,13 @@ describe('NoteEditorDialog', () => {
   it('does not create two notes when an attach and a save race on a new draft', async () => {
     render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
 
-    // Type into the draft (marks dirty, non-empty body).
     fireEvent.change(editorTextarea(), { target: { value: '<p>hello</p>' } });
 
-    // Race two "create the draft" paths in the SAME synchronous tick, before
-    // either createNote resolves: (1) an image insert -> ensureNoteId, and
-    // (2) closing the dialog -> enqueueSave/persist. Both do a sync
-    // `idRef.current == null` check; back-to-back fireEvent.click (no awaits
-    // between them) guarantees both read null before either sets it. Without
-    // serialization through the save chain this creates two Note rows.
+    // Both create paths (ensureNoteId and close) in one synchronous tick, so both read a null id
+    // before either sets it. Without the shared save chain this creates two notes.
     fireEvent.click(screen.getByTestId('ensure-note'));
     fireEvent.click(closeButton());
 
-    // After both paths settle there must be exactly one Note (no silent
-    // duplicate / permanent orphan).
     await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1));
     // And it must be a stable count, not still resolving toward 2.
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -305,16 +288,12 @@ describe('NoteEditorDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'tags.add' }));
     await userEvent.click(await screen.findByRole('checkbox', { name: 'Work' }));
 
-    // The draft became a real note, and the label landed on that same note.
     await waitFor(async () => expect((await testStore.tags.listLinks()).length).toBe(1));
     const link = (await testStore.tags.listLinks())[0];
     expect(await testStore.notes.get(link.noteId)).toBeDefined();
   });
 
   // ---- Note bar (colour / pin) ---------------------------------------------
-  // The editor bar carries only the moves that apply to a note with no card
-  // yet: colour, labels and pin. Archive and trash live on the card's foot
-  // rail, which is visible at rest on every input type.
 
   it('colours an unsaved draft through the same ensureNoteId queue', async () => {
     render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
@@ -369,9 +348,8 @@ describe('NoteEditorDialog', () => {
     expect(handOff).toHaveBeenCalledTimes(1);
   });
 
-  // The calendar was already handed a file linking to this note before the
-  // dialog closes; purging it here would leave that event pointing at
-  // nothing, even though the note has no header or body of its own.
+  // The calendar already holds an event linking to this note, so purging it would leave that
+  // event pointing at nothing.
   it('keeps a draft that was given a Reminder, even with no header or body', async () => {
     const onClose = vi.fn();
     render(<NoteEditorDialog noteId={null} onClose={onClose} />);

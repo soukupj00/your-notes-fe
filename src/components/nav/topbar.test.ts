@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { resolveTopbar, type TopbarConfig } from '@/components/nav/topbar.ts';
 
-/**
- * The whole matrix in one table. This is the payoff of `resolveTopbar` being a
- * pure function of the pathname: the rule that shapes the entire bar is
- * assertable without mounting a router, a provider or a database.
- */
+// The whole matrix in one table, with no router, provider or database: `resolveTopbar` is pure.
 const CASES: [pathname: string, expected: TopbarConfig][] = [
   ['/', { kind: 'destination', title: null }],
   ['/archive', { kind: 'destination', title: { kind: 'key', key: 'nav.archive' } }],
@@ -23,9 +19,8 @@ describe('resolveTopbar', () => {
   // The one rule the whole design rests on, asserted as a rule rather than as
   // six separate rows: if this ever drifts, the bar stops being predictable.
   it('gives the nav control to Destinations and back to everything else', () => {
-    // Every entry in `navItems.ts` is here, which is the point: the drawer
-    // offering a route and that route offering back to somewhere else was the
-    // exact drift this asserts against.
+    // Every `navItems.ts` entry is here: a drawer offering a route that then offers Back is the
+    // drift this guards against.
     const destinations = ['/', '/archive', '/trash', '/tag/t1', '/labels'];
     const children = ['/settings'];
 
@@ -51,9 +46,7 @@ describe('resolveTopbar', () => {
     expect(resolveTopbar('/')).toEqual({ kind: 'destination', title: null });
   });
 
-  // A path we do not recognise cannot be in the nav, so a trigger there would
-  // open a drawer with nothing marked active - and a way out is the one control
-  // it certainly needs.
+  // An unknown path cannot be in the nav, so it gets the one control a dead end needs: a way out.
   it('treats an unknown path as a dead end, not a Destination', () => {
     expect(resolveTopbar('/nope')).toEqual({ kind: 'child', title: null });
     expect(resolveTopbar('/tag/t1/extra').kind).toBe('child');

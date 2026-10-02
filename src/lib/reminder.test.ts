@@ -33,12 +33,8 @@ describe('reminderOf', () => {
     });
   });
 
-  // A backup is validated with a loose schema (ADR: `noteSchema` does not
-  // type-check `remindAt`), so a hand-edited or foreign archive can put any
-  // string there. `Intl.DateTimeFormat.format(new Date('garbage'))` throws a
-  // RangeError, which would take a Card's render down with it - so a
-  // malformed value must never reach the chip, the bell or the .ics as a
-  // Reminder in the first place.
+  // A backup's loose `noteSchema` lets any string into `remindAt`, and formatting
+  // `new Date('garbage')` throws a RangeError that would take a Card's render down.
   it('is undefined for a malformed remindAt, so a bad value never reaches a render', () => {
     expect(reminderOf({ remindAt: 'garbage' })).toBeUndefined();
     expect(reminderOf({ remindAt: '2030-03-04T09:00Z' })).toBeUndefined();

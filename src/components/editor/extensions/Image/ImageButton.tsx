@@ -9,11 +9,9 @@ export interface ImageButtonProps {
   tooltip: string;
 }
 
-/** Toolbar entry point: opens a hidden multi-file image picker. `accept="image/*"`
- *  rather than the MIME whitelist, for the same two reasons as VideoButton:
- *  Android only offers the camera for the wildcard, and Chrome on Linux greys
- *  out valid files when specific types are listed. The whitelist is still
- *  enforced in `validateAttachmentFile` after selection. */
+/** `accept="image/*"`, not the MIME whitelist: Android offers the camera only for the
+ *  wildcard, and Chrome on Linux greys out valid files when specific types are listed.
+ *  The whitelist is still enforced by `validateAttachmentFile`. */
 export function ImageButton({ editor, getDeps, tooltip }: ImageButtonProps) {
   return (
     <AttachmentFilePickerButton

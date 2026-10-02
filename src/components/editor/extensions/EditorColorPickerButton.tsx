@@ -20,7 +20,6 @@ export type EditorColorPickerVariant = 'text' | 'highlight';
 interface EditorColorPickerButtonProps {
   editor: Editor;
   tooltip?: string;
-  /** Keyboard shortcut hint, shown under the tooltip text. */
   shortcutKeys?: string[];
   variant: EditorColorPickerVariant;
 }
@@ -29,7 +28,6 @@ type SelectionRange = { from: number; to: number; empty: boolean };
 
 type VariantConfig = {
   attribute: 'color' | 'backgroundColor';
-  /** A registry key, per the icon convention - never an imported component. */
   icon: IconName;
   palette: ColorPalette;
   previewProperty: 'color' | 'background-color';
@@ -82,7 +80,6 @@ function commitColor(
   else chain.unsetBackgroundColor().run();
 }
 
-/** Shared selection capture, live preview, and commit behavior for editor color marks. */
 export function EditorColorPickerButton({
   editor,
   tooltip,
@@ -132,13 +129,8 @@ export function EditorColorPickerButton({
 
   return (
     <Popover onOpenChange={handleOpenChange}>
-      {/* The trigger is a plain `ActionButton`, which is what makes this button
-          describe itself exactly like every other one: the tooltip, the
-          desktop-only shortcut line and the labelled row a collapsed family
-          needs all come from there. It used to hand-roll the trigger and a copy
-          of the tooltip - the copy carried a comment promising it matched, which
-          is the sort of promise that only holds until one of the two changes,
-          and it had no way at all to draw itself as a menu row. */}
+      {/* A plain ActionButton trigger, so the tooltip, shortcut line and collapsed-menu row
+          come from where every button gets them. Do not hand-roll it again. */}
       <PopoverTrigger asChild>
         <ActionButton
           toggle
@@ -146,7 +138,6 @@ export function EditorColorPickerButton({
           tooltip={tooltip}
           shortcutKeys={shortcutKeys}
           isActive={() => Boolean(currentColor)}
-          // The swatch: the glyph wears the colour it would apply.
           style={{ color: currentColor || undefined }}
         />
       </PopoverTrigger>

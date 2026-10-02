@@ -8,16 +8,13 @@ import { setViewport } from '@/test/viewport.ts';
 import { Editor, type EditorHandle } from './editor.tsx';
 import { insertImageAttachmentFiles } from './extensions/Image/insert';
 
-// The toolbar reads the stored Toolbar Layouts, so every render needs the
-// provider; with nothing written it hydrates to defaults, which is the state
-// these tests are asserting against anyway. `Editor` also reaches attachment
-// actions through the Local Store, so every render needs that provider too.
+// The toolbar reads the stored Layouts (empty, so the defaults) and attachments go
+// through the Local Store, so every render needs both providers.
 const render = (ui: ReactElement) =>
   rtlRender(ui, {
     wrapper: ({ children }) => withStore(<PreferencesProvider>{children}</PreferencesProvider>),
   });
 
-// Keys pass through untranslated so assertions are stable.
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
@@ -31,10 +28,8 @@ vi.mock('@excalidraw/excalidraw', () => ({ Excalidraw: () => null, exportToSvg: 
 vi.mock('./extensions/Image/insert', () => ({ insertImageAttachmentFiles: vi.fn(async () => {}) }));
 
 describe('Editor content syncing', () => {
-  // `content` is passed to useEditor once, at creation, so that the option does
-  // not churn on every keystroke (see the stabilisation note in editor.tsx).
-  // Every later change has to reach the doc through the setContent effect - if
-  // that ever stops being true, opening an existing note shows a blank editor.
+  // `content` is read once, at creation, so every later body must arrive through
+  // the setContent effect, or opening an existing note shows a blank editor.
   it('applies a body that arrives after mount, not just the one seeded at creation', async () => {
     const { container, rerender } = render(<Editor content="" getNoteId={vi.fn()} />);
 
@@ -60,13 +55,9 @@ describe('Editor content syncing', () => {
 
 describe('Editor autoplay-on-open', () => {
   it('scans the doc after a later setContent applies the loaded body, not just at mount', async () => {
-    // Mirrors NoteEditorDialog opening an existing note: it renders with an
-    // empty seeded body, then re-renders once the async db.notes.get() load
-    // resolves and feeds the real content in via the `content` prop.
+    // Mirrors NoteEditorDialog opening an existing note: an empty seeded body,
+    // then the loaded one through the `content` prop.
     const ref = createRef<EditorHandle>();
-    // No `editable` (skips the toolbar, which needs a TooltipProvider ancestor
-    // this headless render doesn't set up) - the autoplay scan doesn't depend
-    // on it either way.
     const { rerender } = render(
       <Editor ref={ref} content="" autoplayFirstAudio getNoteId={vi.fn()} />
     );
@@ -108,10 +99,8 @@ describe('Editor autoplay-on-open', () => {
   });
 
   it('plays immediately via a registered trigger when the attachment is already ready before the scan runs', async () => {
-    // Mirrors the OTHER race direction from the first test: the attachment's
-    // blob load (and its AudioNodeView becoming ready) can finish before the
-    // note body's own async load feeds the real content in - the two loads
-    // are independent. Simulate that by pre-registering a ready trigger.
+    // The other race direction: the blob (and its ready AudioNodeView) can land
+    // before the note body does.
     const ref = createRef<EditorHandle>();
     const { rerender } = render(
       <Editor ref={ref} content="" autoplayFirstAudio getNoteId={vi.fn()} />
@@ -181,15 +170,11 @@ describe('Editor auto-capture', () => {
   });
 });
 
-/**
- * The suites above deliberately render without `editable`, so they never mount
- * the toolbar. See `NoteEditorDialog.realEditor.test.tsx` for the render-loop
- * regression - that needs the dialog's own state updates to reproduce.
- */
+// The suites above render without `editable`, so they never mount the toolbar.
+// The render-loop regression needs the dialog: `NoteEditorDialog.realEditor.test.tsx`.
 describe('Editor in editable mode', () => {
-  // Which buttons reach the bar is the Wide default, and which Layout is in
-  // effect is now a pointer question as well as a width one (ADR 0016) - jsdom
-  // answers coarse to both unless told otherwise.
+  // Which Layout is in effect depends on the pointer as well as the width (ADR 0016),
+  // and jsdom answers coarse unless told otherwise.
   beforeEach(() => setViewport(1024));
 
   it('renders the toolbar buttons the Wide default puts on the bar', async () => {
@@ -204,7 +189,6 @@ describe('Editor in editable mode', () => {
       'editor.link.tooltip',
       'editor.codeBlock.tooltip',
       'editor.horizontalRule.tooltip',
-      // Undo/redo reach the bar for the first time with the registry.
       'editor.undo',
     ]) {
       expect(await findByRole('button', { name })).toBeInTheDocument();
@@ -218,8 +202,6 @@ describe('Editor in editable mode', () => {
       </TooltipProvider>
     );
 
-    // `align` is collapsed in the Wide default, so its three leaves are one tap
-    // away rather than three slots of bar.
     expect(await findByTestId('toolbar-family-align')).toBeInTheDocument();
     expect(queryByRole('button', { name: 'editor.textAlign.left' })).not.toBeInTheDocument();
   });

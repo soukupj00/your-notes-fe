@@ -6,29 +6,16 @@ import { getShortcutKeys } from '@/utils/platform.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
 /**
- * Every action that answers to a key combination, in registry order - so the
- * list reads in the same order as the Layout editor above it and the bar itself.
- *
- * Static, because the registry is: this screen has no live editor to resolve
- * button views against, which is the same reason `ToolbarPreviewStrip` draws a
- * picture instead of mounting TipTap. `shortcuts.test.ts` pins each entry to the
- * real button, so the list cannot advertise a key the editor does not bind.
+ * In registry order, so it reads like the Layout editor and the bar. Static, as Settings
+ * has no live editor; `shortcuts.test.ts` pins each entry to the real button.
  */
 const SHORTCUT_ROWS = TOOLBAR_ITEMS.flatMap(({ id, labelKey, shortcut }) =>
   shortcut?.length ? [{ id, labelKey, shortcut }] : []
 );
 
 /**
- * The keyboard shortcuts, as a read-only list.
- *
- * Deliberately not a column in the Layout editor: that editor answers "what is
- * on my bar, and in what order", and a shortcut answers "how do I do this
- * *without* the bar" - the opposite question, and the one piece of text in those
- * rows that would not be about the row's own state.
- *
- * Hidden entirely on a coarse pointer, on the same signal `ActionButton` uses to
- * drop the hint from its tooltip: a phone has no modifier keys, so every row
- * here would be a promise it cannot keep.
+ * Not a column in the Layout editor: a shortcut answers how to act without the bar.
+ * Hidden on a coarse pointer, as in `ActionButton`: a phone has no modifier keys.
  */
 export function ShortcutsSection() {
   const { t } = useTranslation();
@@ -50,7 +37,6 @@ export function ShortcutsSection() {
   );
 }
 
-/** One combination, drawn as key caps. */
 function ShortcutKeys({ keys }: { keys: string[] }) {
   const parts = getShortcutKeys(keys);
 
@@ -63,11 +49,8 @@ function ShortcutKeys({ keys }: { keys: string[] }) {
         {parts.map((part, index) => (
           <Fragment key={part.readable}>
             {index > 0 && <span className="text-muted-foreground text-xs">+</span>}
-            {/* `text-label` for the size (the 11px floor), but `tracking-normal`
-                over it: the token's 0.1em is for reading a word of metadata,
-                and on a cap it is a trailing space that shifts the glyph off
-                centre. `font-sans` because the modifier symbols are missing
-                from most monospace faces, which `kbd` defaults to. */}
+            {/* `tracking-normal`: the label token's spacing shifts a cap's glyph off centre.
+                `font-sans`: most monospace faces lack the modifier symbols. */}
             <kbd className="inline-flex min-w-7 items-center justify-center rounded-control border bg-muted px-1.5 py-1 font-sans text-label text-muted-foreground tracking-normal">
               {part.symbol}
             </kbd>

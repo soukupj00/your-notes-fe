@@ -7,8 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils';
 import type { ColorItem, ColorPalette } from './palettes';
 
-/** Black or white, whichever reads better on the given color. Guards invalid/partial
- * hex (mid-typing in the custom picker) and non-hex css tokens. */
+/** Black or white, whichever reads better. Tolerates partial hex mid-typing and CSS tokens. */
 function contrastColor(css: string): string {
   try {
     return Color(css).isDark() ? '#ffffff' : '#000000';
@@ -42,7 +41,6 @@ function Swatch({ color, selected, onSelect }: SwatchProps) {
           style={isDefault ? undefined : { backgroundColor: color.cssValue }}
         >
           {isDefault && (
-            /* Diagonal line indicating "no color". */
             <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 rotate-45 bg-destructive" />
           )}
           {selected && !isDefault && (
@@ -59,29 +57,21 @@ function Swatch({ color, selected, onSelect }: SwatchProps) {
 }
 
 export interface ColorPickerPanelProps {
-  /** Current color (hex/css). Empty string means none/default. */
+  /** Empty string means none (the default). */
   value: string;
   /** Commit: fired on a swatch click and when the custom picker drag is released. */
   onChange: (color: string) => void;
   /**
-   * Transient preview: fired continuously while dragging the custom picker. When provided,
-   * the drag no longer calls `onChange` on every move (only the final `onChange` on release)
-   * - callers use this to show a live, uncommitted preview. When omitted, the custom picker
-   * falls back to calling `onChange` on every move (live, immediate).
+   * Fired while dragging the custom picker; when given, `onChange` fires only on release.
+   * Omitted, every move calls `onChange`.
    */
   onPreview?: (color: string) => void;
   palette: ColorPalette;
-  /** Enable the "Custom" full-picker reveal (default true). */
   showCustom?: boolean;
   className?: string;
 }
 
-/**
- * Unified, trigger-agnostic color picker: a grid of preset swatches (always shown)
- * plus a "Custom" toggle that reveals a full react-colorful hex picker. Same markup
- * on mobile and desktop. Callers supply their own palette and wrap it in whatever
- * trigger (Popover / Dialog) suits the site.
- */
+/** Trigger-agnostic: callers supply the palette and wrap it in their own Popover or Dialog. */
 export function ColorPickerPanel({
   value,
   onChange,
@@ -99,11 +89,8 @@ export function ColorPickerPanel({
   const [syncedValue, setSyncedValue] = useState(value);
   const draftRef = useRef(draft);
 
-  // Follow `value` when it changes from outside the picker (a swatch was clicked,
-  // or the caller reset the colour). Adjusting state during render is React's
-  // sanctioned alternative to a sync effect, which re-rendered twice per change.
-  // `draftRef` is deliberately not touched here: it is only ever read on
-  // pointer-up, and every pointer-up in the custom picker is preceded by a
+  // Follows an outside `value` by adjusting state during render; a sync effect rendered
+  // twice per change. `draftRef` is left alone: every pointer-up follows a
   // `handlePickerChange` from the same gesture, so it cannot be stale there.
   if (value !== syncedValue) {
     setSyncedValue(value);

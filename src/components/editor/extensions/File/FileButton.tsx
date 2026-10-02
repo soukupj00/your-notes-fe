@@ -9,10 +9,7 @@ export interface FileButtonProps {
   tooltip: string;
 }
 
-/** Toolbar entry point: opens a hidden multi-file picker with no `accept`
- *  restriction (a file attachment accepts any type; an unrestricted picker also
- *  sidesteps the Chrome-on-Linux greying-out that specific MIME types trigger),
- *  then runs the shared insert pipeline. The 50 MB size cap is enforced in
+/** No `accept`: a file attachment takes any type. The size cap is enforced by
  *  `validateAttachmentFile` after selection. */
 export function FileButton({ editor, getDeps, tooltip }: FileButtonProps) {
   return (

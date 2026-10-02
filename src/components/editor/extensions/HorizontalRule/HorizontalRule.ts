@@ -9,10 +9,7 @@ export interface HorizontalRuleExtensionOptions extends HorizontalRuleOptions {
   button: (context: ButtonContext) => ButtonView;
 }
 
-/**
- * A thematic break. It is an insert, not a toggle, so the button is a plain
- * action with no active state - there is no "cursor is inside a rule".
- */
+/** An insert, not a toggle, so the button has no active state. */
 export const HorizontalRule = TiptapHorizontalRule.extend<HorizontalRuleExtensionOptions>({
   addOptions() {
     return {

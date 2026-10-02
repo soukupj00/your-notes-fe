@@ -1,7 +1,6 @@
 export type ColorItem = {
-  /** Human-readable name shown in the swatch tooltip. */
   label: string;
-  /** CSS color applied when the swatch is chosen. Empty string means "none/default". */
+  /** Empty string means none (the default). */
   cssValue: string;
 };
 
@@ -10,7 +9,7 @@ export type ColorPalette = {
   colors: ColorItem[];
 };
 
-/** Vivid Tailwind-500 swatches for editor text color (moved verbatim from the old picker). */
+/** Tailwind-500 values. */
 export const TEXT_COLORS: ColorPalette = {
   label: 'Text colors',
   colors: [
@@ -25,6 +24,7 @@ export const TEXT_COLORS: ColorPalette = {
   ],
 };
 
+/** Tailwind-200 values. */
 const PASTEL_COLORS: ColorItem[] = [
   { label: 'Default', cssValue: '' },
   { label: 'Red', cssValue: '#fecaca' },
@@ -36,13 +36,11 @@ const PASTEL_COLORS: ColorItem[] = [
   { label: 'Pink', cssValue: '#fbcfe8' },
 ];
 
-/** Muted pastel (Tailwind-200) swatches for editor text highlight, plus a leading Default. */
 export const HIGHLIGHT_COLORS: ColorPalette = {
   label: 'Highlight colors',
   colors: PASTEL_COLORS,
 };
 
-/** Muted pastel (Tailwind-200) swatches for note card backgrounds, plus a leading Default. */
 export const CARD_COLORS: ColorPalette = {
   label: 'Background colors',
   colors: PASTEL_COLORS,

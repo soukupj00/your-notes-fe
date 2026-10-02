@@ -3,10 +3,8 @@ import type { NoteOpenRequest } from '@/components/notes/NotesView.tsx';
 import type { QuickCaptureAction } from '@/components/notes/quickCaptureActions.ts';
 
 /**
- * One hidden file input a capture bar owns, opened synchronously inside a
- * Start's tap - the only moment a browser lets a picker open - and reporting
- * the chosen files as part of the open request. Both bars use it, so the two
- * cannot differ in what a picker Start does.
+ * Opened synchronously inside a Start's tap, the only moment a browser lets a picker open
+ * (CLAUDE.md, Nav shell). Both capture bars use it, so a picker Start behaves the same in each.
  */
 export function useStartPicker(onStart: (editing: NoteOpenRequest) => void): {
   input: ReactNode;

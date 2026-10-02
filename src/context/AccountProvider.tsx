@@ -30,10 +30,8 @@ const NO_SERVER: AccountContextValue = {
 const AccountContext = createContext<AccountContextValue>(NO_SERVER);
 
 /**
- * Whether this Device is signed in to a Self-hosted Server (ADR 0018). It asks
- * once at startup and never blocks anything: sync is opt-in, so every screen
- * works the same whatever it hears, and only the Account sections of Settings
- * and `/pair` read it.
+ * Whether this Device is signed in to a Self-hosted Server (ADR 0018). Asked once at startup and
+ * never awaited: sync is opt-in, so every screen works the same whatever it hears.
  */
 export function AccountProvider({
   service,

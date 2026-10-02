@@ -12,9 +12,6 @@ declare module '@tiptap/core' {
   }
 }
 
-/** Custom generic-file-attachment node built on the shared factory. Body
- *  serializes as <a data-attachment-id> (no href); the NodeView shows the
- *  filename + a generic icon + an open/download link. */
 export function createFile(getDeps: () => AttachmentDeps) {
   return createAttachmentNode(getDeps, {
     name: 'fileAttachment',

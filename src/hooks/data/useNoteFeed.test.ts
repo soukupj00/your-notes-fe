@@ -122,14 +122,8 @@ describe('sorting', () => {
 });
 
 /**
- * Apply a write and resolve once the feed has actually re-run for it.
- *
- * A bare `waitFor(() => expect(notes).toHaveLength(n))` is instantly true and
- * proves nothing, so an order assertion after one can pass against a feed that
- * has not seen the write yet. Every held-rank test below therefore edits the
- * note's `header` alongside whatever it is really testing and waits for *that*
- * to arrive: a propagated value is the only honest signal that the live query
- * has refired and the order on screen is the post-write one.
+ * Applies a write and resolves once the feed has re-run for it. A length check is instantly true,
+ * so the write also changes `header` and waits for it: the only honest sign the query refired.
  */
 async function writeAndSettle(
   result: { current: { notes: Note[] } },
