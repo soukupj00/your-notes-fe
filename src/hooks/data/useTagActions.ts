@@ -1,6 +1,5 @@
-import { v4 as uuid } from 'uuid';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
-import type { Tag } from '@/models.ts';
+import { newNoteTag, newTag, nowIso } from '@/lib/rows.ts';
 
 /** The fields a user can edit on a Tag. An explicit `color: undefined` clears it. */
 export type TagChanges = {
@@ -20,25 +19,17 @@ export function useTagActions() {
     const existing = await store.tags.findByName(trimmed);
     if (existing) return existing;
 
-    const now = new Date().toISOString();
-    const newTag: Tag = { id: uuid(), name: trimmed, color, createdAt: now, updatedAt: now };
-    await store.tags.add(newTag);
-    return newTag;
+    const tag = newTag(trimmed, color);
+    await store.tags.add(tag);
+    return tag;
   };
 
-  const updateTag = async (id: string, changes: TagChanges) => {
-    const tag = await store.tags.get(id);
-    if (!tag) return null;
-
-    const updatedTag: Tag = {
-      ...tag,
+  const updateTag = (id: string, changes: TagChanges) =>
+    store.tags.update(id, (tag) => ({
       ...('name' in changes ? { name: changes.name?.trim() || tag.name } : {}),
       ...('color' in changes ? { color: changes.color } : {}),
-      updatedAt: new Date().toISOString(),
-    };
-    await store.tags.put(updatedTag);
-    return updatedTag;
-  };
+      updatedAt: nowIso(),
+    }));
 
   const deleteTag = (id: string) => store.tags.delete(id);
 
@@ -48,10 +39,8 @@ export function useTagActions() {
    */
   const mergeTags = (sourceId: string, targetId: string) => store.tags.merge(sourceId, targetId);
 
-  const addTagToNote = async (noteId: string, tagId: string) => {
-    const now = new Date().toISOString();
-    await store.tags.link({ noteId, tagId, createdAt: now, updatedAt: now });
-  };
+  const addTagToNote = (noteId: string, tagId: string) =>
+    store.tags.link(newNoteTag(noteId, tagId));
 
   const removeTagFromNote = (noteId: string, tagId: string) => store.tags.unlink(noteId, tagId);
 

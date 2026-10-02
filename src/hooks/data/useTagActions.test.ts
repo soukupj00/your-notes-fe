@@ -55,6 +55,13 @@ describe('updateTag', () => {
     expect((await testStore.tags.get(tag.id))?.color).toBeUndefined();
   });
 
+  it('keeps the old name when the new one is only whitespace', async () => {
+    const tag = await actions().createTag('Work');
+    const updated = await actions().updateTag(tag.id, { name: '   ' });
+    expect(updated?.name).toBe('Work');
+    expect((await testStore.tags.get(tag.id))?.name).toBe('Work');
+  });
+
   it('returns null for an unknown tag', async () => {
     expect(await actions().updateTag('nope', { name: 'x' })).toBeNull();
   });
