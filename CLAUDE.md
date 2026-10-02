@@ -6,6 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Open-source self-hosted PWA note-taking app (Google Keep alternative). Mobile-first React SPA with offline support via IndexedDB. Backend sync server is a separate repository — this repo is frontend-only.
 
+## Hard rules
+
+- Comments are short, plain and high level.
+  Clean names and small functions say what the code does; a comment adds only what the code cannot: why, a decision (link the ADR), or a trap.
+  Never narrate the next line, and write no comment where the code is already clear.
+
 ## Documentation map
 
 - [`CONTEXT.md`](./CONTEXT.md) — domain glossary (canonical meaning of Note, Tag, Attachment, Sync, etc.).
