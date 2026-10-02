@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import { Camera, Image, ListChecks, Mic, PencilRuler, SquarePen } from 'lucide-react';
 import type { NoteOpenRequest } from '@/components/notes/NotesView.tsx';
 import { EMPTY_CHECKLIST_BODY } from '@/components/notes/noteDrafts.ts';
+import { ATTACHMENT_SPECS } from '@/lib/attachments.ts';
 
 export type QuickCaptureActionKey =
   | 'text'
@@ -57,13 +58,13 @@ export const QUICK_CAPTURE_ACTIONS: QuickCaptureAction[] = [
     Icon: Image,
     labelKey: 'notes.capture.picture',
     editing: { id: null },
-    picker: { accept: 'image/*' },
+    picker: { accept: ATTACHMENT_SPECS.image.accept ?? '' },
   },
   {
     key: 'camera',
     Icon: Camera,
     labelKey: 'notes.capture.camera',
     editing: { id: null },
-    picker: { accept: 'image/*', capture: 'environment' },
+    picker: { accept: ATTACHMENT_SPECS.image.accept ?? '', capture: 'environment' },
   },
 ];
