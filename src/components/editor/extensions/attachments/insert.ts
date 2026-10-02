@@ -82,10 +82,18 @@ export function insertTransferredFiles(
   files: FileList,
   deps: AttachmentDeps
 ): boolean {
-  const list = Array.from(files);
-  const kinds = TRANSFER_KINDS.filter((kind) => list.some((file) => fileMatchesKind(file, kind)));
-  for (const kind of kinds) void insertFiles(kind, editor, list, deps);
-  return kinds.length > 0;
+  const groups = new Map<AttachmentKind, File[]>();
+  for (const file of Array.from(files)) {
+    const kind = TRANSFER_KINDS.find((k) => fileMatchesKind(file, k));
+    if (kind) groups.set(kind, [...(groups.get(kind) ?? []), file]);
+  }
+  if (groups.size === 0) return false;
+  // Kinds run in the order they first appear, so a clip dropped before a photo lands first; within a
+  // kind the files keep their order. Concurrent kinds landed in derive-finish order instead.
+  void (async () => {
+    for (const [kind, kindFiles] of groups) await insertFiles(kind, editor, kindFiles, deps);
+  })();
+  return true;
 }
 
 /** Cross-note paste: every node whose row another note owns is repointed at a fresh

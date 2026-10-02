@@ -186,6 +186,7 @@ Near-identical tests collapse with the units they test: one table-driven test, n
 - The toolbar picker's `onFiles` and the editor's paste and drop handlers have no test at any level; one table line calling `onFiles([file])` per picker kind and a Playwright paste or drop spec would pin them.
 - A non-media file in a paste or drop is dropped silently (`TRANSFER_KINDS` has no `file`), while the toolbar's file picker takes any type; whether a drop should route non-media to `file` is a product decision.
 - `dedupeForeignAttachments` (`attachments/insert.ts`, called `void` from the paste handler) awaits `getNoteId` and `cloneAttachment` with no catch, the same unhandled class `insertFiles` just closed.
+- The drawing Save's error-code mapping in editor.tsx has no pinning test; the mocked Excalidraw dialog would need a throwing commit.
 - Six ESLint warnings pre-exist in `LinkButton`, `themeProvider`, `useLive` and `use-mobile`; clearing them makes `pnpm lint` a zero-warning gate.
 - `pnpm test:e2e` logs `ECONNREFUSED 127.0.0.1:3000` proxy errors from the Vite dev server when no backend runs; quiet the proxy in the Playwright web server or skip server calls when no backend is configured.
 - `checklistItemIndexAt` (`lib/body.ts`, the card's tick-by-row helper) has no direct unit test; `e2e/checklist.spec.ts` is its only cover.

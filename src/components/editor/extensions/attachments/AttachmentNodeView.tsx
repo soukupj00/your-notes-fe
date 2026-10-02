@@ -37,7 +37,6 @@ export function AttachmentNodeView({
   props,
   copy,
   className,
-  // An inline-block wrapper gives a percentage width nothing to measure.
   placeholderClassName = 'h-32 w-64 max-w-full',
   children,
 }: AttachmentNodeViewProps) {

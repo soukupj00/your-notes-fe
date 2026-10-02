@@ -1,7 +1,7 @@
 import type { ReactNodeViewProps } from '@tiptap/react';
-import { AttachmentNodeView } from '../attachments/AttachmentNodeView';
+import { type AttachmentNodeCopy, AttachmentNodeView } from '../attachments/AttachmentNodeView';
 
-const COPY = {
+const COPY: AttachmentNodeCopy = {
   delete: 'editor.image.delete',
   unavailable: 'editor.image.unavailable',
   fallbackName: 'editor.image.fallbackAlt',

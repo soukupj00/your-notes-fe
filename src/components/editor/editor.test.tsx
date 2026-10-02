@@ -1,5 +1,6 @@
 import { render as rtlRender, waitFor } from '@testing-library/react';
 import { createRef, type ReactElement } from 'react';
+import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
@@ -15,9 +16,10 @@ const render = (ui: ReactElement) =>
     wrapper: ({ children }) => withStore(<PreferencesProvider>{children}</PreferencesProvider>),
   });
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+const t = vi.hoisted(() => vi.fn((key: string, _options?: object) => key));
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t }) }));
+
+vi.mock('sonner', () => ({ toast: vi.fn() }));
 
 // editor.tsx registers createExcalidraw, which statically imports the real
 // canvas lib - unmocked, it crashes under jsdom (no canvas.getContext()).
@@ -171,6 +173,23 @@ describe('Editor auto-capture', () => {
 
     await waitFor(() => expect(ref.current?.getEditor()).toBeTruthy());
     expect(queryByRole('dialog')).not.toBeInTheDocument();
+  });
+});
+
+describe('Editor attachment errors', () => {
+  it("toasts an insert failure in the kind-neutral copy, with the failing kind's cap", async () => {
+    const ref = createRef<EditorHandle>();
+    render(<Editor ref={ref} content="" getNoteId={vi.fn()} />);
+    await waitFor(() => expect(ref.current?.getEditor()).toBeTruthy());
+    const video = ref.current
+      ?.getEditor()
+      ?.extensionManager.extensions.find((e) => e.name === 'videoAttachment');
+    if (!video) throw new Error('videoAttachment not registered');
+
+    video.options.getDeps().onError('too-large', 'video');
+
+    expect(t).toHaveBeenCalledWith('editor.attachment.errors.too-large', { max: 100 });
+    expect(toast).toHaveBeenCalledWith('editor.attachment.errors.too-large');
   });
 });
 

@@ -182,10 +182,10 @@ describe('insertTransferredFiles', () => {
     return files as unknown as FileList;
   }
 
-  it('routes every file of a mixed transfer to its own kind', async () => {
-    const png = fileOf('a.png', 'image/png');
+  it('routes every file of a mixed transfer to its own kind, in transfer order', async () => {
     const clip = fileOf('c.mp4', 'video/mp4');
-    expect(insertTransferredFiles(editor, fileList(png, clip), deps)).toBe(true);
+    const png = fileOf('a.png', 'image/png');
+    expect(insertTransferredFiles(editor, fileList(clip, png), deps)).toBe(true);
     await vi.waitFor(() => expect(deps.createAttachment).toHaveBeenCalledTimes(2));
     expect(deps.createAttachment).toHaveBeenCalledWith('note-1', png, 'image', {});
     expect(deps.createAttachment).toHaveBeenCalledWith('note-1', clip, 'video', {});
@@ -193,6 +193,7 @@ describe('insertTransferredFiles', () => {
       const html = editor.getHTML();
       expect(html).toContain('data-attachment-id="att-a.png"');
       expect(html).toContain('data-attachment-id="att-c.mp4"');
+      expect(html.indexOf('att-c.mp4')).toBeLessThan(html.indexOf('att-a.png'));
     });
   });
 

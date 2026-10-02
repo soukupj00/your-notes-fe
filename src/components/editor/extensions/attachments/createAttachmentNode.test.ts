@@ -83,7 +83,7 @@ describe.each(ATTACHMENT_KINDS)('%s node', (kind) => {
     );
   });
 
-  it("yields its kind's button with the editor and the kind's tooltip", () => {
+  it("yields its kind's button: a picker's icon and accept, otherwise the editor", () => {
     const editor = editorWith(kind);
     const ext = editor.extensionManager.extensions.find((e) => e.name === `${kind}Attachment`);
     const view = ext?.options.button({ editor, t: deps.t }) as {
@@ -94,10 +94,10 @@ describe.each(ATTACHMENT_KINDS)('%s node', (kind) => {
     expect(view.componentProps.tooltip).toBe(`editor.${kind}.tooltip`);
     const picker = PICKER[kind];
     if (picker) {
+      // A picker holds the editor in its onFiles closure rather than as a prop.
       expect(view.componentProps.icon).toBe(picker.icon);
       expect(view.componentProps.accept).toBe(picker.accept);
     } else {
-      // A picker holds the editor in its onFiles closure rather than as a prop.
       expect(view.componentProps.editor).toBe(editor);
     }
   });
