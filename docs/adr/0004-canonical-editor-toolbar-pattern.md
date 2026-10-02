@@ -7,8 +7,8 @@
 
 Two toolbar patterns currently coexist in the editor, which is confusing and causes drift:
 
-- **Pattern A — extension-owned button.** Each extension `.extend()`s its upstream TipTap extension and attaches a `button` option returning `{ component: ActionButton, componentProps: { icon: "<name>", ... } }`, where `icon` is a **string key** resolved through `src/components/icons/icons.ts`. Used by `extensions/Bold/Bold.ts` and `extensions/history/History.ts`.
-- **Pattern B — centralized toolbar array.** `menus/toolbars/FormatSection.tsx` and `ListSection.tsx` define a `formatActions` array with **inline Lucide JSX icons imported directly**, rendered through `Toolbar`/`ToolbarSection`. This is what `editor.tsx` actually renders today.
+- **Pattern A - extension-owned button.** Each extension `.extend()`s its upstream TipTap extension and attaches a `button` option returning `{ component: ActionButton, componentProps: { icon: "<name>", ... } }`, where `icon` is a **string key** resolved through `src/components/icons/icons.ts`. Used by `extensions/Bold/Bold.ts` and `extensions/history/History.ts` at the time; since M6 slice 2 the one-button extensions are declarations in `extensions/formatting.ts` through `withButton`.
+- **Pattern B - centralized toolbar array.** `menus/toolbars/FormatSection.tsx` and `ListSection.tsx` define a `formatActions` array with **inline Lucide JSX icons imported directly**, rendered through `Toolbar`/`ToolbarSection`. This is what `editor.tsx` actually renders today.
 
 The inspiration repo (reactjs-tiptap-editor) uses Pattern A. Picking one is hard to reverse later because every extension and toolbar would need rewriting.
 

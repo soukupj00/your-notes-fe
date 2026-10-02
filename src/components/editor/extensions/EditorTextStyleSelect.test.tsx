@@ -7,10 +7,9 @@ import Text from '@tiptap/extension-text';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { afterEach, describe, expect, it } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { EditorTextStyleSelect } from './EditorTextStyleSelect';
 import { FontFamily } from './FontFamily';
-import { FontFamilyButton } from './FontFamily/FontFamilyButton';
 import { FontSize } from './FontSize';
-import { FontSizeButton } from './FontSize/FontSizeButton';
 
 const editors: Editor[] = [];
 
@@ -36,7 +35,7 @@ describe('editor text style selects', () => {
     const editor = createEditor();
     render(
       <TooltipProvider>
-        <FontFamilyButton editor={editor} t={t} tooltip="Font family" />
+        <EditorTextStyleSelect editor={editor} t={t} tooltip="Font family" variant="fontFamily" />
       </TooltipProvider>
     );
 
@@ -52,7 +51,7 @@ describe('editor text style selects', () => {
     const editor = createEditor();
     render(
       <TooltipProvider>
-        <FontSizeButton editor={editor} t={t} tooltip="Font size" />
+        <EditorTextStyleSelect editor={editor} t={t} tooltip="Font size" variant="fontSize" />
       </TooltipProvider>
     );
 
@@ -67,8 +66,8 @@ describe('editor text style selects', () => {
     const editor = createEditor();
     render(
       <TooltipProvider>
-        <FontFamilyButton editor={editor} t={t} tooltip="Font family" />
-        <FontSizeButton editor={editor} t={t} tooltip="Font size" />
+        <EditorTextStyleSelect editor={editor} t={t} tooltip="Font family" variant="fontFamily" />
+        <EditorTextStyleSelect editor={editor} t={t} tooltip="Font size" variant="fontSize" />
       </TooltipProvider>
     );
 

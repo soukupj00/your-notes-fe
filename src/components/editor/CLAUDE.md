@@ -1,18 +1,18 @@
 # CLAUDE.md — `src/components/editor` (TipTap editor)
 
-How the rich-text editor is built. The canonical extension/toolbar pattern is fixed by [ADR 0004](../../../docs/adr/0004-canonical-editor-toolbar-pattern.md). See [`PLAN.md`](./PLAN.md) for the M1 work that brings the code in line with it.
+How the rich-text editor is built. The canonical extension/toolbar pattern is fixed by [ADR 0004](../../../docs/adr/0004-canonical-editor-toolbar-pattern.md). See [`PLAN.md`](./PLAN.md) for the M1 work that brought the code in line with it.
 
 ## Structure
 
 - `editor.tsx` — the `Editor` React component: `useEditor({ extensions, content, editable, onUpdate })`, renders `EditorContent`. Syncs external `content` prop into the editor via `setContent`.
   **`content` is not a controlled value.** It is read once, at creation, and every later change reaches the doc through the `setContent` effect instead.
   That is deliberate: `useEditor` is called with no deps, so the editor is never recreated, and TipTap re-checks its options on every render — any key failing reference equality costs a `setOptions` → `view.setProps` → full ProseMirror view pass on top of the one the keystroke already triggered.
-  For the same reason the extensions array and `editorProps` are memoised, and nothing in them may be reactive: every live value reaches the built extensions through a stable getter over a ref, and a captured `t` is safe only because i18next resolves the language at call time — so a consumer must call `t()` lazily, never store its result at build time (`createLink` is the one that got this wrong).
+  For the same reason the extensions array and `editorProps` are memoised, and nothing in them may be reactive: every live value from a render reaches the built extensions through `useLatest`, a stable getter over a ref (the editor itself arrives through `editorRef`, which an effect sets once it exists), and a captured `t` is safe only because i18next resolves the language at call time - so a consumer must call `t()` lazily, never store its result at build time (`createLink` is the one that got this wrong).
   `editor.test.tsx`'s "Editor content syncing" suite is the guard; it fails if the `setContent` path stops applying later bodies.
   On mobile the note bar (labels, colour, pin, reminder) is handed in as `footer` rather than rendered after `Editor`, because a sticky element cannot leave its parent's box: as a sibling, it held the sticky toolbar about 80px above the keyboard.
   The note bar is in the flow, not pinned: the format toolbar is the only fixed chrome, because formatting is a typing move and a second permanent strip costs the vertical space a phone has least of.
   In the DOM the toolbar comes first and the note bar after the content; with `stickyOnMobile` the toolbar takes `order-last`, so it sits under the note bar.
-- `extensions/<Name>/` — one folder per editing capability. Each has `<Name>.ts` (the extension) and `index.ts` (re-export).
+- `extensions/formatting.ts` holds the one-button marks and blocks (Bold, Italic, Strike, Underline, Code, CodeBlock, Blockquote, HorizontalRule, BulletList, OrderedList) as declarations through `withButton`; `extensions/<Name>/` is a folder for an extension that has more than its declaration (a node view, a plugin, a coordinator, its own behaviour test), with `<Name>.ts` and an `index.ts` re-export.
 - `toolbar/` — the customisable toolbar (ADR 0011).
   `registry.ts` maps a stable Toolbar Item id to its icon, **name** and family, and to the extension whose Pattern A `button` it renders; `presets.ts` holds the Minimal / Balanced / Everything stamps per Width Class; `resolveLayout.ts` reconciles a stored Layout against the registry and turns it into a render list; `EditorToolbar.tsx` draws it; `useWidthClass.ts` picks which of the two Layouts is in effect.
   `ToolbarLayoutEditor.tsx` is the one settings surface for a Layout, mounted twice: in `/settings`, and in a sheet over the editor dialog opened by the `customize` (`⚙`) Item (`ToolbarCustomizeButton.tsx`). The in-editor path must not navigate - the dialog may hold an unsaved draft. `layoutEdits.ts` holds the pure reorder/toggle primitives, `foldMarker.ts` the 360px capacity arithmetic, `ToolbarPreviewStrip.tsx` the static picture Settings uses because it has no live editor.
@@ -26,39 +26,39 @@ How the rich-text editor is built. The canonical extension/toolbar pattern is fi
 - Shared button: `ActionButton` (`src/components/ui/ActionButton.tsx`); icon registry: `src/components/icons/icons.ts`.
   `ActionButton` owns three things worth knowing before adding a button. **A menu row's name comes from `MenuRowLabelProvider`, not a prop** - `ToolbarLeaf` states it once and whichever `ActionButton` ends up being the row picks it up, because half the leaves (`link`, the five attachment pickers, the two colour triggers) are custom components that *wrap* an `ActionButton` and could never be handed a label. **The keyboard shortcut is desktop-only** (`useFinePointer`, `(pointer: fine)` - the inverse of the 44px Touch Rule's signal) and lives only in the tooltip, never on a menu row. **Active styling is a class, not just `data-[state=on]`**, because a `PopoverTrigger asChild` overwrites `data-state` with its own `open`/`closed`.
 
-## Canonical pattern (Pattern A — target state)
+## Canonical pattern (Pattern A)
 
-Each extension extends its upstream TipTap extension and attaches a `button` option:
+The common case is the upstream TipTap extension plus a `button` option, built by `withButton` (`extensions/withButton.ts`), which does the `.extend()` and the one cast:
 
 ```ts
-export const Bold = TiptapBold.extend<BoldOptions>({
-  addOptions() {
-    return {
-      ...this.parent?.(),
-      button: ({ editor, t }) => ({
-        component: ActionButton,
-        componentProps: {
-          action: () => editor.commands.toggleBold(),
-          isActive: () => editor.isActive('bold'),
-          icon: 'Bold',                       // string key into icons.ts
-          shortcutKeys: ['Mod', 'B'],
-          tooltip: t('editor.bold.tooltip'),  // i18n
-        },
-      }),
-    };
+export const Bold = withButton(TiptapBold, ({ editor, t }) => ({
+  component: ActionButton,
+  componentProps: {
+    action: () => editor.commands.toggleBold(),
+    isActive: () => editor.isActive('bold'),
+    icon: 'Bold',                       // string key into icons.ts
+    shortcutKeys: ['Mod', 'B'],
+    tooltip: t('editor.bold.tooltip'),  // i18n
+    toggle: true,
   },
-});
+}));
 ```
+
+A third argument carries other upstream defaults (TextAlign's `types`).
+An extension whose button is not an `ActionButton` (a colour picker, a font select, the link picker) still calls `.extend()` itself and types its option as `ButtonView<typeof ThatComponent>`; the attachment nodes get their button from `createAttachmentNode`, typed `AnyButtonView`; `ButtonView` (`button-types.ts`) is generic over the component and defaults to `ActionButton`.
 
 - `icon` is a **string key** resolved by `ActionButton` through `src/components/icons/icons.ts` — never import a Lucide component into an extension's button config.
 - A `button` may return an **array** of buttons (see `extensions/history/History.ts`, which yields undo + redo).
 - Tooltips/labels go through i18n `t(...)`.
 
-## Current state (mismatch to fix in M1)
+## Current state
 
-Pattern A is partly adopted:
-
-- **Wrapped extensions following Pattern A, each with a headless test:** `Bold`, `Italic`, `Strike`, `Underline`, `Clear` (clear formatting), `BulletList`, `OrderedList`, `TaskList`, `Heading` (H1-H3 buttons, see below), `Blockquote` (markdown `>` showcase), `Mathematics` (LaTeX, see below), `Color`/`Highlight`/`FontFamily`/`FontSize` (text styling, see below), plus `history`. `extensions/build.ts` registers all of them, `history` included. `Clear` is not a mark - it is an `Extension.create` whose button runs `clearNodes().unsetAllMarks()`. `ListItem` is wrapped only as a local re-export (structural child, no button); `TaskList` needs `TaskItem`, wrapped in `extensions/TaskItem/`: it adds a `moveTaskItem({ pos, to })` command and, in the editable node view only, a reorder grip driven by pointer events (`taskItemDrag.ts`), so the stored Body and the Card never carry a grip. The node view's `ignoreMutation` must keep treating the row's own attribute changes as non-edits - the drag writes a class and a transform onto the `li`, and a rebuilt node view would drop the row from under the pointer.
+- **Every toolbar extension follows Pattern A.**
+  The ten one-button marks and blocks are declarations in `extensions/formatting.ts` with one table-driven test; `TaskList`, `Heading` (H1-H3 buttons, see below), `TextAlign`, and `history` use the same `withButton` in their folders; `Mathematics` (LaTeX, see below) keeps its own `.extend()` and factory around an `ActionButton`; `Color`/`Highlight`/`FontFamily`/`FontSize` (text styling, see below) and `Link` yield their own components.
+  `extensions/build.ts` registers all of them, `history` included.
+  `Clear` is not a mark - it is an `Extension.create` whose button runs `clearNodes().unsetAllMarks()`.
+  `ListItem` is wrapped only as a local re-export (structural child, no button); `TaskList` needs `TaskItem`, wrapped in `extensions/TaskItem/`: it adds a `moveTaskItem({ pos, to })` command and, in the editable node view only, a reorder grip driven by pointer events (`taskItemDrag.ts`), so the stored Body and the Card never carry a grip.
+  The node view's `ignoreMutation` must keep treating the row's own attribute changes as non-edits - the drag writes a class and a transform onto the `li`, and a rebuilt node view would drop the row from under the pointer.
 - **Checklist behaviour lives in `extensions/TaskList/` beside the button**, in one piece that is not a toolbar button.
   `ChecklistFlip.ts` is an `Extension.create` that **moves nothing**. Sinking is a CSS `order` rule ([ADR 0013](../../../docs/adr/0013-checklist-sinking-is-presentation-not-storage.md)), so a ticked row is already in its new slot by the time the browser paints; what this adds is the *travel*, since `order` re-lays-out instantly and the row would otherwise teleport. It detects a toggle by **comparing documents**, not by reading steps: a checkbox arrives as `setNodeMarkup`, which prosemirror expresses structurally. The timing is why it is a plugin rather than an effect - `appendTransaction` runs before the view writes the DOM (the last chance to read the old geometry) and the plugin view's `update` runs straight after it (the first chance to read the new). It appends no transaction and returns `null` always. Gated on `animate()`, which `editor.tsx` feeds from `useReducedMotion` - a hard killswitch, per DESIGN.md.
   It replaced `CheckedSink.ts`, which physically reordered the document and so could never reach the card, which has no ProseMirror instance. Do not reintroduce a document mutation here: the stored order is what a backup, an export and M5 sync all carry, and it is the only record of the order the user actually typed.
@@ -128,12 +128,11 @@ Pattern A is partly adopted:
   `sceneToSvgString` dynamically imports `@excalidraw/excalidraw` because eagerly importing the package touches `canvas.getContext()` at module scope, which crashes under jsdom without the native `canvas` package.
   The dialog and exporter share Vite's cached Excalidraw chunk.
 - **Text styling via `@tiptap/extension-text-style`.** Four Pattern A extensions ride on the `textStyle` mark (registered once as `TextStyle` in `editor.tsx`); each wraps an upstream helper from that single package and returns a **custom-component** button:
-  - **Text color** (`extensions/Color/`, name `color`) and **Highlight** (`extensions/Highlight/`, name `backgroundColor`, wraps `BackgroundColor`) use thin Pattern A adapters over `extensions/EditorColorPickerButton.tsx`.
+  - **Text color** (`extensions/Color/`, name `color`) and **Highlight** (`extensions/Highlight/`, name `backgroundColor`, wraps `BackgroundColor`) yield `extensions/EditorColorPickerButton.tsx` with their `variant`.
     The shared module owns selection capture, live preview, the `ColorPickerPanel` popover, and mark commits; its `text` and `highlight` variants select the icon, palette, preview CSS property, and TipTap commands.
     They are the two leaves of the `colour` family.
-  - **FontFamily** (`extensions/FontFamily/`, name `fontFamily`) and **FontSize** (`extensions/FontSize/`, name `fontSize`) use thin Pattern A adapters over `extensions/EditorTextStyleSelect.tsx`.
+  - **FontFamily** (`extensions/FontFamily/`, name `fontFamily`) and **FontSize** (`extensions/FontSize/`, name `fontSize`) yield `extensions/EditorTextStyleSelect.tsx` with their `variant`.
     The shared shadcn `Select` module owns their options, focus-and-commit behavior, and the `__default__` sentinel that maps to the corresponding unset command because Radix `Select.Item` forbids an empty-string value.
-    Both live in their own `FontSection`.
   - The legacy `menus/ToolbarButton.tsx` and the `extensions/text-color/` folder were removed; the `Color/` vs `text-color/` duplicate is resolved (kept `Color/`).
   - **Live color preview.** In the custom (react-colorful) picker, dragging only **previews** the color on the selected text and commits (a real `setColor`/`setBackgroundColor` mark) on pointer **release** - so a drag is one clean undo step, not one per mouse-move, and the popover never loses focus mid-drag. The preview is a ProseMirror inline decoration held by the `colorPreview` extension (`extensions/color-preview.ts`, registered in `editor.tsx`): the buttons capture the selection range on popover open, call `previewColor(editor, {from,to,style})` during the drag and `clearColorPreview(editor)` on release/close, and commit the mark to the stored range via `setTextSelection(...)` **without** `focus()` (so the popover stays open). `ColorPickerPanel` exposes an optional `onPreview` (drag) alongside `onChange` (commit); the card picker omits `onPreview` and keeps its immediate live behavior.
 - All toolbar buttons are extension-owned `button` factories (Pattern A), resolved by id through `toolbar/registry.ts`. List buttons switch directly between bullet/ordered/task (no `can()` gating) and, via `extensions/list-toggle.ts` (`toggleWholeList`), convert the **whole** list when the cursor is collapsed inside one - not just the current item (needed because `taskList` uses a different item type than bullet/ordered). An explicit selection is respected as-is. Mark buttons (`Bold`/`Italic`/`Strike`/`Underline`/`Clear`/`Color`) and block buttons (`Heading` H1-H3, `Blockquote`, `Mathematics`) each set `toggle: true` so they render as toggle-styled toolbar buttons with an active highlight. Grouping on the bar is implicit in family order - there are no `Separator`s and no sections. The Mathematics (LaTeX) button uses a custom `Latex` icon (`src/components/icons/LatexIcon.tsx`, a "TeX" wordmark) registered in `icons.ts`.
@@ -161,6 +160,6 @@ Tests run **headless** — no DOM render needed. Build `new Editor({ extensions:
 - pull the button via `editor.extensionManager.extensions.find(e => e.name === '<name>').options.button({ editor, t })` and assert its `componentProps` (`icon`, `tooltip`, `shortcutKeys`) and that `action()` flips `isActive()`;
 - trigger markdown input rules with `editor.view.someProp('handleTextInput', (f) => f(editor.view, from, from, ' '))`.
 
-`extensions/Bold/Bold.test.ts` is the canonical template. Run `pnpm test`.
+`extensions/formatting.test.ts` is the canonical template: one table, one row per extension, plus a case for anything only one of them does. Run `pnpm test`.
 
-When editing here, follow Pattern A for new work and migrate the above — don't add more Pattern B arrays.
+When editing here, follow Pattern A: a new toolbar button is a `withButton` declaration (or a `ButtonView<typeof X>` option for a custom component), never a toolbar-side array.

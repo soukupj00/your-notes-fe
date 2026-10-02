@@ -5,13 +5,9 @@ import Text from '@tiptap/extension-text';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getToolbarItem } from '@/components/editor/toolbar/registry';
 import type { AttachmentDeps } from '../attachments/deps';
-import { Blockquote } from '../Blockquote';
-import { BulletList } from '../BulletList';
-import { CodeBlock } from '../CodeBlock';
+import { Blockquote, BulletList, CodeBlock, HorizontalRule, OrderedList } from '../formatting';
 import { Heading } from '../Heading';
-import { HorizontalRule } from '../HorizontalRule';
 import { ListItem } from '../ListItem';
-import { OrderedList } from '../OrderedList';
 import { filterSlashItems, SLASH_ITEMS } from './slashItems';
 
 // The menu's labels come from the registry now, so the stand-in `t` has to

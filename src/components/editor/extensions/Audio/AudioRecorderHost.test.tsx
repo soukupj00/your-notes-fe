@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AudioRecorderHost } from './AudioRecorderHost';
 import { createAudioCaptureCoordinator } from './audioCapture';
@@ -18,6 +19,7 @@ const recorder: AudioRecorder = {
 
 vi.mock('./useAudioRecorder', () => ({ useAudioRecorder: () => recorder }));
 vi.mock('./RecordingWaveform', () => ({ RecordingWaveform: () => null }));
+vi.mock('sonner', () => ({ toast: vi.fn() }));
 
 const t = (key: string) => key;
 
@@ -42,6 +44,8 @@ describe('AudioRecorderHost', () => {
   beforeEach(() => {
     recorder.status = 'idle';
     vi.mocked(recorder.start).mockClear();
+    vi.mocked(toast).mockClear();
+    (recorder as { error: string | null }).error = null;
   });
 
   it('answers a recording request made before it mounted', () => {
@@ -93,5 +97,20 @@ describe('AudioRecorderHost', () => {
     await userEvent.click(screen.getByRole('button', { name: 'editor.audio.cancel' }));
 
     expect(recorder.cancel).toHaveBeenCalled();
+  });
+
+  it('toasts a recorder error once, however often the deps getter changes identity', () => {
+    const { editor } = makeEditor();
+    recorder.status = 'error';
+    (recorder as { error: string | null }).error = 'failed';
+    const { rerender } = render(<AudioRecorderHost editor={editor} getDeps={getDeps} />);
+    expect(toast).toHaveBeenCalledTimes(1);
+    expect(toast).toHaveBeenCalledWith('editor.audio.errors.failed');
+
+    // A parent that passes a fresh arrow function each render must not re-fire the toast.
+    rerender(<AudioRecorderHost editor={editor} getDeps={() => getDeps()} />);
+    rerender(<AudioRecorderHost editor={editor} getDeps={() => getDeps()} />);
+
+    expect(toast).toHaveBeenCalledTimes(1);
   });
 });
