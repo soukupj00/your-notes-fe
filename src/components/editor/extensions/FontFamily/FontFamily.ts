@@ -2,17 +2,11 @@ import {
   type FontFamilyOptions,
   FontFamily as TiptapFontFamily,
 } from '@tiptap/extension-text-style';
-import type { ComponentProps } from 'react';
-import type { ButtonContext } from '../button-types';
-import { FontFamilyButton } from './FontFamilyButton';
-
-interface FontFamilyButtonView {
-  component: typeof FontFamilyButton;
-  componentProps: ComponentProps<typeof FontFamilyButton>;
-}
+import type { ButtonContext, ButtonView } from '../button-types';
+import { EditorTextStyleSelect } from '../EditorTextStyleSelect';
 
 export interface FontFamilyExtensionOptions extends FontFamilyOptions {
-  button: (context: ButtonContext) => FontFamilyButtonView;
+  button: (context: ButtonContext) => ButtonView<typeof EditorTextStyleSelect>;
 }
 
 /** `TextStyle` must also be registered, or the fontFamily attribute does not exist. */
@@ -20,9 +14,14 @@ export const FontFamily = TiptapFontFamily.extend<FontFamilyExtensionOptions>({
   addOptions() {
     return {
       ...this.parent?.(),
-      button: ({ editor, t }: ButtonContext) => ({
-        component: FontFamilyButton,
-        componentProps: { editor, t, tooltip: t('editor.fontFamily.tooltip') },
+      button: ({ editor, t }: ButtonContext): ButtonView<typeof EditorTextStyleSelect> => ({
+        component: EditorTextStyleSelect,
+        componentProps: {
+          editor,
+          t,
+          tooltip: t('editor.fontFamily.tooltip'),
+          variant: 'fontFamily',
+        },
       }),
     } as unknown as FontFamilyExtensionOptions;
   },

@@ -2,22 +2,16 @@ import {
   type BackgroundColorOptions,
   BackgroundColor as TiptapBackgroundColor,
 } from '@tiptap/extension-text-style';
-import type { ComponentProps } from 'react';
 import { HIGHLIGHT_COLORS } from '@/components/color-picker/palettes.ts';
-import type { ButtonContext } from '../button-types';
-import { HighlightButton } from './HighlightButton';
+import type { ButtonContext, ButtonView } from '../button-types';
+import { EditorColorPickerButton } from '../EditorColorPickerButton';
 
 /** What `Mod+Shift+H` applies: the common case, the picker covers the rest. */
 const SHORTCUT_COLOR =
   HIGHLIGHT_COLORS.colors.find((color) => color.label === 'Yellow')?.cssValue ?? '#fef08a';
 
-interface HighlightButtonView {
-  component: typeof HighlightButton;
-  componentProps: ComponentProps<typeof HighlightButton>;
-}
-
 export interface HighlightExtensionOptions extends BackgroundColorOptions {
-  button: (context: ButtonContext) => HighlightButtonView;
+  button: (context: ButtonContext) => ButtonView<typeof EditorColorPickerButton>;
 }
 
 /** `TextStyle` must also be registered, or the backgroundColor attribute does not exist. */
@@ -25,12 +19,13 @@ export const Highlight = TiptapBackgroundColor.extend<HighlightExtensionOptions>
   addOptions() {
     return {
       ...this.parent?.(),
-      button: ({ editor, t }: ButtonContext) => ({
-        component: HighlightButton,
+      button: ({ editor, t }: ButtonContext): ButtonView<typeof EditorColorPickerButton> => ({
+        component: EditorColorPickerButton,
         componentProps: {
           editor,
           tooltip: t('editor.highlight.tooltip'),
           shortcutKeys: ['Mod', 'Shift', 'H'],
+          variant: 'highlight',
         },
       }),
     } as unknown as HighlightExtensionOptions;

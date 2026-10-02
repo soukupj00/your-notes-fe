@@ -8,9 +8,8 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { afterEach, describe, expect, it } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Color } from './Color';
-import { TextColorButton } from './Color/TextColorButton';
+import { EditorColorPickerButton } from './EditorColorPickerButton';
 import { Highlight } from './Highlight';
-import { HighlightButton } from './Highlight/HighlightButton';
 
 const editors: Editor[] = [];
 
@@ -33,7 +32,7 @@ describe('editor color picker buttons', () => {
     const editor = createEditor();
     render(
       <TooltipProvider>
-        <TextColorButton editor={editor} tooltip="Text color" />
+        <EditorColorPickerButton editor={editor} tooltip="Text color" variant="text" />
       </TooltipProvider>
     );
 
@@ -47,7 +46,7 @@ describe('editor color picker buttons', () => {
     const editor = createEditor();
     render(
       <TooltipProvider>
-        <HighlightButton editor={editor} tooltip="Highlight" />
+        <EditorColorPickerButton editor={editor} tooltip="Highlight" variant="highlight" />
       </TooltipProvider>
     );
 
