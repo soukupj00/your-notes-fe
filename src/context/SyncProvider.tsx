@@ -53,6 +53,9 @@ const INACTIVE: SyncContextValue = {
 
 const SyncContext = createContext<SyncContextValue>(INACTIVE);
 
+// One id, so a second sign-out replaces the toast and a sign-in can take it away.
+const SIGNED_OUT_TOAST = 'sync-signed-out';
+
 /**
  * Runs the sync loop (`src/sync/loop.ts`) while this Device is signed in, and
  * says how it is going. Mounted in `routes/__root.tsx`, inside the router,
@@ -108,6 +111,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     setSession(null);
     // Stays until dismissed: it is the only notice that this Device stopped syncing.
     toast(t('sync.signedOut'), {
+      id: SIGNED_OUT_TOAST,
       duration: Number.POSITIVE_INFINITY,
       action: {
         label: t('account.section.signIn'),
@@ -123,6 +127,9 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     onReportRef.current = onReport;
     onSignedOutRef.current = onSignedOut;
   });
+  useEffect(() => {
+    if (accountId) toast.dismiss(SIGNED_OUT_TOAST);
+  }, [accountId]);
 
   useEffect(() => {
     if (!accountId || !remote || touring) return;
