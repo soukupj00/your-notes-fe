@@ -31,8 +31,12 @@ Domain glossary for the note-taking app. This file defines the **language** of t
   Pressing and holding an item row opens the Note instead.
   _Avoid_: preview (a Preview is an Attachment's stand-in on the Card, not the Card itself)
 - **Start** — One of the ways a new Note can be begun from a Feed: as text, as a Checklist, by recording Audio, by opening a Drawing, by choosing an Image, or by taking a picture with the Camera.
-  A Start may carry an intent (begin recording, open the camera) that the Editor acts on as it opens; the intent belongs to the gesture that began the Note and is never repeated by a reload.
+  A Start may carry an Intent that the Editor acts on as it opens.
   The user chooses which Starts are offered and in what order.
+- **Intent** - The one-shot half of opening a Note: what the Editor does as it opens, beyond showing the Note.
+  A Start may carry one (begin recording, open the Drawing, insert the chosen files, begin as a Checklist), and so may a Card (play the first clip).
+  An Intent belongs to the gesture that opened the Note, so a reload or Back never repeats it.
+  _Avoid_: open request, initial capture, initial files
 
 ## Note lifecycle
 
@@ -58,6 +62,10 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
 ## Editing
 
 - **Editor** — The rich-text surface (TipTap-based) used to write a Note's body. One Editor edits one Note's content.
+- **Draft** - The Editor's working copy of a Note for the life of one open: what the user has typed, whether or not the Local Store has caught up yet.
+  A Draft has its id from the moment the Editor opens, so the address can name it before a row exists, and it earns its row on the first real change or the first act that needs one (a label, an Attachment, a Reminder).
+  A Draft that closes empty leaves nothing behind.
+  _Avoid_: unsaved note, new note (a Draft of an existing Note is still a Draft)
 - **Extension** — A self-contained editing capability plugged into the Editor (bold, lists, headings, image insertion, drawing, etc.). An Extension may contribute editing behavior, a Toolbar Button, or both.
 - **Toolbar Button** — The control a user clicks to invoke an Extension's action (e.g. toggle bold). A Button belongs to its Extension and is identified to the user by a descriptive, recognizable icon.
 - **Toolbar Family** — A named group of related Toolbar Buttons that answer the same question (headings, lists, alignment, media). A Family is shown either **expanded**, as its individual Buttons, or **collapsed**, as a single menu standing in for all of them. Families with one member are always expanded.
