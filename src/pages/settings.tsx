@@ -50,7 +50,7 @@ export default function SettingsPage() {
           closing pair as one block. */}
       <HelpSection />
 
-      {/* `PwaInstallSection` may render nothing, so it cannot anchor step 5 alone;
+      {/* `PwaInstallSection` may render nothing, so it cannot anchor step 6 alone;
           `BackupSection` always renders and carries the same "your data is local" message. */}
       <div data-tour="settings-local">
         <PwaInstallSection />

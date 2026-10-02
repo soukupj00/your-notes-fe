@@ -12,8 +12,8 @@ import { listLocales } from '@/lib/locales.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
 /**
- * Deliberately not a `PreferencesProvider` field, so it is not in the backup and does not
- * sync; why: CLAUDE.md (i18n). A Select, because the list outgrows a segmented control.
+ * Not a `PreferencesProvider` field: i18next's detector owns the language and keeps it in
+ * `localStorage` itself (CLAUDE.md, i18n). A Select, because the list outgrows a segmented control.
  */
 export function LanguageSection() {
   const { t } = useTranslation();

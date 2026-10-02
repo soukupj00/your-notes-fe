@@ -57,11 +57,9 @@ const SyncContext = createContext<SyncContextValue>(INACTIVE);
 const SIGNED_OUT_TOAST = 'sync-signed-out';
 
 /**
- * Runs the sync loop (`src/sync/loop.ts`) while this Device is signed in, and
- * says how it is going. Mounted in `routes/__root.tsx`, inside the router,
- * because two of its toasts link into the app (to the Conflicts Tag and to
- * Settings). It never blocks a screen: signed out or with no server, it is
- * inactive and every value is at rest.
+ * Runs the sync loop while this Device is signed in and says how it is going; signed out
+ * or with no server it is inactive. Mounted in `routes/__root.tsx`, inside the router,
+ * because two of its toasts link into the app (the Conflicts Tag, Settings).
  */
 export function SyncProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
