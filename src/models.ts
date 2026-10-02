@@ -2,10 +2,12 @@
  * The one lifecycle stage a Note is in (ADR 0009). Pinning is orthogonal to it, so it is
  * `Note.pinnedAt` instead.
  */
-export type NoteState = 'active' | 'archived' | 'trashed';
+export const NOTE_STATES = ['active', 'archived', 'trashed'] as const;
+export type NoteState = (typeof NOTE_STATES)[number];
 
 /** How often a Reminder repeats; absent means it happens once. */
-export type ReminderRepeat = 'daily' | 'weekly' | 'monthly' | 'yearly';
+export const REMINDER_REPEATS = ['daily', 'weekly', 'monthly', 'yearly'] as const;
+export type ReminderRepeat = (typeof REMINDER_REPEATS)[number];
 
 export interface Note {
   id: string; // uuid v4
@@ -46,7 +48,8 @@ export interface Setting<T = unknown> {
   value: T;
 }
 
-export type AttachmentKind = 'image' | 'audio' | 'video' | 'file' | 'excalidraw';
+export const ATTACHMENT_KINDS = ['image', 'audio', 'video', 'file', 'excalidraw'] as const;
+export type AttachmentKind = (typeof ATTACHMENT_KINDS)[number];
 
 /**
  * Bytes live here as a native Blob (ADR 0007); the Note body references the row by id via

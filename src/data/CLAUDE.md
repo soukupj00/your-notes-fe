@@ -18,7 +18,7 @@ The seam every read and write of persisted data goes through ([ADR 0020](../../d
 ## Rules
 
 - Nothing outside `dexie/` imports `dexie`; nothing outside `src/data` imports from `dexie/` except `main.tsx` and `src/test/store.tsx` (the two composition points).
-- The store stamps nothing: ids and timestamps are the caller's (`lib/new-note.ts`).
+- The store stamps nothing a caller could stamp: ids and a row's birth timestamps are the caller's (`lib/rows.ts`). The two exceptions are its own bookkeeping: `tags.merge` stamps the links it relabels, and a Tombstone's `deletedAt` is stamped in `syncRows.ts`.
 - Search, sort and held rank live in `src/hooks/data`, in front of the seam.
 - `meta` is bookkeeping about rows (Prop baselines; the sync cursor and Account under `SYNC_META_KEYS`). Preferences are not here - they are in `localStorage` (`PreferencesProvider`).
 - The sync engine (`src/sync/`) is the only caller of `sync.*`. `applyPage` writes what the server answers: in `keep-local` mode (a pull) an owed row or a pending purge waits for its push, in `server-wins` mode (resolving an outcome) the server's row overwrites it. A server Tombstone removes a row (a Note with its links and Attachments, a Tag with its links) without writing a local one, and drops a pending local Tombstone for the same id.

@@ -174,6 +174,15 @@ export function createMemoryLocalStore(): LocalStore {
         write(tags, tag.id, tag);
         changed('tags');
       },
+      update: async (id, change) => {
+        const stored = tags.get(id);
+        if (!stored) return null;
+        const before = strip(stored);
+        const after = { ...before, ...change(before) };
+        tags.set(id, owed(after, stored.rev));
+        changed('tags');
+        return after;
+      },
       delete: async (id) => {
         remove(tags, id, 'tag');
         deleteLinksWhere((l) => l.tagId === id);

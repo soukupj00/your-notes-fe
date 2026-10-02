@@ -3,9 +3,9 @@ import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
-import { REMINDER_REPEATS, type Reminder, toLocalInput } from '@/lib/reminder.ts';
+import { type Reminder, toLocalInput } from '@/lib/reminder.ts';
 import { cn } from '@/lib/utils.ts';
-import type { ReminderRepeat } from '@/models.ts';
+import { REMINDER_REPEATS, type ReminderRepeat } from '@/models.ts';
 
 type ReminderButtonProps = {
   reminder?: Reminder;

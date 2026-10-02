@@ -257,6 +257,6 @@ Feature work follows **red → green → refactor**, applied pragmatically per l
 - **New TipTap extensions**: Follow the per-folder pattern with `ExtensionName.ts` + `index.ts`. Add the button factory with `ActionButton` as the component.
 - **DB schema changes**: Increment the Dexie version number in `src/data/dexie/db.ts` and add a migration if existing data must be preserved.
 - **Dates**: All timestamps stored as ISO strings (`.toISOString()`).
-- **IDs**: Use `uuid` (`v4`) for all entity IDs.
+- **IDs and timestamps**: ids are minted only by `mintId` in `src/lib/rows.ts` (`crypto.randomUUID`; a secure context is already a requirement, ADR 0018). Every Note, Tag, NoteTag and Attachment is born through one of its factories, which stamps both timestamps; a later write stamps `updatedAt` itself, as an ISO string.
 - **Tailwind v4** is in use (CSS-based config, not `tailwind.config.js` plugins). `tw-animate-css` provides animation utilities.
 - **Lint/format is being migrated to Biome** (one tool for both); see the Tooling & CI/CD section above. Until M0 lands, the repo still has ESLint + Prettier wired into husky/lint-staged.

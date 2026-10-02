@@ -189,6 +189,32 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
         expect(await store.tags.findByName('wor')).toBeUndefined();
       });
 
+      it('update is a read-modify-write that returns the row, and null when gone', async () => {
+        const t = tag({ name: 'Work', color: 'blue' });
+        await store.tags.add(t);
+        const after = await store.tags.update(t.id, (current) => ({ name: `${current.name}!` }));
+        expect(after).toEqual({ ...t, name: 'Work!' });
+        expect(await store.tags.get(t.id)).toEqual({ ...t, name: 'Work!' });
+        expect(await store.tags.update('missing', () => ({}))).toBeNull();
+      });
+
+      it('update can clear the colour', async () => {
+        const t = tag({ color: 'blue' });
+        await store.tags.add(t);
+        await store.tags.update(t.id, () => ({ color: undefined }));
+        expect((await store.tags.get(t.id))?.color).toBeUndefined();
+      });
+
+      it('two updates in the same tick both land', async () => {
+        const t = tag({ name: 'Work' });
+        await store.tags.add(t);
+        await Promise.all([
+          store.tags.update(t.id, () => ({ name: 'Home' })),
+          store.tags.update(t.id, () => ({ color: 'red' })),
+        ]);
+        expect(await store.tags.get(t.id)).toMatchObject({ name: 'Home', color: 'red' });
+      });
+
       it('link is idempotent and unlink removes exactly one link', async () => {
         const n = note();
         const t1 = tag({ name: 'a' });

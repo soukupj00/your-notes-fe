@@ -4,7 +4,6 @@ What's left in the data-access layer. See [root PLAN.md](../../../PLAN.md) for m
 
 ## Cleanups (M1, alongside data tests)
 
-- Unify timestamp handling: `createTag`/`addTagToNote` must set `createdAt`/`updatedAt` like `useNoteActions` does, or the models should make them optional — pick one and apply consistently.
 - Add hook tests (Vitest + `fake-indexeddb`): live-query hooks return seeded data and react to mutations; mutation hooks enforce idempotency and cascade behavior.
 
 ## Notes CRUD support (M2)
