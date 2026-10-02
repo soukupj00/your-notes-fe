@@ -11,6 +11,7 @@ import { Spinner } from '@/components/ui/Spinner.tsx';
 import type { NoteFeedScope } from '@/hooks/data/useNoteFeed.ts';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
 import { useOpenNote } from '@/hooks/useOpenNote.ts';
+import { mintId } from '@/lib/rows.ts';
 import { cn } from '@/lib/utils.ts';
 
 const NoteEditorDialog = lazy(() =>
@@ -64,7 +65,7 @@ export function NotesView({
   // The id is minted at open, not on first save, so the URL never swaps under a typing user
   // (CLAUDE.md, Data layer).
   const start = (editing: NoteOpenRequest) => {
-    const id = editing.id ?? crypto.randomUUID();
+    const id = editing.id ?? mintId();
     setIntent({
       for: id,
       isDraft: editing.id == null,

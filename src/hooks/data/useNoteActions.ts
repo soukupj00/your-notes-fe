@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import type { PurgedRelations } from '@/data/LocalStore.ts';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
-import { newNote } from '@/lib/new-note.ts';
+import { newNote } from '@/lib/rows.ts';
 import type { Note } from '@/models.ts';
 
 /** How long a Trashed note is kept before the sweep purges it (ADR 0009). */

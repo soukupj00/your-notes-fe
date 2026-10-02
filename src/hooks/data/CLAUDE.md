@@ -20,11 +20,11 @@ The React interface to the Local Store. Components use these hooks; they should 
 | ------ | ----------- |
 | `useNoteActions()` | `createNote(partial)`, `updateNote(id, updates)`, `purgeNote(id)`, `restoreNote(note, removed)` — plus the lifecycle set: `pinNote`/`unpinNote`, `archiveNote`, `trashNote`, `restoreToActive`, `revertLifecycle(id, snapshot)`, `purgeExpiredTrash(graceDays?)`, `emptyTrash()` |
 | `useTagActions()` | `createTag(name, color?)`, `updateTag(id, changes)`, `deleteTag(id)`, `mergeTags(sourceId, targetId)`, `addTagToNote(noteId, tagId)`, `removeTagFromNote(noteId, tagId)` |
-| `useAttachmentActions()` | `createAttachment(noteId, file, kind?)`, `getAttachment(id)`, `deleteAttachment(id)`, `cloneAttachment(source, noteId)`, `collectOrphans(noteId, referencedIds)`, `collectStartupOrphans()` |
+| `useAttachmentActions()` | `createAttachment(noteId, file, kind?, options?)`, `getAttachment(id)`, `watchAttachment(id)`, `updateAttachment(id, changes)`, `deleteAttachment(id)`, `cloneAttachment(source, noteId)`, `collectOrphans(noteId, referencedIds)`, `collectStartupOrphans()` |
 
 ## Conventions & behaviors
 
-- Mutations set/refresh `updatedAt` and generate `uuid` ids (see `useNoteActions`).
+- Rows are born through `lib/rows.ts` (`newNote`, `newTag`, `newNoteTag`, `newAttachment`, `cloneAttachment`), which mints ids and stamps both timestamps; a later write stamps `updatedAt` in the hook and hands it to the store's atomic `update` (notes and tags alike).
 `createNote` accepts an `id` instead of minting one, which is how a draft keeps the id its URL is already showing ([ADR 0014](../../../docs/adr/0014-the-open-note-lives-in-the-url.md)): the editor's id goes into the address bar when it opens, before there is a row.
 - Relationship-aware deletes are single atomic store methods (`notes.purge`, `tags.merge`, `tags.delete`): `purgeNote` also clears the note's `noteTags` and `attachments`, returning `{ removedTags, removedAttachments }` so callers can pass them (with the captured note) to `restoreNote` for a lossless undo; `deleteTag` clears the tag's `noteTags`.
 - `collectStartupOrphans` is **one pass over both tables**, not the note-scoped `collectOrphans` run per note: "the owning Note is gone" and "the owner's Body no longer references this row" are the same question asked of one row, so answering them together costs one transaction instead of one per note on every app start.

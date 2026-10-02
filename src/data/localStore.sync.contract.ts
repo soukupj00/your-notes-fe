@@ -119,6 +119,17 @@ export function describeLocalStoreSyncContract(makeStore: () => Promise<LocalSto
       expect(batch.tags[0]?.rev).toBe(2);
     });
 
+    it('tags.update owes the row at the Revision it holds', async () => {
+      const t = tag();
+      await store.tags.add(t);
+      await syncAll(store, 2);
+
+      await store.tags.update(t.id, () => ({ name: 'Home' }));
+      const batch = await store.sync.dirty();
+      expect(batch.tags).toHaveLength(1);
+      expect(batch.tags[0]).toMatchObject({ name: 'Home', rev: 2 });
+    });
+
     it('an edit made while the push was in flight stays owed, at the new Revision', async () => {
       const n = note();
       await store.notes.add(n);

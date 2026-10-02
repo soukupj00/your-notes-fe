@@ -5,8 +5,8 @@
  */
 
 import type { LocalStore } from '@/data/LocalStore.ts';
-import { newNote } from '@/lib/new-note.ts';
 import type { NoteColor } from '@/lib/note-colors.ts';
+import { newNote } from '@/lib/rows.ts';
 
 /** The slice of i18next's `t` the Prop copy needs. */
 type Translate = (key: string) => string;

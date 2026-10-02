@@ -147,6 +147,15 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           await db.tombstones.delete(tag.id);
         }),
       put: (tag) => db.transaction('rw', db.tags, db.tombstones, () => writeTag(tag)),
+      update: (id, change) =>
+        db.transaction('rw', db.tags, async () => {
+          const stored = await db.tags.get(id);
+          if (!stored) return null;
+          const before = strip(stored);
+          const after = { ...before, ...change(before) };
+          await db.tags.put(owed(after, stored.rev));
+          return after;
+        }),
       delete: (id) =>
         db.transaction('rw', db.tags, db.noteTags, db.tombstones, async () => {
           const stored = await db.tags.get(id);

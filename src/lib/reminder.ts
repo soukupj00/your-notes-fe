@@ -3,8 +3,6 @@ import type { Note, ReminderRepeat } from '@/models.ts';
 /** A Reminder as the UI passes it around; on the Note it is two flat fields. */
 export type Reminder = { remindAt: string; repeat?: ReminderRepeat };
 
-export const REMINDER_REPEATS: readonly ReminderRepeat[] = ['daily', 'weekly', 'monthly', 'yearly'];
-
 const REMIND_AT_SHAPE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 
 /** How long a one-shot stays on show, struck through, after its time has gone. */

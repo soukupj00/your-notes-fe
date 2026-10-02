@@ -94,6 +94,8 @@ export interface LocalStore {
     findByName(name: string): Promise<Tag | undefined>;
     add(tag: Tag): Promise<void>;
     put(tag: Tag): Promise<void>;
+    /** Atomic read-modify-write; `null` when there is no such tag. */
+    update(id: string, change: (tag: Tag) => Partial<Tag>): Promise<Tag | null>;
     /** Deletes the tag and every link to it. */
     delete(id: string): Promise<void>;
     /**

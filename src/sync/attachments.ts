@@ -1,5 +1,6 @@
 import type { AttachmentTransfer, LocalStore } from '@/data/LocalStore.ts';
 import type { Remote } from '@/data/Remote.ts';
+import { mintId } from '@/lib/rows.ts';
 
 /** One blob to move: the Attachment row it belongs to, and its id on the server. */
 export type Transfer = {
@@ -85,7 +86,7 @@ export async function runTransfers(
 
   // Owes the Note, so the next run pushes the new id and then uploads under it.
   for (const id of todo.mint) {
-    await store.attachments.update(id, { thumbnailId: crypto.randomUUID() });
+    await store.attachments.update(id, { thumbnailId: mintId() });
   }
 
   const refused = new Set<string>();

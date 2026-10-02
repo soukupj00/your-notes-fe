@@ -1,8 +1,13 @@
 import { useCallback } from 'react';
-import { v4 as uuid } from 'uuid';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import { extractAttachmentIds } from '@/lib/attachment-html.ts';
 import { AttachmentError, validateAttachmentFile } from '@/lib/attachments.ts';
+import {
+  cloneAttachment as cloneRow,
+  mintId,
+  type NewAttachmentOptions,
+  newAttachment,
+} from '@/lib/rows.ts';
 import type { Attachment, AttachmentKind } from '@/models.ts';
 
 // Memoized on the store alone, which the provider creates once: the editor's insert handlers and
@@ -15,28 +20,11 @@ export function useAttachmentActions() {
       noteId: string,
       file: File,
       kind: AttachmentKind = 'image',
-      options: { thumbnail?: Blob; duration?: number; width?: number; height?: number } = {}
+      options: NewAttachmentOptions = {}
     ): Promise<Attachment> => {
       const bad = validateAttachmentFile(file, kind);
       if (bad) throw new AttachmentError(bad);
-      const now = new Date().toISOString();
-      const att: Attachment = {
-        id: uuid(),
-        noteId,
-        kind,
-        mime: file.type,
-        blob: file, // a File is a Blob; persist directly (ADR 0007)
-        thumbnail: options.thumbnail,
-        // The thumbnail's own blob id on the server, so it syncs ahead of the full bytes.
-        thumbnailId: options.thumbnail ? uuid() : undefined,
-        duration: options.duration,
-        width: options.width,
-        height: options.height,
-        name: file.name,
-        size: file.size,
-        createdAt: now,
-        updatedAt: now,
-      };
+      const att = newAttachment(noteId, file, kind, options);
       await store.attachments.add(att);
       return att;
     },
@@ -52,16 +40,7 @@ export function useAttachmentActions() {
 
   const cloneAttachment = useCallback(
     async (source: Attachment, noteId: string): Promise<Attachment> => {
-      const now = new Date().toISOString();
-      const clone: Attachment = {
-        ...source,
-        id: uuid(),
-        noteId,
-        // A row not downloaded here has no bytes to copy; the clone waits for them the same way.
-        blob: source.blob?.slice(0, source.blob.size, source.blob.type),
-        createdAt: now,
-        updatedAt: now,
-      };
+      const clone = cloneRow(source, noteId);
       await store.attachments.add(clone);
       return clone;
     },
@@ -81,7 +60,7 @@ export function useAttachmentActions() {
       return store.attachments.update(
         id,
         thumbnail
-          ? { ...changes, thumbnail, thumbnailId: uuid(), updatedAt }
+          ? { ...changes, thumbnail, thumbnailId: mintId(), updatedAt }
           : { ...changes, updatedAt }
       );
     },
