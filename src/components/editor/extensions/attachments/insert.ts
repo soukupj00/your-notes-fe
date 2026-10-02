@@ -1,82 +1,91 @@
 import type { Editor } from '@tiptap/core';
-import { extractAttachmentIds } from '@/lib/attachment-html.ts';
-import { AttachmentError, validateAttachmentFile } from '@/lib/attachments.ts';
+import { AttachmentError, fileMatchesKind, validateAttachmentFile } from '@/lib/attachments.ts';
+import { extractAttachmentIds } from '@/lib/body.ts';
+import { generateImageThumbnail } from '@/lib/image-thumbnail.ts';
+import type { NewAttachmentOptions } from '@/lib/rows.ts';
+import { generateVideoPoster } from '@/lib/video-poster.ts';
 import type { AttachmentKind } from '@/models.ts';
+import { insertAttachmentNode } from './createAttachmentNode';
 import type { AttachmentDeps } from './deps';
 
-export type DerivedAttachmentData = {
-  thumbnail?: Blob;
-  duration?: number;
-  /** Pixels, so another Device can reserve the box before the bytes arrive (M5 slice 5). */
-  width?: number;
-  height?: number;
+/** What a kind derives from its bytes at insert, so a row never exists without the Preview the
+ *  card expects. Best-effort: what cannot be produced is omitted and the file is stored anyway. */
+const DERIVE: Partial<Record<AttachmentKind, (file: File) => Promise<NewAttachmentOptions>>> = {
+  image: generateImageThumbnail,
+  video: async (file) => {
+    const { poster, ...metadata } = await generateVideoPoster(file);
+    return { thumbnail: poster, ...metadata };
+  },
 };
 
-/** Derives card data (thumbnail, poster, length) in the same step as the write, so a row
- *  never exists without the preview the feed expects. `deriveData` is best-effort: what it
- *  cannot produce is omitted and the attachment is stored anyway. */
-export function withDerivedAttachmentData(
+/** The kinds a paste or drop is routed to. */
+const TRANSFER_KINDS: AttachmentKind[] = ['image', 'audio', 'video'];
+
+async function createWithDerivedData(
   deps: AttachmentDeps,
-  kind: AttachmentKind,
-  deriveData: (file: File) => Promise<DerivedAttachmentData>
-): AttachmentDeps {
-  return {
-    ...deps,
-    createAttachment: async (noteId, file, fileKind) => {
-      // Validated here rather than inside `deriveData`, so a rejected file never
-      // pays for a decode it was always going to throw away.
-      const validationError = validateAttachmentFile(file, kind);
-      if (validationError) throw new AttachmentError(validationError);
-      const derived = await deriveData(file);
-      // The options argument means "here is extra data", so empty keys are left off.
-      const options = Object.fromEntries(
-        Object.entries(derived).filter(([, value]) => value !== undefined)
-      ) as DerivedAttachmentData;
-      return Object.keys(options).length > 0
-        ? deps.createAttachment(noteId, file, fileKind, options)
-        : deps.createAttachment(noteId, file, fileKind);
-    },
-  };
+  noteId: string,
+  file: File,
+  kind: AttachmentKind
+) {
+  // Validated before the decode, so a rejected file never pays for one it was going to throw away.
+  const bad = validateAttachmentFile(file, kind);
+  if (bad) throw new AttachmentError(bad);
+  const derived = (await DERIVE[kind]?.(file)) ?? {};
+  // The options mean "here is extra data", so empty keys are left off.
+  const options = Object.fromEntries(
+    Object.entries(derived).filter(([, value]) => value !== undefined)
+  ) as NewAttachmentOptions;
+  return deps.createAttachment(noteId, file, kind, options);
 }
 
-const MIME_PREFIX: Partial<Record<AttachmentKind, string>> = {
-  image: 'image/',
-  audio: 'audio/',
-  video: 'video/',
-};
+function reportInsertError(deps: AttachmentDeps, kind: AttachmentKind, err: unknown) {
+  if (err instanceof AttachmentError) {
+    deps.onError(err.code, kind);
+  } else {
+    console.error('insertFiles: failed to add attachment', err);
+    deps.onError('insert-failed', kind);
+  }
+}
 
-/** One getNoteId() per batch, so a draft is persisted once for several files. */
-export async function insertAttachmentFiles(
-  _editor: Editor,
-  files: FileList | File[],
+/** The one path from files to nodes: files of the kind are validated, derived from, stored and
+ *  placed. One `getNoteId()` per batch, so a draft is persisted once for several files. */
+export async function insertFiles(
   kind: AttachmentKind,
-  deps: AttachmentDeps,
-  insertNode: (attachmentId: string) => void
+  editor: Editor,
+  files: Iterable<File>,
+  deps: AttachmentDeps
 ): Promise<void> {
-  const prefix = MIME_PREFIX[kind];
-  // `file` has no single MIME prefix: accept any picked file (the size cap in
-  // validateAttachmentFile gates it). Media kinds still filter by their prefix.
-  const matched =
-    kind === 'file'
-      ? Array.from(files)
-      : prefix
-        ? Array.from(files).filter((f) => f.type.startsWith(prefix))
-        : [];
+  const matched = Array.from(files).filter((file) => fileMatchesKind(file, kind));
   if (matched.length === 0) return;
-  const noteId = await deps.getNoteId();
+  let noteId: string;
+  try {
+    noteId = await deps.getNoteId();
+  } catch (err) {
+    // Every caller fires this with `void`, so a rejection left here would vanish untoasted.
+    reportInsertError(deps, kind, err);
+    return;
+  }
   for (const file of matched) {
     try {
-      const att = await deps.createAttachment(noteId, file, kind);
-      insertNode(att.id);
+      const att = await createWithDerivedData(deps, noteId, file, kind);
+      insertAttachmentNode(editor, kind, att.id);
     } catch (err) {
-      if (err instanceof AttachmentError) {
-        deps.onError(err.code);
-      } else {
-        console.error('insertAttachmentFiles: failed to add attachment', err);
-        deps.onError('insert-failed');
-      }
+      reportInsertError(deps, kind, err);
     }
   }
+}
+
+/** Paste or drop: each file goes to its kind, so a mixed transfer loses nothing. `false` leaves
+ *  a transfer no media kind claims to the browser. */
+export function insertTransferredFiles(
+  editor: Editor,
+  files: FileList,
+  deps: AttachmentDeps
+): boolean {
+  const list = Array.from(files);
+  const kinds = TRANSFER_KINDS.filter((kind) => list.some((file) => fileMatchesKind(file, kind)));
+  for (const kind of kinds) void insertFiles(kind, editor, list, deps);
+  return kinds.length > 0;
 }
 
 /** Cross-note paste: every node whose row another note owns is repointed at a fresh

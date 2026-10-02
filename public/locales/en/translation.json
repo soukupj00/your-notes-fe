@@ -92,11 +92,6 @@
       "unavailable": "Image unavailable",
       "fallbackAlt": "Image",
       "delete": "Delete image",
-      "errors": {
-        "unsupported-type": "That image type is not supported",
-        "too-large": "Image is too large (max 10 MB)",
-        "insert-failed": "Could not add the image"
-      },
       "label": "Image"
     },
     "audio": {
@@ -192,7 +187,12 @@
       "download": "Download",
       "notDownloaded": "Not on this device yet",
       "notOnServer": "Not on the server yet. Try again in a moment.",
-      "downloadFailed": "Could not download. Check your connection."
+      "downloadFailed": "Could not download. Check your connection.",
+      "errors": {
+        "unsupported-type": "That file type is not supported here",
+        "too-large": "The attachment is too large (max {{max}} MB)",
+        "insert-failed": "Could not add the attachment"
+      }
     }
   },
   "settings": {

@@ -6,7 +6,7 @@ import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { withStore } from '@/test/store.tsx';
 import { setViewport } from '@/test/viewport.ts';
 import { Editor, type EditorHandle } from './editor.tsx';
-import { insertImageAttachmentFiles } from './extensions/Image/insert';
+import { insertFiles } from './extensions/attachments/insert';
 
 // The toolbar reads the stored Layouts (empty, so the defaults) and attachments go
 // through the Local Store, so every render needs both providers.
@@ -23,9 +23,12 @@ vi.mock('react-i18next', () => ({
 // canvas lib - unmocked, it crashes under jsdom (no canvas.getContext()).
 vi.mock('@excalidraw/excalidraw', () => ({ Excalidraw: () => null, exportToSvg: vi.fn() }));
 
-// The image pipeline is its own suite; here only that the editor hands it the
+// The insert path is its own suite; here only that the editor hands it the
 // files it was opened with.
-vi.mock('./extensions/Image/insert', () => ({ insertImageAttachmentFiles: vi.fn(async () => {}) }));
+vi.mock('./extensions/attachments/insert', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./extensions/attachments/insert')>()),
+  insertFiles: vi.fn(async () => {}),
+}));
 
 describe('Editor content syncing', () => {
   // `content` is read once, at creation, so every later body must arrive through
@@ -154,11 +157,12 @@ describe('Editor auto-capture', () => {
     const files = [new File(['x'], 'a.png', { type: 'image/png' })];
     const { rerender } = render(<Editor content="" initialFiles={files} getNoteId={vi.fn()} />);
 
-    await waitFor(() => expect(insertImageAttachmentFiles).toHaveBeenCalledTimes(1));
-    expect(vi.mocked(insertImageAttachmentFiles).mock.calls[0][1]).toBe(files);
+    await waitFor(() => expect(insertFiles).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(insertFiles).mock.calls[0][0]).toBe('image');
+    expect(vi.mocked(insertFiles).mock.calls[0][2]).toBe(files);
 
     rerender(<Editor content="<p>typed</p>" initialFiles={files} getNoteId={vi.fn()} />);
-    expect(insertImageAttachmentFiles).toHaveBeenCalledTimes(1);
+    expect(insertFiles).toHaveBeenCalledTimes(1);
   });
 
   it('does not start a capture that was never asked for', async () => {
