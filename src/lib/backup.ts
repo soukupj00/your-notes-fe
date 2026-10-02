@@ -1,7 +1,7 @@
 import { strFromU8, strToU8, type Unzipped, unzip, type Zippable, zip } from 'fflate';
 import { z } from 'zod';
 import type { LocalStore } from '@/data/LocalStore.ts';
-import type { Attachment, Note, NoteTag, Tag } from '@/models.ts';
+import { type Attachment, NOTE_STATES, type Note, type NoteTag, type Tag } from '@/models.ts';
 
 /**
  * Backup format version. Bump it only when the *layout* changes (entry naming,
@@ -39,7 +39,7 @@ export class BackupError extends Error {
 // through, so a field a future model gains survives a restore instead of being dropped.
 const noteSchema = z.looseObject({
   id: z.string(),
-  state: z.enum(['active', 'archived', 'trashed']),
+  state: z.enum(NOTE_STATES),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
