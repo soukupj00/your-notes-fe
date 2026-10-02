@@ -13,10 +13,16 @@ import { type LifecycleSnapshot, useNoteActions } from '@/hooks/data/useNoteActi
 import type { NoteAttachments } from '@/hooks/data/useNoteAttachments.ts';
 import { useTagsForNote } from '@/hooks/data/useTagsForNote.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
-import { checklistItemIndexAt, setChecklistItemChecked } from '@/lib/checklist.ts';
+import {
+  checklistBox,
+  checklistItemIndexAt,
+  closestChecklistItem,
+  isChecklistItemChecked,
+  setChecklistItemChecked,
+  stripAttachmentNodes,
+} from '@/lib/body.ts';
 import { captureRows, playRows, type RowSnapshot } from '@/lib/flip-rows.ts';
 import { attachLongPress } from '@/lib/long-press.ts';
-import { stripAttachmentNodes } from '@/lib/note-attachments.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { pointOverText } from '@/lib/point-over-text.ts';
 import { reminderOf } from '@/lib/reminder.ts';
@@ -90,7 +96,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
       const root = proseRef.current;
       if (!root) return;
       const target = event.target as Element;
-      const item = target.closest('li[data-type="taskItem"]');
+      const item = closestChecklistItem(target);
       if (!item) return;
       const onText = !target.closest('label') && pointOverText(item, event.clientX, event.clientY);
       if (!target.closest('label') && !onText) return;
@@ -99,8 +105,8 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
 
       const index = checklistItemIndexAt(root, item);
       if (index === null) return;
-      const checked = item.getAttribute('data-checked') !== 'true';
-      const box = item.querySelector<HTMLInputElement>('input[type="checkbox"]');
+      const checked = !isChecklistItemChecked(item);
+      const box = checklistBox(item);
       if (box) box.checked = checked;
       const nextBody = setChecklistItemChecked(bodyRef.current, index, checked);
       if (!nextBody) return;
@@ -144,7 +150,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
     const root = proseRef.current;
     if (!root) return;
     return attachLongPress(root, {
-      isTarget: (target) => target.closest('li[data-type="taskItem"]') !== null,
+      isTarget: (target) => closestChecklistItem(target) !== null,
       onLongPress: () => select(),
     });
   }, [select, hasProse]);

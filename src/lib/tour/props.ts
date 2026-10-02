@@ -5,6 +5,7 @@
  */
 
 import type { LocalStore } from '@/data/LocalStore.ts';
+import { taskListMarkup } from '@/lib/body.ts';
 import type { NoteColor } from '@/lib/note-colors.ts';
 import { newNote } from '@/lib/rows.ts';
 
@@ -29,22 +30,7 @@ export const writeProps = (store: LocalStore, props: TourProp[]) =>
   store.meta.set(TOUR_PROPS_META_KEY, props);
 
 // Bodies are hand-written TipTap HTML, so `props.test.ts` round-trips each through a headless
-// editor to prove TipTap would emit the same. A checklist item carries its state twice, as
-// `lib/checklist.ts` does: TipTap parses `data-checked`, the card paints the input's `checked`.
-
-function taskItem(label: string, checked: boolean): string {
-  const box = checked ? '<input type="checkbox" checked="checked">' : '<input type="checkbox">';
-  return (
-    // `data-checked` leads because that is the order TipTap's own serialiser
-    // emits, and the round-trip test compares strings.
-    `<li data-checked="${checked}" data-type="taskItem">` +
-    `<label>${box}<span></span></label><div><p>${label}</p></div></li>`
-  );
-}
-
-function checklist(items: [label: string, checked: boolean][]): string {
-  return `<ul data-type="taskList">${items.map(([l, c]) => taskItem(l, c)).join('')}</ul>`;
-}
+// editor to prove TipTap would emit the same.
 
 function bulletList(labels: string[]): string {
   return `<ul>${labels.map((l) => `<li><p>${l}</p></li>`).join('')}</ul>`;
@@ -66,7 +52,7 @@ const PROP_SPECS: { key: PropKey; color?: NoteColor; body: (t: Translate) => str
     key: 'groceries',
     color: 'green',
     body: (t) =>
-      checklist([
+      taskListMarkup([
         [t('onboarding.props.groceries.item1'), true],
         [t('onboarding.props.groceries.item2'), false],
         [t('onboarding.props.groceries.item3'), false],

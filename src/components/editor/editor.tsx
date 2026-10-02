@@ -17,13 +17,12 @@ import {
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { AudioRecorderHost } from '@/components/editor/extensions/Audio';
-import type {
-  AttachmentDeps,
-  ExcalidrawOpenArgs,
-} from '@/components/editor/extensions/attachments/deps';
+import { insertAttachmentNode } from '@/components/editor/extensions/attachments/createAttachmentNode';
+import type { ExcalidrawOpenArgs } from '@/components/editor/extensions/attachments/deps';
 import {
   dedupeForeignAttachments,
-  insertAttachmentFiles,
+  insertFiles,
+  insertTransferredFiles,
 } from '@/components/editor/extensions/attachments/insert';
 import { buildEditorExtensions } from '@/components/editor/extensions/build';
 import { commitExcalidrawScene } from '@/components/editor/extensions/Excalidraw/commit';
@@ -32,9 +31,7 @@ import {
   emptyScene,
   parseScene,
 } from '@/components/editor/extensions/Excalidraw/scene';
-import { insertImageAttachmentFiles } from '@/components/editor/extensions/Image/insert';
 import { LinkBubbleMenu } from '@/components/editor/extensions/Link';
-import { insertVideoAttachmentFiles } from '@/components/editor/extensions/Video/insert.ts';
 import { EditorToolbar } from '@/components/editor/toolbar/EditorToolbar.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
@@ -42,8 +39,15 @@ import { useSync } from '@/context/SyncProvider.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useLatest } from '@/hooks/useLatest.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
-import type { AttachmentErrorCode } from '@/lib/attachments.ts';
+import {
+  ATTACHMENT_SPECS,
+  AttachmentError,
+  type AttachmentErrorCode,
+  MiB,
+} from '@/lib/attachments.ts';
+import { bodyHasAttachment } from '@/lib/body.ts';
 import { cn } from '@/lib/utils.ts';
+import type { AttachmentKind } from '@/models.ts';
 
 const ExcalidrawDialog = lazy(
   () => import('@/components/editor/extensions/Excalidraw/ExcalidrawDialog')
@@ -84,34 +88,6 @@ export type CaptureKind = 'audio' | 'drawing';
 
 /** `getEditor` exists for tests that need the live TipTap instance. */
 export type EditorHandle = { focus: () => void; getEditor: () => TiptapEditor | null };
-
-function insertTransferredAttachments(
-  editor: TiptapEditor,
-  files: FileList,
-  deps: AttachmentDeps
-): boolean {
-  const transferredFiles = Array.from(files);
-
-  if (transferredFiles.some((file) => file.type.startsWith('image/'))) {
-    void insertImageAttachmentFiles(editor, files, deps, (id) =>
-      editor.chain().focus().insertImageAttachment({ attachmentId: id }).run()
-    );
-    return true;
-  }
-  if (transferredFiles.some((file) => file.type.startsWith('audio/'))) {
-    void insertAttachmentFiles(editor, files, 'audio', deps, (id) =>
-      editor.chain().focus().insertAudioAttachment({ attachmentId: id }).run()
-    );
-    return true;
-  }
-  if (transferredFiles.some((file) => file.type.startsWith('video/'))) {
-    void insertVideoAttachmentFiles(editor, files, deps, (id) =>
-      editor.chain().focus().insertVideoAttachment({ attachmentId: id }).run()
-    );
-    return true;
-  }
-  return false;
-}
 
 export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   {
@@ -199,7 +175,10 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       cloneAttachment,
       updateAttachment,
       openExcalidraw,
-      onError: (code: AttachmentErrorCode) => toast(t(`editor.image.errors.${code}`)),
+      onError: (code: AttachmentErrorCode, kind: AttachmentKind) =>
+        toast(
+          t(`editor.attachment.errors.${code}`, { max: ATTACHMENT_SPECS[kind].maxBytes / MiB })
+        ),
       t,
     }),
     [
@@ -240,13 +219,13 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       handlePaste: (_view: EditorView, event: ClipboardEvent) => {
         const files = event.clipboardData?.files;
         const ed = editorRef.current;
-        if (ed && files && insertTransferredAttachments(ed, files, getAttachmentDeps())) {
+        if (ed && files && insertTransferredFiles(ed, files, getAttachmentDeps())) {
           return true;
         }
         // Cross-note HTML paste with existing attachment nodes: let the default
         // paste happen, then reclaim any foreign images into owned clones.
         const html = event.clipboardData?.getData('text/html');
-        if (ed && html?.includes('data-attachment-id')) {
+        if (ed && bodyHasAttachment(html)) {
           queueMicrotask(() => void dedupeForeignAttachments(ed, getAttachmentDeps()));
         }
         return false;
@@ -254,7 +233,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       handleDrop: (_view: EditorView, event: Event) => {
         const files = (event as DragEvent).dataTransfer?.files;
         const ed = editorRef.current;
-        return Boolean(ed && files && insertTransferredAttachments(ed, files, getAttachmentDeps()));
+        return Boolean(ed && files && insertTransferredFiles(ed, files, getAttachmentDeps()));
       },
     }),
     [getAttachmentDeps]
@@ -329,9 +308,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       editor.storage.audioAttachment.capture.requestRecording();
     }
     if (initialFiles?.length) {
-      void insertImageAttachmentFiles(editor, initialFiles, getAttachmentDeps(), (id) =>
-        editor.chain().focus().insertImageAttachment({ attachmentId: id }).run()
-      );
+      void insertFiles('image', editor, initialFiles, getAttachmentDeps());
     }
   }, [editor, getAttachmentDeps, initialCapture, initialFiles, openExcalidraw]);
 
@@ -355,11 +332,15 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
             replaceExcalidraw?.(id);
             return;
           }
-          editorRef.current?.chain().focus().insertExcalidrawAttachment({ attachmentId: id }).run();
+          const ed = editorRef.current;
+          if (ed) insertAttachmentNode(ed, 'excalidraw', id);
         });
       } catch (err) {
         console.error('Editor: excalidraw save failed', err);
-        getAttachmentDeps().onError('insert-failed');
+        getAttachmentDeps().onError(
+          err instanceof AttachmentError ? err.code : 'insert-failed',
+          'excalidraw'
+        );
       } finally {
         setExcalidraw((s) => ({ ...s, open: false }));
       }

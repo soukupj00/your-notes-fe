@@ -92,11 +92,6 @@
       "unavailable": "Obrázek není k dispozici",
       "fallbackAlt": "Obrázek",
       "delete": "Smazat obrázek",
-      "errors": {
-        "unsupported-type": "Tento typ obrázku není podporován",
-        "too-large": "Obrázek je příliš velký (max 10 MB)",
-        "insert-failed": "Obrázek se nepodařilo přidat"
-      },
       "label": "Obrázek"
     },
     "audio": {
@@ -192,7 +187,12 @@
       "download": "Stáhnout",
       "notDownloaded": "Zatím není v tomto zařízení",
       "notOnServer": "Na serveru zatím není. Zkuste to za chvíli.",
-      "downloadFailed": "Stažení se nezdařilo. Zkontrolujte připojení."
+      "downloadFailed": "Stažení se nezdařilo. Zkontrolujte připojení.",
+      "errors": {
+        "unsupported-type": "Tento typ souboru zde není podporován",
+        "too-large": "Příloha je příliš velká (max {{max}} MB)",
+        "insert-failed": "Přílohu se nepodařilo přidat"
+      }
     }
   },
   "settings": {

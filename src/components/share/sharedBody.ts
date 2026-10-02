@@ -2,6 +2,7 @@ import DOMPurify from 'dompurify';
 import { sanitizeBody } from '@/components/NoteBody.tsx';
 import type { AttachmentMeta, SharedNote } from '@/contract/index.ts';
 import { sharedBlobUrl } from '@/data/http/publicShare.ts';
+import { ATTACHMENT_ID_ATTR } from '@/lib/body.ts';
 
 const MEDIA = 'block h-auto max-w-full rounded-md';
 
@@ -18,8 +19,8 @@ export function sharedBodyMarkup(shared: SharedNote, fileFallbackName: string): 
   const doc = new DOMParser().parseFromString(sanitizeBody(shared.note.body ?? ''), 'text/html');
   const listed = new Map((shared.note.attachments ?? []).map((a) => [a.id, a]));
 
-  for (const node of doc.body.querySelectorAll('[data-attachment-id]')) {
-    const meta = listed.get(node.getAttribute('data-attachment-id') ?? '');
+  for (const node of doc.body.querySelectorAll(`[${ATTACHMENT_ID_ATTR}]`)) {
+    const meta = listed.get(node.getAttribute(ATTACHMENT_ID_ATTR) ?? '');
     if (meta) node.replaceWith(attachmentElement(doc, shared, meta, fileFallbackName));
     else node.remove();
   }

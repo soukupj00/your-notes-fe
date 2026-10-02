@@ -1,4 +1,3 @@
-import type { Editor } from '@tiptap/core';
 import { createAttachmentNode } from '../attachments/createAttachmentNode';
 import type { AttachmentDeps } from '../attachments/deps';
 import { ExcalidrawButton } from './ExcalidrawButton';
@@ -14,20 +13,9 @@ declare module '@tiptap/core' {
 
 export function createExcalidraw(getDeps: () => AttachmentDeps) {
   return createAttachmentNode(getDeps, {
-    name: 'excalidrawAttachment',
-    parseTag: 'excalidraw-drawing[data-attachment-id]',
-    renderTag: 'excalidraw-drawing',
-    insertCommandName: 'insertExcalidrawAttachment',
+    kind: 'excalidraw',
     nodeView: ExcalidrawNodeView,
-    button: ({
-      editor,
-      getDeps,
-      t,
-    }: {
-      editor: Editor;
-      getDeps: () => AttachmentDeps;
-      t: (k: string) => string;
-    }) => ({
+    button: ({ editor, getDeps, t }) => ({
       component: ExcalidrawButton,
       componentProps: { editor, getDeps, tooltip: t('editor.excalidraw.tooltip') },
     }),

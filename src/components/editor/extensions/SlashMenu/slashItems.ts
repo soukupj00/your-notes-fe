@@ -1,9 +1,10 @@
 import type { Editor, Range } from '@tiptap/core';
 import { getToolbarItem } from '@/components/editor/toolbar/registry';
+import { ATTACHMENT_SPECS } from '@/lib/attachments.ts';
+import type { AttachmentKind } from '@/models.ts';
 import type { AttachmentDeps } from '../attachments/deps';
-import { insertAttachmentFiles } from '../attachments/insert';
+import { insertFiles } from '../attachments/insert';
 import type { TFunction } from '../button-types';
-import { insertImageAttachmentFiles } from '../Image/insert';
 
 export interface SlashItem {
   /** The Toolbar Item id (ADR 0011, decision 13). Icon and name come from the registry,
@@ -36,6 +37,20 @@ function pickFiles(accept: string, onFiles: (files: File[]) => void): void {
 /** Drop the typed `/query` before running a command, so it never survives. */
 function consume(editor: Editor, range: Range) {
   return editor.chain().focus().deleteRange(range);
+}
+
+/** A slash item that picks files for a kind: the same path as the kind's toolbar button. */
+function pickerItem(kind: AttachmentKind, keywords: string[]): SlashItem {
+  return {
+    key: kind,
+    keywords,
+    run: ({ editor, range, deps }) => {
+      consume(editor, range).run();
+      pickFiles(ATTACHMENT_SPECS[kind].accept ?? '', (files) => {
+        void insertFiles(kind, editor, files, deps);
+      });
+    },
+  };
 }
 
 /** Blocks first, media after. Every item should have a toolbar button and vice versa. */
@@ -85,18 +100,7 @@ export const SLASH_ITEMS: SlashItem[] = [
     keywords: ['divider', 'separator', 'hr', 'rule'],
     run: ({ editor, range }) => consume(editor, range).setHorizontalRule().run(),
   },
-  {
-    key: 'image',
-    keywords: ['picture', 'photo', 'img'],
-    run: ({ editor, range, deps }) => {
-      consume(editor, range).run();
-      pickFiles('image/*', (files) => {
-        void insertImageAttachmentFiles(editor, files, deps, (id) =>
-          editor.chain().focus().insertImageAttachment({ attachmentId: id }).run()
-        );
-      });
-    },
-  },
+  pickerItem('image', ['picture', 'photo', 'img']),
   {
     key: 'audio',
     keywords: ['recording', 'voice', 'mic'],
@@ -106,30 +110,8 @@ export const SLASH_ITEMS: SlashItem[] = [
       editor.storage.audioAttachment.capture.requestRecording();
     },
   },
-  {
-    key: 'video',
-    keywords: ['movie', 'clip'],
-    run: ({ editor, range, deps }) => {
-      consume(editor, range).run();
-      pickFiles('video/*', (files) => {
-        void insertAttachmentFiles(editor, files, 'video', deps, (id) =>
-          editor.chain().focus().insertVideoAttachment({ attachmentId: id }).run()
-        );
-      });
-    },
-  },
-  {
-    key: 'file',
-    keywords: ['attachment', 'document', 'upload'],
-    run: ({ editor, range, deps }) => {
-      consume(editor, range).run();
-      pickFiles('', (files) => {
-        void insertAttachmentFiles(editor, files, 'file', deps, (id) =>
-          editor.chain().focus().insertFileAttachment({ attachmentId: id }).run()
-        );
-      });
-    },
-  },
+  pickerItem('video', ['movie', 'clip']),
+  pickerItem('file', ['attachment', 'document', 'upload']),
   {
     key: 'math',
     keywords: ['latex', 'formula', 'equation', 'tex'],

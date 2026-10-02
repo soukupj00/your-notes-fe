@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
-import { extractAttachmentIds } from '@/lib/attachment-html.ts';
 import { AttachmentError, validateAttachmentFile } from '@/lib/attachments.ts';
+import { extractAttachmentIds } from '@/lib/body.ts';
 import {
   cloneAttachment as cloneRow,
   mintId,

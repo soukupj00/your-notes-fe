@@ -1,7 +1,6 @@
-import type { Editor } from '@tiptap/core';
+import { pickerButton } from '../attachments/AttachmentFilePickerButton';
 import { createAttachmentNode } from '../attachments/createAttachmentNode';
 import type { AttachmentDeps } from '../attachments/deps';
-import { VideoButton } from './VideoButton';
 import { VideoNodeView } from './VideoNodeView';
 
 declare module '@tiptap/core' {
@@ -14,22 +13,8 @@ declare module '@tiptap/core' {
 
 export function createVideo(getDeps: () => AttachmentDeps) {
   return createAttachmentNode(getDeps, {
-    name: 'videoAttachment',
-    parseTag: 'video[data-attachment-id]',
-    renderTag: 'video',
-    insertCommandName: 'insertVideoAttachment',
+    kind: 'video',
     nodeView: VideoNodeView,
-    button: ({
-      editor,
-      getDeps,
-      t,
-    }: {
-      editor: Editor;
-      getDeps: () => AttachmentDeps;
-      t: (k: string) => string;
-    }) => ({
-      component: VideoButton,
-      componentProps: { editor, getDeps, tooltip: t('editor.video.tooltip') },
-    }),
+    button: pickerButton('video', 'FileVideo'),
   });
 }

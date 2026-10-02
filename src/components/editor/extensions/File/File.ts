@@ -1,7 +1,6 @@
-import type { Editor } from '@tiptap/core';
+import { pickerButton } from '../attachments/AttachmentFilePickerButton';
 import { createAttachmentNode } from '../attachments/createAttachmentNode';
 import type { AttachmentDeps } from '../attachments/deps';
-import { FileButton } from './FileButton';
 import { FileNodeView } from './FileNodeView';
 
 declare module '@tiptap/core' {
@@ -14,22 +13,8 @@ declare module '@tiptap/core' {
 
 export function createFile(getDeps: () => AttachmentDeps) {
   return createAttachmentNode(getDeps, {
-    name: 'fileAttachment',
-    parseTag: 'a[data-attachment-id]',
-    renderTag: 'a',
-    insertCommandName: 'insertFileAttachment',
+    kind: 'file',
     nodeView: FileNodeView,
-    button: ({
-      editor,
-      getDeps,
-      t,
-    }: {
-      editor: Editor;
-      getDeps: () => AttachmentDeps;
-      t: (k: string) => string;
-    }) => ({
-      component: FileButton,
-      componentProps: { editor, getDeps, tooltip: t('editor.file.tooltip') },
-    }),
+    button: pickerButton('file', 'Paperclip'),
   });
 }
