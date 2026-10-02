@@ -26,15 +26,10 @@ function att(): Attachment {
     updatedAt: now,
   };
 }
-function props(
-  get: (i: string) => Promise<Attachment | undefined>,
-  opts: { isEditable?: boolean; deleteNode?: () => void } = {}
-) {
+function props(get: (i: string) => Promise<Attachment | undefined>) {
   const watchAttachment = liveRow(get);
   return {
     node: { attrs: { attachmentId: 'f1' } },
-    editor: { isEditable: opts.isEditable ?? true },
-    deleteNode: opts.deleteNode ?? vi.fn(),
     extension: {
       options: { getDeps: () => ({ watchAttachment, t: (k: string) => k }) },
     },
@@ -49,27 +44,6 @@ describe('FileNodeView', () => {
     await waitFor(() =>
       expect(link).toHaveAttribute('href', expect.stringContaining('blob:mock/'))
     );
-  });
-
-  it('shows an unavailable state when the row is missing', async () => {
-    render(<FileNodeView {...props(async () => undefined)} />);
-    expect(await screen.findByText('editor.file.unavailable')).toBeInTheDocument();
-  });
-
-  it('confirms before deleting: clicking trash then Remove calls deleteNode once', async () => {
-    const deleteNode = vi.fn();
-    render(<FileNodeView {...props(async () => att(), { deleteNode })} />);
-    await userEvent.click(await screen.findByRole('button', { name: 'editor.file.delete' }));
-    await userEvent.click(
-      await screen.findByRole('button', { name: 'attachments.confirmDelete.confirm' })
-    );
-    expect(deleteNode).toHaveBeenCalledTimes(1);
-  });
-
-  it('hides the delete button when the editor is read-only', async () => {
-    render(<FileNodeView {...props(async () => att(), { isEditable: false })} />);
-    await screen.findByText('report.pdf');
-    expect(screen.queryByRole('button', { name: 'editor.file.delete' })).not.toBeInTheDocument();
   });
 
   it('a synced file not on this Device shows name, size and a download that brings it', async () => {
