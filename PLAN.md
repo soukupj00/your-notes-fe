@@ -132,11 +132,42 @@ Deviations: `sharedBlobUrl` takes the fetched page rather than the token, becaus
   Reporting the answer waits for M5 because this milestone gives that same area a sync status (last synced, queued changes, this device's account), and "is my data safe here" is one question best answered in one block.
 - **Out of scope, deliberately:** end-to-end encryption (threat model documented instead - see ADR 0018), sharing a Note between Accounts, and any email/SMTP.
 - **Known gaps:**
-  - `src/components/editor/editor.tsx` is over the 500-line limit (522 lines before M5 slice 5, 528 after it).
-    Splitting it is its own change, not a sync one.
+  - `src/components/editor/editor.tsx` came back under the 500-line limit in the comment cleanup (457 lines); `src/context/TourProvider.tsx` is the one file over it now (506), which M6 slice 6 trims.
 
 ✅ **Fixes from the backend rework's end-to-end run (2026-10-01)** ([plan](./docs/superpowers/plans/2026-10-01-pwa-offline-session-a11y-fixes.md)).
 Deviations: the font runtime route is limited to `/assets/`; the Card's open button is an invisible full-size button, not `sr-only`; the crash heading takes focus on mount.
+
+### M6 - Refactor: fewer copies, same style
+
+Scoped by a `/grill-with-docs` session on 2026-10-02 from four read-only surveys of the code ([survey](./docs/superpowers/plans/2026-10-02-refactor-survey.md)).
+Decision: [ADR 0022](./docs/adr/0022-interfaces-and-closures-not-classes.md) - the patterns are applied in the codebase's existing interface-plus-closure style, no classes or decorators.
+New glossary: **Intent** (the one-shot half of opening a Note) and **Draft** (the Editor's working copy for the life of one open).
+Every slice is behaviour-preserving under the existing tests; a bug a slice fixes by construction rides with it and gets a pinning test, every other bug found is a ticket (below).
+Each slice branches from `main` as `refactor/<slice>`, merges before the next starts, gets its own task-level plan in `docs/superpowers/plans/` when it starts, and fixes the `CLAUDE.md` and `PLAN.md` statements about the code it changes.
+Near-identical tests collapse with the units they test: one table-driven test, not a copy per unit.
+
+**Six slices, in this order** (2 and 5 build on 1):
+
+1. **Rows** (`refactor/rows`) - `newTag`, `newNoteTag`, `newAttachment` and `cloneAttachment` beside `newNote` in one module, `crypto.randomUUID` as the single id minter (the `uuid` dependency goes; ADR 0018 already makes a secure context a requirement), runtime lists `NOTE_STATES` and `REMINDER_REPEATS` in `models.ts` with the copies in `reminder.ts` and `backup.ts` importing them and one test pinning the vendored contract's enums to them, `tags.update(id, change)` on the Local Store so `updateTag` stops being a non-atomic get-then-put, and the `conflictedCopy` rows built through the factories.
+   Harmless change: a Conflicted Copy's attachments get fresh timestamps, which nothing reads.
+2. **Editor buttons** (`refactor/editor-buttons`) - `withButton(Upstream, ctx => props)`; the eleven simple extensions (Bold, Italic, Strike, Underline, Code, CodeBlock, Blockquote, HorizontalRule, BulletList, OrderedList, TaskList) become declarations in `extensions/formatting.ts` with one table-driven test, their folders go, and Heading, TextAlign and History use the helper in place; a generic `ButtonView<C>` so the five local `XButtonView` copies and the `unknown` on `createAttachmentNode` go; the four `variant` wrapper components go; a `useLatest` hook replaces the three ref-plus-getter triples in `editor.tsx`, which fixes the microphone-error toast repeating on every keystroke.
+3. **Attachments** (`refactor/attachments`) - one `Record<AttachmentKind, …>` descriptor table in `lib/attachments.ts` (MIME prefix, allowed types, size cap, Body tag, extension) replacing the if-chain and the per-kind facts spread over seven files; one insert path keyed by kind replacing the four routes (buttons, slash menu, paste/drop, recorder), which fixes the slash-menu video item losing its poster and size; a shared node-view shell for Image, Video and File (deps, state, delete button, the ready/remote/missing branches), which gives Video and File the loading placeholder only Image has; one Body HTML module (`lib/body.ts`) for the attachment attribute, the checklist markup and the strip/extract helpers.
+   The kind id `excalidraw` is persisted data and stays; its human-facing name is the glossary's **Drawing**.
+4. **UI helpers** (`refactor/ui-helpers`) - `useAsync` for the ten cancel-flag effects, a remote-action helper for the six try/toast blocks and one shared link dialog for the two copies, one `exportBackup(store)` for the three export flows, key-bound `PreferenceSwitch`/`PreferenceSegmented` rows for Settings, the `Intent` type carried as one prop through `NotesView`, `NoteEditorDialog` and `Editor` with the picker-versus-direct branch owned by the picker, locale-aware byte and date formatters (which fixes Settings dates ignoring the app locale), and `src/utils/platform.ts` folded into `src/lib`.
+5. **Draft** (`refactor/draft`) - `createNoteDraft(id, deps)` with `id`, `ensureSaved()`, `save(header, body)` and `close(...)`, pure TypeScript tested without React; the dialog keeps its state and timer and hands the Draft to the note bar, labels, share and reminder children, so `NoteTagsBar` stops keeping its own copy of the id; `isDraft` becomes `isNew`.
+6. **Tour trim** (`refactor/tour-waits`) - `lib/tour` exports the waits `TourProvider` re-implements, bringing it under 500 lines. No controller extraction.
+
+**After the user test, re-grilled then:** the shared sync algorithms for both Local Stores (read, decide, write; fixes the Revision drift below), seam-level `SignedOut`/`Unreachable` on `Remote` so `sync/loop.ts` stops importing the HTTP error, the sync surface split off `LocalStore`, and folding theme, view mode and sidebar state into `PreferencesProvider` with one provider stack shared with the test renderer.
+
+**Tickets** (found by the surveys, fixed by no slice above):
+- Dexie and memory stores drift: a Note added again under a purged, unpushed id pushes without its Revision in Dexie and with it in memory (`DexieLocalStore` add paths skip the Tombstone's `rev`). Not reachable from the UI today.
+- "What is owed" has three answers: the engine excludes the Tour's Props, `SignOutButton` and `pending()` do not, so leftover Props may block sign-out (unverified).
+- `ThemeModeToggleButton` shows the sun while the theme is `system` over a dark OS.
+- `EntityActionButtons` hardcodes English Save, Delete and Edit, and `EditButton` is unused; `ColorPickerPanel`'s "Custom" is untranslated.
+- `/labels` create, merge and delete have no error path.
+- Backups are named `ruflo-backup-...` while the app calls itself YouNotes.
+- Four comments in `src/test/fakeServer.ts` and `fakeSync.ts` cite backend paths that no longer exist; `fakeSync.decide` is a hand copy of the backend's `decide.ts` that `contract:pull` could vendor.
+- Docs drift outside any slice's files (root `CLAUDE.md` provider list and the "one hidden input" claim, `src/context/CLAUDE.md` on `useTheme` and `useAccount` readers, the per-area `PLAN.md` items naming deleted code) gets one pass after slice 6.
 
 ## Per-area plans
 
