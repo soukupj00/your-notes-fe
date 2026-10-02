@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 export const MAX_RECORDING_MS = 5 * 60 * 1000;
 
-const CANDIDATE_MIME = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
+export const CANDIDATE_MIME = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
 
 function pickAudioMimeType(): string | null {
   if (typeof MediaRecorder === 'undefined') return null;

@@ -1,4 +1,3 @@
-import type { Editor } from '@tiptap/core';
 import { createAttachmentNode } from '../attachments/createAttachmentNode';
 import type { AttachmentDeps } from '../attachments/deps';
 import { AudioNodeView } from './AudioNodeView';
@@ -26,20 +25,9 @@ declare module '@tiptap/core' {
 
 export function createAudio(getDeps: () => AttachmentDeps) {
   return createAttachmentNode(getDeps, {
-    name: 'audioAttachment',
-    parseTag: 'audio[data-attachment-id]',
-    renderTag: 'audio',
-    insertCommandName: 'insertAudioAttachment',
+    kind: 'audio',
     nodeView: AudioNodeView,
-    button: ({
-      editor,
-      getDeps,
-      t,
-    }: {
-      editor: Editor;
-      getDeps: () => AttachmentDeps;
-      t: (k: string) => string;
-    }) => ({
+    button: ({ editor, getDeps, t }) => ({
       component: AudioRecordButton,
       componentProps: { editor, getDeps, tooltip: t('editor.audio.tooltip') },
     }),

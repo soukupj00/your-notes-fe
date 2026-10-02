@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
+import { AttachmentError } from '@/lib/attachments.ts';
 import { AudioRecorderHost } from './AudioRecorderHost';
 import { createAudioCaptureCoordinator } from './audioCapture';
 import type { AudioRecorder } from './useAudioRecorder';
@@ -112,5 +113,22 @@ describe('AudioRecorderHost', () => {
     rerender(<AudioRecorderHost editor={editor} getDeps={() => getDeps()} />);
 
     expect(toast).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports a take the validator rejects by its code, not as a generic failure', async () => {
+    const { editor } = makeEditor();
+    recorder.status = 'recording';
+    vi.mocked(recorder.stop).mockResolvedValueOnce({
+      blob: new Blob(['x']),
+      mime: 'audio/webm',
+      durationMs: 1000,
+    });
+    const deps = getDeps() as { createAttachment: Mock; onError: Mock };
+    deps.createAttachment.mockRejectedValueOnce(new AttachmentError('too-large'));
+    render(<AudioRecorderHost editor={editor} getDeps={() => deps as never} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'editor.audio.stop' }));
+
+    expect(deps.onError).toHaveBeenCalledWith('too-large', 'audio');
   });
 });

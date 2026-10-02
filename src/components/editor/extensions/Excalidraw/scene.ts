@@ -1,3 +1,5 @@
+import { fileExtension } from '@/lib/attachments.ts';
+
 /** `files` is Excalidraw's own embedded-asset map, kept verbatim. */
 export interface ExcalidrawScene {
   elements: readonly unknown[];
@@ -25,9 +27,8 @@ export function sceneToFile(scene: ExcalidrawScene): File {
     ...scene,
     appState: withoutTransientAppState(scene.appState),
   };
-  return new File([JSON.stringify(persistableScene)], 'drawing.excalidraw.json', {
-    type: 'application/json',
-  });
+  const name = `drawing.${fileExtension('excalidraw', 'application/json')}`;
+  return new File([JSON.stringify(persistableScene)], name, { type: 'application/json' });
 }
 
 /** Tolerant parse: returns null on malformed JSON so the NodeView can show the

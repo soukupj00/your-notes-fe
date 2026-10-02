@@ -5,10 +5,16 @@ import Text from '@tiptap/extension-text';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getToolbarItem } from '@/components/editor/toolbar/registry';
 import type { AttachmentDeps } from '../attachments/deps';
+import { insertFiles } from '../attachments/insert';
 import { Blockquote, BulletList, CodeBlock, HorizontalRule, OrderedList } from '../formatting';
 import { Heading } from '../Heading';
 import { ListItem } from '../ListItem';
 import { filterSlashItems, SLASH_ITEMS } from './slashItems';
+
+vi.mock('../attachments/insert', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../attachments/insert')>()),
+  insertFiles: vi.fn(),
+}));
 
 // The menu's labels come from the registry now, so the stand-in `t` has to
 // resolve the *registry's* keys rather than a `slash` namespace of its own.
@@ -68,7 +74,10 @@ describe('slash item commands', () => {
     editor = createEditor();
     deps = { openExcalidraw: vi.fn(), t } as unknown as AttachmentDeps;
   });
-  afterEach(() => editor.destroy());
+  afterEach(() => {
+    editor.destroy();
+    vi.restoreAllMocks();
+  });
 
   /** Stand in for what Suggestion passes: the range covering the typed `/query`. */
   function runWithTypedQuery(key: string, typed: string) {
@@ -107,5 +116,24 @@ describe('slash item commands', () => {
   it('opens the drawing surface rather than inserting a node itself', () => {
     runWithTypedQuery('drawing', '/draw');
     expect(deps.openExcalidraw).toHaveBeenCalledOnce();
+  });
+
+  // The slash video used to skip the derived data the toolbar video stored (no poster, no
+  // size, no duration). One path now, pinned here through the picker it opens.
+  it('sends picked video files down the one insert path, with the kind spec accept', () => {
+    const inputs: HTMLInputElement[] = [];
+    const create = document.createElement.bind(document);
+    vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+      const el = create(tag);
+      if (tag === 'input') inputs.push(el as HTMLInputElement);
+      return el;
+    });
+    runWithTypedQuery('video', '/vid');
+    const input = inputs[0];
+    expect(input.accept).toBe('video/*');
+    const clip = new File(['x'], 'clip.mp4', { type: 'video/mp4' });
+    Object.defineProperty(input, 'files', { value: [clip] });
+    input.dispatchEvent(new Event('change'));
+    expect(insertFiles).toHaveBeenCalledWith('video', editor, [clip], deps);
   });
 });

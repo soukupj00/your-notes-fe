@@ -3,7 +3,9 @@ import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { icons } from '@/components/icons';
 import { useLatest } from '@/hooks/useLatest.ts';
+import { AttachmentError, fileExtension } from '@/lib/attachments.ts';
 import { formatElapsed } from '@/lib/format-attachment.ts';
+import { insertAttachmentNode } from '../attachments/createAttachmentNode';
 import type { AttachmentDeps } from '../attachments/deps';
 import { RecordingWaveform } from './RecordingWaveform';
 import { useAudioRecorder } from './useAudioRecorder';
@@ -20,14 +22,6 @@ const ERROR_KEY: Record<string, string> = {
   'no-device': 'editor.audio.errors.no-device',
   'in-use': 'editor.audio.errors.in-use',
   failed: 'editor.audio.errors.failed',
-};
-
-const EXT: Record<string, string> = {
-  'audio/webm': 'webm',
-  'audio/ogg': 'ogg',
-  'audio/mp4': 'm4a',
-  'audio/mpeg': 'mp3',
-  'audio/wav': 'wav',
 };
 
 /** The editor's one recorder, mounted while the editor is editable whatever the toolbar
@@ -64,16 +58,16 @@ export function AudioRecorderHost({ editor, getDeps }: AudioRecorderHostProps) {
     const d = deps();
     try {
       const noteId = await d.getNoteId();
-      const ext = EXT[out.mime.split(';')[0]] ?? 'webm';
+      const ext = fileExtension('audio', out.mime) ?? 'webm';
       const file = new File([out.blob], `recording.${ext}`, { type: out.mime });
       // The recorder already measured this; persisting it is what lets a card
       // show a clip's length without decoding the audio on the feed.
       const att = await d.createAttachment(noteId, file, 'audio', {
         duration: out.durationMs / 1000,
       });
-      editor.chain().focus().insertAudioAttachment({ attachmentId: att.id }).run();
-    } catch {
-      d.onError('insert-failed');
+      insertAttachmentNode(editor, 'audio', att.id);
+    } catch (err) {
+      d.onError(err instanceof AttachmentError ? err.code : 'insert-failed', 'audio');
     }
   };
 

@@ -1,5 +1,5 @@
 import type { LocalStore } from '@/data/LocalStore.ts';
-import { extractAttachmentIds } from '@/lib/attachment-html.ts';
+import { extractAttachmentIds, repointAttachment } from '@/lib/body.ts';
 import { cloneAttachment, mintId, newNote, newNoteTag, newTag } from '@/lib/rows.ts';
 import type { Attachment, Note } from '@/models.ts';
 
@@ -49,7 +49,7 @@ export async function keepConflictedCopy(
   }
   let body = local.body;
   for (const { from, clone } of clones) {
-    body = body?.replaceAll(`data-attachment-id="${from}"`, `data-attachment-id="${clone.id}"`);
+    if (body) body = repointAttachment(body, from, clone.id);
   }
 
   await store.notes.add(

@@ -14,7 +14,7 @@ import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { useIsMobile } from '@/hooks/use-mobile.tsx';
 import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { useKeyboardInset } from '@/hooks/useKeyboardInset.ts';
-import { bodyHasAttachment, extractAttachmentIds } from '@/lib/attachment-html.ts';
+import { bodyHasAttachment, extractAttachmentIds } from '@/lib/body.ts';
 import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { requestPersistentStorage } from '@/lib/persistentStorage.ts';

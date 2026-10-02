@@ -1,8 +1,8 @@
 import type { Live } from '@/data/live.ts';
 import type { AttachmentErrorCode } from '@/lib/attachments.ts';
+import type { NewAttachmentOptions } from '@/lib/rows.ts';
 import type { Attachment, AttachmentKind } from '@/models.ts';
 import type { TFunction } from '../button-types';
-import type { DerivedAttachmentData } from './insert';
 
 export type ExcalidrawOpenArgs = {
   attachmentId?: string;
@@ -16,7 +16,7 @@ export interface AttachmentDeps {
     noteId: string,
     file: File,
     kind: AttachmentKind,
-    options?: DerivedAttachmentData
+    options?: NewAttachmentOptions
   ) => Promise<Attachment>;
   getAttachment: (id: string) => Promise<Attachment | undefined>;
   /** The row, live, for node views: a download or a pull re-renders them. */
@@ -31,6 +31,6 @@ export interface AttachmentDeps {
    *  deleteNode() path; `onReplace` repoints the node at the row a Save minted, since a Save
    *  never rewrites bytes. */
   openExcalidraw: (args: ExcalidrawOpenArgs) => void;
-  onError: (code: AttachmentErrorCode) => void;
+  onError: (code: AttachmentErrorCode, kind: AttachmentKind) => void;
   t: TFunction;
 }

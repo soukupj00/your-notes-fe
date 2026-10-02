@@ -2,24 +2,45 @@ import { type ChainedCommands, type Editor, mergeAttributes, Node } from '@tipta
 import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 import { type ReactNodeViewProps, ReactNodeViewRenderer } from '@tiptap/react';
 import type { ComponentType } from 'react';
+import { ATTACHMENT_SPECS } from '@/lib/attachments.ts';
+import { ATTACHMENT_ID_ATTR } from '@/lib/body.ts';
+import type { AttachmentKind } from '@/models.ts';
 import type { AnyButtonView, TFunction } from '../button-types';
 import type { AttachmentDeps } from './deps';
 
 export interface AttachmentNodeConfig {
-  name: string;
-  parseTag: string;
-  /** renderHTML tag, e.g. 'img'. No src is ever emitted (ADR 0007). */
-  renderTag: string;
-  insertCommandName: string;
+  kind: AttachmentKind;
   nodeView: ComponentType<ReactNodeViewProps>;
   button: (ctx: { editor: Editor; getDeps: () => AttachmentDeps; t: TFunction }) => AnyButtonView;
 }
 
-/** The node mechanics every media attachment shares; per-type parts come from config.
- *  Deps are read through `getDeps`, so the button and node view always see live ones. */
+/** The insert command of each kind, as the extension files declare them for TipTap's typing.
+ *  The type pins each value to its own kind, so a copied row cannot register another kind's command. */
+export const INSERT_COMMAND = {
+  image: 'insertImageAttachment',
+  audio: 'insertAudioAttachment',
+  video: 'insertVideoAttachment',
+  file: 'insertFileAttachment',
+  excalidraw: 'insertExcalidrawAttachment',
+} as const satisfies {
+  [K in AttachmentKind]: `insert${Capitalize<K>}Attachment` & keyof ChainedCommands;
+};
+
+/** Places a node for a stored row at the selection. */
+export function insertAttachmentNode(
+  editor: Editor,
+  kind: AttachmentKind,
+  attachmentId: string
+): boolean {
+  return editor.chain().focus()[INSERT_COMMAND[kind]]({ attachmentId }).run();
+}
+
+/** The node mechanics every attachment kind shares; the per-kind parts come from the kind's spec
+ *  and the config. Deps are read through `getDeps`, so the button and node view see live ones. */
 export function createAttachmentNode(getDeps: () => AttachmentDeps, config: AttachmentNodeConfig) {
+  const { tag } = ATTACHMENT_SPECS[config.kind];
   return Node.create({
-    name: config.name,
+    name: `${config.kind}Attachment`,
     group: 'block',
     atom: true,
     draggable: true,
@@ -36,19 +57,20 @@ export function createAttachmentNode(getDeps: () => AttachmentDeps, config: Atta
       return {
         attachmentId: {
           default: null,
-          parseHTML: (el: HTMLElement) => el.getAttribute('data-attachment-id'),
+          parseHTML: (el: HTMLElement) => el.getAttribute(ATTACHMENT_ID_ATTR),
           renderHTML: (attrs: { attachmentId?: string | null }) =>
-            attrs.attachmentId ? { 'data-attachment-id': attrs.attachmentId } : {},
+            attrs.attachmentId ? { [ATTACHMENT_ID_ATTR]: attrs.attachmentId } : {},
         },
       };
     },
 
     parseHTML() {
-      return [{ tag: config.parseTag }];
+      return [{ tag: `${tag}[${ATTACHMENT_ID_ATTR}]` }];
     },
 
+    // No src, href or payload is ever emitted (ADR 0007).
     renderHTML({ HTMLAttributes }) {
-      return [config.renderTag, mergeAttributes(HTMLAttributes)];
+      return [tag, mergeAttributes(HTMLAttributes)];
     },
 
     addNodeView() {
@@ -89,7 +111,7 @@ export function createAttachmentNode(getDeps: () => AttachmentDeps, config: Atta
               return true;
             })
             .run();
-      return { [config.insertCommandName]: command };
+      return { [INSERT_COMMAND[config.kind]]: command };
     },
   });
 }
