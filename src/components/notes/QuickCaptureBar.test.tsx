@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PREFERENCES_STORAGE_KEY, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { FLOATING_BOTTOM_BAR } from './floatingBottomBar.ts';
+import { EMPTY_CHECKLIST_BODY } from './noteDrafts.ts';
 import { QuickCaptureBar } from './QuickCaptureBar.tsx';
 
 vi.mock('react-i18next', () => ({
@@ -47,14 +48,7 @@ describe('QuickCaptureBar', () => {
 
   it.each([
     ['text', { id: null }],
-    [
-      'checklist',
-      {
-        id: null,
-        initialBody:
-          '<ul data-type="taskList"><li data-type="taskItem" data-checked="false"><p></p></li></ul>',
-      },
-    ],
+    ['checklist', { id: null, initialBody: EMPTY_CHECKLIST_BODY }],
     ['audio', { id: null, capture: 'audio' }],
     ['drawing', { id: null, capture: 'drawing' }],
   ])('opens the editor in the %s state', async (key, expected) => {

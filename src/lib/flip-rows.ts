@@ -4,7 +4,7 @@
  * toggle changes only an attribute, so the k-th row is the same item either way.
  */
 
-const TASK_LIST = 'ul[data-type="taskList"]';
+import { TASK_LIST } from '@/lib/body.ts';
 
 /**
  * `snapshot[listIndex][rowIndex]` is a row's top relative to its own list. Not viewport tops: a
