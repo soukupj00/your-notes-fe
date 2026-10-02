@@ -4,7 +4,7 @@ import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { afterEach, describe, expect, it } from 'vitest';
 import { ActionButton } from '@/components/ui/ActionButton.tsx';
-import type { HistoryOptions } from './History';
+import type { ButtonOption, ButtonView } from '../button-types';
 import { History } from './History';
 
 const t = (key: string) => key;
@@ -21,7 +21,7 @@ describe('History extension', () => {
     const extension = editor.extensionManager.extensions.find((item) => item.name === 'undoRedo');
     if (!extension) throw new Error('history extension not registered');
 
-    const buttons = (extension.options as HistoryOptions).button({ editor, t });
+    const buttons = (extension.options as ButtonOption<ButtonView[]>).button({ editor, t });
 
     expect(buttons.map((button) => button.component)).toEqual([ActionButton, ActionButton]);
     expect(buttons.map((button) => button.componentProps.icon)).toEqual(['Undo2', 'Redo2']);

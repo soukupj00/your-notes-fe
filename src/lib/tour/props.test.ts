@@ -4,7 +4,7 @@ import { TaskItem } from '@tiptap/extension-list';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { describe, expect, it, vi } from 'vitest';
-import { BulletList } from '@/components/editor/extensions/BulletList';
+import { BulletList } from '@/components/editor/extensions/formatting';
 import { ListItem } from '@/components/editor/extensions/ListItem';
 import { TaskList } from '@/components/editor/extensions/TaskList';
 import { createMemoryLocalStore } from '@/data/memory/MemoryLocalStore.ts';

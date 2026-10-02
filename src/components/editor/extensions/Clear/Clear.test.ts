@@ -3,7 +3,7 @@ import Document from '@tiptap/extension-document';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { Bold } from '../Bold';
+import { Bold } from '../formatting';
 import { Clear, type ClearExtensionOptions } from './Clear';
 
 const t = (key: string) => key;

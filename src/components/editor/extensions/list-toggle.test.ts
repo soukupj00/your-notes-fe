@@ -4,10 +4,9 @@ import { TaskItem } from '@tiptap/extension-list';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { BulletList } from './BulletList';
 import type { ButtonView } from './button-types';
+import { BulletList, OrderedList } from './formatting';
 import { ListItem } from './ListItem';
-import { OrderedList } from './OrderedList';
 import { TaskList } from './TaskList';
 
 const t = (key: string) => key;

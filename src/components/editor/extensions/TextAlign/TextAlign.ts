@@ -1,11 +1,12 @@
-import { type TextAlignOptions, TextAlign as TiptapTextAlign } from '@tiptap/extension-text-align';
+import { TextAlign as TiptapTextAlign } from '@tiptap/extension-text-align';
+import type { IconName } from '@/components/icons';
 import { ActionButton } from '@/components/ui/ActionButton.tsx';
-import type { ButtonContext, ButtonView } from '../button-types';
+import { withButton } from '../withButton';
 
 const ALIGNMENTS = ['left', 'center', 'right'] as const;
 type Alignment = (typeof ALIGNMENTS)[number];
 
-const ICONS: Record<Alignment, ButtonView['componentProps']['icon']> = {
+const ICONS: Record<Alignment, IconName> = {
   left: 'AlignLeft',
   center: 'AlignCenter',
   right: 'AlignRight',
@@ -18,30 +19,21 @@ const SHORTCUTS: Record<Alignment, string[]> = {
   right: ['Mod', 'Shift', 'R'],
 };
 
-export interface TextAlignExtensionOptions extends TextAlignOptions {
-  button: (context: ButtonContext) => ButtonView[];
-}
-
 /** `justify` is left out: it reads badly at note width. Without `types` naming the blocks
  *  that carry the attribute, the commands silently no-op. */
-export const TextAlign = TiptapTextAlign.extend<TextAlignExtensionOptions>({
-  addOptions() {
-    return {
-      ...this.parent?.(),
-      types: ['heading', 'paragraph'],
-      alignments: [...ALIGNMENTS],
-      button: ({ editor, t }: ButtonContext) =>
-        ALIGNMENTS.map((alignment) => ({
-          component: ActionButton,
-          componentProps: {
-            action: () => editor.chain().focus().toggleTextAlign(alignment).run(),
-            isActive: () => editor.isActive({ textAlign: alignment }),
-            icon: ICONS[alignment],
-            shortcutKeys: SHORTCUTS[alignment],
-            tooltip: t(`editor.textAlign.${alignment}`),
-            toggle: true,
-          },
-        })),
-    } as unknown as TextAlignExtensionOptions;
-  },
-});
+export const TextAlign = withButton(
+  TiptapTextAlign,
+  ({ editor, t }) =>
+    ALIGNMENTS.map((alignment) => ({
+      component: ActionButton,
+      componentProps: {
+        action: () => editor.chain().focus().toggleTextAlign(alignment).run(),
+        isActive: () => editor.isActive({ textAlign: alignment }),
+        icon: ICONS[alignment],
+        shortcutKeys: SHORTCUTS[alignment],
+        tooltip: t(`editor.textAlign.${alignment}`),
+        toggle: true,
+      },
+    })),
+  { types: ['heading', 'paragraph'], alignments: [...ALIGNMENTS] }
+);

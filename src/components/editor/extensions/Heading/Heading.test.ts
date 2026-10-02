@@ -3,7 +3,8 @@ import Document from '@tiptap/extension-document';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { Heading, type HeadingExtensionOptions } from './Heading';
+import type { ButtonOption, ButtonView } from '../button-types';
+import { Heading } from './Heading';
 
 const t = (key: string, _opts?: Record<string, unknown>) => key;
 
@@ -17,7 +18,7 @@ function createEditor(content = '<p>title</p>') {
 function getButtons(editor: Editor) {
   const ext = editor.extensionManager.extensions.find((e) => e.name === 'heading');
   if (!ext) throw new Error('heading extension not registered');
-  return (ext.options as HeadingExtensionOptions).button({ editor, t });
+  return (ext.options as ButtonOption<ButtonView[]>).button({ editor, t });
 }
 
 describe('Heading extension', () => {
