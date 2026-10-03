@@ -17,7 +17,7 @@ const render = (ui: ReactElement) =>
   });
 
 const t = vi.hoisted(() => vi.fn((key: string, _options?: object) => key));
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t }) }));
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t, i18n: { language: 'en' } }) }));
 
 vi.mock('sonner', () => ({ toast: vi.fn() }));
 

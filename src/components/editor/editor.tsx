@@ -96,7 +96,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   },
   ref
 ) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { preferences } = usePreferences();
   const reducedMotion = useReducedMotion();
   // Math node onClick handlers need the live editor, which does not exist yet when
@@ -171,6 +171,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
           t(`editor.attachment.errors.${code}`, { max: ATTACHMENT_SPECS[kind].maxBytes / MiB })
         ),
       t,
+      locale: i18n.language,
     }),
     [
       getNoteId,
@@ -182,6 +183,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       updateAttachment,
       openExcalidraw,
       t,
+      i18n.language,
     ]
   );
   // useEditor builds the extensions once, so they must reach the *current* deps

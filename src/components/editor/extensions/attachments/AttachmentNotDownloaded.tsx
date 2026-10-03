@@ -3,7 +3,7 @@ import { type ReactNode, useState } from 'react';
 import { toast } from 'sonner';
 import { icons } from '@/components/icons';
 import { Spinner } from '@/components/ui/Spinner.tsx';
-import { formatBytes } from '@/lib/format-attachment.ts';
+import { formatBytes } from '@/lib/format.ts';
 import { cn } from '@/lib/utils.ts';
 import type { Attachment } from '@/models.ts';
 import type { AttachmentDeps } from './deps';
@@ -102,7 +102,7 @@ export function AttachmentNotDownloaded({
   }
 
   const Icon = icons.FileText;
-  const size = formatBytes(attachment.size);
+  const size = formatBytes(attachment.size, deps.locale);
   return (
     <NodeViewWrapper as="div" className="relative my-2" data-drag-handle>
       <div className="flex items-center gap-3 rounded-md border bg-muted/40 py-2 pr-12 pl-3">

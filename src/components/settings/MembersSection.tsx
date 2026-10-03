@@ -16,9 +16,8 @@ import { Spinner } from '@/components/ui/Spinner.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
 import type { Member } from '@/data/Remote.ts';
 import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
+import { formatDate, MEDIUM_DATE } from '@/lib/format.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
-
-const joined = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 
 /** The Owner sets a member's password (backend `docs/setup.md` section 10); their Devices stay signed in. */
 function ResetPasswordButton({ member }: { member: Member }) {
@@ -103,7 +102,7 @@ function ResetPasswordButton({ member }: { member: Member }) {
  * on the next visit.
  */
 export function MembersSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { session, service } = useAccount();
   const [members, setMembers] = useState<Member[]>([]);
   const isOwner = session?.role === 'owner';
@@ -133,7 +132,7 @@ export function MembersSection() {
             member.id === session.accountId
               ? `${t('account.section.owner')} · ${t('account.members.you')}`
               : `${t(`account.section.${member.role}`)} · ${t('account.members.joined', {
-                  date: joined.format(new Date(member.createdAt)),
+                  date: formatDate(member.createdAt, i18n.language, MEDIUM_DATE),
                 })}`
           }
         >

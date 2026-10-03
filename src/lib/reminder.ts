@@ -1,4 +1,5 @@
 import type { Note, ReminderRepeat } from '@/models.ts';
+import { formatDate } from './format.ts';
 
 /** A Reminder as the UI passes it around; on the Note it is two flat fields. */
 export type Reminder = { remindAt: string; repeat?: ReminderRepeat };
@@ -37,16 +38,18 @@ export function isReminderPast(reminder: Reminder, now = new Date()): boolean {
   return !reminder.repeat && new Date(reminder.remindAt) < now;
 }
 
+const REMINDER_TIME: Intl.DateTimeFormatOptions = {
+  day: 'numeric',
+  month: 'short',
+  hour: 'numeric',
+  minute: '2-digit',
+};
+
 /**
  * No `weekday`: it is the one part the reader can derive from the date, and in
  * en it costs the chip ~36px of an ~86px text budget at phone width - so the
  * run that gets cut is the time, which is the whole point of the record.
  */
 export function formatReminderTime(remindAt: string, locale: string): string {
-  return new Intl.DateTimeFormat(locale, {
-    day: 'numeric',
-    month: 'short',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(new Date(remindAt));
+  return formatDate(remindAt, locale, REMINDER_TIME);
 }

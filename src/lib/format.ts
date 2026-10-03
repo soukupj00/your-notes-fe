@@ -29,8 +29,11 @@ export function formatElapsed(seconds: number): string {
 // what the OS file dialog said, and every desktop file manager uses decimal.
 const UNITS = ['B', 'kB', 'MB', 'GB'] as const;
 
-/** A byte count at the largest unit that keeps it under four digits. */
-export function formatBytes(bytes: number | undefined): string | null {
+/**
+ * A byte count at the largest unit whose value is under 1000 before rounding, the number written as
+ * `locale` writes numbers (`3,4 MB` for a Czech reader); the unit tokens are the same in every language.
+ */
+export function formatBytes(bytes: number | undefined, locale: string): string | null {
   if (bytes === undefined || !Number.isFinite(bytes) || bytes < 0) return null;
   let value = bytes;
   let unit = 0;
@@ -40,8 +43,34 @@ export function formatBytes(bytes: number | undefined): string | null {
   }
   // Whole bytes are never fractional; above that one decimal is enough to tell
   // 1.2 MB from 1.9 MB without implying precision we do not have.
-  const rounded = unit === 0 ? String(Math.round(value)) : value.toFixed(value < 10 ? 1 : 0);
-  return `${rounded} ${UNITS[unit]}`;
+  const digits = unit === 0 ? 0 : value < 10 ? 1 : 0;
+  const number = new Intl.NumberFormat(locale, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+    useGrouping: false,
+  }).format(value);
+  return `${number} ${UNITS[unit]}`;
+}
+
+/** `Mar 4, 2030` in en, `4. 3. 2030` in cs. */
+export const MEDIUM_DATE: Readonly<Intl.DateTimeFormatOptions> = { dateStyle: 'medium' };
+/** The date and the time of day: `Mar 4, 2030, 9:00 AM` in en, `4. 3. 2030 9:00` in cs. */
+export const MEDIUM_DATE_TIME: Readonly<Intl.DateTimeFormatOptions> = {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+};
+
+/**
+ * A date in the app's language, never the browser's: the two differ as soon as Settings switches
+ * language. Built per call rather than kept as a module constant, so a switch shows at once.
+ * `iso` may be an instant (`…Z`) or a Reminder's zone-less wall-clock string; `Date` reads both.
+ */
+export function formatDate(
+  iso: string,
+  locale: string,
+  options: Intl.DateTimeFormatOptions
+): string {
+  return new Intl.DateTimeFormat(locale, options).format(new Date(iso));
 }
 
 /**

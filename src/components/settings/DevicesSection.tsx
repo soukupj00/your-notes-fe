@@ -8,16 +8,15 @@ import { useAccount } from '@/context/AccountProvider.tsx';
 import type { Device } from '@/data/Remote.ts';
 import { useAction } from '@/hooks/useAction.ts';
 import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
+import { formatDate, MEDIUM_DATE_TIME } from '@/lib/format.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
-
-const lastSeen = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
 /**
  * Removing a Device signs it out and changes nothing else (backend `docs/setup.md`
  * section 6). This Device signs out from the Account section instead.
  */
 export function DevicesSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { session, service } = useAccount();
   const [devices, setDevices] = useState<Device[]>([]);
   const [removing, setRemoving] = useState<Device | null>(null);
@@ -62,7 +61,7 @@ export function DevicesSection() {
             device.current
               ? t('account.devices.current')
               : t('account.devices.lastSeen', {
-                  date: lastSeen.format(new Date(device.lastSeenAt)),
+                  date: formatDate(device.lastSeenAt, i18n.language, MEDIUM_DATE_TIME),
                 })
           }
         >

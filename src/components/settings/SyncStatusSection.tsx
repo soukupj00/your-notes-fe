@@ -4,18 +4,8 @@ import { Button } from '@/components/ui/button.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import { useSync } from '@/context/SyncProvider.tsx';
 import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
+import { formatBytes, formatDate, MEDIUM_DATE_TIME } from '@/lib/format.ts';
 import { PreferenceSwitch, SettingsRow, SettingsSection } from './SettingsSection.tsx';
-
-const when = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-const unit = (name: 'kilobyte' | 'megabyte') =>
-  new Intl.NumberFormat(undefined, { style: 'unit', unit: name, maximumFractionDigits: 1 });
-const kilobytes = unit('kilobyte');
-const megabytes = unit('megabyte');
-/** A fresh library is tens of kilobytes; "0 MB used" would read as "nothing is stored". */
-const size = (bytes: number) =>
-  bytes < 1_000_000
-    ? kilobytes.format(Math.max(1, Math.round(bytes / 1000)))
-    : megabytes.format(bytes / 1_000_000);
 
 type Storage = { persisted: boolean; usage?: number };
 
@@ -33,7 +23,7 @@ function useStorage(): Storage | null {
 
 /** "Is my data safe here?" answered in one block (PLAN.md M5). */
 export function SyncStatusSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const storage = useStorage();
   const { active, status, lastSyncedAt, pending, syncNow } = useSync();
   if (!storage && !active) return null;
@@ -46,9 +36,12 @@ export function SyncStatusSection() {
         : status === 'error'
           ? t('sync.error')
           : lastSyncedAt
-            ? t('sync.idle', { time: when.format(new Date(lastSyncedAt)) })
+            ? t('sync.idle', { time: formatDate(lastSyncedAt, i18n.language, MEDIUM_DATE_TIME) })
             : t('sync.never');
   const waiting = pending > 0 ? ` · ${t('sync.pending', { count: pending })}` : '';
+  // A fresh library is tens of kilobytes; "0 B used" would read as "nothing is stored".
+  const used =
+    storage?.usage === undefined ? null : formatBytes(Math.max(storage.usage, 1000), i18n.language);
 
   return (
     <SettingsSection title={t('sync.title')}>
@@ -57,9 +50,7 @@ export function SyncStatusSection() {
           label={t('sync.storage.label')}
           description={
             (storage.persisted ? t('sync.storage.persisted') : t('sync.storage.notPersisted')) +
-            (storage.usage === undefined
-              ? ''
-              : ` ${t('sync.storage.used', { size: size(storage.usage) })}`)
+            (used ? ` ${t('sync.storage.used', { size: used })}` : '')
           }
         >
           {null}

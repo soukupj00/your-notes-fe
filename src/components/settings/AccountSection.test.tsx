@@ -12,10 +12,13 @@ import { AccountSection } from './AccountSection.tsx';
 import { DevicesSection } from './DevicesSection.tsx';
 import { MembersSection } from './MembersSection.tsx';
 
+const language = vi.hoisted(() => ({ current: 'en' }));
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options?: Record<string, string>) =>
       options ? `${key} ${Object.values(options).join(' ')}` : key,
+    i18n: { language: language.current },
   }),
 }));
 
@@ -25,6 +28,7 @@ const exportBackup = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/export-backup.ts', () => ({ exportBackup }));
 
 afterEach(async () => {
+  language.current = 'en';
   await clearStore();
 });
 
@@ -120,6 +124,25 @@ describe('Settings account sections', () => {
     expect(qr.querySelector('path')?.getAttribute('d')).toMatch(/^M\d+ \d+h1v1h-1z/);
     expect(screen.getByText(`${window.location.origin}/pair#device-code-1`)).toBeVisible();
   });
+
+  // An English and a Czech medium date: against browser-locale code one row fails on any runner.
+  it.each([
+    ['en', /^account\.devices\.lastSeen [A-Z][a-z]{2} \d{1,2}, \d{4}/],
+    ['cs', /^account\.devices\.lastSeen \d{1,2}\. \d{1,2}\. \d{4}/],
+  ])(
+    "writes the last-seen date in the app language (%s), not the browser's",
+    async (lang, shape) => {
+      language.current = lang;
+      const server = createFakeServer();
+      server.seedOwner('ada', 'correct horse');
+      mount(server);
+      await signIn('ada', 'correct horse');
+
+      await screen.findByText('Laptop');
+
+      expect(screen.getByText(shape)).toBeInTheDocument();
+    }
+  );
 
   it('only the Owner sees Members, and its Invite is a Pairing Link', async () => {
     const server = createFakeServer();

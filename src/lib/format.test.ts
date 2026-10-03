@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { formatBytes, formatDuration, formatElapsed, formatFileType } from './format-attachment.ts';
+import {
+  formatBytes,
+  formatDate,
+  formatDuration,
+  formatElapsed,
+  formatFileType,
+  MEDIUM_DATE,
+  MEDIUM_DATE_TIME,
+} from './format.ts';
 
 describe('formatDuration', () => {
   it('pads seconds and drops the hour when there is none', () => {
@@ -43,19 +51,43 @@ describe('formatElapsed', () => {
 });
 
 describe('formatBytes', () => {
-  it('keeps whole bytes whole and steps up at a thousand', () => {
-    expect(formatBytes(0)).toBe('0 B');
-    expect(formatBytes(999)).toBe('999 B');
-    expect(formatBytes(1000)).toBe('1.0 kB');
-  });
-
-  it('drops the decimal once the number is wide enough to carry itself', () => {
-    expect(formatBytes(248_000)).toBe('248 kB');
-    expect(formatBytes(3_400_000)).toBe('3.4 MB');
+  it.each([
+    [0, 'en', '0 B'],
+    [999, 'en', '999 B'],
+    [1000, 'en', '1.0 kB'],
+    [1536, 'cs', '1,5 kB'],
+    [248_000, 'en', '248 kB'],
+    [3_400_000, 'en', '3.4 MB'],
+    [3_400_000, 'cs', '3,4 MB'],
+    [999_999, 'en', '1000 kB'],
+    [1_500_000_000, 'cs', '1,5 GB'],
+  ])('%d bytes in %s is %s', (bytes, locale, expected) => {
+    expect(formatBytes(bytes, locale)).toBe(expected);
   });
 
   it('returns null for an unknown size', () => {
-    expect(formatBytes(undefined)).toBeNull();
+    expect(formatBytes(undefined, 'en')).toBeNull();
+  });
+});
+
+describe('formatDate', () => {
+  // A fixed instant at noon UTC, read in UTC: the zone of the machine running this cannot move
+  // the date. Pieces, not whole strings: ICU builds differ in the spaces around AM/PM.
+  const AT = '2030-03-04T12:00:00.000Z';
+
+  it.each([
+    ['en', 'MEDIUM_DATE', MEDIUM_DATE, /^Mar 4, 2030$/],
+    ['cs', 'MEDIUM_DATE', MEDIUM_DATE, /^4\. 3\. 2030$/],
+    ['en', 'MEDIUM_DATE_TIME', MEDIUM_DATE_TIME, /^Mar 4, 2030, 12:00/],
+    ['cs', 'MEDIUM_DATE_TIME', MEDIUM_DATE_TIME, /^4\. 3\. 2030 12:00/],
+  ])('writes the date in %s with %s', (locale, _preset, options, expected) => {
+    expect(formatDate(AT, locale, { ...options, timeZone: 'UTC' })).toMatch(expected);
+  });
+
+  it('reads a zone-less wall-clock string as local time, the way a Reminder is stored', () => {
+    expect(formatDate('2030-03-04T09:00', 'en', { hour: 'numeric', minute: '2-digit' })).toMatch(
+      /^9:00/
+    );
   });
 });
 

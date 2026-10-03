@@ -9,8 +9,8 @@ import { Input } from '@/components/ui/input.tsx';
 import { useTourActive } from '@/context/TourProvider.tsx';
 import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { useNoteSearchState } from '@/hooks/useNoteSearchState.ts';
+import { getShortcutKey } from '@/lib/shortcut-keys.ts';
 import { cn } from '@/lib/utils.ts';
-import { getShortcutKey } from '@/utils/platform.ts';
 
 type SearchInputProps = React.ComponentProps<'div'> & {
   /**

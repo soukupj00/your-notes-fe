@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useFinePointer } from '@/hooks/useFinePointer.ts';
+import { getShortcutKeys } from '@/lib/shortcut-keys.ts';
 import { cn } from '@/lib/utils';
 import type { ButtonViewReturnComponentProps } from '@/types';
-import { getShortcutKeys } from '@/utils/platform.ts';
 
 /**
  * A button's name as a menu row, or `null` on a bar; why context: editor/CLAUDE.md.
