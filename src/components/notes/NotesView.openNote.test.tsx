@@ -21,21 +21,21 @@ vi.mock('@/i18n', () => ({
 vi.mock('@/components/notes/NoteEditorDialog.tsx', () => ({
   NoteEditorDialog: ({
     noteId,
-    draftId,
+    isNew,
     intent,
     onClose,
     onNoteMissing,
   }: {
-    noteId: string | null;
-    draftId?: string;
+    noteId: string;
+    isNew?: boolean;
     intent?: { kind: string };
     onClose: () => void;
     onNoteMissing?: () => void;
   }) => (
     <div
       data-testid="editor"
-      data-note-id={noteId ?? ''}
-      data-draft-id={draftId ?? ''}
+      data-note-id={noteId}
+      data-new={isNew ? 'true' : ''}
       data-intent={intent?.kind ?? ''}
     >
       <button type="button" onClick={onClose}>
@@ -124,10 +124,10 @@ describe('opening a note', () => {
     await userEvent.click(await screen.findByRole('button', { name: /notes.createPlaceholder/ }));
 
     const el = await editor();
-    const id = el.getAttribute('data-draft-id');
+    const id = el.getAttribute('data-note-id');
     expect(id).toMatch(/^[0-9a-f-]{36}$/);
-    // Not an existing note: nothing has been written yet.
-    expect(el).toHaveAttribute('data-note-id', '');
+    // A Start's Draft, not an existing note: nothing has been written yet.
+    expect(el).toHaveAttribute('data-new', 'true');
     expect(router.state.location.search).toMatchObject({ note: id });
     expect((await testStore.notes.list()).length).toBe(0);
   });
@@ -141,7 +141,8 @@ describe('closing a note', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'notes.capture.audio' }));
     const opened = await editor();
     expect(opened).toHaveAttribute('data-intent', 'record');
-    const id = opened.getAttribute('data-draft-id');
+    expect(opened).toHaveAttribute('data-new', 'true');
+    const id = opened.getAttribute('data-note-id');
 
     await userEvent.click(screen.getByRole('button', { name: 'close-editor' }));
     await waitFor(noEditor);
@@ -149,6 +150,7 @@ describe('closing a note', () => {
 
     const reopened = await editor();
     expect(reopened).toHaveAttribute('data-intent', '');
+    expect(reopened).toHaveAttribute('data-new', '');
     expect(reopened).toHaveAttribute('data-note-id', id);
   });
 

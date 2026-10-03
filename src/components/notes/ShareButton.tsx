@@ -10,6 +10,7 @@ import { ProblemError } from '@/data/http/hal.ts';
 import type { Share } from '@/data/Remote.ts';
 import { useAction } from '@/hooks/useAction.ts';
 import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
+import type { NoteDraft } from '@/lib/draft.ts';
 import { cn } from '@/lib/utils.ts';
 
 /** The server has not seen this Note yet: a fresh draft, or edits still queued. */
@@ -19,15 +20,7 @@ const unsynced = (error: unknown) => error instanceof ProblemError && error.stat
  * Only while signed in, because the link is the server's, and never on a trashed Note, which the
  * server would not show. A shared Note carries the pressed mark, so its owner sees the open link.
  */
-export function ShareButton({
-  noteId,
-  ensureNoteId,
-  className,
-}: {
-  noteId: string | null;
-  ensureNoteId: () => Promise<string>;
-  className: string;
-}) {
+export function ShareButton({ draft, className }: { draft: NoteDraft; className: string }) {
   const { t } = useTranslation();
   const { status, service } = useAccount();
   const { syncNow } = useSync();
@@ -38,14 +31,16 @@ export function ShareButton({
   const { busy, run } = useAction();
   const signedIn = status === 'signed-in' && service !== null;
 
+  // Only a Note with a row can be shared already. `saved` is a plain read: a Draft that earns its
+  // row later is shared only from here, and `mint` sets the mark itself.
   useAsyncEffect(
     async (alive) => {
-      if (!signedIn || !noteId) return;
+      if (!signedIn || !draft.saved) return;
       // An unanswered read shows as unshared; the next tap tells the truth.
       const all = await service.shares().catch(() => null);
-      if (alive() && all) setShare(all.find((s) => s.noteId === noteId) ?? null);
+      if (alive() && all) setShare(all.find((s) => s.noteId === draft.id) ?? null);
     },
-    [signedIn, service, noteId]
+    [signedIn, service, draft]
   );
 
   if (!signedIn) return null;
@@ -53,7 +48,7 @@ export function ShareButton({
   const mint = () =>
     run(
       async () => {
-        const id = await ensureNoteId();
+        const id = await draft.ensureSaved();
         let minted: Share;
         try {
           minted = await service.share(id);

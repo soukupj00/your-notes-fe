@@ -86,7 +86,7 @@ describe('opening a note with the real editor', () => {
   });
 });
 
-describe('the toolbar customisation sheet, over an unsaved draft', () => {
+describe('the toolbar customisation sheet, over a new Draft', () => {
   // The `⚙` that opens this sheet is on the bar in the Wide default and off in
   // the Compact one, and which Layout is in effect is a pointer question as well
   // as a width one (ADR 0016) - jsdom answers coarse to both unless told.
@@ -97,7 +97,7 @@ describe('the toolbar customisation sheet, over an unsaved draft', () => {
       withStore(
         <PreferencesProvider>
           <TooltipProvider>
-            <NoteEditorDialog noteId={null} onClose={vi.fn()} />
+            <NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />
           </TooltipProvider>
         </PreferencesProvider>
       )
@@ -107,7 +107,7 @@ describe('the toolbar customisation sheet, over an unsaved draft', () => {
 
   /**
    * The sheet layered over the note must not navigate: routing to Settings would destroy the
-   * draft or force it to be created early through `ensureNoteId`.
+   * Draft or make it earn its row early.
    */
   async function roundTripTheSheet(user: ReturnType<typeof userEvent.setup>) {
     await user.click(await screen.findByTestId('toolbar-customize'));
@@ -149,7 +149,7 @@ describe('the toolbar customisation sheet, over an unsaved draft', () => {
       withStore(
         <PreferencesProvider>
           <TooltipProvider>
-            <NoteEditorDialog noteId={null} onClose={vi.fn()} />
+            <NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />
           </TooltipProvider>
         </PreferencesProvider>
       )

@@ -15,21 +15,17 @@ import { useIsMobile } from '@/hooks/use-mobile.tsx';
 import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { useKeyboardInset } from '@/hooks/useKeyboardInset.ts';
-import { bodyHasAttachment, extractAttachmentIds } from '@/lib/body.ts';
+import { useLatest } from '@/hooks/useLatest.ts';
 import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
+import { createNoteDraft, isEmpty } from '@/lib/draft.ts';
 import type { Intent } from '@/lib/intent.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
-import { requestPersistentStorage } from '@/lib/persistentStorage.ts';
 import { type Reminder, reminderOf } from '@/lib/reminder.ts';
-import { stripHtml } from '@/lib/utils.ts';
 import type { NoteState } from '@/models.ts';
 
 const AUTOSAVE_DELAY_MS = 600;
 
 type SaveStatus = 'idle' | 'saving' | 'saved';
-
-const isEmpty = (header: string, body: string) =>
-  header.trim() === '' && stripHtml(body).trim() === '' && !bodyHasAttachment(body);
 
 /** Decoration only: the announcement is the one live region in the dialog. */
 function SaveStatusIcon({ status }: { status: SaveStatus }) {
@@ -42,13 +38,10 @@ function SaveStatusIcon({ status }: { status: SaveStatus }) {
 }
 
 type NoteEditorDialogProps = {
-  /** Existing note id, or null for a new (draft) note not yet persisted. */
-  noteId: string | null;
-  /**
-   * The id a draft takes when first persisted, minted at open so the URL can name
-   * the note before its row exists (ADR 0014). Ignored when `noteId` is set.
-   */
-  draftId?: string;
+  /** The Note's id, the URL's from the moment the editor opens (ADR 0014). */
+  noteId: string;
+  /** A Start's Draft, with no row yet; the default is a Note that already exists. */
+  isNew?: boolean;
   /** `noteId` names no stored note (a dead `?note=`); fixing the URL is the caller's job. */
   onNoteMissing?: () => void;
   /** What the Editor does as it opens, beyond showing the Note (CONTEXT.md "Intent"). */
@@ -58,12 +51,12 @@ type NoteEditorDialogProps = {
 
 /**
  * The single edit surface, keyed by note id so every open starts fresh. Autosave runs off
- * local state, never a live query, so typing never resets the cursor. A draft is persisted
- * on its first real change and discarded if it closes empty.
+ * local state, never a live query, so typing never resets the cursor. The Draft (`lib/draft.ts`)
+ * owns the row: earned on the first real change, discarded if the Note closes empty.
  */
 export function NoteEditorDialog({
   noteId,
-  draftId,
+  isNew = false,
   intent,
   onClose,
   onNoteMissing,
@@ -80,7 +73,7 @@ export function NoteEditorDialog({
 
   const [header, setHeader] = useState('');
   // A checklist draft opens seeded with one item and focused in the body, so that item is ready.
-  const checklistDraft = !noteId && intent?.kind === 'checklist';
+  const checklistDraft = isNew && intent?.kind === 'checklist';
   const [body, setBody] = useState(checklistDraft ? EMPTY_CHECKLIST_BODY : '');
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
 
@@ -99,27 +92,25 @@ export function NoteEditorDialog({
   // the URL with none, so it remembers what had focus (a Card's open button).
   const openerRef = useRef<HTMLElement | null>(null);
 
-  // Null until a draft is first saved. A ref, not state, so serialized saves see it at once.
-  const idRef = useRef<string | null>(noteId);
-  // Mirrors of header/body so ensureNoteId keeps one identity across keystrokes:
-  // the Image extension depends on it, and a new identity remints its deps every render.
-  const headerRef = useRef(header);
-  const bodyRef = useRef(body);
   const dirtyRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Serialize saves so a draft is created exactly once, then updated.
-  const saveChainRef = useRef<Promise<unknown>>(Promise.resolve());
 
-  // Synced after commit is enough: ensureNoteId only reads them from later async work.
-  useEffect(() => {
-    headerRef.current = header;
-    bodyRef.current = body;
-  }, [header, body]);
+  // What is typed so far, for an act that needs the row before the autosave ran and for a
+  // Reminder's calendar event.
+  const content = useLatest({ header, body });
+  // Built once for the open: one Draft, one write queue, so a concurrent act and autosave on a
+  // new Draft create its row exactly once.
+  const [draft] = useState(() =>
+    createNoteDraft(
+      { id: noteId, isNew },
+      { content, createNote, updateNote, purgeNote, collectOrphans }
+    )
+  );
 
   // Load an existing note's content once on mount (not via a live query).
   useAsyncEffect(
     async (alive) => {
-      if (!noteId) return;
+      if (isNew) return;
       const n = await store.notes.get(noteId);
       if (!alive()) return;
       if (n) {
@@ -134,82 +125,31 @@ export function NoteEditorDialog({
       // Not a blank editor: typing into it would silently recreate the note under the dead id.
       onNoteMissing?.();
     },
-    [noteId, onNoteMissing, store]
+    [noteId, isNew, onNoteMissing, store]
   );
 
-  const persist = useCallback(
-    async (h: string, b: string) => {
-      if (idRef.current == null) {
-        if (isEmpty(h, b)) return;
-        const created = await createNote({ id: draftId, header: h, body: b });
-        idRef.current = created.id;
-      } else {
-        await updateNote(idRef.current, { header: h, body: b });
-      }
-      // The user's first own writing is when persistent storage is worth a prompt.
-      // Only the dirty-gated save path reaches here, so a Tour's Props never trigger it.
-      void requestPersistentStorage();
-    },
-    [createNote, updateNote, draftId]
-  );
-
-  // Attachments, labels and reminders need a persisted id, so this creates the draft if needed.
-  // It rides the same queue as persist(), so a concurrent autosave cannot create it twice.
-  const ensureNoteId = useCallback(async (): Promise<string> => {
-    const chained = saveChainRef.current.then(async () => {
-      if (idRef.current == null) {
-        const created = await createNote({
-          id: draftId,
-          header: headerRef.current,
-          body: bodyRef.current,
-        });
-        idRef.current = created.id;
-      }
-      return idRef.current as string;
-    });
-    // Swallow errors so one failed create does not leave the queue rejected for every later save.
-    saveChainRef.current = chained.then(
-      () => undefined,
-      () => undefined
-    );
-    return chained;
-  }, [createNote, draftId]);
-
-  const { handleReminderSet, handleReminderClear } = useNoteReminder(
-    ensureNoteId,
-    headerRef,
-    bodyRef,
-    setReminder
-  );
-
-  const enqueueSave = useCallback(
-    (h: string, b: string) => {
-      saveChainRef.current = saveChainRef.current.then(() => persist(h, b));
-      return saveChainRef.current;
-    },
-    [persist]
-  );
+  const { handleReminderSet, handleReminderClear } = useNoteReminder(draft, content, setReminder);
 
   // Local state is set before the write so the tint and the pin answer on the tap.
   // A draft that was only coloured is still empty, so closing discards it.
   const handleColorChange = useCallback(
     async (next?: string) => {
       setColor(next);
-      const id = await ensureNoteId();
+      const id = await draft.ensureSaved();
       await updateNote(id, { color: next });
     },
-    [ensureNoteId, updateNote]
+    [draft, updateNote]
   );
 
   const handlePinToggle = useCallback(async () => {
     const next = pinnedAt ? undefined : new Date().toISOString();
     setPinnedAt(next);
-    const id = await ensureNoteId();
+    const id = await draft.ensureSaved();
     // The lifecycle transitions own the pin field (ADR 0009) rather than a raw
     // updateNote, so the editor and the card write it the same way.
     if (next) await pinNote(id);
     else await unpinNote(id);
-  }, [pinnedAt, ensureNoteId, pinNote, unpinNote]);
+  }, [pinnedAt, draft, pinNote, unpinNote]);
 
   // dirtyRef keeps the initial load from counting as an edit.
   useEffect(() => {
@@ -217,22 +157,21 @@ export function NoteEditorDialog({
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       // Skip the status flicker when there's nothing to persist (empty draft).
-      if (idRef.current == null && isEmpty(header, body)) return;
+      if (!draft.saved && isEmpty(header, body)) return;
       setSaveStatus('saving');
-      void enqueueSave(header, body).then(() => setSaveStatus('saved'));
+      void draft.save(header, body).then(() => setSaveStatus('saved'));
     }, AUTOSAVE_DELAY_MS);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [header, body, enqueueSave]);
+  }, [header, body, draft]);
 
   // On mobile this goes inside the editor as its footer, so the sticky format toolbar can sit
   // below it at the sheet's bottom edge. On desktop it stays a sibling under the framed editor.
   // Width decides, not pointer: it is a question of which box exists (ADR 0016).
   const noteBar = (
     <NoteEditorBar
-      noteId={noteId}
-      ensureNoteId={ensureNoteId}
+      draft={draft}
       color={color}
       pinned={Boolean(pinnedAt)}
       pinnable={state === 'active'}
@@ -247,18 +186,11 @@ export function NoteEditorDialog({
 
   const handleClose = useCallback(async () => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    await enqueueSave(header, body);
-    // An empty note is purged unless it has a Reminder: the calendar already holds
-    // an event linking to its id.
-    if (idRef.current != null && isEmpty(header, body) && !reminder) {
-      await purgeNote(idRef.current);
-      idRef.current = null;
-    } else if (idRef.current != null) {
-      // Safe only now: the in-editor undo stack that could restore a reference is gone.
-      await collectOrphans(idRef.current, extractAttachmentIds(body));
-    }
+    // An empty note is kept only for a Reminder: the calendar already holds an event linking
+    // to its id.
+    await draft.close(header, body, { keepEmpty: reminder !== undefined });
     onClose();
-  }, [enqueueSave, header, body, reminder, purgeNote, collectOrphans, onClose]);
+  }, [draft, header, body, reminder, onClose]);
 
   return (
     <Dialog
@@ -280,7 +212,7 @@ export function NoteEditorDialog({
           }
           event.preventDefault();
           if (focusBody) return;
-          if (noteId && !finePointer) return;
+          if (!isNew && !finePointer) return;
           headerInputRef.current?.focus();
         }}
         onCloseAutoFocus={(event) => {
@@ -301,7 +233,7 @@ export function NoteEditorDialog({
         className="top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-3 overflow-y-auto rounded-none border-0 bg-note-surface! pt-[calc(0.5rem+var(--safe-top))] pr-[calc(1rem+var(--safe-right))] pb-0 pl-[calc(1rem+var(--safe-left))] sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-card sm:border sm:border-note-border sm:p-6 [&_[data-slot=dialog-close]]:hidden sm:[&_[data-slot=dialog-close]]:flex"
       >
         <DialogTitle className="sr-only">
-          {noteId ? t('notes.editNoteTitle') : t('notes.newNoteTitle')}
+          {isNew ? t('notes.newNoteTitle') : t('notes.editNoteTitle')}
         </DialogTitle>
 
         {/* One always-mounted live region for both breakpoints: a region only announces changes
@@ -352,7 +284,7 @@ export function NoteEditorDialog({
           ref={editorRef}
           content={body}
           editable
-          getNoteId={ensureNoteId}
+          getNoteId={draft.ensureSaved}
           autoFocus={focusBody}
           intent={intent}
           stickyToolbarOnMobile

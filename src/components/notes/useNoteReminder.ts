@@ -1,30 +1,32 @@
-import { type Dispatch, type RefObject, type SetStateAction, useCallback } from 'react';
+import { type Dispatch, type SetStateAction, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
+import type { NoteDraft } from '@/lib/draft.ts';
 import { handOff } from '@/lib/hand-off.ts';
 import type { Reminder } from '@/lib/reminder.ts';
 import { buildReminderIcs, reminderFile } from '@/lib/reminder-ics.ts';
 
 /** The two writes behind the editor's bell (ADR 0021; CLAUDE.md, Reminders). */
 export function useNoteReminder(
-  ensureNoteId: () => Promise<string>,
-  headerRef: RefObject<string>,
-  bodyRef: RefObject<string>,
+  draft: NoteDraft,
+  /** What is typed so far, for the event's title and description. */
+  content: () => { header: string; body: string },
   setReminder: Dispatch<SetStateAction<Reminder | undefined>>
 ) {
   const { t } = useTranslation();
   const { updateNote } = useNoteActions();
 
   // Fields are written only after the calendar took the file, and the bell lights only after
-  // the write (CLAUDE.md, Reminders). The draft is persisted first because the event's UID is the
+  // the write (CLAUDE.md, Reminders). The Draft earns its row first because the event's UID is the
   // Note's id; that takes milliseconds, well inside the tap activation `navigator.share` needs.
   const handleReminderSet = useCallback(
     async (next: Reminder): Promise<boolean> => {
-      const id = await ensureNoteId();
+      const id = await draft.ensureSaved();
+      const typed = content();
       const ics = buildReminderIcs({
         noteId: id,
-        header: headerRef.current,
-        body: bodyRef.current,
+        header: typed.header,
+        body: typed.body,
         reminder: next,
         origin: window.location.origin,
         fallbackTitle: t('reminders.fallbackTitle'),
@@ -41,14 +43,14 @@ export function useNoteReminder(
       setReminder(next);
       return true;
     },
-    [ensureNoteId, updateNote, headerRef, bodyRef, setReminder, t]
+    [draft, content, updateNote, setReminder, t]
   );
 
   const handleReminderClear = useCallback(async () => {
-    const id = await ensureNoteId();
+    const id = await draft.ensureSaved();
     await updateNote(id, { remindAt: undefined, repeat: undefined });
     setReminder(undefined);
-  }, [ensureNoteId, updateNote, setReminder]);
+  }, [draft, updateNote, setReminder]);
 
   return { handleReminderSet, handleReminderClear };
 }
