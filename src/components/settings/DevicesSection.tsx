@@ -20,7 +20,7 @@ export function DevicesSection() {
   const { session, service } = useAccount();
   const [devices, setDevices] = useState<Device[]>([]);
   const [removing, setRemoving] = useState<Device | null>(null);
-  const { run } = useAction();
+  const { busy, run } = useAction();
 
   const load = useCallback(
     async (alive: () => boolean = () => true) => {
@@ -46,10 +46,19 @@ export function DevicesSection() {
 
   if (!session || !service) return null;
 
-  const remove = async (device: Device) => {
-    await run(() => service.revokeDevice(device.id), { success: 'account.devices.removed' });
-    await load();
-  };
+  // The reload is part of the act, so `busy` holds the row until it is gone, not just until the
+  // server answers; it runs after a failure too, since a 404 means another Device removed it.
+  const remove = (device: Device) =>
+    run(
+      async () => {
+        try {
+          await service.revokeDevice(device.id);
+        } finally {
+          await load();
+        }
+      },
+      { success: 'account.devices.removed' }
+    );
 
   return (
     <SettingsSection title={t('account.devices.title')}>
@@ -66,7 +75,7 @@ export function DevicesSection() {
           }
         >
           {!device.current && (
-            <Button variant="outline" size="sm" onClick={() => setRemoving(device)}>
+            <Button variant="outline" size="sm" disabled={busy} onClick={() => setRemoving(device)}>
               {t('account.devices.remove')}
             </Button>
           )}

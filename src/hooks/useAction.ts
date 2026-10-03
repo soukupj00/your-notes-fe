@@ -14,7 +14,8 @@ type Keys = {
 
 /**
  * One thing the user asked for that takes a while: `busy` while it runs, a toast when it ends.
- * `run` answers whether `act` finished, so a caller can undo what it set up before the call.
+ * `run` answers `false` only when `act` threw, so a caller can undo what it set up before the
+ * call; an `act` that backed out still answers `true`.
  */
 export function useAction(): {
   busy: boolean;

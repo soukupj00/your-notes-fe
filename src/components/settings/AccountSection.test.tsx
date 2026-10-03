@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountProvider } from '@/context/AccountProvider.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
@@ -28,6 +29,7 @@ const exportBackup = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/export-backup.ts', () => ({ exportBackup }));
 
 afterEach(async () => {
+  vi.restoreAllMocks();
   language.current = 'en';
   await clearStore();
 });
@@ -123,6 +125,55 @@ describe('Settings account sections', () => {
     const qr = await screen.findByRole('img', { name: 'account.devices.add' });
     expect(qr.querySelector('path')?.getAttribute('d')).toMatch(/^M\d+ \d+h1v1h-1z/);
     expect(screen.getByText(`${window.location.origin}/pair#device-code-1`)).toBeVisible();
+  });
+
+  it('holds Remove while the server answers, so a second tap sends nothing', async () => {
+    const success = vi.spyOn(toast, 'success');
+    const server = createFakeServer();
+    server.seedOwner('ada', 'correct horse');
+    const service = mount(server);
+    let release!: () => void;
+    const revoke = service.revokeDevice;
+    const revokeDevice = vi.spyOn(service, 'revokeDevice').mockImplementation(async (id) => {
+      await new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      return revoke(id);
+    });
+    await signIn('ada', 'correct horse');
+    expect(await screen.findByText('Laptop')).toBeVisible();
+
+    await userEvent.click(screen.getByRole('button', { name: 'account.devices.remove' }));
+    await userEvent.click(
+      within(await screen.findByRole('dialog')).getByRole('button', {
+        name: 'account.devices.remove',
+      })
+    );
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    const remove = screen.getByRole('button', { name: 'account.devices.remove' });
+    expect(remove).toBeDisabled();
+    await userEvent.click(remove);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(revokeDevice).toHaveBeenCalledTimes(1);
+
+    release();
+    await waitFor(() => expect(screen.queryByText('Laptop')).not.toBeInTheDocument());
+    expect(success).toHaveBeenCalledWith('account.devices.removed');
+  });
+
+  it('closes the Pairing Link and says so when the server cannot mint a code', async () => {
+    const error = vi.spyOn(toast, 'error');
+    const server = createFakeServer();
+    server.seedOwner('ada', 'correct horse');
+    mount(server);
+    await signIn('ada', 'correct horse');
+    expect(await screen.findByText('Laptop')).toBeVisible();
+
+    server.state.broken = true;
+    await userEvent.click(screen.getByRole('button', { name: 'account.devices.add' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(error).toHaveBeenCalledWith('account.qr.failed');
   });
 
   // An English and a Czech medium date: against browser-locale code one row fails on any runner.
