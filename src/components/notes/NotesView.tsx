@@ -1,6 +1,5 @@
-import { lazy, type ReactNode, Suspense, useState } from 'react';
+import { lazy, type ReactNode, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CaptureKind } from '@/components/editor/editor.tsx';
 import { NoteContent } from '@/components/NoteContent.tsx';
 import { DesktopCaptureBar } from '@/components/notes/DesktopCaptureBar.tsx';
 import { FLOATING_BOTTOM_BAR } from '@/components/notes/floatingBottomBar.ts';
@@ -11,7 +10,7 @@ import { Spinner } from '@/components/ui/Spinner.tsx';
 import type { NoteFeedScope } from '@/hooks/data/useNoteFeed.ts';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
 import { useOpenNote } from '@/hooks/useOpenNote.ts';
-import { mintId } from '@/lib/rows.ts';
+import type { Intent } from '@/lib/intent.ts';
 import { cn } from '@/lib/utils.ts';
 
 const NoteEditorDialog = lazy(() =>
@@ -19,30 +18,6 @@ const NoteEditorDialog = lazy(() =>
     default: module.NoteEditorDialog,
   }))
 );
-
-/** How an open starts; `id: null` starts a draft. Whether one is open is the URL's (ADR 0014). */
-export type NoteOpenRequest = {
-  id: string | null;
-  initialBody?: string;
-  autoplayFirstAudio?: boolean;
-  /** Media capture to auto-start on open (from quick capture). */
-  capture?: CaptureKind;
-  /** Files chosen by a picker Start, inserted once the editor is ready. */
-  files?: File[];
-};
-
-/**
- * The one-shot half of an open, kept out of the URL so a reload cannot re-fire it (CLAUDE.md,
- * Data layer). `for` scopes it to its note, so Back onto a different note cannot inherit it.
- */
-type OpenIntent = {
-  for: string;
-  isDraft: boolean;
-  initialBody?: string;
-  autoplayFirstAudio?: boolean;
-  capture?: CaptureKind;
-  files?: File[];
-};
 
 /** Behind `/`, `/archive`, `/trash` and `/tag/$id`; routes supply only scope and title. */
 export function NotesView({
@@ -59,26 +34,9 @@ export function NotesView({
 }) {
   const { t } = useTranslation();
   const headingRef = useFocusOnMount<HTMLHeadingElement>();
-  const { openNoteId, openNote, closeNote, dismissMissingNote } = useOpenNote();
-  const [intent, setIntent] = useState<OpenIntent | null>(null);
-
-  // The id is minted at open, not on first save, so the URL never swaps under a typing user
-  // (CLAUDE.md, Data layer).
-  const start = (editing: NoteOpenRequest) => {
-    const id = editing.id ?? mintId();
-    setIntent({
-      for: id,
-      isDraft: editing.id == null,
-      initialBody: editing.initialBody,
-      autoplayFirstAudio: editing.autoplayFirstAudio,
-      capture: editing.capture,
-      files: editing.files,
-    });
-    openNote(id);
-  };
-
-  // A cold load, a forward tap or a shared link opens plain.
-  const active = intent?.for === openNoteId ? intent : null;
+  const { openNoteId, opened, openNote, closeNote, dismissMissingNote } = useOpenNote();
+  // A Start begins a draft, a Card opens its Note; either may carry an Intent.
+  const start = (intent?: Intent) => openNote(null, intent);
 
   return (
     <div className="relative">
@@ -106,10 +64,7 @@ export function NotesView({
 
       <TagFilterBar />
 
-      <NoteContent
-        scope={scope}
-        onSelect={(id, opts) => start({ id, autoplayFirstAudio: opts?.autoplayFirstAudio })}
-      />
+      <NoteContent scope={scope} onSelect={openNote} />
 
       {showCapture && <QuickCaptureBar onStart={start} />}
 
@@ -139,12 +94,9 @@ export function NotesView({
           <NoteEditorDialog
             // Stable for the life of an open, so this key cannot remount the editor mid-edit.
             key={openNoteId}
-            noteId={active?.isDraft ? null : openNoteId}
+            noteId={opened?.isDraft ? null : openNoteId}
             draftId={openNoteId}
-            initialBody={active?.initialBody}
-            autoplayFirstAudio={active?.autoplayFirstAudio}
-            initialCapture={active?.capture}
-            initialFiles={active?.files}
+            intent={opened?.intent}
             onClose={closeNote}
             onNoteMissing={dismissMissingNote}
           />

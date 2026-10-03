@@ -160,7 +160,7 @@ describe('NoteEditorDialog', () => {
   });
 
   it('seeds a new checklist draft with an empty task list and persists it once edited', async () => {
-    render(<NoteEditorDialog noteId={null} initialBody={EMPTY_CHECKLIST_BODY} onClose={vi.fn()} />);
+    render(<NoteEditorDialog noteId={null} intent={{ kind: 'checklist' }} onClose={vi.fn()} />);
 
     expect(editorTextarea()).toHaveValue(EMPTY_CHECKLIST_BODY);
 
@@ -518,7 +518,7 @@ describe('the mobile app bar', () => {
   // A checklist draft focuses its own body instead, and the redirect above must
   // not race that back up to the title.
   it('leaves a checklist draft focused in its body', async () => {
-    render(<NoteEditorDialog noteId={null} initialBody={EMPTY_CHECKLIST_BODY} onClose={vi.fn()} />);
+    render(<NoteEditorDialog noteId={null} intent={{ kind: 'checklist' }} onClose={vi.fn()} />);
 
     const title = await screen.findByLabelText('notes.titlePlaceholder');
     await waitFor(() => expect(title).not.toHaveFocus());

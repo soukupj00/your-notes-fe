@@ -18,7 +18,6 @@ vi.mock('@/i18n', () => ({
 // The editor pulls in TipTap/Excalidraw, which this suite does not exercise.
 vi.mock('@/components/notes/NoteEditorDialog.tsx', () => ({
   NoteEditorDialog: () => null,
-  EMPTY_CHECKLIST_BODY: '',
 }));
 
 // Cards render the note header; that is all these tests assert on.

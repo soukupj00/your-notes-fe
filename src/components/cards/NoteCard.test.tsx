@@ -363,7 +363,7 @@ describe('NoteCard', () => {
     render(<NoteCard note={note} onSelect={onSelect} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'notes.playAudio' }));
-    expect(onSelect).toHaveBeenCalledWith(note.id, { autoplayFirstAudio: true });
+    expect(onSelect).toHaveBeenCalledWith(note.id, { kind: 'play' });
     expect(onSelect).toHaveBeenCalledTimes(1);
 
     // Clicking elsewhere on the same card must still take the plain open path.

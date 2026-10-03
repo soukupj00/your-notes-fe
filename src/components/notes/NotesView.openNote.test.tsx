@@ -22,13 +22,13 @@ vi.mock('@/components/notes/NoteEditorDialog.tsx', () => ({
   NoteEditorDialog: ({
     noteId,
     draftId,
-    initialCapture,
+    intent,
     onClose,
     onNoteMissing,
   }: {
     noteId: string | null;
     draftId?: string;
-    initialCapture?: string;
+    intent?: { kind: string };
     onClose: () => void;
     onNoteMissing?: () => void;
   }) => (
@@ -36,7 +36,7 @@ vi.mock('@/components/notes/NoteEditorDialog.tsx', () => ({
       data-testid="editor"
       data-note-id={noteId ?? ''}
       data-draft-id={draftId ?? ''}
-      data-capture={initialCapture ?? ''}
+      data-intent={intent?.kind ?? ''}
     >
       <button type="button" onClick={onClose}>
         close-editor
@@ -46,7 +46,6 @@ vi.mock('@/components/notes/NoteEditorDialog.tsx', () => ({
       </button>
     </div>
   ),
-  EMPTY_CHECKLIST_BODY: '<ul data-type="taskList"></ul>',
 }));
 
 function makeNote(overrides: Partial<Note> = {}): Note {
@@ -113,7 +112,7 @@ describe('opening a note', () => {
 
     renderRoute(`/?note=${note.id}`);
 
-    expect(await editor()).toHaveAttribute('data-capture', '');
+    expect(await editor()).toHaveAttribute('data-intent', '');
   });
 
   // A draft's id is minted at open, so the URL never has to be rewritten
@@ -135,6 +134,24 @@ describe('opening a note', () => {
 });
 
 describe('closing a note', () => {
+  // A gesture is spent with its open: Forward onto the same note must not record again, nor
+  // show the Start's blank draft over a note saved meanwhile (CONTEXT.md "Intent").
+  it('does not replay a Start when the note is reopened by going forward', async () => {
+    const router = renderRoute('/');
+    await userEvent.click(await screen.findByRole('button', { name: 'notes.capture.audio' }));
+    const opened = await editor();
+    expect(opened).toHaveAttribute('data-intent', 'record');
+    const id = opened.getAttribute('data-draft-id');
+
+    await userEvent.click(screen.getByRole('button', { name: 'close-editor' }));
+    await waitFor(noEditor);
+    router.history.forward();
+
+    const reopened = await editor();
+    expect(reopened).toHaveAttribute('data-intent', '');
+    expect(reopened).toHaveAttribute('data-note-id', id);
+  });
+
   it('pops the entry it pushed, leaving no dead stop in history', async () => {
     const note = makeNote();
     await testStore.notes.add(note);

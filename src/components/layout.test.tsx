@@ -22,7 +22,6 @@ vi.mock('@/i18n', () => ({
 // The editor pulls in TipTap/Excalidraw, which this suite does not exercise.
 vi.mock('@/components/notes/NoteEditorDialog.tsx', () => ({
   NoteEditorDialog: () => null,
-  EMPTY_CHECKLIST_BODY: '',
 }));
 
 const DESKTOP_WIDTH = 1024;

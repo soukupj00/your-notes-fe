@@ -1,9 +1,9 @@
 import { ArrowLeft, Check, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CaptureKind } from '@/components/editor/editor.tsx';
 import { Editor, type EditorHandle } from '@/components/editor/editor.tsx';
 import { NoteEditorBar } from '@/components/notes/NoteEditorBar.tsx';
+import { EMPTY_CHECKLIST_BODY } from '@/components/notes/noteDrafts.ts';
 import { useNoteReminder } from '@/components/notes/useNoteReminder.ts';
 import { AppBar } from '@/components/ui/AppBar.tsx';
 import { Button } from '@/components/ui/button.tsx';
@@ -17,6 +17,7 @@ import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { useKeyboardInset } from '@/hooks/useKeyboardInset.ts';
 import { bodyHasAttachment, extractAttachmentIds } from '@/lib/body.ts';
 import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
+import type { Intent } from '@/lib/intent.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { requestPersistentStorage } from '@/lib/persistentStorage.ts';
 import { type Reminder, reminderOf } from '@/lib/reminder.ts';
@@ -50,14 +51,8 @@ type NoteEditorDialogProps = {
   draftId?: string;
   /** `noteId` names no stored note (a dead `?note=`); fixing the URL is the caller's job. */
   onNoteMissing?: () => void;
-  /** Seed body for a new draft (e.g. an empty checklist for quick-capture). */
-  initialBody?: string;
-  /** Set when the note was opened from its Card's audio chip. */
-  autoplayFirstAudio?: boolean;
-  /** Capture to start as soon as the editor is ready (from the speed-dial). */
-  initialCapture?: CaptureKind;
-  /** Images from a picker Start, inserted once the editor is ready. */
-  initialFiles?: File[];
+  /** What the Editor does as it opens, beyond showing the Note (CONTEXT.md "Intent"). */
+  intent?: Intent;
   onClose: () => void;
 };
 
@@ -69,10 +64,7 @@ type NoteEditorDialogProps = {
 export function NoteEditorDialog({
   noteId,
   draftId,
-  initialBody,
-  autoplayFirstAudio,
-  initialCapture,
-  initialFiles,
+  intent,
   onClose,
   onNoteMissing,
 }: NoteEditorDialogProps) {
@@ -87,7 +79,9 @@ export function NoteEditorDialog({
   useKeyboardInset();
 
   const [header, setHeader] = useState('');
-  const [body, setBody] = useState(noteId ? '' : (initialBody ?? ''));
+  // A checklist draft opens seeded with one item and focused in the body, so that item is ready.
+  const checklistDraft = !noteId && intent?.kind === 'checklist';
+  const [body, setBody] = useState(checklistDraft ? EMPTY_CHECKLIST_BODY : '');
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
 
   // Note-bar fields are written through on each tap, not debounced like header and body:
@@ -97,8 +91,7 @@ export function NoteEditorDialog({
   const [state, setState] = useState<NoteState>('active');
   const [reminder, setReminder] = useState<Reminder | undefined>(undefined);
 
-  // A checklist draft opens focused in the body so the first item is ready.
-  const focusBody = !noteId && !!initialBody;
+  const focusBody = checklistDraft;
 
   const editorRef = useRef<EditorHandle>(null);
   const headerInputRef = useRef<HTMLInputElement>(null);
@@ -361,9 +354,7 @@ export function NoteEditorDialog({
           editable
           getNoteId={ensureNoteId}
           autoFocus={focusBody}
-          autoplayFirstAudio={autoplayFirstAudio}
-          initialCapture={initialCapture}
-          initialFiles={initialFiles}
+          intent={intent}
           stickyToolbarOnMobile
           footer={isMobile ? noteBar : undefined}
           className="flex-1 rounded-none border-0 p-0 sm:rounded-card sm:border sm:border-note-border sm:px-4"
