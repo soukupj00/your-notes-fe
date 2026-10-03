@@ -2,10 +2,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
-import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useSync } from '@/context/SyncProvider.tsx';
 import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
-import { SettingsRow, SettingsSection, SwitchSetting } from './SettingsSection.tsx';
+import { PreferenceSwitch, SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
 const when = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 const unit = (name: 'kilobyte' | 'megabyte') =>
@@ -37,7 +36,6 @@ export function SyncStatusSection() {
   const { t } = useTranslation();
   const storage = useStorage();
   const { active, status, lastSyncedAt, pending, syncNow } = useSync();
-  const { preferences, setPreference } = usePreferences();
   if (!storage && !active) return null;
 
   const statusText =
@@ -81,14 +79,7 @@ export function SyncStatusSection() {
           </Button>
         </SettingsRow>
       )}
-      {active && (
-        <SwitchSetting
-          label={t('sync.keepEverything.label')}
-          description={t('sync.keepEverything.description')}
-          checked={preferences.keepEverything}
-          onChange={(next) => void setPreference('keepEverything', next)}
-        />
-      )}
+      {active && <PreferenceSwitch pref="keepEverything" keys="sync.keepEverything" />}
     </SettingsSection>
   );
 }
