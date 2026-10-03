@@ -73,7 +73,7 @@ Data access uses dedicated hooks in `src/hooks/data/`:
 Search/filter state is **not** in a context - it lives in the URL as typed TanStack search params (`q`, `sort`, `dir`, `tags`), validated by `src/lib/note-search-params.ts` and read through `useNoteSearchState()`.
 Which note is **open** lives there too, as `note` ([ADR 0014](./docs/adr/0014-the-open-note-lives-in-the-url.md), read through `useOpenNote()`), so the platform back button closes the editor rather than navigating the feed out from under it - the editor is a full-screen sheet below `sm:`, and the app is `display: standalone`, so an installed user has no browser chrome to correct that with.
 A note's id is minted when its editor **opens**, not when it is first saved: that id is the dialog's React key and its load-effect dependency, so a mid-session `?note=new` → `?note=<uuid>` swap would remount the editor under a typing user's cursor.
-One-shot open *intents* (start the camera, autoplay the first clip) stay in React state - a reload of a URL must not re-fire them.
+The one-shot half of an open is an **Intent** (`src/lib/intent.ts`: begin recording, open the Drawing, insert the chosen files, begin as a Checklist, play the first clip), kept in React state by `useOpenNote` and spent when the open ends, so a reload, Back or Forward never repeats it.
 The `NotesProvider` that used to hold the query is gone: a searched feed is now shareable, refresh-proof, and steppable with the back button.
 
 ### Editor (`src/components/editor/`)
@@ -129,8 +129,8 @@ It exists because iOS Safari ignores `interactive-widget=resizes-content` and dr
 `window.visualViewport` reports the truth on both platforms, so it is one mechanism rather than a platform branch: on Android the layout viewport has already shrunk and the inset comes out near 0.
 `offsetTop` is part of the sum because iOS scrolls the page to keep the focused field visible, which moves the visual viewport's origin as well as its height.
 It is one CSS variable rather than React state because there is one keyboard and its consumers are CSS lengths, which state could only reach by re-rendering the editor on every frame of the keyboard's slide.
-Audio and drawing Starts carry a `capture` intent that the editor auto-runs on open.
-Image and Camera are picker Starts: the OS picker opens inside the tap itself (`useStartPicker.tsx`, one hidden input both bars share), because the tap's user activation does not survive the route change to the editor, and the chosen files travel as `initialFiles`.
+Each Start carries at most one Intent (`quickCaptureActions.ts`).
+Image and Camera are picker Starts: `useStartPicker.tsx` opens the OS picker inside the tap itself (each bar renders its own hidden input through the hook), because the tap's user activation does not survive the route change to the editor, and the chosen files become the Intent.
 A Checklist on a Card is ticked by tapping its box or its words (`lib/point-over-text.ts` asks the text's own line boxes, since the block spans the row); the empty run after the words is still the card, and press-and-hold on a row opens the Note (`lib/long-press.ts`); in the editor a row is reordered by its grip (`extensions/TaskItem/`), driven by pointer events so a finger can use it.
 
 A11y: every view renders an `<h1 tabIndex={-1}>` and calls `useFocusOnMount` on it, so a navigation moves focus to the destination heading instead of stranding it on the link.
@@ -164,6 +164,7 @@ Zipping is `fflate`.
 `parseBackupZip` is the only validation gate and never writes - restore is replace-all, so an unreadable archive must be rejected while the user's data is still intact.
 `restoreBackup` wipes and rewrites in one Dexie transaction, and the UI (`BackupSection`) offers a checked-by-default "save my current data first" inside the confirm dialog - cancelling or failing that save abandons the import.
 Saving always goes through `requestSaveTarget`, which asks for the destination *before* the bytes are built (`showSaveFilePicker` needs the click's user activation) and reports `confirmed: false` on the Firefox/Safari anchor fallback, where we must not claim the file landed.
+The three export buttons (Settings, the safety copy before an import, "Save a backup" in the blocked sign-out dialog) share `exportBackup(store, suffix)` in `src/lib/export-backup.ts`, which answers `saved`, `unconfirmed` or `cancelled` and lets each caller choose its words.
 Manifest rows are validated with `z.looseObject`, so unknown (future) fields survive a round-trip.
 
 ### Theming (`src/styles/globals.css`, `src/context/themeProvider.tsx`)
@@ -176,6 +177,7 @@ Preferences that CSS rather than React has to act on are stamped onto `<html>` b
 The test for belonging there is whether the stylesheet needs the value - density re-values the type and rhythm tokens, reduced motion has to overrule the `prefers-reduced-motion` media query, which JS cannot reach into, and checklist Sinking is entirely a CSS rule ([ADR 0013](./docs/adr/0013-checklist-sinking-is-presentation-not-storage.md)) that `data-sink-checked` alone switches off.
 `DocumentPreferences` is deliberately separate from `ThemeProvider`: the classes and attributes compose in CSS (`.dark.cvd`, `:root[data-density]`), so neither needs to know the other exists, and folding them together would make `ThemeProvider` read Preferences and reorder the providers in `App.tsx`.
 Every other preference is read by the component that spends it.
+A Settings row that only shows and writes one Preference is a `PreferenceSwitch` or `PreferenceSegmented` bound to its key (`settings/SettingsSection.tsx`); the option lists it offers are the schema's own (`DENSITY_OPTIONS` and friends in `PreferencesProvider.tsx`).
 The 44px Touch Rule has two mechanisms and they are not interchangeable: `.touch-target` grows a control to 44px (right for an icon button), `.touch-reach` gives it a 44px hit box via an invisible centred `::before` and leaves it its own size (right whenever the control's shape is part of what it says, such as a switch).
 
 ### The Tour (`src/lib/tour/`, `src/context/TourProvider.tsx`)
@@ -213,6 +215,7 @@ The seed writes the baselines **before** the Prop rows, because the Local Store 
 ### i18n (`src/i18n.ts`)
 
 Uses **i18next** with browser language detection. Translations are loaded from `/public/locales/<lng>/translation.json`. Fallback language is `en`. The `t()` function is passed into extension button factories for tooltip translations.
+Numbers and dates are written in the app language through `src/lib/format.ts` (`formatBytes`, `formatDate`), with `useTranslation().i18n.language` passed in at the call; node views get it as `deps.locale`.
 `src/i18n.test.ts` gates the bundles against each other: the same base keys in every locale (plural suffixes differ by language, so they are folded), and every key the Tour *composes* at render time resolving in both.
 The chosen language is a Preference in the `CONTEXT.md` sense, but not a `PreferencesProvider` field: i18next's language detector owns it and keeps it in `localStorage` itself.
 Like every Preference it is a Device fact, so it is not in the backup `.zip` and does not sync.
@@ -248,5 +251,8 @@ Feature work follows **red → green → refactor**, applied pragmatically per l
 - **DB schema changes**: Increment the Dexie version number in `src/data/dexie/db.ts` and add a migration if existing data must be preserved.
 - **Dates**: All timestamps stored as ISO strings (`.toISOString()`).
 - **IDs and timestamps**: ids are minted only by `mintId` in `src/lib/rows.ts` (`crypto.randomUUID`; a secure context is already a requirement, ADR 0018). Every Note, Tag, NoteTag and Attachment is born through one of its factories, which stamps both timestamps; a later write stamps `updatedAt` itself, as an ISO string.
+- **An effect that awaits**: `useAsyncEffect(effect, deps)` (`src/hooks/useAsyncEffect.ts`) owns the cancel flag; the effect gets `alive()` and writes state only while it is true.
+  Biome checks its deps array (`biome.json`).
+- **A user-started call that toasts its outcome**: `useAction()` (`src/hooks/useAction.ts`) gives `busy` and `run(act, { success, failure })`, which toasts the outcome; `act` answers `false` to back out quietly, and `failure` may pick the key from the error.
 - **Tailwind v4** is in use (CSS-based config, not `tailwind.config.js` plugins). `tw-animate-css` provides animation utilities.
 - **Lint/format is being migrated to Biome** (one tool for both); see the Tooling & CI/CD section above. Until M0 lands, the repo still has ESLint + Prettier wired into husky/lint-staged.
