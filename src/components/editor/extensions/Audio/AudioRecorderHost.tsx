@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { icons } from '@/components/icons';
 import { useLatest } from '@/hooks/useLatest.ts';
 import { AttachmentError, fileExtension } from '@/lib/attachments.ts';
-import { formatElapsed } from '@/lib/format-attachment.ts';
+import { formatElapsed } from '@/lib/format.ts';
 import { insertAttachmentNode } from '../attachments/createAttachmentNode';
 import type { AttachmentDeps } from '../attachments/deps';
 import { RecordingWaveform } from './RecordingWaveform';

@@ -7,7 +7,8 @@ import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { type NoteAttachments, useNoteAttachments } from '@/hooks/data/useNoteAttachments.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { type BodyAttachment, extractBodyAttachments } from '@/lib/body.ts';
-import { formatBytes, formatDuration, formatFileType } from '@/lib/format-attachment.ts';
+import { formatBytes, formatDuration, formatFileType } from '@/lib/format.ts';
+import type { Intent } from '@/lib/intent.ts';
 import { cn } from '@/lib/utils.ts';
 import { generateVideoPoster } from '@/lib/video-poster.ts';
 import type { Attachment, AttachmentKind } from '@/models.ts';
@@ -287,9 +288,9 @@ function AudioRow({
 
 // Informational, not a control: the whole card already opens the note, where the file opens.
 function FileRow({ row, extra }: { row?: Attachment; extra: number }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const type = formatFileType(row?.name, row?.mime);
-  const size = formatBytes(row?.size);
+  const size = formatBytes(row?.size, i18n.language);
 
   return (
     <div data-slot="card-media-file" className={cn(BLOCK, 'flex items-center gap-2 px-2.5 py-2')}>
@@ -316,7 +317,7 @@ interface CardMediaProps {
   /** The note's Body HTML - the authority on which attachments exist and in what order. */
   body: string | null | undefined;
   /** Opens the note; every preview is a way into the note, never a player of its own. */
-  onOpen: (opts?: { autoplayFirstAudio?: boolean }) => void;
+  onOpen: (intent?: Intent) => void;
   /** Rows the feed already joined on; absent means the card resolves its own. */
   attachments?: NoteAttachments;
 }
@@ -358,7 +359,7 @@ export function CardMedia({ noteId, body, onOpen, attachments }: CardMediaProps)
         <AudioRow
           extra={audio.length - 1}
           duration={formatDuration(audio[0].row?.duration)}
-          onActivate={() => onOpen({ autoplayFirstAudio: true })}
+          onActivate={() => onOpen({ kind: 'play' })}
         />
       )}
 

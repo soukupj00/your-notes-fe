@@ -13,7 +13,7 @@ import { NoteEditorDialog } from './NoteEditorDialog.tsx';
  * load is what drives such a loop hard enough to trip React's limit, so it renders the dialog.
  */
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
 // The note bar's controls pair a scale with a material change; the hook behind

@@ -2,7 +2,7 @@ import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TOOLBAR_ITEMS } from '@/components/editor/toolbar/registry.ts';
 import { useFinePointer } from '@/hooks/useFinePointer.ts';
-import { getShortcutKeys } from '@/utils/platform.ts';
+import { getShortcutKeys } from '@/lib/shortcut-keys.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
 /**

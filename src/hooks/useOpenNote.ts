@@ -1,21 +1,43 @@
 import { useCanGoBack, useNavigate, useRouter, useSearch } from '@tanstack/react-router';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import type { Intent } from '@/lib/intent.ts';
 import type { NoteSearchParams } from '@/lib/note-search-params.ts';
+import { mintId } from '@/lib/rows.ts';
+
+/** The gesture behind the open Note; a draft's id is minted here, before any row exists. */
+export type OpenedNote = { id: string; isDraft: boolean; intent?: Intent };
 
 /**
  * Which note is open, kept in the URL so the platform back button closes it
- * ([ADR 0014](../../docs/adr/0014-the-open-note-lives-in-the-url.md)).
+ * ([ADR 0014](../../docs/adr/0014-the-open-note-lives-in-the-url.md)); how it was opened stays
+ * here, in state, so a reload cannot repeat it.
  */
 export function useOpenNote() {
   const { note } = useSearch({ strict: false }) as NoteSearchParams;
   const navigate = useNavigate();
   const router = useRouter();
   const canGoBack = useCanGoBack();
+  const [opened, setOpened] = useState<OpenedNote | null>(null);
 
-  /** Opening is navigation: it pushes, so back closes the note. */
+  // A gesture lasts one open. The router is the record of the open ending, whichever way it did
+  // (Done, Back, a dead id), so Forward onto the same note opens it plain.
+  useEffect(
+    () =>
+      router.subscribe('onResolved', ({ toLocation }) => {
+        if (!(toLocation.search as NoteSearchParams).note) setOpened(null);
+      }),
+    [router]
+  );
+
+  /**
+   * Opening is navigation: it pushes, so back closes the note. `null` starts a draft, whose id is
+   * minted now rather than on first save, so the URL never swaps under a typing user (ADR 0014).
+   */
   const openNote = useCallback(
-    (id: string) => {
-      void navigate({ to: '.', search: (prev: NoteSearchParams) => ({ ...prev, note: id }) });
+    (id: string | null, intent?: Intent) => {
+      const target = id ?? mintId();
+      setOpened({ id: target, isDraft: id === null, intent });
+      void navigate({ to: '.', search: (prev: NoteSearchParams) => ({ ...prev, note: target }) });
     },
     [navigate]
   );
@@ -50,5 +72,12 @@ export function useOpenNote() {
     });
   }, [navigate]);
 
-  return { openNoteId: note ?? null, openNote, closeNote, dismissMissingNote };
+  return {
+    openNoteId: note ?? null,
+    // A cold load, a shared link or Forward has no gesture behind it.
+    opened: opened?.id === note ? opened : null,
+    openNote,
+    closeNote,
+    dismissMissingNote,
+  };
 }

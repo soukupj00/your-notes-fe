@@ -1,8 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import { Camera, Image, ListChecks, Mic, PencilRuler, SquarePen } from 'lucide-react';
-import type { NoteOpenRequest } from '@/components/notes/NotesView.tsx';
-import { EMPTY_CHECKLIST_BODY } from '@/components/notes/noteDrafts.ts';
 import { ATTACHMENT_SPECS } from '@/lib/attachments.ts';
+import type { Intent } from '@/lib/intent.ts';
 
 export type QuickCaptureActionKey =
   | 'text'
@@ -23,9 +22,8 @@ export type QuickCaptureAction = {
   key: QuickCaptureActionKey;
   Icon: LucideIcon;
   labelKey: string;
-  /** The editor state this action opens - a body seed, a capture, or neither.
-   *  For a picker Start, the bar adds the chosen `files` to it. */
-  editing: NoteOpenRequest;
+  /** What the Editor does as the draft opens; a picker Start's Intent is the files it chose. */
+  intent?: Intent;
   picker?: StartPicker;
 };
 
@@ -34,37 +32,30 @@ export type QuickCaptureAction = {
  * labelled "Image": stored dial orders are written in keys.
  */
 export const QUICK_CAPTURE_ACTIONS: QuickCaptureAction[] = [
-  { key: 'text', Icon: SquarePen, labelKey: 'notes.capture.text', editing: { id: null } },
+  { key: 'text', Icon: SquarePen, labelKey: 'notes.capture.text' },
   {
     key: 'checklist',
     Icon: ListChecks,
     labelKey: 'notes.capture.checklist',
-    editing: { id: null, initialBody: EMPTY_CHECKLIST_BODY },
+    intent: { kind: 'checklist' },
   },
-  {
-    key: 'audio',
-    Icon: Mic,
-    labelKey: 'notes.capture.audio',
-    editing: { id: null, capture: 'audio' },
-  },
+  { key: 'audio', Icon: Mic, labelKey: 'notes.capture.audio', intent: { kind: 'record' } },
   {
     key: 'drawing',
     Icon: PencilRuler,
     labelKey: 'notes.capture.drawing',
-    editing: { id: null, capture: 'drawing' },
+    intent: { kind: 'draw' },
   },
   {
     key: 'picture',
     Icon: Image,
     labelKey: 'notes.capture.picture',
-    editing: { id: null },
     picker: { accept: ATTACHMENT_SPECS.image.accept ?? '' },
   },
   {
     key: 'camera',
     Icon: Camera,
     labelKey: 'notes.capture.camera',
-    editing: { id: null },
     picker: { accept: ATTACHMENT_SPECS.image.accept ?? '', capture: 'environment' },
   },
 ];

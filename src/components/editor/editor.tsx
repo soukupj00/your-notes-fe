@@ -46,6 +46,7 @@ import {
   MiB,
 } from '@/lib/attachments.ts';
 import { bodyHasAttachment } from '@/lib/body.ts';
+import type { Intent } from '@/lib/intent.ts';
 import { cn } from '@/lib/utils.ts';
 import type { AttachmentKind } from '@/models.ts';
 
@@ -74,17 +75,9 @@ type EditorProps = {
   className?: string;
   /** Resolves the owning note id for attachment inserts, creating the draft note if needed. */
   getNoteId?: () => Promise<string>;
-  /** Set when the note was opened from its card's audio chip. Best-effort. */
-  autoplayFirstAudio?: boolean;
-  /** Start a capture as soon as the editor is ready (quick-capture speed-dial). */
-  initialCapture?: CaptureKind;
-  /** Images chosen by a picker Start, inserted once when the editor is ready. */
-  initialFiles?: File[];
+  /** What the Editor does as it opens, beyond showing the Note (CONTEXT.md "Intent"). */
+  intent?: Intent;
 };
-
-/** A capture the speed-dial can hand straight to the editor. A picture is not
- *  one: its picker can only open inside the tap, so it arrives as `initialFiles`. */
-export type CaptureKind = 'audio' | 'drawing';
 
 /** `getEditor` exists for tests that need the live TipTap instance. */
 export type EditorHandle = { focus: () => void; getEditor: () => TiptapEditor | null };
@@ -99,13 +92,11 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     footer,
     className,
     getNoteId,
-    autoplayFirstAudio,
-    initialCapture,
-    initialFiles,
+    intent,
   },
   ref
 ) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { preferences } = usePreferences();
   const reducedMotion = useReducedMotion();
   // Math node onClick handlers need the live editor, which does not exist yet when
@@ -180,6 +171,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
           t(`editor.attachment.errors.${code}`, { max: ATTACHMENT_SPECS[kind].maxBytes / MiB })
         ),
       t,
+      locale: i18n.language,
     }),
     [
       getNoteId,
@@ -191,6 +183,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       updateAttachment,
       openExcalidraw,
       t,
+      i18n.language,
     ]
   );
   // useEditor builds the extensions once, so they must reach the *current* deps
@@ -265,6 +258,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
 
   // Autoplay fires at most once per editor. The audio coordinator handles either
   // load order, since the body and the blob are independent IndexedDB reads.
+  const autoplay = intent?.kind === 'play';
   const autoplayScannedRef = useRef(false);
   useEffect(() => {
     if (!editor) return;
@@ -275,7 +269,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       if (content !== editor.getHTML()) {
         editor.commands.setContent(content ?? '');
       }
-      if (autoplayFirstAudio && !autoplayScannedRef.current) {
+      if (autoplay && !autoplayScannedRef.current) {
         let firstAudioId: string | null = null;
         editor.state.doc.descendants((node) => {
           if (firstAudioId) return false;
@@ -293,24 +287,20 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         }
       }
     });
-  }, [content, editor, autoplayFirstAudio]);
+  }, [content, editor, autoplay]);
 
-  // One-shot open intents from the speed-dial. A picker Start arrives as files,
-  // because the picker can only open inside the tap that chose it (`useStartPicker`).
+  // The Intent's one-shot act. A picker Start arrives as files, because the picker can only open
+  // inside the tap that chose it (`useStartPicker`); a checklist is the dialog's body seed, and
+  // `play` is the autoplay scan above.
   const intentStartedRef = useRef(false);
   useEffect(() => {
     if (!editor || intentStartedRef.current) return;
-    if (!initialCapture && !initialFiles?.length) return;
+    if (intent?.kind !== 'record' && intent?.kind !== 'draw' && intent?.kind !== 'files') return;
     intentStartedRef.current = true;
-    if (initialCapture === 'drawing') {
-      openExcalidraw({});
-    } else if (initialCapture === 'audio') {
-      editor.storage.audioAttachment.capture.requestRecording();
-    }
-    if (initialFiles?.length) {
-      void insertFiles('image', editor, initialFiles, getAttachmentDeps());
-    }
-  }, [editor, getAttachmentDeps, initialCapture, initialFiles, openExcalidraw]);
+    if (intent.kind === 'record') editor.storage.audioAttachment.capture.requestRecording();
+    else if (intent.kind === 'draw') openExcalidraw({});
+    else void insertFiles('image', editor, intent.files, getAttachmentDeps());
+  }, [editor, getAttachmentDeps, intent, openExcalidraw]);
 
   useImperativeHandle(
     ref,

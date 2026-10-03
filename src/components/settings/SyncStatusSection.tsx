@@ -1,47 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
-import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useSync } from '@/context/SyncProvider.tsx';
-import { SettingsRow, SettingsSection, SwitchSetting } from './SettingsSection.tsx';
-
-const when = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-const unit = (name: 'kilobyte' | 'megabyte') =>
-  new Intl.NumberFormat(undefined, { style: 'unit', unit: name, maximumFractionDigits: 1 });
-const kilobytes = unit('kilobyte');
-const megabytes = unit('megabyte');
-/** A fresh library is tens of kilobytes; "0 MB used" would read as "nothing is stored". */
-const size = (bytes: number) =>
-  bytes < 1_000_000
-    ? kilobytes.format(Math.max(1, Math.round(bytes / 1000)))
-    : megabytes.format(bytes / 1_000_000);
+import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
+import { formatBytes, formatDate, MEDIUM_DATE_TIME } from '@/lib/format.ts';
+import { PreferenceSwitch, SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
 type Storage = { persisted: boolean; usage?: number };
 
 /** What the browser says about keeping this Device's data; `null` where it cannot say. */
 function useStorage(): Storage | null {
   const [storage, setStorage] = useState<Storage | null>(null);
-  useEffect(() => {
+  useAsyncEffect(async (alive) => {
     const manager = navigator.storage;
     if (!manager?.persisted) return;
-    let current = true;
-    void Promise.all([manager.persisted(), manager.estimate?.()]).then(([persisted, estimate]) => {
-      if (current) setStorage({ persisted, usage: estimate?.usage });
-    });
-    return () => {
-      current = false;
-    };
+    const [persisted, estimate] = await Promise.all([manager.persisted(), manager.estimate?.()]);
+    if (alive()) setStorage({ persisted, usage: estimate?.usage });
   }, []);
   return storage;
 }
 
 /** "Is my data safe here?" answered in one block (PLAN.md M5). */
 export function SyncStatusSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const storage = useStorage();
   const { active, status, lastSyncedAt, pending, syncNow } = useSync();
-  const { preferences, setPreference } = usePreferences();
   if (!storage && !active) return null;
 
   const statusText =
@@ -52,9 +36,12 @@ export function SyncStatusSection() {
         : status === 'error'
           ? t('sync.error')
           : lastSyncedAt
-            ? t('sync.idle', { time: when.format(new Date(lastSyncedAt)) })
+            ? t('sync.idle', { time: formatDate(lastSyncedAt, i18n.language, MEDIUM_DATE_TIME) })
             : t('sync.never');
   const waiting = pending > 0 ? ` · ${t('sync.pending', { count: pending })}` : '';
+  // A fresh library is tens of kilobytes; "0 B used" would read as "nothing is stored".
+  const used =
+    storage?.usage === undefined ? null : formatBytes(Math.max(storage.usage, 1000), i18n.language);
 
   return (
     <SettingsSection title={t('sync.title')}>
@@ -63,9 +50,7 @@ export function SyncStatusSection() {
           label={t('sync.storage.label')}
           description={
             (storage.persisted ? t('sync.storage.persisted') : t('sync.storage.notPersisted')) +
-            (storage.usage === undefined
-              ? ''
-              : ` ${t('sync.storage.used', { size: size(storage.usage) })}`)
+            (used ? ` ${t('sync.storage.used', { size: used })}` : '')
           }
         >
           {null}
@@ -85,14 +70,7 @@ export function SyncStatusSection() {
           </Button>
         </SettingsRow>
       )}
-      {active && (
-        <SwitchSetting
-          label={t('sync.keepEverything.label')}
-          description={t('sync.keepEverything.description')}
-          checked={preferences.keepEverything}
-          onChange={(next) => void setPreference('keepEverything', next)}
-        />
-      )}
+      {active && <PreferenceSwitch pref="keepEverything" keys="sync.keepEverything" />}
     </SettingsSection>
   );
 }

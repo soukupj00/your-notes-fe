@@ -1,11 +1,12 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AccountForm, type AccountValues } from '@/components/account/AccountForm.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
 import { ProblemError } from '@/data/http/hal.ts';
 import type { Session } from '@/data/Remote.ts';
+import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
 
 /**
@@ -26,17 +27,18 @@ export default function PairPage() {
   const [code] = useState(() => decodeURIComponent(window.location.hash.slice(1)));
   const [mode, setMode] = useState<Mode>(!code ? 'missing' : service ? 'checking' : 'unreachable');
 
-  useEffect(() => {
-    if (!code || !service) return;
-    let current = true;
-    service
-      .setupNeeded()
-      .then((needed) => current && setMode(needed ? 'owner' : 'device'))
-      .catch(() => current && setMode('unreachable'));
-    return () => {
-      current = false;
-    };
-  }, [code, service]);
+  useAsyncEffect(
+    async (alive) => {
+      if (!code || !service) return;
+      try {
+        const needed = await service.setupNeeded();
+        if (alive()) setMode(needed ? 'owner' : 'device');
+      } catch {
+        if (alive()) setMode('unreachable');
+      }
+    },
+    [code, service]
+  );
 
   const done = (session: Session) => {
     setSession(session);

@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PREFERENCES_STORAGE_KEY, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { FLOATING_BOTTOM_BAR } from './floatingBottomBar.ts';
-import { EMPTY_CHECKLIST_BODY } from './noteDrafts.ts';
 import { QuickCaptureBar } from './QuickCaptureBar.tsx';
 
 vi.mock('react-i18next', () => ({
@@ -47,10 +46,10 @@ describe('QuickCaptureBar', () => {
   });
 
   it.each([
-    ['text', { id: null }],
-    ['checklist', { id: null, initialBody: EMPTY_CHECKLIST_BODY }],
-    ['audio', { id: null, capture: 'audio' }],
-    ['drawing', { id: null, capture: 'drawing' }],
+    ['text', undefined],
+    ['checklist', { kind: 'checklist' }],
+    ['audio', { kind: 'record' }],
+    ['drawing', { kind: 'draw' }],
   ])('opens the editor in the %s state', async (key, expected) => {
     const onStart = await openDial();
 
@@ -59,32 +58,22 @@ describe('QuickCaptureBar', () => {
     expect(onStart).toHaveBeenCalledWith(expected);
   });
 
-  it.each([
-    ['picture', 'image/*', null],
-    ['camera', 'image/*', 'environment'],
-  ])(
-    '%s opens the picker inside the tap and starts with the chosen files',
-    async (key, accept, capture) => {
-      // The tap's user activation is the only thing that can open a picker, and
-      // it does not survive the route change to the editor - so the files, not
-      // the intent, are what travel.
-      const onStart = await openDial();
-      const input = screen.getByTestId('start-picker') as HTMLInputElement;
-      const click = vi.spyOn(input, 'click');
+  it('opens the picker inside the tap and starts with the chosen files', async () => {
+    // The contract is `useStartPicker`'s; this pins only that the dial goes through it.
+    const onStart = await openDial();
+    const input = screen.getByTestId('start-picker') as HTMLInputElement;
+    const click = vi.spyOn(input, 'click');
 
-      await userEvent.click(await screen.findByRole('button', { name: `notes.capture.${key}` }));
+    await userEvent.click(await screen.findByRole('button', { name: 'notes.capture.picture' }));
 
-      expect(click).toHaveBeenCalledTimes(1);
-      expect(input.accept).toBe(accept);
-      expect(input.getAttribute('capture')).toBe(capture);
-      expect(onStart).not.toHaveBeenCalled();
+    expect(click).toHaveBeenCalledTimes(1);
+    expect(onStart).not.toHaveBeenCalled();
 
-      const file = new File(['x'], 'a.png', { type: 'image/png' });
-      await userEvent.upload(input, file);
+    const file = new File(['x'], 'a.png', { type: 'image/png' });
+    await userEvent.upload(input, file);
 
-      expect(onStart).toHaveBeenCalledWith({ id: null, files: [file] });
-    }
-  );
+    expect(onStart).toHaveBeenCalledWith({ kind: 'files', files: [file] });
+  });
 
   it('collapses again once an action is taken', async () => {
     await openDial();

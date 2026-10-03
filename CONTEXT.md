@@ -35,7 +35,7 @@ Domain glossary for the note-taking app. This file defines the **language** of t
   The user chooses which Starts are offered and in what order.
 - **Intent** - The one-shot half of opening a Note: what the Editor does as it opens, beyond showing the Note.
   A Start may carry one (begin recording, open the Drawing, insert the chosen files, begin as a Checklist), and so may a Card (play the first clip).
-  An Intent belongs to the gesture that opened the Note, so a reload or Back never repeats it.
+  An Intent belongs to the gesture that opened the Note, so a reload, Back or Forward never repeats it.
   _Avoid_: open request, initial capture, initial files
 
 ## Note lifecycle

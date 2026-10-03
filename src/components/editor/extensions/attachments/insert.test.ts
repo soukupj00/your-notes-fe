@@ -43,6 +43,7 @@ function stubDeps(): AttachmentDeps {
     openExcalidraw: vi.fn(),
     onError: vi.fn(),
     t,
+    locale: 'en',
   };
 }
 

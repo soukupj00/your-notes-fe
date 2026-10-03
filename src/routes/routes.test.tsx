@@ -6,7 +6,7 @@ import { renderRoute as renderAt } from '@/test/renderRoute.tsx';
 import { clearStore, testStore } from '@/test/store.tsx';
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
   // The Navbar reads i18n directly for the locale switcher.
   default: {},
 }));
@@ -18,7 +18,6 @@ vi.mock('@/i18n', () => ({
 // The editor pulls in TipTap/Excalidraw, which this suite does not exercise.
 vi.mock('@/components/notes/NoteEditorDialog.tsx', () => ({
   NoteEditorDialog: () => null,
-  EMPTY_CHECKLIST_BODY: '',
 }));
 
 // Cards render the note header; that is all these tests assert on.

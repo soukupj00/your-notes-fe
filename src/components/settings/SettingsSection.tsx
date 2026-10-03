@@ -1,6 +1,12 @@
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Switch } from '@/components/ui/switch.tsx';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx';
+import {
+  type PreferenceKey,
+  type Preferences,
+  usePreferences,
+} from '@/context/PreferencesProvider.tsx';
 
 /** Sections are the page's only structure: new controls join one rather than invent a layout. */
 export function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
@@ -70,26 +76,53 @@ export function SegmentedSetting<T extends string>({
   );
 }
 
-/** `touch-reach`, not `touch-target`: a switch keeps its own shape (the 44px Touch Rule). */
-export function SwitchSetting({
-  label,
-  description,
-  checked,
-  onChange,
-}: {
-  label: string;
-  description?: string;
-  checked: boolean;
-  onChange: (next: boolean) => void;
-}) {
+/** The Preference keys whose value is a `T`: a switch binds a boolean, a segmented row a string. */
+type PreferenceOf<T> = {
+  [K in PreferenceKey]: Preferences[K] extends T ? K : never;
+}[PreferenceKey];
+
+/**
+ * A switch bound to a boolean Preference. `keys` is the i18n base: `<keys>.label` and
+ * `<keys>.description`. `touch-reach`, not `touch-target`: a switch keeps its own shape (the 44px
+ * Touch Rule).
+ */
+export function PreferenceSwitch({ pref, keys }: { pref: PreferenceOf<boolean>; keys: string }) {
+  const { t } = useTranslation();
+  const { preferences, setPreference } = usePreferences();
+  const label = t(`${keys}.label`);
+
   return (
-    <SettingsRow label={label} description={description}>
+    <SettingsRow label={label} description={t(`${keys}.description`)}>
       <Switch
         className="touch-reach"
-        checked={checked}
-        onCheckedChange={onChange}
+        checked={preferences[pref]}
+        onCheckedChange={(next) => void setPreference(pref, next)}
         aria-label={label}
       />
     </SettingsRow>
+  );
+}
+
+/** A segmented row bound to a Preference with a fixed set of values; each option is `<keys>.<value>`. */
+export function PreferenceSegmented<K extends PreferenceOf<string>>({
+  pref,
+  options,
+  keys,
+}: {
+  pref: K;
+  options: readonly Preferences[K][];
+  keys: string;
+}) {
+  const { t } = useTranslation();
+  const { preferences, setPreference } = usePreferences();
+
+  return (
+    <SegmentedSetting
+      label={t(`${keys}.label`)}
+      description={t(`${keys}.description`)}
+      value={preferences[pref]}
+      options={options.map((option) => ({ value: option, label: t(`${keys}.${option}`) }))}
+      onChange={(next) => void setPreference(pref, next)}
+    />
   );
 }

@@ -2,7 +2,7 @@ import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { icons } from '@/components/icons';
-import { formatElapsed } from '@/lib/format-attachment.ts';
+import { formatElapsed } from '@/lib/format.ts';
 import { AttachmentDeleteButton } from '../attachments/AttachmentDeleteButton';
 import { AttachmentNotDownloaded } from '../attachments/AttachmentNotDownloaded';
 import type { AttachmentDeps } from '../attachments/deps';

@@ -22,6 +22,7 @@ import {
   stripAttachmentNodes,
 } from '@/lib/body.ts';
 import { captureRows, playRows, type RowSnapshot } from '@/lib/flip-rows.ts';
+import type { Intent } from '@/lib/intent.ts';
 import { attachLongPress } from '@/lib/long-press.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { pointOverText } from '@/lib/point-over-text.ts';
@@ -33,7 +34,7 @@ interface NoteCardProps {
   note: Note;
   /** Rows the feed already joined on; absent means the card resolves its own. */
   attachments?: NoteAttachments;
-  onSelect: (id: string, opts?: { autoplayFirstAudio?: boolean }) => void;
+  onSelect: (id: string, intent?: Intent) => void;
 }
 
 export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect }) => {
@@ -136,9 +137,9 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
   // whatever had it, so a pointer open would otherwise close back onto `body`.
   const openRef = useRef<HTMLButtonElement>(null);
   const select = useCallback(
-    (...opts: [opts?: { autoplayFirstAudio?: boolean }]) => {
+    (...rest: [intent?: Intent]) => {
       openRef.current?.focus({ preventScroll: true });
-      onSelect(note.id, ...opts);
+      onSelect(note.id, ...rest);
     },
     [note.id, onSelect]
   );

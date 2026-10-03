@@ -15,6 +15,7 @@ Whether this Device is signed in to a Self-hosted Server (ADR 0018; M5 slice 3).
 - `useAccount()` answers "no server" outside a provider instead of throwing, like `useTourActive()`: its callers are Settings sections that tests mount alone.
 - Nothing answered (opened offline, or before the server was up): it asks again on `online` and when the page becomes visible, so the app starts syncing without a restart.
   A signed-in Device is not re-asked; if the server forgets its Session, `SyncProvider` sets it signed out.
+  The startup ask is a `useAsyncEffect` and the re-ask a `useEffect` whose cleanup is its listeners', and both write the answer's status and session through one `apply`.
 - Composed in `App.tsx` around the router; `main.tsx` builds one HAL client and hands it in as both `service` and `remote` (the latter for `SyncProvider`).
 
 ## `SyncProvider.tsx`

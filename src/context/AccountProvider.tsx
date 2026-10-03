@@ -1,5 +1,14 @@
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import type { AccountService, Remote, Session } from '@/data/Remote.ts';
+import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 
 /**
  * - `checking`: the one startup question is in flight.
@@ -45,23 +54,24 @@ export function AccountProvider({
   const [status, setStatus] = useState<AccountStatus>(service ? 'checking' : 'unavailable');
   const [session, setSessionState] = useState<Session | null>(null);
 
-  useEffect(() => {
-    if (!service) return;
-    let current = true;
-    service
-      .session()
-      .then((found) => {
-        if (!current) return;
-        setSessionState(found);
-        setStatus(found ? 'signed-in' : 'signed-out');
-      })
-      .catch(() => {
-        if (current) setStatus('unavailable');
-      });
-    return () => {
-      current = false;
-    };
-  }, [service]);
+  // What the server said about this Device, applied the same way whichever ask it answers.
+  const apply = useCallback((found: Session | null) => {
+    setSessionState(found);
+    setStatus(found ? 'signed-in' : 'signed-out');
+  }, []);
+
+  useAsyncEffect(
+    async (alive) => {
+      if (!service) return;
+      try {
+        const found = await service.session();
+        if (alive()) apply(found);
+      } catch {
+        if (alive()) setStatus('unavailable');
+      }
+    },
+    [service, apply]
+  );
 
   // An app opened offline (or before the server was up) asks again when the
   // network or the page comes back, so it starts syncing without a restart.
@@ -73,11 +83,7 @@ export function AccountProvider({
       if (document.visibilityState === 'hidden') return;
       service
         .session()
-        .then((found) => {
-          if (!current) return;
-          setSessionState(found);
-          setStatus(found ? 'signed-in' : 'signed-out');
-        })
+        .then((found) => current && apply(found))
         .catch(() => {});
     };
     window.addEventListener('online', retry);
@@ -87,7 +93,7 @@ export function AccountProvider({
       window.removeEventListener('online', retry);
       document.removeEventListener('visibilitychange', retry);
     };
-  }, [service, status]);
+  }, [service, status, apply]);
 
   const value = useMemo<AccountContextValue>(
     () => ({

@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountProvider } from '@/context/AccountProvider.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
@@ -12,16 +13,24 @@ import { AccountSection } from './AccountSection.tsx';
 import { DevicesSection } from './DevicesSection.tsx';
 import { MembersSection } from './MembersSection.tsx';
 
+const language = vi.hoisted(() => ({ current: 'en' }));
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options?: Record<string, string>) =>
       options ? `${key} ${Object.values(options).join(' ')}` : key,
+    i18n: { language: language.current },
   }),
 }));
 
 vi.mock('@tanstack/react-router', () => ({ useNavigate: () => vi.fn() }));
 
+const exportBackup = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/export-backup.ts', () => ({ exportBackup }));
+
 afterEach(async () => {
+  vi.restoreAllMocks();
+  language.current = 'en';
   await clearStore();
 });
 
@@ -118,6 +127,74 @@ describe('Settings account sections', () => {
     expect(screen.getByText(`${window.location.origin}/pair#device-code-1`)).toBeVisible();
   });
 
+  it('holds Remove while the server answers, so a second tap sends nothing', async () => {
+    const success = vi.spyOn(toast, 'success');
+    const server = createFakeServer();
+    server.seedOwner('ada', 'correct horse');
+    const service = mount(server);
+    let release!: () => void;
+    const revoke = service.revokeDevice;
+    const revokeDevice = vi.spyOn(service, 'revokeDevice').mockImplementation(async (id) => {
+      await new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      return revoke(id);
+    });
+    await signIn('ada', 'correct horse');
+    expect(await screen.findByText('Laptop')).toBeVisible();
+
+    await userEvent.click(screen.getByRole('button', { name: 'account.devices.remove' }));
+    await userEvent.click(
+      within(await screen.findByRole('dialog')).getByRole('button', {
+        name: 'account.devices.remove',
+      })
+    );
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    const remove = screen.getByRole('button', { name: 'account.devices.remove' });
+    expect(remove).toBeDisabled();
+    await userEvent.click(remove);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(revokeDevice).toHaveBeenCalledTimes(1);
+
+    release();
+    await waitFor(() => expect(screen.queryByText('Laptop')).not.toBeInTheDocument());
+    expect(success).toHaveBeenCalledWith('account.devices.removed');
+  });
+
+  it('closes the Pairing Link and says so when the server cannot mint a code', async () => {
+    const error = vi.spyOn(toast, 'error');
+    const server = createFakeServer();
+    server.seedOwner('ada', 'correct horse');
+    mount(server);
+    await signIn('ada', 'correct horse');
+    expect(await screen.findByText('Laptop')).toBeVisible();
+
+    server.state.broken = true;
+    await userEvent.click(screen.getByRole('button', { name: 'account.devices.add' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(error).toHaveBeenCalledWith('account.qr.failed');
+  });
+
+  // An English and a Czech medium date: against browser-locale code one row fails on any runner.
+  it.each([
+    ['en', /^account\.devices\.lastSeen [A-Z][a-z]{2} \d{1,2}, \d{4}/],
+    ['cs', /^account\.devices\.lastSeen \d{1,2}\. \d{1,2}\. \d{4}/],
+  ])(
+    "writes the last-seen date in the app language (%s), not the browser's",
+    async (lang, shape) => {
+      language.current = lang;
+      const server = createFakeServer();
+      server.seedOwner('ada', 'correct horse');
+      mount(server);
+      await signIn('ada', 'correct horse');
+
+      await screen.findByText('Laptop');
+
+      expect(screen.getByText(shape)).toBeInTheDocument();
+    }
+  );
+
   it('only the Owner sees Members, and its Invite is a Pairing Link', async () => {
     const server = createFakeServer();
     server.seedOwner('ada', 'correct horse');
@@ -199,5 +276,27 @@ describe('Settings account sections', () => {
     expect(await testStore.notes.list()).toHaveLength(1);
     // Still signed in: the seeded Laptop and this Device.
     expect(server.devices).toHaveLength(2);
+  });
+
+  it('saves a backup from the blocked dialog through the one export flow', async () => {
+    exportBackup.mockResolvedValue('saved');
+    const server = createFakeServer();
+    server.seedOwner('ada', 'correct horse');
+    await testStore.notes.add({
+      id: crypto.randomUUID(),
+      state: 'active',
+      createdAt: T0,
+      updatedAt: T0,
+    });
+    mount(server);
+    await signIn('ada', 'correct horse');
+    await userEvent.click(await screen.findByRole('button', { name: 'account.section.signOut' }));
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'account.section.saveBackup' })
+    );
+
+    await waitFor(() => expect(exportBackup).toHaveBeenCalledTimes(1));
+    expect(exportBackup).toHaveBeenCalledWith(testStore);
   });
 });

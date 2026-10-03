@@ -5,6 +5,7 @@ import type { ViewMode } from '@/context/viewModeProvider.tsx';
 import { useAttachmentsByNote } from '@/hooks/data/useNoteAttachments.ts';
 import { useNoteFeedLayout } from '@/hooks/useNoteFeedLayout.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
+import type { Intent } from '@/lib/intent.ts';
 import { PRESENCE_TRANSITION, resolveTransition } from '@/lib/motion.ts';
 import type { Note } from '@/models.ts';
 
@@ -12,7 +13,7 @@ type NoteFeedProps = {
   notes: Note[];
   mode: ViewMode;
   label: string;
-  onSelect: (id: string, opts?: { autoplayFirstAudio?: boolean }) => void;
+  onSelect: (id: string, intent?: Intent) => void;
 };
 
 /**

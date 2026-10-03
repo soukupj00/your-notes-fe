@@ -49,6 +49,19 @@ function renderButton(service: ReturnType<typeof createHalAccountService>) {
   );
 }
 
+/** Holds `revokeShare` until `release()`, then lets the real call through. */
+function holdRevoke(service: ReturnType<typeof createHalAccountService>) {
+  let release!: () => void;
+  const revoke = service.revokeShare;
+  const revokeShare = vi.spyOn(service, 'revokeShare').mockImplementation(async (id) => {
+    await new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    return revoke(id);
+  });
+  return { revokeShare, release: () => release() };
+}
+
 describe('ShareButton', () => {
   it('mints, shows and copies the link, then stops sharing', async () => {
     const user = userEvent.setup();
@@ -78,6 +91,41 @@ describe('ShareButton', () => {
     expect(screen.getByRole('button', { name: 'share.action' })).toBeVisible();
   });
 
+  it('toasts a stop the server refused, keeps the link open and enables Stop again', async () => {
+    const user = userEvent.setup();
+    const { server, service } = await signedIn();
+    renderButton(service);
+    await user.click(await screen.findByRole('button', { name: 'share.action' }));
+    const stop = await screen.findByRole('button', { name: 'share.stop' });
+
+    server.state.broken = true;
+    await user.click(stop);
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('account.errors.unknown'));
+    expect(server.shares).toHaveLength(1);
+    expect(screen.getByRole('dialog')).toBeVisible();
+    expect(stop).not.toBeDisabled();
+  });
+
+  it('holds Stop while the server answers, so a second tap sends nothing', async () => {
+    const user = userEvent.setup();
+    const { server, service } = await signedIn();
+    renderButton(service);
+    await user.click(await screen.findByRole('button', { name: 'share.action' }));
+    const stop = await screen.findByRole('button', { name: 'share.stop' });
+    const { revokeShare, release } = holdRevoke(service);
+
+    await user.click(stop);
+    expect(stop).toBeDisabled();
+    await user.click(stop);
+    expect(revokeShare).toHaveBeenCalledTimes(1);
+
+    release();
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(toast.success).toHaveBeenCalledWith('share.stopped');
+    expect(server.shares).toEqual([]);
+  });
+
   it('an already shared Note carries the mark before any tap', async () => {
     const { service } = await signedIn();
     await service.share(NOTE);
@@ -104,30 +152,53 @@ describe('ShareButton', () => {
   });
 });
 
+async function listShares() {
+  const { server, service } = await signedIn();
+  await service.share(NOTE);
+  const store = createMemoryLocalStore();
+  await store.notes.add({
+    id: NOTE,
+    header: 'Trip',
+    state: 'active',
+    createdAt: AT,
+    updatedAt: AT,
+  });
+  render(
+    <LocalStoreProvider store={store}>
+      <AccountProvider service={service}>
+        <SharesSection />
+      </AccountProvider>
+    </LocalStoreProvider>
+  );
+  return { server, service };
+}
+
 describe('SharesSection', () => {
   it('lists every shared Note by its header and stops one', async () => {
     const user = userEvent.setup();
-    const { server, service } = await signedIn();
-    await service.share(NOTE);
-    const store = createMemoryLocalStore();
-    await store.notes.add({
-      id: NOTE,
-      header: 'Trip',
-      state: 'active',
-      createdAt: AT,
-      updatedAt: AT,
-    });
-    render(
-      <LocalStoreProvider store={store}>
-        <AccountProvider service={service}>
-          <SharesSection />
-        </AccountProvider>
-      </LocalStoreProvider>
-    );
+    const { server } = await listShares();
 
     expect(await screen.findByText('Trip')).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'share.stop' }));
     expect(await screen.findByText('share.section.none')).toBeVisible();
+    expect(server.shares).toEqual([]);
+  });
+
+  it('holds Stop while the server answers, so a second tap sends nothing', async () => {
+    const user = userEvent.setup();
+    const { server, service } = await listShares();
+    const { revokeShare, release } = holdRevoke(service);
+    expect(await screen.findByText('Trip')).toBeVisible();
+    const stop = screen.getByRole('button', { name: 'share.stop' });
+
+    await user.click(stop);
+    expect(stop).toBeDisabled();
+    await user.click(stop);
+    expect(revokeShare).toHaveBeenCalledTimes(1);
+
+    release();
+    expect(await screen.findByText('share.section.none')).toBeVisible();
+    expect(toast.success).toHaveBeenCalledWith('share.stopped');
     expect(server.shares).toEqual([]);
   });
 });

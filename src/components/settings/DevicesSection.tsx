@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { PairingLinkButton } from '@/components/account/PairingLinkButton.tsx';
@@ -6,55 +6,59 @@ import { Button } from '@/components/ui/button.tsx';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
 import type { Device } from '@/data/Remote.ts';
+import { useAction } from '@/hooks/useAction.ts';
+import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
+import { formatDate, MEDIUM_DATE_TIME } from '@/lib/format.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
-
-const lastSeen = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
 /**
  * Removing a Device signs it out and changes nothing else (backend `docs/setup.md`
  * section 6). This Device signs out from the Account section instead.
  */
 export function DevicesSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { session, service } = useAccount();
   const [devices, setDevices] = useState<Device[]>([]);
   const [removing, setRemoving] = useState<Device | null>(null);
+  const { busy, run } = useAction();
 
-  const load = useCallback(() => {
-    if (!service) return Promise.resolve();
-    return service
-      .devices()
-      .then(setDevices)
-      .catch(() => {
-        toast.error(t('account.errors.unknown'));
-      });
-  }, [service, t]);
+  const load = useCallback(
+    async (alive: () => boolean = () => true) => {
+      if (!service) return;
+      try {
+        const found = await service.devices();
+        if (alive()) setDevices(found);
+      } catch {
+        if (alive()) toast.error(t('account.errors.unknown'));
+      }
+    },
+    [service, t]
+  );
 
   // Once per signed-in session: another Device's pairing shows up on the next visit.
   const accountId = session?.accountId;
-  useEffect(() => {
-    if (!accountId || !service) return;
-    let current = true;
-    service
-      .devices()
-      .then((found) => current && setDevices(found))
-      .catch(() => current && toast.error(t('account.errors.unknown')));
-    return () => {
-      current = false;
-    };
-  }, [accountId, service, t]);
+  useAsyncEffect(
+    (alive) => {
+      if (accountId) return load(alive);
+    },
+    [accountId, load]
+  );
 
   if (!session || !service) return null;
 
-  const remove = async (device: Device) => {
-    try {
-      await service.revokeDevice(device.id);
-      toast.success(t('account.devices.removed'));
-    } catch {
-      toast.error(t('account.errors.unknown'));
-    }
-    await load();
-  };
+  // The reload is part of the act, so `busy` holds the row until it is gone, not just until the
+  // server answers; it runs after a failure too, since a 404 means another Device removed it.
+  const remove = (device: Device) =>
+    run(
+      async () => {
+        try {
+          await service.revokeDevice(device.id);
+        } finally {
+          await load();
+        }
+      },
+      { success: 'account.devices.removed' }
+    );
 
   return (
     <SettingsSection title={t('account.devices.title')}>
@@ -66,12 +70,12 @@ export function DevicesSection() {
             device.current
               ? t('account.devices.current')
               : t('account.devices.lastSeen', {
-                  date: lastSeen.format(new Date(device.lastSeenAt)),
+                  date: formatDate(device.lastSeenAt, i18n.language, MEDIUM_DATE_TIME),
                 })
           }
         >
           {!device.current && (
-            <Button variant="outline" size="sm" onClick={() => setRemoving(device)}>
+            <Button variant="outline" size="sm" disabled={busy} onClick={() => setRemoving(device)}>
               {t('account.devices.remove')}
             </Button>
           )}

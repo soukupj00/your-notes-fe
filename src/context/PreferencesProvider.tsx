@@ -19,6 +19,11 @@ export const PREFERENCES_STORAGE_KEY = 'preferences';
  */
 export const PREFERENCES_VERSION = 2;
 
+/** The choices a segmented Settings row offers, in display order; the schema validates the same lists. */
+export const NOTE_BUTTON_ALIGNMENT_OPTIONS = ['left', 'right'] as const;
+export const DENSITY_OPTIONS = ['comfortable', 'compact'] as const;
+export const REDUCED_MOTION_OPTIONS = ['system', 'always', 'never'] as const;
+
 /** One leaf inside a stored family: array position is its order on the bar. */
 const toolbarMemberSchema = z.object({ id: z.string(), on: z.boolean() });
 
@@ -50,7 +55,7 @@ const preferencesSchema = z.object({
     .catch({ compact: [], wide: [] })
     .default({ compact: [], wide: [] }),
   /** Which side the note-create button sits on. */
-  noteButtonAlignment: z.enum(['left', 'right']).default('right'),
+  noteButtonAlignment: z.enum(NOTE_BUTTON_ALIGNMENT_OPTIONS).default('right'),
   /**
    * The quick-capture starts in order, as the toolbar's `{ id, on }` rows without families: five
    * buttons have nothing to group. Replaces `quickCaptureButtons`, whose default matched no action
@@ -66,7 +71,7 @@ const preferencesSchema = z.object({
    * reject the whole blob and reset every other setting with it.
    */
   colorBlind: z.boolean().catch(false).default(false),
-  density: z.enum(['comfortable', 'compact']).default('comfortable'),
+  density: z.enum(DENSITY_OPTIONS).default('comfortable'),
   /**
    * Whether a checklist is *shown* with checked items at the bottom (CONTEXT.md, "Sinking").
    * On by default since ADR 0013 made it presentation only; off serves lists whose order matters.
@@ -79,7 +84,7 @@ const preferencesSchema = z.object({
    */
   keepEverything: z.boolean().default(false),
   /** `system` follows `prefers-reduced-motion`; the others override it. */
-  reducedMotion: z.enum(['system', 'always', 'never']).default('system'),
+  reducedMotion: z.enum(REDUCED_MOTION_OPTIONS).default('system'),
   /**
    * When the Tour was first *offered*, not completed (ADR 0015): a completion flag would re-arm
    * after every reload, and bring back a tutorial the user dismissed.
