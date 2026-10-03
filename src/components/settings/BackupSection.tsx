@@ -7,19 +7,10 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog.tsx';
 import { LabeledCheckbox } from '@/components/ui/LabeledCheckbox.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
-import {
-  BackupError,
-  backupFilename,
-  buildBackupZip,
-  type ParsedBackup,
-  parseBackupZip,
-  requestSaveTarget,
-  restoreBackup,
-} from '@/lib/backup.ts';
+import { useAction } from '@/hooks/useAction.ts';
+import { BackupError, type ParsedBackup, parseBackupZip, restoreBackup } from '@/lib/backup.ts';
+import { exportBackup } from '@/lib/export-backup.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
-
-/** Which long-running action is in flight; blocks both buttons while set. */
-type Busy = 'export' | 'import' | null;
 
 function errorKey(error: unknown): string {
   return error instanceof BackupError
@@ -35,70 +26,50 @@ export function BackupSection() {
   const { t } = useTranslation();
   const store = useLocalStore();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState<Busy>(null);
   const [pending, setPending] = useState<ParsedBackup | null>(null);
   const [backupFirst, setBackupFirst] = useState(true);
 
-  const handleExport = async () => {
-    const target = await requestSaveTarget(backupFilename());
-    // Cancelled at the picker: the user knows what they did, so say nothing.
-    if (!target) return;
+  const exporting = useAction();
+  const importing = useAction();
+  const busy = exporting.busy || importing.busy;
 
-    setBusy('export');
-    try {
-      await target.write(await buildBackupZip(store));
-      // Only claim it saved when the browser actually told us where it went;
-      // the anchor fallback hands the file off and never reports back.
-      if (target.confirmed) toast.success(t('settings.backup.exported'));
-    } catch {
-      toast.error(t('settings.backup.error.unknown'));
-    } finally {
-      setBusy(null);
-    }
-  };
+  const handleExport = () =>
+    exporting.run(async () => (await exportBackup(store)) === 'saved', {
+      success: 'settings.backup.exported',
+      failure: 'settings.backup.error.unknown',
+    });
 
-  const handleFile = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFile = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     // Clear the input so picking the same file twice still fires a change.
     event.target.value = '';
     if (!file) return;
-
-    setBusy('import');
-    try {
-      const parsed = await parseBackupZip(new Uint8Array(await file.arrayBuffer()));
-      setBackupFirst(true);
-      setPending(parsed);
-    } catch (error) {
-      toast.error(t(errorKey(error)));
-    } finally {
-      setBusy(null);
-    }
+    void importing.run(
+      async () => {
+        const parsed = await parseBackupZip(new Uint8Array(await file.arrayBuffer()));
+        setBackupFirst(true);
+        setPending(parsed);
+      },
+      { failure: errorKey }
+    );
   };
 
-  const confirmRestore = async () => {
+  const confirmRestore = () => {
     const backup = pending;
     if (!backup) return;
     setPending(null);
-
-    const target = backupFirst ? await requestSaveTarget(backupFilename('-before-import')) : null;
-    // Backing out of the safety copy backs out of the import - restoring anyway
-    // would destroy exactly the data the user just declined to lose.
-    if (backupFirst && !target) {
-      toast.info(t('settings.backup.importCancelled'));
-      return;
-    }
-
-    setBusy('import');
-    try {
-      // A failed safety copy throws before restoreBackup, so the wipe never runs.
-      if (target) await target.write(await buildBackupZip(store));
-      await restoreBackup(store, backup);
-      toast.success(t('settings.backup.imported'));
-    } catch (error) {
-      toast.error(t(errorKey(error)));
-    } finally {
-      setBusy(null);
-    }
+    void importing.run(
+      async () => {
+        // Backing out of the safety copy backs out of the import: restoring anyway would destroy
+        // exactly the data the user just declined to lose. A failed copy throws before the wipe.
+        if (backupFirst && (await exportBackup(store, '-before-import')) === 'cancelled') {
+          toast.info(t('settings.backup.importCancelled'));
+          return false;
+        }
+        await restoreBackup(store, backup);
+      },
+      { success: 'settings.backup.imported', failure: errorKey }
+    );
   };
 
   const Download = icons.Download;
@@ -118,11 +89,11 @@ export function BackupSection() {
           variant="outline"
           size="sm"
           className="gap-1"
-          disabled={busy !== null}
+          disabled={busy}
           onClick={() => void handleExport()}
         >
-          {busy === 'export' ? <Spinner /> : <Download className="size-4" aria-hidden />}
-          {busy === 'export' ? t('settings.backup.exporting') : t('settings.backup.export.action')}
+          {exporting.busy ? <Spinner /> : <Download className="size-4" aria-hidden />}
+          {exporting.busy ? t('settings.backup.exporting') : t('settings.backup.export.action')}
         </Button>
       </SettingsRow>
 
@@ -134,11 +105,11 @@ export function BackupSection() {
           variant="outline"
           size="sm"
           className="gap-1"
-          disabled={busy !== null}
+          disabled={busy}
           onClick={() => inputRef.current?.click()}
         >
-          {busy === 'import' ? <Spinner /> : <Download className="size-4 rotate-180" aria-hidden />}
-          {busy === 'import' ? t('settings.backup.importing') : t('settings.backup.import.action')}
+          {importing.busy ? <Spinner /> : <Download className="size-4 rotate-180" aria-hidden />}
+          {importing.busy ? t('settings.backup.importing') : t('settings.backup.import.action')}
         </Button>
         <input
           ref={inputRef}
@@ -146,7 +117,7 @@ export function BackupSection() {
           accept=".zip,application/zip"
           className="hidden"
           aria-label={t('settings.backup.import.label')}
-          onChange={(event) => void handleFile(event)}
+          onChange={handleFile}
         />
       </SettingsRow>
 
@@ -159,7 +130,7 @@ export function BackupSection() {
         description={counts ? t('settings.backup.confirmImport.description', counts) : ''}
         confirmLabel={t('settings.backup.confirmImport.confirm')}
         cancelLabel={t('settings.backup.confirmImport.cancel')}
-        onConfirm={() => void confirmRestore()}
+        onConfirm={confirmRestore}
         body={
           <LabeledCheckbox
             label={t('settings.backup.confirmImport.backupFirst')}

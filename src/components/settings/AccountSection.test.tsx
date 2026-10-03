@@ -21,6 +21,9 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('@tanstack/react-router', () => ({ useNavigate: () => vi.fn() }));
 
+const exportBackup = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/export-backup.ts', () => ({ exportBackup }));
+
 afterEach(async () => {
   await clearStore();
 });
@@ -199,5 +202,27 @@ describe('Settings account sections', () => {
     expect(await testStore.notes.list()).toHaveLength(1);
     // Still signed in: the seeded Laptop and this Device.
     expect(server.devices).toHaveLength(2);
+  });
+
+  it('saves a backup from the blocked dialog through the one export flow', async () => {
+    exportBackup.mockResolvedValue('saved');
+    const server = createFakeServer();
+    server.seedOwner('ada', 'correct horse');
+    await testStore.notes.add({
+      id: crypto.randomUUID(),
+      state: 'active',
+      createdAt: T0,
+      updatedAt: T0,
+    });
+    mount(server);
+    await signIn('ada', 'correct horse');
+    await userEvent.click(await screen.findByRole('button', { name: 'account.section.signOut' }));
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'account.section.saveBackup' })
+    );
+
+    await waitFor(() => expect(exportBackup).toHaveBeenCalledTimes(1));
+    expect(exportBackup).toHaveBeenCalledWith(testStore);
   });
 });
