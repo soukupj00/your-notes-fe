@@ -4,13 +4,11 @@ import {
   type QuickCapturePref,
   reconcileQuickCapture,
 } from '@/components/notes/quickCaptureLayout.ts';
-import { SegmentedSetting, SettingsSection } from '@/components/settings/SettingsSection.tsx';
+import { PreferenceSegmented, SettingsSection } from '@/components/settings/SettingsSection.tsx';
 import { SortableList, SortableRow } from '@/components/ui/SortableList.tsx';
 import { Switch } from '@/components/ui/switch.tsx';
-import { type Preferences, usePreferences } from '@/context/PreferencesProvider.tsx';
+import { NOTE_BUTTON_ALIGNMENT_OPTIONS, usePreferences } from '@/context/PreferencesProvider.tsx';
 import { moveById } from '@/lib/move-by-id.ts';
-
-const ALIGNMENTS: Preferences['noteButtonAlignment'][] = ['left', 'right'];
 
 /**
  * The toolbar's sortable rows over a deliberately plainer model: one flat ordered list,
@@ -31,15 +29,10 @@ export function QuickCaptureSection() {
 
   return (
     <SettingsSection title={t('settings.quickCapture.title')}>
-      <SegmentedSetting
-        label={t('settings.quickCapture.alignment.label')}
-        description={t('settings.quickCapture.alignment.description')}
-        value={preferences.noteButtonAlignment}
-        options={ALIGNMENTS.map((option) => ({
-          value: option,
-          label: t(`settings.quickCapture.alignment.${option}`),
-        }))}
-        onChange={(next) => void setPreference('noteButtonAlignment', next)}
+      <PreferenceSegmented
+        pref="noteButtonAlignment"
+        options={NOTE_BUTTON_ALIGNMENT_OPTIONS}
+        keys="settings.quickCapture.alignment"
       />
 
       <SortableList

@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton.tsx';
 import { useViewMode } from '@/context/viewModeProvider.tsx';
 import { type NoteFeedScope, useNoteFeed } from '@/hooks/data/useNoteFeed.ts';
 import { useNoteSearchState } from '@/hooks/useNoteSearchState.ts';
+import type { Intent } from '@/lib/intent.ts';
 
 // The same `--feed-gap` the real feed spends, so the skeletons the feed
 // replaces are already at the user's density rather than jumping to it.
@@ -22,7 +23,7 @@ export function NoteContent({
   onSelect,
 }: {
   scope: NoteFeedScope;
-  onSelect: (id: string, opts?: { autoplayFirstAudio?: boolean }) => void;
+  onSelect: (id: string, intent?: Intent) => void;
 }) {
   const { search } = useNoteSearchState();
   const { notes, loading } = useNoteFeed(scope, search);

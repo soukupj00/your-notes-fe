@@ -17,7 +17,7 @@ const render = (ui: ReactElement) =>
   });
 
 const t = vi.hoisted(() => vi.fn((key: string, _options?: object) => key));
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t }) }));
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t, i18n: { language: 'en' } }) }));
 
 vi.mock('sonner', () => ({ toast: vi.fn() }));
 
@@ -64,7 +64,7 @@ describe('Editor autoplay-on-open', () => {
     // then the loaded one through the `content` prop.
     const ref = createRef<EditorHandle>();
     const { rerender } = render(
-      <Editor ref={ref} content="" autoplayFirstAudio getNoteId={vi.fn()} />
+      <Editor ref={ref} content="" intent={{ kind: 'play' }} getNoteId={vi.fn()} />
     );
 
     const play = vi.fn();
@@ -76,7 +76,7 @@ describe('Editor autoplay-on-open', () => {
       <Editor
         ref={ref}
         content='<p>hi</p><audio data-attachment-id="au1"></audio>'
-        autoplayFirstAudio
+        intent={{ kind: 'play' }}
         getNoteId={vi.fn()}
       />
     );
@@ -90,7 +90,7 @@ describe('Editor autoplay-on-open', () => {
       <Editor
         ref={ref}
         content='<audio data-attachment-id="au2"></audio>'
-        autoplayFirstAudio
+        intent={{ kind: 'play' }}
         getNoteId={vi.fn()}
       />
     );
@@ -108,7 +108,7 @@ describe('Editor autoplay-on-open', () => {
     // before the note body does.
     const ref = createRef<EditorHandle>();
     const { rerender } = render(
-      <Editor ref={ref} content="" autoplayFirstAudio getNoteId={vi.fn()} />
+      <Editor ref={ref} content="" intent={{ kind: 'play' }} getNoteId={vi.fn()} />
     );
 
     const trigger = vi.fn();
@@ -120,7 +120,7 @@ describe('Editor autoplay-on-open', () => {
       <Editor
         ref={ref}
         content='<p>hi</p><audio data-attachment-id="au1"></audio>'
-        autoplayFirstAudio
+        intent={{ kind: 'play' }}
         getNoteId={vi.fn()}
       />
     );
@@ -132,7 +132,7 @@ describe('Editor autoplay-on-open', () => {
 describe('Editor auto-capture', () => {
   it('asks the audio recorder to start when opened for a voice note', async () => {
     const ref = createRef<EditorHandle>();
-    render(<Editor ref={ref} content="" initialCapture="audio" getNoteId={vi.fn()} />);
+    render(<Editor ref={ref} content="" intent={{ kind: 'record' }} getNoteId={vi.fn()} />);
 
     const editor = ref.current?.getEditor();
     if (!editor) throw new Error('editor not initialised');
@@ -145,7 +145,7 @@ describe('Editor auto-capture', () => {
 
   it('opens the drawing canvas when opened for a drawing', async () => {
     const { findByRole } = render(
-      <Editor content="" initialCapture="drawing" getNoteId={vi.fn()} />
+      <Editor content="" intent={{ kind: 'draw' }} getNoteId={vi.fn()} />
     );
 
     // The shared Excalidraw dialog is the editor's own, so it can be asserted
@@ -157,13 +157,17 @@ describe('Editor auto-capture', () => {
     // The picker itself opened inside the tap on the feed (`useStartPicker`);
     // what reaches the editor is the outcome.
     const files = [new File(['x'], 'a.png', { type: 'image/png' })];
-    const { rerender } = render(<Editor content="" initialFiles={files} getNoteId={vi.fn()} />);
+    const { rerender } = render(
+      <Editor content="" intent={{ kind: 'files', files }} getNoteId={vi.fn()} />
+    );
 
     await waitFor(() => expect(insertFiles).toHaveBeenCalledTimes(1));
     expect(vi.mocked(insertFiles).mock.calls[0][0]).toBe('image');
     expect(vi.mocked(insertFiles).mock.calls[0][2]).toBe(files);
 
-    rerender(<Editor content="<p>typed</p>" initialFiles={files} getNoteId={vi.fn()} />);
+    rerender(
+      <Editor content="<p>typed</p>" intent={{ kind: 'files', files }} getNoteId={vi.fn()} />
+    );
     expect(insertFiles).toHaveBeenCalledTimes(1);
   });
 

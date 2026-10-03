@@ -18,6 +18,7 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options?: Record<string, unknown>) =>
       options ? `${key} ${Object.values(options).join(' ')}` : key,
+    i18n: { language: 'en' },
   }),
 }));
 vi.mock('@tanstack/react-router', () => ({ useNavigate: () => vi.fn() }));

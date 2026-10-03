@@ -1,22 +1,19 @@
 import { Share2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.tsx';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog.tsx';
+import { LinkDialog } from '@/components/ui/LinkDialog.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
 import { useSync } from '@/context/SyncProvider.tsx';
 import { shareLink } from '@/contract/index.ts';
 import { ProblemError } from '@/data/http/hal.ts';
 import type { Share } from '@/data/Remote.ts';
+import { useAction } from '@/hooks/useAction.ts';
+import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { cn } from '@/lib/utils.ts';
+
+/** The server has not seen this Note yet: a fresh draft, or edits still queued. */
+const unsynced = (error: unknown) => error instanceof ProblemError && error.status === 404;
 
 /**
  * Only while signed in, because the link is the server's, and never on a trashed Note, which the
@@ -36,62 +33,52 @@ export function ShareButton({
   const { syncNow } = useSync();
   const [share, setShare] = useState<Share | null>(null);
   const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
+  // Survives Stop so the closing dialog keeps its link; the trigger reads share alone.
+  const [link, setLink] = useState<string | null>(null);
+  const { busy, run } = useAction();
   const signedIn = status === 'signed-in' && service !== null;
 
-  useEffect(() => {
-    if (!signedIn || !noteId) return;
-    let current = true;
-    service
-      .shares()
-      .then((all) => current && setShare(all.find((s) => s.noteId === noteId) ?? null))
-      .catch(() => {});
-    return () => {
-      current = false;
-    };
-  }, [signedIn, service, noteId]);
+  useAsyncEffect(
+    async (alive) => {
+      if (!signedIn || !noteId) return;
+      // An unanswered read shows as unshared; the next tap tells the truth.
+      const all = await service.shares().catch(() => null);
+      if (alive() && all) setShare(all.find((s) => s.noteId === noteId) ?? null);
+    },
+    [signedIn, service, noteId]
+  );
 
   if (!signedIn) return null;
 
-  const mint = async () => {
-    setBusy(true);
-    try {
-      const id = await ensureNoteId();
-      let minted: Share;
-      try {
-        minted = await service.share(id);
-      } catch (error) {
-        // A Note the server has not seen yet (a fresh draft, or edits still queued).
-        if (!(error instanceof ProblemError && error.status === 404)) throw error;
-        await syncNow();
-        minted = await service.share(id);
-      }
-      setShare(minted);
-      setOpen(true);
-    } catch (error) {
-      const unsynced = error instanceof ProblemError && error.status === 404;
-      toast.error(t(unsynced ? 'share.notSynced' : 'account.errors.unknown'));
-    } finally {
-      setBusy(false);
-    }
-  };
+  const mint = () =>
+    run(
+      async () => {
+        const id = await ensureNoteId();
+        let minted: Share;
+        try {
+          minted = await service.share(id);
+        } catch (error) {
+          if (!unsynced(error)) throw error;
+          await syncNow();
+          minted = await service.share(id);
+        }
+        setShare(minted);
+        setLink(shareLink(window.location.origin, minted.token));
+        setOpen(true);
+      },
+      { failure: (error) => (unsynced(error) ? 'share.notSynced' : 'account.errors.unknown') }
+    );
 
   const stop = async () => {
     if (!share) return;
-    try {
-      await service.revokeShare(share.id);
-      setShare(null);
-      setOpen(false);
-      toast.success(t('share.stopped'));
-    } catch {
-      toast.error(t('account.errors.unknown'));
-    }
-  };
-
-  const link = share ? shareLink(window.location.origin, share.token) : '';
-  const copy = async () => {
-    await navigator.clipboard.writeText(link);
-    toast.success(t('account.qr.copied'));
+    await run(
+      async () => {
+        await service.revokeShare(share.id);
+        setShare(null);
+        setOpen(false);
+      },
+      { success: 'share.stopped' }
+    );
   };
 
   return (
@@ -111,26 +98,18 @@ export function ShareButton({
       >
         <Share2 className="size-4" aria-hidden />
       </button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{t('share.title')}</DialogTitle>
-            <DialogDescription>{t('share.description')}</DialogDescription>
-          </DialogHeader>
-          <code className="select-all break-all rounded-md border bg-muted px-2 py-1 text-xs">
-            {link}
-          </code>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => void stop()}>
-              {t('share.stop')}
-            </Button>
-            <Button variant="outline" onClick={() => void copy()}>
-              {t('account.qr.copy')}
-            </Button>
-            <Button onClick={() => setOpen(false)}>{t('account.qr.done')}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <LinkDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={t('share.title')}
+        description={t('share.description')}
+        link={link}
+        actions={
+          <Button variant="outline" disabled={busy} onClick={() => void stop()}>
+            {t('share.stop')}
+          </Button>
+        }
+      />
     </>
   );
 }

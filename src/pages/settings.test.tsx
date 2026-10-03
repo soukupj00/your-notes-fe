@@ -8,7 +8,7 @@ import { clearStore, withStore } from '@/test/store.tsx';
 import SettingsPage from './settings.tsx';
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
 // LanguageSection reads i18n directly. The real module calls

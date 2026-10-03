@@ -1,13 +1,13 @@
 import { animate, m, useMotionValue, useTransform } from 'motion/react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { NoteOpenRequest } from '@/components/notes/NotesView.tsx';
 import { resolveDesktopQuickCapture } from '@/components/notes/quickCaptureLayout.ts';
 import { useStartPicker } from '@/components/notes/useStartPicker.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useTourActive } from '@/context/TourProvider.tsx';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
+import type { Intent } from '@/lib/intent.ts';
 import { resolveTransition } from '@/lib/motion.ts';
 
 /** The first is the resting copy. */
@@ -27,7 +27,7 @@ const CHAR_MS = 45;
  * The desktop twin of the mobile speed-dial, minus plain text, which the bar itself is.
  * The rotating prompt is decoration, so reduced motion pins it to the resting copy.
  */
-export function DesktopCaptureBar({ onStart }: { onStart: (state: NoteOpenRequest) => void }) {
+export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => void }) {
   const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const tourActive = useTourActive();
@@ -87,7 +87,7 @@ export function DesktopCaptureBar({ onStart }: { onStart: (state: NoteOpenReques
     >
       <button
         type="button"
-        onClick={() => onStart({ id: null })}
+        onClick={() => onStart()}
         className="min-h-11 flex-1 cursor-text px-4 py-3 text-left text-body text-muted-foreground transition-colors hover:text-foreground"
       >
         {/* Assistive tech gets one stable label, not a prompt renaming itself every five seconds.
@@ -105,7 +105,7 @@ export function DesktopCaptureBar({ onStart }: { onStart: (state: NoteOpenReques
           variant="ghost"
           size="icon"
           aria-label={t(action.labelKey)}
-          onClick={() => (action.picker ? picker.open(action) : onStart(action.editing))}
+          onClick={() => picker.start(action)}
         >
           <action.Icon className="size-4" />
         </Button>

@@ -1,22 +1,28 @@
 import { type ReactNode, useRef } from 'react';
-import type { NoteOpenRequest } from '@/components/notes/NotesView.tsx';
 import type { QuickCaptureAction } from '@/components/notes/quickCaptureActions.ts';
+import type { Intent } from '@/lib/intent.ts';
 
 /**
- * Opened synchronously inside a Start's tap, the only moment a browser lets a picker open
- * (CLAUDE.md, Nav shell). Both capture bars use it, so a picker Start behaves the same in each.
+ * Begins a Start. A picker Start opens the OS picker synchronously inside the tap, the only moment
+ * a browser lets it open (CLAUDE.md, Nav shell), and the chosen files become the Intent; any other
+ * Start is handed straight on. Both capture bars use it, so a Start behaves the same in each.
  */
-export function useStartPicker(onStart: (editing: NoteOpenRequest) => void): {
+export function useStartPicker(onStart: (intent?: Intent) => void): {
   input: ReactNode;
-  open: (action: QuickCaptureAction) => void;
+  start: (action: QuickCaptureAction) => void;
 } {
   const inputRef = useRef<HTMLInputElement>(null);
-  const pendingRef = useRef<QuickCaptureAction | null>(null);
+  // A change event counts only if `start` opened the picker.
+  const pendingRef = useRef(false);
 
-  const open = (action: QuickCaptureAction) => {
+  const start = (action: QuickCaptureAction) => {
+    if (!action.picker) {
+      onStart(action.intent);
+      return;
+    }
     const input = inputRef.current;
-    if (!action.picker || !input) return;
-    pendingRef.current = action;
+    if (!input) return;
+    pendingRef.current = true;
     input.accept = action.picker.accept;
     if (action.picker.capture) input.setAttribute('capture', action.picker.capture);
     else input.removeAttribute('capture');
@@ -33,12 +39,12 @@ export function useStartPicker(onStart: (editing: NoteOpenRequest) => void): {
       onChange={(event) => {
         const files = Array.from(event.target.files ?? []);
         event.target.value = '';
-        const action = pendingRef.current;
-        pendingRef.current = null;
-        if (files.length && action) onStart({ ...action.editing, files });
+        const pending = pendingRef.current;
+        pendingRef.current = false;
+        if (files.length && pending) onStart({ kind: 'files', files });
       }}
     />
   );
 
-  return { input, open };
+  return { input, start };
 }

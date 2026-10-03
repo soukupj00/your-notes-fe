@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { sharedBodyMarkup } from '@/components/share/sharedBody.ts';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import type { SharedNote } from '@/contract/index.ts';
 import { fetchSharedNote } from '@/data/http/publicShare.ts';
+import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 
 type State =
   | { status: 'loading' }
@@ -19,18 +20,19 @@ export default function SharePage({ token }: { token: string }) {
   const { t } = useTranslation();
   const [state, setState] = useState<State>({ status: 'loading' });
 
-  useEffect(() => {
-    let current = true;
-    fetchSharedNote(token)
-      .then((found) => {
-        if (current)
+  useAsyncEffect(
+    async (alive) => {
+      try {
+        const found = await fetchSharedNote(token);
+        if (alive()) {
           setState(found === 'gone' ? { status: 'gone' } : { status: 'shown', shared: found });
-      })
-      .catch(() => current && setState({ status: 'failed' }));
-    return () => {
-      current = false;
-    };
-  }, [token]);
+        }
+      } catch {
+        if (alive()) setState({ status: 'failed' });
+      }
+    },
+    [token]
+  );
 
   return (
     <main className="mx-auto flex min-h-svh max-w-2xl flex-col px-4 pt-[calc(2rem+var(--safe-top))] pb-[calc(2rem+var(--safe-bottom))]">

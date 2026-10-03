@@ -17,7 +17,6 @@ vi.mock('@/i18n', () => ({
 
 vi.mock('@/components/notes/NoteEditorDialog.tsx', () => ({
   NoteEditorDialog: () => null,
-  EMPTY_CHECKLIST_BODY: '',
 }));
 
 const MOBILE_WIDTH = 500;

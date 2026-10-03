@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { skipTour, startNote } from './helpers';
+import { closeNote, skipTour, startNote } from './helpers';
 
 test.describe('capture starts', () => {
   test.beforeEach(async ({ page }) => {
@@ -46,5 +46,20 @@ test.describe('capture starts', () => {
     await expect(page.getByRole('button', { name: 'Stop' })).toBeVisible();
     // The media menu was never opened: the recorder no longer lives in it.
     await expect(page.getByRole('dialog').getByRole('button', { name: 'Cancel' })).toBeVisible();
+  });
+
+  test('Forward after closing a Start reopens the saved note plain', async ({ page }) => {
+    await startNote(page, 'Checklist');
+    await page.locator('.tiptap').click();
+    await page.keyboard.type('Milk');
+    await closeNote(page);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+
+    await page.goForward();
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    // The saved item, not the Start's empty seed: the note did not reopen as a blank draft.
+    await expect(dialog.getByText('Milk')).toBeVisible();
   });
 });

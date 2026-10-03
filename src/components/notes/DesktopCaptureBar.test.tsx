@@ -82,33 +82,25 @@ describe('DesktopCaptureBar', () => {
     render(<DesktopCaptureBar onStart={onStart} />, { wrapper });
 
     screen.getByRole('button', { name: 'notes.createPlaceholder' }).click();
-    expect(onStart).toHaveBeenCalledWith({ id: null });
+    expect(onStart).toHaveBeenCalledWith();
   });
 
-  it.each([
-    ['picture', 'image/*', null],
-    ['camera', 'image/*', 'environment'],
-  ])(
-    '%s opens the picker inside the click and starts with the chosen files',
-    async (key, accept, capture) => {
-      // The same contract as the mobile dial's, through the same hook.
-      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-      const onStart = vi.fn();
-      render(<DesktopCaptureBar onStart={onStart} />, { wrapper });
-      const input = screen.getByTestId('start-picker') as HTMLInputElement;
-      const click = vi.spyOn(input, 'click');
+  it('opens the picker inside the click and starts with the chosen files', async () => {
+    // The contract is `useStartPicker`'s; this pins only that the bar goes through it.
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const onStart = vi.fn();
+    render(<DesktopCaptureBar onStart={onStart} />, { wrapper });
+    const input = screen.getByTestId('start-picker') as HTMLInputElement;
+    const click = vi.spyOn(input, 'click');
 
-      await user.click(screen.getByRole('button', { name: `notes.capture.${key}` }));
+    await user.click(screen.getByRole('button', { name: 'notes.capture.picture' }));
 
-      expect(click).toHaveBeenCalledTimes(1);
-      expect(input.accept).toBe(accept);
-      expect(input.getAttribute('capture')).toBe(capture);
-      expect(onStart).not.toHaveBeenCalled();
+    expect(click).toHaveBeenCalledTimes(1);
+    expect(onStart).not.toHaveBeenCalled();
 
-      const file = new File(['x'], 'a.png', { type: 'image/png' });
-      await user.upload(input, file);
+    const file = new File(['x'], 'a.png', { type: 'image/png' });
+    await user.upload(input, file);
 
-      expect(onStart).toHaveBeenCalledWith({ id: null, files: [file] });
-    }
-  );
+    expect(onStart).toHaveBeenCalledWith({ kind: 'files', files: [file] });
+  });
 });

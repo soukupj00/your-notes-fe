@@ -33,4 +33,6 @@ export interface AttachmentDeps {
   openExcalidraw: (args: ExcalidrawOpenArgs) => void;
   onError: (code: AttachmentErrorCode, kind: AttachmentKind) => void;
   t: TFunction;
+  /** The app's language, for `Intl` (a size next to a filename). */
+  locale: string;
 }

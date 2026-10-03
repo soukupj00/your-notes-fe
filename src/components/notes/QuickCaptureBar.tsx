@@ -3,18 +3,18 @@ import { m } from 'motion/react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FLOATING_BOTTOM_BAR } from '@/components/notes/floatingBottomBar.ts';
-import type { NoteOpenRequest } from '@/components/notes/NotesView.tsx';
 import { resolveQuickCapture } from '@/components/notes/quickCaptureLayout.ts';
 import { useStartPicker } from '@/components/notes/useStartPicker.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
+import type { Intent } from '@/lib/intent.ts';
 import { NIGHTSHIFT_SPRING, resolveTransition } from '@/lib/motion.ts';
 import { cn } from '@/lib/utils.ts';
 
 // A Popover rather than hand-rolled state, so tap-outside, Esc and focus come for free.
-export function QuickCaptureBar({ onStart }: { onStart: (editing: NoteOpenRequest) => void }) {
+export function QuickCaptureBar({ onStart }: { onStart: (intent?: Intent) => void }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const reducedMotion = useReducedMotion();
@@ -76,8 +76,7 @@ export function QuickCaptureBar({ onStart }: { onStart: (editing: NoteOpenReques
                   variant="secondary"
                   onClick={() => {
                     setOpen(false);
-                    if (action.picker) picker.open(action);
-                    else onStart(action.editing);
+                    picker.start(action);
                   }}
                   className="min-h-11 rounded-full border border-input bg-card shadow-rest hover:bg-accent hover:shadow-lift"
                 >

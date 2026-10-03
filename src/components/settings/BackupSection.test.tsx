@@ -152,6 +152,7 @@ describe('import', () => {
 
     await waitFor(() => expect(toast.info).toHaveBeenCalledWith('settings.backup.importCancelled'));
     expect(backup.restoreBackup).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it('never restores when writing the safety copy fails', async () => {
