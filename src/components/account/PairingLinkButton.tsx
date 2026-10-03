@@ -1,19 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
 import { encode } from 'uqr';
 import { Button } from '@/components/ui/button.tsx';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog.tsx';
-import { Spinner } from '@/components/ui/Spinner.tsx';
+import { LinkDialog } from '@/components/ui/LinkDialog.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
 import { pairingLink } from '@/contract/index.ts';
+import { useAction } from '@/hooks/useAction.ts';
 
 /**
  * Black on white in both themes: not every scanner reads an inverted code. The
@@ -43,26 +35,22 @@ export function PairingLinkButton({ kind, label }: { kind: 'device' | 'invite'; 
   const { service } = useAccount();
   const [open, setOpen] = useState(false);
   const [link, setLink] = useState<string | null>(null);
+  const { run } = useAction();
 
   const show = async () => {
     if (!service) return;
     setLink(null);
     setOpen(true);
-    try {
-      const { code } = await (kind === 'device'
-        ? service.createDeviceCode()
-        : service.createInvite());
-      setLink(pairingLink(window.location.origin, code));
-    } catch {
-      setOpen(false);
-      toast.error(t('account.qr.failed'));
-    }
-  };
-
-  const copy = async () => {
-    if (!link) return;
-    await navigator.clipboard.writeText(link);
-    toast.success(t('account.qr.copied'));
+    const made = await run(
+      async () => {
+        const { code } = await (kind === 'device'
+          ? service.createDeviceCode()
+          : service.createInvite());
+        setLink(pairingLink(window.location.origin, code));
+      },
+      { failure: 'account.qr.failed' }
+    );
+    if (!made) setOpen(false);
   };
 
   return (
@@ -70,39 +58,23 @@ export function PairingLinkButton({ kind, label }: { kind: 'device' | 'invite'; 
       <Button variant="outline" size="sm" onClick={() => void show()}>
         {label}
       </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{label}</DialogTitle>
-            <DialogDescription>
-              {t(
-                kind === 'device' ? 'account.qr.deviceDescription' : 'account.qr.inviteDescription'
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          {link ? (
-            <div className="flex flex-col gap-3">
-              <PairingQr value={link} label={label} />
-              <p className="text-muted-foreground text-sm">{t('account.qr.expires')}</p>
-              <p className="text-sm">{t('account.qr.orOpen')}</p>
-              <code className="select-all break-all rounded-md border bg-muted px-2 py-1 text-xs">
-                {link}
-              </code>
-            </div>
-          ) : (
-            <p className="flex h-56 items-center justify-center gap-2 text-muted-foreground text-sm">
-              <Spinner />
-              {t('account.qr.making')}
-            </p>
-          )}
-          <DialogFooter>
-            <Button variant="outline" disabled={!link} onClick={() => void copy()}>
-              {t('account.qr.copy')}
-            </Button>
-            <Button onClick={() => setOpen(false)}>{t('account.qr.done')}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <LinkDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={label}
+        description={t(
+          kind === 'device' ? 'account.qr.deviceDescription' : 'account.qr.inviteDescription'
+        )}
+        link={link}
+      >
+        {link && (
+          <>
+            <PairingQr value={link} label={label} />
+            <p className="text-muted-foreground text-sm">{t('account.qr.expires')}</p>
+            <p className="text-sm">{t('account.qr.orOpen')}</p>
+          </>
+        )}
+      </LinkDialog>
     </>
   );
 }

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import type { Share } from '@/data/Remote.ts';
+import { useAction } from '@/hooks/useAction.ts';
 import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
@@ -19,6 +20,7 @@ export function SharesSection() {
   const { session, service } = useAccount();
   const store = useLocalStore();
   const [rows, setRows] = useState<Row[]>([]);
+  const { busy, run } = useAction();
 
   const load = useCallback(async () => {
     if (!service) return;
@@ -43,22 +45,21 @@ export function SharesSection() {
 
   if (!session || !service) return null;
 
-  const stop = async (share: Share) => {
-    try {
-      await service.revokeShare(share.id);
-      setRows((all) => all.filter((r) => r.id !== share.id));
-      toast.success(t('share.stopped'));
-    } catch {
-      toast.error(t('account.errors.unknown'));
-    }
-  };
+  const stop = (share: Share) =>
+    run(
+      async () => {
+        await service.revokeShare(share.id);
+        setRows((all) => all.filter((r) => r.id !== share.id));
+      },
+      { success: 'share.stopped' }
+    );
 
   return (
     <SettingsSection title={t('share.section.title')}>
       {rows.length === 0 && <SettingsRow label={t('share.section.none')}>{null}</SettingsRow>}
       {rows.map((row) => (
         <SettingsRow key={row.id} label={row.header ?? t('share.untitled')}>
-          <Button variant="outline" size="sm" onClick={() => void stop(row)}>
+          <Button variant="outline" size="sm" disabled={busy} onClick={() => void stop(row)}>
             {t('share.stop')}
           </Button>
         </SettingsRow>

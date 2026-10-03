@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button.tsx';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
 import type { Device } from '@/data/Remote.ts';
+import { useAction } from '@/hooks/useAction.ts';
 import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
@@ -20,6 +21,7 @@ export function DevicesSection() {
   const { session, service } = useAccount();
   const [devices, setDevices] = useState<Device[]>([]);
   const [removing, setRemoving] = useState<Device | null>(null);
+  const { run } = useAction();
 
   const load = useCallback(
     async (alive: () => boolean = () => true) => {
@@ -46,12 +48,7 @@ export function DevicesSection() {
   if (!session || !service) return null;
 
   const remove = async (device: Device) => {
-    try {
-      await service.revokeDevice(device.id);
-      toast.success(t('account.devices.removed'));
-    } catch {
-      toast.error(t('account.errors.unknown'));
-    }
+    await run(() => service.revokeDevice(device.id), { success: 'account.devices.removed' });
     await load();
   };
 

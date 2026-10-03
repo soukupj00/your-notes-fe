@@ -14,6 +14,7 @@ import {
 import { useAccount } from '@/context/AccountProvider.tsx';
 import { useSync } from '@/context/SyncProvider.tsx';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
+import { useAction } from '@/hooks/useAction.ts';
 import { backupFilename, buildBackupZip, requestSaveTarget } from '@/lib/backup.ts';
 
 /**
@@ -26,28 +27,25 @@ export function SignOutButton() {
   const { service, setSession } = useAccount();
   const sync = useSync();
   const [dialog, setDialog] = useState<'blocked' | 'confirm' | null>(null);
-  const [busy, setBusy] = useState(false);
+  const { busy, run } = useAction();
 
   const erase = async () => {
     if (!service) return;
-    setBusy(true);
-    try {
-      // Asked again at the last moment: an edit may have landed since the dialog opened.
-      const owed = await store.sync.dirty();
-      if (Object.values(owed).some((rows) => rows.length > 0)) {
-        setDialog('blocked');
-        return;
-      }
-      await service.signOut();
-      await sync.stop();
-      await store.clear();
-      setSession(null);
-      toast.success(t('account.section.signedOut'));
-    } catch {
-      toast.error(t('account.errors.unknown'));
-    } finally {
-      setBusy(false);
-    }
+    await run(
+      async () => {
+        // Asked again at the last moment: an edit may have landed since the dialog opened.
+        const owed = await store.sync.dirty();
+        if (Object.values(owed).some((rows) => rows.length > 0)) {
+          setDialog('blocked');
+          return false;
+        }
+        await service.signOut();
+        await sync.stop();
+        await store.clear();
+        setSession(null);
+      },
+      { success: 'account.section.signedOut' }
+    );
   };
 
   const saveBackup = async () => {
