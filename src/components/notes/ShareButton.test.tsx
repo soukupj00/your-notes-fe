@@ -8,6 +8,7 @@ import { createHalAccountService } from '@/data/http/HalAccountService.ts';
 import { createHalClient } from '@/data/http/hal.ts';
 import { LocalStoreProvider } from '@/data/LocalStoreProvider.tsx';
 import { createMemoryLocalStore } from '@/data/memory/MemoryLocalStore.ts';
+import { testDraft } from '@/test/draft.ts';
 import { createFakeServer } from '@/test/fakeServer.ts';
 import { ShareButton } from './ShareButton.tsx';
 
@@ -41,10 +42,14 @@ async function signedIn({ onServer = true } = {}) {
   return { server, service };
 }
 
-function renderButton(service: ReturnType<typeof createHalAccountService>) {
+/** The Note's row exists unless the test says otherwise; a new Draft is the exception. */
+function renderButton(
+  service: ReturnType<typeof createHalAccountService> | null,
+  draft = testDraft({ id: NOTE, isNew: false })
+) {
   render(
     <AccountProvider service={service}>
-      <ShareButton noteId={NOTE} ensureNoteId={async () => NOTE} className="" />
+      <ShareButton draft={draft} className="" />
     </AccountProvider>
   );
 }
@@ -143,12 +148,19 @@ describe('ShareButton', () => {
   });
 
   it('is absent while signed out', () => {
-    render(
-      <AccountProvider service={null}>
-        <ShareButton noteId={NOTE} ensureNoteId={async () => NOTE} className="" />
-      </AccountProvider>
-    );
+    renderButton(null);
     expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  // Nothing can be shared before the row exists, and a read that outlasts the first `mint` would
+  // turn the mark off again (PLAN.md ticket), so a new Draft is not asked about.
+  it('asks the server nothing about a new Draft', async () => {
+    const { service } = await signedIn();
+    const shares = vi.spyOn(service, 'shares');
+    renderButton(service, testDraft({ id: NOTE, isNew: true }));
+
+    expect(await screen.findByRole('button', { name: 'share.action' })).toBeVisible();
+    expect(shares).not.toHaveBeenCalled();
   });
 });
 

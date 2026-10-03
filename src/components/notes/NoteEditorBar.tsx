@@ -5,15 +5,14 @@ import { ShareButton } from '@/components/notes/ShareButton.tsx';
 import { ReminderButton } from '@/components/reminders/ReminderButton.tsx';
 import { NoteTagsBar } from '@/components/tags/NoteTagsBar.tsx';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
+import type { NoteDraft } from '@/lib/draft.ts';
 import { noteControlButton } from '@/lib/note-controls.ts';
 import type { Reminder } from '@/lib/reminder.ts';
 import { cn } from '@/lib/utils.ts';
 
 interface NoteEditorBarProps {
-  /** The note's id, or null for a draft that has not been persisted yet. */
-  noteId: string | null;
-  /** Persists the draft on demand and returns its id (the dialog's save queue). */
-  ensureNoteId: () => Promise<string>;
+  /** The open Note; labels and shares earn its row through it when they need one. */
+  draft: NoteDraft;
   color?: string;
   pinned: boolean;
   /** Pinning is meaningless outside the Active state, so the control is absent there. */
@@ -34,8 +33,7 @@ interface NoteEditorBarProps {
  * above the keyboard.
  */
 export function NoteEditorBar({
-  noteId,
-  ensureNoteId,
+  draft,
   color,
   pinned,
   pinnable,
@@ -52,16 +50,10 @@ export function NoteEditorBar({
   return (
     /* Two columns, so adding a label never moves the controls. */
     <div data-slot="note-editor-bar" className="flex items-start gap-2">
-      <NoteTagsBar noteId={noteId} ensureNoteId={ensureNoteId} className="min-w-0 flex-1" />
+      <NoteTagsBar draft={draft} className="min-w-0 flex-1" />
 
       <div className="flex shrink-0 items-center gap-0.5">
-        {shareable && (
-          <ShareButton
-            noteId={noteId}
-            ensureNoteId={ensureNoteId}
-            className={noteControlButton(reducedMotion)}
-          />
-        )}
+        {shareable && <ShareButton draft={draft} className={noteControlButton(reducedMotion)} />}
 
         <ReminderButton
           reminder={reminder}

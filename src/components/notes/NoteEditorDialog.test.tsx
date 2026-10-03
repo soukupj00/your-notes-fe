@@ -97,7 +97,7 @@ describe('NoteEditorDialog', () => {
   });
 
   it('creates a draft on the first meaningful change, exactly once', async () => {
-    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+    render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
 
     await userEvent.type(headerInput(), 'First draft');
 
@@ -121,7 +121,7 @@ describe('NoteEditorDialog', () => {
   });
 
   it('creates a draft from a body-only edit (empty header), exactly once', async () => {
-    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+    render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
 
     await userEvent.type(editorTextarea(), 'Body only draft');
 
@@ -135,7 +135,7 @@ describe('NoteEditorDialog', () => {
 
   it('discards an empty draft on close', async () => {
     const onClose = vi.fn();
-    render(<NoteEditorDialog noteId={null} onClose={onClose} />);
+    render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={onClose} />);
 
     await userEvent.click(closeButton());
 
@@ -160,7 +160,14 @@ describe('NoteEditorDialog', () => {
   });
 
   it('seeds a new checklist draft with an empty task list and persists it once edited', async () => {
-    render(<NoteEditorDialog noteId={null} intent={{ kind: 'checklist' }} onClose={vi.fn()} />);
+    render(
+      <NoteEditorDialog
+        noteId={crypto.randomUUID()}
+        isNew
+        intent={{ kind: 'checklist' }}
+        onClose={vi.fn()}
+      />
+    );
 
     expect(editorTextarea()).toHaveValue(EMPTY_CHECKLIST_BODY);
 
@@ -175,7 +182,7 @@ describe('NoteEditorDialog', () => {
   });
 
   it('surfaces a "saved" status after an edit autosaves', async () => {
-    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+    render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
 
     await userEvent.type(headerInput(), 'Hello');
 
@@ -187,7 +194,7 @@ describe('NoteEditorDialog', () => {
   it('stops writing once an edit settles (no autosave re-render loop)', async () => {
     const addSpy = vi.spyOn(testStore.notes, 'add');
     const putSpy = vi.spyOn(testStore.notes, 'put');
-    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+    render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
 
     await userEvent.type(headerInput(), 'Hi');
     await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1), {
@@ -207,7 +214,7 @@ describe('NoteEditorDialog', () => {
 
   it('keeps an image-only note (no text) instead of discarding it on close', async () => {
     const user = userEvent.setup();
-    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+    render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
 
     fireEvent.change(editorTextarea(), {
       target: { value: '<img data-attachment-id="x1">' },
@@ -224,7 +231,7 @@ describe('NoteEditorDialog', () => {
 
   it('keeps an audio-only note (no text) instead of discarding it on close', async () => {
     const user = userEvent.setup();
-    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+    render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
 
     fireEvent.change(editorTextarea(), {
       target: { value: '<audio data-attachment-id="au1"></audio>' },
@@ -240,12 +247,12 @@ describe('NoteEditorDialog', () => {
   });
 
   it('does not create two notes when an attach and a save race on a new draft', async () => {
-    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+    render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
 
     fireEvent.change(editorTextarea(), { target: { value: '<p>hello</p>' } });
 
-    // Both create paths (ensureNoteId and close) in one synchronous tick, so both read a null id
-    // before either sets it. Without the shared save chain this creates two notes.
+    // Both create paths (the Editor's getNoteId and close) in one synchronous tick, so both read
+    // "no row yet" before either writes one. Without the Draft's one queue this creates two notes.
     fireEvent.click(screen.getByTestId('ensure-note'));
     fireEvent.click(closeButton());
 
@@ -257,7 +264,7 @@ describe('NoteEditorDialog', () => {
 
   it('still discards a truly empty draft on close', async () => {
     const user = userEvent.setup();
-    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+    render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
     fireEvent.change(editorTextarea(), { target: { value: '' } });
     await user.click(closeButton());
     await waitFor(async () => expect((await testStore.notes.list()).length).toBe(0));
@@ -279,11 +286,11 @@ describe('NoteEditorDialog', () => {
     expect((await testStore.notes.get(note.id))?.header).toBe('Edited header');
   });
 
-  it('labels an unsaved draft, persisting it through the same ensureNoteId queue', async () => {
+  it('labels an unsaved draft, persisting it through the Draft', async () => {
     const now = new Date().toISOString();
     await testStore.tags.put({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
 
-    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+    render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'tags.add' }));
     await userEvent.click(await screen.findByRole('checkbox', { name: 'Work' }));
@@ -295,8 +302,8 @@ describe('NoteEditorDialog', () => {
 
   // ---- Note bar (colour / pin) ---------------------------------------------
 
-  it('colours an unsaved draft through the same ensureNoteId queue', async () => {
-    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+  it('colours an unsaved draft through the Draft', async () => {
+    render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'notes.color' }));
     await userEvent.click(await screen.findByRole('button', { name: 'colors.blue' }));
@@ -335,7 +342,7 @@ describe('NoteEditorDialog', () => {
   }
 
   it('records a Reminder on a draft once the calendar has been given its file', async () => {
-    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+    render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
 
     await setReminderFromBar();
 
@@ -352,7 +359,7 @@ describe('NoteEditorDialog', () => {
   // event pointing at nothing.
   it('keeps a draft that was given a Reminder, even with no header or body', async () => {
     const onClose = vi.fn();
-    render(<NoteEditorDialog noteId={null} onClose={onClose} />);
+    render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={onClose} />);
 
     await setReminderFromBar();
     await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1));
@@ -423,8 +430,8 @@ describe('NoteEditorDialog', () => {
     );
   });
 
-  it('pins an unsaved draft through the same ensureNoteId queue', async () => {
-    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+  it('pins an unsaved draft through the Draft', async () => {
+    render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'notes.pin' }));
 
@@ -453,7 +460,7 @@ describe('NoteEditorDialog', () => {
 describe('the id in the URL', () => {
   it('persists a new draft under the id it was given, not a fresh one', async () => {
     const draftId = crypto.randomUUID();
-    render(<NoteEditorDialog noteId={null} draftId={draftId} onClose={vi.fn()} />);
+    render(<NoteEditorDialog noteId={draftId} isNew onClose={vi.fn()} />);
 
     await userEvent.type(headerInput(), 'Shopping');
 
@@ -509,7 +516,7 @@ describe('the mobile app bar', () => {
   // The arrow is the sheet's first focusable child, so Radix would hand it the
   // opening focus: you would open a note with the caret on "leave".
   it('leaves the opening focus in the note, not on the way out', async () => {
-    render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+    render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
 
     const title = await screen.findByLabelText('notes.titlePlaceholder');
     await waitFor(() => expect(title).toHaveFocus());
@@ -518,7 +525,14 @@ describe('the mobile app bar', () => {
   // A checklist draft focuses its own body instead, and the redirect above must
   // not race that back up to the title.
   it('leaves a checklist draft focused in its body', async () => {
-    render(<NoteEditorDialog noteId={null} intent={{ kind: 'checklist' }} onClose={vi.fn()} />);
+    render(
+      <NoteEditorDialog
+        noteId={crypto.randomUUID()}
+        isNew
+        intent={{ kind: 'checklist' }}
+        onClose={vi.fn()}
+      />
+    );
 
     const title = await screen.findByLabelText('notes.titlePlaceholder');
     await waitFor(() => expect(title).not.toHaveFocus());
@@ -546,7 +560,7 @@ describe('opening focus', () => {
 
   it('focuses the title of a new note on a Coarse pointer, because the user came to type', async () => {
     setPointer(false);
-    render(<NoteEditorDialog noteId={null} draftId={crypto.randomUUID()} onClose={vi.fn()} />);
+    render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
     await waitFor(() => {
       expect(headerInput()).toHaveFocus();
     });
@@ -575,7 +589,9 @@ describe('opening focus', () => {
     setPointer(true);
     const opener = document.body.appendChild(document.createElement('button'));
     opener.focus();
-    const { unmount } = render(<NoteEditorDialog noteId={null} onClose={vi.fn()} />);
+    const { unmount } = render(
+      <NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />
+    );
     await waitFor(() => expect(headerInput()).toHaveFocus());
     unmount();
     await waitFor(() => expect(opener).toHaveFocus());

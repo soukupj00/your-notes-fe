@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { requestPersistentStorage } from '@/lib/persistentStorage.ts';
-import { createNoteDraft, isEmpty } from './draft.ts';
+import { createNoteDraft, isEmpty, type NoteDraft } from './draft.ts';
 
 vi.mock('@/lib/persistentStorage.ts', () => ({ requestPersistentStorage: vi.fn(async () => {}) }));
 
@@ -78,25 +78,22 @@ describe('a new Draft', () => {
   it.each([
     [
       'an act, then a save',
-      (draft: ReturnType<typeof newDraft>[0]) => [
-        draft.ensureSaved(),
-        draft.save('', '<p>hello</p>'),
-      ],
+      (draft: NoteDraft) => [draft.ensureSaved(), draft.save('', '<p>hi</p>')],
+      1,
     ],
     [
       'a save, then an act',
-      (draft: ReturnType<typeof newDraft>[0]) => [
-        draft.save('', '<p>hello</p>'),
-        draft.ensureSaved(),
-      ],
+      (draft: NoteDraft) => [draft.save('', '<p>hi</p>'), draft.ensureSaved()],
+      0,
     ],
-  ])('creates one row when %s race in one tick', async (_, race) => {
-    const [draft, d] = newDraft(deps({ header: '', body: '<p>hello</p>' }));
+  ])('creates one row when %s race in one tick', async (_, race, updates) => {
+    const [draft, d] = newDraft(deps({ header: '', body: '<p>hi</p>' }));
 
     await Promise.all(race(draft));
 
     expect(d.createNote).toHaveBeenCalledOnce();
-    expect(d.updateNote.mock.calls.length).toBeLessThanOrEqual(1);
+    // The second arrival finds the row: a save updates it, an act only answers the id.
+    expect(d.updateNote).toHaveBeenCalledTimes(updates);
   });
 
   it('leaves nothing behind when it closes empty', async () => {

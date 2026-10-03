@@ -15,7 +15,10 @@ export interface NoteDraft {
   readonly id: string;
   /** Whether the Note has its row yet; `ensureSaved()` makes it so. */
   readonly saved: boolean;
-  /** Earns the row now, with what is typed so far, and answers the id: a label, an Attachment, a Reminder. */
+  /**
+   * For an act that needs the row (a label, an Attachment, a Reminder): earns it now with what is
+   * typed so far, and answers the id.
+   */
   ensureSaved(): Promise<string>;
   /** Writes the header and the Body; an empty new Draft is not worth a row yet. */
   save(header: string, body: string): Promise<void>;
@@ -45,7 +48,8 @@ export function createNoteDraft(
   }
 ): NoteDraft {
   let saved = !isNew;
-  // One queue for every write, so a save and an act racing on a new Draft create the row once.
+  // One queue for the writes that may create the row, so a save and an act racing on a new Draft
+  // create it once.
   let queue: Promise<unknown> = Promise.resolve();
   const enqueue = <T>(work: () => Promise<T>): Promise<T> => {
     const next = queue.then(work);
@@ -67,8 +71,8 @@ export function createNoteDraft(
     enqueue(async () => {
       if (!saved && isEmpty(header, body)) return;
       await write(header, body);
-      // The user's first own writing is when persistent storage is worth a prompt; the Tour's
-      // Props never reach this path.
+      // The user's first own writing is when persistent storage is worth a prompt
+      // (lib/persistentStorage.ts).
       void requestPersistentStorage();
     });
 

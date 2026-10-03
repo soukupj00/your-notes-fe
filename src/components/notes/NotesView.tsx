@@ -94,8 +94,8 @@ export function NotesView({
           <NoteEditorDialog
             // Stable for the life of an open, so this key cannot remount the editor mid-edit.
             key={openNoteId}
-            noteId={opened?.isDraft ? null : openNoteId}
-            draftId={openNoteId}
+            noteId={openNoteId}
+            isNew={opened?.isNew}
             intent={opened?.intent}
             onClose={closeNote}
             onNoteMissing={dismissMissingNote}

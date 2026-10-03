@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Tag } from '@/models.ts';
+import { testDraft } from '@/test/draft.ts';
 import { clearStore, renderWithStore as render, testStore } from '@/test/store.tsx';
 import { NoteTagsBar } from './NoteTagsBar.tsx';
 
@@ -25,6 +26,9 @@ const linkedTagIds = async (noteId: string) =>
     .map((link) => link.tagId)
     .sort();
 
+/** An open Note whose row exists, so labelling it writes nothing but the link. */
+const openNote = () => testDraft({ id: 'n1', isNew: false });
+
 /** Open the "＋ Label" popover and hand back its content. */
 async function openPopover() {
   await userEvent.click(await screen.findByRole('button', { name: 'tags.add' }));
@@ -36,7 +40,7 @@ afterEach(clearStore);
 describe('assigning labels', () => {
   it('ticks an existing label onto the note', async () => {
     await putTag('t1', 'Work');
-    render(<NoteTagsBar noteId="n1" />);
+    render(<NoteTagsBar draft={openNote()} />);
 
     const popover = await openPopover();
     await userEvent.click(within(popover).getByRole('checkbox', { name: 'Work' }));
@@ -48,7 +52,7 @@ describe('assigning labels', () => {
     await putTag('t1', 'Work');
     const now = new Date().toISOString();
     await testStore.tags.link({ noteId: 'n1', tagId: 't1', createdAt: now, updatedAt: now });
-    render(<NoteTagsBar noteId="n1" />);
+    render(<NoteTagsBar draft={openNote()} />);
 
     const popover = await openPopover();
     await waitFor(() =>
@@ -61,7 +65,7 @@ describe('assigning labels', () => {
 
   it('toggles from a click on the label text, not just the box', async () => {
     await putTag('t1', 'Work');
-    render(<NoteTagsBar noteId="n1" />);
+    render(<NoteTagsBar draft={openNote()} />);
 
     const popover = await openPopover();
     await userEvent.click(within(popover).getByText('Work'));
@@ -71,7 +75,7 @@ describe('assigning labels', () => {
 
   it('filters the list and creates the typed label on the fly', async () => {
     await putTag('t1', 'Work');
-    render(<NoteTagsBar noteId="n1" />);
+    render(<NoteTagsBar draft={openNote()} />);
 
     const popover = await openPopover();
     await userEvent.type(within(popover).getByRole('textbox'), 'Home');
@@ -86,7 +90,7 @@ describe('assigning labels', () => {
 
   it('offers no create row for a name that already exists', async () => {
     await putTag('t1', 'Work');
-    render(<NoteTagsBar noteId="n1" />);
+    render(<NoteTagsBar draft={openNote()} />);
 
     const popover = await openPopover();
     await userEvent.type(within(popover).getByRole('textbox'), 'work');
@@ -101,7 +105,7 @@ describe('assigned pills', () => {
     const now = new Date().toISOString();
     await testStore.tags.link({ noteId: 'n1', tagId: 't1', createdAt: now, updatedAt: now });
 
-    render(<NoteTagsBar noteId="n1" />);
+    render(<NoteTagsBar draft={openNote()} />);
 
     expect(await screen.findByText('Work')).toBeInTheDocument();
     await userEvent.click(await screen.findByRole('button', { name: 'tags.remove:Work' }));
@@ -110,27 +114,48 @@ describe('assigned pills', () => {
   });
 });
 
-describe('unsaved drafts', () => {
-  it('persists the draft through ensureNoteId before labelling it', async () => {
+describe('a new Draft', () => {
+  it('earns its row before it is labelled, and shows the label under its id', async () => {
     await putTag('t1', 'Work');
-    const ensureNoteId = vi.fn().mockResolvedValue('created-note');
+    // Recorded, not asserted, inside the stub: a throw there would only reject `ensureSaved`.
+    let linksAtCreate: string[] | undefined;
+    const createNote = vi.fn(async () => {
+      linksAtCreate = await linkedTagIds('n1');
+    });
 
-    render(<NoteTagsBar noteId={null} ensureNoteId={ensureNoteId} />);
+    render(<NoteTagsBar draft={testDraft({ id: 'n1', isNew: true }, { createNote })} />);
 
     const popover = await openPopover();
     await userEvent.click(within(popover).getByRole('checkbox', { name: 'Work' }));
 
-    await waitFor(async () => expect(await linkedTagIds('created-note')).toEqual(['t1']));
-    expect(ensureNoteId).toHaveBeenCalledTimes(1);
-    // Wait on the checkbox, not the database: the write can land a render before `checked`
-    // updates, and a second click in that gap would toggle from the stale state.
+    await waitFor(async () => expect(await linkedTagIds('n1')).toEqual(['t1']));
+    expect(createNote).toHaveBeenCalledOnce();
+    // The row came first: no link existed yet when it was created.
+    expect(linksAtCreate).toEqual([]);
     await waitFor(() =>
       expect(within(popover).getByRole('checkbox', { name: 'Work' })).toBeChecked()
     );
 
-    // The resolved id is remembered: a second change must not create again.
+    // The bar queries the Draft's id from the start, so the pill needs no second id to appear.
+    // The popover is modal and hides the bar from role queries while open, so it closes first.
+    await userEvent.keyboard('{Escape}');
+    expect(await screen.findByRole('button', { name: 'tags.remove:Work' })).toBeInTheDocument();
+  });
+
+  // The dialog moves the bar between the Editor's footer and its own body when the width crosses
+  // `sm` (a phone turning), which remounts it. The pills used to vanish then, because the bar kept
+  // its own copy of the id, seeded null; querying the Draft's id from the start fixes that.
+  it('keeps its pills across a remount', async () => {
+    await putTag('t1', 'Work');
+    const draft = testDraft({ id: 'n1', isNew: true }, { createNote: async () => {} });
+    const { unmount } = render(<NoteTagsBar draft={draft} />);
+    const popover = await openPopover();
     await userEvent.click(within(popover).getByRole('checkbox', { name: 'Work' }));
-    await waitFor(async () => expect(await linkedTagIds('created-note')).toEqual([]));
-    expect(ensureNoteId).toHaveBeenCalledTimes(1);
+    await waitFor(async () => expect(await linkedTagIds('n1')).toEqual(['t1']));
+    unmount();
+
+    render(<NoteTagsBar draft={draft} />);
+
+    expect(await screen.findByRole('button', { name: 'tags.remove:Work' })).toBeInTheDocument();
   });
 });
