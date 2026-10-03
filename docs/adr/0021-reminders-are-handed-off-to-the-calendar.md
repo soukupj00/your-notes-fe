@@ -41,7 +41,7 @@ Only something the operating system itself schedules can promise that, and the o
    The value is exactly what `<input type="datetime-local">` emits and accepts, and it is written to the `.ics` as a floating time (no `Z`, no `VTIMEZONE`).
    Recurrence is one `RRULE:FREQ=` line; because the calendar does the firing, the app has no roll-forward arithmetic at all.
 7. **Placement follows the editor bar's existing test** - "can this apply to a Note that has no Card yet?".
-   A draft can carry a Reminder, so the bell sits in `NoteEditorBar` beside colour and pin and resolves a draft's id through `ensureNoteId`.
+   A draft can carry a Reminder, so the bell sits in `NoteEditorBar` beside colour and pin and resolves a draft's id through `ensureNoteId` (since M6 slice 5, 2026-10-03, through the Draft's `ensureSaved()`).
    The Card shows a read-only chip and gains no control; there is no Reminders destination and no feed filter.
    The inputs are the native `datetime-local` and `select`, so a phone gets its own picker and no picker library is added.
 
