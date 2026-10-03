@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from 'react';
+import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { accountErrorKey, Field } from '@/components/account/AccountForm.tsx';
@@ -15,6 +15,7 @@ import {
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
 import type { Member } from '@/data/Remote.ts';
+import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
 const joined = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
@@ -107,17 +108,18 @@ export function MembersSection() {
   const [members, setMembers] = useState<Member[]>([]);
   const isOwner = session?.role === 'owner';
 
-  useEffect(() => {
-    if (!isOwner || !service) return;
-    let current = true;
-    service
-      .accounts()
-      .then((found) => current && setMembers(found))
-      .catch(() => current && toast.error(t('account.errors.unknown')));
-    return () => {
-      current = false;
-    };
-  }, [isOwner, service, t]);
+  useAsyncEffect(
+    async (alive) => {
+      if (!isOwner || !service) return;
+      try {
+        const found = await service.accounts();
+        if (alive()) setMembers(found);
+      } catch {
+        if (alive()) toast.error(t('account.errors.unknown'));
+      }
+    },
+    [isOwner, service, t]
+  );
 
   if (!isOwner) return null;
 

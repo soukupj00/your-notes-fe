@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import type { Share } from '@/data/Remote.ts';
+import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
 type Row = Share & { header: string | undefined };
@@ -27,16 +28,18 @@ export function SharesSection() {
   }, [service, store]);
 
   const accountId = session?.accountId;
-  useEffect(() => {
-    if (!accountId) return;
-    let current = true;
-    load()
-      .then((found) => current && found && setRows(found))
-      .catch(() => current && toast.error(t('account.errors.unknown')));
-    return () => {
-      current = false;
-    };
-  }, [accountId, load, t]);
+  useAsyncEffect(
+    async (alive) => {
+      if (!accountId) return;
+      try {
+        const found = await load();
+        if (alive() && found) setRows(found);
+      } catch {
+        if (alive()) toast.error(t('account.errors.unknown'));
+      }
+    },
+    [accountId, load, t]
+  );
 
   if (!session || !service) return null;
 

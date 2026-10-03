@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useSync } from '@/context/SyncProvider.tsx';
+import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { SettingsRow, SettingsSection, SwitchSetting } from './SettingsSection.tsx';
 
 const when = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
@@ -22,16 +23,11 @@ type Storage = { persisted: boolean; usage?: number };
 /** What the browser says about keeping this Device's data; `null` where it cannot say. */
 function useStorage(): Storage | null {
   const [storage, setStorage] = useState<Storage | null>(null);
-  useEffect(() => {
+  useAsyncEffect(async (alive) => {
     const manager = navigator.storage;
     if (!manager?.persisted) return;
-    let current = true;
-    void Promise.all([manager.persisted(), manager.estimate?.()]).then(([persisted, estimate]) => {
-      if (current) setStorage({ persisted, usage: estimate?.usage });
-    });
-    return () => {
-      current = false;
-    };
+    const [persisted, estimate] = await Promise.all([manager.persisted(), manager.estimate?.()]);
+    if (alive()) setStorage({ persisted, usage: estimate?.usage });
   }, []);
   return storage;
 }

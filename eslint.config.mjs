@@ -46,6 +46,12 @@ export default defineConfig([
     ...reactHooks.configs.flat['recommended-latest'],
     files: SOURCE_FILES,
   },
+  // Hooks that pass the caller's deps array on, by contract: the rule cannot read it. Biome checks
+  // the callers of `useAsyncEffect` instead (biome.json).
+  {
+    files: ['src/hooks/useAsyncEffect.ts', 'src/data/useLive.ts'],
+    rules: { 'react-hooks/exhaustive-deps': 'off' },
+  },
 
   // https://react.dev/learn/you-might-not-need-an-effect
   {

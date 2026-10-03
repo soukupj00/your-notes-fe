@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { PairingLinkButton } from '@/components/account/PairingLinkButton.tsx';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button.tsx';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
 import type { Device } from '@/data/Remote.ts';
+import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
 const lastSeen = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
@@ -20,29 +21,27 @@ export function DevicesSection() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [removing, setRemoving] = useState<Device | null>(null);
 
-  const load = useCallback(() => {
-    if (!service) return Promise.resolve();
-    return service
-      .devices()
-      .then(setDevices)
-      .catch(() => {
-        toast.error(t('account.errors.unknown'));
-      });
-  }, [service, t]);
+  const load = useCallback(
+    async (alive: () => boolean = () => true) => {
+      if (!service) return;
+      try {
+        const found = await service.devices();
+        if (alive()) setDevices(found);
+      } catch {
+        if (alive()) toast.error(t('account.errors.unknown'));
+      }
+    },
+    [service, t]
+  );
 
   // Once per signed-in session: another Device's pairing shows up on the next visit.
   const accountId = session?.accountId;
-  useEffect(() => {
-    if (!accountId || !service) return;
-    let current = true;
-    service
-      .devices()
-      .then((found) => current && setDevices(found))
-      .catch(() => current && toast.error(t('account.errors.unknown')));
-    return () => {
-      current = false;
-    };
-  }, [accountId, service, t]);
+  useAsyncEffect(
+    (alive) => {
+      if (accountId) return load(alive);
+    },
+    [accountId, load]
+  );
 
   if (!session || !service) return null;
 

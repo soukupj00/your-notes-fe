@@ -1,5 +1,5 @@
 import { Share2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.tsx';
@@ -16,6 +16,7 @@ import { useSync } from '@/context/SyncProvider.tsx';
 import { shareLink } from '@/contract/index.ts';
 import { ProblemError } from '@/data/http/hal.ts';
 import type { Share } from '@/data/Remote.ts';
+import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { cn } from '@/lib/utils.ts';
 
 /**
@@ -39,17 +40,15 @@ export function ShareButton({
   const [busy, setBusy] = useState(false);
   const signedIn = status === 'signed-in' && service !== null;
 
-  useEffect(() => {
-    if (!signedIn || !noteId) return;
-    let current = true;
-    service
-      .shares()
-      .then((all) => current && setShare(all.find((s) => s.noteId === noteId) ?? null))
-      .catch(() => {});
-    return () => {
-      current = false;
-    };
-  }, [signedIn, service, noteId]);
+  useAsyncEffect(
+    async (alive) => {
+      if (!signedIn || !noteId) return;
+      // An unanswered read shows as unshared; the next tap tells the truth.
+      const all = await service.shares().catch(() => null);
+      if (alive() && all) setShare(all.find((s) => s.noteId === noteId) ?? null);
+    },
+    [signedIn, service, noteId]
+  );
 
   if (!signedIn) return null;
 

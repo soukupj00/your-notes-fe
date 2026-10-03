@@ -12,6 +12,7 @@ import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { useIsMobile } from '@/hooks/use-mobile.tsx';
+import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { useKeyboardInset } from '@/hooks/useKeyboardInset.ts';
 import { bodyHasAttachment, extractAttachmentIds } from '@/lib/body.ts';
@@ -123,11 +124,11 @@ export function NoteEditorDialog({
   }, [header, body]);
 
   // Load an existing note's content once on mount (not via a live query).
-  useEffect(() => {
-    if (!noteId) return;
-    let active = true;
-    void store.notes.get(noteId).then((n) => {
-      if (!active) return;
+  useAsyncEffect(
+    async (alive) => {
+      if (!noteId) return;
+      const n = await store.notes.get(noteId);
+      if (!alive()) return;
       if (n) {
         setHeader(n.header ?? '');
         setBody(n.body ?? '');
@@ -139,11 +140,9 @@ export function NoteEditorDialog({
       }
       // Not a blank editor: typing into it would silently recreate the note under the dead id.
       onNoteMissing?.();
-    });
-    return () => {
-      active = false;
-    };
-  }, [noteId, onNoteMissing, store]);
+    },
+    [noteId, onNoteMissing, store]
+  );
 
   const persist = useCallback(
     async (h: string, b: string) => {
