@@ -74,6 +74,8 @@ Search/filter state is **not** in a context - it lives in the URL as typed TanSt
 Which note is **open** lives there too, as `note` ([ADR 0014](./docs/adr/0014-the-open-note-lives-in-the-url.md), read through `useOpenNote()`), so the platform back button closes the editor rather than navigating the feed out from under it - the editor is a full-screen sheet below `sm:`, and the app is `display: standalone`, so an installed user has no browser chrome to correct that with.
 A note's id is minted when its editor **opens**, not when it is first saved: that id is the dialog's React key and its load-effect dependency, so a mid-session `?note=new` → `?note=<uuid>` swap would remount the editor under a typing user's cursor.
 The one-shot half of an open is an **Intent** (`src/lib/intent.ts`: begin recording, open the Drawing, insert the chosen files, begin as a Checklist, play the first clip), kept in React state by `useOpenNote` and spent when the open ends, so a reload, Back or Forward never repeats it.
+The Editor's working copy is a **Draft** (`src/lib/draft.ts`): `createNoteDraft({ id, isNew }, deps)` owns the Note's row, earned on the first real change or the first act that needs one, through one write queue the autosave and every act share, and its `close` purges an empty Note or sweeps the Attachments its Body dropped.
+The dialog keeps the typed text, the timer and the status, builds the one Draft at mount and hands it to the note bar, labels, share and reminder, and to the Editor's `getNoteId`.
 The `NotesProvider` that used to hold the query is gone: a searched feed is now shareable, refresh-proof, and steppable with the back button.
 
 ### Editor (`src/components/editor/`)
@@ -139,13 +141,16 @@ In the feed views that heading is `sr-only` - the visible title row was dropped 
 
 ### Tags / labels (`src/components/tags/`, `src/pages/labels.tsx`)
 
-`NoteTagsBar` (pills + the "＋ Label" popover) is the one place labels are assigned; it resolves an unsaved draft's id lazily through the editor's `ensureNoteId`, the same queue attachments use. `TagPills` renders a note's labels read-only on `NoteCard`, tinted from the shared Note/Tag palette (`lib/note-colors.ts`) via `NoteColorPicker`. `/labels` (`src/pages/labels.tsx`) is the manage view: create, inline rename, colour, merge-into, delete. It is a Destination beside Archive and Trash rather than a page inside Settings - `navItems.ts` had always listed it there, and Settings no longer carries a section that only links to it.
+`NoteTagsBar` (pills + the "＋ Label" popover) is the one place labels are assigned; it is handed the editor's Draft and labels it after `draft.ensureSaved()`, the same queue Attachments use, so a Draft earns its row on its first label.
+`TagPills` renders a note's labels read-only on `NoteCard`, tinted from the shared Note/Tag palette (`lib/note-colors.ts`) via `NoteColorPicker`.
+`/labels` (`src/pages/labels.tsx`) is the manage view: create, inline rename, colour, merge-into, delete.
+It is a Destination beside Archive and Trash rather than a page inside Settings - `navItems.ts` had always listed it there, and Settings no longer carries a section that only links to it.
 
 ### Reminders (`src/lib/reminder*.ts`, `src/lib/hand-off.ts`, `src/components/reminders/`)
 
 A Reminder is two unindexed fields on the Note, `remindAt` and `repeat` ([ADR 0021](./docs/adr/0021-reminders-are-handed-off-to-the-calendar.md)).
 **The app never notifies** - no Notification permission, no service-worker code, no timers - because a web app without push cannot fire anything while closed; the alarm belongs to the user's calendar.
-Setting a Reminder *is* handing it off: `useNoteReminder` (`src/components/notes/useNoteReminder.ts`, beside `NoteEditorDialog` rather than inside it, which is already the app's longest file) persists the draft, builds the `.ics` (`lib/reminder-ics.ts`, hand-written - the plan of 2026-09-20 records why no package), calls `handOff`, and only then writes the fields; a dismissed share sheet writes nothing.
+Setting a Reminder *is* handing it off: `useNoteReminder` (`src/components/notes/useNoteReminder.ts`, beside `NoteEditorDialog` rather than inside it) earns the Draft's row through `draft.ensureSaved()`, builds the `.ics` (`lib/reminder-ics.ts`, hand-written - the plan of 2026-09-20 records why no package), calls `handOff`, and only then writes the fields; a dismissed share sheet writes nothing.
 The bell is lit last, after the write rather than before it: colour and pin are optimistic because the tap should answer instantly, but a lit bell over a failed write would promise an alarm that nothing recorded.
 `remindAt` is a **local wall-clock string** (`YYYY-MM-DDTHH:mm`), the one deliberate exception to the ISO-timestamp convention, written to the file as a floating time so 09:00 stays 09:00 across a DST change.
 `handOff` (share on a coarse pointer that can share files, otherwise download) is the one function whose real behaviour only exists on a device, which is why it is one function.

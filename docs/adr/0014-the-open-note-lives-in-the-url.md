@@ -69,6 +69,7 @@ Always popping leaves the app entirely when the note was opened cold - a shared 
 - **A draft's id is visible in the address bar before the note exists.** Copying that link and then discarding the draft yields a link to nothing, handled by the previous point.
 - **`EditingState` became `NoteOpenRequest`.** It used to include `null` because it *was* the editor's state; it now only ever describes a start.
 - **`NoteOpenRequest` split (2026-10-03, M6 slice 4): its id into `openNote(id | null, intent)`, its one-shot fields into `Intent`.** The gesture lives in `useOpenNote` as `{ id, isDraft, intent }` and is spent when the open ends, which is what makes Forward open the Note plain.
+- **`isDraft` became `isNew`, and `draftId` went (2026-10-03, M6 slice 5).** Every open Note has a Draft (`CONTEXT.md`), so the flag that says a Start opened it is `isNew`; `NoteEditorDialog` takes the URL's `noteId` plus `isNew` in place of `noteId | null` plus `draftId`, and `createNoteDraft({ id, isNew }, deps)` in `src/lib/draft.ts` owns the row under that id.
 
 ## Alternatives considered
 

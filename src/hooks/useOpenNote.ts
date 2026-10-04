@@ -4,8 +4,11 @@ import type { Intent } from '@/lib/intent.ts';
 import type { NoteSearchParams } from '@/lib/note-search-params.ts';
 import { mintId } from '@/lib/rows.ts';
 
-/** The gesture behind the open Note; a draft's id is minted here, before any row exists. */
-export type OpenedNote = { id: string; isDraft: boolean; intent?: Intent };
+/**
+ * The gesture behind the open Note. A Start's Note is new: its id is minted here, before any row
+ * exists.
+ */
+export type OpenedNote = { id: string; isNew: boolean; intent?: Intent };
 
 /**
  * Which note is open, kept in the URL so the platform back button closes it
@@ -36,7 +39,7 @@ export function useOpenNote() {
   const openNote = useCallback(
     (id: string | null, intent?: Intent) => {
       const target = id ?? mintId();
-      setOpened({ id: target, isDraft: id === null, intent });
+      setOpened({ id: target, isNew: id === null, intent });
       void navigate({ to: '.', search: (prev: NoteSearchParams) => ({ ...prev, note: target }) });
     },
     [navigate]
