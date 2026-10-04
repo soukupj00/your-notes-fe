@@ -1,0 +1,114 @@
+# The same pipeline as .gitlab-ci.yml: quality, test, build, then the image (ADR 0006).
+# GitHub mirrors GitLab, so it runs on pushes; the image is built on main and on a v0.x.y tag.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*.*.*"]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check:ci
+      - run: pnpm lint
+      - run: pnpm exec tsc -b --noEmit
+
+  test-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+
+  test-e2e:
+    runs-on: ubuntu-latest
+    # Playwright's own image ships the browsers and their system libraries. Keep its version
+    # in step with @playwright/test in package.json, or the runner asks for other browsers.
+    container: mcr.microsoft.com/playwright:v1.62.0-noble
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:e2e
+      - run: pnpm test:e2e:pwa
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            playwright-report-pwa/
+          retention-days: 7
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 7
+
+  # Builds the image, runs it and asks it for / and a client route, and only then publishes:
+  # `latest` from main, the git tag from a tag. The backend's image builds FROM this one.
+  image:
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    needs: [quality, test-unit, test-e2e, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t "$IMAGE:${{ github.sha }}" .
+      - name: Smoke test
+        run: |
+          docker run -d --name younotes-fe -p 8080:80 "$IMAGE:${{ github.sha }}"
+          for _ in $(seq 1 30); do
+            curl -fs http://localhost:8080/ | grep -q '<title>YouNotes</title>' && break
+            sleep 1
+          done
+          curl -fs http://localhost:8080/settings | grep -q '<title>YouNotes</title>' || { docker logs younotes-fe; exit 1; }
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then tag="${{ github.ref_name }}"; else tag=latest; fi
+          docker tag "$IMAGE:${{ github.sha }}" "$IMAGE:$tag"
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:$tag"
