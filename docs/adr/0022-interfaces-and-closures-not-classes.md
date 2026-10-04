@@ -26,10 +26,10 @@ The question was whether "introduce OOP" meant applying that style's principles 
 
 ## Consequences
 
-- The eleven simple editor extensions become declarations through one helper, in one file, and their tests become one table-driven test.
+- The ten simple editor extensions become declarations through one helper, in one file, and their tests become one table-driven test.
 - The Dexie and memory stores will share their sync algorithms through decide-functions in `syncRows.ts`, which keeps the memory store atomic by being synchronous and keeps Dexie's work inside its transaction.
 - A reader who knows the style of any one seam knows them all; there is no second dialect to learn.
-- The eleven-extension folder rule changes: a folder is for an extension that has more than its declaration (a node view, a coordinator, its own behaviour test), and a one-line declaration lives beside its siblings.
+- The folder rule changes: a folder is for an extension that has more than its declaration (a node view, a coordinator, its own behaviour test), and a one-line declaration lives beside its siblings.
 
 ## Alternatives considered
 

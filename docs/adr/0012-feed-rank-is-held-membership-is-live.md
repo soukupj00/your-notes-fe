@@ -6,13 +6,13 @@
 ## Context
 
 `useNoteFeed` derives the feed inside a `useMemo` over a Dexie `useLiveQuery`, so **any** write to the `notes` table re-runs the comparator and re-orders the wall on the next frame.
-The default sort is `updated desc` (`note-search-params.ts:37`), and `updateNote` bumps `updatedAt` unconditionally (`useNoteActions.ts:82`).
+The default sort is `updated desc` (`note-search-params.ts`), and `updateNote` bumps `updatedAt` unconditionally (`useNoteActions.ts`).
 
 Those two facts together mean the feed re-ranks itself as a direct consequence of the user's own in-place edits.
 This already ships, in two places, and was not noticed because both are easy to misread as intentional:
 
-- **Recolouring a card sends it to the top.** `NoteCard.tsx:166` calls `updateNote(note.id, { color })`.
-- **The wall reflows behind an open editor.** `NoteEditorDialog.tsx:120` autosaves on a debounce, so on desktop the card has moved by the time the modal closes.
+- **Recolouring a card sends it to the top.** `NoteCard.tsx` calls `updateNote(note.id, { color })`.
+- **The wall reflows behind an open editor.** `NoteEditorDialog.tsx` autosaves on a debounce, so on desktop the card has moved by the time the modal closes.
 
 It also blocks a third thing outright.
 Ticking a checkbox on a card ([ADR 0013](./0013-checklist-sinking-is-presentation-not-storage.md)) writes the Body, which sends the card to position 0, slides a different card under the user's thumb, and lands the next tap on the wrong note.
@@ -39,7 +39,7 @@ Rank is recomputed only when the user is not watching:
 3. On `visibilitychange` back to visible, which covers backgrounding the PWA and switching tabs.
 
 **Pinning is the one exception**, and it has to be: DESIGN.md's Direct-Manipulation Rule is written specifically about pinning, and moving the card *is* the action being requested.
-This costs nothing structurally, because `floatPinned` (`useNoteFeed.ts:59`) already runs as a separate partition step from the comparator - the pinned/unpinned split stays live while rank *within* each partition is held.
+This costs nothing structurally, because `floatPinned` (`useNoteFeed.ts`) already runs as a separate partition step from the comparator - the pinned/unpinned split stays live while rank *within* each partition is held.
 
 A Note that is not in the held rank map (newly created, newly restored, newly matching a query) is ranked normally by the comparator, so creation still puts a note at the top instantly.
 "Held" applies to notes already on screen, never to the array as a whole.

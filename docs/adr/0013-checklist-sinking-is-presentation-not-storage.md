@@ -14,7 +14,7 @@ Task 5b shipped sinking as `CheckedSink.ts`, an `appendTransaction` plugin that 
 That works in the Editor and cannot reach the card at all, because the card has no ProseMirror instance.
 It was also gated off by default, with an explicit justification: *"a ranked list of options wants its order left exactly where the user put it, and silently rewriting that order would be the app losing the user's work."*
 
-Separately, the card's checkboxes were made inert with `[&_input]:pointer-events-none` (`NoteCard.tsx:149`), commented as *"a preview's checkboxes are a picture of the note, not a control"*.
+Separately, the card's checkboxes were made inert with `[&_input]:pointer-events-none` (`NoteCard.tsx`), commented as *"a preview's checkboxes are a picture of the note, not a control"*.
 **That does not work.** TipTap's `renderHTML` (`@tiptap/extension-list`) emits `<li data-type="taskItem" data-checked><label><input type="checkbox"><span></span></label><div>…</div></li>`, and clicking the label's `<span>` activates the input through label-for semantics regardless of the input's `pointer-events`.
 So a tap on a card checkbox flipped the box in the DOM, wrote nothing, bubbled to the card, and opened an editor showing the unchanged state.
 The control was not inert; it was broken.
