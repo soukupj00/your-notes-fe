@@ -39,6 +39,15 @@ The Pairing Link the server prints points at port 3000, so open its `/pair#<code
 To try sync on a real phone, the server has to serve this app over `https`.
 The server's README shows how, with `pnpm build` here and Tailscale: [Try it on your phone](https://gitlab.fit.cvut.cz/soukuj26/ni-dip-be/-/blob/main/README.md#try-it-on-your-phone).
 
+## Release
+
+The server's image is built from this repo's image, so this repo is released first.
+
+1. Bump `version` in `package.json` and merge to `main`; CI publishes the image as `latest`.
+2. Tag that commit `v0.x.y` and push the tag; CI builds, smoke-tests and publishes the image under that tag.
+3. Release the server: its [README](https://gitlab.fit.cvut.cz/soukuj26/ni-dip-be/-/blob/main/README.md#release) has the steps.
+   Its image takes whatever this repo's `latest` is when it builds, so tag it only after step 1's pipeline has finished.
+
 ## Storage
 
 The app persists to IndexedDB (via Dexie) by default.
