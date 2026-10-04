@@ -1,16 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { NoteFeed } from '@/components/notes/NoteFeed.tsx';
-import { Skeleton } from '@/components/ui/skeleton.tsx';
+import { Spinner } from '@/components/ui/Spinner.tsx';
 import { useViewMode } from '@/context/viewModeProvider.tsx';
 import { type NoteFeedScope, useNoteFeed } from '@/hooks/data/useNoteFeed.ts';
 import { useNoteSearchState } from '@/hooks/useNoteSearchState.ts';
 import type { Intent } from '@/lib/intent.ts';
-
-// The same `--feed-gap` the real feed spends, so the skeletons the feed
-// replaces are already at the user's density rather than jumping to it.
-const MASONRY_SKELETONS =
-  'grid grid-cols-1 gap-[var(--feed-gap)] min-[22rem]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
-const STACK_SKELETONS = 'grid grid-cols-1 gap-[var(--feed-gap)]';
 
 function emptyKeyFor(scope: NoteFeedScope): string {
   if (scope.state === 'archived') return 'archived';
@@ -29,16 +23,16 @@ export function NoteContent({
   const { notes, loading } = useNoteFeed(scope, search);
   const { viewMode } = useViewMode();
   const { t } = useTranslation();
-  const skeletonLayout = viewMode === 'masonry' ? MASONRY_SKELETONS : STACK_SKELETONS;
 
   if (loading) {
     return (
-      // `role="status"`: the skeletons are decoration, so the wait needs a name
-      // of its own or a screen reader hears nothing at all while the feed loads.
-      <div className={skeletonLayout} role="status" aria-busy aria-label={t('notes.loading')}>
-        {['a', 'b', 'c', 'd', 'e', 'f'].map((k) => (
-          <Skeleton key={k} className="h-32 w-full" />
-        ))}
+      <div
+        className="appear-late flex items-center justify-center gap-2 py-12"
+        role="status"
+        aria-busy
+      >
+        <Spinner className="size-5" />
+        <span>{t('notes.loading')}</span>
       </div>
     );
   }
