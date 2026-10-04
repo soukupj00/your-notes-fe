@@ -33,8 +33,8 @@ import {
   TOUR_STEPS,
   type TourStage,
 } from '@/lib/tour/steps.ts';
-import { noteCardTarget, resolveTourTarget, tourTargetSelector } from '@/lib/tour/targets.ts';
-import { waitFor } from '@/lib/tour/waitFor.ts';
+import { noteCardTarget } from '@/lib/tour/targets.ts';
+import { waitFor, waitForGone, waitForTarget } from '@/lib/tour/waitFor.ts';
 import 'driver.js/dist/driver.css';
 
 /**
@@ -146,13 +146,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
       await setProps([]);
       // The Feed repaints through a live query, so cards outlive their rows by a frame or two, and
       // the scrim has to outlive the repaint or the user watches the Props leave.
-      await waitFor(
-        () =>
-          !purged.some(
-            (id) => document.querySelector(tourTargetSelector(noteCardTarget(id))) !== null
-          ),
-        { label: 'the feed to drop the purged Props' }
-      );
+      await waitForGone(purged.map(noteCardTarget), { label: 'the feed to drop the purged Props' });
     },
     [store, purgeNote, setProps]
   );
@@ -188,9 +182,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         // reads the Tour's own write as the user's and leaves the Prop behind.
         if (id) {
           queueWrite(async () => {
-            await waitFor(() => resolveTourTarget('editorToolbar') === null, {
-              label: 'the editor to close before rebasing',
-            });
+            await waitForGone(['editorToolbar'], { label: 'the editor to close before rebasing' });
             await rebase(id);
           });
         }
@@ -256,9 +248,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
       // The act that produces the target has already run, but the app may still
       // be painting it. A step that never gets one is shown centred with no
       // spotlight rather than dropped - the copy is still worth reading.
-      const element = target
-        ? await waitFor(() => resolveTourTarget(target), { label: tourTargetSelector(target) })
-        : null;
+      const element = target ? await waitForTarget(target) : null;
       driverRef.current?.setConfig(driverConfig(element));
       driverRef.current?.highlight({
         element: element ?? undefined,
@@ -345,8 +335,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
     // The Feed must be on screen before seeding. This also keeps the Tour out of anywhere that
     // never paints one, so this wait's timeout is a normal answer, not a bug.
-    if (!(await waitFor(() => resolveTourTarget('capture'), { label: 'a Feed to start on' })))
-      return;
+    if (!(await waitForTarget('capture', { label: 'a Feed to start on' }))) return;
 
     // Warms the lazy editor chunk while step 1 is read, so step 2 does not wait for it.
     // Un-awaited: a failed preload is no reason to skip the Tour, and `lazy()` reuses this import.

@@ -3,6 +3,10 @@
  * A frame is the right step because what is awaited is usually a rect, true only after layout.
  */
 
+import { resolveTourTarget, type TourTarget, tourTargetSelector } from './targets.ts';
+
+type WaitOptions = { timeout?: number; label?: string };
+
 /**
  * Generous because giving up early cuts a spotlight over nothing, while waiting long is only a
  * pause. Nothing retries, so the budget is only ever spent on a real bug.
@@ -16,7 +20,7 @@ export const TOUR_WAIT_MS = 3000;
  */
 export function waitFor<T>(
   condition: () => T | null | undefined | false,
-  { timeout = TOUR_WAIT_MS, label = 'a DOM condition' }: { timeout?: number; label?: string } = {}
+  { timeout = TOUR_WAIT_MS, label = 'a DOM condition' }: WaitOptions = {}
 ): Promise<T | null> {
   return new Promise((resolve) => {
     const deadline = Date.now() + timeout;
@@ -39,4 +43,23 @@ export function waitFor<T>(
 
     check();
   });
+}
+
+/** The target once it is on screen; a spent budget names its selector unless given a label. */
+export function waitForTarget(
+  target: TourTarget,
+  { timeout, label = tourTargetSelector(target) }: WaitOptions = {}
+): Promise<Element | null> {
+  return waitFor(() => resolveTourTarget(target), { timeout, label });
+}
+
+/**
+ * Resolves once none of the targets is on screen. What leaves has an exit animation or a live
+ * query behind it, so "gone" is read from the document, not from having asked.
+ */
+export async function waitForGone(
+  targets: TourTarget[],
+  options: WaitOptions & { label: string }
+): Promise<void> {
+  await waitFor(() => targets.every((target) => resolveTourTarget(target) === null), options);
 }

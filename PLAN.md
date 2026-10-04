@@ -132,7 +132,7 @@ Deviations: `sharedBlobUrl` takes the fetched page rather than the token, becaus
   Reporting the answer waits for M5 because this milestone gives that same area a sync status (last synced, queued changes, this device's account), and "is my data safe here" is one question best answered in one block.
 - **Out of scope, deliberately:** end-to-end encryption (threat model documented instead - see ADR 0018), sharing a Note between Accounts, and any email/SMTP.
 - **Known gaps:**
-  - `src/components/editor/editor.tsx` came back under the 500-line limit in the comment cleanup (457 lines); `src/context/TourProvider.tsx` is the one file over it now (506), which M6 slice 6 trims.
+  - `src/components/editor/editor.tsx` came back under the 500-line limit in the comment cleanup (457 lines); `src/context/TourProvider.tsx` was the last file over it (506) until M6 slice 6 trimmed it to 495.
 
 ✅ **Fixes from the backend rework's end-to-end run (2026-10-01)** ([plan](./docs/superpowers/plans/2026-10-01-pwa-offline-session-a11y-fixes.md)).
 Deviations: the font runtime route is limited to `/assets/`; the Card's open button is an invisible full-size button, not `sr-only`; the crash heading takes focus on mount.
@@ -164,7 +164,9 @@ Near-identical tests collapse with the units they test: one table-driven test, n
    Fixed by construction, pinned: a rejected write no longer fails every later write and the close (the old save chain recovered only on the `ensureNoteId` path); a Draft's label pills survive a remount of the bar (the width crossing `sm`), where the bar's null-seeded copy of the id lost them.
    Harmless changes: a `ShareButton` on a Draft that has its row reads the Share list on a remount or a sign-in change, so the mark survives a rotation where the old null gate lost it (the ticketed GET-after-mint race opens for a Draft in that window); a label on an existing Note waits behind an in-flight autosave, as colour, pin, Share and Attachments already did; a new Draft opens a live labels query on its id instead of an empty one.
    Deviations: the factory takes `{ id, isNew }` rather than a bare id, because an existing Note's Draft opens saved; `saved` is exposed for the autosave status skip and the Share gate; `close` takes `{ keepEmpty }` so the Draft knows nothing about Reminders; `useNoteReminder(draft, content, setReminder)` reads the typed text through the same `useLatest` getter the Draft's deps get; `requestPersistentStorage` stays on the `save` path only; `src/test/draft.ts` builds a real Draft for component tests; `NoteEditorDialog.test.tsx` split into the saving file (440 lines) and `NoteEditorDialog.opening.test.tsx` (195), closing its over-500 ticket, with the attachment-only pair and the colour and pin pair as tables.
-6. **Tour trim** (`refactor/tour-waits`) - `lib/tour` exports the waits `TourProvider` re-implements, bringing it under 500 lines. No controller extraction.
+6. ✅ **Tour trim** (`refactor/tour-waits`) - `lib/tour/waitFor.ts` exports `waitForTarget` and `waitForGone`, and `TourProvider` and `steps.ts` share them, which brings the provider to 495 lines.
+   No controller extraction.
+   Harmless change: the sweep's wait for the purged Props' cards reads "on screen" through `resolveTourTarget` like every other Tour wait, where it asked `document.querySelector`; `NoteFeed` mounts each card once and a leaving card only fades, so it keeps its rect until it unmounts and the two agree in the browser.
 
 **After the user test, re-grilled then:** the shared sync algorithms for both Local Stores (read, decide, write; fixes the Revision drift below), seam-level `SignedOut`/`Unreachable` on `Remote` so `sync/loop.ts` stops importing the HTTP error, the sync surface split off `LocalStore`, and folding theme, view mode and sidebar state into `PreferencesProvider` with one provider stack shared with the test renderer.
 
@@ -176,6 +178,7 @@ Near-identical tests collapse with the units they test: one table-driven test, n
 - `/labels` create, merge and delete have no error path.
 - Backups are named `ruflo-backup-...` while the app calls itself YouNotes.
 - Four comments in `src/test/fakeServer.ts` and `fakeSync.ts` cite backend paths that no longer exist; `fakeSync.decide` is a hand copy of the backend's `decide.ts` that `contract:pull` could vendor.
+- `NoteFeed`'s fallback layout for a browser without `ResizeObserver` stamps no `data-note-feed-id`, so there the Tour's step 3 finds no card and the sweep's wait is trivially true; `targets.ts` says both layouts stamp it.
 - Docs drift outside any slice's files (root `CLAUDE.md` provider list, `src/context/CLAUDE.md` on `useTheme` and `useAccount` readers, the per-area `PLAN.md` items naming deleted code) gets one pass after slice 6.
 - A cloned Attachment keeps its source's `thumbnailId`, so two rows name one server blob; this covers the editor's paste clone and the Conflicted Copy, and the impact depends on how the backend sweeps blobs.
 - `notes.update` and `tags.update` take a change typed `Partial<T>`, which can return a new `id`; Dexie then writes a second row while memory keeps the old key.
