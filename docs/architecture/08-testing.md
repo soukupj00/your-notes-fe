@@ -1,7 +1,7 @@
 # Testing strategy
 
-Consolidates what [ADR 0003](../adr/0003-testing-stack-vitest-and-playwright.md), the root `CLAUDE.md` methodology section, `PLAN.md` and the M5 design each hold a piece of.
-Current scale: 900+ Vitest tests across ~130 files, plus Playwright E2E at two breakpoints.
+Consolidates what [ADR 0003](../adr/0003-testing-stack-vitest-and-playwright.md), the root `CLAUDE.md` methodology section and `PLAN.md` each hold a piece of.
+Current scale: 1,300+ Vitest tests across about 165 files, plus Playwright E2E at two breakpoints.
 
 ## Methodology: pragmatic TDD
 
@@ -16,10 +16,11 @@ Red → green → refactor, applied *per layer* rather than dogmatically:
 | Level | Runner / environment | What it verifies | Examples |
 |---|---|---|---|
 | Pure logic | Vitest (node/jsdom) | `src/lib`: search params, backup zip round-trip, color tokens, feed rank, checklist sinking, Tour rules (dependency-free by design) | `note-search-params.test.ts`, `backup.test.ts`, `lib/tour/*` |
-| Data layer | Vitest + `fake-indexeddb` | Real Dexie code paths: CRUD, cascade delete, orphan GC, and **migrations** (a throwaway-named `NotesDB` per test) | `lifecycle.migration.test.ts`, `attachments.roundtrip.test.ts` |
+| Data layer | Vitest + `fake-indexeddb` | One contract suite run against both Local Store implementations; real Dexie code paths: CRUD, cascade delete, orphan GC, and **migrations** (a throwaway-named `NotesDB` per test) | `lifecycle.migration.test.ts`, `attachments.roundtrip.test.ts` |
 | Hooks | Vitest + RTL | Live queries react to mutations; mutations are idempotent and transactional | `src/hooks/data/*` |
 | Component behavior | Vitest + RTL + user-event | Interactions, contracts, a11y semantics; roles and labels, not pixels | editor, cards, nav, settings tests |
 | Cross-cutting gates | Vitest | Consistency no single feature owns: i18n bundles against key drift, safe-area token pairing | `i18n.test.ts`, `globals.test.ts` |
+| Sync | Vitest + a fake server built from the vendored contract | Push, pull, conflicts, resync, adopt and erase, deterministically | `src/sync/*.test.ts` |
 | End-to-end | Playwright (`e2e/`), `desktop` + `mobile` projects against `pnpm dev` | Real-browser flows jsdom cannot see | `onboarding.spec.ts` (the Tour) |
 
 Vitest sees only `src/**`; Playwright's `testDir` is `e2e/`; neither runner sees the other's files.
@@ -36,17 +37,17 @@ These are recorded because each cost a debugging session:
 ## What is deliberately not automated
 
 - **Visual/pixel verification is manual.** The nightshift identity is specified by `DESIGN.md` measurements, and layout is checked by eye at both breakpoints; automated pixel tests were judged brittle for their value.
-- **PWA install and offline behavior** are verified manually on real devices (an emulator exposes neither a notch nor real install flows).
-- **Genuine two-device sync (M5)** stays manual plus user testing: a cross-repo Playwright pipeline would cost more than it catches.
+- **PWA install** is verified manually on real devices (an emulator exposes neither a notch nor real install flows); the service worker and offline start have their own Playwright run against the production build (`pnpm test:e2e:pwa`).
+- **Genuine two-device sync** stays manual plus user testing: a cross-repo Playwright pipeline would cost more than it catches.
 
 ## CI
 
 GitLab pipeline ([ADR 0006](../adr/0006-ci-cd-and-container-image-distribution.md)): `quality` (Biome + typecheck) → `test` (Vitest, Playwright) → `build` → `publish`, with GitLab's SAST and secret-detection templates kept.
 Pre-commit (husky + lint-staged) applies Biome safe fixes and blocks on the rest.
 
-## M5 plan: testing sync without the server
+## Testing sync without the server
 
-The client sync engine will be tested in this repo against a **fake server built from the vendored Zod contract**, making the hard paths deterministic: conflict → Conflicted Copy, too-old-cursor full resync, offline queue drain, adopt and erase.
+The client sync engine is tested in this repo against a **fake server built from the vendored Zod contract**, making the hard paths deterministic: conflict → Conflicted Copy, too-old-cursor full resync, offline queue drain, adopt and erase.
 The contract file doubles as the drift alarm: a backend change that breaks the client fails validation in tests before it fails in production.
 The backend tests itself in its own repository.
 

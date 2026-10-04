@@ -1,80 +1,115 @@
-# CLAUDE.md — `src/context` (React providers)
+# CLAUDE.md - `src/context` (React providers)
 
-App-wide React context providers. See [`PLAN.md`](./PLAN.md) for upcoming work.
+App-wide providers.
+See [`PLAN.md`](./PLAN.md) for what is left.
 
-> **`NotesProvider` is gone** (M4 Slice 2). The app-wide search text it held now lives in the URL as typed TanStack search params, read and written through `useNoteSearchState()` (`src/hooks/useNoteSearchState.ts`); the feed itself is `useNoteFeed(scope, search)` per route.
-> A context would have made the same state unshareable and invisible to the back button.
+## Where each one sits
+
+`App.tsx` composes, outermost first: `LocalStoreProvider` (in `src/data`), `ThemeProvider`, the error boundary, `PreferencesProvider`, `AppMotionProvider`, `PwaInstallProvider`, `TooltipProvider`, `ViewModeProvider`, `AccountProvider`, then the router.
+`routes/__root.tsx` adds `TourProvider` around `SyncProvider` around the nav shell, because both need the router:
+
+- The Tour navigates, marks the whole body inert and portals past the app, so it sits above the shell.
+- Sync shows toasts that link into the app, and it stands still while the Tour runs, so it sits inside the Tour.
+
+`/share/$token` gets neither (root `CLAUDE.md`, Routing).
+
+Search text and the open Note are not here: they live in the URL (root `CLAUDE.md`, Data layer).
+
+Which hooks throw outside their provider is deliberate.
+`useLocalStore`, `usePreferences`, `useViewMode` and `useTour` throw, because a caller without them would silently do nothing.
+`useAccount`, `useSync`, `useTourActive`, `usePwaInstall` and `useTheme` answer a neutral default ("no server", "not syncing", "no Tour", "cannot install", `system`), because their callers are components that tests mount alone.
 
 ## `AccountProvider.tsx`
 
-Whether this Device is signed in to a Self-hosted Server (ADR 0018; M5 slice 3).
+Whether this Device is signed in to a Self-hosted Server ([ADR 0018](../../docs/adr/0018-the-server-serves-the-pwa.md)).
 
-- It asks `AccountService.session()` **once at startup**. The session is an `HttpOnly` cookie, so there is nothing to read locally, and the server that served the app is the server, so there is no URL to configure.
-- `status` is `checking`, `unavailable` (nothing answered: a static host, offline, or no service), `signed-out` or `signed-in`. **Nothing in the app waits on it**: sync is opt-in, so every screen renders the same whatever it hears. Only the Account, Devices and Members sections of Settings and `/pair` read it.
+- It asks `AccountService.session()` once at startup.
+  The session is an `HttpOnly` cookie, so there is nothing to read locally, and the server that served the app is the server, so there is no URL to configure.
+- `status` is `checking`, `unavailable` (nothing answered: a static host, offline, no service), `signed-out` or `signed-in`.
+  **Nothing in the app waits on it**: sync is opt-in, so every screen renders the same whatever it hears.
+  Its readers are the account surfaces: the Account, Devices, Members and Shares sections of Settings, `/pair`, the Share and Pairing Link buttons, sign-out, and `SyncProvider`.
 - `setSession` takes what a sign-in, pairing or sign-out just answered, so no second request is needed.
-- `useAccount()` answers "no server" outside a provider instead of throwing, like `useTourActive()`: its callers are Settings sections that tests mount alone.
-- Nothing answered (opened offline, or before the server was up): it asks again on `online` and when the page becomes visible, so the app starts syncing without a restart.
+- When nothing answered, it asks again on `online` and when the page becomes visible, so the app starts syncing without a restart.
   A signed-in Device is not re-asked; if the server forgets its Session, `SyncProvider` sets it signed out.
-  The startup ask is a `useAsyncEffect` and the re-ask a `useEffect` whose cleanup is its listeners', and both write the answer's status and session through one `apply`.
-- Composed in `App.tsx` around the router; `main.tsx` builds one HAL client and hands it in as both `service` and `remote` (the latter for `SyncProvider`).
+- `main.tsx` builds one HAL client and hands it in as both `service` and `remote`.
 
 ## `SyncProvider.tsx`
 
-Runs Sync while this Device is signed in (M5 slice 4, [04-sync.md](../../docs/architecture/04-sync.md)).
-What happens in a run is `src/sync/engine.ts`; when a run happens is `src/sync/loop.ts`; both are plain TypeScript and tested against `src/test/fakeServer.ts`, which carries the backend's sync rules.
+Runs Sync while this Device is signed in ([04-sync.md](../../docs/architecture/04-sync.md)).
+What happens in a run is `src/sync/engine.ts`; when a run happens is `src/sync/loop.ts`.
+Both are plain TypeScript, tested against `src/test/fakeServer.ts`.
 
-- **Mounted in `routes/__root.tsx`, inside `TourProvider`**, not in `App.tsx`: two of its toasts link into the app ("N conflicts kept as copies" to the Conflicts Tag, a lost Session to Settings), so it needs the router.
-  The `Remote` reaches it through `AccountProvider`, which `main.tsx` hands both halves of the one HAL client.
-- **It stands still while the Tour runs** (`useTourActive()`), and the engine leaves the Tour's Props out of every push, so a Prop never reaches the server even after a reload mid-Tour.
 - On a session it first **adopts** (a new Account owes the whole library), then starts the loop; on sign-out or a change of Account it stops it.
-- A `401` from a run (the Device was removed elsewhere, or an older server backup was restored) stops the loop and calls `setSession(null)`, with one toast linking to Settings.
+- It stands still while the Tour runs, and the engine leaves the Tour's Props out of every push, so a Prop never reaches the server.
+- A `401` from a run (the Device was removed elsewhere) stops the loop and signs the Device out with one toast.
   Nothing is erased: owed rows wait for the next sign-in.
-- **Attachment bytes** (M5 slice 5) move at the end of each run (`src/sync/attachments.ts`): thumbnails up first, then blobs, every missing thumbnail down.
-  Full bytes come down on a tap through `download(id)`, or after every run while the `keepEverything` Preference is on (turning it on starts a run).
-  A blob the server refuses for its size is one toast, "<name> is too large to sync", and is never retried.
-- Exposes `{ active, status, lastSyncedAt, pending, syncNow, stop, download }`. `pending` is the store's live count of what the server is owed, so it is right signed out too; `stop()` waits for a run in flight, which is what makes erasing safe.
-- `useSync()` answers "not syncing" outside a provider, like `useAccount()`.
-- Sign-out lives in `components/account/SignOutButton.tsx`: refused while `pending > 0` (offering Sync now and a Backup), otherwise `DELETE /api/session`, `stop()`, then `store.clear()`.
+- **Attachment bytes** move at the end of each run (`src/sync/attachments.ts`): thumbnails up first, then blobs, every missing thumbnail down.
+  Full bytes come down on a tap (`download(id)`), or after every run while the `keepEverything` Preference is on.
+  A blob the server refuses for its size is one toast and is never retried.
+- It exposes `{ active, status, lastSyncedAt, pending, syncNow, stop, download }`.
+  `pending` is the store's live count of what the server is owed, so it is right signed out too.
+  `stop()` waits for a run in flight, which is what makes erasing safe.
+- Sign-out (`components/account/SignOutButton.tsx`) is refused while `pending > 0`, offering Sync now and a Backup; otherwise it ends the Session, stops the loop and clears the store.
+
+```mermaid
+sequenceDiagram
+  participant L as loop.ts
+  participant E as engine.ts
+  participant S as LocalStore
+  participant R as Remote
+  L->>E: run (at start, after a local edit, on online, on becoming visible, on a slow poll)
+  E->>S: read the owed rows
+  E->>R: push them
+  R-->>E: outcomes (accepted, or the server's row on a conflict)
+  E->>S: apply outcomes, a lost edit becomes a Conflicted Copy
+  E->>R: pull the change feed from the stored cursor
+  R-->>E: pages of rows and Tombstones
+  E->>S: applyPage, then store the new cursor
+  E->>R: Attachment bytes up and thumbnails down
+```
 
 ## `PreferencesProvider.tsx`
 
-User Preferences, persisted as one Zod-validated blob in `localStorage` under `PREFERENCES_STORAGE_KEY` ([ADR 0020](../../docs/adr/0020-the-local-store-seam.md); `src/data/dexie/legacyPreferences.ts`, which owns the one-shot migration off the old Dexie row, imports the key from here rather than the other way round - nothing outside `src/data` may import from `src/data/dexie/`).
+User Preferences, one Zod-validated blob in `localStorage` ([ADR 0020](../../docs/adr/0020-the-local-store-seam.md)).
 
-- `localStorage`, not the Local Store: Preferences are a Device fact (CONTEXT.md), not something M5 syncs, and it is read synchronously so the first render already has the user's density and motion choice - no hydration step, no flash of defaults.
-- `preferencesSchema` owns the shape and every default; `PREFERENCES_VERSION` versions the blob independently, so a new preference is a code-only change.
-- **Anything unreadable yields defaults** — corrupt value, invalid field, or an unknown `version`. A failed read deliberately leaves the bad blob on disk (the next write replaces it) so a read can never destroy data.
-- `setPreference(key, value)` does a read-modify-write against `localStorage` itself (not React state), re-stamps the current `version`, then updates state. Still `async` so no caller had to change when it stopped being a Dexie transaction.
-- A `storage` event (another tab writing the same key) is the only other way `preferences` changes; the provider listens for it and re-reads.
-- **`tourProps` used to live here and does not any more.** The Tour's Prop baselines are store bookkeeping, not a Preference, and now live in the Local Store's `meta` under `TOUR_PROPS_META_KEY` - see `src/lib/tour/props.ts` (`readProps`/`writeProps`).
-- `usePreferences()` returns `{ preferences, setPreference }` and throws outside the provider.
+- `localStorage`, not the Local Store: Preferences are a Device fact that does not sync, and a synchronous read means the first render already has the user's density and motion choice.
+- `preferencesSchema` owns the shape and every default, so a new Preference is a code-only change; the blob is versioned on its own.
+- **Anything unreadable yields defaults**, and a failed read leaves the bad blob on disk, so a read can never destroy data.
+- `setPreference(key, value)` reads, modifies and writes against `localStorage` itself, not React state.
+- A `storage` event from another tab is the only other way `preferences` changes.
+- The Tour's Prop baselines are not a Preference; they live in the Local Store's `meta` (`src/lib/tour/props.ts`).
 
 ## `TourProvider.tsx`
 
-The onboarding Tour's lifecycle ([ADR 0015](../../docs/adr/0015-the-tour-drives-the-app-on-disposable-props.md)); everything it *decides* is in [`src/lib/tour/`](../lib/tour/) and tested there.
+The onboarding Tour's lifecycle ([ADR 0015](../../docs/adr/0015-the-tour-drives-the-app-on-disposable-props.md)); everything it decides is in [`src/lib/tour/`](../lib/tour/) and tested there.
+The rules of the Tour are in the root `CLAUDE.md`, The Tour.
 
-- **It is mounted in `routes/__root.tsx`, not `App.tsx`** — unlike every other provider. The Tour navigates, so it has to be inside `RouterProvider`; and it marks the whole body inert and portals past the app, so it belongs above `Layout` rather than in it.
-- **It owns the startup sweep too**, not `__root.tsx`. The sweep and the seed read and write the same `meta` list (`src/lib/tour/props.ts`), and running them from two components races a fresh seed against the old list's purge.
-- The startup effect reads the Props once via `readProps(store)`, then sweeps and auto-starts (`!onboardingSeenAt && on the Feed`) once the Feed has actually painted (a `waitFor` on the `capture` target - also what keeps the Tour out of every jsdom test that renders a route). **The ref guard that stops it running twice is only set once that read lands**, not before: Preferences (and now Props) are read eagerly on mount, so this effect's first run is the initial mount, which React StrictMode double-invokes in dev - marking the guard up front let the first invocation's continuation get cancelled by its own cleanup while the guard silently blocked the second, real invocation from ever running it.
-- It **marks its own navigations**; any it did not ask for destroys the Tour and takes the Props with it. Several acts *are* navigations (opening a note is a `?note=` search param since ADR 0014), so without the marking the Tour would destroy itself on its own second step.
-- **Every navigation it makes passes `resetScroll: false`**, and that is load-bearing: TanStack Router scrolls to the top on navigate (`resetScroll ?? true`), and that lands after the spotlight has asked for its target.
-  Traced on a Pixel 7: driver called `scrollIntoView({ behavior: 'smooth', block: 'start' })` at 2637ms and the router called `scrollTo({ top: 0 })` at 2648ms, so the Settings step spotlit a block 930px below the fold.
-  Instant scroll would lose the same race, because the router's call simply comes second.
-  `openNote` needs it too: it returns to the Feed, and the next step points at a card there that a reset to the top can push off-screen.
-- Two hooks, and the difference is deliberate: `useTour()` throws outside the provider (its caller is the Replay row, which must not silently do nothing), `useTourActive()` returns `false` (its callers are ordinary components mounted alone in tests, to which "no provider" and "no Tour" mean the same thing).
-- `driver.js` is the spotlight, and it is held at arm's length: it measures a rect, cuts a hole and places a box, and everything read or pressed is `components/tour/TourPopover.tsx` portalled into its element. Driver **measures that box exactly once**, so the provider waits for `data-tour-step` to match and for `document.fonts.ready` before handing it over.
-- Two workarounds live here and both have a comment saying why: the popover host carries `aria-live="off"` (a modal Radix dialog would otherwise `aria-hidden` it), and it swallows `pointerdown`/`focusin` (Radix's dismissable layers would otherwise read a press on Next as a click outside the note, and close it).
+- **It owns the startup sweep**, not `__root.tsx`: the sweep and the seed read and write the same list of Props, and run from two components they race.
+- The startup effect reads the Props, sweeps, and auto-starts once the Feed has painted.
+  **The ref guard that stops it running twice is set only once that read lands.**
+  React StrictMode double-invokes the first mount: with the guard set up front, the first run was cancelled by its own cleanup while the guard blocked the second.
+- It **marks its own navigations**; any it did not ask for ends the Tour and takes the Props with it.
+  Several acts are navigations (opening a Note is a search param), so without the marking the Tour would end itself on step 2.
+- **Every navigation it makes passes `resetScroll: false`**, and that is load-bearing.
+  The router scrolls to the top on navigate, and that call lands after the spotlight has scrolled its target into view, which leaves the spotlight over a block below the fold.
+  Instant scroll loses the same race, because the router's call simply comes second.
+- `driver.js` only measures a rect, cuts a hole and places a box; everything read or pressed is `components/tour/TourPopover.tsx`, portalled into it.
+  Driver measures that box once, so the provider waits for the popover to render the step and for the fonts before handing it over.
+- Two workarounds, both commented in the code: the popover host carries `aria-live="off"` so a modal dialog does not hide it from the accessibility tree, and it swallows `pointerdown` and `focusin` so Radix does not read a press on Next as a click outside the open Note.
 
 ## `themeProvider.tsx`
 
-Custom theme provider (**not** `next-themes`, even though that package is installed).
+A custom theme provider (not `next-themes`).
 
-- Theme type: `'dark' | 'light' | 'system'`.
-- Persists the choice to `localStorage` under `storageKey` (default `vite-ui-theme`); `App.tsx` uses `defaultTheme="dark"`.
-- On change, toggles the `light`/`dark` class on `document.documentElement`; `system` resolves via `window.matchMedia('(prefers-color-scheme: dark)')`.
-- `paintSystemChrome` then writes the resolved `--background` into `<meta name="theme-color">`, the colour of Android's status bar (and, below Android 15, its button bar) and of a browser tab's toolbar.
-  Without it the platform only sees the manifest's colour, which is stamped at build time and cannot follow a runtime switch.
-  It is written from JS rather than as two `media="(prefers-color-scheme: …)"` tags in `index.html`, because those follow the OS and this app's theme is an explicit choice that may disagree with it.
-  The colour is read from the token rather than restated as a literal, so `globals.css` stays the single source.
-  It is always the app's frame, never a note's tint: a tint would have to be unset on every path out of the editor, and the one path that forgot would leave the whole app wearing it.
-- Exposes `{ theme, setTheme }` via the `useTheme()` hook (throws outside the provider).
-- The actual color values are the OKLCH custom properties in `src/styles/globals.css`, which is the single live token source for both themes (the old `src/themes.ts` duplicate was deleted in M4 Slice 4).
+- The theme is `dark`, `light` or `system`, persisted under its own `localStorage` key; `App.tsx` defaults to dark.
+- On change it toggles the `light` or `dark` class on `<html>`, then writes the resolved `--background` into `<meta name="theme-color">`, which colours Android's status bar and a browser tab's toolbar.
+  It is written from JS because the app's theme is an explicit choice that may disagree with the OS, which is all a media-query `<meta>` can follow.
+  It is always the app's frame, never a Note's tint: a tint would have to be unset on every path out of the editor.
+- The colour values are the OKLCH tokens in `src/styles/globals.css`.
+
+## The small ones
+
+- `viewModeProvider.tsx`: the Feed's layout, Masonry or Stack, kept under its own `localStorage` key.
+- `motionProvider.tsx`: makes the reduced-motion Preference authoritative for the Motion library and lazy-loads its features.
+  Presence animations still need an explicit zero duration, because Motion keeps opacity.
+- `PwaInstallProvider.tsx`: captures Chromium's one-shot install prompt so Settings can offer Install later; `canInstall` is false where the browser has no such prompt or the app is already installed.

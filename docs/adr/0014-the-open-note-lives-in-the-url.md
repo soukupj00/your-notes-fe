@@ -14,7 +14,7 @@ Three consequences, in descending order of how much they matter.
 Below `sm:` the editor is not a modal at all - `NoteEditorDialog.tsx` renders it `top-0 left-0 h-[100dvh] w-full max-w-full rounded-none`, a full-screen sheet covering the whole app including the topbar.
 It looks exactly like a page, so on Android the back gesture is the obvious way out of it.
 What that gesture actually did was run the router back, navigating the feed out from under the sheet.
-The app is `display: 'standalone'` (`vite.config.ts:31`), so an installed user has no browser chrome to correct the mistake with.
+The app is `display: 'standalone'` (`vite.config.ts`), so an installed user has no browser chrome to correct the mistake with.
 
 **A note could not be linked to.**
 Every other piece of feed state had already moved into the URL in M4 slice 2 - `q`, `sort`, `dir`, `tags` - on the reasoning recorded in `CLAUDE.md`: *"a searched feed is now shareable, refresh-proof, and steppable with the back button."*

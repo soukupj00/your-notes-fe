@@ -1,7 +1,7 @@
 # Evaluation: user-testing plan
 
 > **Status: DRAFT.**
-> The brief mandates testing with users ("otestujte s uživateli"); M5 slice 5 schedules it; nothing else specifies it yet.
+> The brief mandates testing with users ("otestujte s uživateli"); it is the step after the release; nothing else specifies it yet.
 > This document proposes a methodology; the **open questions at the end need souki's decisions** before it is a plan.
 
 ## Goals
@@ -40,7 +40,7 @@ Each goal maps to one audience from `PRODUCT.md`: goals 1 and 3 to the household
 3. Export a backup; restore it; say aloud what they believe just happened.
 4. Revoke a "lost" device from Settings.
 
-### Session C - sync comprehension (both archetypes, after M5 slice 3)
+### Session C - sync comprehension (both archetypes)
 
 1. Edit the same note on two devices with one offline; reconnect; find and resolve the Conflicted Copy.
    Success is the participant explaining in their own words which version is where, and deleting the right one without fear.
@@ -48,8 +48,8 @@ Each goal maps to one audience from `PRODUCT.md`: goals 1 and 3 to the household
 
 ## Schedule and iteration
 
-Two rounds fit the M5 plan: a **pilot round** (2 participants, Session A only) as soon as slice 3 lands, to shake out task wording and instrument the observation sheet; the **main round** during slice 5, when setup docs exist for Session B.
-Findings feed slice 5's polish scope directly; the paper reports both rounds and what changed between them.
+Two rounds: a **pilot round** (2 participants, Session A only), to shake out task wording and instrument the observation sheet; then the **main round**, with the setup guide for Session B.
+Findings feed the polish that follows; the paper reports both rounds and what changed between them.
 
 ## Open questions (need decisions)
 

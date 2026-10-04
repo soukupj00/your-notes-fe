@@ -1,6 +1,6 @@
 # Sync
 
-The M5 synchronization design.
+How Sync works, as designed in M5 and built.
 Decided 2026-08-12; the conflict model is [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicted-copies.md), the deployment/auth frame is [ADR 0018](../adr/0018-the-server-serves-the-pwa.md) ([05-server.md](./05-server.md)).
 Glossary terms (Revision, Conflicted Copy, Tombstone, Offline Mutation Queue) are canonical in [`CONTEXT.md`](../../CONTEXT.md).
 
@@ -27,7 +27,7 @@ The honest cost of the model: concurrent edits to one Note lose no text but prod
 | Note (incl. its attachment *metadata*) | Yes | The aggregate; an Attachment belongs to exactly one Note and has no independent life |
 | Tag | Yes | Independent life by definition |
 | NoteTag link | Yes | Deliberately bought granularity: typing into a note on the laptop while tapping "+ Label" on the phone must not produce a duplicate card - labelling must never conflict with writing |
-| Attachment bytes | No | Write-once by id (the one rewriter, Excalidraw save, is refactored to mint a new id), so transfer is an idempotent `PUT` with no conflict rule possible |
+| Attachment bytes | No | Write-once by id (the one rewriter, Excalidraw save, mints a new id), so transfer is an idempotent `PUT` with no conflict rule possible |
 
 ### Deletions: Tombstones
 
@@ -40,7 +40,7 @@ A cursor older than the tombstone window, or newer than the server's Sequence (a
 ## The Offline Mutation Queue is a set, not a log
 
 What the server is owed is the *current state* of each changed thing, not the history of how it got there: ten offline edits to one Note owe one push.
-Implementation follows: every mutation marks its row dirty inside the transaction that already writes it, and "the Queue" is `where('dirty')` - a way of reading the data, not a second store that could disagree with it.
+Implementation follows: every mutation marks its row dirty inside the transaction that already writes it, and "the Queue" is the set of dirty rows - a way of reading the data, not a second store that could disagree with it.
 This replaced an earlier plan for an ordered intent log, which was both more work and less robust (a crash can leave a log disagreeing with the rows).
 
 ## The loop
@@ -89,8 +89,8 @@ The other way round - this Device edited a Note another Device purged - the edit
 
 - Bytes are immutable by id, so upload is "PUT if the server lacks this id" - idempotent, retryable, no conflict rule.
 - **Previews sync eagerly** (tens of KB; the Feed is instantly correct on a new device); **full bytes on demand**, with a "keep everything on this device" preference.
-- Attachment node views gain a third state, "known but not downloaded", rendering a placeholder instead of a broken element.
-- As built (M5 slice 5): a Preview is its own blob, named by the Attachment's `thumbnailId` on the Note, so it syncs ahead of the full bytes.
+- Attachment node views have a third state, "known but not downloaded", rendering a placeholder instead of a broken element.
+- A Preview is its own blob, named by the Attachment's `thumbnailId` on the Note, so it syncs ahead of the full bytes.
   The Device remembers which blob ids the server holds instead of asking with `HEAD`; a lost record costs one repeat `PUT`, which the server answers 204 without reading the body.
   Uploads run after a run's pull, thumbnails before full bytes, and only for Notes the server knows.
   A `413` is recorded on the row and reported once; nothing retries it.
@@ -102,7 +102,7 @@ The other way round - this Device edited a Note another Device purged - the edit
 
 - **Adopt on first sign-in**: a never-attached database bulk-marks every row dirty and pushes it (UUIDs cannot collide).
 - **Erase on sign-out**: full local wipe (the server holds everything; prevents the next user of a shared laptop adopting someone else's Notes), blocked while anything is dirty and offering the zip backup first.
-- Per-entity sync state (dirty / synced / conflicted) is exposed through the data hooks; the editor's "Saved" keeps meaning *saved locally*, shown separately, so the local-first guarantee is never conflated with sync.
+- The editor's "Saved" means *saved locally*; sync state is shown separately, as one pending count in Settings, so the local-first guarantee is never conflated with sync.
 
 ## Re-evaluated 2026-08-30
 
@@ -116,7 +116,7 @@ Five amendments came out of it:
    Per-resource `PUT` with `If-Match` is later work.
 3. The change feed has a per-Account sequence distinct from per-row Revisions; the `_links.next` cursor and the SSE event id are that sequence.
 4. The Background Sync API is a Chromium-only enhancement (no Safari support at all); the dirty set retried on `online` and on open is the guarantee everywhere. Web Push is rejected on the privacy line (a third-party relay).
-5. Ids stay UUIDv4; UUIDv7 was considered for index locality and not adopted.
+5. Ids stay random UUIDs; UUIDv7 was considered for index locality and not adopted.
 
 ## Alternatives rejected (thesis material)
 

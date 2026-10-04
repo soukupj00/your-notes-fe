@@ -18,7 +18,7 @@ A product constraint shapes the whole list: **no external network requests at ru
 | Technology | Role | Rationale |
 |---|---|---|
 | TanStack Router | File-based routing | Chosen over React Router for **typed search params** - the URL is the app's state model, so params being first-class and validated decided it ([ADR 0008](../adr/0008-tanstack-router-over-react-router.md)); `routeTree.gen.ts` generated and committed |
-| Zod 4 | Runtime validation | URL params, the preferences blob, backup manifests (`z.looseObject` so unknown future fields survive a round-trip), and in M5 every server response at the boundary |
+| Zod 4 | Runtime validation | URL params, the preferences blob, backup manifests (`z.looseObject` so unknown future fields survive a round-trip), and every server response at the boundary |
 
 There is no client-state library: Dexie live queries + URL params + small contexts cover it (see [01-architecture.md](./01-architecture.md)).
 
@@ -49,7 +49,7 @@ There is no client-state library: Dexie live queries + URL params + small contex
 | lucide-react | Icons | Via a string-key registry (`icons.ts`), never imported directly into feature code |
 | @dnd-kit/* | Drag and drop | Toolbar customisation ordering; keyboard-accessible |
 | @fontsource-variable/* (Bricolage Grotesque, Work Sans) | Typography | Self-hosted fonts - the no-CDN constraint made `@fontsource` mandatory |
-| sonner | Toasts | Undo affordances (delete, conflict notices in M5) |
+| sonner | Toasts | Undo affordances (delete, conflict notices) |
 | fuse.js | Fuzzy search | Ranked in-memory search over the feed; no server, no index to maintain |
 | class-variance-authority, clsx, tailwind-merge | Class composition | shadcn idiom |
 | react-hotkeys-hook | Shortcuts | `mod+K` etc.; shortcuts shown only to Fine pointers ([ADR 0016](../adr/0016-width-decides-layout-pointer-decides-affordances.md)) |
@@ -78,9 +78,9 @@ There is no client-state library: Dexie live queries + URL params + small contex
 | Technology | Role | Rationale |
 |---|---|---|
 | GitLab CI | Pipeline | `quality → test → build → publish`, plus SAST + secret detection ([ADR 0006](../adr/0006-ci-cd-and-container-image-distribution.md)) |
-| Docker + Kaniko | Container image | Published to the GitLab registry; in M5 the backend image embeds the built PWA and becomes the self-hoster's artifact |
+| Docker + Kaniko | Container image | Published to the GitLab registry; the backend image embeds the built PWA and becomes the self-hoster's artifact |
 
-## Decided for M5 (backend repo)
+## The backend repo
 
 Fastify, SQLite via `better-sqlite3`, Drizzle ORM, Caddy for TLS, `compose.yml`; REST + HAL (`application/hal+json`); shared Zod contract vendored into this repo.
 Rationale in [05-server.md](./05-server.md).
