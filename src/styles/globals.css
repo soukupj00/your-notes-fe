@@ -17,6 +17,19 @@
    width breakpoint (ADR 0016). */
 @custom-variant coarse (@media (pointer: coarse));
 
+/* A wait shorter than the delay paints nothing: a loading line shown for one frame reads as a glitch. */
+@utility appear-late {
+  animation: appear-late 0s 500ms both;
+}
+@keyframes appear-late {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* Utilities, not `@theme` aliases: identities are set on the `data-note-color` element, and
    `@theme` colours resolve at the root. The fallbacks keep an editor mounted outside such an
    element uncoloured rather than transparent. */
