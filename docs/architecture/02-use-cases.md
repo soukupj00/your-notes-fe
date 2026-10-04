@@ -1,17 +1,17 @@
 # Use cases
 
-Actors and use cases as the product defines them ([`PRODUCT.md`](../../PRODUCT.md)), split into what ships today (through M4) and what M5 adds.
+Actors and use cases as the product defines them ([`PRODUCT.md`](../../PRODUCT.md)), split into what works with no server and what a Self-hosted Server adds.
 Capitalized terms are canonical in [`CONTEXT.md`](../../CONTEXT.md).
 
 ## Actors
 
 - **User** - the person taking notes on a Device. Both product audiences (the self-hoster and the household member they hand the app to) act as this actor in the daily surface; the distinction only matters for server administration.
-- **Owner** (M5) - the first Local Account on a Self-hosted Server; the only one that can issue Invites and reset another member's password. A server role, not a kind of Note.
-- **Invited member** (M5) - a person spending an Invite to create their own Local Account. Accounts are private silos; sharing a server never shares Notes.
+- **Owner** - the first Local Account on a Self-hosted Server; the only one that can issue Invites and reset another member's password. A server role, not a kind of Note.
+- **Invited member** - a person spending an Invite to create their own Local Account. Accounts are private silos; sharing a server never shares Notes.
 - **The app itself** - a genuine actor in two places: the Tour (it creates and purges Props) and the sweeps (orphan Attachment GC, trash purge).
-- **The sync engine** (M5) - acts on the user's behalf when connectivity returns; never makes a content decision (a Conflict is resolved by a person).
+- **The sync engine** - acts on the user's behalf when connectivity returns; never makes a content decision (a Conflict is resolved by a person).
 
-## Current use cases (through M4)
+## Use cases without a server
 
 ### Capture and edit
 
@@ -60,16 +60,18 @@ Customisability is a positioning claim ("this one is yours"), which is why it is
 
 The six-step Tour *drives* the real app on disposable Props it creates and purges ([ADR 0015](../adr/0015-the-tour-drives-the-app-on-disposable-props.md)); offered once, replayable from Settings.
 
-## M5 use cases (designed, not built)
+## Use cases with a server
 
 | Use case | Actor | Notes |
 |---|---|---|
 | First-run setup | Self-hoster | One container; first visit to a fresh server creates the Owner, then registration closes. |
 | Invite a member | Owner | Issues a one-time Invite; the newcomer spends it to create a Local Account. |
 | Sign in (adopt) | User | A never-attached Device uploads its existing Notes into the Account on first sign-in (UUIDs cannot collide). |
-| Sync | Sync engine | Bidirectional; push the dirty set, pull the change feed from a stored cursor; on focus/online/visibility + a short interval while visible. |
+| Sync | Sync engine | Bidirectional; push the dirty set, pull the change feed from a stored cursor; at start, after a local edit, on `online`, on becoming visible, on a server hint and on a slow poll. |
 | Resolve a conflict | User | The app never merges silently: the server's version wins, the loser is kept as a Conflicted Copy under a "Conflicts" Tag; the user reads two Notes and deletes one ([ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicted-copies.md)). |
 | Sign out (erase) | User | Clears the local database (the server holds everything); blocked while the Queue is non-empty, offering the zip backup first. |
+| Pair another Device | User | A signed-in Device shows a Pairing Link as a QR code; the new Device opens it and is signed in without typing a password. |
+| Share a Note | User | A Share Link gives anyone who can reach the server a read-only page of one Note; it is ended from the Note or from Settings. |
 | Revoke a lost device | User | Server-side sessions, one per Device, revocable from Settings. |
 | Reset a password | Owner | No email/SMTP anywhere: the Owner resets a member's password from Settings; the Owner's own is reset with a command against the container. |
 
@@ -78,5 +80,5 @@ Sync is opt-in end to end: every current use case works with no Account, Tour in
 ## For the paper
 
 - The actor list is unusual and worth stating: the app and the sync engine are actors with strictly bounded authority (Props and sweeps; transport but never content decisions).
-- Good scenario walk-throughs: interrupted one-handed mobile capture (the product's defining context), trash-restore-purge, backup-restore, and the M5 conflict story told from the user's chair.
+- Good scenario walk-throughs: interrupted one-handed mobile capture (the product's defining context), trash-restore-purge, backup-restore, and the conflict story told from the user's chair.
 - The two-audience framing (self-hoster depth on demand, household-member simplicity by default) explains many UI decisions and belongs in the requirements chapter.

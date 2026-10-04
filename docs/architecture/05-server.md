@@ -1,13 +1,13 @@
-# The server (future connection)
+# The server
 
-The M5 backend lives in a separate repository (`ni-dip-be`, empty at design time), but its architecture was decided here because it constrains this repo's code: [ADR 0018](../adr/0018-the-server-serves-the-pwa.md).
+The backend lives in a separate repository (`ni-dip-be`), but its architecture was decided here because it constrains this repo's code: [ADR 0018](../adr/0018-the-server-serves-the-pwa.md).
 
 ## The central decision: the sync server serves the PWA
 
 The standard self-hosted shape - frontend deployed somewhere, backend somewhere else, and a "enter your server address" text field - is where a meaningful share of non-technical users give up.
 Three browser facts constrain harder than preference:
 
-1. **A LAN address is not a secure context.** On `http://192.168.x.x` a browser refuses the service worker, install, `storage.persist()` and `getUserMedia` - that is not a degraded PWA, it is no PWA, and it kills the mic/camera capture M3 shipped. Only HTTPS and `localhost` qualify, and no zero-config trusted certificate exists for a private IP.
+1. **A LAN address is not a secure context.** On `http://192.168.x.x` a browser refuses the service worker, install, `storage.persist()` and `getUserMedia` - that is not a degraded PWA, it is no PWA, and it kills mic and camera capture. Only HTTPS and `localhost` qualify, and no zero-config trusted certificate exists for a private IP.
 2. **Cross-origin cookies need `SameSite=None; Secure`**, so a separately hosted frontend cannot use cookie auth over plain-HTTP LAN at all; the fallback (a bearer token in IndexedDB) is script-readable and unrevocable without a server-side blocklist - a session table with extra steps.
 3. **"Sign out my lost phone" is a real requirement**, and it wants server-side sessions.
 
@@ -15,7 +15,7 @@ Decision: **one container, one origin, one thing to run** - the server serves th
 Everything else falls out:
 
 - No server-address screen: the app is always already at its server, because the server handed it to the browser. Two servers = two origins = two installs and two isolated IndexedDB databases, which is correct isolation, not a limitation.
-- Auth is an **`HttpOnly`, `SameSite=Lax` session cookie**, one session row per Device, revocable from Settings. JavaScript never touches it; "am I signed in" is answered by asking the server once at startup, not by inspecting storage. The cookie also rides free on a future `EventSource`, which cannot send an `Authorization` header.
+- Auth is an **`HttpOnly`, `SameSite=Lax` session cookie**, one session row per Device, revocable from Settings. JavaScript never touches it; "am I signed in" is answered by asking the server once at startup, not by inspecting storage. The cookie also rides free on the hint stream's `EventSource`, which cannot send an `Authorization` header.
 - **TLS is Caddy's job**, in the compose stack, three documented modes: **Tailscale** (the recommended happy path: real trusted cert, no domain, no port forwarding, works away from home), **DNS-01** with an owned domain, and Caddy's **internal CA** for the fully offline. Application code never knows which. `http://localhost` stays first-class for a same-machine server.
 
 ## Accounts
@@ -33,7 +33,7 @@ Chosen together, each choice constraining the next (see [`PLAN.md`](../../PLAN.m
 |---|---|---|
 | Language | TypeScript | The wire contract becomes one shared Zod file instead of two definitions that drift |
 | HTTP | Fastify | Fast, schema-first, `@fastify/static` serves the PWA |
-| Database | SQLite (`better-sqlite3`) + Drizzle | A self-hoster's backup should be "copy one file" |
+| Database | SQLite (`better-sqlite3`) + Drizzle | A self-hoster's backup should be "copy one file"; PostgreSQL and S3-compatible blob storage are optional backends since the storage rework (backend repo, `docs/setup-backends.md`) |
 | TLS / edge | Caddy | The three modes above without application involvement |
 | Packaging | One container via `compose.yml` | The non-programmer setup path; a single-executable build is a possible later path, not foreclosed |
 
@@ -49,15 +49,14 @@ The brief commits to REST + HATEOAS, and ADR 0017 is what keeps that honest: not
 - No maintained HAL library exists for Node, so `_links` / `_embedded` are hand-rolled per resource.
 - Sessions are a table (one row per Device), because per-Device revoke needs server-side state that a stateless encrypted cookie cannot provide.
 
-## What lands in this repo for the connection
+## What this repo holds for the connection
 
-From the M5 slices and per-area plans:
-
-- An **account context** (signed-in state, current Device, sync status) with no token to hold and no URL to configure.
-- A **`SyncProvider`** running the loop ([04-sync.md](./04-sync.md)); network logic stays out of components.
-- A Settings **Account** section: sign in/out, Devices list with revoke, beside the storage row (persisted? estimate? last synced? queued changes?) carried from M4.
-- Dexie v5 sync metadata ([03-database.md](./03-database.md)) and the write-once Excalidraw refactor.
-- The [ADR 0006](../adr/0006-ci-cd-and-container-image-distribution.md) frontend image changes purpose: the backend image embeds the built assets; the standalone frontend image remains for the advanced put-it-behind-your-own-proxy path (HTTPS + CORS required).
+- `AccountProvider`: signed-in state and the current Device, with no token to hold and no URL to configure.
+- `SyncProvider`, running the loop ([04-sync.md](./04-sync.md)); network logic stays out of components.
+- The HAL client (`src/data/http/`), which validates every response against the vendored contract.
+- Settings: sign in and out, Pairing Links, the Devices list with revoke, Members and Invites, Shared Notes, and one block answering "is my data safe here" (storage persistence, last sync, pending changes).
+- `/pair`, where a Pairing Link signs a new Device in, and `/share/$token`, a Share Link's read-only page.
+- The frontend image ([ADR 0006](../adr/0006-ci-cd-and-container-image-distribution.md)): the backend image builds from it and serves its assets.
 
 ## Security posture (for the paper's threat model)
 

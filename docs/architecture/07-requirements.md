@@ -10,15 +10,15 @@ The Czech assignment text reduces to four mandated outcomes plus a set of stack 
 |---|---|---|
 | B1 | Research Google Keep and similar note managers | [10-related-work.md](./10-related-work.md) |
 | B2 | Analyze and design a solution for synchronization *and* offline support | [ADR 0001](../adr/0001-local-first-storage-with-dexie.md), [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicted-copies.md), [ADR 0018](../adr/0018-the-server-serves-the-pwa.md), [04-sync.md](./04-sync.md) |
-| B3 | Implement a PWA application and a server part for managing and syncing notes | PWA: M0-M4 (shipped); server: M5 (designed, [05-server.md](./05-server.md)) |
-| B4 | Test the application with users | [09-evaluation.md](./09-evaluation.md), M5 slice 5 |
+| B3 | Implement a PWA application and a server part for managing and syncing notes | PWA: M0-M4 (shipped); server: M5 (shipped, [05-server.md](./05-server.md)) |
+| B4 | Test the application with users | [09-evaluation.md](./09-evaluation.md), after the release |
 
 Brief-mandated constraints: React + TypeScript + pnpm + Tailwind + shadcn/Radix + TipTap + IndexedDB + Zod; REST with HATEOAS for the server; Docker-compose setup approachable for non-programmers; local accounts syncing across devices; mobile-first responsive layout (incl. landscape and tablet); light/dark plus colour-vision themes; descriptive, recognizable icons; i18n `en`/`cs` with `en` fallback; unit tests plus Playwright, a test per small feature.
 One deviation is recorded honestly: the brief suggested GSAP for animation; Motion shipped instead ([06-technology.md](./06-technology.md)).
 
 ## Functional requirements
 
-Status: ✅ shipped (M0-M4) / 🔷 designed for M5.
+Status: every requirement below has shipped.
 
 | Id | Requirement | Satisfied by | Verified by |
 |---|---|---|---|
@@ -32,11 +32,11 @@ Status: ✅ shipped (M0-M4) / 🔷 designed for M5.
 | FR8 ✅ | Customize: theme, vision mode, density, reduced motion, locale, toolbar layout, quick-capture | Preferences in `localStorage` (`PreferencesProvider`) | Provider + settings tests |
 | FR9 ✅ | Onboard: a demonstrating Tour, replayable | `lib/tour/` + `TourProvider` ([ADR 0015](../adr/0015-the-tour-drives-the-app-on-disposable-props.md)) | `e2e/onboarding.spec.ts` (two breakpoints) |
 | FR10 ✅ | Install as a PWA and work fully offline | vite-plugin-pwa, Dexie | Manual verification; offline is the default data path |
-| FR11 🔷 | Local accounts: Owner on first run, Invites, private silos | [ADR 0018](../adr/0018-the-server-serves-the-pwa.md) | M5: contract tests + fake server |
-| FR12 🔷 | Bidirectional sync across devices with offline queue | [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicted-copies.md), [04-sync.md](./04-sync.md) | M5: deterministic engine tests |
-| FR13 🔷 | Conflicts never lose text; user-resolvable Conflicted Copies | LWW + Conflicted Copy model | M5: engine tests + user testing |
-| FR14 🔷 | Device management: list, revoke, sign out with erase | Server sessions per Device | M5 |
-| FR15 🔷 | Reminders on a Note, one-shot or repeating, that fire whether or not the app is running (designed, independent of M5) | Hand-off to the user's calendar as an `.ics`; the app never notifies - [ADR 0021](../adr/0021-reminders-are-handed-off-to-the-calendar.md) | `.ics` builder unit tests; Playwright download/share acceptance; on-device check of the Hand-off |
+| FR11 | Local accounts: Owner on first run, Invites, private silos | [ADR 0018](../adr/0018-the-server-serves-the-pwa.md) | M5: contract tests + fake server |
+| FR12 | Bidirectional sync across devices with offline queue | [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicted-copies.md), [04-sync.md](./04-sync.md) | M5: deterministic engine tests |
+| FR13 | Conflicts never lose text; user-resolvable Conflicted Copies | LWW + Conflicted Copy model | M5: engine tests + user testing |
+| FR14 | Device management: list, revoke, sign out with erase | Server sessions per Device | M5 |
+| FR15 | Reminders on a Note, one-shot or repeating, that fire whether or not the app is running | Hand-off to the user's calendar as an `.ics`; the app never notifies - [ADR 0021](../adr/0021-reminders-are-handed-off-to-the-calendar.md) | `.ics` builder unit tests; Playwright download/share acceptance; on-device check of the Hand-off |
 
 ## Non-functional requirements
 

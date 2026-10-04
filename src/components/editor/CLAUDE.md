@@ -1,34 +1,52 @@
-# CLAUDE.md — `src/components/editor` (TipTap editor)
+# CLAUDE.md - `src/components/editor` (TipTap editor)
 
-How the rich-text editor is built. The canonical extension/toolbar pattern is fixed by [ADR 0004](../../../docs/adr/0004-canonical-editor-toolbar-pattern.md). See [`PLAN.md`](./PLAN.md) for the M1 work that brought the code in line with it.
+How the rich-text editor is built.
+The extension and toolbar pattern is fixed by [ADR 0004](../../../docs/adr/0004-canonical-editor-toolbar-pattern.md) and [ADR 0011](../../../docs/adr/0011-toolbar-items-and-families.md).
+
+```mermaid
+flowchart LR
+  Ext[extensions/: each owns its button] --> Build[extensions/build.ts: every mounted extension]
+  Build --> Editor[editor.tsx]
+  Reg[toolbar/registry.ts: Toolbar Item ids] --> Bar[EditorToolbar]
+  Reg --> Slash[SlashMenu]
+  Reg --> Settings[ToolbarLayoutEditor in Settings]
+  Layout[the user's Layout per Width Class] --> Resolve[resolveLayout] --> Bar
+  Editor --> Bar
+```
 
 ## Structure
 
-- `editor.tsx` — the `Editor` React component: `useEditor({ extensions, content, editable, onUpdate })`, renders `EditorContent`. Syncs external `content` prop into the editor via `setContent`.
-  **`content` is not a controlled value.** It is read once, at creation, and every later change reaches the doc through the `setContent` effect instead.
-  That is deliberate: `useEditor` is called with no deps, so the editor is never recreated, and TipTap re-checks its options on every render — any key failing reference equality costs a `setOptions` → `view.setProps` → full ProseMirror view pass on top of the one the keystroke already triggered.
-  For the same reason the extensions array and `editorProps` are memoised, and nothing in them may be reactive: every live value from a render reaches the built extensions through `useLatest`, a stable getter over a ref (the editor itself arrives through `editorRef`, which an effect sets once it exists), and a captured `t` is safe only because i18next resolves the language at call time - so a consumer must call `t()` lazily, never store its result at build time (`createLink` is the one that got this wrong).
-  `editor.test.tsx`'s "Editor content syncing" suite is the guard; it fails if the `setContent` path stops applying later bodies.
-  On mobile the note bar (labels, colour, pin, reminder) is handed in as `footer` rather than rendered after `Editor`, because a sticky element cannot leave its parent's box: as a sibling, it held the sticky toolbar about 80px above the keyboard.
-  The note bar is in the flow, not pinned: the format toolbar is the only fixed chrome, because formatting is a typing move and a second permanent strip costs the vertical space a phone has least of.
-  In the DOM the toolbar comes first and the note bar after the content; with `stickyOnMobile` the toolbar takes `order-last`, so it sits under the note bar.
-- `extensions/formatting.ts` holds the one-button marks and blocks (Bold, Italic, Strike, Underline, Code, CodeBlock, Blockquote, HorizontalRule, BulletList, OrderedList) as declarations through `withButton`; `extensions/<Name>/` is a folder for an extension that has more than its declaration (a node view, a plugin, a coordinator, its own behaviour test), with `<Name>.ts` and an `index.ts` re-export.
-- `toolbar/` — the customisable toolbar (ADR 0011).
-  `registry.ts` maps a stable Toolbar Item id to its icon, **name** and family, and to the extension whose Pattern A `button` it renders; `presets.ts` holds the Minimal / Balanced / Everything stamps per Width Class; `resolveLayout.ts` reconciles a stored Layout against the registry and turns it into a render list; `EditorToolbar.tsx` draws it; `useWidthClass.ts` picks which of the two Layouts is in effect.
-  `ToolbarLayoutEditor.tsx` is the one settings surface for a Layout, mounted twice: in `/settings`, and in a sheet over the editor dialog opened by the `customize` (`⚙`) Item (`ToolbarCustomizeButton.tsx`). The in-editor path must not navigate - the dialog may hold an unsaved draft. `layoutEdits.ts` holds the pure reorder/toggle primitives, `foldMarker.ts` the 360px capacity arithmetic, `ToolbarPreviewStrip.tsx` the static picture Settings uses because it has no live editor.
-  `customize` is the one Item with no extension behind it, which is why the bar's "can I draw this?" filter is `canRenderItem` rather than `resolveItemButton`.
-  The registry also carries each Item's `shortcut`, a deliberate copy of the extension's own `shortcutKeys` so `settings/ShortcutsSection.tsx` can list them without a live editor to resolve buttons against (the `ToolbarPreviewStrip` reason). `shortcuts.test.ts` pins the copy to the real button in both directions, so a new binding has to be added in both places or the suite fails.
-  Reordering is `@dnd-kit/sortable` through the shared `ui/SortableList.tsx` (drag handle is the only drag origin, keyboard sensor on); the same rows serve the quick-capture list in `settings/QuickCaptureSection.tsx`.
-  **The registry is also the slash menu's id space** (ADR 0011, decision 13): `SlashMenu/slashItems.ts` keys by Toolbar Item id and keeps only `keywords` and `run`, taking icon and name from the registry so the two surfaces cannot drift.
-  The old `menus/` folder is gone: `ExtensionButtonBar.tsx` and the five `toolbars/*Section.tsx` files were a hardcoded bar by extension name, which the registry replaces.
-  The legacy `ToolbarSection.tsx` and `ToolbarButton.tsx` had already been removed; the `extensions/text-color/` folder has also been removed (see Color note below).
-- `extensions/build.ts` — every extension the editor mounts, in one function, so the registry's tests can resolve ids against the real mounted set rather than a copy that drifts.
-- Shared button: `ActionButton` (`src/components/ui/ActionButton.tsx`); icon registry: `src/components/icons/icons.ts`.
-  `ActionButton` owns three things worth knowing before adding a button. **A menu row's name comes from `MenuRowLabelProvider`, not a prop** - `ToolbarLeaf` states it once and whichever `ActionButton` ends up being the row picks it up, because half the leaves (`link`, the five attachment pickers, the two colour triggers) are custom components that *wrap* an `ActionButton` and could never be handed a label. **The keyboard shortcut is desktop-only** (`useFinePointer`, `(pointer: fine)` - the inverse of the 44px Touch Rule's signal) and lives only in the tooltip, never on a menu row. **Active styling is a class, not just `data-[state=on]`**, because a `PopoverTrigger asChild` overwrites `data-state` with its own `open`/`closed`.
+- `editor.tsx` - the `Editor` component.
+- `extensions/formatting.ts` - the one-button marks and blocks, as declarations.
+- `extensions/<Name>/` - an extension with more than its declaration (a node view, a plugin, a coordinator), as `<Name>.ts` plus an `index.ts` re-export.
+- `extensions/build.ts` - every extension the editor mounts, in one function, so the registry's tests resolve ids against the real set.
+- `extensions/attachments/` - what the five attachment nodes share.
+- `toolbar/` - the customisable toolbar.
 
-## Canonical pattern (Pattern A)
+### `editor.tsx`
 
-The common case is the upstream TipTap extension plus a `button` option, built by `withButton` (`extensions/withButton.ts`), which does the `.extend()` and the one cast:
+**`content` is not a controlled value.**
+It is read once, at creation, and every later change reaches the document through a `setContent` effect.
+The editor is never recreated, and TipTap re-checks its options on every render: any option that fails reference equality costs a full ProseMirror view pass on top of the keystroke's own.
+So the extensions array and `editorProps` are memoised and nothing in them may be reactive.
+A live value reaches a built extension through `useLatest`, a stable getter over a ref, and a consumer must call `t()` lazily, never store its result at build time.
+The "Editor content syncing" tests are the guard.
+
+On mobile the note bar (labels, colour, pin, reminder) is handed in as `footer` instead of being rendered after the `Editor`, because a sticky element cannot leave its parent's box.
+The note bar is in the flow, not pinned: the format toolbar is the only fixed chrome, since a second permanent strip costs the vertical space a phone has least of.
+
+### `ActionButton`
+
+The shared toolbar button (`src/components/ui/ActionButton.tsx`).
+Three things to know before adding a button:
+
+- **A menu row's name comes from context** (`MenuRowLabelProvider`), not a prop, because half the leaves are custom components that wrap an `ActionButton` and could never be handed a label.
+- **The keyboard shortcut is desktop-only** and lives only in the tooltip, never on a menu row.
+- **Active styling is a class**, not only `data-[state=on]`, because a popover trigger overwrites `data-state` with its own.
+
+## Pattern A
+
+The common case is the upstream TipTap extension plus a `button` option, built by `withButton`:
 
 ```ts
 export const Bold = withButton(TiptapBold, ({ editor, t }) => ({
@@ -38,134 +56,148 @@ export const Bold = withButton(TiptapBold, ({ editor, t }) => ({
     isActive: () => editor.isActive('bold'),
     icon: 'Bold',                       // string key into icons.ts
     shortcutKeys: ['Mod', 'B'],
-    tooltip: t('editor.bold.tooltip'),  // i18n
+    tooltip: t('editor.bold.tooltip'),
     toggle: true,
   },
 }));
 ```
 
-A third argument carries other upstream defaults (TextAlign's `types`).
-An extension whose button is not an `ActionButton` (a colour picker, a font select, the link picker) still calls `.extend()` itself and types its option as `ButtonView<typeof ThatComponent>`; the attachment nodes get their button from `createAttachmentNode`, typed `AnyButtonView`; `ButtonView` (`button-types.ts`) is generic over the component and defaults to `ActionButton`.
+- An extension whose button is not an `ActionButton` (a colour picker, a font select, the link picker) calls `.extend()` itself and types its option `ButtonView<typeof ThatComponent>`.
+- A `button` may return an array: Heading yields H1-H3, History yields undo and redo.
+- `icon` is a string key into `src/components/icons/icons.ts`; never import a Lucide component into a button config.
+- A new toolbar button is always an extension's `button`, never a toolbar-side list.
 
-- `icon` is a **string key** resolved by `ActionButton` through `src/components/icons/icons.ts` — never import a Lucide component into an extension's button config.
-- A `button` may return an **array** of buttons (see `extensions/history/History.ts`, which yields undo + redo).
-- Tooltips/labels go through i18n `t(...)`.
+## The toolbar
 
-## Current state
+A **Toolbar Item** has a stable id in `toolbar/registry.ts`, which maps it to its icon, name, family and the extension button it renders.
+The same ids are the slash menu's, so the two surfaces cannot drift.
+The registry also carries each Item's shortcut, a deliberate copy of the extension's own, so Settings can list shortcuts without a live editor; `shortcuts.test.ts` pins the copy in both directions.
 
-- **Every toolbar extension follows Pattern A.**
-  The ten one-button marks and blocks are declarations in `extensions/formatting.ts` with one table-driven test; `TaskList`, `Heading` (H1-H3 buttons, see below), `TextAlign`, and `history` use the same `withButton` in their folders; `Mathematics` (LaTeX, see below) keeps its own `.extend()` and factory around an `ActionButton`; `Color`/`Highlight`/`FontFamily`/`FontSize` (text styling, see below) and `Link` yield their own components.
-  `extensions/build.ts` registers all of them, `history` included.
-  `Clear` is not a mark - it is an `Extension.create` whose button runs `clearNodes().unsetAllMarks()`.
-  `ListItem` is wrapped only as a local re-export (structural child, no button); `TaskList` needs `TaskItem`, wrapped in `extensions/TaskItem/`: it adds a `moveTaskItem({ pos, to })` command and, in the editable node view only, a reorder grip driven by pointer events (`taskItemDrag.ts`), so the stored Body and the Card never carry a grip.
-  The node view's `ignoreMutation` must keep treating the row's own attribute changes as non-edits - the drag writes a class and a transform onto the `li`, and a rebuilt node view would drop the row from under the pointer.
-- **Checklist behaviour lives in `extensions/TaskList/` beside the button**, in one piece that is not a toolbar button.
-  `ChecklistFlip.ts` is an `Extension.create` that **moves nothing**. Sinking is a CSS `order` rule ([ADR 0013](../../../docs/adr/0013-checklist-sinking-is-presentation-not-storage.md)), so a ticked row is already in its new slot by the time the browser paints; what this adds is the *travel*, since `order` re-lays-out instantly and the row would otherwise teleport. It detects a toggle by **comparing documents**, not by reading steps: a checkbox arrives as `setNodeMarkup`, which prosemirror expresses structurally. The timing is why it is a plugin rather than an effect - `appendTransaction` runs before the view writes the DOM (the last chance to read the old geometry) and the plugin view's `update` runs straight after it (the first chance to read the new). It appends no transaction and returns `null` always. Gated on `animate()`, which `editor.tsx` feeds from `useReducedMotion` - a hard killswitch, per DESIGN.md.
-  It replaced `CheckedSink.ts`, which physically reordered the document and so could never reach the card, which has no ProseMirror instance. Do not reintroduce a document mutation here: the stored order is what a backup, an export and M5 sync all carry, and it is the only record of the order the user actually typed.
-- **Content styling** comes from **`@tailwindcss/typography`**: the editor content has `prose prose-sm max-w-none` and the plugin is enabled with `@plugin "@tailwindcss/typography"` in `globals.css`. Prose's palette is mapped to the app theme tokens (`--tw-prose-*: var(--foreground)` etc. under `.prose`) so it matches light/dark automatically - so the editor uses plain `prose`, **not** `dark:prose-invert`. **The plugin's vertical rhythm is replaced wholesale** (`.prose` "Note rhythm" block in `globals.css`): typography is set for long-form articles, and measured on a ten-block note its defaults spent **46% of the editor's height on inter-block margin** (584px for ~13 lines). One `--note-block-gap` (0.5rem) now separates every node, headings take their air above rather than below, and `li > p` loses paragraph margins entirely - the task-list rule had been doing that for checklists alone, and every other list needed it for the same reason. Type comes from the app's `--text-body` tokens too, because prose-sm was setting 14px/1.71 where DESIGN.md's Body is 0.855rem/1.45, so the same text was larger and looser in the editor than on its own card. Scoped to `.prose` so both surfaces move together. Result: 584px to 392px on the same content. The rest of the hand-written content CSS is the TipTap task-list override (`.prose ul[data-type="taskList"]`, via `@apply`) to put the checkbox and text on one line. It is scoped to `.prose`, **not** `.tiptap`, because a checklist has two surfaces - the editor and `NoteCard`'s preview of the same stored markup - and while it was editor-only every checklist on the feed fell back to prose's own list styling, drawing a bullet *and* a checkbox with the text wrapped below. The coarse-pointer treatment beside it is also `.prose`-scoped: the box is drawn at 16px (the Card rail's icon size) with a hit box of exactly its own size, DESIGN.md's one recorded exception to the 44px Touch Rule, and the row centres box and words on one line. A 44px-wide invisible `::before` anchored at the row's edge was tried first and reached ~24px into the text, so a tap on an item's first letters ticked it instead of placing the caret. A 44px row floor was tried before that and measured worse - 24px of dead space per row - and a 32px box read as too large beside the text. Grow the visible box if mis-taps show up; never restore a hidden halo over the text. Tailwind v4's `dark:` variant is bound to the app's `.dark` class via `@custom-variant dark (&:where(.dark, .dark *))` in `globals.css` (v4 otherwise defaults to `prefers-color-scheme`), so `dark:*` utilities follow the theme toggle. Toolbar toggle buttons carry `text-foreground` in the `toggleVariants` base so their icons adapt to the theme (only the active ones get `text-accent-foreground`).
-  Making a task-list row `flex` defeats `-webkit-line-clamp`, which only counts line boxes when a block's children are block-level.
-  That is why `NoteCard`'s six-line clamp does nothing on a checklist and the card caps its height with `max-height` instead; of `list-item`, `block`, `flex` and `grid`, only the first two clamp, and neither puts the checkbox beside its text.
-  The reorder grip is drawn at the line's own 20px height because it must not set the row's height: at 44px it made every row 44px tall and the editor read as double-spaced.
-  It is always visible on a coarse pointer, which has no hover; on a fine pointer it keeps its column but shows only on the row's hover, so a long list is not a wall of dots.
-- **Heading** contributes a **button array** (one toggle per level H1-H3), which the registry addresses as the three leaves `h1`/`h2`/`h3` of the `style` family (`buttonIndex` picks which). `undoRedo` and `textAlign` work the same way.
-- **Responsive toolbar buttons are gone, replaced by two Layouts.** `hideOnMobile` (a developer-owned second toolbar that hid twelve leaves below `sm`) has been deleted from `button-types.ts` and every extension that set it. Which buttons a width shows is now stored user data: one Layout per **Width Class** (`compact` / `wide`), resolved through `resolveLayout`. Compact is a single non-wrapping row that scrolls horizontally - it sits above the virtual keyboard, so it may not take vertical space from the note; wide wraps.
-  Compact is also `justify-between`, so a bar that fits spreads across its width; that is self-cancelling on a bar that overflows, since there is no free space to distribute. The first family is pinned (sticky) **only while the row scrolls** - the wrapper makes its family one flex item, which `justify-between` would otherwise spread around instead of within - and the wrapper carries no padding, because a pin that cost width could latch itself on.
-  The pin stays the user's choice, since it is whatever family they put first, and it cannot oscillate: unpinning only ever makes the row narrower, so a row that fits unpinned stays unpinned, and one that overflows still overflows once the wrapper is added.
-  That holds only because the wrapper costs zero width (the bar's `gap-1`, no padding): with a `pr-1` a real latch was measured at 341px, where 292px of buttons fit in 293px until 4px of padding made them 296px.
-  The pinned wrapper and the sticky bar both take `bg-note-surface`, which falls back to `--background`, so the opaque backing is right inside a tinted note dialog and outside one.
-  The compact default is `↶ ↷ ¶▾ T▾ ≔▾ 📎▾`: undo and redo as real buttons (a phone has no Ctrl+Z, and `history` being first also makes it the pinned family), then four collapsed ones. That is six slots, which is what `COMPACT_FOLD_SLOTS` says a 360px phone fits - the number is 44px per button, because DESIGN.md's Touch Rule is what governs a coarse pointer, not the 36px mouse width. `colour`, `block`, `align`, `font` and the `⚙` are off there rather than collapsed; the `⚙` stays on in the wide default, and `/settings` reaches the same editor either way.
-  `history` is expanded because undo may not cost a tap to reach before it costs a tap to use, and redo is its other half.
-  `colour` is the family that gave way: at one slot it would put the bar past the fold on day one, and text colour and highlight are the most decorative of the set.
-  The `⚙` is off because it is a door to a settings screen, not an editing control, and every family that is off stays reachable through the slash menu, a keyboard shortcut, or by switching it on.
-  The arithmetic behind `COMPACT_FOLD_SLOTS = 6`: on a phone the editor sheet has 16px sides (see The editor sheet), leaving 328px of a 360px screen.
-  A button is 44px under the Touch Rule and buttons sit `gap-1` (4px) apart, so `n` of them need `48n - 4` px: six fit at 284px and a seventh needs 332px.
-  A collapsed family's trigger is 46px (it carries a chevron), and six of those reach 296px, so six holds for both kinds of slot.
-  The constant read 7 until the Touch Rule landed, computed on the 36px mouse width, and the shipped phone default overflowed its own bar by 24px while Settings reported it as fitting.
-  It is a marker, not a limit: going past it is allowed, and it exists so the user configures against the real constraint instead of discovering it on their phone.
-- **Mathematics** uses the bundled `@tiptap/extension-mathematics` (extension name `Mathematics`, adds `inlineMath` + `blockMath` nodes). Writing LaTeX: type `$$...$$` (inline) or `$$$...$$$` (block) input rules, or use the toolbar button which prompts for LaTeX and inserts inline math. Clicking a rendered math node prompts to edit it. Built via `createMathematics(getEditor, t)` in `extensions/build.ts` (the node `onClick` handlers need the live editor, reached through a ref). `updateInlineMath`/`updateBlockMath` are called with an explicit `pos` - without it they read the original cursor selection and no-op inside a chain.
-- Still **upstream / stubs:** `Attachment`, `Selection` are empty/partial stubs and/or registered upstream in `editor.tsx`.
-- **Image** is a custom `imageAttachment` node (atom, block, draggable), not the upstream `@tiptap/extension-image`. It carries a single `attachmentId` attribute and never persists a `src`/base64 - the actual bytes live in the `attachments` table (see `src/data/CLAUDE.md`), reached via `useAttachmentActions`. Every kind's facts (MIME prefix, whitelist, cap, Body tag, extensions, picker `accept`) are one row of `ATTACHMENT_SPECS` in `src/lib/attachments.ts`; the node factory, the insert path and the Body readers all key on it. Built via `createImage(getDeps)` (same shape as `createMathematics`): the node's React NodeView resolves `attachmentId` to a `Blob` and derives an object URL for rendering (revoked on unmount/id change), so nothing base64-encodes into the document JSON. Insertion happens through paste, drag-and-drop, the toolbar button, the slash menu and the picker Starts, all routed through one insert path that validates the file and creates the attachment row before inserting the node.
-- **Audio** is a custom `audioAttachment` node (`extensions/Audio/Audio.ts`), built on the same shared `createAttachmentNode` factory as Image.
-  It serializes as body `<audio data-attachment-id>` with no `src`; the bytes live in the Dexie `attachments` table (`kind: 'audio'`, plus a `duration` field), reached via `useAttachmentActions`.
-  `AudioNodeView` (`extensions/Audio/AudioNodeView.tsx`) renders a custom player UI - play/pause, scrubber, elapsed/duration - wired to a hidden native `<audio>` element whose `src` is an object URL from the shared `useAttachmentObjectUrl` hook (`extensions/attachments/useAttachmentObjectUrl.ts`), revoked on unmount/id change.
-  Native media `play`, `pause`, and `ended` events are the source of truth for the custom player's playback state.
-  One-shot autoplay is coordinated by `audioAutoplay.ts` through `requestAutoplay` and `registerReadyAudio`, keeping its pending request and ready-player registry outside React while covering either note/audio load ordering.
-  Recording goes through `useAudioRecorder` (`extensions/Audio/useAudioRecorder.ts`), a state-machine hook around `MediaRecorder` (idle -> requesting-permission -> recording -> stopped, with error/cancel paths that release the mic), owned by `AudioRecorderHost` (`extensions/Audio/AudioRecorderHost.tsx`), which `editor.tsx` mounts for as long as the editor is editable, whatever the toolbar shows; the toolbar's `AudioRecordButton` is only a request into the coordinator and reads the recording status back through it. The recorder used to live in the button, and on a phone that button sits inside a collapsed menu, so a voice note started from the dial waited for a recorder that was not there.
-  `useAudioRecorder` pre-checks `navigator.permissions.query({name:'microphone'})` before touching `getUserMedia`: only `'denied'` is actionable up front (fail fast with the real reason instead of a silent no-op), while `'granted'`/`'prompt'`/an unanswerable query all fall through to the stream request - Firefox and Safari reject the descriptor entirely.
-  **Intent** (M4 Slice 2, reshaped 2026-09-09, one value since M6 slice 4): `Editor` takes an `intent?: Intent` prop (`src/lib/intent.ts`): `record` asks the recorder to start, `draw` opens the shared Excalidraw dialog, `files` inserts what a picker Start chose (the picker opens on the feed inside the tap, `notes/useStartPicker.tsx`, because that activation does not survive the route change), `play` autoplays the first clip, and `checklist` is the dialog's body seed, which the Editor ignores.
-  Audio goes through `audioCapture.ts`, a pending-then-fire coordinator in `editor.storage.audioAttachment.capture` (same shape as `audioAutoplay`) because the host and the intent mount independently.
-  The coordinator holds a request until the take it started settles, and hands it back if the recorder answering it unregisters first - React StrictMode's mount cycle does exactly that in development, and without it the request was consumed by a take that was torn down.
-  All are one-shot: `useOpenNote` spends the Intent when the open ends, so a reload, Back or Forward never re-fires it.
-  `AudioRecordButton` is now record-only (M3 Slice 4): the toolbar file-picker affordance it used to offer was removed. Uploading an audio file (including `.mp3`) goes through the generic **File** extension's toolbar button instead, which accepts any file type; pasting/dropping an `audio/*` file still creates an audio attachment via the shared paste/drop router.
-- **Video** is a custom `videoAttachment` node (`extensions/Video/Video.ts`), built on the same `createAttachmentNode` factory. It serializes as body `<video data-attachment-id>` with no `src`; `VideoNodeView` uses a native `<video controls playsInline>` (no custom player skin needed) at the resolved object URL. Insertion is paste/drag-and-drop/toolbar-picker, same pipeline as Image/Audio.
-- **File** is a custom `fileAttachment` node (`extensions/File/File.ts`), built on the same `createAttachmentNode` factory (M3 Slice 4). It serializes as body `<a data-attachment-id>` with no `href` (a file is not inline-renderable). `FileNodeView` shows a generic file icon, the original filename (`Attachment.name`), and an open/download link at the resolved object URL. Validation (`validateAttachmentFile`, `kind: 'file'`) has no MIME whitelist - any file type is accepted, gated only by a 50 MB size cap, which is the `file` row of `ATTACHMENT_SPECS`. Insertion is **toolbar-picker only**: `file` has no single MIME prefix to disambiguate it from image/audio/video in the shared paste/drop router, so its row sets `prefix: ''` and every file matches the empty prefix; with no whitelist (`mimes: null`) only the cap gates it, and `TRANSFER_KINDS` in `extensions/attachments/insert.ts` leaves it out, so `editor.tsx`'s `handlePaste`/`handleDrop` have no file branch.
-- All five attachment nodes share the `attachments/` core: `createAttachmentNode({ kind, nodeView, button })` derives the node name, the Body tag and the insert command from the kind; `insertAttachmentNode(editor, kind, id)` places a node; `insert.ts` is the one path from files to nodes (`insertFiles(kind, editor, files, deps)` validates, derives what the kind's `DERIVE` entry computes, stores and places; `insertTransferredFiles` routes a paste or drop file by file; `pickerButton(kind, icon)` is the toolbar button of every picker kind).
-  Every insert failure reaches `deps.onError(code, kind)`, which `editor.tsx` toasts from the kind-neutral `editor.attachment.errors.*` strings with the kind's cap interpolated from `ATTACHMENT_SPECS`.
-  `AttachmentNodeView` draws the delete overlay, the remote and missing placeholders and the loading pulse, and Image, Video and File supply only their ready element.
-  Audio and Excalidraw keep their own node views (an inline delete button and a canvas surface) and their own buttons (a record request, a dialog).
-  `AttachmentDeleteButton` binds the generic control in `src/components/ui/ConfirmDeleteButton.tsx` to the attachment confirmation copy and owns the shared overlay treatment used by visual NodeViews.
-  This leaves one generic `ConfirmDeleteButton` while keeping attachment-specific presentation local to the attachment module.
-- **Known but not downloaded** (M5 slice 5) is the third state every attachment node view draws, beside ready and missing: a row synced from another Device whose full bytes are still on the server.
-  `useAttachmentObjectUrl` reads the row live through `deps.watchAttachment`, so a download (or a pull) turns it ready without reopening the Note, and answers `status: 'remote'` with the thumbnail's URL when there is one.
-  `attachments/AttachmentNotDownloaded.tsx` draws it: an image's thumbnail with a download button over it, otherwise a card with name, size and the button; Excalidraw keeps its inline SVG preview, and a tap on it downloads the scene before opening the canvas.
-  The button calls `deps.downloadAttachment`, which is `SyncProvider`'s `download`; it is neutral, never the accent, and 44px to a finger.
-  A cross-note paste of a row without bytes downloads it first, because a clone takes a new id nobody else could upload bytes under.
-  The home card never downloads: it shows the thumbnail or preview, and a thumbnail-less image is fetched with the thumbnails because it is its own Preview.
-  An image's and a video's pixel size is read at insert, where the thumbnail or poster is decoded anyway, and stored as `width`/`height`; the thumbnail, the image and the video all carry them as attributes, so the box is reserved before the bytes land.
-  A row from before that has no size and simply grows when its bytes arrive.
-- **Excalidraw** is a custom `excalidrawAttachment` node (`extensions/Excalidraw/Excalidraw.ts`), built on the same shared `createAttachmentNode` factory as Image/Audio/Video/File.
-  It serializes as body `<excalidraw-drawing data-attachment-id>` with no payload; the scene itself is stored as an `application/json` blob in the Dexie `attachments` table (`kind: 'excalidraw'`), with a self-generated SVG snapshot cached in `Attachment.preview`.
-  `ExcalidrawNodeView` is a passive, live-queried SVG preview with tap-to-edit and an overlaid confirm-before-delete control.
-  One shared `ExcalidrawDialog`, owned by `editor.tsx` and opened through `AttachmentDeps.openExcalidraw`, contains the live canvas and imports Excalidraw's stylesheet.
-  The dialog withholds pointer moves above the canvas during a drag that started on it.
-  The canvas takes pointer capture on `pointerdown`, so hit-testing cannot help: a stroke begun below the header kept extending into the header strip, hidden from view but still in the exported image.
-  A capture-phase `window` listener, registered on open and so ahead of the listeners Excalidraw attaches when a drag begins, stops each move above the boundary; the stroke pauses at the edge and resumes when the pointer comes back.
-  It acts only on a drag that started in the canvas, so ordinary pointer traffic over the header (hovering Save, aiming at close) is untouched.
-  The dialog cancels the shared dialog's `zoom-in-95` entrance with `zoom-in-100`/`zoom-out-100`, and that is load-bearing: Excalidraw sizes its canvas from `getBoundingClientRect`, which reports the transformed box, and a transform fires no `ResizeObserver` to correct it.
-  Opening mid-scale cached the canvas about 18px narrower than its frame, so every stroke landed off the cursor; the fade is kept and only the scale is dropped.
-  `onAnimationEnd` still calls the API's `refresh()` for any later reposition, but that recomputes offsets without resizing the canvas, which is why the scale has to go rather than be corrected afterwards.
-  `NotesView` lazy-loads `NoteEditorDialog`, and the editor lazy-loads `ExcalidrawDialog` only when a drawing opens, so neither TipTap nor the drawing engine is part of the initial feed download.
-  Persistence is commit-on-Save: a new drawing creates its attachment and inserts its node only after Save.
-  Editing never rewrites bytes: every Save mints a new attachment row (`commit.ts`, since M5 slice 3) and repoints the node at it through `onReplace`, so every blob stays write-once by id for Sync, and the orphan sweep removes the old row.
-  Cancel discards changes, Delete removes the node through orphan GC, and both actions reuse the shared `ConfirmDialog`.
-  `scene.ts` holds JSON serialization helpers and removes transient collaboration state that cannot survive JSON serialization.
-  `sceneToSvgString` dynamically imports `@excalidraw/excalidraw` because eagerly importing the package touches `canvas.getContext()` at module scope, which crashes under jsdom without the native `canvas` package.
-  The dialog and exporter share Vite's cached Excalidraw chunk.
-- **Text styling via `@tiptap/extension-text-style`.** Four Pattern A extensions ride on the `textStyle` mark (registered once as `TextStyle` in `editor.tsx`); each wraps an upstream helper from that single package and returns a **custom-component** button:
-  - **Text color** (`extensions/Color/`, name `color`) and **Highlight** (`extensions/Highlight/`, name `backgroundColor`, wraps `BackgroundColor`) yield `extensions/EditorColorPickerButton.tsx` with their `variant`.
-    The shared module owns selection capture, live preview, the `ColorPickerPanel` popover, and mark commits; its `text` and `highlight` variants select the icon, palette, preview CSS property, and TipTap commands.
-    They are the two leaves of the `colour` family.
-  - **FontFamily** (`extensions/FontFamily/`, name `fontFamily`) and **FontSize** (`extensions/FontSize/`, name `fontSize`) yield `extensions/EditorTextStyleSelect.tsx` with their `variant`.
-    The shared shadcn `Select` module owns their options, focus-and-commit behavior, and the `__default__` sentinel that maps to the corresponding unset command because Radix `Select.Item` forbids an empty-string value.
-  - The legacy `menus/ToolbarButton.tsx` and the `extensions/text-color/` folder were removed; the `Color/` vs `text-color/` duplicate is resolved (kept `Color/`).
-  - **Live color preview.** In the custom (react-colorful) picker, dragging only **previews** the color on the selected text and commits (a real `setColor`/`setBackgroundColor` mark) on pointer **release** - so a drag is one clean undo step, not one per mouse-move, and the popover never loses focus mid-drag. The preview is a ProseMirror inline decoration held by the `colorPreview` extension (`extensions/color-preview.ts`, registered in `editor.tsx`): the buttons capture the selection range on popover open, call `previewColor(editor, {from,to,style})` during the drag and `clearColorPreview(editor)` on release/close, and commit the mark to the stored range via `setTextSelection(...)` **without** `focus()` (so the popover stays open). `ColorPickerPanel` exposes an optional `onPreview` (drag) alongside `onChange` (commit); the card picker omits `onPreview` and keeps its immediate live behavior.
-- All toolbar buttons are extension-owned `button` factories (Pattern A), resolved by id through `toolbar/registry.ts`. List buttons switch directly between bullet/ordered/task (no `can()` gating) and, via `extensions/list-toggle.ts` (`toggleWholeList`), convert the **whole** list when the cursor is collapsed inside one - not just the current item (needed because `taskList` uses a different item type than bullet/ordered). An explicit selection is respected as-is. Mark buttons (`Bold`/`Italic`/`Strike`/`Underline`/`Clear`/`Color`) and block buttons (`Heading` H1-H3, `Blockquote`, `Mathematics`) each set `toggle: true` so they render as toggle-styled toolbar buttons with an active highlight. Grouping on the bar is implicit in family order - there are no `Separator`s and no sections. The Mathematics (LaTeX) button uses a custom `Latex` icon (`src/components/icons/LatexIcon.tsx`, a "TeX" wordmark) registered in `icons.ts`.
+Which Items show is user data: one **Layout** per **Width Class** (`compact`, `wide`), reconciled against the registry by `resolveLayout`.
+`ToolbarLayoutEditor` edits a Layout and is mounted twice: in Settings, and in a sheet over the editor opened by the `⚙` Item.
+The in-editor path must not navigate, because the dialog may hold an unsaved Draft.
+Reordering is `@dnd-kit/sortable` through the shared `ui/SortableList.tsx`.
 
-- The `History/` empty variant and the duplicate `HistoryActionButton` implementation have been removed. The remaining `history/History.ts` (extension name `undoRedo`) uses the canonical `ActionButton` with typed `Undo2` and `Redo2` icon keys, and is now **registered** in the editor - before the registry work it was built but mounted nowhere, so a phone (no `Ctrl+Z`) had no way to undo at all.
+### The compact default
+
+Compact is one non-wrapping row that scrolls sideways: it sits above the keyboard, so it may not take vertical space from the Note.
+Wide wraps.
+
+- The default is undo, redo and four collapsed families.
+  Undo and redo are real buttons because a phone has no Ctrl+Z.
+  Colour, block, align, font and the `⚙` are off, and stay reachable through the slash menu, a shortcut, or by switching them on.
+- That is six slots, which is what fits a 360px phone (`COMPACT_FOLD_SLOTS` in `foldMarker.ts`).
+  The sheet leaves 328px, and under the 44px Touch Rule with 4px gaps six buttons need 284px and a seventh 332px.
+  It is a marker, not a limit: going past it is allowed, and Settings shows it so the user configures against the real constraint.
+- A bar that fits spreads across its width (`justify-between`), which does nothing once it overflows.
+- **The first family is pinned only while the row scrolls**, and that cannot oscillate: unpinning only makes the row narrower.
+  This holds only because the pin's wrapper costs zero width.
+  With any padding, a row that just fits would overflow once pinned, unpin, fit again, and so latch.
+
+## Content styling
+
+Content is styled by `@tailwindcss/typography` (`prose`), with three deliberate departures in `globals.css`:
+
+- **Prose's palette is mapped to the theme tokens**, so the editor uses plain `prose`, not `dark:prose-invert`.
+- **The plugin's vertical rhythm is replaced.**
+  Typography is set for long articles and spent nearly half a Note's height on margins.
+  One `--note-block-gap` separates every block, and type comes from the app's body tokens, so the same text is the same size in the editor and on its Card.
+- **The rules are scoped to `.prose`, not `.tiptap`**, because a Note has two surfaces, the editor and the Card's preview of the same stored markup, and both must move together.
+
+Checklist rows:
+
+- A row is `flex`, to put the box beside its text.
+  That defeats `-webkit-line-clamp`, which is why the Card caps a Checklist's height with `max-height` instead.
+- On a coarse pointer the box's hit area is exactly its drawn size, DESIGN.md's one recorded exception to the Touch Rule.
+  A larger invisible hit box reached into the text, so a tap on an item's first letters ticked it instead of placing the caret.
+  Grow the visible box if mis-taps show up; never restore a hidden halo over the text.
+- The reorder grip is drawn at the line's own height so it cannot set the row's height.
+  It is always visible on a coarse pointer and appears on hover on a fine one.
+
+## Checklist behaviour
+
+Sinking ticked rows is a CSS `order` rule ([ADR 0013](../../../docs/adr/0013-checklist-sinking-is-presentation-not-storage.md)), so a ticked row is in its new slot by the time the browser paints.
+`extensions/TaskList/ChecklistFlip.ts` adds only the travel between the two positions, and **moves nothing in the document**.
+It is a plugin rather than an effect because it needs the old geometry just before the view writes the DOM and the new just after.
+Do not reintroduce a document mutation here: the stored order is what a Backup and Sync carry, and it is the only record of the order the user typed.
+
+`extensions/TaskItem/` adds the reorder grip in the editable node view only, driven by pointer events so a finger can use it; the stored Body and the Card never carry a grip.
+Its `ignoreMutation` must keep treating the row's own attribute changes as non-edits, or a rebuilt node view drops the row from under the pointer mid-drag.
+
+List buttons convert the whole list when the cursor is collapsed inside one (`extensions/list-toggle.ts`), because a task list uses a different item type from the other two.
+
+## Attachments
+
+All five kinds (image, audio, video, file, Excalidraw) are custom nodes from one factory, `createAttachmentNode`.
+
+- **The Body stores only an `attachmentId`**, never a `src` or base64.
+  The bytes live in the Local Store, and a node view resolves the id to an object URL and revokes it on unmount.
+- **Each kind's facts are one row of `ATTACHMENT_SPECS`** (`src/lib/attachments.ts`): MIME prefix, whitelist, size cap, Body tag, picker `accept`.
+- **`attachments/insert.ts` is the one path from files to nodes**, for paste, drop, the toolbar, the slash menu and the picker Starts: it validates, derives what the kind needs (a thumbnail, a poster, a duration), stores, and places the node.
+  Every failure reaches one error callback, which the editor toasts.
+- **File** is toolbar-only: it accepts any type, so paste and drop cannot tell it from the other kinds.
+- `AttachmentNodeView` draws what the visual kinds share: the delete overlay, the loading pulse, and the missing and not-downloaded placeholders.
+- **Known but not downloaded** is a row synced from another Device whose full bytes are still on the server.
+  The node view reads the row live, so a download turns it ready without reopening the Note.
+  An image shows its thumbnail with a download button; other kinds show a card.
+  The Card on the feed never downloads.
+- An image's and a video's pixel size is stored at insert, so the box is reserved before the bytes land.
+
+### Audio
+
+- A custom player over a hidden native `<audio>`; the element's own events are the source of truth for playback state.
+- **The recorder lives in `AudioRecorderHost`**, which the editor mounts whenever it is editable, not in the toolbar button.
+  On a phone the button sits inside a collapsed menu, so a recorder living there was not mounted when a voice note started from the speed dial.
+  The button is only a request into the coordinator.
+- `audioCapture.ts` and `audioAutoplay.ts` are pending-then-fire coordinators outside React, because the host, the Intent and the Note's content mount in no fixed order.
+  The capture coordinator hands a request back if the recorder answering it unmounts first, which React StrictMode's mount cycle does in development.
+- The recorder checks the microphone permission before asking for a stream, and treats only `denied` as final, because Firefox and Safari cannot answer the query.
+- Uploading an audio file goes through the File button; the Audio button only records.
+
+### Excalidraw
+
+- The scene is a JSON blob with a cached SVG preview; the node view is a passive preview with tap-to-edit.
+- One shared `ExcalidrawDialog`, lazy-loaded when a drawing first opens, holds the live canvas.
+  `NotesView` lazy-loads the editor in the same way, so neither TipTap nor the drawing engine is in the initial download.
+- **Commit on Save**: a new drawing creates its Attachment only on Save, and every Save mints a new Attachment and repoints the node, so every blob stays write-once by id for Sync.
+  The orphan sweep removes the old one.
+- **The dialog withholds pointer moves above the canvas** during a drag that started on it, with a capture-phase `window` listener.
+  The canvas takes pointer capture, so without it a stroke kept extending under the header, hidden but still in the exported image.
+- **The dialog's entrance does not scale**, and that is load-bearing.
+  Excalidraw sizes its canvas from a rect that includes transforms, so opening mid-scale left every stroke off the cursor; the fade is kept.
+- The SVG exporter imports Excalidraw dynamically, because importing it eagerly touches a canvas at module scope and crashes under jsdom.
+
+## Text styling
+
+Text colour, highlight, font family and font size ride on the one `textStyle` mark.
+The two colour buttons share `EditorColorPickerButton`; the two font selects share `EditorTextStyleSelect`.
+
+### Live color preview
+
+In the custom colour picker a drag only previews the colour, as a ProseMirror decoration (`extensions/color-preview.ts`), and the mark is committed on release.
+So a drag is one undo step, not one per mouse move.
+The commit goes to the selection captured when the popover opened, without focusing the editor, which would close the popover.
+
+## Other extensions
+
+- **Mathematics** is the bundled TipTap extension: `$$...$$` inline, `$$$...$$$` block, or the toolbar button; clicking a rendered node edits it.
+- **Clear** is not a mark: its button clears nodes and marks.
+- **Intent**: the `Editor` takes the open's Intent (`src/lib/intent.ts`) and acts on it once: start recording, open the drawing, insert the chosen files, play the first clip.
 
 ## The editor sheet
 
-`NoteEditorDialog` (`src/components/notes/`) is a full-screen sheet below `sm:` and a centred modal from `sm:` up, built on the vendored shadcn `DialogContent`.
+`NoteEditorDialog` (`src/components/notes/`) is a full-screen sheet below `sm:` and a centred modal above it.
 
-- Below `sm:` the vendored close X is hidden and the sheet closes from an app-bar Back arrow; desktop keeps the X.
-  It is hidden with a breakpoint class rather than `showCloseButton`, because that prop is a boolean and re-vendoring the button would duplicate its themed styling and 44px inset overlay.
-  The selector is a descendant one (`[&_[data-slot=dialog-close]]`), not a child one: the close is written as a direct child of `DialogContent` but does not render as one, so `>` silently matches nothing.
-  Because of that rule the Back arrow is a plain `Button` calling `handleClose`, not `DialogClose asChild`, which would forward `data-slot="dialog-close"` and be hidden with the X.
-- The sheet has no bottom padding below `sm:`: its old `1.5rem + --safe-bottom`, plus the note bar under the editor, held the format toolbar about 80px off the keyboard.
-  The toolbar now owns the bottom edge and its insets (`EditorToolbar`, `useKeyboardInset`), and the note bar rides inside the editor column as its `footer`.
-- Below `sm:` the top and side padding are `pt-2` and `px-4` instead of the dialog's `p-6`, with the safe-area insets added on top so the Back arrow never sits under the status bar.
-  8px on top matches the topbar's rhythm, so both app bars sit their controls at the same height; 16px at the sides because the horizontal axis is the scarce one on a phone.
+- Below `sm:` the sheet closes from an app-bar Back arrow and the dialog's X is hidden.
+  The X is hidden by a **descendant** selector on its `data-slot`; a child selector silently matches nothing, because the close does not render as a direct child.
+  For the same reason the Back arrow is a plain button, not a `DialogClose`, which would carry that `data-slot` and be hidden too.
+- Below `sm:` the sheet has no bottom padding: the format toolbar owns the bottom edge and its insets, so it sits on the keyboard.
+- Top and side padding are tighter than the dialog's default, with the safe-area insets added, so the Back arrow never sits under the status bar.
 
-## Testing extensions (Vitest)
+## Testing extensions
 
-Tests run **headless** — no DOM render needed. Build `new Editor({ extensions: [Document, Paragraph, Text, <Ext>] })` from `@tiptap/core`, then:
+Tests run headless: build `new Editor({ extensions: [...] })` from `@tiptap/core`, drive `editor.commands.*`, and assert `editor.getHTML()` and `editor.isActive(...)`.
+Pull a button from the extension's `button` option and assert its props and that `action()` flips `isActive()`.
 
-- drive `editor.commands.*` and assert `editor.getHTML()` / `editor.isActive(...)`;
-- pull the button via `editor.extensionManager.extensions.find(e => e.name === '<name>').options.button({ editor, t })` and assert its `componentProps` (`icon`, `tooltip`, `shortcutKeys`) and that `action()` flips `isActive()`;
-- trigger markdown input rules with `editor.view.someProp('handleTextInput', (f) => f(editor.view, from, from, ' '))`.
-
-`extensions/formatting.test.ts` is the canonical template: one table, one row per extension, plus a case for anything only one of them does.
-The attachment nodes are tested as tables too: `attachments/createAttachmentNode.test.ts` (parse, insert, name per kind), `attachments/insert.test.ts` (the insert path per kind, derived data, transfer routing) and `attachments/AttachmentNodeView.test.tsx` (the shared states per visual kind); a kind's own test keeps only what is its own (the object-URL revoke and the not-downloaded cases in `ImageNodeView.test.tsx`, the not-downloaded card in `FileNodeView.test.tsx`).
-Run `pnpm test`.
-
-When editing here, follow Pattern A: a new toolbar button is a `withButton` declaration (or a `ButtonView<typeof X>` option for a custom component), never a toolbar-side array.
+`extensions/formatting.test.ts` is the template: one table, one row per extension, plus a case for anything only one of them does.
+The attachment nodes are tested as tables too, in `extensions/attachments/`; a kind's own test keeps only what is its own.
