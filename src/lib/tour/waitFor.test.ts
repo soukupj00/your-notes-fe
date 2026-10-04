@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { waitFor } from './waitFor.ts';
+import { noteCardTarget } from './targets.ts';
+import { waitFor, waitForGone, waitForTarget } from './waitFor.ts';
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -8,6 +9,14 @@ afterEach(() => {
 /** Puts something in the document a beat from now, the way the app would. */
 function soon(work: () => void, ms = 10) {
   setTimeout(work, ms);
+}
+
+/** An element with a size, which jsdom never gives one: a target resolves only when measured. */
+function onScreen(html: string): Element {
+  document.body.insertAdjacentHTML('beforeend', html);
+  const element = document.body.lastElementChild as Element;
+  element.getBoundingClientRect = () => ({ width: 120, height: 44 }) as DOMRect;
+  return element;
 }
 
 describe('waitFor', () => {
@@ -76,5 +85,58 @@ describe('waitFor', () => {
 
     expect(warn).not.toHaveBeenCalled();
     warn.mockRestore();
+  });
+});
+
+describe('waitForTarget', () => {
+  it('resolves with the target once it is on screen', async () => {
+    soon(() => onScreen('<div id="bar" data-tour="editor-toolbar"></div>'));
+
+    const found = await waitForTarget('editorToolbar');
+
+    expect(found).toBe(document.querySelector('#bar'));
+    expect(found).not.toBeNull();
+  });
+
+  it.each([
+    ['the selector', undefined, '[data-tour="capture"]'],
+    ['the label it was given', 'a Feed to start on', 'a Feed to start on'],
+  ])('names %s when it gives up', async (_case, label, warned) => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    await expect(waitForTarget('capture', { timeout: 10, label })).resolves.toBeNull();
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining(warned));
+    warn.mockRestore();
+  });
+});
+
+describe('waitForGone', () => {
+  it('waits for every target to leave the screen', async () => {
+    const first = onScreen('<div data-note-feed-id="a"></div>');
+    const second = onScreen('<div data-note-feed-id="b"></div>');
+    let gone = false;
+    // A wait that never saw them leave would also end, late, on its spent budget.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    soon(() => first.remove(), 10);
+    soon(() => {
+      second.remove();
+      gone = true;
+    }, 40);
+
+    await waitForGone([noteCardTarget('a'), noteCardTarget('b')], { label: 'two cards' });
+
+    expect(gone).toBe(true);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('answers straight away for no targets at all', async () => {
+    const frame = vi.spyOn(globalThis, 'requestAnimationFrame');
+
+    await waitForGone([], { label: 'nothing' });
+
+    expect(frame).not.toHaveBeenCalled();
+    frame.mockRestore();
   });
 });
