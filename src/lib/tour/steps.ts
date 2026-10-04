@@ -4,13 +4,8 @@
  */
 
 import { propByKey, type TourProp } from './props.ts';
-import {
-  noteCardTarget,
-  resolveTourTarget,
-  type TourTarget,
-  tourTargetSelector,
-} from './targets.ts';
-import { waitFor } from './waitFor.ts';
+import { noteCardTarget, resolveTourTarget, type TourTarget } from './targets.ts';
+import { waitFor, waitForGone, waitForTarget } from './waitFor.ts';
 
 /**
  * Deliberately narrow. Navigation is here so the provider can mark it as its own (any other ends
@@ -47,10 +42,6 @@ export interface TourStep {
    * nothing. Steps 5 and 6 look again at step 4's Settings; `leaveScene` walks the chain back.
    */
   continues?: boolean;
-}
-
-function waitForTarget(target: TourTarget): Promise<Element | null> {
-  return waitFor(() => resolveTourTarget(target), { label: tourTargetSelector(target) });
 }
 
 /**
@@ -99,9 +90,7 @@ export const TOUR_STEPS: TourStep[] = [
       stage.closeNote();
       // The editor is a Radix dialog with an exit animation, so "closed" is when
       // its toolbar has left the document, not when the router has been told.
-      await waitFor(() => resolveTourTarget('editorToolbar') === null, {
-        label: 'the editor to close',
-      });
+      await waitForGone(['editorToolbar'], { label: 'the editor to close' });
     },
   },
 

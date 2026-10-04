@@ -214,6 +214,7 @@ The seed writes the baselines **before** the Prop rows, because the Local Store 
   `HelpSection` sits between the shortcuts and the closing pair, which keeps `PwaInstallSection` and `BackupSection` adjacent for the last step.
 - Targets are resolved by **first match with a non-zero rect** (`lib/tour/targets.ts`), because several of the app's surfaces are mounted twice with CSS hiding one.
 - Waiting is always on a **DOM condition, never a timer** (`lib/tour/waitFor.ts`): reduced motion is a hard killswitch, so a fixed wait is wrong in both directions at once.
+  The steps and the provider share its two target waits: `waitForTarget` for something to arrive on screen, `waitForGone` for something to leave it.
 - `onboardingSeenAt` is stamped when the Tour is **offered**, before a single Prop exists — not on completion, which would re-arm it after every reload.
 - The Tour's own behaviour is verified by `e2e/onboarding.spec.ts` at two breakpoints, not by Vitest: jsdom measures every element as 0x0, so a hole cut over nothing is invisible there.
 
