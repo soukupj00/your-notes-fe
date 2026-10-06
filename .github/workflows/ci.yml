@@ -111,11 +111,10 @@ jobs:
             sleep 1
           done
           curl -fs http://localhost:8080/settings | grep -q '<title>YouNotes</title>' || { docker logs younotes-fe; exit 1; }
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Log in to ghcr.io
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
       - name: Publish
         run: |
           if [ "${{ github.ref_type }}" = "tag" ]; then tag="${{ github.ref_name }}"; else tag=latest; fi
