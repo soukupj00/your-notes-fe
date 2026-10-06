@@ -75,8 +75,8 @@ Not yet built, and must not be described as existing: the sync server, accounts,
 ## Evidence on Hand
 
 - Real product content and code in this repository; the identity lab at `/prototype/identity` (dev-only route) with three exploratory directions.
-- Domain glossary `CONTEXT.md`, roadmap `PLAN.md`, decision records `docs/adr/`, per-slice plans `docs/superpowers/plans/`.
-- Original assignment brief `INSTRUCTIONS.md` (Czech thesis assignment plus stack decisions).
+- Domain glossary `CONTEXT.md`, roadmap `PLAN.md`, decision records `docs/adr/`.
+- The thesis assignment and the brief's stack decisions, in `docs/architecture/07-requirements.md`.
 
 Absent, and not to be fabricated: no users yet, no testimonials, no case studies, no benchmarks, no press, no pricing or licensing claims beyond "open source", no deployment or install numbers. **User testing with real participants is a required deliverable of the thesis and has not happened yet** - no finding may be attributed to it.
 

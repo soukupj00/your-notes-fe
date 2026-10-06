@@ -1,10 +1,23 @@
 # Requirements
 
-Functional and non-functional requirements distilled from the assignment brief ([`INSTRUCTIONS.md`](../../INSTRUCTIONS.md)) and the product definition ([`PRODUCT.md`](../../PRODUCT.md)), with traceability to where each is satisfied and how it is verified.
+Functional and non-functional requirements distilled from the project brief (the thesis assignment quoted below plus the author's stack and quality constraints) and the product definition ([`PRODUCT.md`](../../PRODUCT.md)), with traceability to where each is satisfied and how it is verified.
 
 ## The brief's requirements
 
-The Czech assignment text reduces to four mandated outcomes plus a set of stack and quality constraints:
+The thesis assignment, as issued in Czech:
+
+> **Open-source self-hosted poznámky**
+>
+> Důležitost soukromí se zvyšuje rok od roku s tím, jak velké korporace využívají uživatelská data nejen pro účely strojového učení, ale především s možnost další monetizace.
+> Přechod na self-hosted řešení, tak může být validním krokem.
+> Analyzujte základní funkcionality aplikace Google Keep a pokuste se navrhnout vlastní open-source řešení se zaměřením na synchronizaci prostřednictvím self-hosted řešení.
+>
+> - Proveďte rešerši aplikace Google Keep a podobných správců poznámek.
+> - Analyzujte a navrhněte řešení s ohledem na synchronizaci i off-line podporu.
+> - Implementujte PWA aplikaci a serverovou část pro správu a synchronizaci poznámek.
+> - Vytvořenou aplikaci otestujte s uživateli.
+
+The brief reduces to the assignment's four mandated outcomes plus the author's stack and quality constraints:
 
 | Id | Brief requirement | Addressed by |
 |---|---|---|

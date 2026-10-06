@@ -23,11 +23,12 @@ Open-source self-hosted PWA note-taking app (Google Keep alternative). Mobile-fi
 - [`CONTEXT.md`](./CONTEXT.md) - domain glossary (canonical meaning of Note, Tag, Attachment, Sync, etc.).
 - [`PLAN.md`](./PLAN.md) - overall roadmap and milestone order.
 - [`PRODUCT.md`](./PRODUCT.md) - who the product is for, its positioning and operating context.
-- [`DESIGN.md`](./DESIGN.md) - **the visual contract.** The `nightshift` direction ("Day desk, night shop"), its tokens, and its Named Rules, which are binding for any UI work. Written from measurement, not impression, so it also records six defects that must be fixed rather than ported. `.impeccable/design.json` is its machine-readable sidecar (tonal ramps, shadow/motion tokens, component snippets).
-- [`docs/adr/`](./docs/adr/) - architecture decision records.
+- [`DESIGN.md`](./DESIGN.md) - **the visual contract.** The `nightshift` direction ("Day desk, night shop"), its tokens, and its Named Rules, which are binding for any UI work. Written from measurement, not impression, so it also records six defects that must be fixed rather than ported.- [`docs/adr/`](./docs/adr/) - architecture decision records.
 - [`docs/architecture/`](./docs/architecture/README.md) - the system described chapter by chapter (architecture, database, sync, server, testing).
-- Per-area docs (each folder has a `CLAUDE.md` = how it works + `PLAN.md` = what's left):
+- Per-area docs (each folder's `CLAUDE.md` says how the area works):
   [`src/data`](./src/data/CLAUDE.md), [`src/hooks/data`](./src/hooks/data/CLAUDE.md), [`src/components/editor`](./src/components/editor/CLAUDE.md), [`src/context`](./src/context/CLAUDE.md).
+- `docs/superpowers/` - agent plans, specs and slice records.
+  Git-ignored, so it exists on the author's machine and not in a clone; nothing in the repository may link into it.
 
 ## Commands
 

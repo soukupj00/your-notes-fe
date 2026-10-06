@@ -35,6 +35,14 @@ dist-ssr
 .claude-flow/
 .ai/
 .playwright-mcp/
+.impeccable/
+
+# Agent plans, specs and slice records: kept on the developer's machine, not shared
+docs/superpowers/
+
+# Thesis notes and research, which belong to the thesis repository
+docs/research/
+docs/thesis/
 
 # Per-machine Claude Code permissions, not shared
 .claude/settings.local.json

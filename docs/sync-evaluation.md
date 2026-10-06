@@ -57,7 +57,7 @@ Prior art, not candidates: Joplin Server, Nextcloud Notes, Google Keep.
 
 ## Findings
 
-Research done 2026-08-30 by five agents against fetched primary sources; raw files (with per-claim URLs and bib entries) are in [`docs/research/sync/`](./research/sync/README.md) and their bib blocks move into the thesis bib in step 4.
+Research done 2026-08-30 by five agents against fetched primary sources; raw files (with per-claim URLs and bib entries) are kept with the thesis material, outside this repository, and their bib blocks move into the thesis bib in step 4.
 Claims the agents could not verify from a primary source are marked *unverified* here as they were there.
 
 ### Transports
@@ -233,12 +233,12 @@ Also recorded as considered and kept: attachment bytes are a separate immutable 
 - Verdict accepted: Build wins; ADR 0017 and ADR 0018 stand with the five amendments above.
 - Amendment 1 accepted: SSE is the primary Live Update channel; polling is the Catch-up trigger (focus, `online`, visibility) and the fallback while the stream is down.
   Implementation delta: one optional `hints` method on `Remote`, one `text/event-stream` endpoint on the server, one extra trigger in the sync loop; a Remote without `hints` is polled.
-- Raw research kept: [`docs/research/sync/`](./research/sync/README.md).
+- Raw research kept with the thesis material, outside this repository.
 - Scores unchanged; tables reshaped for A4 (numbers-only matrices, reasons as bullets).
 - Unverified claims stay out of the thesis text or are marked as such: CouchDB's backup story and signup lock-down, `rxdb-server`'s licence tier, PocketBase's static-serving page and id constraint, EventSource background-tab throttling.
 - Written up as `ni-dip-thesys/text/design/sync.tex`; repo docs reconciled in `docs/architecture/04-sync.md`, `05-server.md`, ADR 0017 (amended) and ADR 0018 (re-evaluated note).
 
 ## Sources
 
-Bib entries are in the `## Bib entries` blocks of [`docs/research/sync/`](./research/sync/README.md) and land in `ni-dip-thesys/text/bib-database.bib` in step 4.
+Bib entries are in the `## Bib entries` blocks of the raw research files, kept with the thesis material, and land in `ni-dip-thesys/text/bib-database.bib` in step 4.
 Reading record: MDN (EventSource, WebSocket, Background Sync, Periodic Sync, Push, Page Visibility, RequestInit, WebTransport, the two PWA guides), WHATWG SSE, RFC 6455, 8288, 9110, 9111, 9562, 8291, OASIS MQTT 5.0, Mosquitto, Caddy, caniuse, WebKit blog; CouchDB docs (protocol, conflicts, `_changes`, auth, CORS, peruser, purge, compaction, Docker), PouchDB, RxDB docs and pricing, Couchbase BSL post; ElectricSQL, TanStack DB, PowerSync, Zero, Triplit, Yjs, Hocuspocus, y-sweet, Automerge, Replicache; PocketBase, Appwrite, Supabase, Dexie Cloud pricing, Joplin specs, Nextcloud Notes API, Fastify, Drizzle, Node sqlite/SEA, Bun, SQLite, Litestream; Lamport 1978, Fidge 1988, Kulkarni et al. 2014, Shapiro et al. 2011, Kleppmann et al. 2019, DDIA, Fowler (Event Sourcing, RMM), Fielding 2000/2008, HAL draft, tus, IETF resumable uploads, Dropbox, Syncthing, the Medium article.

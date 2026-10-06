@@ -13,7 +13,7 @@ What exists:
 
 - **`PRODUCT.md`** defines Keep as the usability bar ("Keep's approachability is the bar to match, not to beat with complexity") and ranks the reasons users would switch: 1. no corporate account, 2. an easy interface, 3. owned offline-first sync - with customisability running through all three.
 - **`PLAN.md`** frames M4 as reaching "Google-Keep parity" and enumerates what that meant here: lifecycle (pin/archive/trash), labels with colors, fuzzy search, quick capture, masonry feed.
-- **`INSTRUCTIONS.md`** names the motivating trend: corporations monetising user data, making self-hosting a privacy response.
+- **The thesis assignment** ([07-requirements.md](./07-requirements.md)) names the motivating trend: corporations monetising user data, making self-hosting a privacy response.
 - **[ADR 0018](../adr/0018-the-server-serves-the-pwa.md)** contains the one comparative observation in the repo: the "frontend somewhere, backend somewhere else, type your server address" shape is "what most self-hosted note and media apps do, and it is where a meaningful share of non-technical users give up".
 
 ## 2. Google Keep: the feature baseline

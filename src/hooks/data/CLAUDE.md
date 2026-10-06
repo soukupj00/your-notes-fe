@@ -63,3 +63,8 @@ The store itself is described in [`src/data/CLAUDE.md`](../../data/CLAUDE.md).
 **The batched hook keeps each Note's `Map` identity across refires, and that is load-bearing.**
 The one shared query refires for any Attachment write, and the Card mints object URLs off that Map, so a fresh Map would revoke and re-mint every thumbnail on screen.
 `useNoteAttachments.test.ts` locks it; do not simplify the cache away.
+
+## Considered and not built
+
+Per-row sync state (dirty, synced, conflicted) on the hooks.
+The app shows one pending count from `SyncProvider`, and a conflict arrives as an ordinary Note under the Conflicts Tag.
