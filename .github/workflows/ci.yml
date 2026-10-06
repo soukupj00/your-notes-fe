@@ -32,6 +32,16 @@ jobs:
       - run: pnpm lint
       - run: pnpm exec tsc -b --noEmit
 
+  # Fails on a credential anywhere in the history, on any branch.
+  # GitLab's Secret Detection template only writes a report, so this job is the gate.
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: docker run --rm -v "$PWD:/repo:ro" ghcr.io/gitleaks/gitleaks:v8.30.1 git /repo --redact --verbose
+
   test-unit:
     runs-on: ubuntu-latest
     steps:
@@ -85,7 +95,7 @@ jobs:
   # `latest` from main, the git tag from a tag. The backend's image builds FROM this one.
   image:
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
-    needs: [quality, test-unit, test-e2e, build]
+    needs: [quality, secrets, test-unit, test-e2e, build]
     runs-on: ubuntu-latest
     permissions:
       contents: read
