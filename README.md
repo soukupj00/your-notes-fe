@@ -32,7 +32,7 @@ pnpm check        # Biome: lint and format
 pnpm build        # type-check and build into dist/
 ```
 
-For the account and sync screens (Settings, `/pair`), run the server's `pnpm dev` in `../ni-dip-be` alongside.
+For the account and sync screens (Settings, `/pair`), run the server's `pnpm dev` alongside, in the `ni-dip-be` repository checked out next to this one.
 Vite forwards `/api` and `/health` to it on port 3000.
 The Pairing Link the server prints points at port 3000, so open its `/pair#<code>` on port 5173 instead.
 

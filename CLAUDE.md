@@ -45,7 +45,7 @@ pnpm test:e2e     # Playwright against `pnpm dev`, at a desktop and a mobile wid
 pnpm test:e2e:pwa # Playwright against the production build: service worker and offline
 ```
 
-For the Account screens (Settings, `/pair`), run the backend's `pnpm dev` in `../ni-dip-be` alongside: Vite proxies `/api` and `/health` to port 3000.
+For the Account screens (Settings, `/pair`), run the backend's `pnpm dev` alongside, in the `ni-dip-be` repository checked out next to this one: Vite proxies `/api` and `/health` to port 3000.
 The Pairing Link the backend prints points at port 3000, which serves no app in dev, so open its `/pair#<code>` on port 5173.
 First Playwright run on a machine needs `pnpm exec playwright install chromium`.
 Vitest sees `src/**` only and Playwright sees `e2e/` only.
@@ -284,4 +284,4 @@ Red → green → refactor, applied per layer ([ADR 0003](./docs/adr/0003-testin
 - **A user-started call that toasts its outcome:** `useAction()` gives `busy` and `run(act, { success, failure })`.
 - **Tailwind v4:** CSS-based config in `globals.css`, no `tailwind.config.js`.
 - **Files stay under 500 lines.**
-- **Vendored and generated files are never edited:** `src/contract/index.ts` (refreshed by `pnpm contract:pull`), `src/routeTree.gen.ts`.
+- **Vendored and generated files are never edited:** `src/contract/index.ts` (refreshed by `pnpm contract:pull`, which copies it from the `ni-dip-be` repository checked out next to this one), `src/routeTree.gen.ts`.
