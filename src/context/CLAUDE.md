@@ -1,7 +1,6 @@
 # CLAUDE.md - `src/context` (React providers)
 
 App-wide providers.
-See [`PLAN.md`](./PLAN.md) for what is left.
 
 ## Where each one sits
 

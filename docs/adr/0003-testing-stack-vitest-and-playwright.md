@@ -5,7 +5,7 @@
 
 ## Context
 
-`INSTRUCTIONS.md` requires unit tests and Playwright E2E, with a test accompanying each small feature (UI behavior and IndexedDB data). No test runner is installed yet — only `fake-indexeddb` and `indexeddbshim` helpers are present in devDependencies. The build already uses Vite.
+The project brief requires unit tests and Playwright E2E, with a test accompanying each small feature (UI behavior and IndexedDB data). No test runner is installed yet — only `fake-indexeddb` and `indexeddbshim` helpers are present in devDependencies. The build already uses Vite.
 
 ## Decision
 

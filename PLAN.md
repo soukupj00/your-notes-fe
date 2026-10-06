@@ -4,7 +4,6 @@ The roadmap for the frontend (React SPA + PWA).
 The sync server lives in a separate repository, [`ni-dip-be`](https://gitlab.fit.cvut.cz/soukuj26/ni-dip-be); this repo plans only the client half of sync.
 
 See [`CONTEXT.md`](./CONTEXT.md) for the glossary and [`docs/adr/`](./docs/adr/) for the decisions.
-Each finished slice's detailed record (deliverables, harmless changes, deviations from its plan) is in [`docs/superpowers/slice-records.md`](./docs/superpowers/slice-records.md), and its plan in [`docs/superpowers/plans/`](./docs/superpowers/plans/).
 
 ## Where we are
 
@@ -26,7 +25,7 @@ flowchart LR
    - the sync surface split off `LocalStore`;
    - theme, view mode and sidebar state folded into `PreferencesProvider`, with one provider stack shared with the test renderer.
 
-Still open from earlier milestones: a high-contrast or low-vision palette, single-key power shortcuts with a `?` cheat sheet, keyboard shortcuts for the toolbar actions that have none, video poster and waveform extras, and **Import from other apps** ([design](./docs/superpowers/specs/2026-08-21-m5-import-from-other-apps-design.md), [ADR 0019](./docs/adr/0019-import-replaces-restore.md)).
+Still open from earlier milestones: a high-contrast or low-vision palette, single-key power shortcuts with a `?` cheat sheet, keyboard shortcuts for the toolbar actions that have none, video poster and waveform extras, and **Import from other apps** ([ADR 0019](./docs/adr/0019-import-replaces-restore.md)).
 
 Out of scope, deliberately: end-to-end encryption (the threat model is documented in ADR 0018 instead), sharing a Note between Accounts, and any email.
 
@@ -143,7 +142,3 @@ Found by the surveys and reviews, fixed by no slice.
 - A failed autosave leaves the editor's status on "saving" with an unhandled rejection (no `catch` on the autosave's `.then` in `NoteEditorDialog`); the next write runs, but nothing tells the user.
 - An `ensureSaved` that arrives after `close` purged the Note (a late Attachment insert) recreates the row from the last content, as `ensureNoteId` did.
 - `NoteTagsBar` runs its live labels query on a Draft's own id from the start, and it settles after the dialog tests' last await, so `--reporter=verbose` shows one or two more React `act()` warnings than main's three; settling the store's live queries inside `act` in `renderWithStore` (`src/test/store.tsx`) would quiet every suite at once.
-
-## Per-area plans
-
-Each lists only what is open in its area: [`src/data`](./src/data/PLAN.md), [`src/hooks/data`](./src/hooks/data/PLAN.md), [`src/components/editor`](./src/components/editor/PLAN.md), [`src/context`](./src/context/PLAN.md).

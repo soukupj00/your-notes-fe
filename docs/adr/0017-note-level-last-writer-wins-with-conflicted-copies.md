@@ -67,7 +67,7 @@ It stays available as a later, Body-only upgrade: the Revision and the Conflicte
 
 ## Amended 2026-08-30
 
-Re-evaluated from scratch against a wider candidate set (CouchDB + PouchDB, RxDB, Yjs + Hocuspocus, PocketBase, Zero, ElectricSQL, PowerSync, and seven transports) under explicit gates and weighted criteria; notes in [`docs/notes.md`](../notes.md), sources in [`docs/research/sync/`](../research/sync/README.md), thesis text in `ni-dip-thesys/text/design/sync.tex`.
+Re-evaluated from scratch against a wider candidate set (CouchDB + PouchDB, RxDB, Yjs + Hocuspocus, PocketBase, Zero, ElectricSQL, PowerSync, and seven transports) under explicit gates and weighted criteria; notes in [`docs/sync-evaluation.md`](../sync-evaluation.md), thesis text in `ni-dip-thesys/text/design/sync.tex`; the sourced findings are kept with the thesis material, outside this repository.
 The decision stands and is amended as follows:
 
 - **SSE is part of the design.** "A REST API remains sufficient" still holds for data; Live Update is a `text/event-stream` hint whose event `id` is the change sequence, and polling is the Catch-up trigger and the fallback. In the frontend this is one optional method on the `Remote` seam.

@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-08-07
-- Supersedes the implementation decided in Task 5b of [`2026-07-25-m4-slice4-identity-and-motion.md`](../superpowers/plans/2026-07-25-m4-slice4-identity-and-motion.md) (2026-08-05).
+- Supersedes the implementation decided in Task 5b of the M4 Slice 4 plan, identity and motion (2026-08-05).
 
 ## Context
 

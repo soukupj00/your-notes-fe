@@ -32,7 +32,7 @@ pnpm check        # Biome: lint and format
 pnpm build        # type-check and build into dist/
 ```
 
-For the account and sync screens (Settings, `/pair`), run the server's `pnpm dev` in `../ni-dip-be` alongside.
+For the account and sync screens (Settings, `/pair`), run the server's `pnpm dev` alongside, in the `ni-dip-be` repository checked out next to this one.
 Vite forwards `/api` and `/health` to it on port 3000.
 The Pairing Link the server prints points at port 3000, so open its `/pair#<code>` on port 5173 instead.
 
@@ -62,3 +62,12 @@ A Backup carries Notes, Tags and Attachments but not Preferences, which stay wit
 - [`PLAN.md`](./PLAN.md): the roadmap.
 - [`DESIGN.md`](./DESIGN.md): the visual design rules.
 - [`docs/adr/`](./docs/adr/): the decisions and why.
+
+## License
+
+[MIT](./LICENSE).
+
+<img src="https://fit.cvut.cz/static/images/fit-cvut-logo-en.svg" alt="FIT CTU logo" height="200">
+
+This software was developed with the support of the **Faculty of Information Technology, Czech Technical University in Prague**.
+For more information, visit [fit.cvut.cz](https://fit.cvut.cz/en).
