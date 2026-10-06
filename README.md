@@ -62,3 +62,12 @@ A Backup carries Notes, Tags and Attachments but not Preferences, which stay wit
 - [`PLAN.md`](./PLAN.md): the roadmap.
 - [`DESIGN.md`](./DESIGN.md): the visual design rules.
 - [`docs/adr/`](./docs/adr/): the decisions and why.
+
+## License
+
+[MIT](./LICENSE).
+
+<img src="https://fit.cvut.cz/static/images/fit-cvut-logo-en.svg" alt="FIT CTU logo" height="200">
+
+This software was developed with the support of the **Faculty of Information Technology, Czech Technical University in Prague**.
+For more information, visit [fit.cvut.cz](https://fit.cvut.cz/en).
