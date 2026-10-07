@@ -42,6 +42,6 @@ Everything else follows from it rather than being chosen separately:
 
 ## Re-evaluated 2026-08-30
 
-Taken as given in the synchronisation re-evaluation ([`docs/sync-evaluation.md`](../sync-evaluation.md)) and scored against; the ready-made candidates strengthened rather than weakened it.
+Taken as given in the synchronisation re-evaluation ([`docs/sync-evaluation.md`](https://github.com/soukupj00/your-notes-fe/blob/main/docs/sync-evaluation.md)) and scored against; the ready-made candidates strengthened rather than weakened it.
 CouchDB's cookie sessions are stateless with no per-Device revoke, PocketBase is a bearer token with no sessions and no logout, and the only backend-in-a-box with real `HttpOnly` sessions (Appwrite) costs 15-20 containers.
 Sessions are therefore a table, one row per Device, and a stateless encrypted cookie was considered and rejected for the same reason.

@@ -1,11 +1,11 @@
 # 0021 - Reminders are handed off to the calendar; the app never notifies
 
-- Status: Accepted (reverses the "note reminders/notifications" non-requirement in [07-requirements.md](../architecture/07-requirements.md))
+- Status: Accepted (reverses the "note reminders/notifications" non-requirement in [07-requirements.md](https://github.com/soukupj00/your-notes-fe/blob/main/docs/architecture/07-requirements.md))
 - Date: 2026-09-20
 
 ## Context
 
-Reminders were an explicit non-requirement, and the most-missed Keep feature ([10-related-work.md](../architecture/10-related-work.md)).
+Reminders were an explicit non-requirement, and the most-missed Keep feature ([10-related-work.md](https://github.com/soukupj00/your-notes-fe/blob/main/docs/architecture/10-related-work.md)).
 The obstacle was never the UI but delivery: a web app has exactly three ways to raise a notification at a chosen time, and none of them is available.
 Web Push fires with the app closed, but needs a server (M5) and a third-party relay, which [ADR 0017](./0017-note-level-last-writer-wins-with-conflicted-copies.md) already rejected.
 Notification Triggers (`showTrigger`) would have fired locally, but Chrome abandoned it and it never shipped.

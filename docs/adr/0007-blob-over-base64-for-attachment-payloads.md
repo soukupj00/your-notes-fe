@@ -5,7 +5,7 @@
 
 ## Context
 
-M3 introduces attachments (starting with inline images - see [PLAN.md](../../PLAN.md) M3 Slice 1).
+M3 introduces attachments (starting with inline images - see [PLAN.md](https://github.com/soukupj00/your-notes-fe/blob/main/PLAN.md) M3 Slice 1).
 Attachment bytes must be stored in the local IndexedDB store ([ADR 0001](./0001-local-first-storage-with-dexie.md)).
 [ADR 0004](./0004-canonical-editor-toolbar-pattern.md) keeps the editor at the center of the product, and M3 renders images **inline in the Note body**: the body HTML holds only a lightweight attachment **id**, not the bytes, and a TipTap node resolves that id to the payload at render time.
 

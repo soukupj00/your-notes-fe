@@ -16,6 +16,8 @@ export default defineConfig([
     'dist/**',
     'coverage/**',
     'playwright-report/**',
+    'docs/.vitepress/cache/**',
+    'docs/.vitepress/dist/**',
     'src/routeTree.gen.ts',
     'src/contract/**',
     '**/*.d.ts',
