@@ -27,7 +27,7 @@ Everything else falls out:
 
 ## Stack
 
-Chosen together, each choice constraining the next (see [`PLAN.md`](../../PLAN.md) M5):
+Chosen together, each choice constraining the next (see [`PLAN.md`](https://github.com/soukupj00/your-notes-fe/blob/main/PLAN.md) M5):
 
 | Layer | Choice | Rationale |
 |---|---|---|

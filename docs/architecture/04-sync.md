@@ -2,7 +2,7 @@
 
 How Sync works, as designed in M5 and built.
 Decided 2026-08-12; the conflict model is [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicted-copies.md), the deployment/auth frame is [ADR 0018](../adr/0018-the-server-serves-the-pwa.md) ([05-server.md](./05-server.md)).
-Glossary terms (Revision, Conflicted Copy, Tombstone, Offline Mutation Queue) are canonical in [`CONTEXT.md`](../../CONTEXT.md).
+Glossary terms (Revision, Conflicted Copy, Tombstone, Offline Mutation Queue) are canonical in [`CONTEXT.md`](https://github.com/soukupj00/your-notes-fe/blob/main/CONTEXT.md).
 
 ## The problem
 
@@ -107,7 +107,7 @@ The other way round - this Device edited a Note another Device purged - the edit
 ## Re-evaluated 2026-08-30
 
 The design was re-run from scratch against a wider candidate set - seven transports and eight server-side designs including CouchDB + PouchDB, RxDB, Yjs + Hocuspocus, PocketBase, Zero, ElectricSQL and PowerSync - under explicit gates and weighted criteria.
-Working notes: [`docs/sync-evaluation.md`](../sync-evaluation.md); thesis text: `ni-dip-thesys/text/design/sync.tex`; the sourced findings are kept with the thesis material, outside this repository.
+Working notes: [`docs/sync-evaluation.md`](https://github.com/soukupj00/your-notes-fe/blob/main/docs/sync-evaluation.md); thesis text: `ni-dip-thesys/text/design/sync.tex`; the sourced findings are kept with the thesis material, outside this repository.
 The model above won (148 of 165; runner-up RxDB 117) and survives removing the "fit with the existing frontend" criterion entirely.
 Five amendments came out of it:
 
@@ -121,7 +121,7 @@ Five amendments came out of it:
 ## Alternatives rejected (thesis material)
 
 - **Field-level merge**: resolves the cheap fields and leaves the Body - the actual collision - on LWW anyway; per-field timestamps on every row is a poor trade for that.
-- **Ready-made sync stacks** (2026-08-30): CouchDB wins only catch-up maturity and has no per-Device session revoke; Yjs wins only merge quality and makes the HTML Body a derived cache; PocketBase equals the build on operations and has no revision, feed or tombstones; the Postgres engines are two to four services and leave writes to us; Dexie Cloud and Couchbase fail the open-source gate. Details in [`docs/sync-evaluation.md`](../sync-evaluation.md).
+- **Ready-made sync stacks** (2026-08-30): CouchDB wins only catch-up maturity and has no per-Device session revoke; Yjs wins only merge quality and makes the HTML Body a derived cache; PocketBase equals the build on operations and has no revision, feed or tombstones; the Postgres engines are two to four services and leave writes to us; Dexie Cloud and Couchbase fail the open-source gate. Details in [`docs/sync-evaluation.md`](https://github.com/soukupj00/your-notes-fe/blob/main/docs/sync-evaluation.md).
 - **CRDT (Yjs) for the Body**: the technically superior merge, rejected with reasons recorded. It would make the Yjs document the real Note and the HTML a derived cache (breaking the invariant relied on by card previews, search, backup and attachment references), wants a WebSocket rather than the brief's REST commitment, and would be the largest single item in M5, competing with the milestone's actual goal (sync an average person can set up). It remains open as a later Body-only upgrade inside the same Revision framework.
 
 ## Testing strategy

@@ -1,0 +1,48 @@
+/* Mermaid sizes a label's box at the label's own line height; the theme's taller paragraph
+   line height would overflow the box and clip the last line. */
+.vp-doc .mermaid p {
+  line-height: inherit;
+}
+
+/* Diagrams render at their natural size (`useMaxWidth: false` in config.ts) and scroll
+   sideways when wider than the page, instead of shrinking their text out of reach. */
+.vp-doc .mermaid {
+  overflow-x: auto;
+}
+
+.screenshots {
+  margin: 32px 0;
+}
+
+.screenshots img {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+}
+
+.dark .light-only,
+html:not(.dark) .dark-only {
+  display: none;
+}
+
+/* The theme caps the hero image at a 320px square, which shrinks a phone screenshot to a stamp.
+   Below 960px the image sits above the title on negative margins, so it keeps the theme's caps there. */
+.VPHero .image-container .image-src {
+  max-width: none;
+  max-height: 192px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  box-shadow: var(--vp-shadow-3);
+}
+
+@media (min-width: 640px) {
+  .VPHero .image-container .image-src {
+    max-height: 256px;
+  }
+}
+
+@media (min-width: 960px) {
+  .VPHero .image-container .image-src {
+    max-height: 480px;
+    border-radius: 20px;
+  }
+}

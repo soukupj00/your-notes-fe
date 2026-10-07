@@ -13,7 +13,7 @@ The numbered decisions that code comments cite as "ADR 0011, decision N" are the
 ## Decisions
 
 Taken in the 2026-08-03 grilling session.
-Vocabulary is in [`CONTEXT.md`](../../CONTEXT.md) under *Editing*: **Toolbar Family**, **Toolbar Item**, **Toolbar Layout**, **Width Class**.
+Vocabulary is in [`CONTEXT.md`](https://github.com/soukupj00/your-notes-fe/blob/main/CONTEXT.md) under *Editing*: **Toolbar Family**, **Toolbar Item**, **Toolbar Layout**, **Width Class**.
 
 1. **The unit is a Toolbar Item, not an extension name.**
    A registry maps a stable id to an icon, a label, a family, and the extension button view it renders.

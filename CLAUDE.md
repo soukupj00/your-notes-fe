@@ -25,6 +25,8 @@ Open-source self-hosted PWA note-taking app (Google Keep alternative). Mobile-fi
 - [`PRODUCT.md`](./PRODUCT.md) - who the product is for, its positioning and operating context.
 - [`DESIGN.md`](./DESIGN.md) - **the visual contract.** The `nightshift` direction ("Day desk, night shop"), its tokens, and its Named Rules, which are binding for any UI work. Written from measurement, not impression, so it also records six defects that must be fixed rather than ported.- [`docs/adr/`](./docs/adr/) - architecture decision records.
 - [`docs/architecture/`](./docs/architecture/README.md) - the system described chapter by chapter (architecture, database, sync, server, testing).
+- `docs/` is also the source of the VitePress site, published to GitHub Pages from `main` (`docs/.vitepress/config.ts`, `.github/workflows/pages.yml`); agent and thesis-only pages are kept off it by `srcExclude`.
+  A page's links must resolve on the site and on GitHub alike, and the build fails on a dead one.
 - Per-area docs (each folder's `CLAUDE.md` says how the area works):
   [`src/data`](./src/data/CLAUDE.md), [`src/hooks/data`](./src/hooks/data/CLAUDE.md), [`src/components/editor`](./src/components/editor/CLAUDE.md), [`src/context`](./src/context/CLAUDE.md).
 - `docs/superpowers/` - agent plans, specs and slice records.
@@ -43,6 +45,7 @@ pnpm lint         # ESLint: only the React Hooks and typed rules Biome cannot ex
 pnpm test         # Vitest (unit, component, data)
 pnpm test:e2e     # Playwright against `pnpm dev`, at a desktop and a mobile width
 pnpm test:e2e:pwa # Playwright against the production build: service worker and offline
+pnpm docs:dev     # the docs site; pnpm docs:build is what Pages runs
 ```
 
 For the Account screens (Settings, `/pair`), run the backend's `pnpm dev` alongside, in the `ni-dip-be` repository checked out next to this one: Vite proxies `/api` and `/health` to port 3000.

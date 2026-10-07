@@ -10,7 +10,7 @@ Two devices can edit the same Note while one of them is offline, so the mileston
 This is the one sync decision that could not be deferred to the backend repo ([ADR 0002](./0002-separate-frontend-backend-repositories.md)): it dictates this repo's Dexie schema, and it dictates whether a REST API is sufficient at all.
 
 The Body is the thing being fought over.
-It is one HTML string ([CONTEXT.md](../../CONTEXT.md)), authored in TipTap, and every richer element - attachments, checklists - lives inside it rather than beside it.
+It is one HTML string ([CONTEXT.md](https://github.com/soukupj00/your-notes-fe/blob/main/CONTEXT.md)), authored in TipTap, and every richer element - attachments, checklists - lives inside it rather than beside it.
 So a merge strategy that resolves `header`, `color` and `state` independently has not touched the conflict that actually happens.
 
 ## Decision
@@ -67,7 +67,7 @@ It stays available as a later, Body-only upgrade: the Revision and the Conflicte
 
 ## Amended 2026-08-30
 
-Re-evaluated from scratch against a wider candidate set (CouchDB + PouchDB, RxDB, Yjs + Hocuspocus, PocketBase, Zero, ElectricSQL, PowerSync, and seven transports) under explicit gates and weighted criteria; notes in [`docs/sync-evaluation.md`](../sync-evaluation.md), thesis text in `ni-dip-thesys/text/design/sync.tex`; the sourced findings are kept with the thesis material, outside this repository.
+Re-evaluated from scratch against a wider candidate set (CouchDB + PouchDB, RxDB, Yjs + Hocuspocus, PocketBase, Zero, ElectricSQL, PowerSync, and seven transports) under explicit gates and weighted criteria; notes in [`docs/sync-evaluation.md`](https://github.com/soukupj00/your-notes-fe/blob/main/docs/sync-evaluation.md), thesis text in `ni-dip-thesys/text/design/sync.tex`; the sourced findings are kept with the thesis material, outside this repository.
 The decision stands and is amended as follows:
 
 - **SSE is part of the design.** "A REST API remains sufficient" still holds for data; Live Update is a `text/event-stream` hint whose event `id` is the change sequence, and polling is the Catch-up trigger and the fallback. In the frontend this is one optional method on the `Remote` seam.

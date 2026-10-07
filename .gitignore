@@ -49,3 +49,7 @@ docs/thesis/
 
 # TanStack Router plugin scratch dir
 .tanstack
+
+# The docs site's cache and build
+docs/.vitepress/cache/
+docs/.vitepress/dist/

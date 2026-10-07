@@ -90,7 +90,7 @@ The v3 lesson generalizes and is the repo's canonical migration rule: adding an 
 
 ## Sync metadata (v5)
 
-Shape fixed by [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicted-copies.md); the rules are in [`src/data/CLAUDE.md`](../../src/data/CLAUDE.md).
+Shape fixed by [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicted-copies.md); the rules are in [`src/data/CLAUDE.md`](https://github.com/soukupj00/your-notes-fe/blob/main/src/data/CLAUDE.md).
 
 - **`rev` + an indexed dirty marker** on `notes`, `tags`, `noteTags`. `rev` is the server Revision the row last agreed with; absent means never pushed - which is exactly what a pre-sync database is, so no backfill was needed.
   Both are store-private: no read returns them, so no caller can carry a stale Revision into a write.
