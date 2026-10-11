@@ -25,7 +25,7 @@ export function SettingsRow({
 }: {
   label: string;
   /** For rows whose consequence needs saying. */
-  description?: string;
+  description?: ReactNode;
   children: ReactNode;
 }) {
   return (
