@@ -306,6 +306,12 @@
         "label": "Průvodce",
         "description": "Tři kroky v Nastavení.",
         "action": "Spustit průvodce znovu"
+      },
+      "docs": {
+        "label": "Dokumentace",
+        "description": "Jak aplikace funguje a jak spustit vlastní server.",
+        "open": "Otevřít dokumentaci",
+        "github": "GitHub"
       }
     },
     "quickCapture": {
@@ -568,6 +574,7 @@
       "title": "Účet",
       "signedOutLabel": "Přihlásit se k serveru",
       "signedOutDescription": "Synchronizujte poznámky z tohoto zařízení se svým serverem YourNotes.",
+      "setupGuide": "Jak zprovoznit server",
       "signIn": "Přihlásit se",
       "signInDescription": "Použijte uživatelské jméno a heslo, které jste si pro účet zvolili.",
       "signedInLabel": "Účet: {{username}}",

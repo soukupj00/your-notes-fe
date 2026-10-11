@@ -86,6 +86,15 @@ describe('Settings account sections', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it('points a signed-out Device at the server setup guide', async () => {
+    mount(createFakeServer());
+
+    expect(await screen.findByRole('link', { name: 'account.section.setupGuide' })).toHaveAttribute(
+      'href',
+      'https://soukupj00.github.io/your-notes-be/setup'
+    );
+  });
+
   it('signs in, saying so when the password is wrong, then signs out', async () => {
     const server = createFakeServer();
     server.seedOwner('ada', 'correct horse');

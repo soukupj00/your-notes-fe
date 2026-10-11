@@ -306,6 +306,12 @@
         "label": "Tutorial",
         "description": "Three steps through Settings.",
         "action": "Replay tutorial"
+      },
+      "docs": {
+        "label": "Documentation",
+        "description": "How it works, and how to run your own server.",
+        "open": "Open the docs",
+        "github": "GitHub"
       }
     },
     "quickCapture": {
@@ -567,6 +573,7 @@
       "title": "Account",
       "signedOutLabel": "Sign in to your server",
       "signedOutDescription": "Sync this Device's Notes with your YourNotes server.",
+      "setupGuide": "How to set up a server",
       "signIn": "Sign in",
       "signInDescription": "Use the username and password you chose for your account.",
       "signedInLabel": "Signed in as {{username}}",
