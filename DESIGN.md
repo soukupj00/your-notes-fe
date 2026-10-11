@@ -1,5 +1,5 @@
 ---
-name: YouNotes
+name: YourNotes
 description: A self-hosted note wall that changes its light, not its colours - warm paper by day, a lit room by night.
 colors:
   canvas-day: "oklch(96% 0.015 84)"
@@ -92,7 +92,7 @@ components:
     size: "56px"
 ---
 
-# Design System: YouNotes
+# Design System: YourNotes
 
 ## Overview
 

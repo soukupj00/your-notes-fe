@@ -1,11 +1,11 @@
 # Get the app
 
-YouNotes is not in an app store.
+YourNotes is not in an app store.
 You open it in your browser at your server's address, and from there you install it, so it gets an icon and a window of its own.
 
 ## 1. Open it from your server
 
-The app comes from the YouNotes server that someone in your household runs at home.
+The app comes from the YourNotes server that someone in your household runs at home.
 If nobody has set one up yet, the server's site has [a step-by-step guide](https://soukupj00.github.io/your-notes-be/setup), written for people who are not programmers.
 
 The easiest way to open the app on a new Device is a Pairing Link, which also signs the Device in:
@@ -29,7 +29,7 @@ Once the app is open in the browser, install it.
    On newer iPhones it is in the menu behind the three dots.
 3. Scroll down and tap **Add to Home Screen**, then **Add**.
 
-YouNotes is now an icon on your home screen.
+YourNotes is now an icon on your home screen.
 
 ### Android
 
@@ -43,14 +43,14 @@ YouNotes is now an icon on your home screen.
   In Chrome it is a small screen with an arrow.
   When the browser allows it, the app offers the same in Settings, under App, with an **Install** button.
 - **Safari on a Mac:** choose **File**, then **Add to Dock**.
-- **Firefox** does not install web apps; keep YouNotes in a tab, where everything works the same.
+- **Firefox** does not install web apps; keep YourNotes in a tab, where everything works the same.
 
 ## Why the address matters
 
 There is no server address to type into the app.
 The app syncs with the server it was opened from, and that is how it finds your Notes.
 
-So always open and install YouNotes from your own server's address.
+So always open and install YourNotes from your own server's address.
 A copy opened from any other address is a separate app with its own Notes, and those never reach your server.
 
 ## When the server is out of reach

@@ -14,7 +14,7 @@
     "skipToContent": "Přejít na obsah"
   },
   "navbar": {
-    "logo": "YouNotes"
+    "logo": "YourNotes"
   },
   "attachments": {
     "confirmDelete": {
@@ -324,12 +324,12 @@
   "pwa": {
     "install": {
       "title": "Aplikace",
-      "label": "Nainstalovat YouNotes",
-      "description": "Přidejte si YouNotes do zařízení pro rychlý přístup v samostatném okně.",
+      "label": "Nainstalovat YourNotes",
+      "description": "Přidejte si YourNotes do zařízení pro rychlý přístup v samostatném okně.",
       "action": "Nainstalovat"
     },
     "update": {
-      "available": "Je k dispozici nová verze aplikace YouNotes.",
+      "available": "Je k dispozici nová verze aplikace YourNotes.",
       "reload": "Znovu načíst",
       "later": "Teď ne"
     }
@@ -470,7 +470,7 @@
     "updateCalendar": "Aktualizovat v kalendáři",
     "clear": "Zrušit připomenutí",
     "oneWay": "Kalendář si uchovává vlastní kopii a připomíná sám. Zrušení nebo změna tady ji v kalendáři neodstraní.",
-    "fallbackTitle": "Připomenutí z YouNotes",
+    "fallbackTitle": "Připomenutí z YourNotes",
     "chip": "Připomenutí: {{when}}",
     "chipPast": "Proběhlé připomenutí: {{when}}",
     "chipRepeating": "Připomenutí: {{when}}, {{repeat}}"
@@ -598,7 +598,7 @@
     "section": {
       "title": "Účet",
       "signedOutLabel": "Přihlásit se k serveru",
-      "signedOutDescription": "Synchronizujte poznámky z tohoto zařízení se svým serverem YouNotes.",
+      "signedOutDescription": "Synchronizujte poznámky z tohoto zařízení se svým serverem YourNotes.",
       "signIn": "Přihlásit se",
       "signInDescription": "Použijte uživatelské jméno a heslo, které jste si pro účet zvolili.",
       "signedInLabel": "Účet: {{username}}",
@@ -714,7 +714,7 @@
       "loading": "Otevírám poznámku…",
       "gone": "Nic se tu nesdílí",
       "failed": "Poznámku se nepodařilo otevřít. Zkuste to později.",
-      "footer": "Sdíleno z YouNotes",
+      "footer": "Sdíleno z YourNotes",
       "untitled": "Sdílená poznámka"
     }
   }

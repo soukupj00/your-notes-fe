@@ -2,7 +2,7 @@
 
 ## System context
 
-The product is **YouNotes**: a self-hosted, open-source, offline-first note-taking PWA - a Google Keep alternative the user runs on their own network.
+The product is **YourNotes**: a self-hosted, open-source, offline-first note-taking PWA - a Google Keep alternative the user runs on their own network.
 It spans two repositories by decision ([ADR 0002](../adr/0002-separate-frontend-backend-repositories.md)):
 
 - **`ni-dip-fe`** (this repo) - the React SPA/PWA. Fully functional with no server at all: all data lives in the browser's IndexedDB.
