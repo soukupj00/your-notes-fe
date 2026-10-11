@@ -22,8 +22,6 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 vi.mock('@tanstack/react-router', () => ({ useNavigate: () => vi.fn() }));
-const tour = vi.hoisted(() => ({ active: false }));
-vi.mock('./TourProvider.tsx', () => ({ useTourActive: () => tour.active }));
 vi.mock('sonner', () => ({
   toast: Object.assign(vi.fn(), {
     info: vi.fn(),
@@ -36,7 +34,6 @@ vi.mock('sonner', () => ({
 afterEach(async () => {
   await clearStore();
   vi.clearAllMocks();
-  tour.active = false;
 });
 
 const T0 = '2026-01-01T00:00:00.000Z';
@@ -167,18 +164,5 @@ describe('SyncProvider', () => {
     );
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(screen.queryByText('sync.label')).not.toBeInTheDocument();
-  });
-
-  it('stands still while the Tour runs, so its Props never reach the server', async () => {
-    tour.active = true;
-    const { server } = await mountSignedIn();
-    await testStore.notes.add({
-      id: crypto.randomUUID(),
-      state: 'active',
-      createdAt: T0,
-      updatedAt: T0,
-    });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    expect(server.state.pushed).toEqual([]);
   });
 });

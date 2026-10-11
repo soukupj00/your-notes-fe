@@ -3,10 +3,7 @@ import { Button } from '@/components/ui/button.tsx';
 import { useTour } from '@/context/TourProvider.tsx';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
-/**
- * The only place the Tour starts by hand: the same steps on fresh Props, so it only calls
- * `start`. Placed so `PwaInstallSection` + `BackupSection` stay the pair the last step lights.
- */
+/** The only place the Tour starts by hand. */
 export function HelpSection() {
   const { t } = useTranslation();
   const { start, active } = useTour();

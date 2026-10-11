@@ -39,7 +39,7 @@ flowchart LR
   Ids and a row's birth timestamps are the caller's (`lib/rows.ts`).
   The exceptions are the store's own bookkeeping: `tags.merge` stamps the links it relabels, and a Tombstone gets its `deletedAt`.
 - Search, sort and held rank live in `src/hooks/data`, in front of the seam.
-- `meta` is bookkeeping about rows: the Tour's Prop baselines, the sync cursor and the attached Account.
+- `meta` is bookkeeping about rows: the sync cursor and the attached Account.
   Preferences are not here; they are in `localStorage`.
 - The sync engine (`src/sync/`) is the only caller of `sync.*`.
 
@@ -69,7 +69,7 @@ There is no runtime switch and there will not be one: a user-facing toggle to a 
 
 ## Dexie implementation
 
-There is no seeder; sample data comes from the Tour's Props, which a fresh install creates and purges for itself.
+There is no seeder, and a fresh install has no Notes.
 
 ### Schema
 

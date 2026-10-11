@@ -304,7 +304,7 @@
       "title": "Help",
       "replay": {
         "label": "Tutorial",
-        "description": "Five steps, on three notes it clears up afterwards.",
+        "description": "Three steps through Settings.",
         "action": "Replay tutorial"
       }
     },
@@ -532,18 +532,6 @@
       "done": "Done"
     },
     "steps": {
-      "capture": {
-        "title": "Start anything",
-        "body": "Text, a checklist, a photo, a voice memo or a drawing - every way in starts here."
-      },
-      "editor": {
-        "title": "Write it",
-        "body": "Type / anywhere in a note for headings, lists, quotes and maths. Images, audio, files and drawings go inline, in the note itself."
-      },
-      "wall": {
-        "title": "Your wall",
-        "body": "Pin a note to keep it on top, give it a colour or a label. Archive keeps it, trash lets it go with a moment to change your mind."
-      },
       "toolbar": {
         "title": "Your toolbar",
         "body": "Choose which buttons the editor's toolbar carries, and in what order. Phone and desktop each keep their own arrangement."
@@ -552,28 +540,9 @@
         "title": "Your quick starts",
         "body": "Reorder the ways in so the one you reach for most comes first, and put the ＋ under whichever thumb you use."
       },
-      "local": {
-        "title": "It all lives here",
-        "body": "Every note is on this device and nowhere else. Install the app to keep it a tap away, and export a zip whenever you want a copy."
-      }
-    },
-    "props": {
-      "groceries": {
-        "header": "Groceries",
-        "item1": "Oat milk",
-        "item2": "Sourdough",
-        "item3": "Something for Sunday"
-      },
-      "weekend": {
-        "header": "Weekend in Brno",
-        "intro": "Train leaves Friday at six, so pack the night before.",
-        "item1": "Book the room near the station",
-        "item2": "The observatory, if it stays clear",
-        "item3": "Coffee on Jakubská"
-      },
-      "ideas": {
-        "header": "Ideas",
-        "body": "A shelf for the hallway - measure the alcove first."
+      "sync": {
+        "title": "Where your notes live",
+        "body": "Every note is saved on this device first, so the app works offline. Sign in to your own server to keep your devices in step, and export a zip whenever you want a copy."
       }
     }
   },

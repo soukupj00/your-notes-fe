@@ -94,13 +94,11 @@ A bug a slice fixed by construction rode with it and got a pinning test; every o
 Found by the surveys and reviews, fixed by no slice.
 
 - Dexie and memory stores drift: a Note added again under a purged, unpushed id pushes without its Revision in Dexie and with it in memory (`DexieLocalStore` add paths skip the Tombstone's `rev`). Not reachable from the UI today.
-- "What is owed" has three answers: the engine excludes the Tour's Props, `SignOutButton` and `pending()` do not, so leftover Props may block sign-out (unverified).
 - `ThemeModeToggleButton` shows the sun while the theme is `system` over a dark OS.
 - `EntityActionButtons` hardcodes English Save, Delete and Edit, and `EditButton` is unused; `ColorPickerPanel`'s "Custom" is untranslated.
 - `/labels` create, merge and delete have no error path.
 - Backups are named `ruflo-backup-...` while the app calls itself YouNotes.
 - Four comments in `src/test/fakeServer.ts` and `fakeSync.ts` cite backend paths that no longer exist; `fakeSync.decide` is a hand copy of the backend's `decide.ts` that `contract:pull` could vendor.
-- `NoteFeed`'s fallback layout for a browser without `ResizeObserver` stamps no `data-note-feed-id`, so there the Tour's step 3 finds no card and the sweep's wait is trivially true; `targets.ts` says both layouts stamp it.
 - A cloned Attachment keeps its source's `thumbnailId`, so two rows name one server blob; this covers the editor's paste clone and the Conflicted Copy, and the impact depends on how the backend sweeps blobs.
 - `notes.update` and `tags.update` take a change typed `Partial<T>`, which can return a new `id`; Dexie then writes a second row while memory keeps the old key.
   Type them `Partial<Omit<T, 'id'>>`.
@@ -138,7 +136,7 @@ Found by the surveys and reviews, fixed by no slice.
 - `SyncStatusSection` has no component test; its keepEverything row and its storage line are exercised by no test in isolation.
 - The app language is read two ways: `i18n.language` (`ReminderChip`, every `format.ts` caller) and `i18n.resolvedLanguage` (`LanguageSection`, the navbar); one accessor should win.
 - Closing an untouched existing Note runs `updateNote` and bumps `updatedAt` (`notes.update` has no no-change short-circuit), so a read reorders a feed sorted by update and syncs as an edit; the dialog's `dirtyRef` already knows whether anything changed.
-- A platform Back unmounts the editor without its close path, so the pending debounce window of typing is dropped, an emptied Note is not purged and orphan Attachments wait for the startup sweep (by reading, unverified in a browser); `TourProvider.closeNote` assumes the opposite, that the editor flushes on its way out; a Prop is never typed into and Back skips `close`, so today no Prop reaches the Draft's `save`, and the fix would send a Prop's close through it (an `updateNote` on the Prop and a persistent-storage prompt mid-Tour).
+- A platform Back unmounts the editor without its close path, so the pending debounce window of typing is dropped, an emptied Note is not purged and orphan Attachments wait for the startup sweep (by reading, unverified in a browser).
 - A failed autosave leaves the editor's status on "saving" with an unhandled rejection (no `catch` on the autosave's `.then` in `NoteEditorDialog`); the next write runs, but nothing tells the user.
 - An `ensureSaved` that arrives after `close` purged the Note (a late Attachment insert) recreates the row from the last content, as `ensureNoteId` did.
 - `NoteTagsBar` runs its live labels query on a Draft's own id from the start, and it settles after the dialog tests' last await, so `--reporter=verbose` shows one or two more React `act()` warnings than main's three; settling the store's live queries inside `act` in `renderWithStore` (`src/test/store.tsx`) would quiet every suite at once.

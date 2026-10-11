@@ -46,21 +46,15 @@ export default function SettingsPage() {
 
       <ShortcutsSection />
 
-      {/* The other "learn the app" surface, placed so the Tour's last step can point at the
-          closing pair as one block. */}
       <HelpSection />
 
-      {/* `PwaInstallSection` may render nothing, so it cannot anchor step 6 alone;
-          `BackupSection` always renders and carries the same "your data is local" message. */}
-      <div data-tour="settings-local">
-        <PwaInstallSection />
+      <PwaInstallSection />
 
-        <BackupSection />
+      <BackupSection />
+
+      <div data-tour="settings-sync">
+        <SyncStatusSection />
       </div>
-
-      {/* Outside `settings-local` on purpose: these render only when a Self-hosted Server
-          answered, and a Tour step's anchor must not change size with the server. */}
-      <SyncStatusSection />
 
       <AccountSection />
 

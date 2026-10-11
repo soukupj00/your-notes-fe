@@ -250,35 +250,6 @@ describe('sync engine', () => {
     ]);
   });
 
-  it("never pushes the Tour's Props, nor anything about them", async () => {
-    const { server, owner } = setup();
-    const hal = createHalClient(server.client().fetch);
-    await createHalAccountService(hal).signIn('ada', 'correct horse', 'Laptop');
-    const store = createMemoryLocalStore();
-    const prop = note('A Prop');
-    const mine = note('Mine');
-    const t = tag('Tag');
-    await store.notes.add(prop);
-    await store.notes.add(mine);
-    await store.tags.add(t);
-    await store.tags.link({ noteId: prop.id, tagId: t.id, createdAt: T0, updatedAt: T0 });
-    const engine = createSyncEngine({
-      store,
-      remote: createHalRemote(hal),
-      deviceName: () => 'Laptop',
-      exclude: async () => new Set([prop.id]),
-    });
-    await engine.adopt(owner.id);
-
-    await engine.sync();
-    expect(server.sync.row(owner.id, 'note', prop.id)).toBeUndefined();
-    expect(server.sync.row(owner.id, 'noteTag', noteTagId(prop.id, t.id))).toBeUndefined();
-    expect(server.sync.row(owner.id, 'note', mine.id)).toBeDefined();
-    // Purged unpushed, a Prop leaves no Tombstone to send either.
-    await store.notes.purge(prop.id);
-    expect((await store.sync.dirty()).tombstones).toEqual([]);
-  });
-
   it('a stale purge keeps the newer edit, with its links', async () => {
     const { server, owner } = setup();
     const a = await device(server, owner.id, 'Laptop');
