@@ -79,8 +79,7 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
   }, [placeholder, reducedMotion, revealed]);
 
   return (
-    // On the whole bar, which is the affordance Tour step 1 describes. Its twin is
-    // `QuickCaptureBar`; `lib/tour/targets.ts` picks whichever one has a rect.
+    // The Tour reads this or its `QuickCaptureBar` twin as the Feed being on screen.
     <div
       data-tour="capture"
       className="mx-auto mb-6 hidden max-w-lg items-center gap-1 rounded-card border bg-card pr-2 shadow-rest transition-shadow hover:shadow-lift sm:flex"

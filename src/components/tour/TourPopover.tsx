@@ -65,12 +65,8 @@ export function TourPopover({
         <h2 className="font-display text-foreground text-title">
           {t(`onboarding.steps.${stepKey}.title`)}
         </h2>
-        {/* No interpolation. Step 3 used to end "and {{mod}} K finds any of
-            them", which the Tour showed to every device including the ones with
-            no modifier key to press (ADR 0016) - and unlike a hint chip that can
-            be hidden, a clause is part of the sentence. It was also the only
-            line in the Tour naming a key rather than a place the step points at,
-            so the copy lost nothing by dropping it. */}
+        {/* No interpolation: a key named in the copy reached devices with no
+            modifier key to press (ADR 0016), and a clause cannot be hidden like a hint chip. */}
         <p className="text-body text-muted-foreground">{t(`onboarding.steps.${stepKey}.body`)}</p>
       </div>
 

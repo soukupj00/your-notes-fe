@@ -51,8 +51,8 @@ describe('holdBodyInert', () => {
   });
 
   it('marks children that arrive later, which is most of them', async () => {
-    // The editor dialog, the speed dial's popover and every toast portal to
-    // `body` after the Tour has started; marking once would miss all of them.
+    // Radix popovers, dialogs and toasts portal to `body` after the Tour has
+    // started; marking once would miss all of them.
     hold();
 
     const dialog = add();

@@ -8,7 +8,7 @@ App-wide providers.
 `routes/__root.tsx` adds `TourProvider` around `SyncProvider` around the nav shell, because both need the router:
 
 - The Tour navigates, marks the whole body inert and portals past the app, so it sits above the shell.
-- Sync shows toasts that link into the app, and it stands still while the Tour runs, so it sits inside the Tour.
+- Sync shows toasts that link into the app, so it sits inside the router.
 
 `/share/$token` gets neither (root `CLAUDE.md`, Routing).
 
@@ -39,7 +39,6 @@ What happens in a run is `src/sync/engine.ts`; when a run happens is `src/sync/l
 Both are plain TypeScript, tested against `src/test/fakeServer.ts`.
 
 - On a session it first **adopts** (a new Account owes the whole library), then starts the loop; on sign-out or a change of Account it stops it.
-- It stands still while the Tour runs, and the engine leaves the Tour's Props out of every push, so a Prop never reaches the server.
 - A `401` from a run (the Device was removed elsewhere) stops the loop and signs the Device out with one toast.
   Nothing is erased: owed rows wait for the next sign-in.
 - **Attachment bytes** move at the end of each run (`src/sync/attachments.ts`): thumbnails up first, then blobs, every missing thumbnail down.
@@ -76,25 +75,20 @@ User Preferences, one Zod-validated blob in `localStorage` ([ADR 0020](../../doc
 - **Anything unreadable yields defaults**, and a failed read leaves the bad blob on disk, so a read can never destroy data.
 - `setPreference(key, value)` reads, modifies and writes against `localStorage` itself, not React state.
 - A `storage` event from another tab is the only other way `preferences` changes.
-- The Tour's Prop baselines are not a Preference; they live in the Local Store's `meta` (`src/lib/tour/props.ts`).
 
 ## `TourProvider.tsx`
 
-The onboarding Tour's lifecycle ([ADR 0015](../../docs/adr/0015-the-tour-drives-the-app-on-disposable-props.md)); everything it decides is in [`src/lib/tour/`](../lib/tour/) and tested there.
+The onboarding Tour's lifecycle ([ADR 0023](../../docs/adr/0023-the-tour-points-at-settings.md)); everything it decides is in [`src/lib/tour/`](../lib/tour/) and tested there.
 The rules of the Tour are in the root `CLAUDE.md`, The Tour.
 
-- **It owns the startup sweep**, not `__root.tsx`: the sweep and the seed read and write the same list of Props, and run from two components they race.
-- The startup effect reads the Props, sweeps, and auto-starts once the Feed has painted.
-  **The ref guard that stops it running twice is set only once that read lands.**
-  React StrictMode double-invokes the first mount: with the guard set up front, the first run was cancelled by its own cleanup while the guard blocked the second.
-- It **marks its own navigations**; any it did not ask for ends the Tour and takes the Props with it.
-  Several acts are navigations (opening a Note is a search param), so without the marking the Tour would end itself on step 2.
+- The startup effect offers the Tour once, on the Feed, when `onboardingSeenAt` is unset; `start` waits for the Feed to paint.
+- It **marks its own navigations**; any it did not ask for ends the Tour.
+  Step 1's act is a navigation, so without the marking the Tour would end itself at once.
 - **Every navigation it makes passes `resetScroll: false`**, and that is load-bearing.
   The router scrolls to the top on navigate, and that call lands after the spotlight has scrolled its target into view, which leaves the spotlight over a block below the fold.
   Instant scroll loses the same race, because the router's call simply comes second.
 - `driver.js` only measures a rect, cuts a hole and places a box; everything read or pressed is `components/tour/TourPopover.tsx`, portalled into it.
   Driver measures that box once, so the provider waits for the popover to render the step and for the fonts before handing it over.
-- Two workarounds, both commented in the code: the popover host carries `aria-live="off"` so a modal dialog does not hide it from the accessibility tree, and it swallows `pointerdown` and `focusin` so Radix does not read a press on Next as a click outside the open Note.
 
 ## `themeProvider.tsx`
 

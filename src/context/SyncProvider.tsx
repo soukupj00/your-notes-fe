@@ -13,13 +13,11 @@ import { toast } from 'sonner';
 import { SYNC_META_KEYS } from '@/data/LocalStore.ts';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import { useLive } from '@/data/useLive.ts';
-import { readProps } from '@/lib/tour/props.ts';
 import { downloadAttachment } from '@/sync/attachments.ts';
 import { createSyncEngine, type SyncReport } from '@/sync/engine.ts';
 import { type SyncLoop, type SyncStatus, startSyncLoop } from '@/sync/loop.ts';
 import { useAccount } from './AccountProvider.tsx';
 import { usePreferences } from './PreferencesProvider.tsx';
-import { useTourActive } from './TourProvider.tsx';
 
 export type SyncContextValue = {
   /** Whether a signed-in session is syncing at all; everything else is idle without one. */
@@ -74,9 +72,6 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const accountId = session?.accountId;
   const deviceName = session?.deviceName ?? '';
   const active = Boolean(accountId && remote);
-  // The Tour's Props are disposable (ADR 0015): nothing syncs while it runs, and
-  // the engine leaves any left behind (a reload mid-Tour) out of every push.
-  const touring = useTourActive();
   // Read by the engine at each run, so turning it on needs no restart of the loop.
   const keepEverything = usePreferences().preferences.keepEverything;
   const keepEverythingRef = useRef(keepEverything);
@@ -85,8 +80,8 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     if (keepEverything) void loopRef.current?.syncNow();
   }, [keepEverything]);
 
-  // Kept in a ref so the loop's lifetime depends only on the session, the server,
-  // the store and the Tour: a new `t` (a language change) must not restart syncing.
+  // Kept in a ref so the loop's lifetime depends only on the session, the server
+  // and the store: a new `t` (a language change) must not restart syncing.
   const onReportRef = useRef<(report: SyncReport) => void>(() => {});
   const onReport = (report: SyncReport) => {
     void store.meta.get<string>(SYNC_META_KEYS.lastSyncedAt).then((at) => {
@@ -130,13 +125,12 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   }, [accountId]);
 
   useEffect(() => {
-    if (!accountId || !remote || touring) return;
+    if (!accountId || !remote) return;
     let cancelled = false;
     const engine = createSyncEngine({
       store,
       remote,
       deviceName: () => deviceName,
-      exclude: async () => new Set((await readProps(store)).map((prop) => prop.id)),
       keepEverything: () => keepEverythingRef.current,
     });
     void store.meta.get<string>(SYNC_META_KEYS.lastSyncedAt).then((at) => {
@@ -161,7 +155,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       loopRef.current = null;
       setStatus('idle');
     };
-  }, [accountId, deviceName, remote, store, touring]);
+  }, [accountId, deviceName, remote, store]);
 
   const value = useMemo<SyncContextValue>(
     () =>

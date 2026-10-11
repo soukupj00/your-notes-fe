@@ -74,7 +74,6 @@ export function createSyncEngine({
   remote,
   deviceName,
   batchSize = MAX_BATCH,
-  exclude = async () => new Set<string>(),
   keepEverything = () => false,
 }: {
   store: LocalStore;
@@ -83,11 +82,6 @@ export function createSyncEngine({
   deviceName: () => string;
   /** `MAX_BATCH`; smaller in tests. */
   batchSize?: number;
-  /**
-   * Note ids that must never reach the server (the Tour's Props, ADR 0015):
-   * left out of every push, with their links. Read at each push.
-   */
-  exclude?: () => Promise<ReadonlySet<string>>;
   /** The "Keep everything on this device" Preference, read at each run. */
   keepEverything?: () => boolean;
 }): SyncEngine {
@@ -129,20 +123,8 @@ export function createSyncEngine({
       : serverWins({ tags: [outcome.server] }));
   }
 
-  async function owedForServer(): Promise<PushBatch> {
-    const owed = await store.sync.dirty();
-    const skip = await exclude();
-    if (skip.size === 0) return owed;
-    return {
-      notes: owed.notes.filter((n) => !skip.has(n.id)),
-      tags: owed.tags,
-      noteTags: owed.noteTags.filter((l) => !skip.has(l.noteId)),
-      tombstones: owed.tombstones.filter((t) => !skip.has(t.id)),
-    };
-  }
-
   async function push(report: SyncReport) {
-    for (const batch of chunk(await owedForServer(), batchSize)) {
+    for (const batch of chunk(await store.sync.dirty(), batchSize)) {
       const outcomes = await remote.push(batch);
       await store.sync.applied(batch, outcomes);
       for (const { pushed, outcome } of pairOutcomes(batch, outcomes)) {
