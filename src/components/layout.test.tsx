@@ -9,7 +9,7 @@ import { setViewport } from '@/test/viewport.ts';
 // Vitest hoists `vi.mock`, so these cannot come from a shared helper.
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => (key === 'navbar.logo' ? 'YouNotes' : key),
+    t: (key: string) => (key === 'navbar.logo' ? 'YourNotes' : key),
   }),
   // The Navbar reads i18n directly for the locale switcher.
   default: {},
@@ -51,11 +51,11 @@ afterEach(async () => {
 });
 
 describe('nav shell contents', () => {
-  it('renders the YouNotes brand with a themeable accent mark', async () => {
+  it('renders the YourNotes brand with a themeable accent mark', async () => {
     renderRoute('/');
 
-    expect(await screen.findByRole('img', { name: 'YouNotes' })).toHaveClass('bg-primary');
-    expect(screen.getByText('YouNotes')).toBeInTheDocument();
+    expect(await screen.findByRole('img', { name: 'YourNotes' })).toHaveClass('bg-primary');
+    expect(screen.getByText('YourNotes')).toBeInTheDocument();
   });
 
   it('renders every destination and every tag as a link', async () => {

@@ -77,7 +77,7 @@ export function buildReminderIcs(event: ReminderEvent): string {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//YouNotes//Reminder//EN',
+    'PRODID:-//YourNotes//Reminder//EN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
     // The Note's id, so handing off again replaces the event where the

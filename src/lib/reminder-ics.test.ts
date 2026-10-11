@@ -7,7 +7,7 @@ const base = {
   body: '<p>secret body text</p>',
   reminder: { remindAt: '2030-03-04T09:00' },
   origin: 'https://notes.example',
-  fallbackTitle: 'YouNotes reminder',
+  fallbackTitle: 'YourNotes reminder',
   now: new Date('2030-01-01T12:00:00Z'),
 };
 
@@ -74,7 +74,7 @@ describe('buildReminderIcs', () => {
     expect(summary).toContain('word word');
 
     const empty = buildReminderIcs({ ...base, header: undefined, body: '' });
-    expect(lines(empty)).toContain('SUMMARY:YouNotes reminder');
+    expect(lines(empty)).toContain('SUMMARY:YourNotes reminder');
   });
 
   it('escapes TEXT: backslash, semicolon, comma and newline', () => {

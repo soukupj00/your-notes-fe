@@ -31,7 +31,7 @@ Ranked by the user, in this order:
 2. **An easy interface.** Keep's approachability is the bar to match, not to beat with complexity. If the privacy story costs usability, the switch does not stick.
 3. **Your sync, offline-first.** The app is complete with no server at all; sync is an addition the user owns, not a dependency the product imposes.
 
-Running through all three: **large customisability - make it your own.** The name is *YouNotes*. Themes (light, dark, colour-blind), density and font size, a user-configurable editor toolbar, note-create button alignment, choice of quick-capture actions, per-note and per-label colours. The product's claim is not "we chose well for you", it is "this one is yours" - a claim a hosted service structurally cannot make.
+Running through all three: **large customisability - make it your own.** The name is *YourNotes*. Themes (light, dark, colour-blind), density and font size, a user-configurable editor toolbar, note-create button alignment, choice of quick-capture actions, per-note and per-label colours. The product's claim is not "we chose well for you", it is "this one is yours" - a claim a hosted service structurally cannot make.
 
 ## Operating Context
 
@@ -67,7 +67,7 @@ Not yet built, and must not be described as existing: the sync server, accounts,
 
 ## Brand Commitments
 
-- **Name: YouNotes.** In use in the PWA manifest. The "You" is the positioning - it is your data, your server, your configuration.
+- **Name: YourNotes.** In use in the PWA manifest. The "Your" is the positioning - it is your data, your server, your configuration.
 - Open source and self-hosted, distributed as a container image; setup must be approachable for a non-programmer.
 - Icons must be **descriptive and recognisable**, an accessibility commitment from the original brief rather than a style choice.
 - The current `#7257dc` manifest theme colour and shadcn-default look are **incumbent, not committed**. They are explicitly the thing M4 Slice 4 exists to replace.

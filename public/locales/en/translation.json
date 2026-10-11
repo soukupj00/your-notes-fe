@@ -14,7 +14,7 @@
     "skipToContent": "Skip to content"
   },
   "navbar": {
-    "logo": "YouNotes"
+    "logo": "YourNotes"
   },
   "attachments": {
     "confirmDelete": {
@@ -324,12 +324,12 @@
   "pwa": {
     "install": {
       "title": "App",
-      "label": "Install YouNotes",
-      "description": "Add YouNotes to your device for quick access in its own window.",
+      "label": "Install YourNotes",
+      "description": "Add YourNotes to your device for quick access in its own window.",
       "action": "Install"
     },
     "update": {
-      "available": "A new version of YouNotes is available.",
+      "available": "A new version of YourNotes is available.",
       "reload": "Reload",
       "later": "Not now"
     }
@@ -469,7 +469,7 @@
     "updateCalendar": "Update in calendar",
     "clear": "Clear reminder",
     "oneWay": "Your calendar keeps its own copy and does the reminding. Clearing or changing this here does not remove it there.",
-    "fallbackTitle": "YouNotes reminder",
+    "fallbackTitle": "YourNotes reminder",
     "chip": "Reminder: {{when}}",
     "chipPast": "Past reminder: {{when}}",
     "chipRepeating": "Reminder: {{when}}, {{repeat}}"
@@ -597,7 +597,7 @@
     "section": {
       "title": "Account",
       "signedOutLabel": "Sign in to your server",
-      "signedOutDescription": "Sync this Device's Notes with your YouNotes server.",
+      "signedOutDescription": "Sync this Device's Notes with your YourNotes server.",
       "signIn": "Sign in",
       "signInDescription": "Use the username and password you chose for your account.",
       "signedInLabel": "Signed in as {{username}}",
@@ -710,7 +710,7 @@
       "loading": "Opening the Note…",
       "gone": "Nothing is shared here",
       "failed": "Could not open this Note. Try again later.",
-      "footer": "Shared from YouNotes",
+      "footer": "Shared from YourNotes",
       "untitled": "Shared Note"
     }
   }
