@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { toLocalInput } from '@/lib/reminder.ts';
 import { ReminderButton } from './ReminderButton.tsx';
 
@@ -59,8 +59,12 @@ describe('ReminderButton', () => {
   });
 
   // Firefox's datetime-local reported nothing until its date was picked too, so
-  // a user who only set the time handed off nothing (feedback B2).
+  // a user who only set the time handed off nothing.
   it('starts a new Reminder on today, so choosing only a time is enough', async () => {
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2030-03-04T10:00') });
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
     const onSet = vi.fn().mockResolvedValue(true);
     render(<ReminderButton onSet={onSet} onClear={vi.fn()} />);
     await open();
@@ -72,7 +76,7 @@ describe('ReminderButton', () => {
     expect(onSet).toHaveBeenCalledWith({ remindAt: `${today}T23:00`, repeat: undefined });
   });
 
-  // The native time input drew AM/PM from the OS locale (feedback U10).
+  // The native time input drew AM/PM from the OS locale.
   it('offers a 24-hour clock in five-minute steps', async () => {
     render(<ReminderButton onSet={vi.fn()} onClear={vi.fn()} />);
     await open();
@@ -108,6 +112,24 @@ describe('ReminderButton', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'reminders.updateCalendar' }));
     expect(onSet).toHaveBeenCalledWith({ remindAt: '2030-03-04T09:07', repeat: undefined });
+  });
+
+  it('will not hand off a one-off time that has passed, though a repeat may start there', async () => {
+    render(
+      <ReminderButton
+        reminder={{ remindAt: '2020-01-01T08:00' }}
+        onSet={vi.fn()}
+        onClear={vi.fn()}
+      />
+    );
+    await open();
+    const update = screen.getByRole('button', { name: 'reminders.updateCalendar' });
+    expect(update).toBeDisabled();
+    expect(screen.getByText('reminders.past')).toBeInTheDocument();
+
+    await userEvent.selectOptions(screen.getByLabelText('reminders.repeat'), 'weekly');
+    expect(update).toBeEnabled();
+    expect(screen.queryByText('reminders.past')).not.toBeInTheDocument();
   });
 
   it('sends no repeat for a one-shot', async () => {

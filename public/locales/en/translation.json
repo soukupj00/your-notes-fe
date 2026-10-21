@@ -479,6 +479,7 @@
     "time": "Time",
     "hour": "Hour",
     "minute": "Minute",
+    "past": "That time has passed. Pick a later one.",
     "repeat": "Repeat",
     "repeats": {
       "none": "Does not repeat",

@@ -5,7 +5,7 @@ import { ReminderTimeField } from '@/components/reminders/ReminderTimeField.tsx'
 import { Button } from '@/components/ui/button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
 import { IconTooltip } from '@/components/ui/tooltip.tsx';
-import { type Reminder, toLocalInput } from '@/lib/reminder.ts';
+import { isReminderPast, type Reminder, toLocalInput } from '@/lib/reminder.ts';
 import { cn } from '@/lib/utils.ts';
 import { REMINDER_REPEATS, type ReminderRepeat } from '@/models.ts';
 
@@ -54,14 +54,13 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
   };
 
   const when = date && hour && minute ? `${date}T${hour}:${minute}` : '';
+  const next: Reminder = { remindAt: when, repeat: repeat === 'none' ? undefined : repeat };
+  const past = when !== '' && isReminderPast(next);
 
   const submit = async () => {
     setBusy(true);
     try {
-      const saved = await onSet({
-        remindAt: when,
-        repeat: repeat === 'none' ? undefined : repeat,
-      });
+      const saved = await onSet(next);
       if (saved) setOpen(false);
     } finally {
       setBusy(false);
@@ -90,7 +89,7 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
       </IconTooltip>
       <PopoverContent align="end" data-testid="reminder-popover" className="w-80 space-y-3 p-3">
         {/* Two fields, not one datetime-local: Firefox reports that as empty until both halves
-            are picked, so a new Reminder could not start on today (feedback B2). */}
+            are picked, so a new Reminder could not start on today. */}
         <div className="grid grid-cols-[1fr_auto] gap-2">
           <div className="space-y-1">
             <label htmlFor={dateId} className="block text-muted-foreground text-xs">
@@ -136,6 +135,7 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
         </div>
 
         <p className="text-muted-foreground text-xs">{t('reminders.oneWay')}</p>
+        {past && <p className="text-destructive text-xs">{t('reminders.past')}</p>}
 
         {/* Stacked, not side by side (CLAUDE.md, Reminders). The primary keeps its whole sentence:
             it is the only place the user learns a Reminder goes to their calendar. */}
@@ -144,7 +144,7 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
             type="button"
             size="sm"
             className="w-full"
-            disabled={!when || busy}
+            disabled={!when || past || busy}
             onClick={() => void submit()}
           >
             {t(reminder ? 'reminders.updateCalendar' : 'reminders.addToCalendar')}

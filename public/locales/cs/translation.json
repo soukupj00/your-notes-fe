@@ -480,6 +480,7 @@
     "time": "Čas",
     "hour": "Hodina",
     "minute": "Minuta",
+    "past": "Tento čas už uplynul. Zvolte pozdější.",
     "repeat": "Opakování",
     "repeats": {
       "none": "Neopakuje se",
