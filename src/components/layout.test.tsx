@@ -51,11 +51,12 @@ afterEach(async () => {
 });
 
 describe('nav shell contents', () => {
-  it('renders the YourNotes brand with a themeable accent mark', async () => {
-    renderRoute('/');
+  it('renders the YourNotes brand as a link to the feed', async () => {
+    renderRoute('/archive');
 
-    expect(await screen.findByRole('img', { name: 'YourNotes' })).toHaveClass('bg-primary');
-    expect(screen.getByText('YourNotes')).toBeInTheDocument();
+    const brand = await screen.findByRole('link', { name: 'YourNotes' });
+    expect(brand).toHaveAttribute('href', '/');
+    expect(brand.querySelector('.bg-primary')).not.toBeNull();
   });
 
   it('renders every destination and every tag as a link', async () => {
@@ -160,6 +161,20 @@ describe('below the nav breakpoint', () => {
     // Radix would restore focus to the trigger on close; `useFocusOnMount` wins.
     const heading = await screen.findByRole('heading', { level: 1, name: 'nav.archive' });
     await waitFor(() => expect(heading).toHaveFocus());
+  });
+
+  it('closes the drawer when the logo takes the user home', async () => {
+    renderRoute('/archive');
+    await screen.findByRole('heading', { level: 1, name: 'nav.archive' });
+
+    await userEvent.click((await screen.findAllByRole('button', { name: 'nav.toggle' }))[0]);
+    await primaryNav();
+    await userEvent.click(screen.getByRole('link', { name: 'YourNotes' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'nav.notes' })).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByRole('navigation', { name: 'nav.primary' })).not.toBeInTheDocument()
+    );
   });
 
   // The gear goes straight to Settings on every width (CLAUDE.md, Nav shell).
