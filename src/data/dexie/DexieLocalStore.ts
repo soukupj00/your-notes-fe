@@ -19,9 +19,8 @@ import { createDexieSync } from './sync.ts';
  * can use a throwaway database per test.
  */
 export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
-  // `meta` waits on the legacy split so a startup Tour sweep cannot read `tourProps` before it
-  // lands. A failure is logged, not rethrown: `meta` stays usable and the split retries next start.
-  const ready = migrateLegacyPreferences(db).catch((error) =>
+  // A failure is logged, not rethrown: the store stays usable and the move retries next start.
+  void migrateLegacyPreferences(db).catch((error) =>
     console.error('Legacy preferences migration failed', error)
   );
 
@@ -272,16 +271,11 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
     // The Dexie table is still called `settings` (no schema bump, ADR 0020);
     // `meta` is what it holds now that Preferences live in localStorage.
     meta: {
-      get: async <T>(key: string) => {
-        await ready;
-        return (await db.settings.get(key))?.value as T | undefined;
-      },
+      get: async <T>(key: string) => (await db.settings.get(key))?.value as T | undefined,
       set: async (key, value) => {
-        await ready;
         await db.settings.put({ key, value });
       },
       delete: async (key) => {
-        await ready;
         await db.settings.delete(key);
       },
     },

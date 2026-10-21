@@ -123,7 +123,7 @@ describe('the family list', () => {
     await waitFor(async () => {
       const { wide } = await storedToolbar();
       expect(wide.find((family) => family.id === 'list')?.collapsed).toBe(true);
-      expect(wide.find((family) => family.id === 'block')?.collapsed).toBe(false);
+      expect(wide.find((family) => family.id === 'format')?.collapsed).toBe(false);
     });
   });
 

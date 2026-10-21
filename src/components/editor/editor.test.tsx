@@ -214,22 +214,24 @@ describe('Editor in editable mode', () => {
     for (const name of [
       'editor.code.tooltip',
       'editor.link.tooltip',
-      'editor.codeBlock.tooltip',
-      'editor.horizontalRule.tooltip',
+      'editor.image.tooltip',
       'editor.undo',
     ]) {
       expect(await findByRole('button', { name })).toBeInTheDocument();
     }
   });
 
-  it('puts the alignment buttons behind their family trigger, not on the bar', async () => {
+  it.each([
+    ['align', 'editor.textAlign.left'],
+    ['block', 'editor.codeBlock.tooltip'],
+  ])('puts the %s buttons behind their family trigger, not on the bar', async (family, leaf) => {
     const { findByTestId, queryByRole } = render(
       <TooltipProvider>
         <Editor editable content="<p>hi</p>" getNoteId={vi.fn()} />
       </TooltipProvider>
     );
 
-    expect(await findByTestId('toolbar-family-align')).toBeInTheDocument();
-    expect(queryByRole('button', { name: 'editor.textAlign.left' })).not.toBeInTheDocument();
+    expect(await findByTestId(`toolbar-family-${family}`)).toBeInTheDocument();
+    expect(queryByRole('button', { name: leaf })).not.toBeInTheDocument();
   });
 });

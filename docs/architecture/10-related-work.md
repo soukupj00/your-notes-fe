@@ -24,7 +24,7 @@ From current secondary sources plus product knowledge; Keep is the parity target
 **Beyond this project's scope, by choice** ([07-requirements.md](./07-requirements.md) non-requirements): location-based reminders and two-way Calendar integration (time-based Reminders are in scope, handed one-way to the user's calendar - [ADR 0021](../adr/0021-reminders-are-handed-off-to-the-calendar.md)); real-time collaborative editing of a shared note; OCR text grab from images; Workspace integration.
 **Commonly cited limitations** (secondary sources): light formatting only, poor for long-form writing; search and organisation weaken at scale; no edit history or diff; checklists are flat.
 
-YouNotes' divergences from the baseline are deliberate and two-directional: it *adds* rich text (headings, math, code), video and arbitrary file attachments, Excalidraw scenes, full-database backup, and deep customisation; it *drops* collaboration, OCR and app-raised notifications.
+YourNotes' divergences from the baseline are deliberate and two-directional: it *adds* rich text (headings, math, code), video and arbitrary file attachments, Excalidraw scenes, full-database backup, and deep customisation; it *drops* collaboration, OCR and app-raised notifications.
 The drops should be argued in the paper, not hidden: collaboration contradicts the private-silo account model.
 Reminders, the most-missed Keep feature, are kept but reshaped: a web app without push cannot fire anything while closed, so a Reminder is recorded on the Note and its alarm is handed to the user's calendar ([ADR 0021](../adr/0021-reminders-are-handed-off-to-the-calendar.md)).
 
@@ -48,11 +48,11 @@ Reminders, the most-missed Keep feature, are kept but reshaped: a web app withou
 | **Glass Keep** | Deliberate Keep clone: cards, checklists, drawings, colors, collaboration | Self-hosted web app | Feature-parity ambition, small project |
 | **KeepLocal** | Keep-inspired: 12 colors, labels, todos | Self-hosted web app | Small project |
 
-### 3.3 The gap YouNotes targets
+### 3.3 The gap YourNotes targets
 
 Reading the two tables together, the niche is empty where this project sits:
 
-1. **The Keep-likes are server-first.** Their web apps assume the server is reachable; none makes IndexedDB the source of truth with sync as the addition. YouNotes is fully functional with no server at all.
+1. **The Keep-likes are server-first.** Their web apps assume the server is reachable; none makes IndexedDB the source of truth with sync as the addition. YourNotes is fully functional with no server at all.
 2. **The offline-first apps are not Keep-like.** Joplin and Trilium have real offline stories but notebook/graph models, markdown editing, and desktop-app ergonomics - not the card wall a Keep user recognises.
 3. **Nobody optimises for the handed-to household member.** Every system in both tables addresses the self-hoster; the two-audience framing (depth for the operator, zero-explanation surface for their family, private silos per account) is this project's distinct product position - and ADR 0018's one-container, no-server-address design is its architectural expression.
 4. **Conflict UX is mostly unexamined.** Joplin's Conflicts notebook is the only comparable mechanism surfaced by the research; evaluating conflict *comprehension* with users ([09-evaluation.md](./09-evaluation.md), Session C) appears to be novel ground.

@@ -1,54 +1,33 @@
 import { expect, type Page, test } from '@playwright/test';
 
 /**
- * The Tour's acceptance test (ADR 0015). Props are found by text, not role: the Tour makes the rest
- * of the page `inert`, which takes it out of the accessibility tree. The popover has a test id
- * because it is portalled into driver.js's element, with no landmark to address it by.
+ * The Tour's acceptance test (ADR 0023). The popover has a test id because it is portalled into
+ * driver.js's element, with no landmark to address it by; the rest of the page is `inert`, which
+ * takes it out of the accessibility tree.
  */
 
-const PROP_HEADERS = ['Groceries', 'Weekend in Brno', 'Ideas'] as const;
-
-/** The last step's advance button reads `Done`; the five before it read `Next`. */
-const STEPS = 6;
+const STEP_TITLES = ['Your toolbar', 'Your quick starts', 'Where your notes live'] as const;
 
 function popover(page: Page) {
   return page.getByTestId('tour-popover');
 }
 
-async function expectPropsOnTheWall(page: Page) {
-  for (const header of PROP_HEADERS) {
-    await expect(page.getByText(header, { exact: true })).toBeVisible();
-  }
+async function expectStep(page: Page, step: number) {
+  await expect(popover(page)).toContainText(`Step ${step} of ${STEP_TITLES.length}`);
+  await expect(popover(page).getByRole('heading')).toHaveText(STEP_TITLES[step - 1]);
+  await expect(page).toHaveURL(/\/settings$/);
 }
 
-/**
- * Settles on a positive fact, the empty feed's own copy, rather than on three absences that are
- * all true one paint before the Props are seeded.
- */
-async function expectAnEmptyWall(page: Page) {
-  await page.goto('/');
+/** The Tour handed the app back: no popover, nothing left inert, an empty Feed on screen. */
+async function expectTheFeedBack(page: Page) {
+  await expect(popover(page)).toBeHidden();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator('body > [inert]')).toHaveCount(0);
   await expect(page.getByText('No notes yet')).toBeVisible();
-  for (const header of PROP_HEADERS) {
-    await expect(page.getByText(header, { exact: true })).toHaveCount(0);
-  }
-}
-
-async function finishTheTour(page: Page) {
-  for (let step = 1; step < STEPS; step++) {
-    await popover(page).getByRole('button', { name: 'Next' }).click();
-  }
-  await popover(page).getByRole('button', { name: 'Done' }).click();
 }
 
 test.describe('the Tour', () => {
-  test('runs on a fresh profile and demonstrates on three Props', async ({ page }) => {
-    await page.goto('/');
-
-    await expect(popover(page)).toBeVisible();
-    await expectPropsOnTheWall(page);
-  });
-
-  test('purges its Props when it finishes', async ({ page }) => {
+  test('is offered on a first visit and walks Settings with Next and Back', async ({ page }) => {
     // A spent `waitFor` budget is always a bug, and silent by design (it returns null), so a stall
     // once read as a slow step. Both breakpoints matter: it fired at 1280px and not at 390px.
     const timeouts: string[] = [];
@@ -57,61 +36,75 @@ test.describe('the Tour', () => {
     });
 
     await page.goto('/');
-    await expectPropsOnTheWall(page);
+    await expectStep(page, 1);
+    // Step 1 is the only step with no Back, so its absence says we are at the start.
+    await expect(popover(page).getByRole('button', { name: 'Back' })).toHaveCount(0);
 
-    await finishTheTour(page);
+    await popover(page).getByRole('button', { name: 'Next' }).click();
+    await expectStep(page, 2);
+    await popover(page).getByRole('button', { name: 'Next' }).click();
+    await expectStep(page, 3);
+
+    await popover(page).getByRole('button', { name: 'Back' }).click();
+    await expectStep(page, 2);
+    await popover(page).getByRole('button', { name: 'Back' }).click();
+    await expectStep(page, 1);
 
     expect(timeouts).toEqual([]);
-
-    await expect(popover(page)).toBeHidden();
-    // Step 4 leaves the Feed for /settings, so the Tour ends there.
-    await expectAnEmptyWall(page);
   });
 
-  test('Skip ends it and takes the Props with it', async ({ page }) => {
+  test('Done returns to the Feed, with no notes left behind', async ({ page }) => {
     await page.goto('/');
-    await expectPropsOnTheWall(page);
+    for (let step = 1; step < STEP_TITLES.length; step++) {
+      await expectStep(page, step);
+      await popover(page).getByRole('button', { name: 'Next' }).click();
+    }
+    await expectStep(page, STEP_TITLES.length);
+
+    await popover(page).getByRole('button', { name: 'Done' }).click();
+
+    await expectTheFeedBack(page);
+  });
+
+  test('Skip ends it from any step', async ({ page }) => {
+    await page.goto('/');
+    await popover(page).getByRole('button', { name: 'Next' }).click();
+    await expectStep(page, 2);
 
     await popover(page).getByRole('button', { name: 'Skip' }).click();
 
-    await expect(popover(page)).toBeHidden();
-    await expectAnEmptyWall(page);
+    await expectTheFeedBack(page);
   });
 
-  test('Back retreats without ending it', async ({ page }) => {
+  test('a navigation it did not make ends it', async ({ page }) => {
+    // The app is inert, so the platform Back is the only way out, and it means the user left.
     await page.goto('/');
-    await popover(page).getByRole('button', { name: 'Next' }).click();
+    await expectStep(page, 1);
 
-    await popover(page).getByRole('button', { name: 'Back' }).click();
+    await page.goBack();
 
-    // Step 1 is the only step with no Back, so its absence is what says we
-    // arrived rather than any copy the step happens to carry.
-    await expect(popover(page)).toBeVisible();
-    await expect(popover(page).getByRole('button', { name: 'Back' })).toHaveCount(0);
+    await expectTheFeedBack(page);
   });
 
-  test('a reload does not re-run it, and the Props it abandoned are swept', async ({ page }) => {
+  test('a second visit does not offer it again', async ({ page }) => {
     // `onboardingSeenAt` is stamped when the Tour is offered, or it would re-arm on every reload.
-    // So abandoned Props cannot wait for a next Tour: the startup sweep takes them.
     await page.goto('/');
-    await expectPropsOnTheWall(page);
+    await expectStep(page, 1);
 
-    await page.reload();
+    await page.goto('/');
 
-    await expectAnEmptyWall(page);
+    await expect(page.getByText('No notes yet')).toBeVisible();
     await expect(popover(page)).toBeHidden();
   });
 
   test('Settings replays it', async ({ page }) => {
     await page.goto('/');
     await popover(page).getByRole('button', { name: 'Skip' }).click();
-    await expectAnEmptyWall(page);
+    await expectTheFeedBack(page);
 
     await page.goto('/settings');
     await page.getByRole('button', { name: 'Replay tutorial' }).click();
 
-    // Replay returns to the Feed and runs the same sequence, Props and all.
-    await expect(popover(page)).toBeVisible();
-    await expectPropsOnTheWall(page);
+    await expectStep(page, 1);
   });
 });

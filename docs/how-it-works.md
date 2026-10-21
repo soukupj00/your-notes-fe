@@ -1,6 +1,6 @@
 # How it works
 
-YouNotes is an app you open in a web browser and then install, so it gets its own icon and window like any other app.
+YourNotes is an app you open in a web browser and then install, so it gets its own icon and window like any other app.
 This page explains where your Notes are kept, what the server adds, and what happens when something goes wrong.
 A Note is one thing you write in the app: a few words, a checklist, a drawing, a photo or a recording.
 
@@ -24,7 +24,7 @@ Installed, it opens in its own window and starts even when you are offline.
 ## What the server adds
 
 On its own, the app keeps your Notes on one Device.
-To have the same Notes on your phone and your laptop, someone in your household runs the YouNotes server at home.
+To have the same Notes on your phone and your laptop, someone in your household runs the YourNotes server at home.
 The server's site has [a step-by-step guide](https://soukupj00.github.io/your-notes-be/setup) for setting it up, written for people who are not programmers.
 
 With a server:

@@ -4,7 +4,7 @@ Domain glossary for the note-taking app. This file defines the **language** of t
 
 ## Core entities
 
-- **Note** — A single unit of content captured in the app, almost always by the user and occasionally by the app itself (see **Prop**). Has an optional header, an optional plaintext description, a rich-text body (which may contain a Checklist), zero or more attachments, and zero or more tags. A Note is the central aggregate of the app.
+- **Note** — A single unit of content captured in the app, almost always by the user and occasionally by the app itself. Has an optional header, an optional plaintext description, a rich-text body (which may contain a Checklist), zero or more attachments, and zero or more tags. A Note is the central aggregate of the app.
 - **Body** — The rich-text content of a Note, authored in the Editor and stored as HTML. This is the main writing surface, and it is where every richer element lives — attachments and the Checklist are authored inside it, not alongside it. Distinct from the **description** (a short plaintext subtitle).
 - **Checklist** — A to-do list authored *inside* the Body: a list whose items each carry a checked/unchecked state. It is Body content, not separate structured Note data. Distinct from a plain bullet/ordered list, which has no checked state — the Checklist is the one with checkboxes. A Body may contain more than one Checklist.
 - **Sinking** — Presenting a Checklist with its checked items gathered at the bottom, below its unchecked ones. Sinking is a way of *showing* a Checklist, never a way of storing one: the order the user typed is what is kept, so unchecking an item returns it to exactly the place it was authored in. Applies to every surface a Checklist appears on, so the same list never reads two ways.
@@ -56,8 +56,7 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
   The Hand-off is one-way: the calendar keeps its own copy, which the app can offer to replace but can never see, change or remove. The event carries the Note's title and a link back to it, never its Body.
   _Avoid_: sync (the calendar is not a synced store), export (that is Backup's word)
 - **Purge** — The permanent, irreversible removal of a Note and its Attachments, performed by a sweep the same way Orphan Attachments are reclaimed.
-  Two things are purged, and they are the only two: a **Trashed** Note once its grace period elapses, and a **Prop** once its Tour ends.
-  A Prop is purged from **Active** and immediately, with no grace period, because it was never the user's to restore.
+  Only a **Trashed** Note is purged, once its grace period elapses.
 
 ## Editing
 
@@ -95,16 +94,10 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
 ## Onboarding
 
 - **Tour** — A short, ordered demonstration of the app, shown once to a new user and replayable on demand.
-  A Tour *drives the app* rather than describing it: each step performs the gesture it is talking about, and the user only advances, retreats, or skips.
+  A Tour *drives the app* rather than describing it: it takes the user to the place it is talking about, and the user only advances, retreats, or skips.
   It is therefore always in the user's own Locale, Theme, Vision Mode and Width Class, because there is nothing to be in but the app itself.
   A Tour never asks the user to act and never waits on them; a step that required the user to do something would be a different concept.
-  A Tour is not over until its Props are gone: clearing the stage is the Tour's last act, not the app's first one.
-  So the app is handed back already free of them, and taking the dressing away is never something the user watches happen.
-- **Prop** — A Note the app creates so a Tour has something to demonstrate on.
-  While it exists a Prop is an ordinary Note in every respect: it sits in the Feed, it can be Pinned, Coloured, opened and edited, and nothing marks it out to the user.
-  Its one difference is its ending: a Prop is Purged when its Tour ends, rather than living until the user discards it.
-  **A Prop the user edits stops being a Prop** and becomes an ordinary Note, because the moment it holds the user's writing it is no longer the app's to remove.
-  Props are what make a Tour safe to let loose on the real app: pinning, colouring and opening a Prop mutates nothing the user owns.
+  A Tour creates and changes no Notes: it only moves the user around the app and back.
 
 ## Backup & import
 

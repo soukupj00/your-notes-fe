@@ -14,7 +14,7 @@
     "skipToContent": "Skip to content"
   },
   "navbar": {
-    "logo": "YouNotes"
+    "logo": "YourNotes"
   },
   "attachments": {
     "confirmDelete": {
@@ -178,7 +178,7 @@
         "list": "Lists",
         "block": "Blocks",
         "align": "Alignment",
-        "media": "Media",
+        "media": "Insert",
         "font": "Font",
         "meta": "Toolbar"
       }
@@ -304,8 +304,14 @@
       "title": "Help",
       "replay": {
         "label": "Tutorial",
-        "description": "Five steps, on three notes it clears up afterwards.",
+        "description": "Three steps through Settings.",
         "action": "Replay tutorial"
+      },
+      "docs": {
+        "label": "Documentation",
+        "description": "How it works, and how to run your own server.",
+        "open": "Open the docs",
+        "github": "GitHub"
       }
     },
     "quickCapture": {
@@ -324,12 +330,12 @@
   "pwa": {
     "install": {
       "title": "App",
-      "label": "Install YouNotes",
-      "description": "Add YouNotes to your device for quick access in its own window.",
+      "label": "Install YourNotes",
+      "description": "Add YourNotes to your device for quick access in its own window.",
       "action": "Install"
     },
     "update": {
-      "available": "A new version of YouNotes is available.",
+      "available": "A new version of YourNotes is available.",
       "reload": "Reload",
       "later": "Not now"
     }
@@ -469,7 +475,7 @@
     "updateCalendar": "Update in calendar",
     "clear": "Clear reminder",
     "oneWay": "Your calendar keeps its own copy and does the reminding. Clearing or changing this here does not remove it there.",
-    "fallbackTitle": "YouNotes reminder",
+    "fallbackTitle": "YourNotes reminder",
     "chip": "Reminder: {{when}}",
     "chipPast": "Past reminder: {{when}}",
     "chipRepeating": "Reminder: {{when}}, {{repeat}}"
@@ -532,18 +538,6 @@
       "done": "Done"
     },
     "steps": {
-      "capture": {
-        "title": "Start anything",
-        "body": "Text, a checklist, a photo, a voice memo or a drawing - every way in starts here."
-      },
-      "editor": {
-        "title": "Write it",
-        "body": "Type / anywhere in a note for headings, lists, quotes and maths. Images, audio, files and drawings go inline, in the note itself."
-      },
-      "wall": {
-        "title": "Your wall",
-        "body": "Pin a note to keep it on top, give it a colour or a label. Archive keeps it, trash lets it go with a moment to change your mind."
-      },
       "toolbar": {
         "title": "Your toolbar",
         "body": "Choose which buttons the editor's toolbar carries, and in what order. Phone and desktop each keep their own arrangement."
@@ -552,28 +546,9 @@
         "title": "Your quick starts",
         "body": "Reorder the ways in so the one you reach for most comes first, and put the ＋ under whichever thumb you use."
       },
-      "local": {
-        "title": "It all lives here",
-        "body": "Every note is on this device and nowhere else. Install the app to keep it a tap away, and export a zip whenever you want a copy."
-      }
-    },
-    "props": {
-      "groceries": {
-        "header": "Groceries",
-        "item1": "Oat milk",
-        "item2": "Sourdough",
-        "item3": "Something for Sunday"
-      },
-      "weekend": {
-        "header": "Weekend in Brno",
-        "intro": "Train leaves Friday at six, so pack the night before.",
-        "item1": "Book the room near the station",
-        "item2": "The observatory, if it stays clear",
-        "item3": "Coffee on Jakubská"
-      },
-      "ideas": {
-        "header": "Ideas",
-        "body": "A shelf for the hallway - measure the alcove first."
+      "sync": {
+        "title": "Where your notes live",
+        "body": "Every note is saved on this device first, so the app works offline. Sign in to your own server to keep your devices in step, and export a zip whenever you want a copy."
       }
     }
   },
@@ -597,7 +572,8 @@
     "section": {
       "title": "Account",
       "signedOutLabel": "Sign in to your server",
-      "signedOutDescription": "Sync this Device's Notes with your YouNotes server.",
+      "signedOutDescription": "Sync this Device's Notes with your YourNotes server.",
+      "setupGuide": "How to set up a server",
       "signIn": "Sign in",
       "signInDescription": "Use the username and password you chose for your account.",
       "signedInLabel": "Signed in as {{username}}",
@@ -710,7 +686,7 @@
       "loading": "Opening the Note…",
       "gone": "Nothing is shared here",
       "failed": "Could not open this Note. Try again later.",
-      "footer": "Shared from YouNotes",
+      "footer": "Shared from YourNotes",
       "untitled": "Shared Note"
     }
   }

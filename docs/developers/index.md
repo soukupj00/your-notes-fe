@@ -1,6 +1,6 @@
 # For developers
 
-YouNotes is a React single-page app that installs as a PWA and keeps everything in the browser's IndexedDB.
+YourNotes is a React single-page app that installs as a PWA and keeps everything in the browser's IndexedDB.
 It is complete without a server; [the server](https://soukupj00.github.io/your-notes-be/developers/) lives in its own repository and adds sync.
 The words used here, such as Note, Tag, Attachment, Local Store and Remote, are defined in [`CONTEXT.md`](https://github.com/soukupj00/your-notes-fe/blob/main/CONTEXT.md).
 

@@ -84,7 +84,7 @@ const forDevelopersCzech = [
 
 const config = withMermaid(
   defineConfig({
-    title: 'YouNotes',
+    title: 'YourNotes',
     description:
       'Notes, checklists, drawings and photos, on your devices, synced by a server you own.',
     base,

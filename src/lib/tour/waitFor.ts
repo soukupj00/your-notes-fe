@@ -3,7 +3,7 @@
  * A frame is the right step because what is awaited is usually a rect, true only after layout.
  */
 
-import { resolveTourTarget, type TourTarget, tourTargetSelector } from './targets.ts';
+import { resolveTourTarget, TOUR_TARGETS, type TourTargetName } from './targets.ts';
 
 type WaitOptions = { timeout?: number; label?: string };
 
@@ -47,19 +47,8 @@ export function waitFor<T>(
 
 /** The target once it is on screen; a spent budget names its selector unless given a label. */
 export function waitForTarget(
-  target: TourTarget,
-  { timeout, label = tourTargetSelector(target) }: WaitOptions = {}
+  target: TourTargetName,
+  { timeout, label = TOUR_TARGETS[target] }: WaitOptions = {}
 ): Promise<Element | null> {
   return waitFor(() => resolveTourTarget(target), { timeout, label });
-}
-
-/**
- * Resolves once none of the targets is on screen. What leaves has an exit animation or a live
- * query behind it, so "gone" is read from the document, not from having asked.
- */
-export async function waitForGone(
-  targets: TourTarget[],
-  options: WaitOptions & { label: string }
-): Promise<void> {
-  await waitFor(() => targets.every((target) => resolveTourTarget(target) === null), options);
 }

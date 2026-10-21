@@ -42,8 +42,8 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: 'YouNotes',
-        short_name: 'YouNotes',
+        name: 'YourNotes',
+        short_name: 'YourNotes',
         start_url: '/',
         display: 'standalone',
         // The dark `--canvas` from `globals.css`, since the app opens dark. A manifest cannot read

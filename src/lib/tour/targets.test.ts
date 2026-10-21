@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { noteCardTarget, resolveTourTarget, tourTargetSelector } from './targets.ts';
+import { resolveTourTarget } from './targets.ts';
 
 /**
  * jsdom measures every element as 0x0, so rects are stubbed per element. This proves the resolver
@@ -42,8 +42,7 @@ describe('resolveTourTarget', () => {
   });
 
   it('returns null when every match is hidden', () => {
-    // Not an error: a step whose target is absent is dropped from the run, so
-    // the counter never promises a step the user will not be shown.
+    // Not an error: a step whose target is absent is shown without a cutout.
     render('<div data-tour="capture"></div>');
     measure(document.querySelector('[data-tour="capture"]')!, false);
 
@@ -53,15 +52,7 @@ describe('resolveTourTarget', () => {
   it('returns null when nothing carries the attribute at all', () => {
     render('<div></div>');
 
-    expect(resolveTourTarget('editorToolbar')).toBeNull();
-  });
-
-  it('resolves a selector computed at run time, which is how step 3 finds its card', () => {
-    const id = '0f8c6b1e-1d64-4a2f-9c31-0d2a2f4c8b77';
-    render(`<li data-note-feed-id="${id}"></li>`);
-    measure(document.querySelector('li')!, true);
-
-    expect(resolveTourTarget(noteCardTarget(id))).toBe(document.querySelector('li'));
+    expect(resolveTourTarget('settingsSync')).toBeNull();
   });
 
   it('searches within the root it is given', () => {
@@ -72,13 +63,5 @@ describe('resolveTourTarget', () => {
     measure(document.querySelector('#inside')!, true);
 
     expect(resolveTourTarget('capture', document.querySelector('main')!)?.id).toBe('inside');
-  });
-});
-
-describe('tourTargetSelector', () => {
-  it('escapes an id rather than interpolating it raw', () => {
-    // Note ids are uuids today, but a selector built by string concatenation is
-    // one schema change away from being unparseable.
-    expect(tourTargetSelector(noteCardTarget('a"b'))).toBe('[data-note-feed-id="a\\"b"]');
   });
 });

@@ -1,4 +1,4 @@
-# YouNotes
+# YourNotes
 
 A self-hosted, open-source note-taking app you run yourself, as an alternative to Google Keep.
 Capture notes, checklists, drawings, photos, audio, video and files, organise them with labels and colours, and use it fully offline.
@@ -8,7 +8,7 @@ It is a PWA: open it in a browser and install it to the home screen or desktop.
 Syncing between Devices needs your own server, which serves the app itself.
 
 This repository is the app.
-The [YouNotes server](https://soukupj00.github.io/your-notes-be/) keeps your Devices in step and serves the app from your own home.
+The [YourNotes server](https://soukupj00.github.io/your-notes-be/) keeps your Devices in step and serves the app from your own home.
 
 **The site, [soukupj00.github.io/your-notes-fe](https://soukupj00.github.io/your-notes-fe/), has the rest:** how it works, how to install it, and the guides for developers.
 

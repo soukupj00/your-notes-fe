@@ -31,15 +31,11 @@ export function QuickCaptureBar({ onStart }: { onStart: (intent?: Intent) => voi
     <div className={cn(FLOATING_BOTTOM_BAR, 'sm:hidden', left ? 'justify-start' : 'justify-end')}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          {/* On the `＋`, not the full-width wrapper, so the Tour's cutout is a circle, not a
-              letterbox. Its twin is the desktop bar; `lib/tour/targets.ts` picks the shown one. */}
+          {/* The Tour reads this or its desktop twin as the Feed being on screen. */}
           <Button
             type="button"
             size="icon"
             data-tour="capture"
-            // Only this width has a dial, so a Tour step finds out there is one from this
-            // attribute. Separate from `data-tour`, because one element cannot hold two values.
-            data-tour-toggle=""
             aria-label={t('notes.capture.open')}
             className="size-14 rounded-full bg-primary text-primary-foreground shadow-lift hover:bg-primary/90 hover:shadow-lift"
           >
@@ -55,12 +51,8 @@ export function QuickCaptureBar({ onStart }: { onStart: (intent?: Intent) => voi
           className="w-auto border-0 bg-transparent p-0 shadow-none"
         >
           {/* `flex-col-reverse`, not a reversed array: the first start sits nearest the thumb and
-              stays first in tab and screen-reader order. The Tour spotlights this open dial, not
-              the `＋`, because the starts unfold above it. */}
-          <ul
-            data-tour="capture-dial"
-            className={cn('flex flex-col-reverse gap-2', left ? 'items-start' : 'items-end')}
-          >
+              stays first in tab and screen-reader order. */}
+          <ul className={cn('flex flex-col-reverse gap-2', left ? 'items-start' : 'items-end')}>
             {actions.map((action, index) => (
               <m.li
                 key={action.key}

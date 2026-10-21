@@ -217,30 +217,22 @@ The 44px Touch Rule has two mechanisms that are not interchangeable: `.touch-tar
 
 ### The Tour (`src/lib/tour/`, `src/context/TourProvider.tsx`)
 
-The six-step onboarding Tour ([ADR 0015](./docs/adr/0015-the-tour-drives-the-app-on-disposable-props.md)).
-It **demonstrates**: every step drives the real app, and the user presses only Next, Back or Skip.
+The three-step onboarding Tour ([ADR 0023](./docs/adr/0023-the-tour-points-at-settings.md), which supersedes [ADR 0015](./docs/adr/0015-the-tour-drives-the-app-on-disposable-props.md)).
+It **demonstrates**: the Tour drives the real app by taking the user to Settings, and the user presses only Next, Back or Skip.
+It creates and changes no Notes.
 
-- **Props.**
-  The Tour acts on three Notes it creates at the start and Purges at the end.
-  `lib/tour/props.ts` holds the rules, and a bug there deletes something the user wrote.
-  A Prop is purged only while its `updatedAt` still matches the baseline the Tour recorded, so every act that writes to a Prop rebases it; the `TourStage` a step receives offers only the rebasing writers.
-  The baselines live in the Local Store's `meta`, written before the Prop rows, so a reload or a crash mid-Tour leaves something the next start can sweep.
 - **Nothing in `src/lib/tour/` imports `driver.js` or React.**
-  That is what makes the steps, targets, Prop rules and inert marking testable; `TourProvider` alone knows the spotlight library.
+  That is what makes the steps, targets and inert marking testable; `TourProvider` alone knows the spotlight library.
 - **A step is a scene, not a layer.**
   Moving between steps is `exit` the one left, then `enter` the one arriving, in both directions, and `exit` is the strict inverse of `enter`.
-  Steps 4-6 are one Settings scene looked at three times (`continues`).
-- **The speed dial.**
-  Step 1 opens it by clicking the `＋`.
-  Whether it is open is read from whether its Starts are on screen, never from `aria-expanded`, which driver.js stamps onto whatever it highlights.
-  Opening is awaited (driver measures the target once); closing is not, because step 2's editor covers the screen, and Back from step 2 closes the editor and awaits it.
-- **Everything except the popover is `inert`** for the Tour's lifetime (`lib/tour/inert.ts`), kept as a standing rule by a `MutationObserver` because most of what must be marked mounts later.
-  `inert` blocks hit testing, not dispatch, so a programmatic `.click()` still runs.
+  All three steps are one Settings scene looked at three times (`continues`): step 1 navigates there, and leaving it goes back to the Feed.
+- **Everything except the popover is `inert`** for the Tour's lifetime (`lib/tour/inert.ts`), kept as a standing rule by a `MutationObserver` because what portals to `body` can mount later.
   An element that was already inert is never released.
 - **Settings anchors** (`data-tour` wrappers) are declared in `src/pages/settings.tsx`, so no section knows the Tour exists.
   Toolbar and quick capture are two steps because nobody can scroll an inert app and together they do not fit a phone.
+  The last anchor wraps "Storage and sync", which renders nothing without the Storage API or a signed-in Device; that step then shows its copy without a cutout.
 - **Targets** resolve to the first match with a non-zero rect (`lib/tour/targets.ts`), because several surfaces are mounted twice with CSS hiding one.
-- **Waiting is on a DOM condition, never a timer** (`lib/tour/waitFor.ts`): `waitForTarget` for something to arrive on screen, `waitForGone` for something to leave it.
+- **Waiting is on a DOM condition, never a timer** (`lib/tour/waitFor.ts`): `waitForTarget` for something to arrive on screen.
 - `onboardingSeenAt` is stamped when the Tour is **offered**, not on completion, which would re-arm it after every reload.
 - The Tour is verified by `e2e/onboarding.spec.ts` at two breakpoints, not by Vitest: jsdom measures every element as 0x0.
 
