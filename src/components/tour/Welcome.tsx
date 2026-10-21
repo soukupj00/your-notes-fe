@@ -145,7 +145,7 @@ export function Welcome() {
         <rect
           width="100%"
           height="100%"
-          style={{ fill: 'var(--tour-scrim)' }}
+          style={{ fill: 'var(--scrim)' }}
           mask={`url(#${MASK_ID})`}
         />
       </svg>

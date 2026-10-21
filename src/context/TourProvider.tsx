@@ -79,7 +79,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
       overlayClickBehavior: () => {},
       // A token, not a colour: driver writes it into an inline `style.fill`, where `var()` still
       // follows the theme. The alpha is in the token, so opacity 1 stops driver multiplying it.
-      overlayColor: 'var(--tour-scrim)',
+      overlayColor: 'var(--scrim)',
       overlayOpacity: 1,
       stagePadding: STAGE_PADDING,
       stageRadius: stageRadiusOf(element),

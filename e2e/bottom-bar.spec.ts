@@ -22,3 +22,24 @@ test('a card under the floating ＋ strip still takes clicks', async ({ page }) 
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   await expect(card(page, 'C')).toHaveCount(0);
 });
+
+// Feedback U14: the open dial dims the wall, and a tap on the dim only closes the dial.
+test('a tap on the dimmed wall closes the dial without opening the card under it', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(!isMobile, 'the ＋ dial is the phone layout');
+  await skipTour(page);
+  await page.goto('/');
+  await newTextNote(page, 'A');
+
+  await page.getByRole('button', { name: 'New note' }).click();
+  await expect(page.getByRole('button', { name: 'Checklist', exact: true })).toBeVisible();
+  const box = await card(page, 'A').boundingBox();
+  if (!box) throw new Error('no card');
+  await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+
+  await expect(page.getByRole('button', { name: 'Checklist', exact: true })).toBeHidden();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page).not.toHaveURL(/note=/);
+});
