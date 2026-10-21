@@ -23,10 +23,14 @@ export interface NoteDraft {
   /** Writes the header and the Body; an empty new Draft is not worth a row yet. */
   save(header: string, body: string): Promise<void>;
   /**
-   * The last write, then the Note's fate: purged when empty unless kept, otherwise swept of the
-   * Attachments its Body no longer references.
+   * The last write, if anything was `edited` this open, then the Note's fate: purged when empty
+   * unless kept, otherwise swept of the Attachments its Body no longer references.
    */
-  close(header: string, body: string, options: { keepEmpty: boolean }): Promise<void>;
+  close(
+    header: string,
+    body: string,
+    options: { keepEmpty: boolean; edited: boolean }
+  ): Promise<void>;
 }
 
 export function createNoteDraft(
@@ -85,8 +89,10 @@ export function createNoteDraft(
       return id;
     });
 
-  const close = async (header: string, body: string, { keepEmpty }: { keepEmpty: boolean }) => {
-    await save(header, body);
+  const close: NoteDraft['close'] = async (header, body, { keepEmpty, edited }) => {
+    // A read is not an edit: the write would bump `updatedAt` and sync as a change.
+    if (edited) await save(header, body);
+    else await queue;
     if (!saved) return;
     if (isEmpty(header, body) && !keepEmpty) {
       await purgeNote(id);

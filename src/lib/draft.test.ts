@@ -99,7 +99,7 @@ describe('a new Draft', () => {
   it('leaves nothing behind when it closes empty', async () => {
     const [draft, d] = newDraft();
 
-    await draft.close('', '', { keepEmpty: false });
+    await draft.close('', '', { keepEmpty: false, edited: true });
 
     expect(d.createNote).not.toHaveBeenCalled();
     expect(d.purgeNote).not.toHaveBeenCalled();
@@ -144,17 +144,27 @@ describe('closing', () => {
     const [draft, d] = openNote();
     const body = '<p>kept</p><img data-attachment-id="a1">';
 
-    await draft.close('Milk', body, { keepEmpty: false });
+    await draft.close('Milk', body, { keepEmpty: false, edited: true });
 
     expect(d.updateNote).toHaveBeenCalledWith('n1', { header: 'Milk', body });
     expect(d.collectOrphans).toHaveBeenCalledWith('n1', ['a1']);
     expect(d.purgeNote).not.toHaveBeenCalled();
   });
 
+  // A read is not an edit: the write would bump `updatedAt`, re-rank the feed and sync as a change.
+  it('writes nothing for a Note that was only read', async () => {
+    const [draft, d] = openNote();
+
+    await draft.close('Milk', '<p>kept</p>', { keepEmpty: false, edited: false });
+
+    expect(d.updateNote).not.toHaveBeenCalled();
+    expect(d.collectOrphans).toHaveBeenCalledWith('n1', []);
+  });
+
   it('purges a Note that was emptied out', async () => {
     const [draft, d] = openNote();
 
-    await draft.close('', '', { keepEmpty: false });
+    await draft.close('', '', { keepEmpty: false, edited: true });
 
     expect(d.purgeNote).toHaveBeenCalledWith('n1');
     expect(d.collectOrphans).not.toHaveBeenCalled();
@@ -164,7 +174,7 @@ describe('closing', () => {
   it('keeps an empty Note it is told to keep', async () => {
     const [draft, d] = openNote();
 
-    await draft.close('', '', { keepEmpty: true });
+    await draft.close('', '', { keepEmpty: true, edited: true });
 
     expect(d.purgeNote).not.toHaveBeenCalled();
     expect(d.collectOrphans).toHaveBeenCalledWith('n1', []);
@@ -176,7 +186,7 @@ describe('closing', () => {
     d.createNote.mockReturnValueOnce(create.promise);
 
     const first = draft.save('a', '');
-    const closing = draft.close('', '', { keepEmpty: false });
+    const closing = draft.close('', '', { keepEmpty: false, edited: true });
     create.release();
     await Promise.all([first, closing]);
 

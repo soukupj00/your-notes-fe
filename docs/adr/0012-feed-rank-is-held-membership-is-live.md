@@ -37,6 +37,8 @@ Rank is recomputed only when the user is not watching:
 1. On mount, which covers every route change between feeds.
 2. On search-param change (`q`, `sort`, `dir`, `tags`) - the user asked for a different arrangement, so they get one.
 3. On `visibilitychange` back to visible, which covers backgrounding the PWA and switching tabs.
+4. When the editor closes (added 2026-10-21 after the first user test): the user was in the Note, not on the Feed, and expected the Note they just edited to move under the "last edited" sort.
+   Opening the editor re-ranks nothing, so the wall never reflows behind it.
 
 **Pinning is the one exception**, and it has to be: DESIGN.md's Direct-Manipulation Rule is written specifically about pinning, and moving the card *is* the action being requested.
 This costs nothing structurally, because `floatPinned` (`useNoteFeed.ts`) already runs as a separate partition step from the comparator - the pinned/unpinned split stays live while rank *within* each partition is held.

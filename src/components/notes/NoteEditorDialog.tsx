@@ -191,7 +191,10 @@ export function NoteEditorDialog({
     if (preview) return;
     // An empty note is kept only for a Reminder: the calendar already holds an event linking
     // to its id.
-    await draft.close(header, body, { keepEmpty: reminder !== undefined });
+    await draft.close(header, body, {
+      keepEmpty: reminder !== undefined,
+      edited: dirtyRef.current,
+    });
   }, [preview, draft, header, body, reminder]);
 
   const handleClose = useCallback(async () => {
@@ -201,6 +204,7 @@ export function NoteEditorDialog({
 
   // The last save lands before the move, so its undo returns the Note as it was left. A Draft
   // that closed empty has no row to move, which makes this a plain close.
+  // Released only on failure: a second press before the dialog unmounts would move it twice.
   const leavingRef = useRef(false);
   async function leaveWith(move: (id: string) => Promise<void>) {
     if (leavingRef.current) return;
@@ -209,8 +213,9 @@ export function NoteEditorDialog({
       await closeDraft();
       if (draft.saved) await move(noteId);
       onClose();
-    } finally {
+    } catch (error) {
       leavingRef.current = false;
+      throw error;
     }
   }
 

@@ -80,6 +80,18 @@ function useVisibilityEpoch(): number {
 }
 
 /**
+ * Counts the editor closing: the user was in the Note, not on the wall, so the Note they just
+ * edited may take its sorted place then (feedback B4). Opening re-ranks nothing.
+ */
+function useCloseEpoch(editing: boolean): number {
+  const [seen, setSeen] = useState({ editing, epoch: 0 });
+  if (seen.editing !== editing) {
+    setSeen({ editing, epoch: editing ? seen.epoch : seen.epoch + 1 });
+  }
+  return seen.epoch;
+}
+
+/**
  * The one live query behind every note list: scope, then search within it (so Trash is only
  * reachable from `/trash`, ADR 0009), then order. Membership is live, rank is held (ADR 0012);
  * the full design is in src/hooks/data/CLAUDE.md.
@@ -91,6 +103,7 @@ export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
   // can actually compare.
   const tagKey = tags.join(',');
   const visibilityEpoch = useVisibilityEpoch();
+  const closeEpoch = useCloseEpoch(Boolean(search?.note));
 
   const store = useLocalStore();
   const notesInScope = useLive(() => store.notes.feed(scope), [store, scope.state, scope.tagId]);
@@ -125,7 +138,7 @@ export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
   // Everything the user can ask for a *different* order with. A change here is
   // the user looking away or asking to be re-ranked, so the held order is
   // abandoned and the fresh one adopted (ADR 0012).
-  const rankKey = `${scope.state}|${scope.tagId ?? ''}|${trimmed}|${sort}|${dir}|${tagKey}|${visibilityEpoch}`;
+  const rankKey = `${scope.state}|${scope.tagId ?? ''}|${trimmed}|${sort}|${dir}|${tagKey}|${visibilityEpoch}|${closeEpoch}`;
 
   // The freshly sorted feed, before any memory of what was last shown.
   const fresh = useMemo(() => {

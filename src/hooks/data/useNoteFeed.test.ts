@@ -208,6 +208,24 @@ describe('held rank (ADR 0012)', () => {
     await waitFor(() => expect(ids(result.current.notes)).toEqual(['b', 'a']));
   });
 
+  it('holds the rank while a note is open and re-ranks once it closes', async () => {
+    await putNote({ id: 'a', updatedAt: daysAgo(1) });
+    await putNote({ id: 'b', updatedAt: daysAgo(2) });
+
+    const { result, rerender } = renderHookWithStore(
+      ({ search }: { search: NoteSearchParams }) => useNoteFeed({ state: 'active' }, search),
+      { initialProps: { search: {} as NoteSearchParams } }
+    );
+    await waitFor(() => expect(ids(result.current.notes)).toEqual(['a', 'b']));
+
+    rerender({ search: { note: 'b' } });
+    await writeAndSettle(result, 'b', { updatedAt: new Date().toISOString() });
+    expect(ids(result.current.notes)).toEqual(['a', 'b']);
+
+    rerender({ search: {} });
+    await waitFor(() => expect(ids(result.current.notes)).toEqual(['b', 'a']));
+  });
+
   it('lets an unpinned note fall back to its held place, not to its fresh one', async () => {
     await putNote({ id: 'a', updatedAt: daysAgo(1) });
     await putNote({ id: 'b', updatedAt: daysAgo(2) });

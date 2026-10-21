@@ -37,6 +37,8 @@ Pořadí se přepočítává jen tehdy, když se uživatel nedívá:
 1. Při připojení, což pokrývá každou změnu routy mezi přehledy.
 2. Při změně search params (`q`, `sort`, `dir`, `tags`) - uživatel si řekl o jiné uspořádání, tak ho dostane.
 3. Při `visibilitychange` zpět na viditelný stav, což pokrývá přesunutí PWA na pozadí i přepínání karet prohlížeče.
+4. Při zavření editoru (doplněno 2026-10-21 po prvním uživatelském testu): uživatel byl v poznámce, ne v přehledu, a čekal, že se právě upravená poznámka při řazení podle poslední úpravy posune.
+   Otevření editoru nepřepočítává nic, takže se zeď za ním nikdy nepřeskládá.
 
 **Připnutí je jediná výjimka**, a musí být: pravidlo přímé manipulace (Direct-Manipulation Rule) v DESIGN.md je napsáno právě o připínání a přesun karty *je* požadovaná akce.
 Strukturálně to nic nestojí, protože `floatPinned` (`useNoteFeed.ts`) už běží jako samostatný krok rozdělení oddělený od komparátoru - rozdělení na připnuté a nepřipnuté zůstává živé, zatímco pořadí *uvnitř* každé části se drží.
