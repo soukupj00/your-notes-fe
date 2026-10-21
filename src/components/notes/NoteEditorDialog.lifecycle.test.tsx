@@ -123,6 +123,27 @@ describe('NoteEditorDialog lifecycle', () => {
     expect(toastMock).not.toHaveBeenCalled();
   });
 
+  // Before the load the fields are blank, and the close the move starts with must not purge.
+  it.each(['notes.archive', 'notes.moveToTrash'])(
+    'keeps the content when %s is pressed before the note has loaded',
+    async (name) => {
+      const note = makeNote();
+      await testStore.notes.add(note);
+      const get = vi.spyOn(testStore.notes, 'get').mockReturnValueOnce(new Promise(() => {}));
+      const onClose = vi.fn();
+      render(<NoteEditorDialog noteId={note.id} onClose={onClose} />);
+
+      await userEvent.click(screen.getByRole('button', { name }));
+
+      await waitFor(() => expect(onClose).toHaveBeenCalled());
+      get.mockRestore();
+      expect(await testStore.notes.get(note.id)).toMatchObject({
+        header: note.header,
+        body: note.body,
+      });
+    }
+  );
+
   it('offers restore instead of archive on an archived note', async () => {
     const { note, onClose } = await openStored({ state: 'archived' });
 

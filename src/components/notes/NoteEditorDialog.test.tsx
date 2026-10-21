@@ -162,6 +162,24 @@ describe('NoteEditorDialog', () => {
     expect(await testStore.notes.get(note.id)).toBeUndefined();
   });
 
+  // A cold `?note=` link on a slow device: the empty fields are not the Note's content yet.
+  it('leaves an existing note alone when closed before it has loaded', async () => {
+    const note = makeNote();
+    await testStore.notes.add(note);
+    const get = vi.spyOn(testStore.notes, 'get').mockReturnValueOnce(new Promise(() => {}));
+    const onClose = vi.fn();
+
+    render(<NoteEditorDialog noteId={note.id} onClose={onClose} />);
+    await userEvent.click(closeButton());
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    get.mockRestore();
+    expect(await testStore.notes.get(note.id)).toMatchObject({
+      header: note.header,
+      body: note.body,
+    });
+  });
+
   it('seeds a new checklist draft with an empty task list and persists it once edited', async () => {
     render(
       <NoteEditorDialog
@@ -315,9 +333,10 @@ describe('NoteEditorDialog', () => {
   // hand-off are the two cases worth pinning: the fields exist only afterwards.
   async function setReminderFromBar() {
     await userEvent.click(screen.getByRole('button', { name: 'reminders.button' }));
-    fireEvent.change(await screen.findByLabelText('reminders.when'), {
-      target: { value: '2030-03-04T09:00' },
+    fireEvent.change(await screen.findByLabelText('reminders.date'), {
+      target: { value: '2030-03-04' },
     });
+    await userEvent.selectOptions(screen.getByLabelText('reminders.hour'), '09');
     await userEvent.selectOptions(screen.getByLabelText('reminders.repeat'), 'weekly');
     await userEvent.click(screen.getByRole('button', { name: 'reminders.addToCalendar' }));
   }

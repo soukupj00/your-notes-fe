@@ -99,7 +99,7 @@ describe('a new Draft', () => {
   it('leaves nothing behind when it closes empty', async () => {
     const [draft, d] = newDraft();
 
-    await draft.close('', '', { keepEmpty: false });
+    await draft.close('', '', { keepEmpty: false, edited: true });
 
     expect(d.createNote).not.toHaveBeenCalled();
     expect(d.purgeNote).not.toHaveBeenCalled();
@@ -144,17 +144,26 @@ describe('closing', () => {
     const [draft, d] = openNote();
     const body = '<p>kept</p><img data-attachment-id="a1">';
 
-    await draft.close('Milk', body, { keepEmpty: false });
+    await draft.close('Milk', body, { keepEmpty: false, edited: true });
 
     expect(d.updateNote).toHaveBeenCalledWith('n1', { header: 'Milk', body });
     expect(d.collectOrphans).toHaveBeenCalledWith('n1', ['a1']);
     expect(d.purgeNote).not.toHaveBeenCalled();
   });
 
+  it('writes nothing for a Note that was only read', async () => {
+    const [draft, d] = openNote();
+
+    await draft.close('Milk', '<p>kept</p>', { keepEmpty: false, edited: false });
+
+    expect(d.updateNote).not.toHaveBeenCalled();
+    expect(d.collectOrphans).toHaveBeenCalledWith('n1', []);
+  });
+
   it('purges a Note that was emptied out', async () => {
     const [draft, d] = openNote();
 
-    await draft.close('', '', { keepEmpty: false });
+    await draft.close('', '', { keepEmpty: false, edited: true });
 
     expect(d.purgeNote).toHaveBeenCalledWith('n1');
     expect(d.collectOrphans).not.toHaveBeenCalled();
@@ -164,10 +173,24 @@ describe('closing', () => {
   it('keeps an empty Note it is told to keep', async () => {
     const [draft, d] = openNote();
 
-    await draft.close('', '', { keepEmpty: true });
+    await draft.close('', '', { keepEmpty: true, edited: true });
 
     expect(d.purgeNote).not.toHaveBeenCalled();
     expect(d.collectOrphans).toHaveBeenCalledWith('n1', []);
+  });
+
+  // An act (a Reminder, an Attachment) earns the row without typing, so nothing reads as edited.
+  it.each([
+    [false, 'purges', 1],
+    [true, 'keeps', 0],
+  ])('when told keepEmpty=%s, %s an empty row an act earned', async (keepEmpty, _, purges) => {
+    const [draft, d] = newDraft();
+    await draft.ensureSaved();
+
+    await draft.close('', '', { keepEmpty, edited: false });
+
+    expect(d.updateNote).not.toHaveBeenCalled();
+    expect(d.purgeNote).toHaveBeenCalledTimes(purges);
   });
 
   it('decides the fate after a create that was still in flight', async () => {
@@ -176,7 +199,7 @@ describe('closing', () => {
     d.createNote.mockReturnValueOnce(create.promise);
 
     const first = draft.save('a', '');
-    const closing = draft.close('', '', { keepEmpty: false });
+    const closing = draft.close('', '', { keepEmpty: false, edited: true });
     create.release();
     await Promise.all([first, closing]);
 

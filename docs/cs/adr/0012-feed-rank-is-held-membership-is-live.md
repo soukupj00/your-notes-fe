@@ -1,6 +1,6 @@
 # 0012 - Pořadí v přehledu se drží, příslušnost je živá
 
-- Stav: přijato
+- Stav: přijato (doplněno [ADR 0025](./0025-the-closed-note-takes-its-sorted-place.md))
 - Datum: 2026-08-07
 
 ## Kontext

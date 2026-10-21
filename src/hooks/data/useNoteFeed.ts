@@ -80,11 +80,33 @@ function useVisibilityEpoch(): number {
 }
 
 /**
+ * The Note whose editor just closed takes its sorted place, and only it (ADR 0025). Released until
+ * the feed's first update after the close, because the close's own write can land after it.
+ */
+function useReleasedOnClose(openNoteId: string | undefined, entries: unknown): string | undefined {
+  const [release, setRelease] = useState<{ open?: string; id?: string; at?: unknown }>({
+    open: openNoteId,
+  });
+  if (release.open !== openNoteId) {
+    const id = openNoteId ? undefined : release.open;
+    setRelease({ open: openNoteId, id, at: entries });
+    return id;
+  }
+  if (release.id && release.at !== entries) setRelease({ open: openNoteId });
+  return release.id;
+}
+
+/**
  * The one live query behind every note list: scope, then search within it (so Trash is only
  * reachable from `/trash`, ADR 0009), then order. Membership is live, rank is held (ADR 0012);
  * the full design is in src/hooks/data/CLAUDE.md.
  */
-export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
+export function useNoteFeed(
+  scope: NoteFeedScope,
+  search?: NoteSearchParams,
+  /** The Note open in the editor, if any. */
+  openNoteId?: string
+) {
   const { q, sort, dir, tags } = resolveNoteSearch(search);
   const trimmed = q.trim();
   // Arrays are fresh objects on every render; the joined key is what the memos
@@ -140,8 +162,13 @@ export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
   // is spotted at read time; a reset effect would run after the memo it must precede.
   const [held, setHeld] = useState<{ key: string; ids: readonly string[] } | null>(null);
   const heldIds = held?.key === rankKey ? held.ids : EMPTY_IDS;
+  const released = useReleasedOnClose(openNoteId, entries);
+  const keptIds = useMemo(
+    () => (released ? heldIds.filter((id) => id !== released) : heldIds),
+    [heldIds, released]
+  );
 
-  const ranked = useMemo(() => mergeHeldOrder(fresh, heldIds), [fresh, heldIds]);
+  const ranked = useMemo(() => mergeHeldOrder(fresh, keptIds), [fresh, keptIds]);
 
   // Recorded before `floatPinned`, so an unpin puts the note back (ADR 0012's one exception). Set
   // during render, React's derive-state pattern, so the unstable order never paints; the equality

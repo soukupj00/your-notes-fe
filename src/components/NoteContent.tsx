@@ -14,13 +14,16 @@ function emptyKeyFor(scope: NoteFeedScope): string {
 
 export function NoteContent({
   scope,
+  openNoteId,
   onSelect,
 }: {
   scope: NoteFeedScope;
+  /** The Note open in the editor; when it closes, that Note takes its sorted place. */
+  openNoteId?: string | null;
   onSelect: (id: string, intent?: Intent) => void;
 }) {
   const { search } = useNoteSearchState();
-  const { notes, loading } = useNoteFeed(scope, search);
+  const { notes, loading } = useNoteFeed(scope, search, openNoteId ?? undefined);
   const { viewMode } = useViewMode();
   const { t } = useTranslation();
 

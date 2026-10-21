@@ -41,8 +41,10 @@ export function isReminderPast(reminder: Reminder, now = new Date()): boolean {
 const REMINDER_TIME: Intl.DateTimeFormatOptions = {
   day: 'numeric',
   month: 'short',
-  hour: 'numeric',
+  hour: '2-digit',
   minute: '2-digit',
+  // The picker's clock, 24-hour with two digits, so the record reads the same in every locale.
+  hourCycle: 'h23',
 };
 
 /**

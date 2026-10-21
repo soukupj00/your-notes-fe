@@ -1,6 +1,6 @@
 # 0012 — Feed rank is held, membership is live
 
-- Status: Accepted
+- Status: Accepted (amended by [ADR 0025](./0025-the-closed-note-takes-its-sorted-place.md))
 - Date: 2026-08-07
 
 ## Context

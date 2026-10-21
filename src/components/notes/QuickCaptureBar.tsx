@@ -29,6 +29,19 @@ export function QuickCaptureBar({ onStart }: { onStart: (intent?: Intent) => voi
 
   return (
     <div className={cn(FLOATING_BOTTOM_BAR, 'sm:hidden', left ? 'justify-start' : 'justify-end')}>
+      {/* The wall dims behind the open dial, so its chips never sit on a card's text. A tap on
+          it is Radix's outside press, which closes the dial. The ＋ is `relative` only to paint
+          above it. */}
+      {open && (
+        <m.div
+          data-testid="capture-scrim"
+          aria-hidden
+          className="fixed inset-0 bg-(--scrim)"
+          initial={reducedMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={transition}
+        />
+      )}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           {/* The Welcome marks this or its desktop twin. */}
@@ -37,7 +50,7 @@ export function QuickCaptureBar({ onStart }: { onStart: (intent?: Intent) => voi
             size="icon"
             data-tour="capture"
             aria-label={t('notes.capture.open')}
-            className="size-14 rounded-full bg-primary text-primary-foreground shadow-lift hover:bg-primary/90 hover:shadow-lift"
+            className="relative size-14 rounded-full bg-primary text-primary-foreground shadow-lift hover:bg-primary/90 hover:shadow-lift"
           >
             <m.span animate={{ rotate: reducedMotion ? 0 : open ? 45 : 0 }} transition={transition}>
               <Plus className="size-6" />
@@ -48,7 +61,9 @@ export function QuickCaptureBar({ onStart }: { onStart: (intent?: Intent) => voi
           side="top"
           align={left ? 'start' : 'end'}
           sideOffset={12}
-          className="w-auto border-0 bg-transparent p-0 shadow-none"
+          // Never faded: the shared fade showed the cards through the chips, and on close the
+          // scrim is already gone.
+          className="max-h-[none] w-auto animate-none! overflow-visible border-0 bg-transparent p-0 shadow-none"
         >
           {/* `flex-col-reverse`, not a reversed array: the first start sits nearest the thumb and
               stays first in tab and screen-reader order. */}
@@ -56,8 +71,8 @@ export function QuickCaptureBar({ onStart }: { onStart: (intent?: Intent) => voi
             {actions.map((action, index) => (
               <m.li
                 key={action.key}
-                initial={reducedMotion ? false : { opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={reducedMotion ? false : { y: 10 }}
+                animate={{ y: 0 }}
                 transition={resolveTransition(reducedMotion, {
                   ...NIGHTSHIFT_SPRING,
                   delay: index * 0.035,

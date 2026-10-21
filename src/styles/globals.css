@@ -132,6 +132,10 @@
     --ink: oklch(26% 0.02 72);
     --ink-soft: oklch(50% 0.02 72);
 
+    /* Dims the app behind the Welcome, the Tour and the open quick-capture dial. Never plain
+       black: warm ink by day, the recessed chrome plane by night. */
+    --scrim: color-mix(in oklab, var(--ink) 62%, transparent);
+
     /* The one accent, chrome only (The One Accent Rule). Deep by day: The Two-Constraint Rule. */
     --accent-tone: oklch(54% 0.112 80);
     --on-accent-tone: oklch(99% 0.008 84);
@@ -210,6 +214,8 @@
 
     --ink: oklch(93% 0.006 250);
     --ink-soft: oklch(68% 0.01 250);
+
+    --scrim: color-mix(in oklab, var(--canvas-chrome) 82%, transparent);
 
     /* The day amber's hue, bright: night has no two-constraint tension (DESIGN.md). */
     --accent-tone: oklch(80% 0.169 75);
@@ -852,18 +858,16 @@
 /*
  * ── The Tour ────────────────────────────────────────────────────────────────
  *
- * Only driver.js's geometry is kept; everything painted is the app's. The scrim
- * is never plain black: warm ink by day, the recessed chrome plane by night.
+ * Only driver.js's geometry is kept; everything painted is the app's, the
+ * dimming included (`--scrim`).
  */
 :root {
-  --tour-scrim: color-mix(in oklab, var(--ink) 62%, transparent);
   /* Day lifts with a hairline (The Glow-Is-Night-Only Rule), so the cutout is
      ringed in solid amber and nothing more. */
   --tour-cutout-ring: 0 0 0 2px var(--accent-tone);
 }
 
 .dark {
-  --tour-scrim: color-mix(in oklab, var(--canvas-chrome) 82%, transparent);
   /* Night has no drop-shadow depth to spend, so the ring gains the glow that
      every lit thing in this theme carries. */
   --tour-cutout-ring:

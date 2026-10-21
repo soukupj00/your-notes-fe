@@ -45,6 +45,18 @@ describe('QuickCaptureBar', () => {
     }
   });
 
+  it('dims the wall while open, and a tap on the dim closes it', async () => {
+    await openDial();
+    await screen.findByRole('button', { name: 'notes.capture.text' });
+
+    await userEvent.click(screen.getByTestId('capture-scrim'));
+
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'notes.capture.text' })).not.toBeInTheDocument()
+    );
+    expect(screen.queryByTestId('capture-scrim')).not.toBeInTheDocument();
+  });
+
   it.each([
     ['text', undefined],
     ['checklist', { kind: 'checklist' }],

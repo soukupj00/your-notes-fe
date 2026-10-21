@@ -1,10 +1,11 @@
 import { Bell } from 'lucide-react';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ReminderTimeField } from '@/components/reminders/ReminderTimeField.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
 import { IconTooltip } from '@/components/ui/tooltip.tsx';
-import { type Reminder, toLocalInput } from '@/lib/reminder.ts';
+import { isReminderPast, type Reminder, toLocalInput } from '@/lib/reminder.ts';
 import { cn } from '@/lib/utils.ts';
 import { REMINDER_REPEATS, type ReminderRepeat } from '@/models.ts';
 
@@ -21,16 +22,20 @@ type ReminderButtonProps = {
 const FIELD =
   'h-9 w-full rounded-control border border-input bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:[color-scheme:dark]';
 
+const today = () => toLocalInput(new Date()).slice(0, 10);
+
 /**
  * One primary action that both saves and hands off (ADR 0021): a Reminder the calendar was
  * never offered would promise an alarm nothing sounds. Native inputs, no picker library.
  */
 export function ReminderButton({ reminder, onSet, onClear, className }: ReminderButtonProps) {
   const { t } = useTranslation();
-  const whenId = useId();
+  const dateId = useId();
   const repeatId = useId();
   const [open, setOpen] = useState(false);
-  const [when, setWhen] = useState('');
+  const [date, setDate] = useState('');
+  const [hour, setHour] = useState('');
+  const [minute, setMinute] = useState('');
   const [repeat, setRepeat] = useState<ReminderRepeat | 'none'>('none');
   const [busy, setBusy] = useState(false);
 
@@ -38,19 +43,24 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
     // Re-seed from the stored Reminder on every open, so an abandoned edit
     // does not come back as if it had been saved.
     if (next) {
-      setWhen(reminder?.remindAt ?? '');
+      const [storedDate, storedTime = ''] = reminder?.remindAt.split('T') ?? [today()];
+      const [storedHour = '', storedMinute = ''] = storedTime ? storedTime.split(':') : [];
+      setDate(storedDate);
+      setHour(storedHour);
+      setMinute(storedMinute);
       setRepeat(reminder?.repeat ?? 'none');
     }
     setOpen(next);
   };
 
+  const when = date && hour && minute ? `${date}T${hour}:${minute}` : '';
+  const next: Reminder = { remindAt: when, repeat: repeat === 'none' ? undefined : repeat };
+  const past = when !== '' && isReminderPast(next);
+
   const submit = async () => {
     setBusy(true);
     try {
-      const saved = await onSet({
-        remindAt: when,
-        repeat: repeat === 'none' ? undefined : repeat,
-      });
+      const saved = await onSet(next);
       if (saved) setOpen(false);
     } finally {
       setBusy(false);
@@ -77,23 +87,36 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
           </button>
         </PopoverTrigger>
       </IconTooltip>
-      <PopoverContent align="end" data-testid="reminder-popover" className="w-72 space-y-3 p-3">
-        <div className="space-y-1">
-          <label htmlFor={whenId} className="text-muted-foreground text-xs">
-            {t('reminders.when')}
-          </label>
-          <input
-            id={whenId}
-            type="datetime-local"
-            value={when}
-            min={toLocalInput(new Date())}
-            onChange={(e) => setWhen(e.target.value)}
+      <PopoverContent align="end" data-testid="reminder-popover" className="w-80 space-y-3 p-3">
+        {/* Two fields, not one datetime-local: Firefox reports that as empty until both halves
+            are picked, so a new Reminder could not start on today. */}
+        <div className="grid grid-cols-[1fr_auto] gap-2">
+          <div className="space-y-1">
+            <label htmlFor={dateId} className="block text-muted-foreground text-xs">
+              {t('reminders.date')}
+            </label>
+            <input
+              id={dateId}
+              type="date"
+              value={date}
+              min={today()}
+              onChange={(e) => setDate(e.target.value)}
+              className={FIELD}
+            />
+          </div>
+          <ReminderTimeField
+            hour={hour}
+            minute={minute}
+            onChange={(nextHour, nextMinute) => {
+              setHour(nextHour);
+              setMinute(nextMinute);
+            }}
             className={FIELD}
           />
         </div>
 
         <div className="space-y-1">
-          <label htmlFor={repeatId} className="text-muted-foreground text-xs">
+          <label htmlFor={repeatId} className="block text-muted-foreground text-xs">
             {t('reminders.repeat')}
           </label>
           <select
@@ -112,6 +135,7 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
         </div>
 
         <p className="text-muted-foreground text-xs">{t('reminders.oneWay')}</p>
+        {past && <p className="text-destructive text-xs">{t('reminders.past')}</p>}
 
         {/* Stacked, not side by side (CLAUDE.md, Reminders). The primary keeps its whole sentence:
             it is the only place the user learns a Reminder goes to their calendar. */}
@@ -120,7 +144,7 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
             type="button"
             size="sm"
             className="w-full"
-            disabled={!when || busy}
+            disabled={!when || past || busy}
             onClick={() => void submit()}
           >
             {t(reminder ? 'reminders.updateCalendar' : 'reminders.addToCalendar')}
