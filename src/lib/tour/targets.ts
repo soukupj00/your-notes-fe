@@ -1,12 +1,14 @@
 /**
  * Several surfaces are mounted twice with CSS hiding one, so a target resolves to the first match
- * with a non-zero rect (CLAUDE.md "The Tour"). jsdom measures everything as 0x0, so only
+ * with a non-zero rect (CLAUDE.md "Onboarding"). jsdom measures everything as 0x0, so only
  * `e2e/onboarding.spec.ts`, which fails on a dropped step, proves both breakpoints resolve.
  */
 
 export const TOUR_TARGETS = {
-  /** Not a step: the Feed is on screen. The `＋` below `sm:`, the "Take a note" bar above it. */
+  /** The Welcome's first mark: the `＋` below `sm:`, the "Take a note" bar above it. */
   capture: '[data-tour="capture"]',
+  /** The Welcome's second mark: the topbar gear, Settings' one entry point. */
+  settingsGear: '[data-tour="settings-gear"]',
   /**
    * Step 1: the preview strip, not `EditorToolbarSection`. The section is 880px tall on an 839px
    * phone and the inert app cannot scroll, so a cutout over it could never be seen whole.

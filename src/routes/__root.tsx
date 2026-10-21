@@ -1,6 +1,7 @@
 import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import Layout from '@/components/layout.tsx';
+import { Welcome } from '@/components/tour/Welcome.tsx';
 import { SyncProvider } from '@/context/SyncProvider.tsx';
 import { TourProvider } from '@/context/TourProvider.tsx';
 import { isSharePath } from '@/data/http/publicShare.ts';
@@ -35,6 +36,7 @@ function AppLayout() {
         <Layout>
           <Outlet />
         </Layout>
+        <Welcome />
       </SyncProvider>
     </TourProvider>
   );

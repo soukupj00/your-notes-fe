@@ -21,11 +21,8 @@ const GROUP_PADDING = 'px-4 group-data-[collapsible=icon]:px-2';
 export function SideNav() {
   const { t } = useTranslation();
   const tags = useTags();
-  const { setOpenMobile, isMobile, state } = useSidebar();
+  const { setOpenMobile } = useSidebar();
   const closeDrawer = () => setOpenMobile(false);
-  // The collapsed rail carries the destinations only (ADR 0010). `state` tracks the desktop
-  // rail, so the drawer must not inherit a collapse chosen on a laptop.
-  const showLabels = tags.length > 0 && (isMobile || state === 'expanded');
 
   const activeProps = {
     className: 'bg-sidebar-primary font-medium text-sidebar-primary-foreground',
@@ -57,14 +54,15 @@ export function SideNav() {
         </SidebarGroupContent>
       </SidebarGroup>
 
-      {showLabels && (
+      {tags.length > 0 && (
         <SidebarGroup className={GROUP_PADDING}>
           <SidebarGroupLabel>{t('nav.labels')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {tags.map((tag) => (
                 <SidebarMenuItem key={tag.id}>
-                  <SidebarMenuButton asChild>
+                  {/* Collapsed, the dot is all that shows, so the name rides in the rail's tooltip. */}
+                  <SidebarMenuButton asChild tooltip={tag.name}>
                     <Link
                       to="/tag/$id"
                       params={{ id: tag.id }}

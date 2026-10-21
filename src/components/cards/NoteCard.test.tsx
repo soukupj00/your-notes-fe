@@ -295,9 +295,10 @@ describe('NoteCard', () => {
     await testStore.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    // Trash and pin mean nothing in the trash, and purging is never a card action: the trash
+    // Trash, pin and colour mean nothing in the trash, and purging is never a card action: the trash
     // itself is the confirmation.
     expect(screen.queryByRole('button', { name: 'notes.moveToTrash' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'notes.color' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'notes.pin' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'notes.deleteForever' })).not.toBeInTheDocument();
 

@@ -31,7 +31,7 @@ Capitalized terms are canonical in [`CONTEXT.md`](../../CONTEXT.md).
 | Color a note / a label | A palette token, resolved per Theme and Vision Mode. |
 | Pin | Surfaces the Note at the top of the Active Feed; cleared by archive/trash. |
 | Archive | Keeping without clutter: hidden from the main Feed, never auto-deleted, still searchable. |
-| Trash and restore | Discarding with an undo window; a 30-day grace period, then the Purge sweep removes it permanently ([ADR 0009](../adr/0009-note-lifecycle-model.md)). |
+| Trash and restore | Discarding with an undo window; a 30-day grace period, then the Purge sweep removes it permanently ([ADR 0009](../adr/0009-note-lifecycle-model.md)). Opened from the trash, a Note is a read-only preview offering Restore and Delete forever. |
 | Manage labels | `/labels`: rename, recolour, merge-into, delete. |
 
 ### Find
@@ -58,7 +58,7 @@ Customisability is a positioning claim ("this one is yours"), which is why it is
 
 ### Learn the app
 
-The three-step Tour *drives* the real app by taking the user through Settings, and creates nothing ([ADR 0023](../adr/0023-the-tour-points-at-settings.md)); offered once, replayable from Settings.
+First launch shows a one-screen Welcome pointing at capture and the Settings gear; the three-step Tour is offered on the first visit to Settings, creates nothing and is replayable there ([ADR 0024](../adr/0024-a-welcome-at-launch-the-tour-in-settings.md)).
 
 ## Use cases with a server
 

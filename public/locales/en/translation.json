@@ -392,6 +392,15 @@
     "movedToTrash": "Note moved to trash",
     "restore": "Restore",
     "restored": "Note restored",
+    "deleteForever": "Delete forever",
+    "deletedForever": "Note deleted forever",
+    "confirmDeleteForever": {
+      "title": "Delete this note forever?",
+      "description": "The note and its attachments are deleted for good. This cannot be undone.",
+      "confirm": "Delete forever",
+      "cancel": "Cancel"
+    },
+    "trashedPreview": "In the trash. Restore it to edit.",
     "emptyTrash": "Empty trash",
     "confirmEmptyTrash": {
       "title": "Empty the trash?",
@@ -532,6 +541,15 @@
     "over": "{{name}} moved to position {{position}}.",
     "dropped": "{{name}} dropped at position {{position}}.",
     "cancelled": "{{name}} put back where it was."
+  },
+  "welcome": {
+    "title": "Welcome to YourNotes",
+    "body": "Your notes are kept on this device and work offline. Two places to begin:",
+    "marks": {
+      "capture": "Start a note here: text, a checklist, a voice note, a drawing or a picture.",
+      "settings": "Settings: arrange the toolbar and the ways to start a note, and connect your own server."
+    },
+    "dismiss": "Got it"
   },
   "onboarding": {
     "progress": "Step {{current}} of {{total}}",

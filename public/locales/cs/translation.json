@@ -392,6 +392,15 @@
     "movedToTrash": "Poznámka přesunuta do koše",
     "restore": "Obnovit",
     "restored": "Poznámka obnovena",
+    "deleteForever": "Smazat navždy",
+    "deletedForever": "Poznámka smazána navždy",
+    "confirmDeleteForever": {
+      "title": "Smazat poznámku navždy?",
+      "description": "Poznámka i její přílohy se nadobro smažou. Tuto akci nelze vrátit.",
+      "confirm": "Smazat navždy",
+      "cancel": "Zrušit"
+    },
+    "trashedPreview": "V koši. Pro úpravy ji obnovte.",
     "emptyTrash": "Vysypat koš",
     "confirmEmptyTrash": {
       "title": "Vysypat koš?",
@@ -533,6 +542,15 @@
     "over": "{{name}} přesunuto na pozici {{position}}.",
     "dropped": "{{name}} položeno na pozici {{position}}.",
     "cancelled": "{{name}} vráceno na původní místo."
+  },
+  "welcome": {
+    "title": "Vítej v YourNotes",
+    "body": "Poznámky se ukládají v tomhle zařízení a fungují i offline. Začít můžeš tady:",
+    "marks": {
+      "capture": "Tady začneš poznámku: text, seznam, hlasovou poznámku, kresbu nebo obrázek.",
+      "settings": "Nastavení: uprav si panel nástrojů a způsoby, jak začít poznámku, a připoj vlastní server."
+    },
+    "dismiss": "Rozumím"
   },
   "onboarding": {
     "progress": "Krok {{current}} z {{total}}",

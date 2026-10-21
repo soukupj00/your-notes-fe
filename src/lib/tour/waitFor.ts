@@ -1,5 +1,5 @@
 /**
- * Polls a DOM condition once per animation frame, never a fixed delay (CLAUDE.md "The Tour").
+ * Polls a DOM condition once per animation frame, never a fixed delay (CLAUDE.md "Onboarding").
  * A frame is the right step because what is awaited is usually a rect, true only after layout.
  */
 

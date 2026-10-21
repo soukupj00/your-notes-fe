@@ -21,7 +21,7 @@ Red → green → refactor, applied *per layer* rather than dogmatically:
 | Component behavior | Vitest + RTL + user-event | Interactions, contracts, a11y semantics; roles and labels, not pixels | editor, cards, nav, settings tests |
 | Cross-cutting gates | Vitest | Consistency no single feature owns: i18n bundles against key drift, safe-area token pairing | `i18n.test.ts`, `globals.test.ts` |
 | Sync | Vitest + a fake server built from the vendored contract | Push, pull, conflicts, resync, adopt and erase, deterministically | `src/sync/*.test.ts` |
-| End-to-end | Playwright (`e2e/`), `desktop` + `mobile` projects against `pnpm dev` | Real-browser flows jsdom cannot see | `onboarding.spec.ts` (the Tour) |
+| End-to-end | Playwright (`e2e/`), `desktop` + `mobile` projects against `pnpm dev` | Real-browser flows jsdom cannot see | `onboarding.spec.ts` (the Welcome and the Tour) |
 
 Vitest sees only `src/**`; Playwright's `testDir` is `e2e/`; neither runner sees the other's files.
 

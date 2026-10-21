@@ -214,34 +214,36 @@ Those the stylesheet has to act on are stamped onto `<html>` by `DocumentPrefere
 Every other Preference is read by the component that spends it.
 A Settings row that shows and writes one Preference is a `PreferenceSwitch` or `PreferenceSegmented` bound to its key.
 
+Size in rem, not px: on a large screen the root font steps up (`globals.css`, DESIGN.md Layout), and only rem grows with it; the Masonry columns read the root font for the same reason.
+
 The 44px Touch Rule has two mechanisms that are not interchangeable: `.touch-target` grows a control to 44px (an icon button), `.touch-reach` gives it a 44px hit box and leaves its size alone (a switch, whose shape is part of what it says).
 
-### The Tour (`src/lib/tour/`, `src/context/TourProvider.tsx`)
+### Onboarding (`src/lib/tour/`, `src/context/TourProvider.tsx`, `src/components/tour/`)
 
-The three-step onboarding Tour ([ADR 0023](./docs/adr/0023-the-tour-points-at-settings.md), which supersedes [ADR 0015](./docs/adr/0015-the-tour-drives-the-app-on-disposable-props.md)).
-It **demonstrates**: the Tour drives the real app by taking the user to Settings, and the user presses only Next, Back or Skip.
-It creates and changes no Notes.
+Onboarding is two guides ([ADR 0024](./docs/adr/0024-a-welcome-at-launch-the-tour-in-settings.md), which supersedes ADR 0023 and 0015).
+The **Welcome** (`components/tour/Welcome.tsx`) is one overlay at first launch whose marks point at capture and the Settings gear; one press dismisses it.
+The three-step **Tour** is offered on the first visit to Settings and points at the real Settings page; the user presses only Next, Back or Skip, and stays in Settings.
+Neither creates or changes Notes.
 
 - **Nothing in `src/lib/tour/` imports `driver.js` or React.**
   That is what makes the steps, targets and inert marking testable; `TourProvider` alone knows the spotlight library.
-- **A step is a scene, not a layer.**
-  Moving between steps is `exit` the one left, then `enter` the one arriving, in both directions, and `exit` is the strict inverse of `enter`.
-  All three steps are one Settings scene looked at three times (`continues`): step 1 navigates there, and leaving it goes back to the Feed.
+- **The Tour never navigates**, so any navigation is the user leaving and ends it.
 - **Everything except the popover is `inert`** for the Tour's lifetime (`lib/tour/inert.ts`), kept as a standing rule by a `MutationObserver` because what portals to `body` can mount later.
   An element that was already inert is never released.
+  The Welcome holds the same rule around its own overlay.
 - **Settings anchors** (`data-tour` wrappers) are declared in `src/pages/settings.tsx`, so no section knows the Tour exists.
   Toolbar and quick capture are two steps because nobody can scroll an inert app and together they do not fit a phone.
   The last anchor wraps "Storage and sync", which renders nothing without the Storage API or a signed-in Device; that step then shows its copy without a cutout.
 - **Targets** resolve to the first match with a non-zero rect (`lib/tour/targets.ts`), because several surfaces are mounted twice with CSS hiding one.
 - **Waiting is on a DOM condition, never a timer** (`lib/tour/waitFor.ts`): `waitForTarget` for something to arrive on screen.
-- `onboardingSeenAt` is stamped when the Tour is **offered**, not on completion, which would re-arm it after every reload.
-- The Tour is verified by `e2e/onboarding.spec.ts` at two breakpoints, not by Vitest: jsdom measures every element as 0x0.
+- `welcomeSeenAt` and `onboardingSeenAt` are stamped when each guide is **offered**, not on completion, which would re-arm it after every reload.
+- Both are verified by `e2e/onboarding.spec.ts` at two breakpoints, not by Vitest: jsdom measures every element as 0x0.
 
 ### i18n (`src/i18n.ts`)
 
 **i18next** with browser language detection; translations are in `public/locales/<lng>/translation.json`, falling back to `en`.
 Numbers and dates go through `src/lib/format.ts` with the app language passed in.
-`src/i18n.test.ts` gates the bundles against each other: the same keys in every locale, and every key the Tour composes at render time.
+`src/i18n.test.ts` gates the bundles against each other: the same keys in every locale, and every key the Tour and the Welcome compose at render time.
 The language is a Device fact like every Preference (not in a Backup, not synced), but i18next's detector keeps it in `localStorage` itself, not `PreferencesProvider`.
 Settings uses a Select for it because the list outgrows a segmented control.
 
@@ -280,6 +282,7 @@ Red → green → refactor, applied per layer ([ADR 0003](./docs/adr/0003-testin
   Every Note, Tag, NoteTag and Attachment is born through one of its factories, which stamps both timestamps; a later write stamps `updatedAt` itself.
 - **An effect that awaits:** `useAsyncEffect(effect, deps)` owns the cancel flag; the effect writes state only while `alive()` is true.
 - **A user-started call that toasts its outcome:** `useAction()` gives `busy` and `run(act, { success, failure })`.
+- **A lifecycle move (pin, archive, trash, restore):** `useUndoableLifecycle()`, which toasts its undo; the Card and the open Note both go through it.
 - **Tailwind v4:** CSS-based config in `globals.css`, no `tailwind.config.js`.
 - **Files stay under 500 lines.**
 - **Vendored and generated files are never edited:** `src/contract/index.ts` (refreshed by `pnpm contract:pull`, which copies it from the `ni-dip-be` repository checked out next to this one), `src/routeTree.gen.ts`.

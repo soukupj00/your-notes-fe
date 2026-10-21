@@ -37,7 +37,7 @@ export default function SettingsPage() {
       <AppearanceSection />
 
       {/* The Tour's Settings anchors wrap sections here, so no section knows the Tour exists.
-          Why they are split the way they are: CLAUDE.md, "The Tour". */}
+          Why they are split the way they are: CLAUDE.md, "Onboarding". */}
       <EditorToolbarSection />
 
       <div data-tour="settings-quick-capture">

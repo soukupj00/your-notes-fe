@@ -1,9 +1,11 @@
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { Editor, type EditorHandle } from '@/components/editor/editor.tsx';
 import { NoteEditorBar } from '@/components/notes/NoteEditorBar.tsx';
 import { EMPTY_CHECKLIST_BODY } from '@/components/notes/noteDrafts.ts';
+import { TrashedNoteBar } from '@/components/notes/TrashedNoteBar.tsx';
 import { useNoteReminder } from '@/components/notes/useNoteReminder.ts';
 import { AppBar } from '@/components/ui/AppBar.tsx';
 import { Button } from '@/components/ui/button.tsx';
@@ -17,6 +19,7 @@ import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { useKeyboardInset } from '@/hooks/useKeyboardInset.ts';
 import { useLatest } from '@/hooks/useLatest.ts';
+import { useUndoableLifecycle } from '@/hooks/useUndoableLifecycle.ts';
 import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
 import { createNoteDraft, isEmpty } from '@/lib/draft.ts';
 import type { Intent } from '@/lib/intent.ts';
@@ -26,6 +29,7 @@ import { cn } from '@/lib/utils.ts';
 import type { NoteState } from '@/models.ts';
 
 const AUTOSAVE_DELAY_MS = 600;
+const HEADER_CLASS = 'w-full font-semibold text-foreground text-xl';
 
 type SaveStatus = 'idle' | 'saving' | 'saved';
 
@@ -76,6 +80,7 @@ export function NoteEditorDialog({
   const store = useLocalStore();
   const { createNote, updateNote, purgeNote, pinNote, unpinNote } = useNoteActions();
   const { collectOrphans } = useAttachmentActions();
+  const lifecycle = useUndoableLifecycle();
   const isMobile = useIsMobile();
   const finePointer = useFinePointer();
   // The sheet is the one surface the software keyboard shares the screen with,
@@ -177,31 +182,68 @@ export function NoteEditorDialog({
     };
   }, [header, body, draft]);
 
+  // In the trash a Note is a read-only preview: it cannot be edited, so closing it
+  // writes nothing, which also keeps an empty one from being purged.
+  const preview = state === 'trashed';
+
+  const closeDraft = useCallback(async () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (preview) return;
+    // An empty note is kept only for a Reminder: the calendar already holds an event linking
+    // to its id.
+    await draft.close(header, body, { keepEmpty: reminder !== undefined });
+  }, [preview, draft, header, body, reminder]);
+
+  const handleClose = useCallback(async () => {
+    await closeDraft();
+    onClose();
+  }, [closeDraft, onClose]);
+
+  // The last save lands before the move, so its undo returns the Note as it was left. A Draft
+  // that closed empty has no row to move, which makes this a plain close.
+  const leavingRef = useRef(false);
+  async function leaveWith(move: (id: string) => Promise<void>) {
+    if (leavingRef.current) return;
+    leavingRef.current = true;
+    try {
+      await closeDraft();
+      if (draft.saved) await move(noteId);
+      onClose();
+    } finally {
+      leavingRef.current = false;
+    }
+  }
+
+  async function deleteForever() {
+    await purgeNote(noteId);
+    toast(t('notes.deletedForever'));
+    onClose();
+  }
+
   // On mobile this goes inside the editor as its footer, so the sticky format toolbar can sit
   // below it at the sheet's bottom edge. On desktop it stays a sibling under the framed editor.
   // Width decides, not pointer: it is a question of which box exists (ADR 0016).
-  const noteBar = (
+  const noteBar = preview ? (
+    <TrashedNoteBar
+      onRestore={() => void leaveWith(lifecycle.restore)}
+      onDeleteForever={() => void deleteForever()}
+    />
+  ) : (
     <NoteEditorBar
       draft={draft}
       color={color}
       pinned={Boolean(pinnedAt)}
-      pinnable={state === 'active'}
-      shareable={state !== 'trashed'}
+      state={state}
       onColorChange={(next) => void handleColorChange(next)}
       onPinToggle={() => void handlePinToggle()}
+      onArchive={() => void leaveWith(lifecycle.archive)}
+      onRestore={() => void leaveWith(lifecycle.restore)}
+      onTrash={() => void leaveWith(lifecycle.trash)}
       reminder={reminder}
       onReminderSet={handleReminderSet}
       onReminderClear={() => void handleReminderClear()}
     />
   );
-
-  const handleClose = useCallback(async () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    // An empty note is kept only for a Reminder: the calendar already holds an event linking
-    // to its id.
-    await draft.close(header, body, { keepEmpty: reminder !== undefined });
-    onClose();
-  }, [draft, header, body, reminder, onClose]);
 
   return (
     <Dialog
@@ -279,36 +321,58 @@ export function NoteEditorDialog({
           <SaveStatusIcon status={saveStatus} />
         </div>
 
-        <input
-          ref={headerInputRef}
-          value={header}
-          onChange={(e) => {
-            dirtyRef.current = true;
-            setHeader(e.target.value);
-          }}
-          // Not mid-composition: Safari reports the Enter that commits an IME word as key 229.
-          onKeyDown={(e) => {
-            if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent.isComposing || e.keyCode === 229) {
-              return;
-            }
-            e.preventDefault();
-            editorRef.current?.focus('start');
-          }}
-          placeholder={t('notes.titlePlaceholder')}
-          aria-label={t('notes.titlePlaceholder')}
-          className="w-full bg-transparent font-semibold text-foreground text-xl outline-none placeholder:text-muted-foreground"
-        />
+        {preview ? (
+          header && (
+            <h2 dir="auto" className={cn(HEADER_CLASS, 'break-words')}>
+              {header}
+            </h2>
+          )
+        ) : (
+          <input
+            ref={headerInputRef}
+            value={header}
+            onChange={(e) => {
+              dirtyRef.current = true;
+              setHeader(e.target.value);
+            }}
+            // Not mid-composition: Safari reports the Enter that commits an IME word as key 229.
+            onKeyDown={(e) => {
+              if (
+                e.key !== 'Enter' ||
+                e.shiftKey ||
+                e.nativeEvent.isComposing ||
+                e.keyCode === 229
+              ) {
+                return;
+              }
+              e.preventDefault();
+              editorRef.current?.focus('start');
+            }}
+            placeholder={t('notes.titlePlaceholder')}
+            aria-label={t('notes.titlePlaceholder')}
+            className={cn(
+              HEADER_CLASS,
+              'bg-transparent outline-none placeholder:text-muted-foreground'
+            )}
+          />
+        )}
 
         <Editor
+          // Remounted, not toggled: the Editor reads its content once, at creation.
+          key={preview ? 'preview' : 'edit'}
           ref={editorRef}
           content={body}
-          editable
+          editable={!preview}
           getNoteId={draft.ensureSaved}
           autoFocus={focusBody}
           intent={intent}
           stickyToolbarOnMobile
           footer={isMobile ? noteBar : undefined}
-          className="flex-1 rounded-none border-0 p-0 sm:rounded-card sm:border sm:border-note-border sm:px-4"
+          // A preview drops the frame, which would read as a field to type in.
+          className={cn(
+            'flex-1 rounded-none border-0 p-0',
+            !preview && 'sm:rounded-card sm:border sm:border-note-border sm:px-4'
+          )}
           onUpdate={(html) => {
             dirtyRef.current = true;
             setBody(html);

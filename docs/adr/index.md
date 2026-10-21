@@ -28,4 +28,5 @@ Decisions about the server itself are on [the server's site](https://soukupj00.g
 | [0020](./0020-the-local-store-seam.md) | The app reads and writes a Local Store interface, never Dexie |
 | [0021](./0021-reminders-are-handed-off-to-the-calendar.md) | Reminders are handed off to the calendar; the app never notifies |
 | [0022](./0022-interfaces-and-closures-not-classes.md) | Interfaces and closure factories, never classes |
-| [0023](./0023-the-tour-points-at-settings.md) | The Tour points at Settings and creates no Notes |
+| [0023](./0023-the-tour-points-at-settings.md) | The Tour points at Settings and creates no Notes (superseded by [0024](./0024-a-welcome-at-launch-the-tour-in-settings.md)) |
+| [0024](./0024-a-welcome-at-launch-the-tour-in-settings.md) | A Welcome at launch; the Tour waits for the first visit to Settings |

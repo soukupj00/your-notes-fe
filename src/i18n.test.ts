@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { TOUR_STEPS } from '@/lib/tour/steps.ts';
+import { WELCOME_MARKS } from '@/lib/tour/welcome.ts';
 
 /**
  * A key missing from `cs` shows as English mid-Czech-screen, and one missing from `en` (the
@@ -56,6 +57,14 @@ describe('translation bundles', () => {
         [`onboarding.steps.${step.key}.title`, `onboarding.steps.${step.key}.body`].filter(
           (key) => !resolves(bundle, key)
         )
+      );
+
+      expect(missing).toEqual([]);
+    });
+
+    it('names every Welcome mark', () => {
+      const missing = WELCOME_MARKS.map(({ key }) => `welcome.marks.${key}`).filter(
+        (key) => !resolves(bundle, key)
       );
 
       expect(missing).toEqual([]);

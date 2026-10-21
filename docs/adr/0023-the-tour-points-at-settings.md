@@ -1,6 +1,6 @@
 # 0023 - The Tour points at Settings
 
-- Status: Accepted (supersedes [ADR 0015](./0015-the-tour-drives-the-app-on-disposable-props.md))
+- Status: Superseded by [ADR 0024](./0024-a-welcome-at-launch-the-tour-in-settings.md) (it superseded [ADR 0015](./0015-the-tour-drives-the-app-on-disposable-props.md))
 - Date: 2026-10-11
 
 ## Context

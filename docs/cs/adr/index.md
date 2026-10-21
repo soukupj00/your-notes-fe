@@ -28,4 +28,5 @@ Rozhodnutí týkající se samotného serveru jsou na [webu serveru](https://sou
 | [0020](./0020-the-local-store-seam.md) | Aplikace čte a zapisuje přes rozhraní lokálního úložiště, nikdy přímo přes Dexie |
 | [0021](./0021-reminders-are-handed-off-to-the-calendar.md) | Připomenutí se předávají do kalendáře; aplikace nikdy neposílá oznámení |
 | [0022](./0022-interfaces-and-closures-not-classes.md) | OOP pomocí rozhraní a closure factories, nikdy pomocí tříd |
-| [0023](./0023-the-tour-points-at-settings.md) | Průvodce ukazuje na Nastavení a nezakládá žádné poznámky |
+| [0023](./0023-the-tour-points-at-settings.md) | Průvodce ukazuje na Nastavení a nezakládá žádné poznámky (nahrazeno [0024](./0024-a-welcome-at-launch-the-tour-in-settings.md)) |
+| [0024](./0024-a-welcome-at-launch-the-tour-in-settings.md) | Při spuštění uvítání; průvodce čeká na první návštěvu Nastavení |

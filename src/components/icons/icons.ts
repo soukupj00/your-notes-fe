@@ -45,6 +45,7 @@ import {
   Video,
 } from 'lucide-react';
 import { LatexIcon } from './LatexIcon';
+import { TrashXIcon } from './TrashXIcon';
 
 export const icons = {
   Bold,
@@ -92,6 +93,7 @@ export const icons = {
   CaseSensitive,
   Settings2,
   Latex: LatexIcon,
+  TrashX: TrashXIcon,
 };
 
 export type IconName = keyof typeof icons;

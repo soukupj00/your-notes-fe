@@ -77,17 +77,26 @@ describe('nav shell contents', () => {
     expect(nav.queryByRole('link', { name: 'nav.settings' })).not.toBeInTheDocument();
   });
 
-  it('drops the labels group when collapsed but keeps every destination', async () => {
+  it('keeps every destination and every label as a named link when collapsed', async () => {
     await seedTag();
     localStorage.setItem('sidebar-open', 'false');
     renderRoute('/');
 
     const nav = within(await primaryNav());
-    expect(nav.getAllByRole('link')).toHaveLength(NAV_ITEMS.length);
-    for (const { labelKey } of NAV_ITEMS) {
-      expect(nav.getByRole('link', { name: labelKey })).toBeInTheDocument();
+    for (const { to, labelKey } of NAV_ITEMS) {
+      expect(nav.getByRole('link', { name: labelKey })).toHaveAttribute('href', to);
     }
-    expect(nav.queryByRole('link', { name: 'Work' })).not.toBeInTheDocument();
+    expect(await nav.findByRole('link', { name: 'Work' })).toHaveAttribute('href', '/tag/t1');
+  });
+
+  it('names a label in a tooltip only while the rail is collapsed', async () => {
+    await seedTag();
+    localStorage.setItem('sidebar-open', 'false');
+    renderRoute('/');
+
+    await userEvent.hover(await within(await primaryNav()).findByRole('link', { name: 'Work' }));
+
+    expect(await screen.findByRole('tooltip', { name: 'Work' })).toBeInTheDocument();
   });
 });
 
@@ -124,9 +133,10 @@ describe('collapse persistence', () => {
     await seedTag();
     renderRoute('/');
 
-    // The labels group is the observable proxy for "expanded": jsdom applies no
-    // CSS, so width and `data-state` would be assertions about our own markup.
-    expect(await within(await primaryNav()).findByRole('link', { name: 'Work' })).toBeVisible();
+    // The rail's tooltips are the observable proxy for "collapsed": jsdom applies no CSS, so
+    // width and `data-state` would be assertions about our own markup.
+    await userEvent.hover(await within(await primaryNav()).findByRole('link', { name: 'Work' }));
+    expect(screen.queryByRole('tooltip', { name: 'Work' })).not.toBeInTheDocument();
 
     await userEvent.click((await screen.findAllByRole('button', { name: 'nav.toggle' }))[0]);
     await waitFor(() => expect(localStorage.getItem('sidebar-open')).toBe('false'));
@@ -134,9 +144,8 @@ describe('collapse persistence', () => {
     cleanup();
     renderRoute('/');
 
-    const nav = within(await primaryNav());
-    await waitFor(() => expect(nav.getAllByRole('link')).toHaveLength(NAV_ITEMS.length));
-    expect(nav.queryByRole('link', { name: 'Work' })).not.toBeInTheDocument();
+    await userEvent.hover(await within(await primaryNav()).findByRole('link', { name: 'Work' }));
+    expect(await screen.findByRole('tooltip', { name: 'Work' })).toBeInTheDocument();
   });
 });
 

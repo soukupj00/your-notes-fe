@@ -4,6 +4,7 @@ import {
   type NoteFeedLayout,
   type NoteFeedLayoutMode,
 } from '@/lib/note-feed-layout.ts';
+import { rootFontPx } from '@/lib/utils.ts';
 
 const EMPTY_LAYOUT: NoteFeedLayout = {
   placements: {},
@@ -17,7 +18,7 @@ const PIXEL_TOLERANCE = 0.5;
 type LayoutInput = {
   mode: NoteFeedLayoutMode;
   ids: readonly string[];
-  minColumnWidth: number;
+  minColumnRem: number;
 };
 
 function layoutsMatch(
@@ -54,14 +55,14 @@ function layoutsMatch(
 export function useNoteFeedLayout(
   mode: NoteFeedLayoutMode,
   ids: readonly string[],
-  minColumnWidth = 216
+  minColumnRem = 13.5
 ) {
   const supported = typeof ResizeObserver !== 'undefined';
   const containerNode = useRef<HTMLUListElement | null>(null);
   const observer = useRef<ResizeObserver | null>(null);
   const observedItems = useRef(new Set<HTMLElement>());
   const animationFrame = useRef<number | null>(null);
-  const input = useRef<LayoutInput>({ mode, ids, minColumnWidth });
+  const input = useRef<LayoutInput>({ mode, ids, minColumnRem });
   const layoutSnapshot = useRef(EMPTY_LAYOUT);
   const [layout, setLayout] = useState(EMPTY_LAYOUT);
   const [ready, setReady] = useState(false);
@@ -88,14 +89,16 @@ export function useNoteFeedLayout(
     const container = containerNode.current;
     if (!container) return;
 
-    const { mode: currentMode, ids: currentIds, minColumnWidth: minimum } = input.current;
+    const { mode: currentMode, ids: currentIds, minColumnRem } = input.current;
     const width = container.clientWidth;
     if (width <= 0) return;
 
     const gap = Number.parseFloat(getComputedStyle(container).rowGap) || 13.6;
     // DESIGN.md's breakpoint is container-driven: a narrow app panel gets the
-    // same 10rem columns as a narrow viewport, regardless of window size.
-    const effectiveMinimum = width < 736 ? 160 : minimum;
+    // same 10rem columns as a narrow viewport, regardless of window size. In rem, so
+    // columns widen with the root font on a large screen.
+    const rem = rootFontPx();
+    const effectiveMinimum = width < 46 * rem ? 10 * rem : minColumnRem * rem;
     const dimensions = calculateNoteFeedLayout({
       mode: currentMode,
       containerWidth: width,
@@ -157,10 +160,10 @@ export function useNoteFeedLayout(
   }, [layout]);
 
   useLayoutEffect(() => {
-    input.current = { mode, ids, minColumnWidth };
+    input.current = { mode, ids, minColumnRem };
     syncObservedItems();
     measure();
-  }, [ids, measure, minColumnWidth, mode, syncObservedItems]);
+  }, [ids, measure, minColumnRem, mode, syncObservedItems]);
 
   // A destination width has to land before its resulting card heights can be
   // read. This second layout pass still completes before paint.

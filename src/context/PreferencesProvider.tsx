@@ -86,10 +86,13 @@ const preferencesSchema = z.object({
   /** `system` follows `prefers-reduced-motion`; the others override it. */
   reducedMotion: z.enum(REDUCED_MOTION_OPTIONS).default('system'),
   /**
-   * When the Tour was first *offered*, not completed (ADR 0015): a completion flag would re-arm
-   * after every reload, and bring back a tutorial the user dismissed.
+   * When the Settings Tour was first *offered*, not completed (ADR 0015): a completion flag would
+   * re-arm after every reload, and bring back a tutorial the user dismissed. The name predates
+   * the Tour's move into Settings (ADR 0024).
    */
   onboardingSeenAt: z.string().optional(),
+  /** When the launch Welcome was offered (ADR 0024); stamped on offer for the same reason. */
+  welcomeSeenAt: z.string().optional(),
 });
 
 export type Preferences = z.infer<typeof preferencesSchema>;

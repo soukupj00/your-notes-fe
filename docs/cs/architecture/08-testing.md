@@ -21,7 +21,7 @@ Red → green → refactor, uplatňované *po vrstvách*, ne dogmaticky:
 | Chování komponent | Vitest + RTL + user-event | Interakce, kontrakty, sémantika a11y; role a popisky, ne pixely | testy editoru, karet, navigace, nastavení |
 | Průřezové kontroly | Vitest | Konzistence, kterou nevlastní žádná jednotlivá funkce: balíčky i18n proti rozcházení klíčů, párování tokenů safe-area | `i18n.test.ts`, `globals.test.ts` |
 | Synchronizace | Vitest + falešný server postavený z vendorovaného kontraktu | Push, pull, konflikty, resynchronizace, převzetí a vymazání, deterministicky | `src/sync/*.test.ts` |
-| End-to-end | Playwright (`e2e/`), projekty `desktop` + `mobile` proti `pnpm dev` | Toky ve skutečném prohlížeči, které jsdom nevidí | `onboarding.spec.ts` (průvodce) |
+| End-to-end | Playwright (`e2e/`), projekty `desktop` + `mobile` proti `pnpm dev` | Toky ve skutečném prohlížeči, které jsdom nevidí | `onboarding.spec.ts` (uvítání a průvodce) |
 
 Vitest vidí jen `src/**`; `testDir` Playwrightu je `e2e/`; žádný z runnerů nevidí soubory toho druhého.
 
