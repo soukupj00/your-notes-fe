@@ -445,7 +445,8 @@
       "audio": "Hlasová poznámka",
       "drawing": "Kresba",
       "picture": "Obrázek",
-      "camera": "Fotoaparát"
+      "camera": "Fotoaparát",
+      "file": "Soubor"
     },
     "emptyingTrash": "Vyprazdňuji koš…",
     "placeholders": {

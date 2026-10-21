@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Camera, Image, ListChecks, Mic, PencilRuler, SquarePen } from 'lucide-react';
+import { Camera, Image, ListChecks, Mic, Paperclip, PencilRuler, SquarePen } from 'lucide-react';
 import { ATTACHMENT_SPECS } from '@/lib/attachments.ts';
 import type { Intent } from '@/lib/intent.ts';
 
@@ -9,13 +9,16 @@ export type QuickCaptureActionKey =
   | 'audio'
   | 'drawing'
   | 'picture'
-  | 'camera';
+  | 'camera'
+  | 'file';
 
 /** A Start that begins by choosing files: the OS picker opens inside the tap. */
 export interface StartPicker {
   accept: string;
   /** Straight to the camera on a phone; ignored by a desktop browser. */
   capture?: 'environment';
+  /** What the chosen files are inserted as. */
+  attachment: 'image' | 'file';
 }
 
 export type QuickCaptureAction = {
@@ -50,12 +53,25 @@ export const QUICK_CAPTURE_ACTIONS: QuickCaptureAction[] = [
     key: 'picture',
     Icon: Image,
     labelKey: 'notes.capture.picture',
-    picker: { accept: ATTACHMENT_SPECS.image.accept ?? '' },
+    picker: { accept: ATTACHMENT_SPECS.image.accept ?? '', attachment: 'image' },
   },
   {
     key: 'camera',
     Icon: Camera,
     labelKey: 'notes.capture.camera',
-    picker: { accept: ATTACHMENT_SPECS.image.accept ?? '', capture: 'environment' },
+    picker: {
+      accept: ATTACHMENT_SPECS.image.accept ?? '',
+      capture: 'environment',
+      attachment: 'image',
+    },
   },
 ];
+
+/** Camera's stand-in on desktop, where a browser ignores `capture` and Camera would repeat Image.
+ *  Not a Start of its own, so Settings and the dial never list it. */
+export const FILE_START: QuickCaptureAction = {
+  key: 'file',
+  Icon: Paperclip,
+  labelKey: 'notes.capture.file',
+  picker: { accept: '', attachment: 'file' },
+};

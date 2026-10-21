@@ -7,5 +7,5 @@ export type Intent =
   | { kind: 'checklist' }
   | { kind: 'record' }
   | { kind: 'draw' }
-  | { kind: 'files'; files: File[] }
+  | { kind: 'files'; files: File[]; attachment: 'image' | 'file' }
   | { kind: 'play' };

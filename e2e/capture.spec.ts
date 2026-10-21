@@ -27,13 +27,29 @@ test.describe('capture starts', () => {
     await expect(page.getByRole('dialog').locator('img')).toHaveCount(1);
   });
 
-  test('Camera asks for the camera', async ({ page }) => {
+  test('Camera asks for the camera', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'a desktop browser ignores `capture`, so desktop offers File instead');
     const chooser = page.waitForEvent('filechooser');
     await startNote(page, 'Camera');
     const picker = await chooser;
     const input = picker.element();
     expect(await input.getAttribute('capture')).toBe('environment');
     expect(await input.getAttribute('accept')).toBe('image/*');
+  });
+
+  test('File on desktop takes any file and lands it as a file', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'the phone keeps Camera in this slot');
+    const chooser = page.waitForEvent('filechooser');
+    await startNote(page, 'File');
+    const picker = await chooser;
+    expect(await picker.element().getAttribute('capture')).toBeNull();
+    await picker.setFiles({
+      name: 'notes.pdf',
+      mimeType: 'application/pdf',
+      buffer: Buffer.from('%PDF-1.4\n%%EOF\n'),
+    });
+
+    await expect(page.getByRole('dialog').getByText('notes.pdf')).toBeVisible();
   });
 
   test('Voice note starts recording at once, whatever the toolbar shows', async ({

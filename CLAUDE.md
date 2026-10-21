@@ -154,6 +154,7 @@ Settings is not a sidebar destination; the topbar gear is its one entry point.
 Their order and the dial's side are Preferences.
 Each Start carries at most one Intent.
 Image and Camera are picker Starts: `useStartPicker` opens the OS picker inside the tap itself, because the tap's user activation does not survive the route change to the editor.
+A desktop browser ignores `capture`, so the desktop bar shows File (any file, inserted as a File attachment) in Camera's slot.
 
 **Insets.**
 The four safe-area insets are named once in `globals.css` (`--safe-top` and friends) and are always added to the design's own spacing, never substituted for it.

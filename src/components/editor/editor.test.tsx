@@ -158,7 +158,11 @@ describe('Editor auto-capture', () => {
     // what reaches the editor is the outcome.
     const files = [new File(['x'], 'a.png', { type: 'image/png' })];
     const { rerender } = render(
-      <Editor content="" intent={{ kind: 'files', files }} getNoteId={vi.fn()} />
+      <Editor
+        content=""
+        intent={{ kind: 'files', files, attachment: 'image' }}
+        getNoteId={vi.fn()}
+      />
     );
 
     await waitFor(() => expect(insertFiles).toHaveBeenCalledTimes(1));
@@ -166,7 +170,11 @@ describe('Editor auto-capture', () => {
     expect(vi.mocked(insertFiles).mock.calls[0][2]).toBe(files);
 
     rerender(
-      <Editor content="<p>typed</p>" intent={{ kind: 'files', files }} getNoteId={vi.fn()} />
+      <Editor
+        content="<p>typed</p>"
+        intent={{ kind: 'files', files, attachment: 'image' }}
+        getNoteId={vi.fn()}
+      />
     );
     expect(insertFiles).toHaveBeenCalledTimes(1);
   });

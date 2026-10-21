@@ -302,7 +302,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     intentStartedRef.current = true;
     if (intent.kind === 'record') editor.storage.audioAttachment.capture.requestRecording();
     else if (intent.kind === 'draw') openExcalidraw({});
-    else void insertFiles('image', editor, intent.files, getAttachmentDeps());
+    else void insertFiles(intent.attachment, editor, intent.files, getAttachmentDeps());
   }, [editor, getAttachmentDeps, intent, openExcalidraw]);
 
   useImperativeHandle(

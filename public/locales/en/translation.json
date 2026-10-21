@@ -444,7 +444,8 @@
       "audio": "Voice note",
       "drawing": "Drawing",
       "picture": "Image",
-      "camera": "Camera"
+      "camera": "Camera",
+      "file": "File"
     },
     "emptyingTrash": "Emptying trash…",
     "placeholders": {

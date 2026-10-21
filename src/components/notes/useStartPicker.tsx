@@ -12,8 +12,8 @@ export function useStartPicker(onStart: (intent?: Intent) => void): {
   start: (action: QuickCaptureAction) => void;
 } {
   const inputRef = useRef<HTMLInputElement>(null);
-  // A change event counts only if `start` opened the picker.
-  const pendingRef = useRef(false);
+  // A change event counts only if `start` opened the picker, and inserts as that Start asked.
+  const pendingRef = useRef<'image' | 'file' | null>(null);
 
   const start = (action: QuickCaptureAction) => {
     if (!action.picker) {
@@ -22,7 +22,7 @@ export function useStartPicker(onStart: (intent?: Intent) => void): {
     }
     const input = inputRef.current;
     if (!input) return;
-    pendingRef.current = true;
+    pendingRef.current = action.picker.attachment;
     input.accept = action.picker.accept;
     if (action.picker.capture) input.setAttribute('capture', action.picker.capture);
     else input.removeAttribute('capture');
@@ -39,9 +39,9 @@ export function useStartPicker(onStart: (intent?: Intent) => void): {
       onChange={(event) => {
         const files = Array.from(event.target.files ?? []);
         event.target.value = '';
-        const pending = pendingRef.current;
-        pendingRef.current = false;
-        if (files.length && pending) onStart({ kind: 'files', files });
+        const attachment = pendingRef.current;
+        pendingRef.current = null;
+        if (files.length && attachment) onStart({ kind: 'files', files, attachment });
       }}
     />
   );

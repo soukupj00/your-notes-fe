@@ -1,4 +1,5 @@
 import {
+  FILE_START,
   QUICK_CAPTURE_ACTIONS,
   type QuickCaptureAction,
 } from '@/components/notes/quickCaptureActions.ts';
@@ -35,11 +36,13 @@ export function resolveQuickCapture(stored: QuickCapturePref[] | undefined): Qui
 }
 
 /**
- * Minus plain text, which the desktop bar's own field is. Derived rather than stored twice:
- * nobody asked for a desktop dial that differs from their phone's.
+ * Minus plain text, which the desktop bar's own field is, and with File in Camera's slot.
+ * Derived rather than stored twice: nobody asked for a desktop dial that differs from their phone's.
  */
 export function resolveDesktopQuickCapture(
   stored: QuickCapturePref[] | undefined
 ): QuickCaptureAction[] {
-  return resolveQuickCapture(stored).filter((action) => action.key !== 'text');
+  return resolveQuickCapture(stored)
+    .filter((action) => action.key !== 'text')
+    .map((action) => (action.key === 'camera' ? FILE_START : action));
 }

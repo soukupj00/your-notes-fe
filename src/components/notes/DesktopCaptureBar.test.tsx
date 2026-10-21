@@ -101,6 +101,6 @@ describe('DesktopCaptureBar', () => {
     const file = new File(['x'], 'a.png', { type: 'image/png' });
     await user.upload(input, file);
 
-    expect(onStart).toHaveBeenCalledWith({ kind: 'files', files: [file] });
+    expect(onStart).toHaveBeenCalledWith({ kind: 'files', files: [file], attachment: 'image' });
   });
 });

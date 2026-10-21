@@ -135,7 +135,8 @@ All five kinds (image, audio, video, file, Excalidraw) are custom nodes from one
 - **Each kind's facts are one row of `ATTACHMENT_SPECS`** (`src/lib/attachments.ts`): MIME prefix, whitelist, size cap, Body tag, picker `accept`.
 - **`attachments/insert.ts` is the one path from files to nodes**, for paste, drop, the toolbar, the slash menu and the picker Starts: it validates, derives what the kind needs (a thumbnail, a poster, a duration), stores, and places the node.
   Every failure reaches one error callback, which the editor toasts.
-- **File** is toolbar-only: it accepts any type, so paste and drop cannot tell it from the other kinds.
+- **File** is never routed from paste or drop: it accepts any type, so they cannot tell it from the other kinds.
+  It arrives from the toolbar, the slash menu or the desktop File Start.
 - `AttachmentNodeView` draws what the visual kinds share: the delete overlay, the loading pulse, and the missing and not-downloaded placeholders.
 - **Known but not downloaded** is a row synced from another Device whose full bytes are still on the server.
   The node view reads the row live, so a download turns it ready without reopening the Note.

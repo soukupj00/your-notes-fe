@@ -72,7 +72,7 @@ describe('QuickCaptureBar', () => {
     const file = new File(['x'], 'a.png', { type: 'image/png' });
     await userEvent.upload(input, file);
 
-    expect(onStart).toHaveBeenCalledWith({ kind: 'files', files: [file] });
+    expect(onStart).toHaveBeenCalledWith({ kind: 'files', files: [file], attachment: 'image' });
   });
 
   it('collapses again once an action is taken', async () => {

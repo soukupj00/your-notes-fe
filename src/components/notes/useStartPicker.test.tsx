@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { Intent } from '@/lib/intent.ts';
-import { QUICK_CAPTURE_ACTIONS } from './quickCaptureActions.ts';
+import { FILE_START, QUICK_CAPTURE_ACTIONS } from './quickCaptureActions.ts';
 import { useStartPicker } from './useStartPicker.tsx';
 
 /** The hook under a bar with one button per Start, as both real bars render it. */
@@ -10,7 +10,7 @@ function Bar({ onStart }: { onStart: (intent?: Intent) => void }) {
   const picker = useStartPicker(onStart);
   return (
     <>
-      {QUICK_CAPTURE_ACTIONS.map((action) => (
+      {[...QUICK_CAPTURE_ACTIONS, FILE_START].map((action) => (
         <button key={action.key} type="button" onClick={() => picker.start(action)}>
           {action.key}
         </button>
@@ -41,11 +41,12 @@ describe('useStartPicker', () => {
   );
 
   it.each([
-    ['picture', 'image/*', null],
-    ['camera', 'image/*', 'environment'],
+    ['picture', 'image/*', null, 'image'],
+    ['camera', 'image/*', 'environment', 'image'],
+    ['file', '', null, 'file'],
   ])(
     '%s opens the picker inside the tap and starts with the chosen files',
-    async (key, accept, capture) => {
+    async (key, accept, capture, attachment) => {
       // The tap's user activation is the only thing that can open a picker, and it does not
       // survive the route change to the editor, so the files, not the request, are what travel.
       const onStart = vi.fn();
@@ -63,7 +64,7 @@ describe('useStartPicker', () => {
       const file = new File(['x'], 'a.png', { type: 'image/png' });
       await userEvent.upload(input, file);
 
-      expect(onStart).toHaveBeenCalledWith({ kind: 'files', files: [file] });
+      expect(onStart).toHaveBeenCalledWith({ kind: 'files', files: [file], attachment });
     }
   );
 });
