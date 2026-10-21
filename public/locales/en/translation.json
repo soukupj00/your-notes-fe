@@ -477,6 +477,8 @@
     "button": "Reminder",
     "date": "Date",
     "time": "Time",
+    "hour": "Hour",
+    "minute": "Minute",
     "repeat": "Repeat",
     "repeats": {
       "none": "Does not repeat",

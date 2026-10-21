@@ -478,6 +478,8 @@
     "button": "Připomenutí",
     "date": "Datum",
     "time": "Čas",
+    "hour": "Hodina",
+    "minute": "Minuta",
     "repeat": "Opakování",
     "repeats": {
       "none": "Neopakuje se",

@@ -1,6 +1,7 @@
 import { Bell } from 'lucide-react';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ReminderTimeField } from '@/components/reminders/ReminderTimeField.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
 import { IconTooltip } from '@/components/ui/tooltip.tsx';
@@ -30,11 +31,11 @@ const today = () => toLocalInput(new Date()).slice(0, 10);
 export function ReminderButton({ reminder, onSet, onClear, className }: ReminderButtonProps) {
   const { t } = useTranslation();
   const dateId = useId();
-  const timeId = useId();
   const repeatId = useId();
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
+  const [hour, setHour] = useState('');
+  const [minute, setMinute] = useState('');
   const [repeat, setRepeat] = useState<ReminderRepeat | 'none'>('none');
   const [busy, setBusy] = useState(false);
 
@@ -43,14 +44,16 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
     // does not come back as if it had been saved.
     if (next) {
       const [storedDate, storedTime = ''] = reminder?.remindAt.split('T') ?? [today()];
+      const [storedHour = '', storedMinute = ''] = storedTime ? storedTime.split(':') : [];
       setDate(storedDate);
-      setTime(storedTime);
+      setHour(storedHour);
+      setMinute(storedMinute);
       setRepeat(reminder?.repeat ?? 'none');
     }
     setOpen(next);
   };
 
-  const when = date && time ? `${date}T${time}` : '';
+  const when = date && hour && minute ? `${date}T${hour}:${minute}` : '';
 
   const submit = async () => {
     setBusy(true);
@@ -88,9 +91,9 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
       <PopoverContent align="end" data-testid="reminder-popover" className="w-80 space-y-3 p-3">
         {/* Two fields, not one datetime-local: Firefox reports that as empty until both halves
             are picked, so a new Reminder could not start on today (feedback B2). */}
-        <div className="grid grid-cols-[3fr_2fr] gap-2">
+        <div className="grid grid-cols-[1fr_auto] gap-2">
           <div className="space-y-1">
-            <label htmlFor={dateId} className="text-muted-foreground text-xs">
+            <label htmlFor={dateId} className="block text-muted-foreground text-xs">
               {t('reminders.date')}
             </label>
             <input
@@ -102,22 +105,19 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
               className={FIELD}
             />
           </div>
-          <div className="space-y-1">
-            <label htmlFor={timeId} className="text-muted-foreground text-xs">
-              {t('reminders.time')}
-            </label>
-            <input
-              id={timeId}
-              type="time"
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
-              className={FIELD}
-            />
-          </div>
+          <ReminderTimeField
+            hour={hour}
+            minute={minute}
+            onChange={(nextHour, nextMinute) => {
+              setHour(nextHour);
+              setMinute(nextMinute);
+            }}
+            className={FIELD}
+          />
         </div>
 
         <div className="space-y-1">
-          <label htmlFor={repeatId} className="text-muted-foreground text-xs">
+          <label htmlFor={repeatId} className="block text-muted-foreground text-xs">
             {t('reminders.repeat')}
           </label>
           <select

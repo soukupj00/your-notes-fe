@@ -6,7 +6,7 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, vars?: Record<string, string>) =>
       vars ? `${key}|${Object.values(vars).join('|')}` : key,
-    i18n: { language: 'en-GB' },
+    i18n: { language: 'en' },
   }),
 }));
 
@@ -19,6 +19,11 @@ describe('ReminderChip', () => {
     expect(chip).toHaveAccessibleName(/^reminders\.chip\|.*0?9:00/);
     expect(chip).toHaveTextContent(/0?9:00/);
     expect(chip).toHaveAttribute('data-past', 'false');
+  });
+
+  it('reads the time on a 24-hour clock, like the picker', () => {
+    render(<ReminderChip reminder={{ remindAt: '2030-03-05T21:00' }} now={now} />);
+    expect(screen.getByTestId('reminder-chip')).toHaveTextContent('21:00');
   });
 
   it('is struck through once a one-shot has passed, and says so in its name', () => {

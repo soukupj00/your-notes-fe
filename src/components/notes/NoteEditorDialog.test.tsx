@@ -318,7 +318,7 @@ describe('NoteEditorDialog', () => {
     fireEvent.change(await screen.findByLabelText('reminders.date'), {
       target: { value: '2030-03-04' },
     });
-    fireEvent.change(screen.getByLabelText('reminders.time'), { target: { value: '09:00' } });
+    await userEvent.selectOptions(screen.getByLabelText('reminders.hour'), '09');
     await userEvent.selectOptions(screen.getByLabelText('reminders.repeat'), 'weekly');
     await userEvent.click(screen.getByRole('button', { name: 'reminders.addToCalendar' }));
   }

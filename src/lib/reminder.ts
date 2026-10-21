@@ -43,6 +43,8 @@ const REMINDER_TIME: Intl.DateTimeFormatOptions = {
   month: 'short',
   hour: 'numeric',
   minute: '2-digit',
+  // The picker is 24-hour in every locale (feedback U10), so the record matches it.
+  hourCycle: 'h23',
 };
 
 /**

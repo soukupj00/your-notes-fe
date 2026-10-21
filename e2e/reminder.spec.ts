@@ -26,7 +26,8 @@ async function openNewNote(page: Page, isMobile: boolean) {
 async function setWeeklyReminder(page: Page) {
   await page.getByRole('button', { name: 'Reminder' }).click();
   await page.getByLabel('Date').fill('2030-03-04');
-  await page.getByLabel('Time').fill('09:00');
+  await page.getByLabel('Hour').selectOption('09');
+  await page.getByLabel('Minute').selectOption('00');
   await page.getByLabel('Repeat').selectOption('weekly');
 }
 
@@ -70,7 +71,7 @@ test.describe('Reminders', () => {
 
     // Re-clicking the bell while the popover is open would toggle it shut, so wait for it to close.
     // Wait on the field, not the primary action: that renames itself one render before the close.
-    await expect(page.getByLabel('Time')).toBeHidden();
+    await expect(page.getByLabel('Hour')).toBeHidden();
 
     await page.getByRole('button', { name: 'Reminder' }).click();
 
@@ -107,7 +108,7 @@ test.describe('Reminders', () => {
     const downloading = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Add to calendar' }).click();
     await downloading;
-    await expect(page.getByLabel('Time')).toBeHidden();
+    await expect(page.getByLabel('Hour')).toBeHidden();
 
     await page.getByRole('button', { name: 'Reminder' }).click();
     const popover = page.getByTestId('reminder-popover');
@@ -120,7 +121,7 @@ test.describe('Reminders', () => {
     expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(300);
 
     await page.getByRole('button', { name: 'Clear reminder' }).click();
-    await expect(page.getByLabel('Time')).toBeHidden();
+    await expect(page.getByLabel('Hour')).toBeHidden();
   });
 
   test('on a phone that can share files, the calendar file goes to the share sheet', async ({
