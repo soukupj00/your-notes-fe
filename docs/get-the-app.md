@@ -1,7 +1,14 @@
 # Get the app
 
 YourNotes is not in an app store.
-You open it in your browser at your server's address, and from there you install it, so it gets an icon and a window of its own.
+You open it in your browser, from your own server or without one to try it, and from there you install it, so it gets an icon and a window of its own.
+
+## Try it without a server
+
+You can use YourNotes right away at [your-notes-fe.vercel.app](https://your-notes-fe.vercel.app/), with no server and no account.
+It works fully on that one Device, offline included, and you can install it from there as shown below.
+The Notes you write there stay on that Device: that copy cannot sync, because only the app opened from your own server can.
+To take them along later, save a backup in Settings and load it into the app opened from your server.
 
 ## 1. Open it from your server
 
