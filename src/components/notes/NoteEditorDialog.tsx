@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Editor, type EditorHandle } from '@/components/editor/editor.tsx';
@@ -8,6 +8,7 @@ import { useNoteReminder } from '@/components/notes/useNoteReminder.ts';
 import { AppBar } from '@/components/ui/AppBar.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog.tsx';
+import { IconTooltip } from '@/components/ui/tooltip.tsx';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
@@ -21,19 +22,29 @@ import { createNoteDraft, isEmpty } from '@/lib/draft.ts';
 import type { Intent } from '@/lib/intent.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { type Reminder, reminderOf } from '@/lib/reminder.ts';
+import { cn } from '@/lib/utils.ts';
 import type { NoteState } from '@/models.ts';
 
 const AUTOSAVE_DELAY_MS = 600;
 
 type SaveStatus = 'idle' | 'saving' | 'saved';
 
-/** Decoration only: the announcement is the one live region in the dialog. */
+/** Decoration only: the announcement is the one live region in the dialog. Sync arrows, not a
+ *  tick: beside the close X a tick read as "confirm", as if the X would discard. */
 function SaveStatusIcon({ status }: { status: SaveStatus }) {
+  const { t } = useTranslation();
   if (status === 'idle') return null;
-  return status === 'saving' ? (
-    <Loader2 className="size-4 animate-spin text-muted-foreground" aria-hidden />
-  ) : (
-    <Check className="size-4 text-muted-foreground" aria-hidden />
+  return (
+    <IconTooltip
+      label={t(status === 'saving' ? 'notes.saveStatus.saving' : 'notes.saveStatus.savedHint')}
+    >
+      <span className="flex">
+        <RefreshCw
+          className={cn('size-4 text-muted-foreground', status === 'saving' && 'animate-spin')}
+          aria-hidden
+        />
+      </span>
+    </IconTooltip>
   );
 }
 

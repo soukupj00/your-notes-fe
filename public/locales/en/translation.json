@@ -409,7 +409,8 @@
     },
     "saveStatus": {
       "saving": "Saving…",
-      "saved": "Saved"
+      "saved": "Saved",
+      "savedHint": "Saved on this device"
     },
     "searchPlaceholder": "Search",
     "trashNotice": "Notes in the trash are deleted after {{days}} days.",

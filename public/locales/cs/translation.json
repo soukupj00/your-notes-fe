@@ -410,7 +410,8 @@
     },
     "saveStatus": {
       "saving": "Ukládání…",
-      "saved": "Uloženo"
+      "saved": "Uloženo",
+      "savedHint": "Uloženo v tomto zařízení"
     },
     "searchPlaceholder": "Hledat",
     "trashNotice": "Poznámky v koši se po {{days}} dnech smažou.",
