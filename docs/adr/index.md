@@ -17,7 +17,7 @@ Decisions about the server itself are on [the server's site](https://soukupj00.g
 | [0009](./0009-note-lifecycle-model.md) | Note lifecycle model: state, pin, colour, trash |
 | [0010](./0010-shadcn-sidebar-as-nav-shell.md) | The shadcn `Sidebar` as the nav shell |
 | [0011](./0011-toolbar-items-and-families.md) | Toolbar Items and Families over a flat button list |
-| [0012](./0012-feed-rank-is-held-membership-is-live.md) | Feed rank is held, membership is live |
+| [0012](./0012-feed-rank-is-held-membership-is-live.md) | Feed rank is held, membership is live (amended by [0025](./0025-the-closed-note-takes-its-sorted-place.md)) |
 | [0013](./0013-checklist-sinking-is-presentation-not-storage.md) | Checklist sinking is presentation, not storage |
 | [0014](./0014-the-open-note-lives-in-the-url.md) | The open Note lives in the URL |
 | [0015](./0015-the-tour-drives-the-app-on-disposable-props.md) | The Tour drives the app on disposable Props (superseded by [0023](./0023-the-tour-points-at-settings.md)) |
@@ -30,3 +30,4 @@ Decisions about the server itself are on [the server's site](https://soukupj00.g
 | [0022](./0022-interfaces-and-closures-not-classes.md) | Interfaces and closure factories, never classes |
 | [0023](./0023-the-tour-points-at-settings.md) | The Tour points at Settings and creates no Notes (superseded by [0024](./0024-a-welcome-at-launch-the-tour-in-settings.md)) |
 | [0024](./0024-a-welcome-at-launch-the-tour-in-settings.md) | A Welcome at launch; the Tour waits for the first visit to Settings |
+| [0025](./0025-the-closed-note-takes-its-sorted-place.md) | The closed Note takes its sorted place |

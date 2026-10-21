@@ -208,22 +208,46 @@ describe('held rank (ADR 0012)', () => {
     await waitFor(() => expect(ids(result.current.notes)).toEqual(['b', 'a']));
   });
 
-  it('holds the rank while a note is open and re-ranks once it closes', async () => {
-    await putNote({ id: 'a', updatedAt: daysAgo(1) });
-    await putNote({ id: 'b', updatedAt: daysAgo(2) });
+  describe('when the editor closes (ADR 0025)', () => {
+    async function openFeed() {
+      await putNote({ id: 'a', updatedAt: daysAgo(1) });
+      await putNote({ id: 'b', updatedAt: daysAgo(2) });
+      await putNote({ id: 'c', updatedAt: daysAgo(3) });
+      const hook = renderHookWithStore(
+        ({ open }: { open?: string }) => useNoteFeed({ state: 'active' }, undefined, open),
+        { initialProps: {} as { open?: string } }
+      );
+      await waitFor(() => expect(ids(hook.result.current.notes)).toEqual(['a', 'b', 'c']));
+      return hook;
+    }
 
-    const { result, rerender } = renderHookWithStore(
-      ({ search }: { search: NoteSearchParams }) => useNoteFeed({ state: 'active' }, search),
-      { initialProps: { search: {} as NoteSearchParams } }
-    );
-    await waitFor(() => expect(ids(result.current.notes)).toEqual(['a', 'b']));
+    it('holds the rank while the note is open, then moves only that note', async () => {
+      const { result, rerender } = await openFeed();
 
-    rerender({ search: { note: 'b' } });
-    await writeAndSettle(result, 'b', { updatedAt: new Date().toISOString() });
-    expect(ids(result.current.notes)).toEqual(['a', 'b']);
+      rerender({ open: 'c' });
+      await writeAndSettle(result, 'c', { updatedAt: new Date().toISOString() });
+      // Edited on its card meanwhile: held, and must stay held when `c` closes.
+      await writeAndSettle(result, 'b', { updatedAt: daysAgo(0.5) });
+      expect(ids(result.current.notes)).toEqual(['a', 'b', 'c']);
 
-    rerender({ search: {} });
-    await waitFor(() => expect(ids(result.current.notes)).toEqual(['b', 'a']));
+      rerender({});
+      await waitFor(() => expect(ids(result.current.notes)).toEqual(['c', 'a', 'b']));
+    });
+
+    it('moves the note when its last write lands after the close', async () => {
+      const { result, rerender } = await openFeed();
+      rerender({ open: 'c' });
+
+      await act(async () => {
+        const writing = testStore.notes.update('c', () => ({
+          updatedAt: new Date().toISOString(),
+        }));
+        rerender({});
+        await writing;
+      });
+
+      await waitFor(() => expect(ids(result.current.notes)).toEqual(['c', 'a', 'b']));
+    });
   });
 
   it('lets an unpinned note fall back to its held place, not to its fresh one', async () => {

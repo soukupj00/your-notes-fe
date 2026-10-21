@@ -80,15 +80,20 @@ function useVisibilityEpoch(): number {
 }
 
 /**
- * Counts the editor closing: the user was in the Note, not on the wall, so the Note they just
- * edited may take its sorted place then (feedback B4). Opening re-ranks nothing.
+ * The Note whose editor just closed takes its sorted place, and only it (ADR 0025). Released until
+ * the feed's first update after the close, because the close's own write can land after it.
  */
-function useCloseEpoch(editing: boolean): number {
-  const [seen, setSeen] = useState({ editing, epoch: 0 });
-  if (seen.editing !== editing) {
-    setSeen({ editing, epoch: editing ? seen.epoch : seen.epoch + 1 });
+function useReleasedOnClose(openNoteId: string | undefined, entries: unknown): string | undefined {
+  const [release, setRelease] = useState<{ open?: string; id?: string; at?: unknown }>({
+    open: openNoteId,
+  });
+  if (release.open !== openNoteId) {
+    const id = openNoteId ? undefined : release.open;
+    setRelease({ open: openNoteId, id, at: entries });
+    return id;
   }
-  return seen.epoch;
+  if (release.id && release.at !== entries) setRelease({ open: openNoteId });
+  return release.id;
 }
 
 /**
@@ -96,14 +101,18 @@ function useCloseEpoch(editing: boolean): number {
  * reachable from `/trash`, ADR 0009), then order. Membership is live, rank is held (ADR 0012);
  * the full design is in src/hooks/data/CLAUDE.md.
  */
-export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
+export function useNoteFeed(
+  scope: NoteFeedScope,
+  search?: NoteSearchParams,
+  /** The Note open in the editor, if any. */
+  openNoteId?: string
+) {
   const { q, sort, dir, tags } = resolveNoteSearch(search);
   const trimmed = q.trim();
   // Arrays are fresh objects on every render; the joined key is what the memos
   // can actually compare.
   const tagKey = tags.join(',');
   const visibilityEpoch = useVisibilityEpoch();
-  const closeEpoch = useCloseEpoch(Boolean(search?.note));
 
   const store = useLocalStore();
   const notesInScope = useLive(() => store.notes.feed(scope), [store, scope.state, scope.tagId]);
@@ -138,7 +147,7 @@ export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
   // Everything the user can ask for a *different* order with. A change here is
   // the user looking away or asking to be re-ranked, so the held order is
   // abandoned and the fresh one adopted (ADR 0012).
-  const rankKey = `${scope.state}|${scope.tagId ?? ''}|${trimmed}|${sort}|${dir}|${tagKey}|${visibilityEpoch}|${closeEpoch}`;
+  const rankKey = `${scope.state}|${scope.tagId ?? ''}|${trimmed}|${sort}|${dir}|${tagKey}|${visibilityEpoch}`;
 
   // The freshly sorted feed, before any memory of what was last shown.
   const fresh = useMemo(() => {
@@ -153,8 +162,13 @@ export function useNoteFeed(scope: NoteFeedScope, search?: NoteSearchParams) {
   // is spotted at read time; a reset effect would run after the memo it must precede.
   const [held, setHeld] = useState<{ key: string; ids: readonly string[] } | null>(null);
   const heldIds = held?.key === rankKey ? held.ids : EMPTY_IDS;
+  const released = useReleasedOnClose(openNoteId, entries);
+  const keptIds = useMemo(
+    () => (released ? heldIds.filter((id) => id !== released) : heldIds),
+    [heldIds, released]
+  );
 
-  const ranked = useMemo(() => mergeHeldOrder(fresh, heldIds), [fresh, heldIds]);
+  const ranked = useMemo(() => mergeHeldOrder(fresh, keptIds), [fresh, keptIds]);
 
   // Recorded before `floatPinned`, so an unpin puts the note back (ADR 0012's one exception). Set
   // during render, React's derive-state pattern, so the unstable order never paints; the equality

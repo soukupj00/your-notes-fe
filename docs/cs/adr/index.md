@@ -17,7 +17,7 @@ Rozhodnutí týkající se samotného serveru jsou na [webu serveru](https://sou
 | [0009](./0009-note-lifecycle-model.md) | Model životního cyklu poznámky: stav, připnutí, barva, koš |
 | [0010](./0010-shadcn-sidebar-as-nav-shell.md) | shadcn `Sidebar` jako navigační kostra |
 | [0011](./0011-toolbar-items-and-families.md) | Položky a skupiny panelu nástrojů místo plochého seznamu tlačítek |
-| [0012](./0012-feed-rank-is-held-membership-is-live.md) | Pořadí v přehledu se drží, příslušnost je živá |
+| [0012](./0012-feed-rank-is-held-membership-is-live.md) | Pořadí v přehledu se drží, příslušnost je živá (doplněno [0025](./0025-the-closed-note-takes-its-sorted-place.md)) |
 | [0013](./0013-checklist-sinking-is-presentation-not-storage.md) | Propadání v seznamu úkolů je způsob zobrazení, ne uložení |
 | [0014](./0014-the-open-note-lives-in-the-url.md) | Otevřená poznámka žije v URL |
 | [0015](./0015-the-tour-drives-the-app-on-disposable-props.md) | Průvodce ovládá aplikaci na jednorázových rekvizitách (nahrazeno [0023](./0023-the-tour-points-at-settings.md)) |
@@ -30,3 +30,4 @@ Rozhodnutí týkající se samotného serveru jsou na [webu serveru](https://sou
 | [0022](./0022-interfaces-and-closures-not-classes.md) | OOP pomocí rozhraní a closure factories, nikdy pomocí tříd |
 | [0023](./0023-the-tour-points-at-settings.md) | Průvodce ukazuje na Nastavení a nezakládá žádné poznámky (nahrazeno [0024](./0024-a-welcome-at-launch-the-tour-in-settings.md)) |
 | [0024](./0024-a-welcome-at-launch-the-tour-in-settings.md) | Při spuštění uvítání; průvodce čeká na první návštěvu Nastavení |
+| [0025](./0025-the-closed-note-takes-its-sorted-place.md) | Zavřená poznámka zaujme své seřazené místo |

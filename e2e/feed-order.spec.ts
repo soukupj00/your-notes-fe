@@ -4,7 +4,7 @@ import { card, closeNote, newTextNote, skipTour } from './helpers';
 /** The Card titles, top to bottom, under the default "last edited" sort. */
 const order = (page: Page) => page.locator('[data-slot="card"] h2').allInnerTexts();
 
-test.describe('feed order on the default sort (ADR 0012, feedback B4)', () => {
+test.describe('feed order on the default sort (ADR 0025)', () => {
   test.beforeEach(async ({ page }) => {
     await skipTour(page);
     await page.goto('/');

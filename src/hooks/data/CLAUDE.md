@@ -51,7 +51,8 @@ The store itself is described in [`src/data/CLAUDE.md`](../../data/CLAUDE.md).
 - **Membership is live, rank is held** ([ADR 0012](../../../docs/adr/0012-feed-rank-is-held-membership-is-live.md)).
   Every write bumps `updatedAt`, so on the default sort the wall would re-order itself whenever a card was recoloured, a box ticked or the open editor autosaved.
   Notes still join and leave at once; what is held is where the ones already on screen sit.
-  The order is re-taken only when the user is not watching: on mount, on a search-param change, on returning to the tab, and when the editor closes.
+  The order is re-taken only when the user is not watching: on mount, on a search-param change, and on returning to the tab.
+  When the editor closes, the Note that was open, and only it, takes its sorted place ([ADR 0025](../../../docs/adr/0025-the-closed-note-takes-its-sorted-place.md)).
   It is recorded before pinned Notes are floated, which is what keeps pinning live.
   `mergeHeldOrder` (`src/lib/feed-rank.ts`) is the pure part and is tested on its own.
 - Search runs within the current scope, so trashed Notes are reachable only from `/trash`.
