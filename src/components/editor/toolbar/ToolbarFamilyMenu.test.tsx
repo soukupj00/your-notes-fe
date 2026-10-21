@@ -101,12 +101,12 @@ describe('ToolbarFamilyMenu', () => {
     });
     editors.push(editor);
     renderMenu(
-      'format',
+      'media',
       editor,
-      itemsInFamily('format').filter((item) => ['bold', 'link'].includes(item.id))
+      itemsInFamily('media').filter((item) => item.id === 'link')
     );
 
-    await userEvent.click(screen.getByTestId('toolbar-family-format'));
+    await userEvent.click(screen.getByTestId('toolbar-family-media'));
 
     // Its name is drawn on the row, not left to a tooltip nobody on a phone
     // will ever see.

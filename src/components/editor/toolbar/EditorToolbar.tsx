@@ -135,8 +135,8 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         );
 
         return (
-          // `contents` keeps a family's buttons in the bar's own flex row; only a
-          // pinned family needs a box, because sticking needs one.
+          // On Compact, `contents` keeps a family's buttons in the bar's own row so they
+          // spread; only a pinned family needs a box. On Wide a family wraps as one unit.
           <div
             key={family.id}
             data-pinned={pinned || undefined}
@@ -144,7 +144,9 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
               pinned
                 ? // No padding: a pin that cost width could latch itself on (editor/CLAUDE.md).
                   'sticky left-0 z-10 flex shrink-0 items-center gap-1 bg-note-surface'
-                : 'contents'
+                : compact
+                  ? 'contents'
+                  : 'flex items-center gap-1'
             }
           >
             {content}

@@ -23,15 +23,15 @@ describe('reconcileLayout', () => {
 
   it('appends a registry family the blob has never heard of, at its registry position', () => {
     // An old blob that predates `block` and `media`: they sit between `list` and
-    // `font` in the registry, and must land there rather than at the end.
+    // `meta` in the registry, and must land there rather than at the end.
     const stored = storedLayout(
       { id: 'list', on: true, collapsed: false, members: [{ id: 'bullet-list', on: true }] },
-      { id: 'font', on: true, collapsed: false, members: [] }
+      { id: 'meta', on: true, collapsed: false, members: [] }
     );
 
     const ids = reconcileLayout(stored, 'wide').map((family) => family.id);
     expect(ids.indexOf('block')).toBeGreaterThan(ids.indexOf('list'));
-    expect(ids.indexOf('block')).toBeLessThan(ids.indexOf('font'));
+    expect(ids.indexOf('block')).toBeLessThan(ids.indexOf('meta'));
     expect(ids.indexOf('media')).toBeGreaterThan(ids.indexOf('block'));
     expect(new Set(ids)).toEqual(new Set(TOOLBAR_FAMILIES.map((family) => family.id)));
   });

@@ -38,30 +38,32 @@ export function buildLayout(spec: FamilySpec[]): ToolbarLayout {
  */
 const COMPACT_BALANCED: FamilySpec[] = [
   { family: 'history' },
-  { family: 'style', collapsed: true },
   { family: 'format', collapsed: true },
   { family: 'list', collapsed: true },
   { family: 'media', collapsed: true },
+  { family: 'style', collapsed: true },
 ];
 
+/** Undo stays: a phone has no Ctrl+Z, so a bar without it has no way back. */
 const COMPACT_MINIMAL: FamilySpec[] = [
-  { family: 'style', collapsed: true },
+  { family: 'history', leaves: ['undo'] },
   { family: 'format', leaves: ['bold'] },
   { family: 'list', collapsed: true },
   { family: 'media', collapsed: true },
   { family: 'meta' },
 ];
 
+/** `media` stays expanded so Mod+K anchors the link popover to a visible Link button. */
 const WIDE_BALANCED: FamilySpec[] = [
   { family: 'history' },
   { family: 'style' },
-  { family: 'format' },
-  { family: 'colour' },
-  { family: 'list' },
-  { family: 'block' },
-  { family: 'media' },
-  { family: 'align', collapsed: true },
   { family: 'font', collapsed: true },
+  { family: 'format' },
+  { family: 'colour', collapsed: true },
+  { family: 'list' },
+  { family: 'align', collapsed: true },
+  { family: 'block', collapsed: true },
+  { family: 'media' },
   { family: 'meta' },
 ];
 

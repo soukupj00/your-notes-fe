@@ -91,7 +91,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
               'hover:bg-muted hover:text-foreground',
               activeToggle,
               // Before `className`, so a caller can still override the menu-row shape.
-              menuRowLabel !== null && 'h-9 w-full justify-start gap-2 px-2',
+              menuRowLabel !== null && 'h-9 w-full justify-start gap-2 px-2.5',
               className
             )}
             {...rest}
