@@ -99,6 +99,7 @@ export function NoteEditorDialog({
   const [pinnedAt, setPinnedAt] = useState<string | undefined>(undefined);
   const [state, setState] = useState<NoteState>('active');
   const [reminder, setReminder] = useState<Reminder | undefined>(undefined);
+  const [loaded, setLoaded] = useState(isNew);
 
   const focusBody = checklistDraft;
 
@@ -136,6 +137,7 @@ export function NoteEditorDialog({
         setReminder(reminderOf(n));
         setPinnedAt(n.pinnedAt);
         setState(n.state);
+        setLoaded(true);
         return;
       }
       // Not a blank editor: typing into it would silently recreate the note under the dead id.
@@ -188,14 +190,15 @@ export function NoteEditorDialog({
 
   const closeDraft = useCallback(async () => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    if (preview) return;
+    // Before the load the fields are blank, not the Note's content, and an empty close purges.
+    if (preview || !loaded) return;
     // An empty note is kept only for a Reminder: the calendar already holds an event linking
     // to its id.
     await draft.close(header, body, {
       keepEmpty: reminder !== undefined,
       edited: dirtyRef.current,
     });
-  }, [preview, draft, header, body, reminder]);
+  }, [preview, loaded, draft, header, body, reminder]);
 
   const handleClose = useCallback(async () => {
     await closeDraft();
