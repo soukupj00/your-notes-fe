@@ -5,7 +5,8 @@ import type { Note } from '@/models.ts';
 import { clearStore, renderWithStore as render, testStore } from '@/test/store.tsx';
 import { NoteEditorDialog } from './NoteEditorDialog.tsx';
 
-// Archive, trash and restore from the open Note. What it saves is `NoteEditorDialog.test.tsx`.
+// Archive, trash and restore from the open Note, and the trash's read-only preview. What it saves
+// is `NoteEditorDialog.test.tsx`.
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -16,9 +17,18 @@ vi.mock('@/hooks/useReducedMotion.ts', () => ({
 }));
 
 vi.mock('@/components/editor/editor.tsx', () => ({
-  Editor: ({ content, onUpdate }: { content?: string; onUpdate?: (html: string) => void }) => (
+  Editor: ({
+    content,
+    editable,
+    onUpdate,
+  }: {
+    content?: string;
+    editable?: boolean;
+    onUpdate?: (html: string) => void;
+  }) => (
     <textarea
       data-testid="editor"
+      readOnly={!editable}
       value={content ?? ''}
       onChange={(e) => onUpdate?.(e.target.value)}
     />
@@ -54,7 +64,7 @@ async function openStored(overrides: Partial<Note> = {}) {
   await testStore.notes.add(note);
   const onClose = vi.fn();
   render(<NoteEditorDialog noteId={note.id} onClose={onClose} />);
-  await screen.findByDisplayValue(note.header);
+  await screen.findByDisplayValue(note.body);
   return { note, onClose };
 }
 
@@ -111,5 +121,63 @@ describe('NoteEditorDialog lifecycle', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect((await testStore.notes.get(note.id))?.state).toBe('active');
     expect(toastMock).toHaveBeenCalledWith('notes.restored', expect.anything());
+  });
+});
+
+describe('a trashed note', () => {
+  const trashed = { state: 'trashed' as const, trashedAt: new Date().toISOString() };
+
+  it('opens as a read-only preview with only restore and delete forever', async () => {
+    await openStored(trashed);
+
+    expect(screen.getByRole('heading', { name: 'Kept' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('textbox', { name: 'notes.titlePlaceholder' })
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('editor')).toHaveAttribute('readonly');
+    for (const name of [
+      'notes.color',
+      'reminders.button',
+      'notes.pin',
+      'tags.add',
+      'notes.moveToTrash',
+    ]) {
+      expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
+    }
+    expect(screen.getByRole('button', { name: 'notes.restore' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'notes.deleteForever' })).toBeInTheDocument();
+  });
+
+  it('restores from the preview with the same undo as the card', async () => {
+    const { note, onClose } = await openStored(trashed);
+
+    await userEvent.click(screen.getByRole('button', { name: 'notes.restore' }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect((await testStore.notes.get(note.id))?.state).toBe('active');
+    expect(toastMock).toHaveBeenCalledWith('notes.restored', expect.anything());
+  });
+
+  it('deletes forever only once the user confirms', async () => {
+    const { note, onClose } = await openStored(trashed);
+
+    await userEvent.click(screen.getByRole('button', { name: 'notes.deleteForever' }));
+    expect(await testStore.notes.get(note.id)).toBeDefined();
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'notes.confirmDeleteForever.confirm' })
+    );
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(await testStore.notes.get(note.id)).toBeUndefined();
+  });
+
+  it('writes nothing on close, so even an empty one survives', async () => {
+    const { note, onClose } = await openStored({ ...trashed, header: '', body: '' });
+    await screen.findByRole('button', { name: 'notes.deleteForever' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(await testStore.notes.get(note.id)).toEqual(note);
   });
 });

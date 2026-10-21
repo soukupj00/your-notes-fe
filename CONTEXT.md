@@ -46,6 +46,7 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
   - **Active** — The default. The Note appears in the main feed.
   - **Archived** — The user is done with the Note but wants to keep it. Hidden from the main feed to reduce clutter, never auto-deleted, still reachable and still found by Search. Distinct from Trashed: archiving is *keeping*, not *discarding*.
   - **Trashed** — The Note is on its way out. Held for a grace period during which it can be restored, then permanently purged by a sweep. Distinct from Archived: trashing is *discarding with an undo window*.
+    Opened, a Trashed Note is a read-only preview: it is restored to be edited.
 - **Pinned** — A flag, orthogonal to State, marking a Note the user wants surfaced at the top of the feed. Only meaningful while Active. Archiving or trashing a Note clears its Pinned status.
 - **Color** — An optional label color a user assigns to a Note for visual grouping. Stored as a palette *token* (a named entry), never a raw color value, so the concrete shade resolves from the active Theme and Vision Mode. A Note has at most one Color; the absence of one is the default surface.
 - **Reminder** — A time the user wants to be brought back to a Note, optionally repeating (daily, weekly, monthly, yearly). Orthogonal to State, and a Note has at most one.
@@ -56,7 +57,7 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
   The Hand-off is one-way: the calendar keeps its own copy, which the app can offer to replace but can never see, change or remove. The event carries the Note's title and a link back to it, never its Body.
   _Avoid_: sync (the calendar is not a synced store), export (that is Backup's word)
 - **Purge** — The permanent, irreversible removal of a Note and its Attachments, performed by a sweep the same way Orphan Attachments are reclaimed.
-  Only a **Trashed** Note is purged, once its grace period elapses.
+  Only a **Trashed** Note is purged: once its grace period elapses, when the trash is emptied, or when the user deletes it forever from its preview.
 
 ## Editing
 

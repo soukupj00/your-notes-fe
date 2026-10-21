@@ -392,6 +392,15 @@
     "movedToTrash": "Poznámka přesunuta do koše",
     "restore": "Obnovit",
     "restored": "Poznámka obnovena",
+    "deleteForever": "Smazat navždy",
+    "deletedForever": "Poznámka smazána navždy",
+    "confirmDeleteForever": {
+      "title": "Smazat poznámku navždy?",
+      "description": "Poznámka i její přílohy se nadobro smažou. Tuto akci nelze vrátit.",
+      "confirm": "Smazat navždy",
+      "cancel": "Zrušit"
+    },
+    "trashedPreview": "V koši. Pro úpravy ji obnovte.",
     "emptyTrash": "Vysypat koš",
     "confirmEmptyTrash": {
       "title": "Vysypat koš?",

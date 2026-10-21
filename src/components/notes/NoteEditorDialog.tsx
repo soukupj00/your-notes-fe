@@ -1,9 +1,11 @@
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { Editor, type EditorHandle } from '@/components/editor/editor.tsx';
 import { NoteEditorBar } from '@/components/notes/NoteEditorBar.tsx';
 import { EMPTY_CHECKLIST_BODY } from '@/components/notes/noteDrafts.ts';
+import { TrashedNoteBar } from '@/components/notes/TrashedNoteBar.tsx';
 import { useNoteReminder } from '@/components/notes/useNoteReminder.ts';
 import { AppBar } from '@/components/ui/AppBar.tsx';
 import { Button } from '@/components/ui/button.tsx';
@@ -27,6 +29,7 @@ import { cn } from '@/lib/utils.ts';
 import type { NoteState } from '@/models.ts';
 
 const AUTOSAVE_DELAY_MS = 600;
+const HEADER_CLASS = 'w-full font-semibold text-foreground text-xl';
 
 type SaveStatus = 'idle' | 'saving' | 'saved';
 
@@ -179,12 +182,17 @@ export function NoteEditorDialog({
     };
   }, [header, body, draft]);
 
+  // In the trash a Note is a read-only preview (FEEDBACK U8): it cannot be edited, so closing it
+  // writes nothing, which also keeps an empty one from being purged.
+  const preview = state === 'trashed';
+
   const closeDraft = useCallback(async () => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    if (preview) return;
     // An empty note is kept only for a Reminder: the calendar already holds an event linking
     // to its id.
     await draft.close(header, body, { keepEmpty: reminder !== undefined });
-  }, [draft, header, body, reminder]);
+  }, [preview, draft, header, body, reminder]);
 
   const handleClose = useCallback(async () => {
     await closeDraft();
@@ -199,10 +207,21 @@ export function NoteEditorDialog({
     onClose();
   }
 
+  async function deleteForever() {
+    await purgeNote(noteId);
+    toast(t('notes.deletedForever'));
+    onClose();
+  }
+
   // On mobile this goes inside the editor as its footer, so the sticky format toolbar can sit
   // below it at the sheet's bottom edge. On desktop it stays a sibling under the framed editor.
   // Width decides, not pointer: it is a question of which box exists (ADR 0016).
-  const noteBar = (
+  const noteBar = preview ? (
+    <TrashedNoteBar
+      onRestore={() => void leaveWith(lifecycle.restore)}
+      onDeleteForever={() => void deleteForever()}
+    />
+  ) : (
     <NoteEditorBar
       draft={draft}
       color={color}
@@ -295,36 +314,58 @@ export function NoteEditorDialog({
           <SaveStatusIcon status={saveStatus} />
         </div>
 
-        <input
-          ref={headerInputRef}
-          value={header}
-          onChange={(e) => {
-            dirtyRef.current = true;
-            setHeader(e.target.value);
-          }}
-          // Not mid-composition: Safari reports the Enter that commits an IME word as key 229.
-          onKeyDown={(e) => {
-            if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent.isComposing || e.keyCode === 229) {
-              return;
-            }
-            e.preventDefault();
-            editorRef.current?.focus('start');
-          }}
-          placeholder={t('notes.titlePlaceholder')}
-          aria-label={t('notes.titlePlaceholder')}
-          className="w-full bg-transparent font-semibold text-foreground text-xl outline-none placeholder:text-muted-foreground"
-        />
+        {preview ? (
+          header && (
+            <h2 dir="auto" className={cn(HEADER_CLASS, 'break-words')}>
+              {header}
+            </h2>
+          )
+        ) : (
+          <input
+            ref={headerInputRef}
+            value={header}
+            onChange={(e) => {
+              dirtyRef.current = true;
+              setHeader(e.target.value);
+            }}
+            // Not mid-composition: Safari reports the Enter that commits an IME word as key 229.
+            onKeyDown={(e) => {
+              if (
+                e.key !== 'Enter' ||
+                e.shiftKey ||
+                e.nativeEvent.isComposing ||
+                e.keyCode === 229
+              ) {
+                return;
+              }
+              e.preventDefault();
+              editorRef.current?.focus('start');
+            }}
+            placeholder={t('notes.titlePlaceholder')}
+            aria-label={t('notes.titlePlaceholder')}
+            className={cn(
+              HEADER_CLASS,
+              'bg-transparent outline-none placeholder:text-muted-foreground'
+            )}
+          />
+        )}
 
         <Editor
+          // Remounted, not toggled: the Editor reads its content once, at creation.
+          key={preview ? 'preview' : 'edit'}
           ref={editorRef}
           content={body}
-          editable
+          editable={!preview}
           getNoteId={draft.ensureSaved}
           autoFocus={focusBody}
           intent={intent}
           stickyToolbarOnMobile
           footer={isMobile ? noteBar : undefined}
-          className="flex-1 rounded-none border-0 p-0 sm:rounded-card sm:border sm:border-note-border sm:px-4"
+          // A preview drops the frame, which would read as a field to type in.
+          className={cn(
+            'flex-1 rounded-none border-0 p-0',
+            !preview && 'sm:rounded-card sm:border sm:border-note-border sm:px-4'
+          )}
           onUpdate={(html) => {
             dirtyRef.current = true;
             setBody(html);
