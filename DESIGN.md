@@ -246,7 +246,7 @@ The feed has exactly **two layouts**, and the user switches between them from th
 **Masonry** is the default and the identity-carrying one: a column-packed wall where each card drops into whichever column is currently shortest, in document order.
 This is measured and placed in JS, not in CSS, and the reason is worth recording - CSS `columns` reads top-to-bottom per column, which puts note 2 below note 1 instead of beside it and wrecks tab order, and `grid-template-rows: masonry` is not something a self-hosted PWA can depend on across browsers.
 Measuring in JS keeps DOM order equal to reading order, so cards stay ordinary focusable list items.
-Columns are `minmax(216px, 1fr)`, auto-filled. Gap is `{spacing.gap}`, tightening to `{spacing.gap-compact}` in compact density.
+Columns are `minmax(13.5rem, 1fr)` (216px at the default root size), auto-filled. Gap is `{spacing.gap}`, tightening to `{spacing.gap-compact}` in compact density.
 
 **Stack** is the alternative: every card takes the **full container width** and sits directly below the previous one, one per row.
 It is the reading layout rather than the scanning layout - a longer note gets its full measure instead of being squeezed into a 216px column, and a person working down a list in order is not asked to track two columns at once.
@@ -256,6 +256,7 @@ Card content does not change between the layouts. The same anatomy, the same cap
 
 **Responsive behavior** is driven by a container query on the app shell, not a media query, so the shell behaves the same whether it is the whole viewport or a panel.
 Below **46rem (736px)** the persistent left rail is hidden and the feed drops to `minmax(10rem, 1fr)`.
+From a 1920px viewport the root font steps up to 112.5%, and from 2560px to 125%, because a large screen is read from further away; everything in rem grows with it, columns included, while hairlines, corners and the 44px floor stay in px.
 The rail's destinations must be reachable from a drawer at that width - the prototype simply hides them, which is a prototype gap, not a design decision. The real shell already solves this with its Sheet drawer.
 
 Mobile is the primary device, so the scarce axis is horizontal. Any card anatomy that spends horizontal space to hold controls is spending the wrong axis.

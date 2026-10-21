@@ -79,6 +79,19 @@
     --keyboard-inset: 0px;
   }
 
+  /* A large screen is read from further away, so everything sized in rem grows with it; px is
+     left for hairlines, corners and the touch floor. */
+  @media (min-width: 1920px) {
+    :root {
+      font-size: 112.5%;
+    }
+  }
+  @media (min-width: 2560px) {
+    :root {
+      font-size: 125%;
+    }
+  }
+
   body {
     background-color: var(--background);
     color: var(--foreground);

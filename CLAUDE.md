@@ -214,6 +214,8 @@ Those the stylesheet has to act on are stamped onto `<html>` by `DocumentPrefere
 Every other Preference is read by the component that spends it.
 A Settings row that shows and writes one Preference is a `PreferenceSwitch` or `PreferenceSegmented` bound to its key.
 
+Size in rem, not px: on a large screen the root font steps up (`globals.css`, DESIGN.md Layout), and only rem grows with it; the Masonry columns read the root font for the same reason.
+
 The 44px Touch Rule has two mechanisms that are not interchangeable: `.touch-target` grows a control to 44px (an icon button), `.touch-reach` gives it a 44px hit box and leaves its size alone (a switch, whose shape is part of what it says).
 
 ### The Tour (`src/lib/tour/`, `src/context/TourProvider.tsx`)
