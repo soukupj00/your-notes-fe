@@ -71,11 +71,13 @@ describe('reminderOf', () => {
 });
 
 describe('formatReminderTime', () => {
-  it('reads the stored string as local time, hour without a leading zero', () => {
-    const label = formatReminderTime('2030-03-04T09:00', 'en-GB');
-    expect(label).toContain('9:00');
-    expect(label).not.toContain('09:00');
-    expect(label).toContain('4 Mar');
+  it('reads the stored string as local time, in the date the locale writes', () => {
+    expect(formatReminderTime('2030-03-04T09:00', 'en-GB')).toContain('4 Mar');
+  });
+
+  it.each(['en', 'en-GB', 'cs'])('writes %s time as the picker does, 09:00 and 21:00', (locale) => {
+    expect(formatReminderTime('2030-03-04T09:00', locale)).toContain('09:00');
+    expect(formatReminderTime('2030-03-04T21:00', locale)).toContain('21:00');
   });
 
   it('leaves the weekday out, so the time is never what the chip cuts', () => {

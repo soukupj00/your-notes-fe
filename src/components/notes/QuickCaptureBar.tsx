@@ -61,8 +61,9 @@ export function QuickCaptureBar({ onStart }: { onStart: (intent?: Intent) => voi
           side="top"
           align={left ? 'start' : 'end'}
           sideOffset={12}
-          // Solid from the first frame: the shared fade showed the cards through the chips.
-          className="max-h-[none] w-auto overflow-visible border-0 bg-transparent p-0 shadow-none data-[state=open]:animate-none"
+          // Never faded: the shared fade showed the cards through the chips, and on close the
+          // scrim is already gone.
+          className="max-h-[none] w-auto animate-none! overflow-visible border-0 bg-transparent p-0 shadow-none"
         >
           {/* `flex-col-reverse`, not a reversed array: the first start sits nearest the thumb and
               stays first in tab and screen-reader order. */}
