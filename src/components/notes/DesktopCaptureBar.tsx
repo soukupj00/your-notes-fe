@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { resolveDesktopQuickCapture } from '@/components/notes/quickCaptureLayout.ts';
 import { useStartPicker } from '@/components/notes/useStartPicker.tsx';
 import { Button } from '@/components/ui/button.tsx';
+import { IconTooltip } from '@/components/ui/tooltip.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useTourActive } from '@/context/TourProvider.tsx';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
@@ -98,16 +99,17 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
       </button>
 
       {actions.map((action) => (
-        <Button
-          key={action.key}
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label={t(action.labelKey)}
-          onClick={() => picker.start(action)}
-        >
-          <action.Icon className="size-4" />
-        </Button>
+        <IconTooltip key={action.key} label={t(action.labelKey)}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={t(action.labelKey)}
+            onClick={() => picker.start(action)}
+          >
+            <action.Icon className="size-4" />
+          </Button>
+        </IconTooltip>
       ))}
       {picker.input}
     </div>

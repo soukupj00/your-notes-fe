@@ -4,6 +4,7 @@ import { NoteColorButton } from '@/components/color-picker/NoteColorButton.tsx';
 import { ShareButton } from '@/components/notes/ShareButton.tsx';
 import { ReminderButton } from '@/components/reminders/ReminderButton.tsx';
 import { NoteTagsBar } from '@/components/tags/NoteTagsBar.tsx';
+import { IconTooltip } from '@/components/ui/tooltip.tsx';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import type { NoteDraft } from '@/lib/draft.ts';
 import { noteControlButton } from '@/lib/note-controls.ts';
@@ -69,20 +70,22 @@ export function NoteEditorBar({
         />
 
         {pinnable && (
-          <button
-            type="button"
-            aria-label={t(pinned ? 'notes.unpin' : 'notes.pin')}
-            aria-pressed={pinned}
-            onClick={onPinToggle}
-            className={noteControlButton(
-              reducedMotion,
-              // Pinned is chrome, so it takes the accent, like the card's pin.
-              pinned &&
-                'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
-            )}
-          >
-            <Pin className={cn('size-4', pinned && 'fill-current')} aria-hidden />
-          </button>
+          <IconTooltip label={t(pinned ? 'notes.unpin' : 'notes.pin')}>
+            <button
+              type="button"
+              aria-label={t(pinned ? 'notes.unpin' : 'notes.pin')}
+              aria-pressed={pinned}
+              onClick={onPinToggle}
+              className={noteControlButton(
+                reducedMotion,
+                // Pinned is chrome, so it takes the accent, like the card's pin.
+                pinned &&
+                  'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
+              )}
+            >
+              <Pin className={cn('size-4', pinned && 'fill-current')} aria-hidden />
+            </button>
+          </IconTooltip>
         )}
       </div>
     </div>

@@ -3,6 +3,7 @@ import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
+import { IconTooltip } from '@/components/ui/tooltip.tsx';
 import { type Reminder, toLocalInput } from '@/lib/reminder.ts';
 import { cn } from '@/lib/utils.ts';
 import { REMINDER_REPEATS, type ReminderRepeat } from '@/models.ts';
@@ -60,20 +61,22 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
     // `modal` for the same reason as TagPopover: inside the editor's Dialog a
     // non-modal popover is outside react-remove-scroll's shard.
     <Popover modal open={open} onOpenChange={handleOpenChange}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label={t('reminders.button')}
-          aria-pressed={Boolean(reminder)}
-          className={cn(
-            className,
-            reminder &&
-              'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
-          )}
-        >
-          <Bell className={cn('size-4', reminder && 'fill-current')} aria-hidden />
-        </button>
-      </PopoverTrigger>
+      <IconTooltip label={t('reminders.button')}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            aria-label={t('reminders.button')}
+            aria-pressed={Boolean(reminder)}
+            className={cn(
+              className,
+              reminder &&
+                'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
+            )}
+          >
+            <Bell className={cn('size-4', reminder && 'fill-current')} aria-hidden />
+          </button>
+        </PopoverTrigger>
+      </IconTooltip>
       <PopoverContent align="end" data-testid="reminder-popover" className="w-72 space-y-3 p-3">
         <div className="space-y-1">
           <label htmlFor={whenId} className="text-muted-foreground text-xs">

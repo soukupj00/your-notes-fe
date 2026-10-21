@@ -60,7 +60,56 @@ function useTooltipFloor() {
   };
 }
 
+/* Radix opens a tooltip on any focus, including focus a menu or popover hands back after a
+   click or tap; Chrome even marks that `:focus-visible`. Only focus after a key press opens it. */
+let lastInputWasKey = false;
+if (typeof document !== 'undefined') {
+  document.addEventListener(
+    'keydown',
+    () => {
+      lastInputWasKey = true;
+    },
+    true
+  );
+  document.addEventListener(
+    'pointerdown',
+    () => {
+      lastInputWasKey = false;
+    },
+    true
+  );
+}
+
+/** A name on hover for an icon-only control. Visual only: the child keeps its own `aria-label`.
+ *  Its own provider, like `NoteColorPicker`'s, so it works wherever it mounts; Radix permits nesting. */
+function IconTooltip({
+  label,
+  side,
+  children,
+}: {
+  label: string;
+  side?: React.ComponentProps<typeof TooltipContent>['side'];
+  children: React.ReactElement;
+}) {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger
+          asChild
+          onFocus={(event) => {
+            if (!lastInputWasKey) event.preventDefault();
+          }}
+        >
+          {children}
+        </TooltipTrigger>
+        <TooltipContent side={side}>{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 export {
+  IconTooltip,
   Tooltip,
   TooltipContent,
   TooltipFloorProvider,

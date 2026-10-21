@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar.tsx';
+import { IconTooltip } from '@/components/ui/tooltip.tsx';
 import { useIsFeedRoute } from '@/hooks/useNoteSearchState.ts';
 import i18n from '@/i18n';
 import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
@@ -44,16 +45,18 @@ function Navbar() {
 
         <div className="flex items-center gap-3">
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={CHROME_ICON_BUTTON}
-                aria-label={t('settings.locale.label')}
-              >
-                <Globe />
-              </Button>
-            </DropdownMenuTrigger>
+            <IconTooltip label={t('settings.locale.label')}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={CHROME_ICON_BUTTON}
+                  aria-label={t('settings.locale.label')}
+                >
+                  <Globe />
+                </Button>
+              </DropdownMenuTrigger>
+            </IconTooltip>
             <DropdownMenuContent align="end">
               <DropdownMenuGroup>
                 {locales.map((locale) => {
@@ -75,11 +78,13 @@ function Navbar() {
             </DropdownMenuContent>
           </DropdownMenu>
           <ThemeModeToggleButton />
-          <Button variant="ghost" size="icon" className={CHROME_ICON_BUTTON} asChild>
-            <Link to="/settings" aria-label={t('nav.settings')}>
-              <Settings />
-            </Link>
-          </Button>
+          <IconTooltip label={t('nav.settings')}>
+            <Button variant="ghost" size="icon" className={CHROME_ICON_BUTTON} asChild>
+              <Link to="/settings" aria-label={t('nav.settings')}>
+                <Settings />
+              </Link>
+            </Button>
+          </IconTooltip>
         </div>
       </div>
 

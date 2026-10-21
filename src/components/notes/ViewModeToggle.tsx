@@ -1,6 +1,7 @@
 import { LayoutGrid, Rows3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.tsx';
+import { IconTooltip } from '@/components/ui/tooltip.tsx';
 import { useViewMode } from '@/context/viewModeProvider.tsx';
 import { cn } from '@/lib/utils.ts';
 
@@ -11,16 +12,17 @@ export function ViewModeToggle({ className }: { className?: string }) {
   const next = viewMode === 'masonry' ? 'stack' : 'masonry';
 
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      onClick={() => setViewMode(next)}
-      aria-label={t('notes.view.toggle')}
-      title={t(`notes.view.${next}`)}
-      className={cn('text-muted-foreground', className)}
-    >
-      {viewMode === 'masonry' ? <Rows3 /> : <LayoutGrid />}
-    </Button>
+    <IconTooltip label={t(`notes.view.${next}`)}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={() => setViewMode(next)}
+        aria-label={t('notes.view.toggle')}
+        className={cn('text-muted-foreground', className)}
+      >
+        {viewMode === 'masonry' ? <Rows3 /> : <LayoutGrid />}
+      </Button>
+    </IconTooltip>
   );
 }

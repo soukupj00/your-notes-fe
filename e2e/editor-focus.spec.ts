@@ -153,3 +153,29 @@ test.describe('an old iPad', () => {
     await expect(page.getByRole('searchbox')).toBeFocused();
   });
 });
+
+test.describe('icon tooltips', () => {
+  test.beforeEach(async ({ page }) => {
+    await skipTour(page);
+    await page.goto('/');
+  });
+
+  test('focus handed back after a menu shows no tooltip', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'the language menu is desktop chrome');
+    await page.getByRole('button', { name: 'Language' }).click();
+    await page.getByRole('menuitem', { name: /English/ }).click();
+
+    await expect(page.getByRole('button', { name: 'Language' })).toBeFocused();
+    // Past the provider's open delay, so a late tooltip would be on screen by now.
+    await page.waitForTimeout(1000);
+    await expect(page.getByRole('tooltip', { name: 'Language' })).toHaveCount(0);
+  });
+
+  test('a keyboard user still gets the tooltip', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'the language menu is desktop chrome');
+    await page.getByRole('button', { name: 'Toggle theme' }).focus();
+    await page.keyboard.press('Shift+Tab');
+
+    await expect(page.getByRole('tooltip', { name: 'Language' })).toBeVisible();
+  });
+});

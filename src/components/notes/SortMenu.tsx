@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx';
+import { IconTooltip } from '@/components/ui/tooltip.tsx';
 import { useNoteSearchState } from '@/hooks/useNoteSearchState.ts';
 import {
   NOTE_SORT_DIRECTIONS,
@@ -21,16 +22,18 @@ export function SortMenu() {
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="touch-target size-8"
-          aria-label={t('notes.sort.label')}
-        >
-          <ArrowDownUp className="size-4" />
-        </Button>
-      </PopoverTrigger>
+      <IconTooltip label={t('notes.sort.label')}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="touch-target size-8"
+            aria-label={t('notes.sort.label')}
+          >
+            <ArrowDownUp className="size-4" />
+          </Button>
+        </PopoverTrigger>
+      </IconTooltip>
       <PopoverContent align="end" className="flex w-56 flex-col gap-3 p-3">
         <div className="flex flex-col gap-1.5">
           <p className="font-medium text-muted-foreground text-xs">{t('notes.sort.byLabel')}</p>

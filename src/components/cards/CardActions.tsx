@@ -1,6 +1,7 @@
 import { Archive, ArchiveRestore, RotateCcw, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { NoteColorButton } from '@/components/color-picker/NoteColorButton.tsx';
+import { IconTooltip } from '@/components/ui/tooltip.tsx';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { noteControlButton } from '@/lib/note-controls.ts';
 import type { Note } from '@/models.ts';
@@ -40,31 +41,35 @@ export function CardActions({
     <div data-slot="note-card-actions" className="ml-auto flex shrink-0 items-center gap-0.5">
       <NoteColorButton value={note.color} onChange={onColorChange} className={railButton} />
 
-      <button
-        type="button"
-        aria-label={t(isActive ? 'notes.archive' : 'notes.restore')}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (isActive) onArchive();
-          else onRestore();
-        }}
-        className={railButton}
-      >
-        <LeaveIcon className="size-4" aria-hidden />
-      </button>
-
-      {note.state !== 'trashed' && (
+      <IconTooltip label={t(isActive ? 'notes.archive' : 'notes.restore')}>
         <button
           type="button"
-          aria-label={t('notes.moveToTrash')}
+          aria-label={t(isActive ? 'notes.archive' : 'notes.restore')}
           onClick={(e) => {
             e.stopPropagation();
-            onTrash();
+            if (isActive) onArchive();
+            else onRestore();
           }}
           className={railButton}
         >
-          <Trash2 className="size-4" aria-hidden />
+          <LeaveIcon className="size-4" aria-hidden />
         </button>
+      </IconTooltip>
+
+      {note.state !== 'trashed' && (
+        <IconTooltip label={t('notes.moveToTrash')}>
+          <button
+            type="button"
+            aria-label={t('notes.moveToTrash')}
+            onClick={(e) => {
+              e.stopPropagation();
+              onTrash();
+            }}
+            className={railButton}
+          >
+            <Trash2 className="size-4" aria-hidden />
+          </button>
+        </IconTooltip>
       )}
     </div>
   );

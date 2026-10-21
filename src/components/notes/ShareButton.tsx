@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.tsx';
 import { LinkDialog } from '@/components/ui/LinkDialog.tsx';
+import { IconTooltip } from '@/components/ui/tooltip.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
 import { useSync } from '@/context/SyncProvider.tsx';
 import { shareLink } from '@/contract/index.ts';
@@ -78,21 +79,23 @@ export function ShareButton({ draft, className }: { draft: NoteDraft; className:
 
   return (
     <>
-      <button
-        type="button"
-        aria-label={t(share ? 'share.shared' : 'share.action')}
-        aria-haspopup="dialog"
-        disabled={busy}
-        onClick={() => void mint()}
-        className={cn(
-          className,
-          // The pin's pressed mark: an open link is chrome, so it takes the accent.
-          share &&
-            'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
-        )}
-      >
-        <Share2 className="size-4" aria-hidden />
-      </button>
+      <IconTooltip label={t(share ? 'share.shared' : 'share.action')}>
+        <button
+          type="button"
+          aria-label={t(share ? 'share.shared' : 'share.action')}
+          aria-haspopup="dialog"
+          disabled={busy}
+          onClick={() => void mint()}
+          className={cn(
+            className,
+            // The pin's pressed mark: an open link is chrome, so it takes the accent.
+            share &&
+              'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
+          )}
+        >
+          <Share2 className="size-4" aria-hidden />
+        </button>
+      </IconTooltip>
       <LinkDialog
         open={open}
         onOpenChange={setOpen}
