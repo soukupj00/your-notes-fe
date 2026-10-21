@@ -105,12 +105,12 @@ jobs:
       - run: docker build -t "$IMAGE:${{ github.sha }}" .
       - name: Smoke test
         run: |
-          docker run -d --name younotes-fe -p 8080:80 "$IMAGE:${{ github.sha }}"
+          docker run -d --name yournotes-fe -p 8080:80 "$IMAGE:${{ github.sha }}"
           for _ in $(seq 1 30); do
             curl -fs http://localhost:8080/ | grep -q '<title>YourNotes</title>' && break
             sleep 1
           done
-          curl -fs http://localhost:8080/settings | grep -q '<title>YourNotes</title>' || { docker logs younotes-fe; exit 1; }
+          curl -fs http://localhost:8080/settings | grep -q '<title>YourNotes</title>' || { docker logs yournotes-fe; exit 1; }
       - name: Log in to ghcr.io
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

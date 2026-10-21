@@ -153,9 +153,9 @@ test:smoke:
   allow_failure: true
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
-    - docker run -d --name younotes-fe -p 8080:80 "$IMAGE:$CI_COMMIT_SHORT_SHA"
+    - docker run -d --name yournotes-fe -p 8080:80 "$IMAGE:$CI_COMMIT_SHORT_SHA"
     - for i in $(seq 1 30); do wget -q -O - http://docker:8080/ | grep -q '<title>YourNotes</title>' && break; sleep 1; done
-    - wget -q -O - http://docker:8080/settings | grep -q '<title>YourNotes</title>' || { docker logs younotes-fe; exit 1; }
+    - wget -q -O - http://docker:8080/settings | grep -q '<title>YourNotes</title>' || { docker logs yournotes-fe; exit 1; }
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_COMMIT_TAG
