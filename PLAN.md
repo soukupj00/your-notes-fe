@@ -98,7 +98,7 @@ Found by the surveys and reviews, fixed by no slice.
 - `ThemeModeToggleButton` shows the sun while the theme is `system` over a dark OS.
 - `EntityActionButtons` hardcodes English Save, Delete and Edit, and `EditButton` is unused; `ColorPickerPanel`'s "Custom" is untranslated.
 - `/labels` create, merge and delete have no error path.
-- Backups are named `ruflo-backup-...` while the app calls itself YouNotes.
+- Backups are named `ruflo-backup-...` while the app calls itself YourNotes.
 - Four comments in `src/test/fakeServer.ts` and `fakeSync.ts` cite backend paths that no longer exist; `fakeSync.decide` is a hand copy of the backend's `decide.ts` that `contract:pull` could vendor.
 - `NoteFeed`'s fallback layout for a browser without `ResizeObserver` stamps no `data-note-feed-id`, so there the Tour's step 3 finds no card and the sweep's wait is trivially true; `targets.ts` says both layouts stamp it.
 - A cloned Attachment keeps its source's `thumbnailId`, so two rows name one server blob; this covers the editor's paste clone and the Conflicted Copy, and the impact depends on how the backend sweeps blobs.

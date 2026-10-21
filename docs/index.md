@@ -2,12 +2,12 @@
 layout: home
 
 hero:
-  name: YouNotes
+  name: YourNotes
   text: Notes, checklists, drawings and photos, on your devices
   tagline: Synced by a server you own. A notes app in the spirit of Google Keep, without an account at a company.
   image:
     src: /screenshots/mobile.png
-    alt: YouNotes on a phone, showing a wall of Notes
+    alt: YourNotes on a phone, showing a wall of Notes
   actions:
     - theme: brand
       text: Get the app
@@ -24,7 +24,7 @@ features:
   - title: Labels and colours
     details: Give a Note a colour and one or more labels, pin the ones you need most, and find the rest again by the colour you remember.
   - title: Syncs between your Devices
-    details: Run the YouNotes server at home and your phone, tablet and laptop all show the same Notes, a few seconds after you change one.
+    details: Run the YourNotes server at home and your phone, tablet and laptop all show the same Notes, a few seconds after you change one.
   - title: Make it yours
     details: Light or dark, a colour-blind palette, roomy or compact, and an editor toolbar with the buttons you use, in the order you like.
   - title: Yours to run
