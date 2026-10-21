@@ -111,6 +111,29 @@ describe('TaskItem extension', () => {
     }
   });
 
+  it("keeps focus on the moved row's grip, so the arrows can keep moving it", () => {
+    const mounted = new Editor({
+      element: document.body.appendChild(document.createElement('div')),
+      extensions: [Document, Paragraph, Text, TaskList, TaskItem],
+      content: list(item('A'), item('B'), item('C')),
+    });
+    try {
+      const focusedRow = () => document.activeElement?.closest('li')?.textContent;
+      (mounted.view.dom.querySelector('.task-item-grip') as HTMLElement).focus();
+
+      for (const _ of [1, 2]) {
+        document.activeElement?.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })
+        );
+      }
+
+      expect(labels(mounted)).toEqual(['B', 'C', 'A']);
+      expect(focusedRow()).toBe('A');
+    } finally {
+      mounted.destroy();
+    }
+  });
+
   it('serialises no grip: the stored Body is the same markup as before', () => {
     expect(editor.getHTML()).not.toContain('button');
     expect(editor.getHTML()).not.toContain('grip');

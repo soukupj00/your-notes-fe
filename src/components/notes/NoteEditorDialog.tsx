@@ -275,6 +275,14 @@ export function NoteEditorDialog({
             dirtyRef.current = true;
             setHeader(e.target.value);
           }}
+          // Not mid-composition: Safari reports the Enter that commits an IME word as key 229.
+          onKeyDown={(e) => {
+            if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent.isComposing || e.keyCode === 229) {
+              return;
+            }
+            e.preventDefault();
+            editorRef.current?.focus('start');
+          }}
           placeholder={t('notes.titlePlaceholder')}
           aria-label={t('notes.titlePlaceholder')}
           className="w-full bg-transparent font-semibold text-foreground text-xl outline-none placeholder:text-muted-foreground"

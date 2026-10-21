@@ -1,4 +1,5 @@
 import { type TaskItemOptions, TaskItem as TiptapTaskItem } from '@tiptap/extension-list';
+import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { startTaskItemDrag } from './taskItemDrag';
 
 export interface TaskItemExtensionOptions extends TaskItemOptions {
@@ -20,6 +21,13 @@ const GRIP_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
   '<circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/>' +
   '<circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>';
+
+/** Document position of a list's `index`th child, the list's content starting at `start`. */
+function childPos(list: ProseMirrorNode, start: number, index: number): number {
+  let pos = start;
+  for (let i = 0; i < index; i++) pos += list.child(i).nodeSize;
+  return pos;
+}
 
 /** Adds `moveTaskItem` and a reorder grip driven by pointer or arrow keys. The grip lives
  *  only in the editable node view; `renderHTML` stays upstream's, so the stored Body and
@@ -51,10 +59,7 @@ export const TaskItem = TiptapTaskItem.extend<TaskItemExtensionOptions>({
           const listStart = $pos.start();
           tr.delete(pos, pos + node.nodeSize);
           // Offsets in the list after the removal.
-          let insertAt = listStart;
-          const remaining = tr.doc.resolve(listStart).parent;
-          for (let i = 0; i < to; i++) insertAt += remaining.child(i).nodeSize;
-          tr.insert(insertAt, node);
+          tr.insert(childPos(tr.doc.resolve(listStart).parent, listStart, to), node);
           return true;
         },
     };
@@ -88,9 +93,16 @@ export const TaskItem = TiptapTaskItem.extend<TaskItemExtensionOptions>({
         event.preventDefault();
         const pos = getPos();
         if (typeof pos !== 'number') return;
-        const index = editor.state.doc.resolve(pos).index();
-        move(event.key === 'ArrowUp' ? Math.max(0, index - 1) : index + 1);
-        grip.focus();
+        const $pos = editor.state.doc.resolve(pos);
+        const to = event.key === 'ArrowUp' ? Math.max(0, $pos.index() - 1) : $pos.index() + 1;
+        if (!editor.commands.moveTaskItem({ pos, to })) return;
+        // The move rebuilds the row's node view, so focus follows to the new row's grip.
+        const listStart = $pos.start();
+        const moved = editor.view.nodeDOM(
+          childPos(editor.state.doc.resolve(listStart).parent, listStart, to)
+        );
+        if (moved instanceof HTMLElement)
+          moved.querySelector<HTMLElement>('.task-item-grip')?.focus();
       });
 
       item.prepend(grip);

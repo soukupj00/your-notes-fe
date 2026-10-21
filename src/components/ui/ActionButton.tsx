@@ -4,7 +4,7 @@ import * as React from 'react';
 import { type IconName, icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger, useTooltipFloor } from '@/components/ui/tooltip';
 import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { getShortcutKeys } from '@/lib/shortcut-keys.ts';
 import { cn } from '@/lib/utils';
@@ -63,6 +63,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
     // On a touch device a shortcut is noise in the one place the user reads the
     // button's name, so it is hidden.
     const finePointer = useFinePointer();
+    const floor = useTooltipFloor();
 
     // Flattens Button's filled `default` variant with classes rather than `variant`,
     // because `Comp` is a union and TS only sees Toggle's narrower variant type.
@@ -75,8 +76,8 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
     const Icon = icon ? icons[icon] : undefined;
 
     return (
-      <Tooltip>
-        <TooltipTrigger asChild>
+      <Tooltip {...floor.root}>
+        <TooltipTrigger asChild {...floor.trigger}>
           <Comp
             ref={ref}
             onClick={action}
@@ -107,7 +108,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
         {/* Inside a menu the name is already on the row, and a tooltip would float
             over the popover rather than beside the row. */}
         {tooltip && showTooltip && menuRowLabel === null && (
-          <TooltipContent side="top" align="center" {...tooltipOptions}>
+          <TooltipContent side="top" align="center" {...tooltipOptions} {...floor.content}>
             <div className="flex max-w-[200px] flex-col items-center gap-1 text-center">
               <span>{tooltip}</span>
               {/* Not `text-muted-foreground`: page ink measured ~1.1:1 on the accent

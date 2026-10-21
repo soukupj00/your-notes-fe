@@ -410,7 +410,7 @@
       "saving": "Ukládání…",
       "saved": "Uloženo"
     },
-    "searchPlaceholder": "Hledat poznámky…",
+    "searchPlaceholder": "Hledat",
     "trashNotice": "Poznámky v koši se po {{days}} dnech smažou.",
     "sort": {
       "label": "Seřadit poznámky",

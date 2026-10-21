@@ -129,10 +129,17 @@ describe('toolbar keyboard shortcuts', () => {
     expect(editor.getHTML()).not.toContain('background-color');
   });
 
-  it('falls back to a prompt for Mod+K when no link button is mounted', () => {
-    // The whole `format` family can be collapsed, in which case the popover
-    // lives inside a closed menu and nothing is listening.
+  // The whole `format` family can be collapsed, in which case the popover lives inside a
+  // closed menu, and the bubble menu's button is mounted but detached until a link is selected.
+  it.each([
+    ['no link button is mounted', () => {}],
+    [
+      'the only link button is off screen',
+      (editor: Editor) => editor.storage.link.prompt.registerButton(() => false),
+    ],
+  ])('falls back to a prompt for Mod+K when %s', (_, mount) => {
     const editor = createEditor();
+    mount(editor);
     const prompt = vi.spyOn(window, 'prompt').mockReturnValue('https://example.com');
     editor.commands.selectAll();
 
@@ -150,6 +157,7 @@ describe('toolbar keyboard shortcuts', () => {
     let opened = false;
     editor.storage.link.prompt.registerButton(() => {
       opened = true;
+      return true;
     });
 
     editor.view.someProp('handleKeyDown', (handler) =>

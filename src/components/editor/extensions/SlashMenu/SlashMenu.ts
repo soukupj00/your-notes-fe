@@ -1,7 +1,7 @@
 import { computePosition, flip, offset, shift } from '@floating-ui/dom';
 import { Extension } from '@tiptap/core';
 import { ReactRenderer } from '@tiptap/react';
-import Suggestion, { type SuggestionOptions } from '@tiptap/suggestion';
+import Suggestion, { exitSuggestion, type SuggestionOptions } from '@tiptap/suggestion';
 import type { AttachmentDeps } from '../attachments/deps';
 import type { TFunction } from '../button-types';
 import { SlashMenuList, type SlashMenuListHandle } from './SlashMenuList';
@@ -38,6 +38,7 @@ function createRenderer(t: TFunction): SuggestionOptions<SlashItem>['render'] {
   return () => {
     let component: ReactRenderer<SlashMenuListHandle> | null = null;
     let container: HTMLElement | null = null;
+    let closeOnEscape: ((event: KeyboardEvent) => void) | null = null;
 
     const place = (clientRect: (() => DOMRect | null) | null | undefined) => {
       const rect = clientRect?.();
@@ -67,6 +68,17 @@ function createRenderer(t: TFunction): SuggestionOptions<SlashItem>['render'] {
         container.appendChild(component.element);
         document.body.appendChild(container);
         place(props.clientRect);
+
+        // The note dialog closes on Escape in the document's capture phase, before the editor
+        // sees the key, so the menu takes it earlier still, on window.
+        const { view } = props.editor;
+        closeOnEscape = (event) => {
+          if (event.key !== 'Escape') return;
+          event.preventDefault();
+          event.stopPropagation();
+          exitSuggestion(view);
+        };
+        window.addEventListener('keydown', closeOnEscape, { capture: true });
       },
 
       onUpdate: (props) => {
@@ -74,16 +86,11 @@ function createRenderer(t: TFunction): SuggestionOptions<SlashItem>['render'] {
         place(props.clientRect);
       },
 
-      onKeyDown: (props) => {
-        if (props.event.key === 'Escape') {
-          // Let the plugin close itself, but swallow the key so Escape does not
-          // also bubble out and close the note dialog behind the menu.
-          return true;
-        }
-        return component?.ref?.onKeyDown(props) ?? false;
-      },
+      onKeyDown: (props) => component?.ref?.onKeyDown(props) ?? false,
 
       onExit: () => {
+        if (closeOnEscape) window.removeEventListener('keydown', closeOnEscape, { capture: true });
+        closeOnEscape = null;
         container?.remove();
         component?.destroy();
         container = null;

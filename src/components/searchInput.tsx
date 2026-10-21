@@ -9,41 +9,33 @@ import { Input } from '@/components/ui/input.tsx';
 import { useTourActive } from '@/context/TourProvider.tsx';
 import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { useNoteSearchState } from '@/hooks/useNoteSearchState.ts';
-import { getShortcutKey } from '@/lib/shortcut-keys.ts';
+import { getShortcutKey, IS_MAC } from '@/lib/shortcut-keys.ts';
 import { cn } from '@/lib/utils.ts';
 
-type SearchInputProps = React.ComponentProps<'div'> & {
-  /**
-   * Binds `mod+K`. Opt-in because the Navbar renders a desktop and a mobile bar, and two bindings
-   * would race to focus the hidden one. Whether the hint chip shows is Pointer Class's question
-   * (ADR 0016), not this prop's.
-   */
-  enableShortcut?: boolean;
-};
-
-function SearchInput({ className, enableShortcut = false, ...props }: SearchInputProps) {
+function SearchInput({ className, ...props }: React.ComponentProps<'div'>) {
   const { search, setSearch } = useNoteSearchState();
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const tourActive = useTourActive();
-  // Binding without a hint is fine (a Coarse phone may have a Bluetooth keyboard); a hint
-  // without a key is the promise ADR 0016 forbids.
-  const finePointer = useFinePointer();
-  const showShortcut = enableShortcut && finePointer;
+  // Every box binds the key (a Coarse phone may have a Bluetooth keyboard); only a Fine pointer
+  // is shown it (ADR 0016).
+  const showShortcut = useFinePointer();
 
-  // `enableOnFormTags` so search works from inside the note title too. Stood down during the
-  // Tour: the document-level binding fires through the scrim at a field the Tour made inert.
+  // Our own IS_MAC, as the editor and the chip use: the library's `mod` reads an old iPad as no Mac.
+  // Works from any field but never out of an open note, whose dialog keeps focus (in its body the key
+  // is Link). Stands down during the Tour and in whichever of the Navbar's two boxes CSS hides.
   useHotkeys(
-    'mod+k',
+    IS_MAC ? 'meta+k' : 'ctrl+k',
     () => {
       inputRef.current?.focus();
       inputRef.current?.select();
     },
     {
-      enabled: enableShortcut && !tourActive,
+      enabled: !tourActive,
       preventDefault: true,
       enableOnFormTags: true,
       enableOnContentEditable: true,
+      ignoreEventWhen: (e) => e.defaultPrevented || !inputRef.current?.getClientRects().length,
     }
   );
 

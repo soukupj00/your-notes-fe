@@ -13,6 +13,8 @@ type NoteColorPickerProps = {
   /** The stored palette token, or undefined for "no colour". */
   value?: string;
   onChange: (color?: string) => void;
+  /** A focused swatch's tooltip is the topmost layer, so it hears Escape before the popover does. */
+  onEscape?: () => void;
   className?: string;
 };
 
@@ -20,7 +22,7 @@ type NoteColorPickerProps = {
  * Deals in palette tokens, not CSS values, so a choice re-tints itself under another
  * theme; that is why it is not the hex-based `ColorPickerPanel`.
  */
-export function NoteColorPicker({ value, onChange, className }: NoteColorPickerProps) {
+export function NoteColorPicker({ value, onChange, onEscape, className }: NoteColorPickerProps) {
   const { t } = useTranslation();
 
   return (
@@ -61,7 +63,7 @@ export function NoteColorPicker({ value, onChange, className }: NoteColorPickerP
                   )}
                 </button>
               </TooltipTrigger>
-              <TooltipContent>{label}</TooltipContent>
+              <TooltipContent onEscapeKeyDown={onEscape}>{label}</TooltipContent>
             </Tooltip>
           );
         })}

@@ -3,6 +3,7 @@ import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from '@/components/editor/extensions/button-types';
+import { TooltipFloorProvider } from '@/components/ui/tooltip.tsx';
 import { cn } from '@/lib/utils.ts';
 import { canRenderItem } from './registry';
 import { resolveLayout } from './resolveLayout';
@@ -102,58 +103,61 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   const fade = compact && families.length > 0 ? { ...overflow, start: false } : overflow;
 
   return (
-    <div
-      ref={scrollRef}
-      data-testid="editor-toolbar"
-      data-width-class={widthClass}
-      data-overflow-start={fade.start || undefined}
-      data-overflow-end={fade.end || undefined}
-      style={compact ? edgeFadeStyle(fade) : undefined}
-      className={cn(
-        'flex items-center gap-1',
-        compact
-          ? // `justify-between` is a no-op once the bar overflows: editor/CLAUDE.md.
-            'justify-between overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&_button]:shrink-0'
-          : 'flex-wrap',
-        // The sheet drops its own padding below `sm:`, so this bar clears the home
-        // indicator and the keyboard itself. `--keyboard-inset` is 0 wherever the
-        // layout viewport already shrank (`useKeyboardInset`), as on Android.
-        stickyOnMobile &&
-          'sticky bottom-0 z-10 order-last bg-note-surface pt-2 pb-[calc(0.5rem+var(--safe-bottom)+var(--keyboard-inset))] sm:static sm:order-none sm:py-0',
-        className
-      )}
-    >
-      {families.map(({ family, items, collapsed }, index) => {
-        // The first family stays put while the rest scrolls, so undo (first by
-        // default) is always in reach on a phone. Why only while the row scrolls,
-        // and why that cannot oscillate: editor/CLAUDE.md.
-        const pinned = compact && scrolls && index === 0;
-        const content = collapsed ? (
-          <ToolbarFamilyMenu family={family} items={items} editor={editor} t={t} />
-        ) : (
-          items.map((item) => <ToolbarLeaf key={item.id} item={item} editor={editor} t={t} />)
-        );
+    // Compact's one row sits on the bottom edge, where above is the only room for a tooltip.
+    <TooltipFloorProvider value={compact ? null : scrollRef}>
+      <div
+        ref={scrollRef}
+        data-testid="editor-toolbar"
+        data-width-class={widthClass}
+        data-overflow-start={fade.start || undefined}
+        data-overflow-end={fade.end || undefined}
+        style={compact ? edgeFadeStyle(fade) : undefined}
+        className={cn(
+          'flex items-center gap-1',
+          compact
+            ? // `justify-between` is a no-op once the bar overflows: editor/CLAUDE.md.
+              'justify-between overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&_button]:shrink-0'
+            : 'flex-wrap',
+          // The sheet drops its own padding below `sm:`, so this bar clears the home
+          // indicator and the keyboard itself. `--keyboard-inset` is 0 wherever the
+          // layout viewport already shrank (`useKeyboardInset`), as on Android.
+          stickyOnMobile &&
+            'sticky bottom-0 z-10 order-last bg-note-surface pt-2 pb-[calc(0.5rem+var(--safe-bottom)+var(--keyboard-inset))] sm:static sm:order-none sm:py-0',
+          className
+        )}
+      >
+        {families.map(({ family, items, collapsed }, index) => {
+          // The first family stays put while the rest scrolls, so undo (first by
+          // default) is always in reach on a phone. Why only while the row scrolls,
+          // and why that cannot oscillate: editor/CLAUDE.md.
+          const pinned = compact && scrolls && index === 0;
+          const content = collapsed ? (
+            <ToolbarFamilyMenu family={family} items={items} editor={editor} t={t} />
+          ) : (
+            items.map((item) => <ToolbarLeaf key={item.id} item={item} editor={editor} t={t} />)
+          );
 
-        return (
-          // On Compact, `contents` keeps a family's buttons in the bar's own row so they
-          // spread; only a pinned family needs a box. On Wide a family wraps as one unit.
-          <div
-            key={family.id}
-            data-pinned={pinned || undefined}
-            className={
-              pinned
-                ? // No padding: a pin that cost width could latch itself on (editor/CLAUDE.md).
-                  'sticky left-0 z-10 flex shrink-0 items-center gap-1 bg-note-surface'
-                : compact
-                  ? 'contents'
-                  : 'flex items-center gap-1'
-            }
-          >
-            {content}
-          </div>
-        );
-      })}
-    </div>
+          return (
+            // On Compact, `contents` keeps a family's buttons in the bar's own row so they
+            // spread; only a pinned family needs a box. On Wide a family wraps as one unit.
+            <div
+              key={family.id}
+              data-pinned={pinned || undefined}
+              className={
+                pinned
+                  ? // No padding: a pin that cost width could latch itself on (editor/CLAUDE.md).
+                    'sticky left-0 z-10 flex shrink-0 items-center gap-1 bg-note-surface'
+                  : compact
+                    ? 'contents'
+                    : 'flex items-center gap-1'
+              }
+            >
+              {content}
+            </div>
+          );
+        })}
+      </div>
+    </TooltipFloorProvider>
   );
 };
 

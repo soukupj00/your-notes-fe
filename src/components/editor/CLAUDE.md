@@ -181,6 +181,7 @@ The commit goes to the selection captured when the popover opened, without focus
 ## Other extensions
 
 - **Mathematics** is the bundled TipTap extension: `$$...$$` inline, `$$$...$$$` block, or the toolbar button; clicking a rendered node edits it.
+- **Typography** skips its rules inside a formula still being typed, before the closing `$$` makes it a math node, or `x^2` and `->` would be rewritten out of the LaTeX.
 - **Clear** is not a mark: its button clears nodes and marks.
 - **Intent**: the `Editor` takes the open's Intent (`src/lib/intent.ts`) and acts on it once: start recording, open the drawing, insert the chosen files, play the first clip.
 

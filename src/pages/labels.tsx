@@ -55,6 +55,7 @@ function LabelRow({ tag, tags }: { tag: Tag; tags: Tag[] }) {
   const { t } = useTranslation();
   const { updateTag, deleteTag, mergeTags } = useTagActions();
   const [name, setName] = useState(tag.name);
+  const [colorOpen, setColorOpen] = useState(false);
   const [mergeTarget, setMergeTarget] = useState<Tag | null>(null);
   // A merge rewrites every note link for the label, so it is the one action here
   // that can visibly take a moment on a large database.
@@ -74,7 +75,7 @@ function LabelRow({ tag, tags }: { tag: Tag; tags: Tag[] }) {
 
   return (
     <li className="flex items-center gap-2 px-3 py-2">
-      <Popover>
+      <Popover open={colorOpen} onOpenChange={setColorOpen}>
         <PopoverTrigger asChild>
           <button
             type="button"
@@ -89,6 +90,7 @@ function LabelRow({ tag, tags }: { tag: Tag; tags: Tag[] }) {
           <NoteColorPicker
             value={tag.color}
             onChange={(color) => void updateTag(tag.id, { color })}
+            onEscape={() => setColorOpen(false)}
           />
         </PopoverContent>
       </Popover>

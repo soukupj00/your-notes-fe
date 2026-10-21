@@ -1,4 +1,5 @@
 import { Palette } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NoteColorPicker } from '@/components/color-picker/NoteColorPicker.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
@@ -17,9 +18,10 @@ interface NoteColorButtonProps {
  */
 export function NoteColorButton({ value, onChange, className }: NoteColorButtonProps) {
   const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         aria-label={t('notes.color')}
         // Every mount sits inside a larger click target (the card opens the editor,
@@ -30,7 +32,7 @@ export function NoteColorButton({ value, onChange, className }: NoteColorButtonP
         <Palette className="size-4" aria-hidden />
       </PopoverTrigger>
       <PopoverContent align="end" className="w-auto p-2" onClick={(e) => e.stopPropagation()}>
-        <NoteColorPicker value={value} onChange={onChange} />
+        <NoteColorPicker value={value} onChange={onChange} onEscape={() => setOpen(false)} />
       </PopoverContent>
     </Popover>
   );

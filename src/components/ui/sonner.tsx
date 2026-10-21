@@ -10,6 +10,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps['theme']}
       className="toaster group"
+      // No hotkey: its Alt+T is Option+T, a typed character, on a Mac. Sonner has no off switch and
+      // `[]` matches every key, so this names a code no key has, which its label then strips to "".
+      hotkey={['Key']}
       toastOptions={{
         classNames: {
           toast:

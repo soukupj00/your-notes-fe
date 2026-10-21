@@ -1,6 +1,6 @@
 // Whether this is a Mac cannot change during a session, and a module body runs
 // once, so this is the cache - no lazy branch needed.
-const IS_MAC = (() => {
+export const IS_MAC = (() => {
   const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
   const platform =
     typeof nav.userAgentData?.platform === 'string'
