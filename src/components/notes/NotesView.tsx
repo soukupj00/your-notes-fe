@@ -64,7 +64,7 @@ export function NotesView({
 
       <TagFilterBar />
 
-      <NoteContent scope={scope} onSelect={openNote} />
+      <NoteContent scope={scope} openNoteId={openNoteId} onSelect={openNote} />
 
       {showCapture && <QuickCaptureBar onStart={start} />}
 

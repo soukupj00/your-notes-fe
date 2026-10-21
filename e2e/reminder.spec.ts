@@ -112,7 +112,9 @@ test.describe('Reminders', () => {
     await page.getByRole('button', { name: 'Reminder' }).click();
     const popover = page.getByTestId('reminder-popover');
     // Measured after the entrance, which scales the box.
-    await popover.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
+    await popover.evaluate((el) =>
+      Promise.all(el.getAnimations().map((a: { finished: Promise<unknown> }) => a.finished))
+    );
     const box = await popover.boundingBox();
     expect(box?.y).toBeGreaterThanOrEqual(0);
     expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(300);

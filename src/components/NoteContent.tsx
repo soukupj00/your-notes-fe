@@ -1,4 +1,3 @@
-import { useSearch } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { NoteFeed } from '@/components/notes/NoteFeed.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
@@ -6,7 +5,6 @@ import { useViewMode } from '@/context/viewModeProvider.tsx';
 import { type NoteFeedScope, useNoteFeed } from '@/hooks/data/useNoteFeed.ts';
 import { useNoteSearchState } from '@/hooks/useNoteSearchState.ts';
 import type { Intent } from '@/lib/intent.ts';
-import type { NoteSearchParams } from '@/lib/note-search-params.ts';
 
 function emptyKeyFor(scope: NoteFeedScope): string {
   if (scope.state === 'archived') return 'archived';
@@ -16,14 +14,16 @@ function emptyKeyFor(scope: NoteFeedScope): string {
 
 export function NoteContent({
   scope,
+  openNoteId,
   onSelect,
 }: {
   scope: NoteFeedScope;
+  /** The Note open in the editor; its closing re-ranks the feed. */
+  openNoteId?: string | null;
   onSelect: (id: string, intent?: Intent) => void;
 }) {
   const { search } = useNoteSearchState();
-  const { note } = useSearch({ strict: false }) as NoteSearchParams;
-  const { notes, loading } = useNoteFeed(scope, { ...search, note });
+  const { notes, loading } = useNoteFeed(scope, { ...search, note: openNoteId ?? undefined });
   const { viewMode } = useViewMode();
   const { t } = useTranslation();
 
