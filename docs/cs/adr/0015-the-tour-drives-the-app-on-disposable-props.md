@@ -1,6 +1,6 @@
 # 0015 - Průvodce ovládá aplikaci na jednorázových rekvizitách
 
-- Stav: přijato
+- Stav: nahrazeno [ADR 0023](./0023-the-tour-points-at-settings.md)
 - Datum: 2026-08-09
 
 ## Kontext

@@ -21,7 +21,7 @@ Rozhraní mluví jazykem domény: o poznámkách, štítcích a přílohách, ni
   Každá metoda je sama o sobě atomická, takže volající nikdy neotevírá transakci.
 - Čtení, které UI sleduje, vrací `Live<T>`, drobný observable s jedinou metodou, `subscribe`.
   Doručí aktuální hodnotu a pak každou hodnotu, kterou vyprodukuje pozdější zápis; React ji čte přes `useLive`.
-- `meta` je malé úložiště klíč-hodnota pro evidenci kolem řádků: výchozí stavy rekvizit průvodce, kurzor synchronizace, připojený účet.
+- `meta` je malé úložiště klíč-hodnota pro evidenci kolem řádků: kurzor synchronizace, připojený účet.
   Předvolby tu nejsou; žijí v `localStorage`, protože patří zařízení.
 - `sync` je to, co aplikace dluží serveru, a volá ho jen synchronizační engine.
 - `exportAll` a `replaceAll` jsou to, co záloha čte a zapisuje.

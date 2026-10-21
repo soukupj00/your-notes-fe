@@ -6,7 +6,7 @@ IndexedDB byla zvolena před alternativami kvůli skutečnému ukládání blob�
 
 Samotné schéma ADR 0020 nezměnilo - aplikace se ho jen už přímo nedotýká.
 Existují dvě implementace `LocalStore`: Dexie (níže) a implementace v paměti (`src/data/memory/`).
-Předvolby se z tabulky `settings` přesunuly do `localStorage`; zbývá v ní evidence pod `meta` (dnes výchozí stavy rekvizit průvodce).
+Předvolby se z tabulky `settings` přesunuly do `localStorage`; zbývá v ní evidence pod `meta` (kurzor synchronizace a připojený účet).
 
 ## Entitní model
 
@@ -69,8 +69,8 @@ Body návrhu, které stojí za obhajobu v textu práce:
 - **Tělo poznámky je páteří agregátu.** Přílohy a seznamy úkolů žijí *uvnitř* HTML těla poznámky jako odkazy (`data-attachment-id`), ne vedle něj jako sourozenecké kolekce. Tabulka `attachments` vlastní bajty; tělo poznámky rozhoduje, které se zobrazí a kde. Právě tento jediný fakt později určuje model konfliktů při synchronizaci (viz [04-sync.md](./04-sync.md)).
 - **Jedna obecná tabulka `attachments`** s diskriminátorem `kind` nahradila plánované tabulky podle typu (v2). Každý další mediální slice od té doby využívá stejné úložiště, akce i GC.
 - **`NoteTag` je skutečná spojovací tabulka** (složený primární klíč `[noteId+tagId]`), protože štítek má nezávislý život. Vazba je vlastním synchronizovaným řádkem právě proto, aby označování štítkem nikdy nekolidovalo s psaním.
-- **`settings` je úložiště klíč-hodnota**, vystavené jako `meta` lokálního úložiště; drží výchozí stavy rekvizit průvodce a evidenci synchronizace (kurzor a připojený účet) a hodnoty se tam, kde je to potřeba, stále verzují samy.
-- **Osiřelé přílohy se uklízejí, nehoní se.** Odebrání odkazu na přílohu bajty hned nesmaže (vrácení zpět v editoru je může obnovit); úklidová rekonciliace při zavření editoru a při startu aplikace uvolní neodkazované řádky. Trvalé smazání (uplynutí lhůty v koši nebo rekvizity průvodce) používá stejný úklidový mechanismus.
+- **`settings` je úložiště klíč-hodnota**, vystavené jako `meta` lokálního úložiště; drží evidenci synchronizace (kurzor a připojený účet) a hodnoty se tam, kde je to potřeba, stále verzují samy.
+- **Osiřelé přílohy se uklízejí, nehoní se.** Odebrání odkazu na přílohu bajty hned nesmaže (vrácení zpět v editoru je může obnovit); úklidová rekonciliace při zavření editoru a při startu aplikace uvolní neodkazované řádky. Trvalé smazání (uplynutí lhůty v koši) používá stejný úklidový mechanismus.
 
 Existuje jedna denormalizace: `Note.tags?: Tag[]` je volitelné předem načtené přepsání, které využívá `NoteCard` (bez něj se vrací k živému dotazu `useTagsForNote`). Zdrojem pravdy zůstává spojovací tabulka.
 
