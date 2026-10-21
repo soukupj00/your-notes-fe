@@ -17,4 +17,14 @@ describe('Toaster', () => {
 
     expect(document.activeElement).toBe(document.body);
   });
+
+  it('sets toasts in the app font, not Sonner’s own system stack', async () => {
+    render(<Toaster />);
+    act(() => void toast('Saved'));
+    await screen.findByText('Saved');
+
+    expect(document.querySelector<HTMLElement>('[data-sonner-toaster]')?.style.fontFamily).toBe(
+      'var(--font-sans)'
+    );
+  });
 });
