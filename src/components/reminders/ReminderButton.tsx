@@ -21,16 +21,20 @@ type ReminderButtonProps = {
 const FIELD =
   'h-9 w-full rounded-control border border-input bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:[color-scheme:dark]';
 
+const today = () => toLocalInput(new Date()).slice(0, 10);
+
 /**
  * One primary action that both saves and hands off (ADR 0021): a Reminder the calendar was
  * never offered would promise an alarm nothing sounds. Native inputs, no picker library.
  */
 export function ReminderButton({ reminder, onSet, onClear, className }: ReminderButtonProps) {
   const { t } = useTranslation();
-  const whenId = useId();
+  const dateId = useId();
+  const timeId = useId();
   const repeatId = useId();
   const [open, setOpen] = useState(false);
-  const [when, setWhen] = useState('');
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
   const [repeat, setRepeat] = useState<ReminderRepeat | 'none'>('none');
   const [busy, setBusy] = useState(false);
 
@@ -38,11 +42,15 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
     // Re-seed from the stored Reminder on every open, so an abandoned edit
     // does not come back as if it had been saved.
     if (next) {
-      setWhen(reminder?.remindAt ?? '');
+      const [storedDate, storedTime = ''] = reminder?.remindAt.split('T') ?? [today()];
+      setDate(storedDate);
+      setTime(storedTime);
       setRepeat(reminder?.repeat ?? 'none');
     }
     setOpen(next);
   };
+
+  const when = date && time ? `${date}T${time}` : '';
 
   const submit = async () => {
     setBusy(true);
@@ -77,19 +85,35 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
           </button>
         </PopoverTrigger>
       </IconTooltip>
-      <PopoverContent align="end" data-testid="reminder-popover" className="w-72 space-y-3 p-3">
-        <div className="space-y-1">
-          <label htmlFor={whenId} className="text-muted-foreground text-xs">
-            {t('reminders.when')}
-          </label>
-          <input
-            id={whenId}
-            type="datetime-local"
-            value={when}
-            min={toLocalInput(new Date())}
-            onChange={(e) => setWhen(e.target.value)}
-            className={FIELD}
-          />
+      <PopoverContent align="end" data-testid="reminder-popover" className="w-80 space-y-3 p-3">
+        {/* Two fields, not one datetime-local: Firefox reports that as empty until both halves
+            are picked, so a new Reminder could not start on today (feedback B2). */}
+        <div className="grid grid-cols-[3fr_2fr] gap-2">
+          <div className="space-y-1">
+            <label htmlFor={dateId} className="text-muted-foreground text-xs">
+              {t('reminders.date')}
+            </label>
+            <input
+              id={dateId}
+              type="date"
+              value={date}
+              min={today()}
+              onChange={(e) => setDate(e.target.value)}
+              className={FIELD}
+            />
+          </div>
+          <div className="space-y-1">
+            <label htmlFor={timeId} className="text-muted-foreground text-xs">
+              {t('reminders.time')}
+            </label>
+            <input
+              id={timeId}
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className={FIELD}
+            />
+          </div>
         </div>
 
         <div className="space-y-1">

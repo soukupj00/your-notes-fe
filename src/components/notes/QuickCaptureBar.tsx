@@ -48,7 +48,7 @@ export function QuickCaptureBar({ onStart }: { onStart: (intent?: Intent) => voi
           side="top"
           align={left ? 'start' : 'end'}
           sideOffset={12}
-          className="w-auto border-0 bg-transparent p-0 shadow-none"
+          className="max-h-none w-auto overflow-visible border-0 bg-transparent p-0 shadow-none"
         >
           {/* `flex-col-reverse`, not a reversed array: the first start sits nearest the thumb and
               stays first in tab and screen-reader order. */}

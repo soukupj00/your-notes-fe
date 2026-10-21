@@ -476,7 +476,8 @@
   },
   "reminders": {
     "button": "Připomenutí",
-    "when": "Datum a čas",
+    "date": "Datum",
+    "time": "Čas",
     "repeat": "Opakování",
     "repeats": {
       "none": "Neopakuje se",

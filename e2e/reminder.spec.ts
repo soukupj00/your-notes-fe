@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { expect, type Page, test } from '@playwright/test';
-import { skipTour } from './helpers';
+import { skipTour, startNote } from './helpers';
 
 /**
  * Reminders' acceptance test (ADR 0021). The app never notifies, so what can be pinned is the
@@ -25,7 +25,8 @@ async function openNewNote(page: Page, isMobile: boolean) {
 
 async function setWeeklyReminder(page: Page) {
   await page.getByRole('button', { name: 'Reminder' }).click();
-  await page.getByLabel('Date and time').fill('2030-03-04T09:00');
+  await page.getByLabel('Date').fill('2030-03-04');
+  await page.getByLabel('Time').fill('09:00');
   await page.getByLabel('Repeat').selectOption('weekly');
 }
 
@@ -69,7 +70,7 @@ test.describe('Reminders', () => {
 
     // Re-clicking the bell while the popover is open would toggle it shut, so wait for it to close.
     // Wait on the field, not the primary action: that renames itself one render before the close.
-    await expect(page.getByLabel('Date and time')).toBeHidden();
+    await expect(page.getByLabel('Time')).toBeHidden();
 
     await page.getByRole('button', { name: 'Reminder' }).click();
 
@@ -90,6 +91,34 @@ test.describe('Reminders', () => {
 
     await expect(page.getByText('Call the dentist')).toBeVisible();
     await expect(page.getByTestId('reminder-chip')).toHaveCount(0);
+  });
+
+  // A phone on its side leaves room on neither side of the bell (feedback B3): the popover must
+  // stay on screen and scroll rather than lose its top edge.
+  test('on a short screen the popover stays on screen and every action is reachable', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 915, height: 300 });
+    await freshWall(page);
+    // Not `openNewNote`: at this width even the phone shows the desktop bar.
+    await startNote(page, 'Note');
+    await page.getByRole('textbox', { name: 'Title' }).fill('Call the dentist');
+    await setWeeklyReminder(page);
+    const downloading = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Add to calendar' }).click();
+    await downloading;
+    await expect(page.getByLabel('Time')).toBeHidden();
+
+    await page.getByRole('button', { name: 'Reminder' }).click();
+    const popover = page.getByTestId('reminder-popover');
+    // Measured after the entrance, which scales the box.
+    await popover.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
+    const box = await popover.boundingBox();
+    expect(box?.y).toBeGreaterThanOrEqual(0);
+    expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(300);
+
+    await page.getByRole('button', { name: 'Clear reminder' }).click();
+    await expect(page.getByLabel('Time')).toBeHidden();
   });
 
   test('on a phone that can share files, the calendar file goes to the share sheet', async ({

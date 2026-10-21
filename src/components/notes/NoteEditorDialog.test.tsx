@@ -315,9 +315,10 @@ describe('NoteEditorDialog', () => {
   // hand-off are the two cases worth pinning: the fields exist only afterwards.
   async function setReminderFromBar() {
     await userEvent.click(screen.getByRole('button', { name: 'reminders.button' }));
-    fireEvent.change(await screen.findByLabelText('reminders.when'), {
-      target: { value: '2030-03-04T09:00' },
+    fireEvent.change(await screen.findByLabelText('reminders.date'), {
+      target: { value: '2030-03-04' },
     });
+    fireEvent.change(screen.getByLabelText('reminders.time'), { target: { value: '09:00' } });
     await userEvent.selectOptions(screen.getByLabelText('reminders.repeat'), 'weekly');
     await userEvent.click(screen.getByRole('button', { name: 'reminders.addToCalendar' }));
   }
