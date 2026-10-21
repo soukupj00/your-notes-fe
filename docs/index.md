@@ -15,6 +15,9 @@ hero:
     - theme: alt
       text: How it works
       link: /how-it-works
+    - theme: alt
+      text: Try it in your browser
+      link: https://your-notes-fe.vercel.app/
 
 features:
   - title: Works offline

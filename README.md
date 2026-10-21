@@ -4,6 +4,9 @@ A self-hosted, open-source note-taking app you run yourself, as an alternative t
 Capture notes, checklists, drawings, photos, audio, video and files, organise them with labels and colours, and use it fully offline.
 It is a PWA: open it in a browser and install it to the home screen or desktop.
 
+**Try it** at [your-notes-fe.vercel.app](https://your-notes-fe.vercel.app/): YourNotes works fully there on one Device, offline and without an account.
+Syncing between Devices needs your own server, which serves the app itself.
+
 This repository is the app.
 The [YouNotes server](https://soukupj00.github.io/your-notes-be/) keeps your Devices in step and serves the app from your own home.
 
