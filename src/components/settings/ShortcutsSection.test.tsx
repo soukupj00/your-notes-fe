@@ -40,16 +40,15 @@ describe('ShortcutsSection', () => {
   });
 
   /**
-   * The caps show glyphs because that is what is printed on the keyboard; the
-   * accessible copy spells them, because a screen reader reads `⇧` as
-   * punctuation or not at all.
+   * The caps show what is printed on the keyboard (a word off Mac, `⌘ ⌥ ⇧` on one); the
+   * accessible copy spells them, because a screen reader reads `⇧` as punctuation or not at all.
    */
-  it('draws the modifier as a glyph and announces it as a word', () => {
+  it('draws the modifier as printed and announces it as a word', () => {
     stubPointer(true);
     const { container } = render(<ShortcutsSection />);
 
     const caps = [...container.querySelectorAll('kbd')].map((cap) => cap.textContent);
-    expect(caps).toContain('⇧');
+    expect(caps).toContain('Shift');
 
     const row = screen.getByText('editor.strike.tooltip').closest('div');
     expect(row).toHaveTextContent('Control + Shift + S');

@@ -17,7 +17,7 @@ type ShortcutKeyResult = {
 const shortcutKeyMap: Record<string, ShortcutKeyResult> = {
   mod: IS_MAC ? { symbol: '⌘', readable: 'Command' } : { symbol: 'Ctrl', readable: 'Control' },
   alt: IS_MAC ? { symbol: '⌥', readable: 'Option' } : { symbol: 'Alt', readable: 'Alt' },
-  shift: { symbol: '⇧', readable: 'Shift' },
+  shift: IS_MAC ? { symbol: '⇧', readable: 'Shift' } : { symbol: 'Shift', readable: 'Shift' },
 };
 
 export const getShortcutKey = (key: string): ShortcutKeyResult =>

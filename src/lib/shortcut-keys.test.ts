@@ -20,7 +20,7 @@ afterEach(() => {
 describe('getShortcutKeys', () => {
   it.each([
     ['a Mac', MAC, ['⌘', '⌥', '⇧', 'B'], ['Command', 'Option', 'Shift', 'B']],
-    ['anything else', WINDOWS, ['Ctrl', 'Alt', '⇧', 'B'], ['Control', 'Alt', 'Shift', 'B']],
+    ['anything else', WINDOWS, ['Ctrl', 'Alt', 'Shift', 'B'], ['Control', 'Alt', 'Shift', 'B']],
   ])('spells Mod, Alt, Shift and a letter for %s', async (_name, ua, symbols, readable) => {
     const { getShortcutKeys } = await load(ua);
 
