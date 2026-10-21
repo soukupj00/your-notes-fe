@@ -3,7 +3,6 @@ import Document from '@tiptap/extension-document';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { TextStyle } from '@tiptap/extension-text-style';
-import { Typography } from '@tiptap/extension-typography';
 import { Placeholder } from '@tiptap/extensions';
 import { createAudio } from './Audio';
 import type { AttachmentDeps } from './attachments/deps';
@@ -38,6 +37,7 @@ import { createSlashMenu } from './SlashMenu';
 import { TaskItem } from './TaskItem';
 import { ChecklistFlip, TaskList } from './TaskList';
 import { TextAlign } from './TextAlign';
+import { Typography } from './Typography';
 import { createVideo } from './Video';
 
 interface BuildOptions {

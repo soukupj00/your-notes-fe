@@ -1,5 +1,5 @@
 import type { Editor } from '@tiptap/core';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActionButton } from '@/components/ui/ActionButton.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Input } from '@/components/ui/input.tsx';
@@ -20,6 +20,7 @@ export interface LinkButtonProps {
 export function LinkButton({ editor, t, tooltip, shortcutKeys }: LinkButtonProps) {
   const [open, setOpen] = useState(false);
   const [href, setHref] = useState('');
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const openPopover = useCallback(
     (next: boolean) => {
@@ -31,10 +32,15 @@ export function LinkButton({ editor, t, tooltip, shortcutKeys }: LinkButtonProps
   );
 
   // `Mod+K` opens this popover rather than a second, different link UI. The
-  // extension falls back to a prompt when no button is mounted, so the shortcut
+  // extension falls back to a prompt when no button is on screen, so the shortcut
   // still works when the whole format family is collapsed.
   useEffect(
-    () => editor.storage.link.prompt.registerButton(() => openPopover(true)),
+    () =>
+      editor.storage.link.prompt.registerButton(() => {
+        if (!triggerRef.current?.isConnected) return false;
+        openPopover(true);
+        return true;
+      }),
     [editor, openPopover]
   );
 
@@ -65,6 +71,7 @@ export function LinkButton({ editor, t, tooltip, shortcutKeys }: LinkButtonProps
     <Popover open={open} onOpenChange={openPopover}>
       <PopoverTrigger asChild>
         <ActionButton
+          ref={triggerRef}
           shortcutKeys={shortcutKeys}
           icon="Link2"
           tooltip={tooltip}
@@ -72,7 +79,15 @@ export function LinkButton({ editor, t, tooltip, shortcutKeys }: LinkButtonProps
           isActive={() => editor.isActive('link')}
         />
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-72">
+      <PopoverContent
+        align="start"
+        className="w-72"
+        // Back to the text, not the trigger, unless a click outside already put focus elsewhere.
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          if (document.activeElement === document.body) editor.commands.focus();
+        }}
+      >
         <form
           className="flex items-center gap-2"
           onSubmit={(event) => {

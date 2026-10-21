@@ -140,19 +140,6 @@ describe('search state in the URL', () => {
     expect(screen.getByTestId('note-card')).toHaveTextContent('Car service');
   });
 
-  // The one global shortcut for now. It has to reach the box from anywhere,
-  // including from inside another field, which is why it is not scoped.
-  it('focuses the search box on mod+K, even while typing elsewhere', async () => {
-    await seedSearchable();
-    renderAt('/');
-
-    const box = (await screen.findAllByRole('searchbox'))[0];
-    expect(box).not.toHaveFocus();
-
-    await userEvent.keyboard('{Control>}k{/Control}');
-    expect(box).toHaveFocus();
-  });
-
   it('offers no label filters until a search is under way', async () => {
     await seedSearchable();
     renderAt('/');

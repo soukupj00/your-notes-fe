@@ -1,28 +1,29 @@
 import type { Editor } from '@tiptap/core';
 
 export interface LinkPromptCoordinator {
-  /** True when a mounted `LinkButton` took the request and opened its popover. */
+  /** True when a `LinkButton` on screen took the request and opened its popover. */
   requestOpen(): boolean;
-  registerButton(open: () => void): () => void;
+  /** `open` returns false when its trigger is off screen: the bubble menu keeps its button
+   *  mounted while hidden, and a popover anchored to nothing opens in the page corner. */
+  registerButton(open: () => boolean): () => void;
 }
 
 /** Unlike the audio coordinator, not pending-then-fire: an untaken request falls back to a
  *  prompt at once (no button is mounted while `format` is collapsed), because a shortcut
  *  that silently does nothing is worse than an ugly prompt. */
 export function createLinkPromptCoordinator(): LinkPromptCoordinator {
-  let current: (() => void) | null = null;
+  const buttons = new Set<() => boolean>();
 
   return {
     requestOpen() {
-      if (!current) return false;
-      current();
-      return true;
+      for (const open of buttons) if (open()) return true;
+      return false;
     },
 
     registerButton(open) {
-      current = open;
+      buttons.add(open);
       return () => {
-        if (current === open) current = null;
+        buttons.delete(open);
       };
     },
   };

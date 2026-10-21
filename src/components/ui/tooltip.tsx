@@ -5,6 +5,8 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
+const GAP = 4;
+
 const TooltipProvider = TooltipPrimitive.Provider;
 
 const Tooltip = TooltipPrimitive.Root;
@@ -14,7 +16,7 @@ const TooltipTrigger = TooltipPrimitive.Trigger;
 const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
+>(({ className, sideOffset = GAP, ...props }, ref) => (
   <TooltipPrimitive.Portal>
     <TooltipPrimitive.Content
       ref={ref}
@@ -29,4 +31,40 @@ const TooltipContent = React.forwardRef<
 ));
 TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
-export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };
+/** Inside it, a tooltip on a lower row of this element opens below the element rather than over
+ *  the rows above; the first row keeps the default. For the wrapped toolbar on Wide. */
+const TooltipFloorContext = React.createContext<React.RefObject<HTMLElement | null> | null>(null);
+const TooltipFloorProvider = TooltipFloorContext.Provider;
+
+/** Spread `root` on the `Tooltip`, `trigger` on its `TooltipTrigger` and `content` last on its `TooltipContent`. */
+function useTooltipFloor() {
+  const floor = React.useContext(TooltipFloorContext);
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const [offset, setOffset] = React.useState<number | null>(null);
+
+  // Measured on open only: resetting on close would flip the tooltip's side mid fade-out.
+  const onOpenChange = (open: boolean) => {
+    const bar = floor?.current;
+    const trigger = triggerRef.current;
+    if (!open || !bar || !trigger) return;
+    const barBox = bar.getBoundingClientRect();
+    const box = trigger.getBoundingClientRect();
+    const lowerRow = bar.contains(trigger) && box.top - barBox.top >= box.height;
+    setOffset(lowerRow ? barBox.bottom - box.bottom + GAP : null);
+  };
+
+  return {
+    root: { onOpenChange },
+    trigger: { ref: triggerRef },
+    content: offset === null ? {} : { side: 'bottom' as const, sideOffset: offset },
+  };
+}
+
+export {
+  Tooltip,
+  TooltipContent,
+  TooltipFloorProvider,
+  TooltipProvider,
+  TooltipTrigger,
+  useTooltipFloor,
+};

@@ -409,7 +409,7 @@
       "saving": "Saving…",
       "saved": "Saved"
     },
-    "searchPlaceholder": "Search notes…",
+    "searchPlaceholder": "Search",
     "trashNotice": "Notes in the trash are deleted after {{days}} days.",
     "sort": {
       "label": "Sort notes",

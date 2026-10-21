@@ -80,6 +80,20 @@ describe('Heading extension', () => {
     });
   });
 
+  describe('levels 4-6', () => {
+    it.each([4, 5, 6])('Mod-Alt-%i leaves the paragraph alone', (level) => {
+      editor.commands.focus();
+      editor.commands.keyboardShortcut(`Mod-Alt-${level}`);
+      expect(editor.getHTML()).toBe('<p>title</p>');
+    });
+
+    // A stored or pasted h4-h6 keeps its text, as a paragraph.
+    it.each([4, 5, 6])('reads an <h%i> as a paragraph', (level) => {
+      editor.commands.setContent(`<h${level}>old</h${level}>`);
+      expect(editor.getHTML()).toBe('<p>old</p>');
+    });
+  });
+
   describe('markdown input rules', () => {
     it('converts "# " to an h1 heading', () => {
       editor.commands.focus();

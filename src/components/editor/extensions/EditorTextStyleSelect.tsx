@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger, useTooltipFloor } from '@/components/ui/tooltip';
 import type { TFunction } from './button-types';
 
 export type EditorTextStyleVariant = 'fontFamily' | 'fontSize';
@@ -94,14 +94,15 @@ export function EditorTextStyleSelect({ editor, tooltip, t, variant }: EditorTex
   const options = OPTIONS[variant];
   const Icon = icons[ICONS[variant]];
   const current = options.find((option) => option.value === (currentValue || DEFAULT_VALUE));
+  const floor = useTooltipFloor();
 
   return (
     <Select
       value={currentValue || DEFAULT_VALUE}
       onValueChange={(value) => updateTextStyle(editor, variant, value)}
     >
-      <Tooltip>
-        <TooltipTrigger asChild>
+      <Tooltip {...floor.root}>
+        <TooltipTrigger asChild {...floor.trigger}>
           <SelectTrigger
             aria-label={tooltip}
             size="sm"
@@ -114,7 +115,7 @@ export function EditorTextStyleSelect({ editor, tooltip, t, variant }: EditorTex
           </SelectTrigger>
         </TooltipTrigger>
         {tooltip && (
-          <TooltipContent side="top" align="center">
+          <TooltipContent side="top" align="center" {...floor.content}>
             {tooltip}
           </TooltipContent>
         )}

@@ -40,7 +40,7 @@ function Navbar() {
       <div className="hidden items-center justify-between px-4 py-2 sm:flex">
         <SidebarTrigger />
 
-        <div className="max-w-md flex-1 px-4">{searchable && <SearchInput enableShortcut />}</div>
+        <div className="max-w-md flex-1 px-4">{searchable && <SearchInput />}</div>
 
         <div className="flex items-center gap-3">
           <DropdownMenu>

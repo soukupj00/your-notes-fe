@@ -80,7 +80,10 @@ type EditorProps = {
 };
 
 /** `getEditor` exists for tests that need the live TipTap instance. */
-export type EditorHandle = { focus: () => void; getEditor: () => TiptapEditor | null };
+export type EditorHandle = {
+  focus: (at?: 'start' | 'end') => void;
+  getEditor: () => TiptapEditor | null;
+};
 
 export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   {
@@ -305,7 +308,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   useImperativeHandle(
     ref,
     () => ({
-      focus: () => editor?.commands.focus('end'),
+      focus: (at = 'end') => editor?.commands.focus(at),
       getEditor: () => editorRef.current,
     }),
     [editor]
