@@ -1,6 +1,6 @@
 # 0010 - shadcn `Sidebar` jako navigační kostra
 
-- Stav: přijato
+- Stav: přijato, doplněno 2026-10-21 (sbalená lišta ukazuje štítky)
 - Datum: 2026-07-29
 
 ## Kontext
@@ -115,3 +115,11 @@ Textový logotyp zůstává viditelný v obou stavech, dokud nebude k dispozici 
 - Spolu s tím se odstraňují tři mrtvé hooky (`use-window-size`, `use-isomorphic-layout-effect`, `use-unmount`); `use-debounce-callback` a jeho test zůstávají, protože se pravděpodobně budou hodit a jsou samostatně otestované.
 - M4 Slice 3 Task 4 (sémantika, pořadí tabulátoru, odkaz pro přeskočení na obsah) teď přistává na kostře s jediným `<main>` a skutečnými prvky `nav`/`header`.
   Odkaz pro přeskočení, který tam vznikne, by měl cílit na `SidebarInset`.
+
+## Doplněno 2026-10-21
+
+První externí tester sbalil postranní panel a přišel o štítky, které byly jeho hlavním způsobem, jak filtrovat přehled.
+Sbalená lišta proto teď ukazuje každý štítek jako jeho barevnou tečku, která stejně jako řádek v rozbaleném stavu vede na `/tag/$id`, a jméno štítku nese vlastní tooltip lišty.
+Když se štítky nevejdou, lišta se posouvá, se skrytým posuvníkem, aby ikony zůstaly vystředěné.
+Zamítnutá možnost výše cenu stále popisuje: štítek bez barvy je šedá tečka a dva štítky se stejnou barvou vypadají stejně, takže rozdíl nese tooltip a přístupné jméno.
+Ve sbaleném stavu je jméno řádku dostupné jen čtečce obrazovky místo odstranění, takže každý odkaz v liště má přístupné jméno.

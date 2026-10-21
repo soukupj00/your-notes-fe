@@ -1,6 +1,6 @@
 # 0010 — shadcn `Sidebar` as the nav shell
 
-- Status: Accepted
+- Status: Accepted, amended 2026-10-21 (collapsed rail shows labels)
 - Date: 2026-07-29
 
 ## Context
@@ -101,3 +101,11 @@ The drawer now takes 70% of the viewport width and relies on the blurred overlay
 The wordmark remains visible in both states until the planned logo mark is available, preserving the header's height and the app's identity when collapsed.
 - Three dead hooks are removed alongside (`use-window-size`, `use-isomorphic-layout-effect`, `use-unmount`); `use-debounce-callback` and its test are kept, being plausibly wanted and independently tested.
 - M4 Slice 3 Task 4 (semantics, tab order, skip-to-content link) now lands on a shell with a single `<main>` and real `nav`/`header` elements. The skip link introduced there should target `SidebarInset`.
+
+## Amended 2026-10-21
+
+The first outside tester collapsed the sidebar and lost the labels, which were their main way to filter the Feed.
+So the collapsed rail now shows every label as its colour dot, linking to `/tag/$id` like the expanded row, with the label's name in the rail's own tooltip.
+The rail scrolls when the labels do not fit, with its scrollbar hidden so the icons stay centred.
+The rejected option above still names the cost: an uncoloured label is a grey dot and two labels sharing a colour look the same, so the tooltip and the accessible name carry the difference.
+Collapsed, a row's name is screen-reader-only rather than removed, so every rail link keeps an accessible name.
