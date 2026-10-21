@@ -5,7 +5,7 @@ import type { AttachmentDeps } from '@/components/editor/extensions/attachments/
 import { buildEditorExtensions } from '@/components/editor/extensions/build';
 import { icons } from '@/components/icons';
 import { COMPACT_FOLD_SLOTS, familySlots } from './foldMarker';
-import { buildLayout, toolbarPreset } from './presets';
+import { buildLayout, defaultToolbarLayout, toolbarPreset } from './presets';
 import {
   getToolbarFamily,
   itemsInFamily,
@@ -164,6 +164,17 @@ describe('toolbar presets', () => {
         if (expected) expect(meta?.members).toEqual([{ id: 'customize', on: true }]);
       }
     }
+  });
+
+  it('defaults to Minimal on Wide and Balanced on Compact', () => {
+    expect(defaultToolbarLayout('wide')).toEqual(toolbarPreset('minimal', 'wide'));
+    expect(defaultToolbarLayout('compact')).toEqual(toolbarPreset('balanced', 'compact'));
+  });
+
+  it('keeps Link a visible button on Wide Minimal, so Mod+K anchors to it', () => {
+    const media = toolbarPreset('minimal', 'wide').find((family) => family.id === 'media');
+    expect(media?.on && !media.collapsed).toBe(true);
+    expect(media?.members.find((member) => member.id === 'link')?.on).toBe(true);
   });
 
   it('orders listed families first and switches the rest off', () => {

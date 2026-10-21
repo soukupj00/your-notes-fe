@@ -220,7 +220,7 @@ describe('Editor in editable mode', () => {
     );
 
     for (const name of [
-      'editor.code.tooltip',
+      'editor.bold.tooltip',
       'editor.link.tooltip',
       'editor.image.tooltip',
       'editor.undo',
@@ -232,14 +232,15 @@ describe('Editor in editable mode', () => {
   it.each([
     ['align', 'editor.textAlign.left'],
     ['block', 'editor.codeBlock.tooltip'],
-  ])('puts the %s buttons behind their family trigger, not on the bar', async (family, leaf) => {
-    const { findByTestId, queryByRole } = render(
+  ])('leaves the %s family off the Wide default bar entirely', async (family, leaf) => {
+    const { findByRole, queryByRole, queryByTestId } = render(
       <TooltipProvider>
         <Editor editable content="<p>hi</p>" getNoteId={vi.fn()} />
       </TooltipProvider>
     );
 
-    expect(await findByTestId(`toolbar-family-${family}`)).toBeInTheDocument();
+    await findByRole('button', { name: 'editor.undo' });
+    expect(queryByTestId(`toolbar-family-${family}`)).not.toBeInTheDocument();
     expect(queryByRole('button', { name: leaf })).not.toBeInTheDocument();
   });
 });

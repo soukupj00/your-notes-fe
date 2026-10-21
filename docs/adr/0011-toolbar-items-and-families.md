@@ -40,7 +40,7 @@ Vocabulary is in [`CONTEXT.md`](https://github.com/soukupj00/your-notes-fe/blob/
    Ids in the blob missing from the registry are kept in storage but not rendered, so a temporarily unregistered extension cannot erase an arrangement.
 9. **Presets are a stamp, not a mode.**
    Minimal / Balanced / Everything write a full Layout into the current Width Class.
-   There is no "am I still on a preset" state, and Reset is re-stamping Balanced.
+   There is no "am I still on a preset" state, and Reset is re-stamping the Width Class's default preset (Balanced on Compact, Minimal on Wide since 2026-10-21).
 10. **Two entry points, one component.**
     A `Settings` section and a sheet layered over the editor dialog, opened by a trailing `⚙` Item.
     The in-editor path **must not navigate**: the editor may hold an unsaved draft, and routing away would either destroy it or force the `ensureNoteId` race that Task 4 of the same slice refused for archive and trash.

@@ -1,7 +1,7 @@
 import { itemsInFamily, TOOLBAR_FAMILIES } from './registry';
 import type { ToolbarFamilyId, ToolbarLayout, WidthClass } from './types';
 
-/** The three stamps offered in the settings editor. Reset re-stamps `balanced`. */
+/** The three stamps offered in the settings editor. Reset re-stamps the Width Class's `DEFAULT_PRESET`. */
 export type ToolbarPresetId = 'minimal' | 'balanced' | 'everything';
 
 /** `leaves` omitted means every leaf is on; a family absent from the spec is off. */
@@ -67,12 +67,13 @@ const WIDE_BALANCED: FamilySpec[] = [
   { family: 'meta' },
 ];
 
+/** Link stays a visible button for the same Mod+K reason as Wide Balanced: Minimal is the Wide default. */
 const WIDE_MINIMAL: FamilySpec[] = [
   { family: 'history' },
   { family: 'style' },
   { family: 'format', leaves: ['bold', 'italic', 'underline'] },
   { family: 'list' },
-  { family: 'media', collapsed: true },
+  { family: 'media', leaves: ['link', 'image'] },
   { family: 'meta' },
 ];
 
@@ -91,6 +92,12 @@ export function toolbarPreset(preset: ToolbarPresetId, widthClass: WidthClass): 
   return buildLayout(SPECS[widthClass][preset]);
 }
 
+/** Desktop starts lean, with the rest a switch away; the phone's Balanced is already its six slots. */
+export const DEFAULT_PRESET: Record<WidthClass, ToolbarPresetId> = {
+  compact: 'balanced',
+  wide: 'minimal',
+};
+
 export function defaultToolbarLayout(widthClass: WidthClass): ToolbarLayout {
-  return toolbarPreset('balanced', widthClass);
+  return toolbarPreset(DEFAULT_PRESET[widthClass], widthClass);
 }

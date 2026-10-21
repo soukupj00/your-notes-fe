@@ -40,7 +40,7 @@ Slovník je v [`CONTEXT.md`](https://github.com/soukupj00/your-notes-fe/blob/mai
    Id v blobu, která v registru chybí, zůstávají v úložišti, ale nevykreslují se, takže dočasně neregistrované rozšíření nemůže uspořádání vymazat.
 9. **Přednastavení je razítko, ne režim.**
    Minimální / Vyvážené / Vše zapíší do aktuální šířkové třídy celé rozvržení.
-   Neexistuje žádný stav „jsem pořád na přednastavení“ a Reset znamená znovu orazítkovat přednastavení Vyvážené.
+   Neexistuje žádný stav „jsem pořád na přednastavení“ a Reset znamená znovu orazítkovat výchozí přednastavení šířkové třídy (na Compact Vyvážené, na Wide od 21. 10. 2026 Minimální).
 10. **Dva vstupy, jedna komponenta.**
     Sekce v `Settings` a panel (sheet) vrstvený nad dialogem editoru, otevíraný koncovou položkou `⚙`.
     Cesta z editoru **nesmí navigovat**: editor může držet neuložený koncept a odchod jinam by ho buď zničil, nebo vynutil souběh s `ensureNoteId`, který Task 4 téhož slice odmítl pro archiv a koš.

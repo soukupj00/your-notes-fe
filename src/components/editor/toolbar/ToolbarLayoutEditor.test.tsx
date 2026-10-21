@@ -236,20 +236,30 @@ describe('presets', () => {
     });
   });
 
-  it('restores the default by re-stamping Balanced', async () => {
-    const user = userEvent.setup();
-    renderEditor('wide');
+  it.each([
+    ['wide', 'minimal'],
+    ['compact', 'balanced'],
+  ] as const)(
+    'restores the %s default by re-stamping %s, the preset marked default',
+    async (width, preset) => {
+      const user = userEvent.setup();
+      renderEditor(width);
 
-    await user.click(
-      await screen.findByRole('button', { name: /settings\.toolbar\.preset\.minimal/ })
-    );
-    await waitFor(async () => expect((await storedToolbar()).wide).not.toEqual([]));
-    await user.click(screen.getByRole('button', { name: /settings\.toolbar\.preset\.balanced/ }));
+      await user.click(
+        await screen.findByRole('button', { name: /settings\.toolbar\.preset\.everything/ })
+      );
+      await waitFor(async () => expect((await storedToolbar())[width]).not.toEqual([]));
+      const restore = screen.getByRole('button', {
+        name: new RegExp(`settings\\.toolbar\\.preset\\.${preset}`),
+      });
+      expect(restore).toHaveTextContent('settings.toolbar.preset.isDefault');
+      await user.click(restore);
 
-    await waitFor(async () => {
-      expect((await storedToolbar()).wide).toEqual(defaultToolbarLayout('wide'));
-    });
-  });
+      await waitFor(async () => {
+        expect((await storedToolbar())[width]).toEqual(defaultToolbarLayout(width));
+      });
+    }
+  );
 
   it('stamps the Width Class being edited, not the window’s', async () => {
     const user = userEvent.setup();

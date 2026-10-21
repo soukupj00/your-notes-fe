@@ -10,7 +10,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { COMPACT_FOLD_SLOTS, foldIndex } from './foldMarker';
 import { moveFamily, moveMember, setMemberOn, updateFamily } from './layoutEdits';
-import { type ToolbarPresetId, toolbarPreset } from './presets';
+import { DEFAULT_PRESET, type ToolbarPresetId, toolbarPreset } from './presets';
 import { getToolbarFamily, itemsInFamily, TOOLBAR_ITEMS } from './registry';
 import { reconcileLayout } from './resolveLayout';
 import { ToolbarPreviewStrip } from './ToolbarPreviewStrip';
@@ -119,11 +119,11 @@ export function ToolbarLayoutEditor({ initialWidthClass, showPreview }: ToolbarL
             variant="outline"
             size="sm"
             // A stamp, not a mode (decision 9): nothing remembers it, so there is no
-            // active state and no Reset button; re-stamping Balanced is the reset.
+            // active state and no Reset button; re-stamping the default is the reset.
             onClick={() => write(toolbarPreset(preset, widthClass))}
           >
             {t(`settings.toolbar.preset.${preset}`)}
-            {preset === 'balanced' && (
+            {preset === DEFAULT_PRESET[widthClass] && (
               <span className="text-muted-foreground text-xs">
                 {t('settings.toolbar.preset.isDefault')}
               </span>
