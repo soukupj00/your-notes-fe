@@ -8,7 +8,7 @@ Capitalized terms are canonical in [`CONTEXT.md`](../../CONTEXT.md).
 - **User** - the person taking notes on a Device. Both product audiences (the self-hoster and the household member they hand the app to) act as this actor in the daily surface; the distinction only matters for server administration.
 - **Owner** - the first Local Account on a Self-hosted Server; the only one that can issue Invites and reset another member's password. A server role, not a kind of Note.
 - **Invited member** - a person spending an Invite to create their own Local Account. Accounts are private silos; sharing a server never shares Notes.
-- **The app itself** - a genuine actor in two places: the Tour (it creates and purges Props) and the sweeps (orphan Attachment GC, trash purge).
+- **The app itself** - a genuine actor in one place: the sweeps (orphan Attachment GC, trash purge).
 - **The sync engine** - acts on the user's behalf when connectivity returns; never makes a content decision (a Conflict is resolved by a person).
 
 ## Use cases without a server
@@ -58,7 +58,7 @@ Customisability is a positioning claim ("this one is yours"), which is why it is
 
 ### Learn the app
 
-The six-step Tour *drives* the real app on disposable Props it creates and purges ([ADR 0015](../adr/0015-the-tour-drives-the-app-on-disposable-props.md)); offered once, replayable from Settings.
+The three-step Tour *drives* the real app by taking the user through Settings, and creates nothing ([ADR 0023](../adr/0023-the-tour-points-at-settings.md)); offered once, replayable from Settings.
 
 ## Use cases with a server
 
@@ -79,6 +79,6 @@ Sync is opt-in end to end: every current use case works with no Account, Tour in
 
 ## For the paper
 
-- The actor list is unusual and worth stating: the app and the sync engine are actors with strictly bounded authority (Props and sweeps; transport but never content decisions).
+- The actor list is unusual and worth stating: the app and the sync engine are actors with strictly bounded authority (sweeps; transport but never content decisions).
 - Good scenario walk-throughs: interrupted one-handed mobile capture (the product's defining context), trash-restore-purge, backup-restore, and the conflict story told from the user's chair.
 - The two-audience framing (self-hoster depth on demand, household-member simplicity by default) explains many UI decisions and belongs in the requirements chapter.

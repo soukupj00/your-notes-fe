@@ -1,6 +1,6 @@
 # 0015 — The tour drives the app on disposable props
 
-- Status: Accepted
+- Status: Superseded by [ADR 0023](./0023-the-tour-points-at-settings.md)
 - Date: 2026-08-09
 
 ## Context

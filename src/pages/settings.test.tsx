@@ -108,3 +108,18 @@ describe('the customisation sections', () => {
     ).toBeInTheDocument();
   });
 });
+
+describe('the help section', () => {
+  it('links out to the docs site and the repository', async () => {
+    mount();
+
+    expect(await screen.findByRole('link', { name: 'settings.help.docs.open' })).toHaveAttribute(
+      'href',
+      'https://soukupj00.github.io/your-notes-fe/'
+    );
+    expect(screen.getByRole('link', { name: 'settings.help.docs.github' })).toHaveAttribute(
+      'href',
+      'https://github.com/soukupj00/your-notes-fe'
+    );
+  });
+});

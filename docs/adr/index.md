@@ -20,7 +20,7 @@ Decisions about the server itself are on [the server's site](https://soukupj00.g
 | [0012](./0012-feed-rank-is-held-membership-is-live.md) | Feed rank is held, membership is live |
 | [0013](./0013-checklist-sinking-is-presentation-not-storage.md) | Checklist sinking is presentation, not storage |
 | [0014](./0014-the-open-note-lives-in-the-url.md) | The open Note lives in the URL |
-| [0015](./0015-the-tour-drives-the-app-on-disposable-props.md) | The Tour drives the app on disposable Props |
+| [0015](./0015-the-tour-drives-the-app-on-disposable-props.md) | The Tour drives the app on disposable Props (superseded by [0023](./0023-the-tour-points-at-settings.md)) |
 | [0016](./0016-width-decides-layout-pointer-decides-affordances.md) | Width decides layout, pointer decides affordances |
 | [0017](./0017-note-level-last-writer-wins-with-conflicted-copies.md) | Note-level last-writer-wins, with the loser kept as a Conflicted Copy |
 | [0018](./0018-the-server-serves-the-pwa.md) | The sync server serves the PWA, and that decides auth, pairing and TLS |
@@ -28,3 +28,4 @@ Decisions about the server itself are on [the server's site](https://soukupj00.g
 | [0020](./0020-the-local-store-seam.md) | The app reads and writes a Local Store interface, never Dexie |
 | [0021](./0021-reminders-are-handed-off-to-the-calendar.md) | Reminders are handed off to the calendar; the app never notifies |
 | [0022](./0022-interfaces-and-closures-not-classes.md) | Interfaces and closure factories, never classes |
+| [0023](./0023-the-tour-points-at-settings.md) | The Tour points at Settings and creates no Notes |

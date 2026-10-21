@@ -1,7 +1,6 @@
 /**
  * Every child of `body` goes inert, not just `#root`, because Radix portals there (ADR 0015); the
- * observer catches what mounts later. `inert` blocks hit testing, not dispatch, so the Tour's
- * programmatic `.click()` still runs (CLAUDE.md "The Tour").
+ * observer catches what mounts later.
  */
 
 /** Returns the undo. `exempt` keeps the spotlight library's own nodes live without naming it. */

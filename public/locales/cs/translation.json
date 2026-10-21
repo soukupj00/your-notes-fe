@@ -304,8 +304,14 @@
       "title": "Nápověda",
       "replay": {
         "label": "Průvodce",
-        "description": "Pět kroků na třech poznámkách, které pak zase zmizí.",
+        "description": "Tři kroky v Nastavení.",
         "action": "Spustit průvodce znovu"
+      },
+      "docs": {
+        "label": "Dokumentace",
+        "description": "Jak aplikace funguje a jak spustit vlastní server.",
+        "open": "Otevřít dokumentaci",
+        "github": "GitHub"
       }
     },
     "quickCapture": {
@@ -533,18 +539,6 @@
       "done": "Hotovo"
     },
     "steps": {
-      "capture": {
-        "title": "Začni čímkoliv",
-        "body": "Text, seznam úkolů, fotka, hlasová poznámka nebo kresba - všechny způsoby začínají tady."
-      },
-      "editor": {
-        "title": "Napiš to",
-        "body": "Napiš / kdekoliv v poznámce a vyber nadpis, seznam, citaci nebo vzorec. Obrázky, zvuk, soubory i kresby jsou přímo v poznámce."
-      },
-      "wall": {
-        "title": "Tvoje nástěnka",
-        "body": "Připni poznámku nahoru, dej jí barvu nebo štítek. Archiv si ji nechá, koš ji zahodí a nechá chvíli na rozmyšlenou."
-      },
       "toolbar": {
         "title": "Tvoje lišta",
         "body": "Vyber, která tlačítka nese lišta editoru a v jakém pořadí. Telefon a počítač si drží každý své uspořádání."
@@ -553,28 +547,9 @@
         "title": "Tvoje rychlé starty",
         "body": "Přeskládej způsoby, jak začít, ať je první ten, po kterém saháš nejčastěji, a dej ＋ pod palec, který používáš."
       },
-      "local": {
-        "title": "Všechno zůstává tady",
-        "body": "Každá poznámka je na tomhle zařízení a nikde jinde. Nainstaluj si aplikaci, ať ji máš po ruce, a kdykoliv si stáhni zálohu v zipu."
-      }
-    },
-    "props": {
-      "groceries": {
-        "header": "Nákup",
-        "item1": "Ovesné mléko",
-        "item2": "Kvasový chleba",
-        "item3": "Něco na neděli"
-      },
-      "weekend": {
-        "header": "Víkend v Brně",
-        "intro": "Vlak jede v pátek v šest, tak sbalit už večer.",
-        "item1": "Zamluvit pokoj kousek od nádraží",
-        "item2": "Hvězdárna, jestli zůstane jasno",
-        "item3": "Káva na Jakubské"
-      },
-      "ideas": {
-        "header": "Nápady",
-        "body": "Police do předsíně - nejdřív změřit výklenek."
+      "sync": {
+        "title": "Kde tvoje poznámky žijí",
+        "body": "Každá poznámka se nejdřív uloží na tomhle zařízení, takže aplikace funguje i bez připojení. Přihlas se ke svému vlastnímu serveru, ať máš na všech zařízeních totéž, a kdykoliv si stáhni zálohu v zipu."
       }
     }
   },
@@ -599,6 +574,7 @@
       "title": "Účet",
       "signedOutLabel": "Přihlásit se k serveru",
       "signedOutDescription": "Synchronizujte poznámky z tohoto zařízení se svým serverem YourNotes.",
+      "setupGuide": "Jak zprovoznit server",
       "signIn": "Přihlásit se",
       "signInDescription": "Použijte uživatelské jméno a heslo, které jste si pro účet zvolili.",
       "signedInLabel": "Účet: {{username}}",

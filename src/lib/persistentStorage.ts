@@ -3,7 +3,7 @@ let asked = false;
 /**
  * IndexedDB is best-effort: Chrome evicts under pressure and Safari clears it after seven unvisited
  * days. Asked on the user's first own save, not at start, so Firefox's prompt never meets a fresh
- * user mid-Tour; Props never reach the editor's dirty-gated save path that calls this.
+ * user mid-Tour.
  */
 export async function requestPersistentStorage(): Promise<void> {
   if (asked) return;

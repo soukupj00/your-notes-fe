@@ -36,7 +36,19 @@ export function AccountSection() {
       ) : (
         <SettingsRow
           label={t('account.section.signedOutLabel')}
-          description={t('account.section.signedOutDescription')}
+          description={
+            <>
+              {t('account.section.signedOutDescription')}
+              <a
+                href="https://soukupj00.github.io/your-notes-be/setup"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="touch-reach block w-fit underline underline-offset-2 hover:text-foreground"
+              >
+                {t('account.section.setupGuide')}
+              </a>
+            </>
+          }
         >
           <Button variant="outline" size="sm" onClick={() => setSigningIn(true)}>
             {t('account.section.signIn')}

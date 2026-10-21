@@ -21,7 +21,7 @@ It is domain-shaped: it speaks of Notes, Tags and Attachments, never of tables o
   Each method is atomic on its own, so a caller never opens a transaction.
 - A read that the UI watches returns a `Live<T>`, a tiny observable with one method, `subscribe`.
   It delivers the present value, then every value a later write produces; React reads it through `useLive`.
-- `meta` is a small key-value store for bookkeeping about rows: the Tour's Prop baselines, the sync cursor, the attached Account.
+- `meta` is a small key-value store for bookkeeping about rows: the sync cursor, the attached Account.
   Preferences are not here; they live in `localStorage`, because they belong to the Device.
 - `sync` is what the server is owed, and only the sync engine calls it.
 - `exportAll` and `replaceAll` are what a Backup reads and writes.

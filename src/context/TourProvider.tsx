@@ -11,21 +11,11 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { useTranslation } from 'react-i18next';
 import { TourPopover } from '@/components/tour/TourPopover.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
-import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
-import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
+import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { holdBodyInert } from '@/lib/tour/inert.ts';
-import {
-  createProps,
-  purgeProps,
-  readProps,
-  rebaseProp,
-  type TourProp,
-  writeProps,
-} from '@/lib/tour/props.ts';
 import {
   changesScene,
   leaveScene,
@@ -33,19 +23,18 @@ import {
   TOUR_STEPS,
   type TourStage,
 } from '@/lib/tour/steps.ts';
-import { noteCardTarget } from '@/lib/tour/targets.ts';
-import { waitFor, waitForGone, waitForTarget } from '@/lib/tour/waitFor.ts';
+import { waitFor, waitForTarget } from '@/lib/tour/waitFor.ts';
 import 'driver.js/dist/driver.css';
 
 /**
- * The Tour's lifecycle (ADR 0015): the `driver.js` instance, the router, the Props' persistence and
- * the `inert` marking. What the Tour decides lives in `src/lib/tour/`; how this file works, and
- * why, is in src/context/CLAUDE.md and the root CLAUDE.md, The Tour.
+ * The Tour's lifecycle (ADR 0023): the `driver.js` instance, the router and the `inert` marking.
+ * What the Tour decides lives in `src/lib/tour/`; how this file works, and why, is in
+ * src/context/CLAUDE.md and the root CLAUDE.md, The Tour.
  */
 
 type TourContextValue = {
   active: boolean;
-  /** Runs the Tour from step 1 on a fresh set of Props. Safe to call twice. */
+  /** Runs the Tour from step 1. Safe to call twice. */
   start: () => void;
 };
 
@@ -56,7 +45,7 @@ const STAGE_PADDING = 8;
 
 /**
  * Driver's own elements, the only ones left interactive. Named, not "anything added after the
- * start": the speed dial's Radix popover portals to `body` too and must be marked inert.
+ * start": whatever else portals to `body` mid-Tour must be marked inert too.
  */
 function isDriverElement(node: Element): boolean {
   for (const name of node.classList) if (name.startsWith('driver-')) return true;
@@ -64,10 +53,7 @@ function isDriverElement(node: Element): boolean {
 }
 
 export function TourProvider({ children }: { children: ReactNode }) {
-  const { t } = useTranslation();
   const { preferences, setPreference } = usePreferences();
-  const store = useLocalStore();
-  const { purgeNote, pinNote, unpinNote } = useNoteActions();
   const reducedMotion = useReducedMotion();
   const navigate = useNavigate();
   const router = useRouter();
@@ -80,76 +66,15 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
   // A node of our own, rendered ahead of driver and appended on `onPopoverRender`: driver positions
   // the box as that callback returns, and a React tree committed only then would still be empty.
-  const [popoverHost] = useState(() => {
-    const host = document.createElement('div');
-    // `aria-live` is what a modal Radix dialog's `hideOthers` spares, so the buttons stay in the
-    // accessibility tree when step 2's editor opens. `off`, not `polite`: `TourPopover`'s step
-    // region already announces, and a second live region would re-read "Next".
-    host.setAttribute('aria-live', 'off');
-    return host;
-  });
+  const [popoverHost] = useState(() => document.createElement('div'));
 
   const driverRef = useRef<Driver | null>(null);
   const releaseInertRef = useRef<(() => void) | null>(null);
-  const propsRef = useRef<TourProp[]>([]);
   const indexRef = useRef<number | null>(null);
   const busyRef = useRef(false);
   const startedRef = useRef(false);
-  /** Which Prop the Tour has open in the editor, so its baseline is re-taken. */
-  const openedPropRef = useRef<string | null>(null);
   /** Navigations the Tour itself asked for; anything else destroys it. */
   const ownNavigationsRef = useRef(0);
-  /** Prop writes still in flight, which the sweep must not overtake. */
-  const writesRef = useRef<Promise<unknown>>(Promise.resolve());
-
-  /**
-   * The Tour's presses stop at the popover: Radix's dismissable layers read Next as a press outside
-   * step 2's open editor and closed it too, and the second `history.back()` left the app.
-   * `focusin` for the same reason: focus landing on Next is not focus leaving the note.
-   */
-  useEffect(() => {
-    const swallow = (event: Event) => event.stopPropagation();
-    const types = ['pointerdown', 'mousedown', 'touchstart', 'focusin'];
-    for (const type of types) popoverHost.addEventListener(type, swallow);
-    return () => {
-      for (const type of types) popoverHost.removeEventListener(type, swallow);
-    };
-  }, [popoverHost]);
-
-  const queueWrite = useCallback((work: () => Promise<unknown>) => {
-    writesRef.current = writesRef.current.then(work).catch(console.error);
-  }, []);
-
-  const setProps = useCallback(
-    async (next: TourProp[]) => {
-      propsRef.current = next;
-      await writeProps(store, next);
-    },
-    [store]
-  );
-
-  const rebase = useCallback(
-    async (id: string) => {
-      await setProps(await rebaseProp(store, propsRef.current, id));
-    },
-    [store, setProps]
-  );
-
-  /**
-   * Purges a list of Props and forgets it. It ends one run and starts the next: an abandoned run
-   * and a finished one leave the same list behind.
-   */
-  const sweep = useCallback(
-    async (props: TourProp[]) => {
-      if (props.length === 0) return;
-      const purged = await purgeProps(store, purgeNote, props);
-      await setProps([]);
-      // The Feed repaints through a live query, so cards outlive their rows by a frame or two, and
-      // the scrim has to outlive the repaint or the user watches the Props leave.
-      await waitForGone(purged.map(noteCardTarget), { label: 'the feed to drop the purged Props' });
-    },
-    [store, purgeNote, setProps]
-  );
 
   const markNavigation = useCallback(() => {
     ownNavigationsRef.current += 1;
@@ -162,39 +87,6 @@ export function TourProvider({ children }: { children: ReactNode }) {
    */
   const makeStage = useCallback(
     (): TourStage => ({
-      props: propsRef.current,
-      openNote: (id) => {
-        openedPropRef.current = id;
-        markNavigation();
-        void navigate({
-          to: '/',
-          search: (prev) => ({ ...prev, note: id }),
-          resetScroll: false,
-        });
-      },
-      closeNote: () => {
-        const id = openedPropRef.current;
-        openedPropRef.current = null;
-        markNavigation();
-        router.history.back();
-        // The editor flushes the note back to Dexie on its way out, so the
-        // baseline has to be re-taken after it has gone - otherwise the sweep
-        // reads the Tour's own write as the user's and leaves the Prop behind.
-        if (id) {
-          queueWrite(async () => {
-            await waitForGone(['editorToolbar'], { label: 'the editor to close before rebasing' });
-            await rebase(id);
-          });
-        }
-      },
-      pinProp: async (id) => {
-        await pinNote(id);
-        await rebase(id);
-      },
-      unpinProp: async (id) => {
-        await unpinNote(id);
-        await rebase(id);
-      },
       navigate: async (to) => {
         markNavigation();
         // `steps.ts` names routes as plain strings so it can stay clear of the
@@ -206,7 +98,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         router.history.back();
       },
     }),
-    [navigate, router, markNavigation, pinNote, unpinNote, rebase, queueWrite]
+    [navigate, router, markNavigation]
   );
 
   const driverConfig = useCallback(
@@ -244,7 +136,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         () => popoverHost.firstElementChild?.getAttribute('data-tour-step') === String(at),
         { label: `the popover to render step ${at + 1}` }
       );
-      const target = TOUR_STEPS[at].target(makeStage());
+      const target = TOUR_STEPS[at].target();
       // The act that produces the target has already run, but the app may still
       // be painting it. A step that never gets one is shown centred with no
       // spotlight rather than dropped - the copy is still worth reading.
@@ -257,7 +149,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         popover: { description: '', showButtons: [] },
       });
     },
-    [makeStage, driverConfig, popoverHost]
+    [driverConfig, popoverHost]
   );
 
   const setRunning = useCallback((running: boolean) => {
@@ -301,26 +193,17 @@ export function TourProvider({ children }: { children: ReactNode }) {
       setRunning(false);
 
       try {
-        // A Tour is not over until its Props are gone (CONTEXT.md), so they go before the app is
-        // handed back. Safe with step 2's editor open: `updateNote` returns null for a gone row,
-        // so the dialog's closing flush cannot write the Prop back.
-        await writesRef.current;
-        await sweep(propsRef.current);
-
-        // Not when the *user* navigated away: the Tour does not move them back. The sweep already
-        // undid step 3's pin, so `leaveScene` only retraces the navigations.
+        // Not when the *user* navigated away: the Tour does not move them back.
         if (unwind) await leaveScene(from, makeStage());
       } finally {
-        // In a `finally` because the sweep now runs first: a purge that threw
-        // would otherwise leave the user under an inert overlay with no way
-        // out, which is a worse failure than the one it is reporting.
+        // An act that threw must not leave the user under an inert overlay with no way out.
         driverRef.current?.destroy();
         driverRef.current = null;
         releaseInertRef.current?.();
         releaseInertRef.current = null;
       }
     },
-    [makeStage, sweep, setRunning]
+    [makeStage, setRunning]
   );
 
   const start = useCallback(async () => {
@@ -333,27 +216,19 @@ export function TourProvider({ children }: { children: ReactNode }) {
       await navigate({ to: '/' });
     }
 
-    // The Feed must be on screen before seeding. This also keeps the Tour out of anywhere that
-    // never paints one, so this wait's timeout is a normal answer, not a bug.
+    // The Feed must be on screen: step 1 leaves from it and unwinding returns to it. This also
+    // keeps the Tour out of anywhere that never paints one, so this wait's timeout is a normal
+    // answer, not a bug.
     if (!(await waitForTarget('capture', { label: 'a Feed to start on' }))) return;
-
-    // Warms the lazy editor chunk while step 1 is read, so step 2 does not wait for it.
-    // Un-awaited: a failed preload is no reason to skip the Tour, and `lazy()` reuses this import.
-    void import('@/components/notes/NoteEditorDialog.tsx');
 
     // Driver measures the popover once, and the self-hosted fonts load async: measured in the
     // fallback face, step 1's box hung off the top of the window.
     await document.fonts?.ready;
 
-    // Stamped when offered, not on completion, or it re-arms after every reload (ADR 0015). Before
-    // seeding, because that window is when a Tour is most often abandoned, and a reload in it
-    // would seed three more Props on top of the three left behind.
+    // Stamped when offered, not on completion, or it re-arms after every reload (ADR 0015).
     if (!preferences.onboardingSeenAt) {
       await setPreference('onboardingSeenAt', new Date().toISOString());
     }
-
-    await sweep(propsRef.current);
-    propsRef.current = await createProps(store, (key) => t(key));
 
     releaseInertRef.current = holdBodyInert(isDriverElement);
     driverRef.current = driver(driverConfig(null));
@@ -366,9 +241,6 @@ export function TourProvider({ children }: { children: ReactNode }) {
     router,
     navigate,
     markNavigation,
-    sweep,
-    store,
-    t,
     preferences.onboardingSeenAt,
     setPreference,
     driverConfig,
@@ -391,32 +263,18 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
   const skip = useCallback(() => void end({ unwind: true }), [end]);
 
-  // Startup: sweep what the last run abandoned, then offer the Tour if it never was. Both live
-  // here, not in `__root.tsx`: they share one list, and apart they race a seed against a purge.
-  useEffect(() => {
+  // Startup: offer the Tour if it never was. A failed start is logged, and the app goes on
+  // without a Tour.
+  useAsyncEffect(async () => {
     if (startedRef.current) return;
-    let cancelled = false;
-    // `startedRef` is set once the read lands, not before, or StrictMode's double mount cancels
-    // the first run while the guard blocks the second (src/context/CLAUDE.md).
-    void readProps(store)
-      .then(async (props) => {
-        if (cancelled) return;
-        startedRef.current = true;
-        propsRef.current = props;
-        await sweep(props);
-        if (!preferences.onboardingSeenAt && router.state.location.pathname === '/') await start();
-        // Like `queueWrite`: a failed read or seed is logged, not left unhandled, and the app
-        // goes on without a Tour.
-      })
-      .catch(console.error);
-    return () => {
-      cancelled = true;
-    };
-  }, [store, preferences.onboardingSeenAt, sweep, start, router]);
+    startedRef.current = true;
+    if (preferences.onboardingSeenAt || router.state.location.pathname !== '/') return;
+    await start().catch(console.error);
+  }, [preferences.onboardingSeenAt, start, router]);
 
-  // A navigation the Tour did not ask for destroys it, Props and all: the app is
-  // inert, so the only way one happens is the platform back button or gesture,
-  // and that is the user leaving rather than something to be corrected.
+  // A navigation the Tour did not ask for destroys it: the app is inert, so the
+  // only way one happens is the platform back button or gesture, and that is
+  // the user leaving rather than something to be corrected.
   const lastHrefRef = useRef(href);
   useEffect(() => {
     if (href === lastHrefRef.current) return;

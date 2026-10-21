@@ -6,7 +6,7 @@ IndexedDB was chosen over alternatives for real Blob storage, transactions, inde
 
 The schema itself is unchanged by ADR 0020 - the app no longer touches it directly.
 Two `LocalStore` implementations exist: Dexie (below) and an in-memory one (`src/data/memory/`).
-Preferences left the `settings` table for `localStorage`; what remains there is bookkeeping under `meta` (the Tour's Prop baselines today).
+Preferences left the `settings` table for `localStorage`; what remains there is bookkeeping under `meta` (the sync cursor and attached Account).
 
 ## Entity model
 
@@ -69,8 +69,8 @@ Design points worth defending in the paper:
 - **The Body is the aggregate's spine.** Attachments and Checklists live *inside* the HTML Body as references (`data-attachment-id`), not beside it as sibling collections. The `attachments` table owns the bytes; the Body decides which are shown and where. This single fact later dictates the sync conflict model (see [04-sync.md](./04-sync.md)).
 - **One generic `attachments` table** with a `kind` discriminator replaced planned per-type tables (v2). Every media slice since has reused the same storage, actions and GC.
 - **`NoteTag` is a real join table** (composite primary key `[noteId+tagId]`), because a Tag has independent life. The link is its own synced row precisely so labelling never conflicts with writing.
-- **`settings` is a key-value store**, exposed as the Local Store's `meta`; it holds the Tour's Prop baselines and sync bookkeeping (the cursor and attached Account), and values still version themselves where needed.
-- **Orphans are swept, not chased.** Removing an attachment reference does not delete bytes immediately (in-editor undo may bring it back); a reconciliation sweep at editor close and app start reclaims unreferenced rows. Purge (trash grace elapsed, or Tour Props) uses the same sweep machinery.
+- **`settings` is a key-value store**, exposed as the Local Store's `meta`; it holds sync bookkeeping (the cursor and attached Account), and values still version themselves where needed.
+- **Orphans are swept, not chased.** Removing an attachment reference does not delete bytes immediately (in-editor undo may bring it back); a reconciliation sweep at editor close and app start reclaims unreferenced rows. Purge (trash grace elapsed) uses the same sweep machinery.
 
 One denormalization exists: `Note.tags?: Tag[]` is an optional preloaded override consumed by `NoteCard` (which falls back to the live `useTagsForNote` query when absent). The join table remains the source of truth.
 
