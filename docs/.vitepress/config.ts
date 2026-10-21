@@ -88,7 +88,10 @@ const config = withMermaid(
     description:
       'Notes, checklists, drawings and photos, on your devices, synced by a server you own.',
     base,
-    head: [['script', {}, czechRedirect(base)]],
+    head: [
+      ['link', { rel: 'icon', type: 'image/png', href: `${base}note-128.png` }],
+      ['script', {}, czechRedirect(base)],
+    ],
     locales: {
       root: { label: 'English', lang: 'en' },
       cs: {
