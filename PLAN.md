@@ -139,3 +139,4 @@ Found by the surveys and reviews, fixed by no slice.
 - A failed autosave leaves the editor's status on "saving" with an unhandled rejection (no `catch` on the autosave's `.then` in `NoteEditorDialog`); the next write runs, but nothing tells the user.
 - An `ensureSaved` that arrives after `close` purged the Note (a late Attachment insert) recreates the row from the last content, as `ensureNoteId` did.
 - `NoteTagsBar` runs its live labels query on a Draft's own id from the start, and it settles after the dialog tests' last await, so `--reporter=verbose` shows one or two more React `act()` warnings than main's three; settling the store's live queries inside `act` in `renderWithStore` (`src/test/store.tsx`) would quiet every suite at once.
+- With 3,000 Notes and the CPU slowed 6x in DevTools, closing the editor took over 30 s (seen once in a review, not investigated).

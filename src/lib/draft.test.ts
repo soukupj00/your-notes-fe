@@ -151,7 +151,6 @@ describe('closing', () => {
     expect(d.purgeNote).not.toHaveBeenCalled();
   });
 
-  // A read is not an edit: the write would bump `updatedAt`, re-rank the feed and sync as a change.
   it('writes nothing for a Note that was only read', async () => {
     const [draft, d] = openNote();
 
@@ -178,6 +177,20 @@ describe('closing', () => {
 
     expect(d.purgeNote).not.toHaveBeenCalled();
     expect(d.collectOrphans).toHaveBeenCalledWith('n1', []);
+  });
+
+  // An act (a Reminder, an Attachment) earns the row without typing, so nothing reads as edited.
+  it.each([
+    [false, 'purges', 1],
+    [true, 'keeps', 0],
+  ])('when told keepEmpty=%s, %s an empty row an act earned', async (keepEmpty, _, purges) => {
+    const [draft, d] = newDraft();
+    await draft.ensureSaved();
+
+    await draft.close('', '', { keepEmpty, edited: false });
+
+    expect(d.updateNote).not.toHaveBeenCalled();
+    expect(d.purgeNote).toHaveBeenCalledTimes(purges);
   });
 
   it('decides the fate after a create that was still in flight', async () => {

@@ -45,7 +45,6 @@ describe('QuickCaptureBar', () => {
     }
   });
 
-  // Feedback U14: the open dial sits on a dimmed wall, and tapping the dim closes it.
   it('dims the wall while open, and a tap on the dim closes it', async () => {
     await openDial();
     await screen.findByRole('button', { name: 'notes.capture.text' });

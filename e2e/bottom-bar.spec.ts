@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { card, newTextNote, skipTour } from './helpers';
 
-// Feedback B1: a desktop browser zoomed into the phone layout. The `＋` strip spans the whole
+// A desktop browser zoomed into the phone layout. The `＋` strip spans the whole
 // bottom edge, so it must take the pointer only on its own button.
 test('a card under the floating ＋ strip still takes clicks', async ({ page }) => {
   await page.setViewportSize({ width: 512, height: 360 });
@@ -23,7 +23,6 @@ test('a card under the floating ＋ strip still takes clicks', async ({ page }) 
   await expect(card(page, 'C')).toHaveCount(0);
 });
 
-// Feedback U14: the open dial dims the wall, and a tap on the dim only closes the dial.
 test('a tap on the dimmed wall closes the dial without opening the card under it', async ({
   page,
   isMobile,

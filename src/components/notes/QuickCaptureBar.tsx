@@ -29,9 +29,9 @@ export function QuickCaptureBar({ onStart }: { onStart: (intent?: Intent) => voi
 
   return (
     <div className={cn(FLOATING_BOTTOM_BAR, 'sm:hidden', left ? 'justify-start' : 'justify-end')}>
-      {/* The wall dims behind the open dial, so its chips never sit on a card's text (feedback
-          U14). A tap on it is Radix's outside press, which closes the dial. The ＋ is `relative`
-          only to paint above it. */}
+      {/* The wall dims behind the open dial, so its chips never sit on a card's text. A tap on
+          it is Radix's outside press, which closes the dial. The ＋ is `relative` only to paint
+          above it. */}
       {open && (
         <m.div
           data-testid="capture-scrim"
@@ -62,7 +62,7 @@ export function QuickCaptureBar({ onStart }: { onStart: (intent?: Intent) => voi
           align={left ? 'start' : 'end'}
           sideOffset={12}
           // Solid from the first frame: the shared fade showed the cards through the chips.
-          className="max-h-none w-auto overflow-visible border-0 bg-transparent p-0 shadow-none data-[state=open]:animate-none"
+          className="max-h-[none] w-auto overflow-visible border-0 bg-transparent p-0 shadow-none data-[state=open]:animate-none"
         >
           {/* `flex-col-reverse`, not a reversed array: the first start sits nearest the thumb and
               stays first in tab and screen-reader order. */}

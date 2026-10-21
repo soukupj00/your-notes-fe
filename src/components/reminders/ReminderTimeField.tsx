@@ -20,7 +20,7 @@ type ReminderTimeFieldProps = {
 
 /**
  * Two selects rather than `<input type="time">`, which draws AM/PM whenever the OS locale does
- * and ignores `lang` (feedback U10).
+ * and ignores `lang`.
  */
 export function ReminderTimeField({ hour, minute, onChange, className }: ReminderTimeFieldProps) {
   const { t } = useTranslation();

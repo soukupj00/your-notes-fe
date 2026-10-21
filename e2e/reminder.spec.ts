@@ -25,7 +25,7 @@ async function openNewNote(page: Page, isMobile: boolean) {
 
 async function setWeeklyReminder(page: Page) {
   await page.getByRole('button', { name: 'Reminder' }).click();
-  await page.getByLabel('Date').fill('2030-03-04');
+  await page.getByLabel('Date', { exact: true }).fill('2030-03-04');
   await page.getByLabel('Hour').selectOption('09');
   await page.getByLabel('Minute').selectOption('00');
   await page.getByLabel('Repeat').selectOption('weekly');
@@ -61,6 +61,20 @@ test.describe('Reminders', () => {
     await expect(page.getByTestId('reminder-chip')).toBeVisible();
   });
 
+  // Firefox's datetime-local stayed empty until its date was picked as well.
+  test('choosing only a time sets the Reminder for today', async ({ page, isMobile }) => {
+    await page.clock.setFixedTime(new Date('2030-03-04T08:00'));
+    await freshWall(page);
+    await openNewNote(page, isMobile);
+    await page.getByRole('button', { name: 'Reminder' }).click();
+    await page.getByLabel('Hour').selectOption('09');
+
+    const downloading = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Add to calendar' }).click();
+    const ics = await readFile(await (await downloading).path(), 'utf8');
+    expect(ics).toContain('DTSTART:20300304T090000\r\n');
+  });
+
   test('clearing removes the chip', async ({ page, isMobile }) => {
     await freshWall(page);
     await openNewNote(page, isMobile);
@@ -94,7 +108,7 @@ test.describe('Reminders', () => {
     await expect(page.getByTestId('reminder-chip')).toHaveCount(0);
   });
 
-  // A phone on its side leaves room on neither side of the bell (feedback B3): the popover must
+  // A phone on its side leaves room on neither side of the bell: the popover must
   // stay on screen and scroll rather than lose its top edge.
   test('on a short screen the popover stays on screen and every action is reachable', async ({
     page,
