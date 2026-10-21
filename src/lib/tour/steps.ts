@@ -51,7 +51,7 @@ export const TOUR_STEPS: TourStep[] = [
     },
   },
 
-  /** 2 - Your quick starts. Step 1's Settings scene seen again, so no act of its own. */
+  /** 2 - Ways to start a note. Step 1's Settings scene seen again, so no act of its own. */
   {
     key: 'quickCapture',
     target: () => 'settingsQuickCapture',

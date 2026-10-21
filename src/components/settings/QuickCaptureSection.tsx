@@ -29,11 +29,14 @@ export function QuickCaptureSection() {
 
   return (
     <SettingsSection title={t('settings.quickCapture.title')}>
-      <PreferenceSegmented
-        pref="noteButtonAlignment"
-        options={NOTE_BUTTON_ALIGNMENT_OPTIONS}
-        keys="settings.quickCapture.alignment"
-      />
+      {/* The ＋ is phone-only (`QuickCaptureBar`), so its side means nothing from `sm:` up. */}
+      <div className="sm:hidden">
+        <PreferenceSegmented
+          pref="noteButtonAlignment"
+          options={NOTE_BUTTON_ALIGNMENT_OPTIONS}
+          keys="settings.quickCapture.alignment"
+        />
+      </div>
 
       <SortableList
         ids={actions.map((entry) => entry.id)}

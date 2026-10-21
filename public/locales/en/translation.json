@@ -545,8 +545,8 @@
         "body": "Choose which buttons the editor's toolbar carries, and in what order. Phone and desktop each keep their own arrangement."
       },
       "quickCapture": {
-        "title": "Your quick starts",
-        "body": "Reorder the ways in so the one you reach for most comes first, and put the ＋ under whichever thumb you use."
+        "title": "Ways to start a note",
+        "body": "Drag the kinds of note you make most often to the top. On a phone, you can also choose which side the ＋ button sits on."
       },
       "sync": {
         "title": "Where your notes live",

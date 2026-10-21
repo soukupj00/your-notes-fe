@@ -6,7 +6,7 @@ import { expect, type Page, test } from '@playwright/test';
  * takes it out of the accessibility tree.
  */
 
-const STEP_TITLES = ['Your toolbar', 'Your quick starts', 'Where your notes live'] as const;
+const STEP_TITLES = ['Your toolbar', 'Ways to start a note', 'Where your notes live'] as const;
 
 function popover(page: Page) {
   return page.getByTestId('tour-popover');
