@@ -282,6 +282,7 @@ Red → green → refactor, applied per layer ([ADR 0003](./docs/adr/0003-testin
   Every Note, Tag, NoteTag and Attachment is born through one of its factories, which stamps both timestamps; a later write stamps `updatedAt` itself.
 - **An effect that awaits:** `useAsyncEffect(effect, deps)` owns the cancel flag; the effect writes state only while `alive()` is true.
 - **A user-started call that toasts its outcome:** `useAction()` gives `busy` and `run(act, { success, failure })`.
+- **A lifecycle move (pin, archive, trash, restore):** `useUndoableLifecycle()`, which toasts its undo; the Card and the open Note both go through it.
 - **Tailwind v4:** CSS-based config in `globals.css`, no `tailwind.config.js`.
 - **Files stay under 500 lines.**
 - **Vendored and generated files are never edited:** `src/contract/index.ts` (refreshed by `pnpm contract:pull`, which copies it from the `ni-dip-be` repository checked out next to this one), `src/routeTree.gen.ts`.

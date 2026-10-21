@@ -17,6 +17,7 @@ import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { useKeyboardInset } from '@/hooks/useKeyboardInset.ts';
 import { useLatest } from '@/hooks/useLatest.ts';
+import { useUndoableLifecycle } from '@/hooks/useUndoableLifecycle.ts';
 import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
 import { createNoteDraft, isEmpty } from '@/lib/draft.ts';
 import type { Intent } from '@/lib/intent.ts';
@@ -76,6 +77,7 @@ export function NoteEditorDialog({
   const store = useLocalStore();
   const { createNote, updateNote, purgeNote, pinNote, unpinNote } = useNoteActions();
   const { collectOrphans } = useAttachmentActions();
+  const lifecycle = useUndoableLifecycle();
   const isMobile = useIsMobile();
   const finePointer = useFinePointer();
   // The sheet is the one surface the software keyboard shares the screen with,
@@ -177,6 +179,26 @@ export function NoteEditorDialog({
     };
   }, [header, body, draft]);
 
+  const closeDraft = useCallback(async () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    // An empty note is kept only for a Reminder: the calendar already holds an event linking
+    // to its id.
+    await draft.close(header, body, { keepEmpty: reminder !== undefined });
+  }, [draft, header, body, reminder]);
+
+  const handleClose = useCallback(async () => {
+    await closeDraft();
+    onClose();
+  }, [closeDraft, onClose]);
+
+  // The last save lands before the move, so its undo returns the Note as it was left. A Draft
+  // that closed empty has no row to move, which makes this a plain close.
+  async function leaveWith(move: (id: string) => Promise<void>) {
+    await closeDraft();
+    if (draft.saved) await move(noteId);
+    onClose();
+  }
+
   // On mobile this goes inside the editor as its footer, so the sticky format toolbar can sit
   // below it at the sheet's bottom edge. On desktop it stays a sibling under the framed editor.
   // Width decides, not pointer: it is a question of which box exists (ADR 0016).
@@ -185,23 +207,17 @@ export function NoteEditorDialog({
       draft={draft}
       color={color}
       pinned={Boolean(pinnedAt)}
-      pinnable={state === 'active'}
-      shareable={state !== 'trashed'}
+      state={state}
       onColorChange={(next) => void handleColorChange(next)}
       onPinToggle={() => void handlePinToggle()}
+      onArchive={() => void leaveWith(lifecycle.archive)}
+      onRestore={() => void leaveWith(lifecycle.restore)}
+      onTrash={() => void leaveWith(lifecycle.trash)}
       reminder={reminder}
       onReminderSet={handleReminderSet}
       onReminderClear={() => void handleReminderClear()}
     />
   );
-
-  const handleClose = useCallback(async () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    // An empty note is kept only for a Reminder: the calendar already holds an event linking
-    // to its id.
-    await draft.close(header, body, { keepEmpty: reminder !== undefined });
-    onClose();
-  }, [draft, header, body, reminder, onClose]);
 
   return (
     <Dialog

@@ -1,7 +1,6 @@
 import type React from 'react';
 import { useCallback, useEffect, useId, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
 import { CardActions } from '@/components/cards/CardActions.tsx';
 import { CardMedia } from '@/components/cards/CardMedia.tsx';
 import { CardPin } from '@/components/cards/CardPin.tsx';
@@ -9,10 +8,11 @@ import { NoteBody } from '@/components/NoteBody.tsx';
 import { ReminderChip } from '@/components/reminders/ReminderChip.tsx';
 import { TagPills } from '@/components/tags/TagPills.tsx';
 import { Card } from '@/components/ui/card.tsx';
-import { type LifecycleSnapshot, useNoteActions } from '@/hooks/data/useNoteActions.ts';
+import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import type { NoteAttachments } from '@/hooks/data/useNoteAttachments.ts';
 import { useTagsForNote } from '@/hooks/data/useTagsForNote.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
+import { useUndoableLifecycle } from '@/hooks/useUndoableLifecycle.ts';
 import {
   checklistBox,
   checklistItemIndexAt,
@@ -40,15 +40,8 @@ interface NoteCardProps {
 export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect }) => {
   const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
-  const {
-    updateNote,
-    revertLifecycle,
-    pinNote,
-    unpinNote,
-    archiveNote,
-    trashNote,
-    restoreToActive,
-  } = useNoteActions();
+  const { updateNote } = useNoteActions();
+  const lifecycle = useUndoableLifecycle();
   // A feed card reads the labels `useNoteFeed` joined on; only a bare note opens its own query.
   const liveTags = useTagsForNote(note.tags ? null : note.id);
   const tags = note.tags ?? liveTags;
@@ -61,21 +54,11 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
   // an appointment. The fields stay on the row, so Restore brings the chip back.
   const reminder = note.state === 'trashed' ? undefined : reminderOf(note);
 
-  // One wrapper for every lifecycle action, so a new one cannot ship without an undo.
-  const withUndo =
-    (run: (id: string) => Promise<LifecycleSnapshot | null>, message: string) => async () => {
-      const before = await run(note.id);
-      if (!before) return;
-      toast(message, {
-        action: { label: t('notes.undo'), onClick: () => revertLifecycle(note.id, before) },
-      });
-    };
-
-  const handlePin = withUndo(pinNote, t('notes.pinned'));
-  const handleUnpin = withUndo(unpinNote, t('notes.unpinned'));
-  const handleArchive = withUndo(archiveNote, t('notes.archived'));
-  const handleTrash = withUndo(trashNote, t('notes.movedToTrash'));
-  const handleRestore = withUndo(restoreToActive, t('notes.restored'));
+  const handlePin = () => lifecycle.pin(note.id);
+  const handleUnpin = () => lifecycle.unpin(note.id);
+  const handleArchive = () => lifecycle.archive(note.id);
+  const handleTrash = () => lifecycle.trash(note.id);
+  const handleRestore = () => lifecycle.restore(note.id);
 
   // Read at click time and written by the handler too, so two quick ticks compose
   // instead of the second being computed from a body the first already replaced.
