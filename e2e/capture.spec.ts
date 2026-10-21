@@ -52,6 +52,21 @@ test.describe('capture starts', () => {
     await expect(page.getByRole('dialog').getByText('notes.pdf')).toBeVisible();
   });
 
+  test('the search box sits centred over the capture bar, at its width', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(isMobile, 'the phone has no capture bar, only the dial');
+    const search = page.getByRole('searchbox').locator('..');
+    const bar = page.locator('[data-tour="capture"]:visible');
+    await bar.waitFor();
+
+    const [s, b] = [await search.boundingBox(), await bar.boundingBox()];
+    if (!s || !b) throw new Error('both must be on screen');
+    expect(Math.abs(s.width - b.width)).toBeLessThanOrEqual(1);
+    expect(Math.abs(s.x + s.width / 2 - (b.x + b.width / 2))).toBeLessThanOrEqual(1);
+  });
+
   test('Voice note starts recording at once, whatever the toolbar shows', async ({
     page,
     context,
