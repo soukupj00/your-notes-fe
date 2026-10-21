@@ -7,7 +7,8 @@ App-wide providers.
 `App.tsx` composes, outermost first: `LocalStoreProvider` (in `src/data`), `ThemeProvider`, the error boundary, `PreferencesProvider`, `AppMotionProvider`, `PwaInstallProvider`, `TooltipProvider`, `ViewModeProvider`, `AccountProvider`, then the router.
 `routes/__root.tsx` adds `TourProvider` around `SyncProvider` around the nav shell, because both need the router:
 
-- The Tour navigates, marks the whole body inert and portals past the app, so it sits above the shell.
+- The Tour reads the location, marks the whole body inert and portals past the app, so it sits above the shell.
+  The Welcome, beside the shell, does the same for launch.
 - Sync shows toasts that link into the app, so it sits inside the router.
 
 `/share/$token` gets neither (root `CLAUDE.md`, Routing).
@@ -78,15 +79,11 @@ User Preferences, one Zod-validated blob in `localStorage` ([ADR 0020](../../doc
 
 ## `TourProvider.tsx`
 
-The onboarding Tour's lifecycle ([ADR 0023](../../docs/adr/0023-the-tour-points-at-settings.md)); everything it decides is in [`src/lib/tour/`](../lib/tour/) and tested there.
-The rules of the Tour are in the root `CLAUDE.md`, The Tour.
+The Settings Tour's lifecycle ([ADR 0024](../../docs/adr/0024-a-welcome-at-launch-the-tour-in-settings.md)); everything it decides is in [`src/lib/tour/`](../lib/tour/) and tested there.
+The rules of the Tour are in the root `CLAUDE.md`, Onboarding.
 
-- The startup effect offers the Tour once, on the Feed, when `onboardingSeenAt` is unset; `start` waits for the Feed to paint.
-- It **marks its own navigations**; any it did not ask for ends the Tour.
-  Step 1's act is a navigation, so without the marking the Tour would end itself at once.
-- **Every navigation it makes passes `resetScroll: false`**, and that is load-bearing.
-  The router scrolls to the top on navigate, and that call lands after the spotlight has scrolled its target into view, which leaves the spotlight over a block below the fold.
-  Instant scroll loses the same race, because the router's call simply comes second.
+- An effect offers the Tour once, on the first visit to Settings, when `onboardingSeenAt` is unset; `start` waits for the Settings page to paint.
+- The Tour never navigates, so any change of location ends it.
 - `driver.js` only measures a rect, cuts a hole and places a box; everything read or pressed is `components/tour/TourPopover.tsx`, portalled into it.
   Driver measures that box once, so the provider waits for the popover to render the step and for the fonts before handing it over.
 

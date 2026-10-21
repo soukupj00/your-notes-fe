@@ -1,14 +1,16 @@
 import type { Page } from '@playwright/test';
 
 /**
- * A fresh context is offered the Tour, which makes the app `inert`, so the offer is recorded as made
- * in the Preferences schema's own shape. A string, not a function: `tsconfig.node.json` has no DOM
- * lib, so a callback naming `localStorage` would not typecheck.
+ * A fresh context is offered the Welcome and, in Settings, the Tour, both of which make the app
+ * `inert`, so both offers are recorded as made in the Preferences schema's own shape. A string, not
+ * a function: `tsconfig.node.json` has no DOM lib, so a callback naming `localStorage` would not
+ * typecheck.
  */
 export async function skipTour(page: Page) {
+  const seen = '2026-01-01T00:00:00.000Z';
   await page.addInitScript(
     `localStorage.setItem('preferences', ${JSON.stringify(
-      JSON.stringify({ version: 2, onboardingSeenAt: '2026-01-01T00:00:00.000Z' })
+      JSON.stringify({ version: 2, onboardingSeenAt: seen, welcomeSeenAt: seen })
     )});`
   );
 }

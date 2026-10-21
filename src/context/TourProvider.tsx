@@ -1,4 +1,4 @@
-import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router';
+import { useRouterState } from '@tanstack/react-router';
 import { type Driver, driver, type PopoverDOM } from 'driver.js';
 import {
   createContext,
@@ -16,25 +16,19 @@ import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { holdBodyInert } from '@/lib/tour/inert.ts';
-import {
-  changesScene,
-  leaveScene,
-  stageRadiusOf,
-  TOUR_STEPS,
-  type TourStage,
-} from '@/lib/tour/steps.ts';
+import { stageRadiusOf, TOUR_STEPS } from '@/lib/tour/steps.ts';
 import { waitFor, waitForTarget } from '@/lib/tour/waitFor.ts';
 import 'driver.js/dist/driver.css';
 
 /**
- * The Tour's lifecycle (ADR 0023): the `driver.js` instance, the router and the `inert` marking.
+ * The Settings Tour's lifecycle (ADR 0024): the `driver.js` instance and the `inert` marking.
  * What the Tour decides lives in `src/lib/tour/`; how this file works, and why, is in
  * src/context/CLAUDE.md and the root CLAUDE.md, The Tour.
  */
 
 type TourContextValue = {
   active: boolean;
-  /** Runs the Tour from step 1. Safe to call twice. */
+  /** Runs the Tour from step 1, in Settings. Safe to call twice. */
   start: () => void;
 };
 
@@ -55,9 +49,7 @@ function isDriverElement(node: Element): boolean {
 export function TourProvider({ children }: { children: ReactNode }) {
   const { preferences, setPreference } = usePreferences();
   const reducedMotion = useReducedMotion();
-  const navigate = useNavigate();
-  const router = useRouter();
-  const href = useRouterState({ select: (state) => state.location.href });
+  const location = useRouterState({ select: (state) => state.location });
 
   /** Which step is showing, or `null` when the Tour is not running. */
   const [index, setIndex] = useState<number | null>(null);
@@ -72,34 +64,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const releaseInertRef = useRef<(() => void) | null>(null);
   const indexRef = useRef<number | null>(null);
   const busyRef = useRef(false);
-  const startedRef = useRef(false);
-  /** Navigations the Tour itself asked for; anything else destroys it. */
-  const ownNavigationsRef = useRef(0);
-
-  const markNavigation = useCallback(() => {
-    ownNavigationsRef.current += 1;
-  }, []);
-
-  /**
-   * Every Tour navigation passes `resetScroll: false`, and it is load-bearing: the router's
-   * scroll-to-top lands after driver's `scrollIntoView` and leaves the spotlight off-screen
-   * (the measured race is in src/context/CLAUDE.md).
-   */
-  const makeStage = useCallback(
-    (): TourStage => ({
-      navigate: async (to) => {
-        markNavigation();
-        // `steps.ts` names routes as plain strings so it can stay clear of the
-        // router's types; this is the one place that has to reconcile the two.
-        await navigate({ to: to as '/settings', resetScroll: false });
-      },
-      back: () => {
-        markNavigation();
-        router.history.back();
-      },
-    }),
-    [navigate, router, markNavigation]
-  );
+  const offeredRef = useRef(false);
 
   const driverConfig = useCallback(
     (element: Element | null) => ({
@@ -137,9 +102,8 @@ export function TourProvider({ children }: { children: ReactNode }) {
         { label: `the popover to render step ${at + 1}` }
       );
       const target = TOUR_STEPS[at].target();
-      // The act that produces the target has already run, but the app may still
-      // be painting it. A step that never gets one is shown centred with no
-      // spotlight rather than dropped - the copy is still worth reading.
+      // The app may still be painting the target. A step that never gets one is shown centred
+      // with no spotlight rather than dropped - the copy is still worth reading.
       const element = target ? await waitForTarget(target) : null;
       driverRef.current?.setConfig(driverConfig(element));
       driverRef.current?.highlight({
@@ -159,67 +123,39 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
   const goTo = useCallback(
     async (to: number) => {
-      const from = indexRef.current;
-      if (from === null || busyRef.current) return;
+      if (indexRef.current === null || busyRef.current) return;
       setRunning(true);
-
       try {
-        if (changesScene(from, to)) {
-          await leaveScene(from, makeStage());
-          await TOUR_STEPS[to].enter?.(makeStage());
-        }
-
         indexRef.current = to;
         setIndex(to);
         await showStep(to);
       } finally {
-        // A step whose act threw still has to hand the controls back: a Tour
-        // frozen on a disabled Next is worse than one that landed badly.
+        // A step that threw still has to hand the controls back: a Tour frozen on a disabled
+        // Next is worse than one that landed badly.
         setRunning(false);
       }
     },
-    [makeStage, showStep, setRunning]
+    [showStep, setRunning]
   );
 
-  const end = useCallback(
-    async ({ unwind }: { unwind: boolean }) => {
-      const from = indexRef.current;
-      if (from === null) return;
-
-      // The popover goes the moment the user asks, so the press is answered at
-      // once; the scrim outlives it by the length of the wind-down below.
-      indexRef.current = null;
-      setIndex(null);
-      setRunning(false);
-
-      try {
-        // Not when the *user* navigated away: the Tour does not move them back.
-        if (unwind) await leaveScene(from, makeStage());
-      } finally {
-        // An act that threw must not leave the user under an inert overlay with no way out.
-        driverRef.current?.destroy();
-        driverRef.current = null;
-        releaseInertRef.current?.();
-        releaseInertRef.current = null;
-      }
-    },
-    [makeStage, setRunning]
-  );
+  // Every way out leaves the user where they are: the Tour only pointed, so nothing is undone.
+  const end = useCallback(() => {
+    if (indexRef.current === null) return;
+    indexRef.current = null;
+    setIndex(null);
+    setRunning(false);
+    driverRef.current?.destroy();
+    driverRef.current = null;
+    releaseInertRef.current?.();
+    releaseInertRef.current = null;
+  }, [setRunning]);
 
   const start = useCallback(async () => {
     if (indexRef.current !== null) return;
 
-    // Only a replay starts off the Feed; the automatic run never moves someone who chose Settings.
-    // Guarded: navigating to the current route changes no location, so the marker would miscount.
-    if (router.state.location.pathname !== '/') {
-      markNavigation();
-      await navigate({ to: '/' });
-    }
-
-    // The Feed must be on screen: step 1 leaves from it and unwinding returns to it. This also
-    // keeps the Tour out of anywhere that never paints one, so this wait's timeout is a normal
-    // answer, not a bug.
-    if (!(await waitForTarget('capture', { label: 'a Feed to start on' }))) return;
+    // Settings must be on screen: every step points into it. Anywhere else this wait's timeout is
+    // a normal answer, not a bug.
+    if (!(await waitForTarget('settingsToolbar', { label: 'Settings to start on' }))) return;
 
     // Driver measures the popover once, and the self-hosted fonts load async: measured in the
     // fallback face, step 1's box hung off the top of the window.
@@ -235,23 +171,13 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
     indexRef.current = 0;
     setIndex(0);
-    await TOUR_STEPS[0].enter?.(makeStage());
     await showStep(0);
-  }, [
-    router,
-    navigate,
-    markNavigation,
-    preferences.onboardingSeenAt,
-    setPreference,
-    driverConfig,
-    makeStage,
-    showStep,
-  ]);
+  }, [preferences.onboardingSeenAt, setPreference, driverConfig, showStep]);
 
   const goNext = useCallback(() => {
     const at = indexRef.current;
     if (at === null) return;
-    if (at === TOUR_STEPS.length - 1) void end({ unwind: true });
+    if (at === TOUR_STEPS.length - 1) end();
     else void goTo(at + 1);
   }, [end, goTo]);
 
@@ -261,31 +187,23 @@ export function TourProvider({ children }: { children: ReactNode }) {
     void goTo(at - 1);
   }, [goTo]);
 
-  const skip = useCallback(() => void end({ unwind: true }), [end]);
-
-  // Startup: offer the Tour if it never was. A failed start is logged, and the app goes on
-  // without a Tour.
+  // The first visit to Settings offers the Tour, once. A failed start is logged, and the app goes
+  // on without a Tour.
   useAsyncEffect(async () => {
-    if (startedRef.current) return;
-    startedRef.current = true;
-    if (preferences.onboardingSeenAt || router.state.location.pathname !== '/') return;
+    if (offeredRef.current || preferences.onboardingSeenAt) return;
+    if (location.pathname !== '/settings') return;
+    offeredRef.current = true;
     await start().catch(console.error);
-  }, [preferences.onboardingSeenAt, start, router]);
+  }, [location.pathname, preferences.onboardingSeenAt, start]);
 
-  // A navigation the Tour did not ask for destroys it: the app is inert, so the
-  // only way one happens is the platform back button or gesture, and that is
-  // the user leaving rather than something to be corrected.
-  const lastHrefRef = useRef(href);
+  // The Tour never navigates, and the app is inert, so a navigation is the platform back button or
+  // gesture: the user leaving.
+  const lastHrefRef = useRef(location.href);
   useEffect(() => {
-    if (href === lastHrefRef.current) return;
-    lastHrefRef.current = href;
-    if (indexRef.current === null) return;
-    if (ownNavigationsRef.current > 0) {
-      ownNavigationsRef.current -= 1;
-      return;
-    }
-    void end({ unwind: false });
-  }, [href, end]);
+    if (location.href === lastHrefRef.current) return;
+    lastHrefRef.current = location.href;
+    end();
+  }, [location.href, end]);
 
   // Esc skips and the arrows step, which is driver's own keyboard contract minus
   // the parts we turned off. Enter needs nothing: the popover's buttons are real
@@ -293,7 +211,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (index === null) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') skip();
+      if (event.key === 'Escape') end();
       else if (event.key === 'ArrowRight') goNext();
       else if (event.key === 'ArrowLeft') goBack();
       else return;
@@ -301,7 +219,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [index, skip, goNext, goBack]);
+  }, [index, end, goNext, goBack]);
 
   // Unmount is not a path the app takes, but a spotlight and an inert body are
   // both things that outlive React if nobody puts them back.
@@ -330,7 +248,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
             busy={busy}
             onBack={goBack}
             onNext={goNext}
-            onSkip={skip}
+            onSkip={end}
           />,
           popoverHost
         )}

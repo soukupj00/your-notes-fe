@@ -543,6 +543,15 @@
     "dropped": "{{name}} položeno na pozici {{position}}.",
     "cancelled": "{{name}} vráceno na původní místo."
   },
+  "welcome": {
+    "title": "Vítej v YourNotes",
+    "body": "Poznámky se ukládají v tomhle zařízení a fungují i offline. Začít můžeš tady:",
+    "marks": {
+      "capture": "Tady začneš poznámku: text, seznam, hlasovou poznámku, kresbu nebo obrázek.",
+      "settings": "Nastavení: uprav si panel nástrojů a způsoby, jak začít poznámku, a připoj vlastní server."
+    },
+    "dismiss": "Rozumím"
+  },
   "onboarding": {
     "progress": "Krok {{current}} z {{total}}",
     "buttons": {

@@ -1,6 +1,6 @@
 # 0023 - Průvodce ukazuje na Nastavení
 
-- Stav: přijato (nahrazuje [ADR 0015](./0015-the-tour-drives-the-app-on-disposable-props.md))
+- Stav: nahrazeno [ADR 0024](./0024-a-welcome-at-launch-the-tour-in-settings.md) (samo nahradilo [ADR 0015](./0015-the-tour-drives-the-app-on-disposable-props.md))
 - Datum: 2026-10-11
 
 ## Kontext

@@ -5,8 +5,10 @@
  */
 
 export const TOUR_TARGETS = {
-  /** Not a step: the Feed is on screen. The `＋` below `sm:`, the "Take a note" bar above it. */
+  /** The Welcome's first mark: the `＋` below `sm:`, the "Take a note" bar above it. */
   capture: '[data-tour="capture"]',
+  /** The Welcome's second mark: the topbar gear, Settings' one entry point. */
+  settingsGear: '[data-tour="settings-gear"]',
   /**
    * Step 1: the preview strip, not `EditorToolbarSection`. The section is 880px tall on an 839px
    * phone and the inert app cannot scroll, so a cutout over it could never be seen whole.

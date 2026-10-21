@@ -27,7 +27,7 @@ function found(name: TourTargetName) {
 }
 
 describe('every named tour target is mounted somewhere', () => {
-  it('marks both capture bars on the feed, since exactly one of them is on screen', async () => {
+  it('marks both capture bars and both gears on the feed, since one of each is on screen', async () => {
     renderRoute('/');
     await screen.findByRole('heading', { level: 1 });
 
@@ -35,6 +35,8 @@ describe('every named tour target is mounted somewhere', () => {
     // always in the document and CSS hides one; this is the duplication that
     // makes `resolveTourTarget`'s rect check load-bearing rather than tidy.
     expect(found('capture')).toHaveLength(2);
+    // The same for the gear: one in the desktop topbar, one in the phone's app bar.
+    expect(found('settingsGear')).toHaveLength(2);
   });
 
   // Three anchors, not one shared block: that block was 1296px on an 839px phone, which the inert
@@ -52,7 +54,7 @@ describe('every named tour target is mounted somewhere', () => {
   it('covers every target the registry declares', () => {
     // The one that fails when a target is added and nothing above is updated.
     expect(Object.keys(TOUR_TARGETS).sort()).toEqual(
-      ['capture', 'settingsToolbar', 'settingsQuickCapture', 'settingsSync'].sort()
+      ['capture', 'settingsGear', 'settingsToolbar', 'settingsQuickCapture', 'settingsSync'].sort()
     );
   });
 });

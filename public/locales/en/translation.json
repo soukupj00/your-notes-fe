@@ -542,6 +542,15 @@
     "dropped": "{{name}} dropped at position {{position}}.",
     "cancelled": "{{name}} put back where it was."
   },
+  "welcome": {
+    "title": "Welcome to YourNotes",
+    "body": "Your notes are kept on this device and work offline. Two places to begin:",
+    "marks": {
+      "capture": "Start a note here: text, a checklist, a voice note, a drawing or a picture.",
+      "settings": "Settings: arrange the toolbar and the ways to start a note, and connect your own server."
+    },
+    "dismiss": "Got it"
+  },
   "onboarding": {
     "progress": "Step {{current}} of {{total}}",
     "buttons": {

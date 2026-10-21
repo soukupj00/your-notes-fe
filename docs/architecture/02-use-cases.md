@@ -58,7 +58,7 @@ Customisability is a positioning claim ("this one is yours"), which is why it is
 
 ### Learn the app
 
-The three-step Tour *drives* the real app by taking the user through Settings, and creates nothing ([ADR 0023](../adr/0023-the-tour-points-at-settings.md)); offered once, replayable from Settings.
+First launch shows a one-screen Welcome pointing at capture and the Settings gear; the three-step Tour is offered on the first visit to Settings, creates nothing and is replayable there ([ADR 0024](../adr/0024-a-welcome-at-launch-the-tour-in-settings.md)).
 
 ## Use cases with a server
 

@@ -64,7 +64,7 @@ async function openStored(overrides: Partial<Note> = {}) {
   await testStore.notes.add(note);
   const onClose = vi.fn();
   render(<NoteEditorDialog noteId={note.id} onClose={onClose} />);
-  await screen.findByDisplayValue(note.body);
+  await screen.findByDisplayValue(note.body as string);
   return { note, onClose };
 }
 

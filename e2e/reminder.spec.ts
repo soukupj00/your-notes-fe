@@ -1,15 +1,15 @@
 import { readFile } from 'node:fs/promises';
 import { expect, type Page, test } from '@playwright/test';
+import { skipTour } from './helpers';
 
 /**
  * Reminders' acceptance test (ADR 0021). The app never notifies, so what can be pinned is the
  * Hand-off: setting a Reminder produces a calendar file, and the Card keeps the record.
  */
 
-/** A fresh profile is offered the Tour, which makes the whole app inert. */
 async function freshWall(page: Page) {
+  await skipTour(page);
   await page.goto('/');
-  await page.getByTestId('tour-popover').getByRole('button', { name: 'Skip' }).click();
   await expect(page.getByText('No notes yet')).toBeVisible();
 }
 

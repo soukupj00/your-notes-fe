@@ -82,7 +82,7 @@ function Navbar() {
           <ThemeModeToggleButton />
           <IconTooltip label={t('nav.settings')}>
             <Button variant="ghost" size="icon" className={CHROME_ICON_BUTTON} asChild>
-              <Link to="/settings" aria-label={t('nav.settings')}>
+              <Link to="/settings" aria-label={t('nav.settings')} data-tour="settings-gear">
                 <Settings />
               </Link>
             </Button>
@@ -107,7 +107,7 @@ function Navbar() {
           right={
             topbar.kind === 'destination' && (
               <Button variant="ghost" size="icon" className={CHROME_ICON_BUTTON} asChild>
-                <Link to="/settings" aria-label={t('nav.settings')}>
+                <Link to="/settings" aria-label={t('nav.settings')} data-tour="settings-gear">
                   <Settings />
                 </Link>
               </Button>

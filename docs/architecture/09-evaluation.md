@@ -25,7 +25,7 @@ Each goal maps to one audience from `PRODUCT.md`: goals 1 and 3 to the household
 
 ### Session A - daily surface (all participants, phone first)
 
-1. First open: experience the Tour (observe: skipped or followed? anything re-explained later?).
+1. First open: the Welcome, then the Tour on the first visit to Settings (observe: skipped or followed? anything re-explained later?).
 2. Capture a note one-handed while "walking out the door" (the product's defining scenario).
 3. Make a shopping checklist; check two items off; observe the sinking behavior comprehension.
 4. Attach a photo and record a short audio note.
