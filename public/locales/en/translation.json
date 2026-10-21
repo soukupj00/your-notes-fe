@@ -230,8 +230,8 @@
       "description": "Re-tints note and label colours so the nine stay distinguishable. Works with either theme."
     },
     "sinkCheckedItems": {
-      "label": "Sink checked items",
-      "description": "Checked items are shown at the bottom of their list. The order you typed is never changed."
+      "label": "Move checked items to the bottom",
+      "description": "In a checklist, checked items are shown after the unchecked ones. The order you typed them in is kept."
     },
     "backup": {
       "title": "Backup",

@@ -230,8 +230,8 @@
       "description": "Přebarví barvy poznámek a štítků tak, aby šlo všech devět rozlišit. Funguje s oběma motivy."
     },
     "sinkCheckedItems": {
-      "label": "Odsouvat splněné položky",
-      "description": "Zaškrtnuté položky se zobrazují na konci seznamu. Pořadí, ve kterém jste je napsali, se nikdy nemění."
+      "label": "Přesouvat splněné položky na konec",
+      "description": "V seznamu úkolů se zaškrtnuté položky zobrazují pod nezaškrtnutými. Pořadí, ve kterém jste je napsali, zůstává."
     },
     "backup": {
       "title": "Záloha",
