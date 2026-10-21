@@ -47,6 +47,11 @@ export function HelpSection() {
               {t('settings.help.docs.github')}
             </a>
           </Button>
+          <Button asChild variant="outline" className="min-h-11">
+            <a href={t('settings.help.docs.setupUrl')} target="_blank" rel="noopener noreferrer">
+              {t('settings.help.docs.setup')}
+            </a>
+          </Button>
         </div>
       </SettingsRow>
     </SettingsSection>

@@ -311,7 +311,9 @@
         "label": "Documentation",
         "description": "How it works, and how to run your own server.",
         "open": "Open the docs",
-        "github": "GitHub"
+        "github": "GitHub",
+        "setup": "Set up your own server",
+        "setupUrl": "https://soukupj00.github.io/your-notes-be/setup"
       }
     },
     "quickCapture": {

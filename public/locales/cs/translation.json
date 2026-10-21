@@ -311,7 +311,9 @@
         "label": "Dokumentace",
         "description": "Jak aplikace funguje a jak spustit vlastní server.",
         "open": "Otevřít dokumentaci",
-        "github": "GitHub"
+        "github": "GitHub",
+        "setup": "Nastavit vlastní server",
+        "setupUrl": "https://soukupj00.github.io/your-notes-be/cs/setup"
       }
     },
     "quickCapture": {
