@@ -101,6 +101,17 @@ describe('NoteEditorDialog lifecycle', () => {
     expect(toastMock).toHaveBeenCalledWith('notes.movedToTrash', expect.anything());
   });
 
+  it('moves the note once however fast the button is pressed again', async () => {
+    const { onClose } = await openStored();
+    const archive = screen.getByRole('button', { name: 'notes.archive' });
+
+    await userEvent.dblClick(archive);
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(toastMock).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('discards a new, empty draft like a close, with nothing to undo', async () => {
     const onClose = vi.fn();
     render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={onClose} />);

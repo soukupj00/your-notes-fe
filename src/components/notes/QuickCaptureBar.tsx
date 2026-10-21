@@ -31,7 +31,7 @@ export function QuickCaptureBar({ onStart }: { onStart: (intent?: Intent) => voi
     <div className={cn(FLOATING_BOTTOM_BAR, 'sm:hidden', left ? 'justify-start' : 'justify-end')}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          {/* The Tour reads this or its desktop twin as the Feed being on screen. */}
+          {/* The Welcome marks this or its desktop twin. */}
           <Button
             type="button"
             size="icon"

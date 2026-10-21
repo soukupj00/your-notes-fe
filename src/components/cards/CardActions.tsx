@@ -31,7 +31,7 @@ export function CardActions({
 
   return (
     <div data-slot="note-card-actions" className="ml-auto flex shrink-0 items-center gap-0.5">
-      {/* A trashed Note is on its way out, so it is not recoloured (FEEDBACK U8). */}
+      {/* A trashed Note is on its way out, so it is not recoloured. */}
       {note.state !== 'trashed' && (
         <NoteColorButton value={note.color} onChange={onColorChange} className={railButton} />
       )}

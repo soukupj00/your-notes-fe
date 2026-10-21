@@ -94,9 +94,9 @@ A Note is always in exactly one **State**, and may independently be **Pinned** a
 
 ## Onboarding
 
-- **Welcome** — The one overlay a new user sees at first launch: a greeting and a few marks, each pointing at a control and saying what it is for.
+- **Welcome** - The one overlay a new user sees at first launch: a greeting and a few marks, each pointing at a control and saying what it is for.
   It is shown once and dismissed with one press; nothing in it steps, so it is not a Tour.
-- **Tour** — A short, ordered demonstration of a part of the app, offered once when the user first reaches it and replayable on demand.
+- **Tour** - A short, ordered demonstration of a part of the app, offered once when the user first reaches it and replayable on demand.
   A Tour *points at the real app* rather than describing it, and the user only advances, retreats, or skips.
   It is therefore always in the user's own Locale, Theme, Vision Mode and Width Class, because there is nothing to be in but the app itself.
   A Tour never asks the user to act and never waits on them; a step that required the user to do something would be a different concept.

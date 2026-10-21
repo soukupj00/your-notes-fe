@@ -1,4 +1,4 @@
-import { useRouterState } from '@tanstack/react-router';
+import { useRouter, useRouterState } from '@tanstack/react-router';
 import { type CSSProperties, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,7 @@ import { holdBodyInert } from '@/lib/tour/inert.ts';
 import { stageRadiusOf } from '@/lib/tour/steps.ts';
 import { waitForTarget } from '@/lib/tour/waitFor.ts';
 import { type Box, placeCallout, WELCOME_MARKS } from '@/lib/tour/welcome.ts';
-import { cn } from '@/lib/utils.ts';
+import { cn, rootFontPx } from '@/lib/utils.ts';
 
 /** Matches the Tour's stage padding, so a hole sits off its target the same way. */
 const HOLE_PADDING = 8;
@@ -47,8 +47,6 @@ function measure(
   });
 }
 
-const rootPx = () => Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-
 /**
  * The launch Welcome (ADR 0024): one overlay, offered once on the Feed, whose marks point at where
  * to begin. Not a Tour: nothing steps, and one press dismisses it.
@@ -56,6 +54,7 @@ const rootPx = () => Number.parseFloat(getComputedStyle(document.documentElement
 export function Welcome() {
   const { t } = useTranslation();
   const { preferences, setPreference } = usePreferences();
+  const router = useRouter();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [elements, setElements] = useState<Element[] | null>(null);
   const [viewport, setViewport] = useState(() => ({
@@ -64,6 +63,7 @@ export function Welcome() {
   }));
   const [host] = useState(() => document.createElement('div'));
   const offeredRef = useRef(false);
+  const dismissRef = useRef<HTMLButtonElement>(null);
 
   // Stamped when offered, like the Tour (ADR 0015). Waits for the marks, never a timer, and also
   // for the fonts, since a callout measured in the fallback face would land elsewhere.
@@ -84,8 +84,15 @@ export function Welcome() {
 
   useEffect(() => {
     if (!open) return;
+    const previous = document.activeElement;
     document.body.append(host);
     const release = holdBodyInert((node) => node === host);
+    // Not `autoFocus`: React focuses while the host is still detached, and that focus is lost.
+    dismissRef.current?.focus();
+    // The app is inert, so a navigation is Back or Forward: the user has left the Feed it marks.
+    const stopListening = router.subscribe('onBeforeNavigate', (event) => {
+      if (event.pathChanged) setElements(null);
+    });
     const onResize = () => setViewport({ width: window.innerWidth, height: window.innerHeight });
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
@@ -95,17 +102,19 @@ export function Welcome() {
     window.addEventListener('resize', onResize);
     document.addEventListener('keydown', onKeyDown);
     return () => {
+      stopListening();
       release();
       host.remove();
+      if (previous instanceof HTMLElement) previous.focus();
       window.removeEventListener('resize', onResize);
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [open, host]);
+  }, [open, host, router]);
 
   if (!elements) return null;
 
   const marks = measure(elements, viewport);
-  const width = Math.min(16 * rootPx(), viewport.width - 32);
+  const width = Math.min(16 * rootFontPx(), viewport.width - 32);
 
   return createPortal(
     <div
@@ -189,8 +198,8 @@ export function Welcome() {
           {t('welcome.body')}
         </p>
         <Button
+          ref={dismissRef}
           type="button"
-          autoFocus
           className="min-h-11 self-end"
           onClick={() => setElements(null)}
         >

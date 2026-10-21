@@ -23,7 +23,7 @@ import 'driver.js/dist/driver.css';
 /**
  * The Settings Tour's lifecycle (ADR 0024): the `driver.js` instance and the `inert` marking.
  * What the Tour decides lives in `src/lib/tour/`; how this file works, and why, is in
- * src/context/CLAUDE.md and the root CLAUDE.md, The Tour.
+ * src/context/CLAUDE.md and the root CLAUDE.md, Onboarding.
  */
 
 type TourContextValue = {
@@ -53,7 +53,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
   /** Which step is showing, or `null` when the Tour is not running. */
   const [index, setIndex] = useState<number | null>(null);
-  /** True while a step's act is still running, so no control can be pressed twice. */
+  /** True while a step is still being shown, so no control can be pressed twice. */
   const [busy, setBusy] = useState(false);
 
   // A node of our own, rendered ahead of driver and appended on `onPopoverRender`: driver positions

@@ -1,6 +1,6 @@
 /**
  * Several surfaces are mounted twice with CSS hiding one, so a target resolves to the first match
- * with a non-zero rect (CLAUDE.md "The Tour"). jsdom measures everything as 0x0, so only
+ * with a non-zero rect (CLAUDE.md "Onboarding"). jsdom measures everything as 0x0, so only
  * `e2e/onboarding.spec.ts`, which fails on a dropped step, proves both breakpoints resolve.
  */
 

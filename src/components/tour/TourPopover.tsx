@@ -31,7 +31,7 @@ export function TourPopover({
   /** Zero-based, so the counter reads `index + 1`. */
   index: number;
   total: number;
-  /** True while a step's act is still running; every control waits for it. */
+  /** True while a step is still being shown; every control waits for it. */
   busy: boolean;
   onBack: () => void;
   onNext: () => void;

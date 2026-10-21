@@ -6,7 +6,6 @@ import { useStartPicker } from '@/components/notes/useStartPicker.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { IconTooltip } from '@/components/ui/tooltip.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
-import { useTourActive } from '@/context/TourProvider.tsx';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import type { Intent } from '@/lib/intent.ts';
 import { resolveTransition } from '@/lib/motion.ts';
@@ -31,7 +30,6 @@ const CHAR_MS = 45;
 export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => void }) {
   const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
-  const tourActive = useTourActive();
   const [index, setIndex] = useState(0);
   const { preferences } = usePreferences();
   const actions = resolveDesktopQuickCapture(preferences.quickCapture);
@@ -42,16 +40,14 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
   // from its raw key to words as translations arrive, which nobody should watch being typed.
   const hasRotated = useRef(false);
 
-  // The rotation stands down during the Tour: step 1 spotlights this bar, and
-  // its content must hold still while the popover explaining it is read.
   useEffect(() => {
-    if (reducedMotion || tourActive) return;
+    if (reducedMotion) return;
     const id = setInterval(() => {
       hasRotated.current = true;
       setIndex((i) => (i + 1) % PLACEHOLDER_KEYS.length);
     }, ROTATE_MS);
     return () => clearInterval(id);
-  }, [reducedMotion, tourActive]);
+  }, [reducedMotion]);
 
   const key = PLACEHOLDER_KEYS[reducedMotion ? 0 : index];
   const placeholder = t(key);
@@ -80,7 +76,7 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
   }, [placeholder, reducedMotion, revealed]);
 
   return (
-    // The Tour reads this or its `QuickCaptureBar` twin as the Feed being on screen.
+    // The Welcome marks this or its `QuickCaptureBar` twin.
     <div
       data-tour="capture"
       className="mx-auto mb-6 hidden max-w-lg items-center gap-1 rounded-card border bg-card pr-2 shadow-rest transition-shadow hover:shadow-lift sm:flex"

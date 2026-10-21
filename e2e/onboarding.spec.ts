@@ -53,10 +53,12 @@ test.describe('the Welcome', () => {
     await expect(welcome(page).getByTestId('welcome-mark-settings')).toBeVisible();
     // Launch is not the Tour: that waits for Settings.
     await expect(popover(page)).toBeHidden();
+    await expect(welcome(page).getByRole('button', { name: 'Got it' })).toBeFocused();
 
     await welcome(page).getByRole('button', { name: 'Got it' }).click();
     await expectAppBack(page);
     await expect(page.getByText('No notes yet')).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
 
     await page.reload();
     await expect(page.getByText('No notes yet')).toBeVisible();
@@ -69,6 +71,18 @@ test.describe('the Welcome', () => {
 
     await page.keyboard.press('Escape');
 
+    await expectAppBack(page);
+  });
+
+  test('Back closes it with the Feed it marks', async ({ page, isMobile }) => {
+    await page.goto('/trash');
+    if (isMobile) await page.getByRole('button', { name: 'Toggle navigation' }).click();
+    await page.getByRole('link', { name: 'Notes', exact: true }).click();
+    await expect(welcome(page)).toBeVisible();
+
+    await page.goBack();
+
+    await expect(page).toHaveURL(/\/trash$/);
     await expectAppBack(page);
   });
 });

@@ -182,7 +182,7 @@ export function NoteEditorDialog({
     };
   }, [header, body, draft]);
 
-  // In the trash a Note is a read-only preview (FEEDBACK U8): it cannot be edited, so closing it
+  // In the trash a Note is a read-only preview: it cannot be edited, so closing it
   // writes nothing, which also keeps an empty one from being purged.
   const preview = state === 'trashed';
 
@@ -201,10 +201,17 @@ export function NoteEditorDialog({
 
   // The last save lands before the move, so its undo returns the Note as it was left. A Draft
   // that closed empty has no row to move, which makes this a plain close.
+  const leavingRef = useRef(false);
   async function leaveWith(move: (id: string) => Promise<void>) {
-    await closeDraft();
-    if (draft.saved) await move(noteId);
-    onClose();
+    if (leavingRef.current) return;
+    leavingRef.current = true;
+    try {
+      await closeDraft();
+      if (draft.saved) await move(noteId);
+      onClose();
+    } finally {
+      leavingRef.current = false;
+    }
   }
 
   async function deleteForever() {

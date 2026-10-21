@@ -243,7 +243,7 @@ Neither creates or changes Notes.
 
 **i18next** with browser language detection; translations are in `public/locales/<lng>/translation.json`, falling back to `en`.
 Numbers and dates go through `src/lib/format.ts` with the app language passed in.
-`src/i18n.test.ts` gates the bundles against each other: the same keys in every locale, and every key the Tour composes at render time.
+`src/i18n.test.ts` gates the bundles against each other: the same keys in every locale, and every key the Tour and the Welcome compose at render time.
 The language is a Device fact like every Preference (not in a Backup, not synced), but i18next's detector keeps it in `localStorage` itself, not `PreferencesProvider`.
 Settings uses a Select for it because the list outgrows a segmented control.
 

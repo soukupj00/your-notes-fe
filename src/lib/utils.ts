@@ -17,3 +17,8 @@ export function stripHtml(html: string | null | undefined): string {
     .replace(/\s+/g, ' ')
     .trim();
 }
+
+/** One rem in px right now: the root font steps up on a large screen (DESIGN.md Layout). */
+export function rootFontPx(): number {
+  return Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+}

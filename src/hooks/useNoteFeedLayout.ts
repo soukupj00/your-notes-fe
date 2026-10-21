@@ -4,6 +4,7 @@ import {
   type NoteFeedLayout,
   type NoteFeedLayoutMode,
 } from '@/lib/note-feed-layout.ts';
+import { rootFontPx } from '@/lib/utils.ts';
 
 const EMPTY_LAYOUT: NoteFeedLayout = {
   placements: {},
@@ -96,7 +97,7 @@ export function useNoteFeedLayout(
     // DESIGN.md's breakpoint is container-driven: a narrow app panel gets the
     // same 10rem columns as a narrow viewport, regardless of window size. In rem, so
     // columns widen with the root font on a large screen.
-    const rem = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const rem = rootFontPx();
     const effectiveMinimum = width < 46 * rem ? 10 * rem : minColumnRem * rem;
     const dimensions = calculateNoteFeedLayout({
       mode: currentMode,
