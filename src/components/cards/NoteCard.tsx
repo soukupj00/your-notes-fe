@@ -148,7 +148,10 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
       data-pinned={note.pinnedAt ? '' : undefined}
       // A click anywhere opens the note. Keyboards and screen readers use the open button
       // instead, so the card is not one button swallowing the rail's controls (invalid nesting).
-      onClick={() => select()}
+      // A portal's clicks (a dialog the rail opened) bubble here through React, not the page.
+      onClick={(e) => {
+        if (e.currentTarget.contains(e.target as Node)) select();
+      }}
       className="group relative isolate w-full cursor-pointer break-inside-avoid gap-0 rounded-card border-0 bg-transparent py-0 text-card-foreground shadow-none has-[[data-slot=note-card-open]:focus-visible]:ring-2 has-[[data-slot=note-card-open]:focus-visible]:ring-ring has-[[data-slot=note-card-open]:focus-visible]:ring-offset-2 has-[[data-slot=note-card-open]:focus-visible]:ring-offset-background"
     >
       {/* Its click bubbles to the Card's `onClick`, so it needs no handler of its own. */}

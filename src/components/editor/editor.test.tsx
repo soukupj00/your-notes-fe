@@ -32,6 +32,21 @@ vi.mock('./extensions/attachments/insert', async (importOriginal) => ({
   insertFiles: vi.fn(async () => {}),
 }));
 
+describe('Editor focus', () => {
+  // TipTap alone moves focus a frame later, and a key typed in that frame lands in the field
+  // that still has it (the title, after its Enter).
+  it('takes focus in the same tick it is asked to', async () => {
+    const ref = createRef<EditorHandle>();
+    const { container } = render(<Editor ref={ref} content="<p>world</p>" getNoteId={vi.fn()} />);
+    await waitFor(() => expect(ref.current?.getEditor()).toBeTruthy());
+
+    ref.current?.focus('start');
+
+    expect(document.activeElement).toBe(container.querySelector('.tiptap'));
+    expect(ref.current?.getEditor()?.state.selection.from).toBe(1);
+  });
+});
+
 describe('Editor content syncing', () => {
   // `content` is read once, at creation, so every later body must arrive through
   // the setContent effect, or opening an existing note shows a blank editor.

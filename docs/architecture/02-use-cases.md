@@ -31,7 +31,7 @@ Capitalized terms are canonical in [`CONTEXT.md`](../../CONTEXT.md).
 | Color a note / a label | A palette token, resolved per Theme and Vision Mode. |
 | Pin | Surfaces the Note at the top of the Active Feed; cleared by archive/trash. |
 | Archive | Keeping without clutter: hidden from the main Feed, never auto-deleted, still searchable. |
-| Trash and restore | Discarding with an undo window; a 30-day grace period, then the Purge sweep removes it permanently ([ADR 0009](../adr/0009-note-lifecycle-model.md)). Opened from the trash, a Note is a read-only preview offering Restore and Delete forever. |
+| Trash and restore | Discarding with an undo window; a 30-day grace period, then the Purge sweep removes it permanently ([ADR 0009](../adr/0009-note-lifecycle-model.md)). In the trash, a Note's Card and its read-only preview both offer Restore, Archive and Delete forever; only Delete forever has no undo, so it asks first. |
 | Manage labels | `/labels`: rename, recolour, merge-into, delete. |
 
 ### Find
