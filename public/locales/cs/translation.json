@@ -298,17 +298,42 @@
     },
     "shortcuts": {
       "title": "Klávesové zkratky",
-      "description": "Klávesa pro novou poznámku funguje v Poznámkách. Ostatní fungují v otevřené poznámce bez ohledu na to, která tlačítka panel zobrazuje.",
+      "description": "Zkratku změníte kliknutím na její klávesy. Zkratky v Poznámkách fungují mimo otevřenou poznámku, ostatní v otevřené poznámce bez ohledu na to, která tlačítka panel zobrazuje.",
       "newNote": {
-        "label": "Nová poznámka",
-        "description": "Stiskem v Poznámkách založíte novou poznámku.",
-        "recording": "Stiskněte novou klávesu. Esc změnu zruší.",
-        "refused": "Jen jedno písmeno, číslice nebo symbol. Esc změnu zruší.",
-        "off": "Vypnuto",
-        "change": "Změnit",
-        "turnOff": "Vypnout",
-        "reset": "Výchozí"
-      }
+        "label": "Nová poznámka"
+      },
+      "search": {
+        "label": "Hledat"
+      },
+      "group": {
+        "app": "V Poznámkách",
+        "editor": "V otevřené poznámce"
+      },
+      "none": "Žádná",
+      "changed": "Změněno",
+      "keysButton": "{{name}}: {{keys}}. Změnit",
+      "keysButtonNone": "{{name}}: žádná. Nastavit zkratku",
+      "menu": {
+        "trigger": "Další možnosti: {{name}}",
+        "edit": "Upravit",
+        "clear": "Vymazat",
+        "reset": "Obnovit výchozí {{keys}}"
+      },
+      "recording": "Stiskněte nové klávesy. Esc změnu zruší.",
+      "conflict": "Zkratku {{keys}} už používá akce {{name}}. Nahrazením se jí zkratka odebere.",
+      "replace": "Nahradit",
+      "cancel": "Zrušit",
+      "refused": {
+        "needsModifier": "Podržte také Ctrl, Cmd nebo Alt: samotná klávesa píše do poznámky.",
+        "bareKey": "Jedno písmeno, číslice nebo symbol, nebo klávesa s Ctrl, Cmd či Alt.",
+        "browser": "Kombinaci {{keys}} si nechává prohlížeč.",
+        "editor": "{{keys}} slouží k psaní a úpravám.",
+        "altgr": "Na této klávesnici {{keys}} píše znak."
+      },
+      "resetAll": "Obnovit všechny zkratky",
+      "resetAllTitle": "Obnovit všechny zkratky?",
+      "resetAllBody": "Všechny zkratky se vrátí na výchozí, i ty, které jste vymazali.",
+      "resetAllConfirm": "Obnovit vše"
     },
     "help": {
       "title": "Nápověda",
