@@ -85,6 +85,12 @@ export type EditorHandle = {
   getEditor: () => TiptapEditor | null;
 };
 
+// TipTap moves focus a frame later, and a key pressed in that frame lands where focus was.
+function focusNow(editor: TiptapEditor, at: 'start' | 'end') {
+  editor.commands.focus(at);
+  editor.view.focus();
+}
+
 export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   {
     content,
@@ -308,7 +314,9 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   useImperativeHandle(
     ref,
     () => ({
-      focus: (at = 'end') => editor?.commands.focus(at),
+      focus: (at = 'end') => {
+        if (editor) focusNow(editor, at);
+      },
       getEditor: () => editorRef.current,
     }),
     [editor]
@@ -352,7 +360,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       return;
     }
     e.preventDefault();
-    editor.commands.focus('end');
+    focusNow(editor, 'end');
   };
 
   return (
