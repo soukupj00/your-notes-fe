@@ -1,6 +1,7 @@
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { Editor, type EditorHandle } from '@/components/editor/editor.tsx';
 import { NoteEditorBar } from '@/components/notes/NoteEditorBar.tsx';
 import { EMPTY_CHECKLIST_BODY } from '@/components/notes/noteDrafts.ts';
@@ -221,17 +222,19 @@ export function NoteEditorDialog({
     }
   }
 
+  async function deleteForever() {
+    await purgeNote(noteId);
+    toast(t('notes.deletedForever'));
+    onClose();
+  }
+
   // On mobile this goes inside the editor as its footer, so the sticky format toolbar can sit
   // below it at the sheet's bottom edge. On desktop it stays a sibling under the framed editor.
   // Width decides, not pointer: it is a question of which box exists (ADR 0016).
-  // None before the load: `state` is only a default until then, and the edit bar's moves would
-  // act on a trashed Note.
-  const noteBar = !loaded ? null : preview ? (
+  const noteBar = preview ? (
     <TrashedNoteBar
-      noteId={noteId}
       onRestore={() => void leaveWith(lifecycle.restore)}
-      onArchive={() => void leaveWith(lifecycle.archive)}
-      onDeleted={onClose}
+      onDeleteForever={() => void deleteForever()}
     />
   ) : (
     <NoteEditorBar

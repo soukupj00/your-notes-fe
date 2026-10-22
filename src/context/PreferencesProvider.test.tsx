@@ -118,6 +118,21 @@ describe('graceful fallback', () => {
     expect(result.current.preferences.toolbar.wide).toHaveLength(1);
   });
 
+  it.each([
+    ['nothing stored', undefined, 'n'],
+    ['a key turned off', null, null],
+    ['a remapped key', 'k', 'k'],
+    ['two characters', 'ab', 'n'],
+    ['a number', 5, 'n'],
+  ])('reads the new-note key from %s', async (_label, newNoteKey, expected) => {
+    store({ version: PREFERENCES_VERSION, newNoteKey, density: 'compact' });
+
+    const result = await prefs();
+
+    expect(result.current.preferences.newNoteKey).toBe(expected);
+    expect(result.current.preferences.density).toBe('compact');
+  });
+
   it('keeps a stored Layout naming ids this build does not know', async () => {
     // Forward compatibility is decision 8: a blob written by a later release
     // must round-trip, not be validated away.
