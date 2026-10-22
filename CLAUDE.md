@@ -155,8 +155,8 @@ Their order and the dial's side are Preferences.
 Each Start carries at most one Intent.
 Image and Camera are picker Starts: `useStartPicker` opens the OS picker inside the tap itself, because the tap's user activation does not survive the route change to the editor.
 A desktop browser ignores `capture`, so the desktop bar shows File (any file, inserted as a File attachment) in Camera's slot.
-The **new-note key** (`N` by default; a Preference the Shortcuts section changes or turns off, for WCAG 2.1.4) is the same act as clicking the bar, so `NotesView` listens for it only where the bar is shown, and only for a fine pointer, the one that gets the Shortcuts section to turn it off in.
-`isNewNoteKey` (`lib/new-note-key.ts`) matches `event.key`, so it follows the keyboard layout, and leaves alone a key typed into a field or the editor, held with Ctrl, Cmd or Alt, or pressed inside a dialog or menu or while a modal such as the Welcome is open.
+The **new-note key** (`N` by default; a Shortcut the user changes or clears in Settings, for WCAG 2.1.4) is the same act as clicking the bar, so `NotesView` listens for it only where the bar is shown, and only for a fine pointer, the one that gets the Shortcuts section to clear it in.
+It and the search key are matched by `isAppShortcut` (`lib/app-shortcut.ts`) on the one canonical key name (ADR 0026), and never fire inside a dialog or menu, while a modal such as the Welcome is open, or, as a bare key, in a field.
 
 **Insets.**
 The four safe-area insets are named once in `globals.css` (`--safe-top` and friends) and are always added to the design's own spacing, never substituted for it.

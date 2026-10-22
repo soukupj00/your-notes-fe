@@ -132,7 +132,7 @@ test.describe('keys', () => {
   });
 });
 
-// iPadOS 12 says "iPad ... like Mac OS X": react-hotkeys-hook reads that as not a Mac, while the
+// iPadOS 12 says "iPad ... like Mac OS X": a library reading it as no Mac would split search from the
 // editor and the chip read it as one.
 test.describe('an old iPad', () => {
   test.beforeEach(async ({ page }) => {

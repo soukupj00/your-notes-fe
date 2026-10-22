@@ -31,3 +31,4 @@ Decisions about the server itself are on [the server's site](https://soukupj00.g
 | [0023](./0023-the-tour-points-at-settings.md) | The Tour points at Settings and creates no Notes (superseded by [0024](./0024-a-welcome-at-launch-the-tour-in-settings.md)) |
 | [0024](./0024-a-welcome-at-launch-the-tour-in-settings.md) | A Welcome at launch; the Tour waits for the first visit to Settings |
 | [0025](./0025-the-closed-note-takes-its-sorted-place.md) | The closed Note takes its sorted place |
+| [0026](./0026-shortcuts-are-one-preference-matched-by-one-key-name.md) | Shortcuts are one Preference, matched by one key name |

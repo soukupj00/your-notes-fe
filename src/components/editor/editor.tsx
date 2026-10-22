@@ -39,6 +39,7 @@ import { useSync } from '@/context/SyncProvider.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useLatest } from '@/hooks/useLatest.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
+import { useShortcuts } from '@/hooks/useShortcuts.ts';
 import {
   ATTACHMENT_SPECS,
   AttachmentError,
@@ -201,6 +202,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   // Same reason: the checklist FLIP plugin must see reduced motion as it is when a
   // box is ticked. It is a hard killswitch (DESIGN.md Motion).
   const getAnimateChecklist = useLatest(!reducedMotion);
+  const getShortcuts = useLatest(useShortcuts().bindings);
 
   // `extensions`, `editorProps` and `content` stay referentially stable, or every
   // render costs a full ProseMirror view pass: see editor/CLAUDE.md (`editor.tsx`).
@@ -211,9 +213,10 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         getDeps: getAttachmentDeps,
         getEditor: () => editorRef.current,
         animateChecklist: getAnimateChecklist,
+        getShortcuts,
         t,
       }),
-    [getAttachmentDeps, getAnimateChecklist, t]
+    [getAttachmentDeps, getAnimateChecklist, getShortcuts, t]
   );
 
   const editorProps = useMemo(

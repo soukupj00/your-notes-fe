@@ -12,13 +12,12 @@ There is no central list of buttons for the toolbar to drift from.
 The common case is the upstream TipTap extension plus a `button` option, built by `withButton`:
 
 ```ts
-export const Bold = withButton(TiptapBold, ({ editor, t }) => ({
+export const Bold = withButton(withoutKeys(TiptapBold, ['Mod-b', 'Mod-B']), ({ editor, t }) => ({
   component: ActionButton,
   componentProps: {
     action: () => editor.commands.toggleBold(),
     isActive: () => editor.isActive('bold'),
     icon: 'Bold', // a key into src/components/icons/icons.ts
-    shortcutKeys: ['Mod', 'B'],
     tooltip: t('editor.bold.tooltip'),
     toggle: true,
   },
@@ -28,6 +27,8 @@ export const Bold = withButton(TiptapBold, ({ editor, t }) => ({
 - One-button marks and blocks are declarations in `extensions/formatting.ts`.
 - An extension with more, such as a node view or a plugin, gets its own folder, `extensions/<Name>/`.
 - `icon` is a string key into `src/components/icons/icons.ts`; never import an icon component into a button config.
+- `withoutKeys` drops the upstream key: every command key is the user's Shortcut, bound by one plugin that reads the live Preference ([ADR 0026](../adr/0026-shortcuts-are-one-preference-matched-by-one-key-name.md)).
+  A new action with a key gets a row in `lib/shortcuts.ts` and an entry in `extensions/Shortcuts/actions.ts`.
 - `extensions/build.ts` lists every extension the editor mounts, in one function, so tests check the toolbar against the real set.
 
 ## The toolbar is the user's

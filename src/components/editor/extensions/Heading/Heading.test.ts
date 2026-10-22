@@ -45,13 +45,6 @@ describe('Heading extension', () => {
       expect(buttons[2].componentProps.icon).toBe('Heading3');
     });
 
-    it('each button has the correct shortcutKeys', () => {
-      const buttons = getButtons(editor);
-      expect(buttons[0].componentProps.shortcutKeys).toEqual(['Mod', 'Alt', '1']);
-      expect(buttons[1].componentProps.shortcutKeys).toEqual(['Mod', 'Alt', '2']);
-      expect(buttons[2].componentProps.shortcutKeys).toEqual(['Mod', 'Alt', '3']);
-    });
-
     // Per level, and pinned to keys that actually exist: the interpolated
     // `editor.heading.level` these used to share was in no translation file, so
     // the tooltip rendered as the raw key and i18next warned on every rebuild.

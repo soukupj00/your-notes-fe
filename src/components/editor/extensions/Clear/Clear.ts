@@ -16,18 +16,10 @@ export const Clear = Extension.create<ClearExtensionOptions>({
         componentProps: {
           action: () => editor.chain().focus().clearNodes().unsetAllMarks().run(),
           icon: 'RemoveFormatting',
-          shortcutKeys: ['Mod', '\\'],
           tooltip: t('editor.clearFormatting.tooltip'),
           toggle: true,
         },
       }),
     } as unknown as ClearExtensionOptions;
-  },
-
-  // TipTap has no default for clearing formatting, so the advertised shortcut is bound here.
-  addKeyboardShortcuts() {
-    return {
-      'Mod-\\': () => this.editor.chain().focus().clearNodes().unsetAllMarks().run(),
-    };
   },
 });

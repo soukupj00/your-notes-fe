@@ -27,7 +27,7 @@ export function ToolbarPreviewStrip({ layout, widthClass }: ToolbarPreviewStripP
   return (
     // `data-tour` is here, not on the section, which is taller than a phone screen
     // while the inert Tour cannot scroll. Only Settings mounts the strip, so it is unique.
-    <div data-tour="settings-toolbar" className="flex flex-col gap-1 p-3">
+    <div data-tour="settings-toolbar" className="flex flex-col gap-1 px-4 py-3">
       <span className="text-muted-foreground text-xs">{t('settings.toolbar.preview')}</span>
       <div
         aria-hidden

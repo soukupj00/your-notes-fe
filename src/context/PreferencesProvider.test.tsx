@@ -119,18 +119,50 @@ describe('graceful fallback', () => {
   });
 
   it.each([
-    ['nothing stored', undefined, 'n'],
-    ['a key turned off', null, null],
-    ['a remapped key', 'k', 'k'],
-    ['two characters', 'ab', 'n'],
-    ['a number', 5, 'n'],
-  ])('reads the new-note key from %s', async (_label, newNoteKey, expected) => {
+    ['nothing stored', undefined, {}],
+    ['the default key', 'n', {}],
+    ['a key turned off', null, { 'new-note': null }],
+    ['a remapped key', 'J', { 'new-note': 'j' }],
+    ['two characters, which F3 read as the default', 'ab', {}],
+    ['a number, which F3 read as the default', 5, {}],
+  ])('carries the F3 new-note key over from %s', async (_label, newNoteKey, expected) => {
     store({ version: PREFERENCES_VERSION, newNoteKey, density: 'compact' });
 
     const result = await prefs();
 
-    expect(result.current.preferences.newNoteKey).toBe(expected);
+    expect(result.current.preferences.shortcuts).toEqual(expected);
     expect(result.current.preferences.density).toBe('compact');
+    expect(result.current.preferences).not.toHaveProperty('newNoteKey');
+  });
+
+  it('keeps a new-note Shortcut already stored over the old key', async () => {
+    store({
+      version: PREFERENCES_VERSION,
+      newNoteKey: 'j',
+      shortcuts: { 'new-note': 'Mod-Alt-n' },
+    });
+
+    expect((await prefs()).current.preferences.shortcuts).toEqual({ 'new-note': 'Mod-Alt-n' });
+  });
+
+  it('absorbs an unreadable shortcuts value without resetting its neighbours', async () => {
+    store({ version: PREFERENCES_VERSION, shortcuts: 'oops', density: 'compact' });
+
+    const result = await prefs();
+
+    expect(result.current.preferences.shortcuts).toEqual({});
+    expect(result.current.preferences.density).toBe('compact');
+  });
+
+  it('drops one unreadable Shortcut and keeps the others', async () => {
+    store({
+      version: PREFERENCES_VERSION,
+      shortcuts: { bold: 42, italic: 'Mod-Alt-i', code: null },
+    });
+
+    const result = await prefs();
+
+    expect(result.current.preferences.shortcuts).toEqual({ italic: 'Mod-Alt-i', code: null });
   });
 
   it('keeps a stored Layout naming ids this build does not know', async () => {

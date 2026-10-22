@@ -21,6 +21,7 @@ Slovník je v [`CONTEXT.md`](https://github.com/soukupj00/your-notes-fe/blob/mai
 2. **Dvě rozvržení, jedno pro každou šířkovou třídu.**
    Ne jeden seznam s přetečením podle priority.
    Editor nastavení má nahoře přepínač „Kompaktní“/„Široké okno“ a upravuje vždy jedno rozvržení.
+   Doplněno 2026-10-22: Nastavení už šířkovou třídu nepřepíná; upravuje tu, ve které je tato obrazovka, takže úzké rozvržení se upravuje na telefonu nebo v úzkém okně.
 3. **`hideOnMobile` je smazáno.**
    Jeho informace se přesouvá do přednastavení pro úzkou třídu.
    V kódu rozšíření nezůstává nic o tom, která tlačítka zobrazuje telefon.

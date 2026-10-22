@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button.tsx';
 import { SortableList, SortableRow } from '@/components/ui/SortableList.tsx';
 import { Switch } from '@/components/ui/switch.tsx';
 import { Toggle } from '@/components/ui/toggle.tsx';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { COMPACT_FOLD_SLOTS, foldIndex } from './foldMarker';
 import { moveFamily, moveMember, setMemberOn, updateFamily } from './layoutEdits';
@@ -14,27 +13,25 @@ import { DEFAULT_PRESET, type ToolbarPresetId, toolbarPreset } from './presets';
 import { getToolbarFamily, itemsInFamily, TOOLBAR_ITEMS } from './registry';
 import { reconcileLayout } from './resolveLayout';
 import { ToolbarPreviewStrip } from './ToolbarPreviewStrip';
-import type { ToolbarFamilyPref, ToolbarLayout, WidthClass } from './types';
+import type { ToolbarFamilyPref, ToolbarLayout } from './types';
 import { useWidthClass } from './useWidthClass';
 
-const WIDTH_CLASSES: WidthClass[] = ['compact', 'wide'];
 const PRESETS: ToolbarPresetId[] = ['minimal', 'balanced', 'everything'];
 
 interface ToolbarLayoutEditorProps {
-  initialWidthClass?: WidthClass;
   /** On in Settings, which has no note open; off over the editor, whose real bar is live. */
   showPreview?: boolean;
 }
 
 /**
- * Mounted in Settings and over the editor (ADR 0011, decision 10). It edits one Width
- * Class at a time and writes straight through: the bar behind the sheet is the preview.
+ * Mounted in Settings and over the editor (ADR 0011, decision 10). It edits the Layout of the
+ * Width Class this screen is in, and writes straight through: the bar behind the sheet is the
+ * preview.
  */
-export function ToolbarLayoutEditor({ initialWidthClass, showPreview }: ToolbarLayoutEditorProps) {
+export function ToolbarLayoutEditor({ showPreview }: ToolbarLayoutEditorProps) {
   const { t } = useTranslation();
   const { preferences, setPreference } = usePreferences();
-  const windowWidthClass = useWidthClass();
-  const [widthClass, setWidthClass] = useState<WidthClass>(initialWidthClass ?? windowWidthClass);
+  const widthClass = useWidthClass();
   const [openFamilyId, setOpenFamilyId] = useState<string | null>(null);
 
   // Reconciled, because the stored blob may be empty or predate half the registry,
@@ -87,30 +84,13 @@ export function ToolbarLayoutEditor({ initialWidthClass, showPreview }: ToolbarL
 
   return (
     <div className="flex flex-col">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b p-3">
-        <span className="flex min-w-0 flex-col">
-          <span className="text-sm">{t('settings.toolbar.width.legend')}</span>
-          <span className="text-muted-foreground text-xs">{t('settings.toolbar.width.hint')}</span>
-        </span>
-        <ToggleGroup
-          type="single"
-          value={widthClass}
-          onValueChange={(next) => setWidthClass((next as WidthClass) || widthClass)}
-          variant="outline"
-          size="sm"
-          aria-label={t('settings.toolbar.width.legend')}
-        >
-          {WIDTH_CLASSES.map((option) => (
-            <ToggleGroupItem key={option} value={option}>
-              {t(`settings.toolbar.width.${option}`)}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      </div>
+      <p className="border-b px-4 py-3 text-sm">
+        {t(`settings.toolbar.width.current.${widthClass}`)}
+      </p>
 
       {showPreview && <ToolbarPreviewStrip layout={layout} widthClass={widthClass} />}
 
-      <div className="flex flex-wrap items-center gap-2 border-b p-3">
+      <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
         <span className="mr-auto text-sm">{t('settings.toolbar.preset.legend')}</span>
         {PRESETS.map((preset) => (
           <Button

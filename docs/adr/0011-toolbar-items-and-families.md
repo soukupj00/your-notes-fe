@@ -21,6 +21,7 @@ Vocabulary is in [`CONTEXT.md`](https://github.com/soukupj00/your-notes-fe/blob/
 2. **Two Layouts, one per Width Class.**
    Not one list with priority overflow.
    The settings editor has a Compact/Wide toggle at the top and edits one at a time.
+   Amended 2026-10-22: Settings no longer toggles the Width Class; it edits the one this screen is in, so the narrow layout is edited on a phone or a narrow window.
 3. **`hideOnMobile` is deleted.**
    Its information moves into the Compact preset.
    Nothing about which buttons a phone shows stays in extension code.

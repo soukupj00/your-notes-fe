@@ -41,6 +41,5 @@ describe('Clear extension', () => {
     const props = getButtonProps(editor);
     expect(props.icon).toBe('RemoveFormatting');
     expect(props.tooltip).toBe('editor.clearFormatting.tooltip');
-    expect(props.shortcutKeys).toEqual(['Mod', '\\']);
   });
 });

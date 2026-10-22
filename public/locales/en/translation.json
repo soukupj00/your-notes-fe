@@ -272,10 +272,12 @@
       "back": "All groups",
       "fold": "A phone shows about {{slots}} buttons before this line",
       "width": {
-        "legend": "Editing the layout for",
-        "hint": "Narrow and wide are separate layouts. You get the narrow one on a narrow window, and on any touchscreen - a phone stays narrow held sideways.",
         "compact": "Narrow window",
-        "wide": "Wide window"
+        "wide": "Wide window",
+        "current": {
+          "compact": "This is the layout for narrow windows and touchscreens.",
+          "wide": "This is the layout for wide windows."
+        }
       },
       "preset": {
         "legend": "Start from",
@@ -298,17 +300,42 @@
     },
     "shortcuts": {
       "title": "Keyboard shortcuts",
-      "description": "The new-note key works in Notes. The others work while a note is open, whichever buttons your toolbar shows.",
+      "description": "Click a shortcut's keys to change it. Shortcuts in Notes work outside an open note; the others work while a note is open, whichever buttons your toolbar shows.",
       "newNote": {
-        "label": "New note",
-        "description": "Press it in Notes to start a new note.",
-        "recording": "Press the new key. Esc cancels.",
-        "refused": "One letter, digit or symbol, on its own. Esc cancels.",
-        "off": "Off",
-        "change": "Change",
-        "turnOff": "Turn off",
-        "reset": "Reset"
-      }
+        "label": "New note"
+      },
+      "search": {
+        "label": "Search"
+      },
+      "group": {
+        "app": "In Notes",
+        "editor": "In an open note"
+      },
+      "none": "None",
+      "changed": "Changed",
+      "keysButton": "{{name}}: {{keys}}. Change",
+      "keysButtonNone": "{{name}}: none. Set a shortcut",
+      "menu": {
+        "trigger": "More for {{name}}",
+        "edit": "Edit",
+        "clear": "Clear",
+        "reset": "Reset to default {{keys}}"
+      },
+      "recording": "Press the new keys. Esc cancels.",
+      "conflict": "{{keys}} is already used for {{name}}. Replacing it removes that shortcut.",
+      "replace": "Replace",
+      "cancel": "Cancel",
+      "refused": {
+        "needsModifier": "Hold Ctrl, Cmd or Alt too: on its own the key types in the note.",
+        "bareKey": "One letter, digit or symbol, or a key with Ctrl, Cmd or Alt.",
+        "browser": "The browser keeps {{keys}} for itself.",
+        "editor": "{{keys}} is used for typing and editing.",
+        "altgr": "On this keyboard {{keys}} types a character."
+      },
+      "resetAll": "Reset all shortcuts",
+      "resetAllTitle": "Reset all shortcuts?",
+      "resetAllBody": "Every shortcut goes back to its default, including the ones you cleared.",
+      "resetAllConfirm": "Reset all"
     },
     "help": {
       "title": "Help",

@@ -1,3 +1,4 @@
+import type { Editor } from '@tiptap/core';
 import {
   type BackgroundColorOptions,
   BackgroundColor as TiptapBackgroundColor,
@@ -6,9 +7,19 @@ import { HIGHLIGHT_COLORS } from '@/components/color-picker/palettes.ts';
 import type { ButtonContext, ButtonView } from '../button-types';
 import { EditorColorPickerButton } from '../EditorColorPickerButton';
 
-/** What `Mod+Shift+H` applies: the common case, the picker covers the rest. */
+/** What the shortcut applies: the common case, the picker covers the rest. */
 const SHORTCUT_COLOR =
   HIGHLIGHT_COLORS.colors.find((color) => color.label === 'Yellow')?.cssValue ?? '#fef08a';
+
+/** Toggles rather than opening the picker: a popover cannot open from a shortcut while its
+ *  button sits in a collapsed family. */
+export function toggleDefaultHighlight(editor: Editor) {
+  if (editor.getAttributes('textStyle').backgroundColor) {
+    editor.chain().focus().unsetBackgroundColor().run();
+  } else {
+    editor.chain().focus().setBackgroundColor(SHORTCUT_COLOR).run();
+  }
+}
 
 export interface HighlightExtensionOptions extends BackgroundColorOptions {
   button: (context: ButtonContext) => ButtonView<typeof EditorColorPickerButton>;
@@ -24,21 +35,9 @@ export const Highlight = TiptapBackgroundColor.extend<HighlightExtensionOptions>
         componentProps: {
           editor,
           tooltip: t('editor.highlight.tooltip'),
-          shortcutKeys: ['Mod', 'Shift', 'H'],
           variant: 'highlight',
         },
       }),
     } as unknown as HighlightExtensionOptions;
-  },
-
-  // Toggles rather than opening the picker: a popover cannot open from a shortcut while its
-  // button sits in a collapsed family.
-  addKeyboardShortcuts() {
-    return {
-      'Mod-Shift-h': () =>
-        this.editor.getAttributes('textStyle').backgroundColor
-          ? this.editor.chain().focus().unsetBackgroundColor().run()
-          : this.editor.chain().focus().setBackgroundColor(SHORTCUT_COLOR).run(),
-    };
   },
 });

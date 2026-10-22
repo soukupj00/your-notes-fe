@@ -7,9 +7,10 @@ import Text from '@tiptap/extension-text';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Bold, BulletList, OrderedList } from '@/components/editor/extensions/formatting';
 import { Heading } from '@/components/editor/extensions/Heading';
-import { createLink } from '@/components/editor/extensions/Link/Link';
+import { Link } from '@/components/editor/extensions/Link/Link';
 import { ListItem } from '@/components/editor/extensions/ListItem';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { getToolbarFamily, itemsInFamily } from './registry';
 import { ToolbarFamilyMenu, triggerIcon } from './ToolbarFamilyMenu';
 import type { ToolbarFamilyId, ToolbarItem } from './types';
@@ -38,9 +39,12 @@ function family(id: ToolbarFamilyId) {
 
 function renderMenu(id: ToolbarFamilyId, editor: Editor, items: ToolbarItem[] = itemsInFamily(id)) {
   render(
-    <TooltipProvider>
-      <ToolbarFamilyMenu family={family(id)} items={items} editor={editor} t={t} />
-    </TooltipProvider>
+    // A leaf reads the user's Shortcuts for its tooltip.
+    <PreferencesProvider>
+      <TooltipProvider>
+        <ToolbarFamilyMenu family={family(id)} items={items} editor={editor} t={t} />
+      </TooltipProvider>
+    </PreferencesProvider>
   );
 }
 
@@ -96,7 +100,7 @@ describe('ToolbarFamilyMenu', () => {
     // `link` wraps an `ActionButton` rather than being one, like the attachment pickers
     // and colour triggers: no prop could reach the button, so each drew nameless.
     const editor = new Editor({
-      extensions: [Document, Paragraph, Text, Bold, createLink(t)],
+      extensions: [Document, Paragraph, Text, Bold, Link],
       content: '<p>hello</p>',
     });
     editors.push(editor);

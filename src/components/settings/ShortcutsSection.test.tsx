@@ -1,12 +1,15 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getToolbarItem } from '@/components/editor/toolbar/registry.ts';
 import { PREFERENCES_STORAGE_KEY, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { ShortcutsSection } from './ShortcutsSection.tsx';
 
+// Interpolated values join the key, so a test can tell one row's copy from another's.
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({
+    t: (key: string, values?: Record<string, string>) =>
+      values ? [key, ...Object.values(values)].join('|') : key,
+  }),
 }));
 
 /**
@@ -31,156 +34,248 @@ afterEach(() => {
   localStorage.clear();
 });
 
-const renderSection = () =>
-  render(
+function setup() {
+  stubPointer(true);
+  const view = render(
     <PreferencesProvider>
       <ShortcutsSection />
     </PreferencesProvider>
   );
+  return { ...view, user: userEvent.setup() };
+}
 
-const storedKey = () =>
-  JSON.parse(localStorage.getItem(PREFERENCES_STORAGE_KEY) ?? '{}').newNoteKey;
+const stored = () => JSON.parse(localStorage.getItem(PREFERENCES_STORAGE_KEY) ?? '{}').shortcuts;
+
+/** The keys button of the row named `label`, set or cleared. */
+const keysButton = (label: string) =>
+  screen.getByRole('button', {
+    name: (name) =>
+      /^settings\.shortcuts\.keysButton(None)?\|/.test(name) && name.split('|')[1] === label,
+  });
+
+const row = (label: string) => keysButton(label).closest('li') as HTMLElement;
+
+async function openMenu(user: ReturnType<typeof userEvent.setup>, label: string) {
+  await user.click(
+    screen.getByRole('button', { name: `settings.shortcuts.menu.trigger|${label}` })
+  );
+}
+
+/** A keydown as a browser sends it; jsdom leaves `keyCode` at 0 otherwise. */
+const press = (label: string, init: KeyboardEventInit & { keyCode: number }) =>
+  fireEvent.keyDown(keysButton(label), init);
+
+async function record(
+  user: ReturnType<typeof userEvent.setup>,
+  label: string,
+  init: KeyboardEventInit & { keyCode: number }
+) {
+  await user.click(keysButton(label));
+  press(label, init);
+}
 
 describe('ShortcutsSection', () => {
-  it('lists an action with its combination, in readable words for a screen reader', () => {
-    stubPointer(true);
-    renderSection();
+  it('lists both groups and every Shortcut, New note first', () => {
+    setup();
 
-    const row = screen.getByText('editor.bold.tooltip').closest('div');
-    expect(row).not.toBeNull();
-    // Ctrl on this platform, ⌘ on a Mac - the words are the stable half.
-    expect(row).toHaveTextContent('Control + B');
+    const app = screen.getByRole('group', { name: 'settings.shortcuts.group.app' });
+    const editor = screen.getByRole('group', { name: 'settings.shortcuts.group.editor' });
+    expect(within(app).getAllByRole('listitem')).toHaveLength(2);
+    expect(within(editor).getAllByRole('listitem')).toHaveLength(22);
+    expect(within(app).getAllByRole('listitem')[0]).toHaveTextContent(
+      'settings.shortcuts.newNote.label'
+    );
   });
 
-  /**
-   * The caps show what is printed on the keyboard (a word off Mac, `⌘ ⌥ ⇧` on one); the
-   * accessible copy spells them, because a screen reader reads `⇧` as punctuation or not at all.
-   */
-  it('draws the modifier as printed and announces it as a word', () => {
-    stubPointer(true);
-    const { container } = renderSection();
+  /** A screen reader reads `⇧` as punctuation or not at all, so the keys are spelled out too. */
+  it('draws the keys as printed and announces them as words', () => {
+    setup();
 
-    const caps = [...container.querySelectorAll('kbd')].map((cap) => cap.textContent);
-    expect(caps).toContain('Shift');
-
-    const row = screen.getByText('editor.strike.tooltip').closest('div');
-    expect(row).toHaveTextContent('Control + Shift + S');
+    expect(keysButton('editor.strike.tooltip')).toHaveAccessibleName(
+      'settings.shortcuts.keysButton|editor.strike.tooltip|Control + Shift + S'
+    );
+    const caps = [...row('editor.strike.tooltip').querySelectorAll('kbd')].map(
+      (cap) => cap.textContent
+    );
+    expect(caps).toEqual(['Ctrl', 'Shift', 'S']);
   });
 
-  /**
-   * A phone has no modifier keys, so every row would be a promise it cannot
-   * keep. Same signal `ActionButton` uses to drop the hint from its tooltip.
-   */
-  it('renders nothing on a coarse pointer', () => {
-    stubPointer(false);
-    const { container } = renderSection();
+  it('records a new combination, marks the row, and offers the default back', async () => {
+    const { user } = setup();
 
-    expect(container).toBeEmptyDOMElement();
-  });
+    await record(user, 'editor.bold.tooltip', {
+      key: 'b',
+      keyCode: 66,
+      ctrlKey: true,
+      altKey: true,
+    });
 
-  /** The names come from the registry, so a row can never invent one. */
-  it('names every row from the registry entry it came from', () => {
-    stubPointer(true);
-    renderSection();
-
-    expect(screen.getByText(getToolbarItem('undo')?.labelKey ?? '')).toBeInTheDocument();
-    // `text-color` has no shortcut, so it must not take a row.
-    expect(screen.queryByText('editor.textColor.tooltip')).not.toBeInTheDocument();
-  });
-});
-
-describe('the new-note key row', () => {
-  const row = () =>
-    screen.getByText('settings.shortcuts.newNote.label').closest('div') as HTMLElement;
-  const button = (name: string) => screen.getByRole('button', { name });
-
-  async function setup() {
-    stubPointer(true);
-    renderSection();
-    return userEvent.setup();
-  }
-
-  it('shows the current key', async () => {
-    await setup();
-
-    expect(row().querySelector('kbd')).toHaveTextContent('N');
-    expect(screen.queryByRole('button', { name: 'settings.shortcuts.newNote.reset' })).toBeNull();
-  });
-
-  it('stores the next key pressed after Change, keeping focus on Change', async () => {
-    const user = await setup();
-
-    await user.click(button('settings.shortcuts.newNote.change'));
-    expect(screen.getByRole('status')).toHaveTextContent('settings.shortcuts.newNote.recording');
-    await user.keyboard('K');
-
-    expect(storedKey()).toBe('k');
-    expect(row().querySelector('kbd')).toHaveTextContent('K');
-    expect(button('settings.shortcuts.newNote.change')).toHaveFocus();
-  });
-
-  // Safari and Firefox on macOS do not focus a button on click, so the keys would go to body.
-  it('records after a click that does not focus the button', async () => {
-    const user = await setup();
-
-    fireEvent.click(button('settings.shortcuts.newNote.change'));
-    await user.keyboard('k');
-
-    expect(storedKey()).toBe('k');
-  });
-
-  it('groups the controls under the row name for assistive tech', async () => {
-    await setup();
-
+    expect(stored()).toEqual({ bold: 'Mod-Alt-b' });
+    expect(row('editor.bold.tooltip')).toHaveTextContent('settings.shortcuts.changed');
+    expect(keysButton('editor.bold.tooltip')).toHaveFocus();
+    await openMenu(user, 'editor.bold.tooltip');
     expect(
-      screen.getByRole('group', { name: 'settings.shortcuts.newNote.label' })
-    ).toContainElement(button('settings.shortcuts.newNote.change'));
+      screen.getByRole('menuitem', { name: 'settings.shortcuts.menu.reset|Ctrl + B' })
+    ).toBeInTheDocument();
   });
 
-  it('keeps the old key when Esc cancels', async () => {
-    const user = await setup();
+  it('cancels on Esc without the key reaching anything around it', async () => {
+    const { user } = setup();
+    const outside = vi.fn();
+    document.addEventListener('keydown', outside);
 
-    await user.click(button('settings.shortcuts.newNote.change'));
-    await user.keyboard('{Escape}');
-    await user.keyboard('k');
+    await record(user, 'editor.bold.tooltip', { key: 'Escape', keyCode: 27 });
+    document.removeEventListener('keydown', outside);
+    press('editor.bold.tooltip', { key: 'i', keyCode: 73, ctrlKey: true });
 
-    expect(storedKey()).toBeUndefined();
-    expect(row().querySelector('kbd')).toHaveTextContent('N');
+    expect(outside).not.toHaveBeenCalled();
+    expect(stored()).toBeUndefined();
+    expect(keysButton('editor.bold.tooltip')).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  describe('a combination another action has', () => {
+    async function conflict() {
+      const { user } = setup();
+      await record(user, 'editor.bold.tooltip', {
+        key: 'B',
+        keyCode: 66,
+        ctrlKey: true,
+        shiftKey: true,
+      });
+      return user;
+    }
+
+    it('names the owner and saves nothing yet', async () => {
+      await conflict();
+
+      expect(row('editor.bold.tooltip')).toHaveTextContent(
+        'settings.shortcuts.conflict|Ctrl + Shift + B|editor.blockquote.tooltip'
+      );
+      expect(stored()).toBeUndefined();
+    });
+
+    it('moves it on Replace, leaving the owner with none', async () => {
+      const user = await conflict();
+
+      await user.click(screen.getByRole('button', { name: 'settings.shortcuts.replace' }));
+
+      expect(stored()).toEqual({ bold: 'Mod-Shift-b', blockquote: null });
+      expect(keysButton('editor.blockquote.tooltip')).toHaveTextContent('settings.shortcuts.none');
+      expect(keysButton('editor.bold.tooltip')).toHaveFocus();
+    });
+
+    it('keeps both on Cancel', async () => {
+      const user = await conflict();
+
+      await user.click(screen.getByRole('button', { name: 'settings.shortcuts.cancel' }));
+
+      expect(stored()).toBeUndefined();
+      expect(row('editor.bold.tooltip')).not.toHaveTextContent('settings.shortcuts.conflict');
+    });
+  });
+
+  it('offers Replace when the default it resets to was given to another action', async () => {
+    const { user } = setup();
+    await record(user, 'editor.bold.tooltip', { key: 'i', keyCode: 73, ctrlKey: true });
+    await user.click(screen.getByRole('button', { name: 'settings.shortcuts.replace' }));
+
+    await openMenu(user, 'editor.italic.tooltip');
+    await user.click(
+      screen.getByRole('menuitem', { name: 'settings.shortcuts.menu.reset|Ctrl + I' })
+    );
+    expect(row('editor.italic.tooltip')).toHaveTextContent(
+      'settings.shortcuts.conflict|Ctrl + I|editor.bold.tooltip'
+    );
+    expect(stored()).toEqual({ bold: 'Mod-i', italic: null });
+
+    await user.click(screen.getByRole('button', { name: 'settings.shortcuts.replace' }));
+    expect(stored()).toEqual({ bold: null });
   });
 
   it.each([
-    ['Enter', '{Enter}'],
-    ['Space', ' '],
-    ['Tab', '{Tab}'],
-    ['an arrow', '{ArrowDown}'],
-    ['a combination', '{Control>}k{/Control}'],
-  ])('refuses %s with a message and keeps listening', async (_label, keys) => {
-    const user = await setup();
+    ['b alone for Bold', 'editor.bold.tooltip', { key: 'b', keyCode: 66 }, 'needsModifier'],
+    [
+      'Ctrl+W for Search',
+      'settings.shortcuts.search.label',
+      { key: 'w', keyCode: 87, ctrlKey: true },
+      'browser|Ctrl + W',
+    ],
+    [
+      'Ctrl+A for Bold',
+      'editor.bold.tooltip',
+      { key: 'a', keyCode: 65, ctrlKey: true },
+      'editor|Ctrl + A',
+    ],
+    [
+      'Space for New note',
+      'settings.shortcuts.newNote.label',
+      { key: ' ', keyCode: 32 },
+      'bareKey',
+    ],
+  ])('refuses %s and keeps listening', async (_label, label, init, reason) => {
+    const { user } = setup();
 
-    await user.click(button('settings.shortcuts.newNote.change'));
-    await user.keyboard(keys);
+    await record(user, label, init);
 
-    expect(screen.getByRole('status')).toHaveTextContent('settings.shortcuts.newNote.refused');
-    expect(storedKey()).toBeUndefined();
-    expect(button('settings.shortcuts.newNote.change')).toHaveFocus();
-    await user.keyboard('j');
-    expect(storedKey()).toBe('j');
+    expect(row(label)).toHaveTextContent(`settings.shortcuts.refused.${reason}`);
+    expect(stored()).toBeUndefined();
+    expect(keysButton(label)).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('turns the key off, shows Off, and Reset brings N back', async () => {
-    const user = await setup();
+  it('lets Tab leave a recording, which cancels it', async () => {
+    const { user } = setup();
 
-    await user.click(button('settings.shortcuts.newNote.turnOff'));
+    await user.click(keysButton('editor.bold.tooltip'));
+    await user.tab();
 
-    expect(storedKey()).toBeNull();
-    expect(row()).toHaveTextContent('settings.shortcuts.newNote.off');
-    expect(row().querySelector('kbd')).toBeNull();
-    expect(button('settings.shortcuts.newNote.change')).toHaveFocus();
+    expect(keysButton('editor.bold.tooltip')).not.toHaveFocus();
+    expect(keysButton('editor.bold.tooltip')).toHaveAttribute('aria-pressed', 'false');
+  });
 
-    await user.click(button('settings.shortcuts.newNote.reset'));
+  it('clears a Shortcut from its menu and hands focus back to its keys', async () => {
+    const { user } = setup();
 
-    expect(storedKey()).toBe('n');
-    expect(row().querySelector('kbd')).toHaveTextContent('N');
-    expect(button('settings.shortcuts.newNote.change')).toHaveFocus();
+    await openMenu(user, 'editor.italic.tooltip');
+    await user.click(screen.getByRole('menuitem', { name: 'settings.shortcuts.menu.clear' }));
+
+    expect(stored()).toEqual({ italic: null });
+    expect(keysButton('editor.italic.tooltip')).toHaveTextContent('settings.shortcuts.none');
+    expect(keysButton('editor.italic.tooltip')).toHaveFocus();
+  });
+
+  it('records from Edit in the menu', async () => {
+    const { user } = setup();
+
+    await openMenu(user, 'editor.italic.tooltip');
+    await user.click(screen.getByRole('menuitem', { name: 'settings.shortcuts.menu.edit' }));
+    press('editor.italic.tooltip', { key: 'j', keyCode: 74, ctrlKey: true, altKey: true });
+
+    expect(stored()).toEqual({ italic: 'Mod-Alt-j' });
+  });
+
+  it('asks before resetting everything, and Cancel keeps the changes', async () => {
+    const { user } = setup();
+    await openMenu(user, 'editor.italic.tooltip');
+    await user.click(screen.getByRole('menuitem', { name: 'settings.shortcuts.menu.clear' }));
+
+    await user.click(screen.getByRole('button', { name: 'settings.shortcuts.resetAll' }));
+    await user.click(screen.getByRole('button', { name: 'settings.shortcuts.cancel' }));
+    expect(stored()).toEqual({ italic: null });
+
+    await user.click(screen.getByRole('button', { name: 'settings.shortcuts.resetAll' }));
+    await user.click(screen.getByRole('button', { name: 'settings.shortcuts.resetAllConfirm' }));
+    expect(stored()).toEqual({});
+  });
+
+  /** A phone has no modifier keys, so every row would be a promise it cannot keep. */
+  it('renders nothing on a coarse pointer', () => {
+    stubPointer(false);
+    const { container } = render(
+      <PreferencesProvider>
+        <ShortcutsSection />
+      </PreferencesProvider>
+    );
+
+    expect(container).toBeEmptyDOMElement();
   });
 });

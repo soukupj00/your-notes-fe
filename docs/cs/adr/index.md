@@ -31,3 +31,4 @@ Rozhodnutí týkající se samotného serveru jsou na [webu serveru](https://sou
 | [0023](./0023-the-tour-points-at-settings.md) | Průvodce ukazuje na Nastavení a nezakládá žádné poznámky (nahrazeno [0024](./0024-a-welcome-at-launch-the-tour-in-settings.md)) |
 | [0024](./0024-a-welcome-at-launch-the-tour-in-settings.md) | Při spuštění uvítání; průvodce čeká na první návštěvu Nastavení |
 | [0025](./0025-the-closed-note-takes-its-sorted-place.md) | Zavřená poznámka zaujme své seřazené místo |
+| [0026](./0026-shortcuts-are-one-preference-matched-by-one-key-name.md) | Klávesové zkratky jsou jedna předvolba s jedním názvem klávesy |

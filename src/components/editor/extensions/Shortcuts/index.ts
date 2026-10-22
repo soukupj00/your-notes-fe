@@ -1,0 +1,1 @@
+export { createShortcuts } from './Shortcuts';
