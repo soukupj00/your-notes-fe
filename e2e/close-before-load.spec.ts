@@ -1,27 +1,49 @@
 import { expect, test } from '@playwright/test';
-import { card, newTextNote, skipTour } from './helpers';
+import { card, closeNote, newTextNote, skipTour } from './helpers';
+
+/**
+ * Holds every read-only IndexedDB `get` of one Note until `__releaseHeldNote()`, so the editor
+ * opens on a Note that has not loaded yet however fast the machine is. A string, not a function:
+ * `tsconfig.node.json` has no DOM lib.
+ */
+const holdNoteReads = (id: string) => `{
+  let release;
+  const released = new Promise((resolve) => { release = resolve; });
+  window.__releaseHeldNote = () => release();
+  const get = IDBObjectStore.prototype.get;
+  IDBObjectStore.prototype.get = function (key) {
+    const request = get.call(this, key);
+    if (this.name !== 'notes' || key !== ${JSON.stringify(id)} || this.transaction.mode !== 'readonly') {
+      return request;
+    }
+    let onsuccess = null;
+    Object.defineProperty(request, 'onsuccess', { get: () => onsuccess, set: (h) => { onsuccess = h; } });
+    request.addEventListener('success', (event) => {
+      void released.then(() => onsuccess?.call(request, event));
+    });
+    return request;
+  };
+}`;
 
 // A slow device opening a shared `?note=` link, and a user who leaves at once: the editor
 // closes before the Note has loaded, while its fields are still blank.
-test('a note closed before it loads is kept', async ({ page, browserName }) => {
-  test.skip(browserName !== 'chromium', 'CPU throttling is a Chromium DevTools call');
+test('a note closed before it loads is kept', async ({ page }) => {
   await skipTour(page);
   await page.goto('/');
   await newTextNote(page, 'Keep me', 'Body text');
   await card(page, 'Keep me').getByRole('heading', { name: 'Keep me' }).click();
   await expect(page).toHaveURL(/note=/);
   const link = page.url();
-  await page.keyboard.press('Escape');
+  const id = new URL(link).searchParams.get('note') ?? '';
+  await closeNote(page);
 
-  const cdp = await page.context().newCDPSession(page);
-  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 20 });
+  await page.addInitScript(holdNoteReads(id));
   await page.goto(link);
-  await page.getByRole('dialog').waitFor();
-  // Radix listens for Escape only from an effect, so the first presses can land before it.
-  while (page.url().includes('note=')) await page.keyboard.press('Escape');
-  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
-
+  await expect(page.getByRole('textbox', { name: 'Title' })).toHaveValue('');
+  await closeNote(page);
   await expect(page.getByRole('dialog')).toBeHidden();
+  await page.evaluate('window.__releaseHeldNote()');
+
   await page.goto('/');
   await expect(card(page, 'Keep me')).toHaveCount(1);
 });
