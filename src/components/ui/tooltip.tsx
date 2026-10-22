@@ -81,12 +81,14 @@ if (typeof document !== 'undefined') {
 }
 
 /** A name on hover for an icon-only control. Visual only: the child keeps its own `aria-label`.
- *  Its own provider, like `NoteColorPicker`'s, so it works wherever it mounts; Radix permits nesting. */
+ *  Its own provider, like `NoteColorPicker`'s, so it works wherever it mounts; Radix permits nesting.
+ *  Other props reach the child, so it can sit inside another `asChild` trigger. */
 function IconTooltip({
   label,
   side,
   children,
-}: {
+  ...trigger
+}: React.ComponentProps<typeof TooltipTrigger> & {
   label: string;
   side?: React.ComponentProps<typeof TooltipContent>['side'];
   children: React.ReactElement;
@@ -96,7 +98,9 @@ function IconTooltip({
       <Tooltip>
         <TooltipTrigger
           asChild
+          {...trigger}
           onFocus={(event) => {
+            trigger.onFocus?.(event);
             if (!lastInputWasKey) event.preventDefault();
           }}
         >
