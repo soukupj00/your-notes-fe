@@ -83,6 +83,11 @@ const preferencesSchema = z.object({
    * and full bytes on the first tap, which is what a phone's storage wants.
    */
   keepEverything: z.boolean().default(false),
+  /**
+   * The one key that opens a new Note on the Feed, matched case-insensitively; `null` is off,
+   * which with remapping meets WCAG 2.1.4 (Character Key Shortcuts).
+   */
+  newNoteKey: z.string().length(1).nullable().catch('n').default('n'),
   /** `system` follows `prefers-reduced-motion`; the others override it. */
   reducedMotion: z.enum(REDUCED_MOTION_OPTIONS).default('system'),
   /**

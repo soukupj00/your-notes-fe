@@ -298,7 +298,17 @@
     },
     "shortcuts": {
       "title": "Keyboard shortcuts",
-      "description": "These work while a note is open, whichever buttons your toolbar shows."
+      "description": "The new-note key works in Notes. The others work while a note is open, whichever buttons your toolbar shows.",
+      "newNote": {
+        "label": "New note",
+        "description": "Press it in Notes to start a new note.",
+        "recording": "Press the new key. Esc cancels.",
+        "refused": "One letter, digit or symbol, on its own. Esc cancels.",
+        "off": "Off",
+        "change": "Change",
+        "turnOff": "Turn off",
+        "reset": "Reset"
+      }
     },
     "help": {
       "title": "Help",

@@ -52,7 +52,7 @@ Celý seznam formuje jedno produktové omezení: **žádné externí síťové p
 | sonner | Toasty | Možnost vrátit akci (smazání, upozornění na konflikt) |
 | fuse.js | Fuzzy vyhledávání | Řazené vyhledávání v paměti nad přehledem; žádný server, žádný index k údržbě |
 | class-variance-authority, clsx, tailwind-merge | Skládání tříd | Idiom shadcn |
-| react-hotkeys-hook | Klávesové zkratky | `mod+K` atd.; zkratky se zobrazují jen přesným ukazatelům ([ADR 0016](../adr/0016-width-decides-layout-pointer-decides-affordances.md)) |
+| react-hotkeys-hook | Klávesové zkratky | `mod+K` atd.; samotnou klávesu pro novou poznámku místo toho rozpoznává `lib/new-note-key.ts` podle `event.key`; zkratky se zobrazují jen přesným ukazatelům ([ADR 0016](../adr/0016-width-decides-layout-pointer-decides-affordances.md)) |
 | driver.js | Zvýraznění v průvodci | Jediné místo, kde se průvodce dotýká knihovny; veškerá logika průvodce je bez závislostí v `lib/tour/` ([ADR 0024](../adr/0024-a-welcome-at-launch-the-tour-in-settings.md)) |
 | react-colorful, color, country-flag-icons | Drobné utility | Výběr barvy, výpočty s barvami, vlajky jazyků |
 

@@ -430,7 +430,7 @@ describe('NoteEditorDialog', () => {
 
     render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
 
-    const pin = await screen.findByRole('button', { name: 'notes.pin' });
+    const pin = screen.getByRole('button', { name: 'notes.pin' });
     expect(pin).toHaveAttribute('aria-pressed', 'false');
 
     await userEvent.click(pin);

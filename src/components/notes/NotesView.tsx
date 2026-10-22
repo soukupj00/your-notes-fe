@@ -1,4 +1,4 @@
-import { lazy, type ReactNode, Suspense } from 'react';
+import { lazy, type ReactNode, Suspense, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NoteContent } from '@/components/NoteContent.tsx';
 import { DesktopCaptureBar } from '@/components/notes/DesktopCaptureBar.tsx';
@@ -7,10 +7,13 @@ import { QuickCaptureBar } from '@/components/notes/QuickCaptureBar.tsx';
 import { TagFilterBar } from '@/components/tags/TagFilterBar.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
+import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import type { NoteFeedScope } from '@/hooks/data/useNoteFeed.ts';
+import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
 import { useOpenNote } from '@/hooks/useOpenNote.ts';
 import type { Intent } from '@/lib/intent.ts';
+import { isNewNoteKey } from '@/lib/new-note-key.ts';
 import { cn } from '@/lib/utils.ts';
 
 const NoteEditorDialog = lazy(() =>
@@ -37,6 +40,21 @@ export function NotesView({
   const { openNoteId, opened, openNote, closeNote, dismissMissingNote } = useOpenNote();
   // A Start begins a draft, a Card opens its Note; either may carry an Intent.
   const start = (intent?: Intent) => openNote(null, intent);
+  const { newNoteKey } = usePreferences().preferences;
+  const finePointer = useFinePointer();
+
+  // The key is the same act as "Take a note", so it lives only where that bar does. A coarse
+  // pointer has no Shortcuts section to turn it off in (WCAG 2.1.4), so it gets no key.
+  useEffect(() => {
+    if (!showCapture || openNoteId || !finePointer) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!isNewNoteKey(event, newNoteKey)) return;
+      event.preventDefault();
+      openNote(null);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [showCapture, openNoteId, finePointer, newNoteKey, openNote]);
 
   return (
     <div className="relative">

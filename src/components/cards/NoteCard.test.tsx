@@ -290,6 +290,23 @@ describe('NoteCard', () => {
     await waitFor(async () => expect((await testStore.notes.get(note.id))?.state).toBe('active'));
   });
 
+  it('offers only restore for a trashed note, and never permanent deletion', async () => {
+    const note = makeNote({ state: 'trashed', trashedAt: new Date().toISOString() });
+    await testStore.notes.add(note);
+    render(<NoteCard note={note} onSelect={vi.fn()} />);
+
+    // Trash, pin and colour mean nothing in the trash, and purging is never a card action: the trash
+    // itself is the confirmation.
+    expect(screen.queryByRole('button', { name: 'notes.moveToTrash' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'notes.color' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'notes.pin' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'notes.deleteForever' })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'notes.restore' }));
+
+    await waitFor(async () => expect((await testStore.notes.get(note.id))?.state).toBe('active'));
+  });
+
   it('never puts an overflow menu on the rail: every control is a direct button', () => {
     render(<NoteCard note={makeNote()} onSelect={vi.fn()} />);
 

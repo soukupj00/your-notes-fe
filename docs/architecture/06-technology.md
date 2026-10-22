@@ -52,7 +52,7 @@ There is no client-state library: Dexie live queries + URL params + small contex
 | sonner | Toasts | Undo affordances (delete, conflict notices) |
 | fuse.js | Fuzzy search | Ranked in-memory search over the feed; no server, no index to maintain |
 | class-variance-authority, clsx, tailwind-merge | Class composition | shadcn idiom |
-| react-hotkeys-hook | Shortcuts | `mod+K` etc.; shortcuts shown only to Fine pointers ([ADR 0016](../adr/0016-width-decides-layout-pointer-decides-affordances.md)) |
+| react-hotkeys-hook | Shortcuts | `mod+K` etc.; the bare new-note key is matched by `lib/new-note-key.ts` instead, on `event.key`; shortcuts shown only to Fine pointers ([ADR 0016](../adr/0016-width-decides-layout-pointer-decides-affordances.md)) |
 | driver.js | Tour spotlight | The one place the Tour touches a library; all Tour logic is dependency-free in `lib/tour/` ([ADR 0024](../adr/0024-a-welcome-at-launch-the-tour-in-settings.md)) |
 | react-colorful, color, country-flag-icons | Small utilities | Color picking, color math, locale flags |
 

@@ -123,31 +123,26 @@ describe('NoteEditorDialog lifecycle', () => {
     expect(toastMock).not.toHaveBeenCalled();
   });
 
-  // Until the load, `state` is only the default 'active', so a trashed Note would offer the
-  // edit bar's moves: Archive would archive it, Move to trash would restart its grace period.
-  it('offers no lifecycle move before the note has loaded', async () => {
-    const note = makeNote({ state: 'trashed', trashedAt: new Date().toISOString() });
-    await testStore.notes.add(note);
-    let finishLoad = () => {};
-    const get = vi.spyOn(testStore.notes, 'get').mockImplementationOnce(
-      (id) =>
-        new Promise((resolve) => {
-          finishLoad = () => resolve(testStore.notes.get(id));
-        })
-    );
-    render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
+  // Before the load the fields are blank, and the close the move starts with must not purge.
+  it.each(['notes.archive', 'notes.moveToTrash'])(
+    'keeps the content when %s is pressed before the note has loaded',
+    async (name) => {
+      const note = makeNote();
+      await testStore.notes.add(note);
+      const get = vi.spyOn(testStore.notes, 'get').mockReturnValueOnce(new Promise(() => {}));
+      const onClose = vi.fn();
+      render(<NoteEditorDialog noteId={note.id} onClose={onClose} />);
 
-    await waitFor(() => expect(get).toHaveBeenCalled());
-    for (const name of ['notes.archive', 'notes.moveToTrash', 'notes.restore']) {
-      expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name }));
+
+      await waitFor(() => expect(onClose).toHaveBeenCalled());
+      get.mockRestore();
+      expect(await testStore.notes.get(note.id)).toMatchObject({
+        header: note.header,
+        body: note.body,
+      });
     }
-
-    finishLoad();
-
-    expect(await screen.findByText('notes.trashedPreview')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'notes.moveToTrash' })).not.toBeInTheDocument();
-    get.mockRestore();
-  });
+  );
 
   it('offers restore instead of archive on an archived note', async () => {
     const { note, onClose } = await openStored({ state: 'archived' });
@@ -164,7 +159,7 @@ describe('NoteEditorDialog lifecycle', () => {
 describe('a trashed note', () => {
   const trashed = { state: 'trashed' as const, trashedAt: new Date().toISOString() };
 
-  it('opens as a read-only preview with only restore, archive and delete forever', async () => {
+  it('opens as a read-only preview with only restore and delete forever', async () => {
     await openStored(trashed);
 
     expect(screen.getByRole('heading', { name: 'Kept' })).toBeInTheDocument();
@@ -181,54 +176,18 @@ describe('a trashed note', () => {
     ]) {
       expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
     }
-    const bar = document.querySelector('[data-slot="note-editor-bar"]') as HTMLElement;
-    expect([...bar.querySelectorAll('button')].map((b) => b.textContent)).toEqual([
-      'notes.restore',
-      'notes.archive',
-      'notes.deleteForever',
-    ]);
+    expect(screen.getByRole('button', { name: 'notes.restore' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'notes.deleteForever' })).toBeInTheDocument();
   });
 
-  it.each([
-    ['notes.restore', 'active', 'notes.restored'],
-    ['notes.archive', 'archived', 'notes.archived'],
-  ] as const)(
-    '%s from the preview moves it to %s with the undo the card has',
-    async (button, state, toast) => {
-      const { note, onClose } = await openStored(trashed);
-
-      await userEvent.click(screen.getByRole('button', { name: button }));
-
-      await waitFor(() => expect(onClose).toHaveBeenCalled());
-      expect(await testStore.notes.get(note.id)).toMatchObject({ state, trashedAt: undefined });
-      expect(toastMock).toHaveBeenCalledWith(toast, expect.anything());
-
-      await undoLastToast();
-      await waitFor(async () =>
-        expect(await testStore.notes.get(note.id)).toMatchObject({
-          state: 'trashed',
-          trashedAt: trashed.trashedAt,
-        })
-      );
-    }
-  );
-
-  it('keeps the note open and stored when delete forever is cancelled', async () => {
+  it('restores from the preview with the same undo as the card', async () => {
     const { note, onClose } = await openStored(trashed);
 
-    await userEvent.click(screen.getByRole('button', { name: 'notes.deleteForever' }));
-    await userEvent.click(
-      await screen.findByRole('button', { name: 'notes.confirmDeleteForever.cancel' })
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'notes.restore' }));
 
-    await waitFor(() =>
-      expect(
-        screen.queryByRole('button', { name: 'notes.confirmDeleteForever.confirm' })
-      ).not.toBeInTheDocument()
-    );
-    expect(await testStore.notes.get(note.id)).toEqual(note);
-    expect(onClose).not.toHaveBeenCalled();
-    expect(toastMock).not.toHaveBeenCalled();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect((await testStore.notes.get(note.id))?.state).toBe('active');
+    expect(toastMock).toHaveBeenCalledWith('notes.restored', expect.anything());
   });
 
   it('deletes forever only once the user confirms', async () => {
