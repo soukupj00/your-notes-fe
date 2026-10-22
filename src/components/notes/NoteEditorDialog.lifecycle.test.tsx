@@ -123,26 +123,31 @@ describe('NoteEditorDialog lifecycle', () => {
     expect(toastMock).not.toHaveBeenCalled();
   });
 
-  // Before the load the fields are blank, and the close the move starts with must not purge.
-  it.each(['notes.archive', 'notes.moveToTrash'])(
-    'keeps the content when %s is pressed before the note has loaded',
-    async (name) => {
-      const note = makeNote();
-      await testStore.notes.add(note);
-      const get = vi.spyOn(testStore.notes, 'get').mockReturnValueOnce(new Promise(() => {}));
-      const onClose = vi.fn();
-      render(<NoteEditorDialog noteId={note.id} onClose={onClose} />);
+  // Until the load, `state` is only the default 'active', so a trashed Note would offer the
+  // edit bar's moves: Archive would archive it, Move to trash would restart its grace period.
+  it('offers no lifecycle move before the note has loaded', async () => {
+    const note = makeNote({ state: 'trashed', trashedAt: new Date().toISOString() });
+    await testStore.notes.add(note);
+    let finishLoad = () => {};
+    const get = vi.spyOn(testStore.notes, 'get').mockImplementationOnce(
+      (id) =>
+        new Promise((resolve) => {
+          finishLoad = () => resolve(testStore.notes.get(id));
+        })
+    );
+    render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
 
-      await userEvent.click(screen.getByRole('button', { name }));
-
-      await waitFor(() => expect(onClose).toHaveBeenCalled());
-      get.mockRestore();
-      expect(await testStore.notes.get(note.id)).toMatchObject({
-        header: note.header,
-        body: note.body,
-      });
+    await waitFor(() => expect(get).toHaveBeenCalled());
+    for (const name of ['notes.archive', 'notes.moveToTrash', 'notes.restore']) {
+      expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
     }
-  );
+
+    finishLoad();
+
+    expect(await screen.findByText('notes.trashedPreview')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'notes.moveToTrash' })).not.toBeInTheDocument();
+    get.mockRestore();
+  });
 
   it('offers restore instead of archive on an archived note', async () => {
     const { note, onClose } = await openStored({ state: 'archived' });

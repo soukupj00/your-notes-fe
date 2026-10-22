@@ -11,10 +11,8 @@ async function trash(page: Page, ...titles: string[]) {
   await page.goto('/trash');
 }
 
-/** Until it loads, the dialog shows the edit bar, which has an Archive of its own. */
 async function openPreview(page: Page, title: string) {
   await card(page, title).getByRole('heading', { name: title }).click();
-  await page.getByText('In the trash. Restore it to edit.').waitFor();
   return page.getByRole('dialog');
 }
 

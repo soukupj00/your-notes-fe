@@ -224,7 +224,9 @@ export function NoteEditorDialog({
   // On mobile this goes inside the editor as its footer, so the sticky format toolbar can sit
   // below it at the sheet's bottom edge. On desktop it stays a sibling under the framed editor.
   // Width decides, not pointer: it is a question of which box exists (ADR 0016).
-  const noteBar = preview ? (
+  // None before the load: `state` is only a default until then, and the edit bar's moves would
+  // act on a trashed Note.
+  const noteBar = !loaded ? null : preview ? (
     <TrashedNoteBar
       noteId={noteId}
       onRestore={() => void leaveWith(lifecycle.restore)}
