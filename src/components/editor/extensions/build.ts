@@ -4,6 +4,7 @@ import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Placeholder } from '@tiptap/extensions';
+import { resolveShortcuts, type ShortcutBindings } from '@/lib/shortcuts.ts';
 import { createAudio } from './Audio';
 import type { AttachmentDeps } from './attachments/deps';
 import type { TFunction } from './button-types';
@@ -30,9 +31,10 @@ import { Heading } from './Heading';
 import { Highlight } from './Highlight';
 import { History } from './history';
 import { createImage } from './Image';
-import { createLink } from './Link';
+import { Link } from './Link';
 import { ListItem } from './ListItem';
 import { createMathematics } from './Mathematics';
+import { createShortcuts } from './Shortcuts';
 import { createSlashMenu } from './SlashMenu';
 import { TaskItem } from './TaskItem';
 import { ChecklistFlip, TaskList } from './TaskList';
@@ -48,12 +50,20 @@ interface BuildOptions {
   getEditor: () => TiptapEditor | null;
   /** Read live, like `getDeps`. Optional, so a headless test gets no animation. */
   animateChecklist?: () => boolean;
+  /** Read live, like `getDeps`. Optional, so a headless test gets the defaults. */
+  getShortcuts?: () => ShortcutBindings;
   t: TFunction;
 }
 
 /** Lives outside `editor.tsx` so the toolbar registry is tested against the real mounted
  *  set: an id naming an unregistered extension is a button that silently never appears. */
-export function buildEditorExtensions({ getDeps, getEditor, animateChecklist, t }: BuildOptions) {
+export function buildEditorExtensions({
+  getDeps,
+  getEditor,
+  animateChecklist,
+  getShortcuts = () => resolveShortcuts({}),
+  t,
+}: BuildOptions) {
   return [
     Document,
     Paragraph,
@@ -80,7 +90,7 @@ export function buildEditorExtensions({ getDeps, getEditor, animateChecklist, t 
     CodeBlock,
     HorizontalRule,
     TextAlign,
-    createLink(t),
+    Link,
     Typography,
     // Registered for its buttons too: a phone has no Ctrl+Z, so they are its only undo.
     History,
@@ -92,6 +102,7 @@ export function buildEditorExtensions({ getDeps, getEditor, animateChecklist, t 
       showOnlyWhenEditable: true,
     }),
     createMathematics(getEditor, t),
+    createShortcuts(getShortcuts, t),
     Color,
     Highlight,
     FontFamily,

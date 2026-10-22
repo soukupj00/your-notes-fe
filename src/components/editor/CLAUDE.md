@@ -49,13 +49,12 @@ Three things to know before adding a button:
 The common case is the upstream TipTap extension plus a `button` option, built by `withButton`:
 
 ```ts
-export const Bold = withButton(TiptapBold, ({ editor, t }) => ({
+export const Bold = withButton(withoutKeys(TiptapBold, ['Mod-b', 'Mod-B']), ({ editor, t }) => ({
   component: ActionButton,
   componentProps: {
     action: () => editor.commands.toggleBold(),
     isActive: () => editor.isActive('bold'),
     icon: 'Bold',                       // string key into icons.ts
-    shortcutKeys: ['Mod', 'B'],
     tooltip: t('editor.bold.tooltip'),
     toggle: true,
   },
@@ -66,12 +65,14 @@ export const Bold = withButton(TiptapBold, ({ editor, t }) => ({
 - A `button` may return an array: Heading yields H1-H3, History yields undo and redo.
 - `icon` is a string key into `src/components/icons/icons.ts`; never import a Lucide component into a button config.
 - A new toolbar button is always an extension's `button`, never a toolbar-side list.
+- `withoutKeys` drops the upstream keys, because the editor binds no command key of its own ([ADR 0026](../../../docs/adr/0026-shortcuts-are-one-preference-matched-by-one-key-name.md)).
+  `extensions/Shortcuts/` is the one keymap: it reads the live bindings per key press and runs the action from `EDITOR_ACTIONS`, keyed by the Toolbar Item id.
+  `ToolbarLeaf` hands each button its tooltip keys from the same bindings, so a button never declares `shortcutKeys`.
 
 ## The toolbar
 
 A **Toolbar Item** has a stable id in `toolbar/registry.ts`, which maps it to its icon, name, family and the extension button it renders.
 The same ids are the slash menu's, so the two surfaces cannot drift.
-The registry also carries each Item's shortcut, a deliberate copy of the extension's own, so Settings can list shortcuts without a live editor; `shortcuts.test.ts` pins the copy in both directions.
 
 Which Items show is user data: one **Layout** per **Width Class** (`compact`, `wide`), reconciled against the registry by `resolveLayout`.
 `ToolbarLayoutEditor` edits a Layout and is mounted twice: in Settings, and in a sheet over the editor opened by the `⚙` Item.

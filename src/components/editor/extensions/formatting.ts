@@ -13,64 +13,67 @@ import { Underline as TiptapUnderline } from '@tiptap/extension-underline';
 import { ActionButton } from '@/components/ui/ActionButton.tsx';
 import { toggleWholeList } from './list-toggle';
 import { withButton } from './withButton';
+import { withoutKeys } from './withoutKeys';
 
 // The marks and blocks whose whole contribution is one button. An extension with more
 // than its declaration (a node view, a plugin, its own behaviour) keeps a folder of its own.
+// Their upstream keys go: the user's Shortcuts bind them instead (ADR 0026).
 
-export const Bold = withButton(TiptapBold, ({ editor, t }) => ({
+export const Bold = withButton(withoutKeys(TiptapBold, ['Mod-b', 'Mod-B']), ({ editor, t }) => ({
   component: ActionButton,
   componentProps: {
     action: () => editor.commands.toggleBold(),
     isActive: () => editor.isActive('bold'),
-    shortcutKeys: ['Mod', 'B'],
     icon: 'Bold',
     tooltip: t('editor.bold.tooltip'),
     toggle: true,
   },
 }));
 
-export const Italic = withButton(TiptapItalic, ({ editor, t }) => ({
-  component: ActionButton,
-  componentProps: {
-    action: () => editor.commands.toggleItalic(),
-    isActive: () => editor.isActive('italic'),
-    shortcutKeys: ['Mod', 'I'],
-    icon: 'Italic',
-    tooltip: t('editor.italic.tooltip'),
-    toggle: true,
-  },
-}));
+export const Italic = withButton(
+  withoutKeys(TiptapItalic, ['Mod-i', 'Mod-I']),
+  ({ editor, t }) => ({
+    component: ActionButton,
+    componentProps: {
+      action: () => editor.commands.toggleItalic(),
+      isActive: () => editor.isActive('italic'),
+      icon: 'Italic',
+      tooltip: t('editor.italic.tooltip'),
+      toggle: true,
+    },
+  })
+);
 
-export const Strike = withButton(TiptapStrike, ({ editor, t }) => ({
+export const Strike = withButton(withoutKeys(TiptapStrike, ['Mod-Shift-s']), ({ editor, t }) => ({
   component: ActionButton,
   componentProps: {
     action: () => editor.commands.toggleStrike(),
     isActive: () => editor.isActive('strike'),
-    shortcutKeys: ['Mod', 'Shift', 'S'],
     icon: 'Strikethrough',
     tooltip: t('editor.strike.tooltip'),
     toggle: true,
   },
 }));
 
-export const Underline = withButton(TiptapUnderline, ({ editor, t }) => ({
-  component: ActionButton,
-  componentProps: {
-    action: () => editor.commands.toggleUnderline(),
-    isActive: () => editor.isActive('underline'),
-    shortcutKeys: ['Mod', 'U'],
-    icon: 'Underline',
-    tooltip: t('editor.underline.tooltip'),
-    toggle: true,
-  },
-}));
+export const Underline = withButton(
+  withoutKeys(TiptapUnderline, ['Mod-u', 'Mod-U']),
+  ({ editor, t }) => ({
+    component: ActionButton,
+    componentProps: {
+      action: () => editor.commands.toggleUnderline(),
+      isActive: () => editor.isActive('underline'),
+      icon: 'Underline',
+      tooltip: t('editor.underline.tooltip'),
+      toggle: true,
+    },
+  })
+);
 
-export const Code = withButton(TiptapCode, ({ editor, t }) => ({
+export const Code = withButton(withoutKeys(TiptapCode, ['Mod-e']), ({ editor, t }) => ({
   component: ActionButton,
   componentProps: {
     action: () => editor.commands.toggleCode(),
     isActive: () => editor.isActive('code'),
-    shortcutKeys: ['Mod', 'E'],
     icon: 'Code',
     tooltip: t('editor.code.tooltip'),
     toggle: true,
@@ -79,29 +82,33 @@ export const Code = withButton(TiptapCode, ({ editor, t }) => ({
 
 /** Plain, not the lowlight variant: highlighting would pull in a grammar bundle for a block
  *  that mostly holds a command or a snippet verbatim. */
-export const CodeBlock = withButton(TiptapCodeBlock, ({ editor, t }) => ({
-  component: ActionButton,
-  componentProps: {
-    action: () => editor.commands.toggleCodeBlock(),
-    isActive: () => editor.isActive('codeBlock'),
-    shortcutKeys: ['Mod', 'Alt', 'C'],
-    icon: 'Code2',
-    tooltip: t('editor.codeBlock.tooltip'),
-    toggle: true,
-  },
-}));
+export const CodeBlock = withButton(
+  withoutKeys(TiptapCodeBlock, ['Mod-Alt-c']),
+  ({ editor, t }) => ({
+    component: ActionButton,
+    componentProps: {
+      action: () => editor.commands.toggleCodeBlock(),
+      isActive: () => editor.isActive('codeBlock'),
+      icon: 'Code2',
+      tooltip: t('editor.codeBlock.tooltip'),
+      toggle: true,
+    },
+  })
+);
 
-export const Blockquote = withButton(TiptapBlockquote, ({ editor, t }) => ({
-  component: ActionButton,
-  componentProps: {
-    action: () => editor.commands.toggleBlockquote(),
-    isActive: () => editor.isActive('blockquote'),
-    shortcutKeys: ['Mod', 'Shift', 'B'],
-    icon: 'Quote',
-    tooltip: t('editor.blockquote.tooltip'),
-    toggle: true,
-  },
-}));
+export const Blockquote = withButton(
+  withoutKeys(TiptapBlockquote, ['Mod-Shift-b']),
+  ({ editor, t }) => ({
+    component: ActionButton,
+    componentProps: {
+      action: () => editor.commands.toggleBlockquote(),
+      isActive: () => editor.isActive('blockquote'),
+      icon: 'Quote',
+      tooltip: t('editor.blockquote.tooltip'),
+      toggle: true,
+    },
+  })
+);
 
 /** An insert, not a toggle, so the button has no active state. */
 export const HorizontalRule = withButton(TiptapHorizontalRule, ({ editor, t }) => ({
@@ -113,26 +120,30 @@ export const HorizontalRule = withButton(TiptapHorizontalRule, ({ editor, t }) =
   },
 }));
 
-export const BulletList = withButton(TiptapBulletList, ({ editor, t }) => ({
-  component: ActionButton,
-  componentProps: {
-    action: () => toggleWholeList(editor, (chain) => chain.toggleBulletList()),
-    isActive: () => editor.isActive('bulletList'),
-    shortcutKeys: ['Mod', 'Shift', '8'],
-    icon: 'List',
-    tooltip: t('editor.bulletList.tooltip'),
-    toggle: true,
-  },
-}));
+export const BulletList = withButton(
+  withoutKeys(TiptapBulletList, ['Mod-Shift-8']),
+  ({ editor, t }) => ({
+    component: ActionButton,
+    componentProps: {
+      action: () => toggleWholeList(editor, (chain) => chain.toggleBulletList()),
+      isActive: () => editor.isActive('bulletList'),
+      icon: 'List',
+      tooltip: t('editor.bulletList.tooltip'),
+      toggle: true,
+    },
+  })
+);
 
-export const OrderedList = withButton(TiptapOrderedList, ({ editor, t }) => ({
-  component: ActionButton,
-  componentProps: {
-    action: () => toggleWholeList(editor, (chain) => chain.toggleOrderedList()),
-    isActive: () => editor.isActive('orderedList'),
-    shortcutKeys: ['Mod', 'Shift', '7'],
-    icon: 'ListOrdered',
-    tooltip: t('editor.orderedList.tooltip'),
-    toggle: true,
-  },
-}));
+export const OrderedList = withButton(
+  withoutKeys(TiptapOrderedList, ['Mod-Shift-7']),
+  ({ editor, t }) => ({
+    component: ActionButton,
+    componentProps: {
+      action: () => toggleWholeList(editor, (chain) => chain.toggleOrderedList()),
+      isActive: () => editor.isActive('orderedList'),
+      icon: 'ListOrdered',
+      tooltip: t('editor.orderedList.tooltip'),
+      toggle: true,
+    },
+  })
+);

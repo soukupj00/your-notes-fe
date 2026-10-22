@@ -12,13 +12,12 @@ Neexistuje žádný centrální seznam tlačítek, od kterého by se panel nást
 Běžný případ je upstreamové rozšíření TipTapu plus volba `button`, sestavené pomocí `withButton`:
 
 ```ts
-export const Bold = withButton(TiptapBold, ({ editor, t }) => ({
+export const Bold = withButton(withoutKeys(TiptapBold, ['Mod-b', 'Mod-B']), ({ editor, t }) => ({
   component: ActionButton,
   componentProps: {
     action: () => editor.commands.toggleBold(),
     isActive: () => editor.isActive('bold'),
     icon: 'Bold', // a key into src/components/icons/icons.ts
-    shortcutKeys: ['Mod', 'B'],
     tooltip: t('editor.bold.tooltip'),
     toggle: true,
   },
@@ -28,6 +27,8 @@ export const Bold = withButton(TiptapBold, ({ editor, t }) => ({
 - Značky a bloky s jedním tlačítkem jsou deklarace v `extensions/formatting.ts`.
 - Rozšíření s něčím navíc, například s node view nebo pluginem, dostane vlastní složku, `extensions/<Name>/`.
 - `icon` je textový klíč do `src/components/icons/icons.ts`; nikdy neimportujte komponentu ikony do konfigurace tlačítka.
+- `withoutKeys` odebere původní klávesu: každá příkazová klávesa je zkratka uživatele, kterou váže jeden plugin čtoucí aktuální předvolbu ([ADR 0026](../adr/0026-shortcuts-are-one-preference-matched-by-one-key-name.md)).
+  Nová akce s klávesou dostane řádek v `lib/shortcuts.ts` a položku v `extensions/Shortcuts/actions.ts`.
 - `extensions/build.ts` vyjmenovává v jedné funkci každé rozšíření, které editor připojí, takže testy kontrolují panel nástrojů proti skutečné sadě.
 
 ## Panel nástrojů patří uživateli

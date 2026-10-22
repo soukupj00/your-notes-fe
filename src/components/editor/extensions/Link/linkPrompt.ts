@@ -1,4 +1,5 @@
 import type { Editor } from '@tiptap/core';
+import type { TFunction } from '../button-types';
 
 export interface LinkPromptCoordinator {
   /** True when a `LinkButton` on screen took the request and opened its popover. */
@@ -49,4 +50,12 @@ export function applyLink(editor: Editor, url: string): void {
     return;
   }
   editor.chain().focus().setLink({ href }).run();
+}
+
+/** The link shortcut: the mounted button's popover, else a prompt. `t` is called now, not at
+ *  build time, so the label follows the current language. */
+export function openLinkPrompt(editor: Editor, t: TFunction): void {
+  if (editor.storage.link.prompt.requestOpen()) return;
+  const url = window.prompt(t('editor.link.url'), '');
+  if (url !== null) applyLink(editor, url);
 }

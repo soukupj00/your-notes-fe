@@ -99,7 +99,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     buttonIndex: 0,
     icon: 'Undo2',
     labelKey: 'editor.undo',
-    shortcut: ['Mod', 'Z'],
   },
   {
     id: 'redo',
@@ -108,7 +107,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     buttonIndex: 1,
     icon: 'Redo2',
     labelKey: 'editor.redo',
-    shortcut: ['Mod', 'Shift', 'Z'],
   },
   {
     id: 'h1',
@@ -117,7 +115,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     buttonIndex: 0,
     icon: 'Heading1',
     labelKey: 'editor.heading.h1',
-    shortcut: ['Mod', 'Alt', '1'],
   },
   {
     id: 'h2',
@@ -126,7 +123,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     buttonIndex: 1,
     icon: 'Heading2',
     labelKey: 'editor.heading.h2',
-    shortcut: ['Mod', 'Alt', '2'],
   },
   {
     id: 'h3',
@@ -135,7 +131,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     buttonIndex: 2,
     icon: 'Heading3',
     labelKey: 'editor.heading.h3',
-    shortcut: ['Mod', 'Alt', '3'],
   },
   {
     id: 'font-family',
@@ -157,7 +152,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     extension: 'bold',
     icon: 'Bold',
     labelKey: 'editor.bold.tooltip',
-    shortcut: ['Mod', 'B'],
   },
   {
     id: 'italic',
@@ -165,7 +159,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     extension: 'italic',
     icon: 'Italic',
     labelKey: 'editor.italic.tooltip',
-    shortcut: ['Mod', 'I'],
   },
   {
     id: 'underline',
@@ -173,7 +166,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     extension: 'underline',
     icon: 'Underline',
     labelKey: 'editor.underline.tooltip',
-    shortcut: ['Mod', 'U'],
   },
   {
     id: 'strike',
@@ -181,7 +173,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     extension: 'strike',
     icon: 'Strikethrough',
     labelKey: 'editor.strike.tooltip',
-    shortcut: ['Mod', 'Shift', 'S'],
   },
   {
     id: 'code',
@@ -189,7 +180,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     extension: 'code',
     icon: 'Code',
     labelKey: 'editor.code.tooltip',
-    shortcut: ['Mod', 'E'],
   },
   {
     id: 'clear',
@@ -197,7 +187,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     extension: 'clear',
     icon: 'RemoveFormatting',
     labelKey: 'editor.clearFormatting.tooltip',
-    shortcut: ['Mod', '\\'],
   },
   {
     id: 'text-color',
@@ -212,7 +201,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     extension: 'backgroundColor',
     icon: 'Highlighter',
     labelKey: 'editor.highlight.tooltip',
-    shortcut: ['Mod', 'Shift', 'H'],
   },
   {
     id: 'bullet-list',
@@ -220,7 +208,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     extension: 'bulletList',
     icon: 'List',
     labelKey: 'editor.bulletList.tooltip',
-    shortcut: ['Mod', 'Shift', '8'],
   },
   {
     id: 'ordered-list',
@@ -228,7 +215,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     extension: 'orderedList',
     icon: 'ListOrdered',
     labelKey: 'editor.orderedList.tooltip',
-    shortcut: ['Mod', 'Shift', '7'],
   },
   {
     id: 'task-list',
@@ -236,7 +222,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     extension: 'taskList',
     icon: 'ListTodo',
     labelKey: 'editor.taskList.tooltip',
-    shortcut: ['Mod', 'Shift', '9'],
   },
   {
     id: 'align-left',
@@ -245,7 +230,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     buttonIndex: 0,
     icon: 'AlignLeft',
     labelKey: 'editor.textAlign.left',
-    shortcut: ['Mod', 'Shift', 'L'],
   },
   {
     id: 'align-center',
@@ -254,7 +238,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     buttonIndex: 1,
     icon: 'AlignCenter',
     labelKey: 'editor.textAlign.center',
-    shortcut: ['Mod', 'Shift', 'E'],
   },
   {
     id: 'align-right',
@@ -263,7 +246,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     buttonIndex: 2,
     icon: 'AlignRight',
     labelKey: 'editor.textAlign.right',
-    shortcut: ['Mod', 'Shift', 'R'],
   },
   {
     id: 'blockquote',
@@ -271,7 +253,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     extension: 'blockquote',
     icon: 'Quote',
     labelKey: 'editor.blockquote.tooltip',
-    shortcut: ['Mod', 'Shift', 'B'],
   },
   {
     id: 'code-block',
@@ -279,7 +260,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     extension: 'codeBlock',
     icon: 'Code2',
     labelKey: 'editor.codeBlock.tooltip',
-    shortcut: ['Mod', 'Alt', 'C'],
   },
   {
     id: 'divider',
@@ -294,7 +274,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     extension: 'Mathematics',
     icon: 'Latex',
     labelKey: 'editor.math.tooltip',
-    shortcut: ['Mod', 'Shift', 'M'],
   },
   {
     id: 'link',
@@ -302,7 +281,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     extension: 'link',
     icon: 'Link2',
     labelKey: 'editor.link.tooltip',
-    shortcut: ['Mod', 'K'],
   },
   {
     id: 'image',

@@ -53,7 +53,6 @@ const TOGGLES = [
     html: '<strong>',
     icon: 'Bold',
     tooltip: 'editor.bold.tooltip',
-    shortcut: ['Mod', 'B'],
   },
   {
     name: 'italic',
@@ -63,7 +62,6 @@ const TOGGLES = [
     html: '<em>',
     icon: 'Italic',
     tooltip: 'editor.italic.tooltip',
-    shortcut: ['Mod', 'I'],
   },
   {
     name: 'strike',
@@ -73,7 +71,6 @@ const TOGGLES = [
     html: '<s>',
     icon: 'Strikethrough',
     tooltip: 'editor.strike.tooltip',
-    shortcut: ['Mod', 'Shift', 'S'],
   },
   {
     name: 'underline',
@@ -83,7 +80,6 @@ const TOGGLES = [
     html: '<u>',
     icon: 'Underline',
     tooltip: 'editor.underline.tooltip',
-    shortcut: ['Mod', 'U'],
   },
   {
     name: 'code',
@@ -93,7 +89,6 @@ const TOGGLES = [
     html: '<code>',
     icon: 'Code',
     tooltip: 'editor.code.tooltip',
-    shortcut: ['Mod', 'E'],
   },
   {
     name: 'codeBlock',
@@ -103,7 +98,6 @@ const TOGGLES = [
     html: '<pre>',
     icon: 'Code2',
     tooltip: 'editor.codeBlock.tooltip',
-    shortcut: ['Mod', 'Alt', 'C'],
   },
   {
     name: 'blockquote',
@@ -113,7 +107,6 @@ const TOGGLES = [
     html: '<blockquote>',
     icon: 'Quote',
     tooltip: 'editor.blockquote.tooltip',
-    shortcut: ['Mod', 'Shift', 'B'],
   },
   {
     name: 'bulletList',
@@ -123,7 +116,6 @@ const TOGGLES = [
     html: '<ul>',
     icon: 'List',
     tooltip: 'editor.bulletList.tooltip',
-    shortcut: ['Mod', 'Shift', '8'],
   },
   {
     name: 'orderedList',
@@ -133,11 +125,10 @@ const TOGGLES = [
     html: '<ol>',
     icon: 'ListOrdered',
     tooltip: 'editor.orderedList.tooltip',
-    shortcut: ['Mod', 'Shift', '7'],
   },
 ];
 
-describe.each(TOGGLES)('$name', ({ name, ext, extra, toggle, html, icon, tooltip, shortcut }) => {
+describe.each(TOGGLES)('$name', ({ name, ext, extra, toggle, html, icon, tooltip }) => {
   it('toggles on the selection and reports itself active', () => {
     const editor = createEditor([...extra, ext]);
     editor.commands.selectAll();
@@ -152,7 +143,6 @@ describe.each(TOGGLES)('$name', ({ name, ext, extra, toggle, html, icon, tooltip
     const props = buttonProps(editor, name);
     expect(props.icon).toBe(icon);
     expect(props.tooltip).toBe(tooltip);
-    expect(props.shortcutKeys).toEqual(shortcut);
     expect(props.toggle).toBe(true);
 
     editor.commands.selectAll();

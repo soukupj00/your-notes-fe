@@ -34,11 +34,6 @@ export interface ToolbarItem {
    * A name, not a tooltip: "Image", not "Insert image".
    */
   labelKey: string;
-  /**
-   * A deliberate copy of the extension's `shortcutKeys` for Settings, pinned to the
-   * real button by `shortcuts.test.ts`. Why a copy: editor/CLAUDE.md.
-   */
-  shortcut?: string[];
 }
 
 /** A group of Items, expanded onto the bar or collapsed behind one trigger. */

@@ -2,6 +2,8 @@ import type { Editor } from '@tiptap/react';
 import type React from 'react';
 import type { TFunction } from '@/components/editor/extensions/button-types';
 import { MenuRowLabelProvider } from '@/components/ui/ActionButton.tsx';
+import { useShortcuts } from '@/hooks/useShortcuts.ts';
+import { comboParts } from '@/lib/key-combo.ts';
 import { CUSTOMIZE_ITEM_ID, resolveItemButton } from './registry';
 import { ToolbarCustomizeButton } from './ToolbarCustomizeButton';
 import type { ToolbarItem } from './types';
@@ -19,13 +21,18 @@ interface ToolbarLeafProps {
 
 /** Renders nothing for an unmounted extension, which costs its own button, not the bar. */
 export const ToolbarLeaf: React.FC<ToolbarLeafProps> = ({ item, editor, t, inMenu }) => {
+  const combo = useShortcuts().bindings[item.id];
   // The one Item with no extension behind it: it changes the bar, not the note,
   // so the bar owns it rather than resolving it through TipTap.
   if (item.id === CUSTOMIZE_ITEM_ID) return <ToolbarCustomizeButton />;
 
   const view = resolveItemButton(item, { editor, t });
   if (!view) return null;
-  const { component: Component, componentProps } = view;
+  const { component: Component } = view;
+  const componentProps = {
+    ...view.componentProps,
+    shortcutKeys: combo ? comboParts(combo) : undefined,
+  };
 
   if (!inMenu) return <Component {...componentProps} />;
 

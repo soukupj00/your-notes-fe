@@ -1,21 +1,14 @@
 import { Fragment, type KeyboardEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TOOLBAR_ITEMS } from '@/components/editor/toolbar/registry.ts';
 import { Button } from '@/components/ui/button.tsx';
 import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { useShortcuts } from '@/hooks/useShortcuts.ts';
-import { comboFromEvent, comboLabel, MODIFIER_KEYS } from '@/lib/key-combo.ts';
+import { comboFromEvent, comboLabel, comboParts, MODIFIER_KEYS } from '@/lib/key-combo.ts';
 import { getShortcutKeys } from '@/lib/shortcut-keys.ts';
-import { refusalOf } from '@/lib/shortcuts.ts';
+import { refusalOf, SHORTCUTS } from '@/lib/shortcuts.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
-/**
- * In registry order, so it reads like the Layout editor and the bar. Static, as Settings
- * has no live editor; `shortcuts.test.ts` pins each entry to the real button.
- */
-const SHORTCUT_ROWS = TOOLBAR_ITEMS.flatMap(({ id, labelKey, shortcut }) =>
-  shortcut?.length ? [{ id, labelKey, shortcut }] : []
-);
+const EDITOR_ROWS = SHORTCUTS.filter((def) => def.scope === 'editor');
 
 /**
  * Not a column in the Layout editor: a shortcut answers how to act without the bar.
@@ -24,6 +17,7 @@ const SHORTCUT_ROWS = TOOLBAR_ITEMS.flatMap(({ id, labelKey, shortcut }) =>
 export function ShortcutsSection() {
   const { t } = useTranslation();
   const finePointer = useFinePointer();
+  const { bindings } = useShortcuts();
 
   if (!finePointer) return null;
 
@@ -33,11 +27,14 @@ export function ShortcutsSection() {
         {t('settings.shortcuts.description')}
       </p>
       <NewNoteKeyRow />
-      {SHORTCUT_ROWS.map((row) => (
-        <SettingsRow key={row.id} label={t(row.labelKey)}>
-          <ShortcutKeys keys={row.shortcut} />
-        </SettingsRow>
-      ))}
+      {EDITOR_ROWS.map(({ id, labelKey }) => {
+        const combo = bindings[id];
+        return (
+          <SettingsRow key={id} label={t(labelKey)}>
+            {combo && <ShortcutKeys keys={comboParts(combo)} />}
+          </SettingsRow>
+        );
+      })}
     </SettingsSection>
   );
 }
