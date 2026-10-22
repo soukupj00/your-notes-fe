@@ -159,7 +159,7 @@ describe('NoteEditorDialog lifecycle', () => {
 describe('a trashed note', () => {
   const trashed = { state: 'trashed' as const, trashedAt: new Date().toISOString() };
 
-  it('opens as a read-only preview with only restore and delete forever', async () => {
+  it('opens as a read-only preview with only restore, archive and delete forever', async () => {
     await openStored(trashed);
 
     expect(screen.getByRole('heading', { name: 'Kept' })).toBeInTheDocument();
@@ -176,18 +176,54 @@ describe('a trashed note', () => {
     ]) {
       expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
     }
-    expect(screen.getByRole('button', { name: 'notes.restore' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'notes.deleteForever' })).toBeInTheDocument();
+    const bar = document.querySelector('[data-slot="note-editor-bar"]') as HTMLElement;
+    expect([...bar.querySelectorAll('button')].map((b) => b.textContent)).toEqual([
+      'notes.restore',
+      'notes.archive',
+      'notes.deleteForever',
+    ]);
   });
 
-  it('restores from the preview with the same undo as the card', async () => {
+  it.each([
+    ['notes.restore', 'active', 'notes.restored'],
+    ['notes.archive', 'archived', 'notes.archived'],
+  ] as const)(
+    '%s from the preview moves it to %s with the undo the card has',
+    async (button, state, toast) => {
+      const { note, onClose } = await openStored(trashed);
+
+      await userEvent.click(screen.getByRole('button', { name: button }));
+
+      await waitFor(() => expect(onClose).toHaveBeenCalled());
+      expect(await testStore.notes.get(note.id)).toMatchObject({ state, trashedAt: undefined });
+      expect(toastMock).toHaveBeenCalledWith(toast, expect.anything());
+
+      await undoLastToast();
+      await waitFor(async () =>
+        expect(await testStore.notes.get(note.id)).toMatchObject({
+          state: 'trashed',
+          trashedAt: trashed.trashedAt,
+        })
+      );
+    }
+  );
+
+  it('keeps the note open and stored when delete forever is cancelled', async () => {
     const { note, onClose } = await openStored(trashed);
 
-    await userEvent.click(screen.getByRole('button', { name: 'notes.restore' }));
+    await userEvent.click(screen.getByRole('button', { name: 'notes.deleteForever' }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'notes.confirmDeleteForever.cancel' })
+    );
 
-    await waitFor(() => expect(onClose).toHaveBeenCalled());
-    expect((await testStore.notes.get(note.id))?.state).toBe('active');
-    expect(toastMock).toHaveBeenCalledWith('notes.restored', expect.anything());
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: 'notes.confirmDeleteForever.confirm' })
+      ).not.toBeInTheDocument()
+    );
+    expect(await testStore.notes.get(note.id)).toEqual(note);
+    expect(onClose).not.toHaveBeenCalled();
+    expect(toastMock).not.toHaveBeenCalled();
   });
 
   it('deletes forever only once the user confirms', async () => {

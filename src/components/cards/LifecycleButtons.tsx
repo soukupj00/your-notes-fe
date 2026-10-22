@@ -1,4 +1,4 @@
-import { Archive, ArchiveRestore, RotateCcw, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, type LucideIcon, RotateCcw, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { IconTooltip } from '@/components/ui/tooltip.tsx';
 import type { NoteState } from '@/models.ts';
@@ -12,8 +12,8 @@ interface LifecycleButtonsProps {
 }
 
 /**
- * Archive or restore, then trash: the same pair on a Card's rail and an open Note's bar. Clicks
- * stop here, so a Card does not also open its Note.
+ * The lifecycle pair on a Card's rail and an open Note's bar: archive or restore, then trash; in
+ * the trash, restore then archive. Clicks stop here, so a Card does not also open its Note.
  */
 export function LifecycleButtons({
   state,
@@ -24,43 +24,40 @@ export function LifecycleButtons({
 }: LifecycleButtonsProps) {
   const { t } = useTranslation();
 
-  // Both leave through `restoreToActive`, but un-archiving and un-trashing are different
-  // gestures, so each has its own icon.
-  const isActive = state === 'active';
-  const LeaveIcon = isActive ? Archive : state === 'archived' ? ArchiveRestore : RotateCcw;
+  const button = (label: string, Icon: LucideIcon, onPress: () => void) => (
+    <IconTooltip label={label}>
+      <button
+        type="button"
+        aria-label={label}
+        onClick={(e) => {
+          e.stopPropagation();
+          onPress();
+        }}
+        className={className}
+      >
+        <Icon className="size-4" aria-hidden />
+      </button>
+    </IconTooltip>
+  );
 
+  const archive = button(t('notes.archive'), Archive, onArchive);
+  const trash = button(t('notes.moveToTrash'), Trash2, onTrash);
+
+  // Both restores leave through `restoreToActive`, but un-archiving and un-trashing are
+  // different gestures, so each has its own icon.
+  if (state === 'active') {
+    return (
+      <>
+        {archive}
+        {trash}
+      </>
+    );
+  }
+  const restoreIcon = state === 'archived' ? ArchiveRestore : RotateCcw;
   return (
     <>
-      <IconTooltip label={t(isActive ? 'notes.archive' : 'notes.restore')}>
-        <button
-          type="button"
-          aria-label={t(isActive ? 'notes.archive' : 'notes.restore')}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (isActive) onArchive();
-            else onRestore();
-          }}
-          className={className}
-        >
-          <LeaveIcon className="size-4" aria-hidden />
-        </button>
-      </IconTooltip>
-
-      {state !== 'trashed' && (
-        <IconTooltip label={t('notes.moveToTrash')}>
-          <button
-            type="button"
-            aria-label={t('notes.moveToTrash')}
-            onClick={(e) => {
-              e.stopPropagation();
-              onTrash();
-            }}
-            className={className}
-          >
-            <Trash2 className="size-4" aria-hidden />
-          </button>
-        </IconTooltip>
-      )}
+      {button(t('notes.restore'), restoreIcon, onRestore)}
+      {state === 'archived' ? trash : archive}
     </>
   );
 }
