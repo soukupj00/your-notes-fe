@@ -139,11 +139,30 @@ describe('DesktopCaptureBar', () => {
 
   it('drops the hint while the key is off', () => {
     stubPointer(true);
-    localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify({ version: 2, newNoteKey: null }));
+    localStorage.setItem(
+      PREFERENCES_STORAGE_KEY,
+      JSON.stringify({ version: 2, shortcuts: { 'new-note': null } })
+    );
     render(<DesktopCaptureBar onStart={vi.fn()} />, { wrapper });
     const trigger = screen.getByRole('button', { name: 'notes.createPlaceholder' });
 
     expect(trigger).not.toHaveAttribute('aria-keyshortcuts');
     expect(trigger.querySelector('kbd')).toBeNull();
+  });
+
+  it.each([
+    ['a single key', 'j', 'J', 'J'],
+    ['a combination', 'Mod-Alt-n', 'Control+Alt+N', 'Ctrl + Alt + N'],
+  ])('names and shows %s the user chose', (_label, combo, aria, shown) => {
+    stubPointer(true);
+    localStorage.setItem(
+      PREFERENCES_STORAGE_KEY,
+      JSON.stringify({ version: 2, shortcuts: { 'new-note': combo } })
+    );
+    render(<DesktopCaptureBar onStart={vi.fn()} />, { wrapper });
+    const trigger = screen.getByRole('button', { name: 'notes.createPlaceholder' });
+
+    expect(trigger).toHaveAttribute('aria-keyshortcuts', aria);
+    expect(trigger.querySelector('kbd')).toHaveTextContent(shown);
   });
 });

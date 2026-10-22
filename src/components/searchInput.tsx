@@ -1,7 +1,6 @@
 import { Search } from 'lucide-react';
 import type * as React from 'react';
-import { useRef } from 'react';
-import { useHotkeys } from 'react-hotkeys-hook';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SortMenu } from '@/components/notes/SortMenu.tsx';
 import { ViewModeToggle } from '@/components/notes/ViewModeToggle.tsx';
@@ -9,7 +8,9 @@ import { Input } from '@/components/ui/input.tsx';
 import { useTourActive } from '@/context/TourProvider.tsx';
 import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { useNoteSearchState } from '@/hooks/useNoteSearchState.ts';
-import { getShortcutKey, IS_MAC } from '@/lib/shortcut-keys.ts';
+import { useShortcuts } from '@/hooks/useShortcuts.ts';
+import { isAppShortcut } from '@/lib/app-shortcut.ts';
+import { comboLabel } from '@/lib/key-combo.ts';
 import { cn } from '@/lib/utils.ts';
 
 function SearchInput({ className, ...props }: React.ComponentProps<'div'>) {
@@ -21,25 +22,22 @@ function SearchInput({ className, ...props }: React.ComponentProps<'div'>) {
   // is shown it (ADR 0016).
   const showShortcut = useFinePointer();
 
-  // Our own IS_MAC, as the editor and the chip use: the library's `mod` reads an old iPad as no Mac.
-  // Works from any field but never out of an open note, whose dialog keeps focus (in its body the key
-  // is Link). Stands down during the Tour and in whichever of the Navbar's two boxes CSS hides.
-  useHotkeys(
-    IS_MAC ? 'meta+k' : 'ctrl+k',
-    () => {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    },
-    {
-      enabled: !tourActive,
-      preventDefault: true,
-      enableOnFormTags: true,
-      enableOnContentEditable: true,
-      ignoreEventWhen: (e) => e.defaultPrevented || !inputRef.current?.getClientRects().length,
-    }
-  );
+  const searchKey = useShortcuts().bindings.search;
 
-  const modSymbol = getShortcutKey('mod').symbol;
+  // Stands down during the Tour and in whichever of the Navbar's two boxes CSS hides;
+  // `isAppShortcut` keeps it out of an open note, where Ctrl+K is Link.
+  useEffect(() => {
+    if (tourActive) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      const input = inputRef.current;
+      if (!input?.getClientRects().length || !isAppShortcut(event, searchKey)) return;
+      event.preventDefault();
+      input.focus();
+      input.select();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [tourActive, searchKey]);
 
   return (
     <div
@@ -69,12 +67,12 @@ function SearchInput({ className, ...props }: React.ComponentProps<'div'>) {
       <div className="absolute top-1/2 right-1 flex -translate-y-1/2 items-center">
         {/* Not hidden on focus, so the controls beside it never shift. `aria-hidden`: a key
             combination is noise to a screen reader on the field itself. */}
-        {showShortcut && (
+        {showShortcut && searchKey && (
           <kbd
             aria-hidden
             className="mr-1 inline-block select-none rounded border bg-muted px-1.5 py-0.5 font-medium font-sans text-[10px] text-muted-foreground"
           >
-            {modSymbol} K
+            {comboLabel(searchKey)}
           </kbd>
         )}
         <SortMenu />

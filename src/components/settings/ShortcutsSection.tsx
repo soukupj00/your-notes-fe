@@ -2,10 +2,11 @@ import { Fragment, type KeyboardEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TOOLBAR_ITEMS } from '@/components/editor/toolbar/registry.ts';
 import { Button } from '@/components/ui/button.tsx';
-import { DEFAULT_PREFERENCES, usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useFinePointer } from '@/hooks/useFinePointer.ts';
-import { isAssignableKey, MODIFIER_KEYS } from '@/lib/new-note-key.ts';
+import { useShortcuts } from '@/hooks/useShortcuts.ts';
+import { comboFromEvent, comboLabel, MODIFIER_KEYS } from '@/lib/key-combo.ts';
 import { getShortcutKeys } from '@/lib/shortcut-keys.ts';
+import { refusalOf } from '@/lib/shortcuts.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
 /**
@@ -56,13 +57,14 @@ type Recording = 'idle' | 'listening' | 'refused';
  */
 function NewNoteKeyRow() {
   const { t } = useTranslation();
-  const { preferences, setPreference } = usePreferences();
+  const { bindings, stored, assign, reset } = useShortcuts();
   const [recording, setRecording] = useState<Recording>('idle');
   const changeRef = useRef<HTMLButtonElement>(null);
-  const key = preferences.newNoteKey;
+  const key = bindings['new-note'];
 
-  const store = (next: string | null) => {
-    void setPreference('newNoteKey', next);
+  const store = (next: string | null | 'default') => {
+    if (next === 'default') reset('new-note');
+    else assign('new-note', next);
     changeRef.current?.focus();
   };
 
@@ -71,9 +73,12 @@ function NewNoteKeyRow() {
     event.preventDefault();
     if (event.key === 'Escape') {
       setRecording('idle');
-    } else if (isAssignableKey(event)) {
+      return;
+    }
+    const combo = comboFromEvent(event.nativeEvent);
+    if (combo && !refusalOf(combo, 'app')) {
       setRecording('idle');
-      store(event.key.toLowerCase());
+      store(combo);
     } else {
       setRecording('refused');
     }
@@ -104,7 +109,7 @@ function NewNoteKeyRow() {
             {t('settings.shortcuts.newNote.off')}
           </span>
         ) : (
-          <kbd className={KEYCAP}>{key.toUpperCase()}</kbd>
+          <kbd className={KEYCAP}>{comboLabel(key)}</kbd>
         )}
         <Button
           ref={changeRef}
@@ -130,13 +135,8 @@ function NewNoteKeyRow() {
             {t('settings.shortcuts.newNote.turnOff')}
           </Button>
         )}
-        {key !== DEFAULT_PREFERENCES.newNoteKey && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => store(DEFAULT_PREFERENCES.newNoteKey)}
-          >
+        {'new-note' in stored && (
+          <Button type="button" variant="outline" size="sm" onClick={() => store('default')}>
             {t('settings.shortcuts.newNote.reset')}
           </Button>
         )}

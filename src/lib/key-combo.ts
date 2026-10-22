@@ -1,5 +1,5 @@
 import { base } from 'w3c-keyname';
-import { IS_MAC, IS_WINDOWS } from './shortcut-keys.ts';
+import { getShortcutKeys, IS_MAC, IS_WINDOWS } from './shortcut-keys.ts';
 
 /**
  * One name for a key combination, shared by the recorder and every matcher (ADR 0026):
@@ -86,4 +86,11 @@ export function ariaKeyShortcuts(combo: string, platform = PLATFORM): string {
       part === 'Mod' ? (platform.mac ? 'Meta' : 'Control') : (ARIA_NAMES[part] ?? part)
     )
     .join('+');
+}
+
+/** As a tooltip and a hint draw it: `Ctrl + Alt + N`, `⌘ + B` on a Mac. */
+export function comboLabel(combo: string): string {
+  return getShortcutKeys(comboParts(combo))
+    .map((key) => key.symbol)
+    .join(' + ');
 }

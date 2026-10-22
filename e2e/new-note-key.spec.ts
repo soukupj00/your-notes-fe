@@ -80,3 +80,38 @@ test.describe('the new-note key', () => {
     await expect(page.getByRole('dialog')).toBeVisible();
   });
 });
+
+test.describe('a search key the user chose', () => {
+  test.beforeEach(async ({ page, isMobile }) => {
+    test.skip(isMobile, 'a phone has no keyboard to press it on');
+    await skipTour(page);
+    await page.addInitScript(() => {
+      const stored = JSON.parse(localStorage.getItem('preferences') ?? '{"version":2}');
+      localStorage.setItem(
+        'preferences',
+        JSON.stringify({ ...stored, version: 2, shortcuts: { search: '/' } })
+      );
+    });
+  });
+
+  test('/ focuses search, and types itself once there', async ({ page }) => {
+    await page.goto('/');
+    const search = page.getByRole('searchbox');
+    await expect(search).toBeVisible();
+
+    await page.keyboard.press('/');
+    await expect(search).toBeFocused();
+
+    await page.keyboard.type('a/b');
+    await expect(search).toHaveValue('a/b');
+  });
+
+  test('Ctrl+K no longer moves to search', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('searchbox')).toBeVisible();
+
+    await page.keyboard.press('ControlOrMeta+k');
+
+    await expect(page.getByRole('searchbox')).not.toBeFocused();
+  });
+});

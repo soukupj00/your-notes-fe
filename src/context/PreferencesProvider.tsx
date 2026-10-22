@@ -84,10 +84,10 @@ const preferencesSchema = z.object({
    */
   keepEverything: z.boolean().default(false),
   /**
-   * The one key that opens a new Note on the Feed, matched case-insensitively; `null` is off,
-   * which with remapping meets WCAG 2.1.4 (Character Key Shortcuts).
+   * The user's changes to the Shortcuts (ADR 0026), by id; `null` is cleared, which with remapping
+   * meets WCAG 2.1.4 for the bare new-note key. Values are checked by `resolveShortcuts`.
    */
-  newNoteKey: z.string().length(1).nullable().catch('n').default('n'),
+  shortcuts: z.record(z.string(), z.string().nullable()).catch({}).default({}),
   /** `system` follows `prefers-reduced-motion`; the others override it. */
   reducedMotion: z.enum(REDUCED_MOTION_OPTIONS).default('system'),
   /**
@@ -119,9 +119,28 @@ function migratePreferences(raw: unknown): unknown {
   // v1 → v2 (ADR 0013): forced, not left to the new default, because anyone who changed a setting
   // already stores `sinkCheckedItems: false`. It overrules the few who chose off, which is benign:
   // a stored `false` is indistinguishable from the old default.
-  if (blob.version === 1) return { ...blob, version: 2, sinkCheckedItems: true };
+  if (blob.version === 1)
+    return migratePreferences({ ...blob, version: 2, sinkCheckedItems: true });
+
+  // F3's one key became the `new-note` Shortcut; the old field is dropped by the next write.
+  if ('newNoteKey' in blob) {
+    const { newNoteKey, ...rest } = blob;
+    const shortcuts = isRecord(rest.shortcuts) ? rest.shortcuts : {};
+    // As F3's schema read it: one character, or `null` for off; anything else was the default.
+    const key =
+      newNoteKey === null || (typeof newNoteKey === 'string' && newNoteKey.length === 1)
+        ? (newNoteKey?.toLowerCase() ?? null)
+        : 'n';
+    const carried =
+      'new-note' in shortcuts || key === 'n' ? shortcuts : { ...shortcuts, 'new-note': key };
+    return { ...rest, shortcuts: carried };
+  }
 
   return blob;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
 /**

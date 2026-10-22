@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ariaKeyShortcuts,
   comboFromEvent,
+  comboLabel,
   comboParts,
   hasCommandModifier,
   type KeyEventLike,
@@ -108,5 +109,12 @@ describe('ariaKeyShortcuts', () => {
     expect(ariaKeyShortcuts('Mod-Alt-n', pc)).toBe('Control+Alt+N');
     expect(ariaKeyShortcuts('Mod-Alt-n', mac)).toBe('Meta+Alt+N');
     expect(ariaKeyShortcuts('n', pc)).toBe('N');
+  });
+});
+
+describe('comboLabel', () => {
+  it('draws a combination with its printed symbols', () => {
+    expect(comboLabel('Mod-Alt-n')).toBe('Ctrl + Alt + N');
+    expect(comboLabel('/')).toBe('/');
   });
 });

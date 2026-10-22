@@ -39,7 +39,7 @@ const renderSection = () =>
   );
 
 const storedKey = () =>
-  JSON.parse(localStorage.getItem(PREFERENCES_STORAGE_KEY) ?? '{}').newNoteKey;
+  JSON.parse(localStorage.getItem(PREFERENCES_STORAGE_KEY) ?? '{}').shortcuts?.['new-note'];
 
 describe('ShortcutsSection', () => {
   it('lists an action with its combination, in readable words for a screen reader', () => {
@@ -153,7 +153,6 @@ describe('the new-note key row', () => {
     ['Space', ' '],
     ['Tab', '{Tab}'],
     ['an arrow', '{ArrowDown}'],
-    ['a combination', '{Control>}k{/Control}'],
   ])('refuses %s with a message and keeps listening', async (_label, keys) => {
     const user = await setup();
 
@@ -179,7 +178,7 @@ describe('the new-note key row', () => {
 
     await user.click(button('settings.shortcuts.newNote.reset'));
 
-    expect(storedKey()).toBe('n');
+    expect(storedKey()).toBeUndefined();
     expect(row().querySelector('kbd')).toHaveTextContent('N');
     expect(button('settings.shortcuts.newNote.change')).toHaveFocus();
   });
