@@ -298,7 +298,17 @@
     },
     "shortcuts": {
       "title": "Klávesové zkratky",
-      "description": "Fungují v otevřené poznámce bez ohledu na to, která tlačítka panel zobrazuje."
+      "description": "Klávesa pro novou poznámku funguje v Poznámkách. Ostatní fungují v otevřené poznámce bez ohledu na to, která tlačítka panel zobrazuje.",
+      "newNote": {
+        "label": "Nová poznámka",
+        "description": "Stiskem v Poznámkách založíte novou poznámku.",
+        "recording": "Stiskněte novou klávesu. Esc změnu zruší.",
+        "refused": "Jen jedno písmeno, číslice nebo symbol. Esc změnu zruší.",
+        "off": "Vypnuto",
+        "change": "Změnit",
+        "turnOff": "Vypnout",
+        "reset": "Obnovit"
+      }
     },
     "help": {
       "title": "Nápověda",

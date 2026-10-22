@@ -13,3 +13,14 @@ export function isNewNoteKey(event: KeyboardEvent, key: string | null): boolean 
   }
   return !(event.target instanceof Element && event.target.closest(OWNS_ITS_KEYS));
 }
+
+/** What a held modifier sends on its own; recording waits past it for the key itself. */
+export const MODIFIER_KEYS = new Set(['Shift', 'Control', 'Alt', 'AltGraph', 'Meta', 'CapsLock']);
+
+/** One printable character, alone; space is refused because it presses the focused button. */
+export function isAssignableKey(
+  event: Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'metaKey' | 'altKey'>
+): boolean {
+  if (event.ctrlKey || event.metaKey || event.altKey) return false;
+  return event.key.length === 1 && event.key !== ' ';
+}
