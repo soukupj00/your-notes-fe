@@ -22,8 +22,21 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.restoreAllMocks();
   localStorage.clear();
 });
+
+function stubPointer(fine: boolean) {
+  vi.spyOn(window, 'matchMedia').mockImplementation(
+    (query: string) =>
+      ({
+        matches: query === '(pointer: fine)' && fine,
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }) as unknown as MediaQueryList
+  );
+}
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <PreferencesProvider>{children}</PreferencesProvider>
@@ -105,7 +118,8 @@ describe('DesktopCaptureBar', () => {
     expect(onStart).toHaveBeenCalledWith({ kind: 'files', files: [file], attachment: 'image' });
   });
 
-  it('names and shows the new-note key', () => {
+  it('names and shows the new-note key to a fine pointer', () => {
+    stubPointer(true);
     render(<DesktopCaptureBar onStart={vi.fn()} />, { wrapper });
     const trigger = screen.getByRole('button', { name: 'notes.createPlaceholder' });
 
@@ -113,7 +127,18 @@ describe('DesktopCaptureBar', () => {
     expect(trigger.querySelector('kbd')).toHaveTextContent('N');
   });
 
+  // ADR 0016: a phone held sideways gets this bar, but no key to press.
+  it('names the key but draws no hint for a coarse pointer', () => {
+    stubPointer(false);
+    render(<DesktopCaptureBar onStart={vi.fn()} />, { wrapper });
+    const trigger = screen.getByRole('button', { name: 'notes.createPlaceholder' });
+
+    expect(trigger).toHaveAttribute('aria-keyshortcuts', 'N');
+    expect(trigger.querySelector('kbd')).toBeNull();
+  });
+
   it('drops the hint while the key is off', () => {
+    stubPointer(true);
     localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify({ version: 2, newNoteKey: null }));
     render(<DesktopCaptureBar onStart={vi.fn()} />, { wrapper });
     const trigger = screen.getByRole('button', { name: 'notes.createPlaceholder' });

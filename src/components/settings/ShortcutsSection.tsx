@@ -95,7 +95,10 @@ function NewNoteKeyRow() {
         </span>
       }
     >
-      <span className="flex flex-wrap items-center gap-2">
+      <fieldset
+        aria-label={t('settings.shortcuts.newNote.label')}
+        className="flex flex-wrap items-center gap-2"
+      >
         {key === null ? (
           <span className="text-muted-foreground text-sm">
             {t('settings.shortcuts.newNote.off')}
@@ -110,8 +113,13 @@ function NewNoteKeyRow() {
           size="sm"
           className="aria-pressed:bg-accent aria-pressed:text-accent-foreground"
           aria-pressed={recording !== 'idle'}
-          // Space and Enter are refused keys while listening, not a second press.
-          onClick={() => recording === 'idle' && setRecording('listening')}
+          // Space and Enter are refused keys while listening, not a second press. Focused by hand,
+          // as Safari and Firefox on macOS do not focus a clicked button.
+          onClick={(event) => {
+            if (recording !== 'idle') return;
+            event.currentTarget.focus();
+            setRecording('listening');
+          }}
           onKeyDown={onKeyDown}
           onBlur={() => setRecording('idle')}
         >
@@ -132,7 +140,7 @@ function NewNoteKeyRow() {
             {t('settings.shortcuts.newNote.reset')}
           </Button>
         )}
-      </span>
+      </fieldset>
     </SettingsRow>
   );
 }

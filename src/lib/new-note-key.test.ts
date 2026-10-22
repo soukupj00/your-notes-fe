@@ -50,6 +50,12 @@ describe('isNewNoteKey', () => {
     ['an alert dialog', '<div role="alertdialog"><div id="target"></div></div>', { key: 'n' }],
     ['a menu', '<div role="menu"><div id="target" role="menuitem"></div></div>', { key: 'n' }],
     ['a listbox', '<div role="listbox"><div id="target" role="option"></div></div>', { key: 'n' }],
+    // The launch Welcome holds the app inert, and a click on its scrim leaves focus on body.
+    [
+      'a modal open elsewhere',
+      '<div role="dialog" aria-modal="true"></div><div id="target"></div>',
+      { key: 'n' },
+    ],
   ])('ignores %s', (_label, html, init) => {
     expect(fire(html, init)).toBe(false);
   });

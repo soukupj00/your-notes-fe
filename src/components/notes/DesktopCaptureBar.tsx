@@ -6,6 +6,7 @@ import { useStartPicker } from '@/components/notes/useStartPicker.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { IconTooltip } from '@/components/ui/tooltip.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
+import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import type { Intent } from '@/lib/intent.ts';
 import { resolveTransition } from '@/lib/motion.ts';
@@ -34,6 +35,7 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
   const { preferences } = usePreferences();
   const actions = resolveDesktopQuickCapture(preferences.quickCapture);
   const shortcut = preferences.newNoteKey?.toUpperCase();
+  const showShortcut = useFinePointer();
   // A picker Start opens the OS picker here, inside the click (`useStartPicker`).
   const picker = useStartPicker(onStart);
 
@@ -94,9 +96,9 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
           {typed}
         </m.span>
         <span className="sr-only">{t('notes.createPlaceholder')}</span>
-        {/* Only where the longest prompt still fits beside it; `aria-keyshortcuts` tells
-            assistive tech either way. */}
-        {shortcut && (
+        {/* For a fine pointer only (ADR 0016), and only where the longest prompt still fits
+            beside it; `aria-keyshortcuts` tells assistive tech either way. */}
+        {shortcut && showShortcut && (
           <kbd
             aria-hidden
             className="ml-auto @md:block hidden select-none rounded border bg-muted px-1.5 py-0.5 font-medium font-sans text-label text-muted-foreground tracking-normal"

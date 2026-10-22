@@ -11,6 +11,8 @@ export function isNewNoteKey(event: KeyboardEvent, key: string | null): boolean 
   if (event.ctrlKey || event.metaKey || event.altKey || event.repeat || event.defaultPrevented) {
     return false;
   }
+  // A modal elsewhere (the launch Welcome) holds the app inert even when focus is on body.
+  if (document.querySelector('[aria-modal="true"]')) return false;
   return !(event.target instanceof Element && event.target.closest(OWNS_ITS_KEYS));
 }
 

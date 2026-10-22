@@ -1,6 +1,33 @@
 import { expect, test } from '@playwright/test';
 import { skipTour } from './helpers';
 
+// A coarse pointer gets no Shortcuts section to turn the key off in (WCAG 2.1.4), so no key.
+test('a phone ignores the key', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'the desktop case is below');
+  await skipTour(page);
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: 'New note' })).toBeVisible();
+
+  await page.keyboard.press('n');
+
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page).not.toHaveURL(/note=/);
+});
+
+test('N under the launch Welcome opens nothing', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'a phone has no keyboard to press it on');
+  await page.goto('/');
+  const welcome = page.getByTestId('welcome');
+  await expect(welcome).toBeVisible();
+  // A click on the scrim leaves focus on body, outside the Welcome's dialog.
+  await welcome.click({ position: { x: 5, y: 5 } });
+  await expect(welcome).toBeVisible();
+
+  await page.keyboard.press('n');
+
+  await expect(page).not.toHaveURL(/note=/);
+});
+
 test.describe('the new-note key', () => {
   test.beforeEach(async ({ page, isMobile }) => {
     test.skip(isMobile, 'a phone has no keyboard to press it on');

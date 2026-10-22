@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getToolbarItem } from '@/components/editor/toolbar/registry.ts';
@@ -117,6 +117,24 @@ describe('the new-note key row', () => {
     expect(storedKey()).toBe('k');
     expect(row().querySelector('kbd')).toHaveTextContent('K');
     expect(button('settings.shortcuts.newNote.change')).toHaveFocus();
+  });
+
+  // Safari and Firefox on macOS do not focus a button on click, so the keys would go to body.
+  it('records after a click that does not focus the button', async () => {
+    const user = await setup();
+
+    fireEvent.click(button('settings.shortcuts.newNote.change'));
+    await user.keyboard('k');
+
+    expect(storedKey()).toBe('k');
+  });
+
+  it('groups the controls under the row name for assistive tech', async () => {
+    await setup();
+
+    expect(
+      screen.getByRole('group', { name: 'settings.shortcuts.newNote.label' })
+    ).toContainElement(button('settings.shortcuts.newNote.change'));
   });
 
   it('keeps the old key when Esc cancels', async () => {
