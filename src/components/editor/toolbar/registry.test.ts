@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AttachmentDeps } from '@/components/editor/extensions/attachments/deps';
 import { buildEditorExtensions } from '@/components/editor/extensions/build';
 import { icons } from '@/components/icons';
+import { SHORTCUTS } from '@/lib/shortcuts.ts';
 import { COMPACT_FOLD_SLOTS, familySlots } from './foldMarker';
 import { buildLayout, defaultToolbarLayout, toolbarPreset } from './presets';
 import {
@@ -55,6 +56,13 @@ function lookup(key: string): unknown {
 }
 
 describe('toolbar registry', () => {
+  it('names every editor shortcut after the Toolbar Item it runs', () => {
+    const items = new Map(TOOLBAR_ITEMS.map((item) => [item.id, item.labelKey]));
+    for (const def of SHORTCUTS.filter((shortcut) => shortcut.scope === 'editor')) {
+      expect(items.get(def.id), def.id).toBe(def.labelKey);
+    }
+  });
+
   it('has unique item ids and unique family ids', () => {
     const itemIds = TOOLBAR_ITEMS.map((item) => item.id);
     expect(new Set(itemIds).size).toBe(itemIds.length);
