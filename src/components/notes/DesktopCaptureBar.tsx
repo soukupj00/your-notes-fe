@@ -33,6 +33,7 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
   const [index, setIndex] = useState(0);
   const { preferences } = usePreferences();
   const actions = resolveDesktopQuickCapture(preferences.quickCapture);
+  const shortcut = preferences.newNoteKey?.toUpperCase();
   // A picker Start opens the OS picker here, inside the click (`useStartPicker`).
   const picker = useStartPicker(onStart);
 
@@ -79,12 +80,13 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
     // The Welcome marks this or its `QuickCaptureBar` twin.
     <div
       data-tour="capture"
-      className="mx-auto mb-6 hidden max-w-lg items-center gap-1 rounded-card border bg-card pr-2 shadow-rest transition-shadow hover:shadow-lift sm:flex"
+      className="@container mx-auto mb-6 hidden max-w-lg items-center gap-1 rounded-card border bg-card pr-2 shadow-rest transition-shadow hover:shadow-lift sm:flex"
     >
       <button
         type="button"
         onClick={() => onStart()}
-        className="min-h-11 flex-1 cursor-text px-4 py-3 text-left text-body text-muted-foreground transition-colors hover:text-foreground"
+        aria-keyshortcuts={shortcut}
+        className="flex min-h-11 flex-1 cursor-text items-center gap-3 px-4 py-3 text-left text-body text-muted-foreground transition-colors hover:text-foreground"
       >
         {/* Assistive tech gets one stable label, not a prompt renaming itself every five seconds.
             Tests read `data-prompt`: the MotionValue writes the visible text outside React. */}
@@ -92,6 +94,16 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
           {typed}
         </m.span>
         <span className="sr-only">{t('notes.createPlaceholder')}</span>
+        {/* Only where the longest prompt still fits beside it; `aria-keyshortcuts` tells
+            assistive tech either way. */}
+        {shortcut && (
+          <kbd
+            aria-hidden
+            className="ml-auto @md:block hidden select-none rounded border bg-muted px-1.5 py-0.5 font-medium font-sans text-label text-muted-foreground tracking-normal"
+          >
+            {shortcut}
+          </kbd>
+        )}
       </button>
 
       {actions.map((action) => (
