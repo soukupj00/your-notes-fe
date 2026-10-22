@@ -70,6 +70,13 @@ describe('typesAltGrCharacter', () => {
     ).toBe(true);
   });
 
+  // A Czech AltGr+3 starts ^ on the next key, and names itself `Dead` rather than the character.
+  it('is a dead key pressed with AltGr on Windows', () => {
+    expect(
+      typesAltGrCharacter(press({ key: 'Dead', keyCode: 51, ctrlKey: true, altKey: true }), win)
+    ).toBe(true);
+  });
+
   it('is not the same press elsewhere, or a plain Ctrl+Alt+1', () => {
     expect(
       typesAltGrCharacter(press({ key: '~', keyCode: 49, ctrlKey: true, altKey: true }), pc)
@@ -109,6 +116,7 @@ describe('ariaKeyShortcuts', () => {
     expect(ariaKeyShortcuts('Mod-Alt-n', pc)).toBe('Control+Alt+N');
     expect(ariaKeyShortcuts('Mod-Alt-n', mac)).toBe('Meta+Alt+N');
     expect(ariaKeyShortcuts('n', pc)).toBe('N');
+    expect(ariaKeyShortcuts('Mod- ', pc)).toBe('Control+Space');
   });
 });
 
@@ -116,5 +124,6 @@ describe('comboLabel', () => {
   it('draws a combination with its printed symbols', () => {
     expect(comboLabel('Mod-Alt-n')).toBe('Ctrl + Alt + N');
     expect(comboLabel('/')).toBe('/');
+    expect(comboLabel('Mod- ')).toBe('Ctrl + Space');
   });
 });

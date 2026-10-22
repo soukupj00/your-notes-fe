@@ -47,15 +47,14 @@ export function comboFromEvent(event: KeyEventLike, platform = PLATFORM): string
   return parts.join('-');
 }
 
-/** On Windows Ctrl+Alt is AltGr: a press that typed a character is typing, never a shortcut. */
+/**
+ * On Windows Ctrl+Alt is AltGr: a press that typed a character, or started an accent as a dead
+ * key, is typing, never a shortcut.
+ */
 export function typesAltGrCharacter(event: KeyEventLike, platform = PLATFORM): boolean {
-  return (
-    platform.windows &&
-    event.ctrlKey &&
-    event.altKey &&
-    event.key.length === 1 &&
-    event.key.toLowerCase() !== base[event.keyCode]
-  );
+  if (!platform.windows || !event.ctrlKey || !event.altKey) return false;
+  if (event.key === 'Dead') return true;
+  return event.key.length === 1 && event.key.toLowerCase() !== base[event.keyCode];
 }
 
 /** `Mod-Shift-8` as `['Mod', 'Shift', '8']`, a letter upper-cased for display; `Mod--` is Mod and minus. */
@@ -73,6 +72,7 @@ export function hasCommandModifier(combo: string): boolean {
 }
 
 const ARIA_NAMES: Record<string, string> = {
+  ' ': 'Space',
   Ctrl: 'Control',
   Meta: 'Meta',
   Alt: 'Alt',

@@ -154,6 +154,17 @@ describe('graceful fallback', () => {
     expect(result.current.preferences.density).toBe('compact');
   });
 
+  it('drops one unreadable Shortcut and keeps the others', async () => {
+    store({
+      version: PREFERENCES_VERSION,
+      shortcuts: { bold: 42, italic: 'Mod-Alt-i', code: null },
+    });
+
+    const result = await prefs();
+
+    expect(result.current.preferences.shortcuts).toEqual({ italic: 'Mod-Alt-i', code: null });
+  });
+
   it('keeps a stored Layout naming ids this build does not know', async () => {
     // Forward compatibility is decision 8: a blob written by a later release
     // must round-trip, not be validated away.

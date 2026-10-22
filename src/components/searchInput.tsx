@@ -42,7 +42,7 @@ function SearchInput({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       className={cn(
-        'relative w-full rounded-full border border-input bg-card shadow-rest transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30',
+        'relative flex w-full items-center rounded-full border border-input bg-card shadow-rest transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30',
         className
       )}
       {...props}
@@ -55,16 +55,14 @@ function SearchInput({ className, ...props }: React.ComponentProps<'div'>) {
         ref={inputRef}
         type="search"
         placeholder={t('notes.searchPlaceholder')}
-        className={cn(
-          'h-11 w-full rounded-full border-0 bg-transparent py-2 pl-9 text-body text-foreground shadow-none placeholder:text-muted-foreground focus:outline-none focus-visible:border-transparent focus-visible:ring-0 dark:bg-transparent',
-          showShortcut ? 'pr-32' : 'pr-24'
-        )}
+        className="h-11 min-w-0 flex-1 rounded-full border-0 bg-transparent py-2 pr-2 pl-9 text-body text-foreground shadow-none placeholder:text-muted-foreground focus:outline-none focus-visible:border-transparent focus-visible:ring-0 dark:bg-transparent"
         value={search.q}
         // Typing is not navigation: replace the history entry so the back
         // button leaves the search rather than un-typing it letter by letter.
         onChange={(e) => setSearch({ q: e.target.value }, { replace: true })}
       />
-      <div className="absolute top-1/2 right-1 flex -translate-y-1/2 items-center">
+      {/* A sibling, not an overlay: a long search key takes width from the field, not its text. */}
+      <div className="flex shrink-0 items-center pr-1">
         {/* Not hidden on focus, so the controls beside it never shift. `aria-hidden`: a key
             combination is noise to a screen reader on the field itself. */}
         {showShortcut && searchKey && (

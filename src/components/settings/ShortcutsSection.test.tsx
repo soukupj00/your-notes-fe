@@ -174,6 +174,24 @@ describe('ShortcutsSection', () => {
     });
   });
 
+  it('offers Replace when the default it resets to was given to another action', async () => {
+    const { user } = setup();
+    await record(user, 'editor.bold.tooltip', { key: 'i', keyCode: 73, ctrlKey: true });
+    await user.click(screen.getByRole('button', { name: 'settings.shortcuts.replace' }));
+
+    await openMenu(user, 'editor.italic.tooltip');
+    await user.click(
+      screen.getByRole('menuitem', { name: 'settings.shortcuts.menu.reset|Ctrl + I' })
+    );
+    expect(row('editor.italic.tooltip')).toHaveTextContent(
+      'settings.shortcuts.conflict|Ctrl + I|editor.bold.tooltip'
+    );
+    expect(stored()).toEqual({ bold: 'Mod-i', italic: null });
+
+    await user.click(screen.getByRole('button', { name: 'settings.shortcuts.replace' }));
+    expect(stored()).toEqual({ bold: null });
+  });
+
   it.each([
     ['b alone for Bold', 'editor.bold.tooltip', { key: 'b', keyCode: 66 }, 'needsModifier'],
     [

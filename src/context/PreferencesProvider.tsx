@@ -87,7 +87,17 @@ const preferencesSchema = z.object({
    * The user's changes to the Shortcuts (ADR 0026), by id; `null` is cleared, which with remapping
    * meets WCAG 2.1.4 for the bare new-note key. Values are checked by `resolveShortcuts`.
    */
-  shortcuts: z.record(z.string(), z.string().nullable()).catch({}).default({}),
+  shortcuts: z
+    .record(z.string(), z.unknown())
+    // Per entry, so one unreadable value costs only its own Shortcut.
+    .transform(
+      (entries) =>
+        Object.fromEntries(
+          Object.entries(entries).filter(([, value]) => value === null || typeof value === 'string')
+        ) as Record<string, string | null>
+    )
+    .catch({})
+    .default({}),
   /** `system` follows `prefers-reduced-motion`; the others override it. */
   reducedMotion: z.enum(REDUCED_MOTION_OPTIONS).default('system'),
   /**

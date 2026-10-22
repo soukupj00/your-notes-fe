@@ -24,6 +24,7 @@ const shortcutKeyMap: Record<string, ShortcutKeyResult> = {
   // Only a recorded shortcut names these: on a Mac Ctrl is not `Mod`, elsewhere Meta is not.
   ctrl: IS_MAC ? { symbol: '⌃', readable: 'Control' } : { symbol: 'Ctrl', readable: 'Control' },
   meta: IS_MAC ? { symbol: '⌘', readable: 'Command' } : { symbol: 'Super', readable: 'Super' },
+  ' ': { symbol: 'Space', readable: 'Space' },
 };
 
 export const getShortcutKey = (key: string): ShortcutKeyResult =>

@@ -49,6 +49,8 @@ export function ShortcutRow({ def }: { def: ShortcutDef }) {
   const combo = bindings[def.id] ?? null;
   const changed = combo !== def.defaultCombo;
   const listening = recording.kind === 'listening';
+  const ownerOf = (taken: string) =>
+    SHORTCUTS.find((other) => other.id === findConflict(def.id, taken, bindings));
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (!listening || MODIFIER_KEYS.has(event.key)) return;
@@ -62,8 +64,7 @@ export function ShortcutRow({ def }: { def: ShortcutDef }) {
     if (!pressed) return;
     const reason = typesAltGrCharacter(event.nativeEvent) ? 'altgr' : refusalOf(pressed, def.scope);
     if (reason) return setRecording({ kind: 'listening', refused: { reason, combo: pressed } });
-    const ownerId = findConflict(def.id, pressed, bindings);
-    const owner = SHORTCUTS.find((other) => other.id === ownerId);
+    const owner = ownerOf(pressed);
     if (owner) return setRecording({ kind: 'conflict', combo: pressed, owner });
     setRecording(IDLE);
     assign(def.id, pressed);
@@ -170,7 +171,10 @@ export function ShortcutRow({ def }: { def: ShortcutDef }) {
                 <DropdownMenuItem
                   onSelect={() => {
                     focusKeysOnClose.current = true;
-                    reset(def.id);
+                    // The default may have been given away since; resetting must not share it.
+                    const owner = ownerOf(def.defaultCombo);
+                    if (owner) setRecording({ kind: 'conflict', combo: def.defaultCombo, owner });
+                    else reset(def.id);
                   }}
                 >
                   {t('settings.shortcuts.menu.reset', { keys: comboLabel(def.defaultCombo) })}
