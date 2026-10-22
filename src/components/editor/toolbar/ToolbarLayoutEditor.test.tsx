@@ -17,6 +17,10 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
+/** The Width Class of the screen the editor is shown on, which is the one it edits. */
+let screenWidthClass: WidthClass = 'wide';
+vi.mock('./useWidthClass', () => ({ useWidthClass: () => screenWidthClass }));
+
 const wrapper = ({ children }: { children: ReactNode }) => (
   <PreferencesProvider>{children}</PreferencesProvider>
 );
@@ -41,8 +45,9 @@ function setWidth(px: number) {
   }) as unknown as typeof window.matchMedia;
 }
 
-function renderEditor(initialWidthClass: WidthClass = 'wide') {
-  render(<ToolbarLayoutEditor initialWidthClass={initialWidthClass} />, { wrapper });
+function renderEditor(widthClass: WidthClass = 'wide') {
+  screenWidthClass = widthClass;
+  return render(<ToolbarLayoutEditor />, { wrapper });
 }
 
 /**
@@ -261,10 +266,8 @@ describe('presets', () => {
     }
   );
 
-  it('stamps the Width Class being edited, not the window’s', async () => {
+  it('stamps only the Width Class this screen is in', async () => {
     const user = userEvent.setup();
-    // A wide window editing the phone's Layout - the case the Width Class toggle
-    // exists for.
     renderEditor('compact');
 
     await user.click(
@@ -279,9 +282,18 @@ describe('presets', () => {
   });
 });
 
-describe('the Width Class toggle', () => {
-  it('switches which Layout the list is editing', async () => {
-    const user = userEvent.setup();
+describe('the Width Class', () => {
+  it.each([
+    ['compact', 'settings.toolbar.width.current.compact'],
+    ['wide', 'settings.toolbar.width.current.wide'],
+  ] as const)('on a %s screen, says so and offers no other width', (width, line) => {
+    renderEditor(width);
+
+    expect(screen.getByText(line)).toBeInTheDocument();
+    expect(screen.queryByRole('radio')).toBeNull();
+  });
+
+  it('follows the screen when its Width Class changes', async () => {
     localStorage.setItem(
       PREFERENCES_STORAGE_KEY,
       JSON.stringify({
@@ -289,13 +301,15 @@ describe('the Width Class toggle', () => {
         toolbar: { compact: [], wide: toolbarPreset('minimal', 'wide') },
       })
     );
-    renderEditor('compact');
+    const { rerender } = renderEditor('compact');
+    // `meta` is off in the Compact default and on in Wide/Minimal.
+    await waitFor(() => expect(switchFor('meta')).not.toBeChecked());
 
-    // `block` is off in Wide/Minimal and on in the Compact default.
-    await waitFor(() => expect(switchFor('media')).toBeChecked());
-    await user.click(screen.getByRole('radio', { name: 'settings.toolbar.width.wide' }));
+    screenWidthClass = 'wide';
+    rerender(<ToolbarLayoutEditor />);
 
-    await waitFor(() => expect(switchFor('block')).not.toBeChecked());
+    await waitFor(() => expect(switchFor('meta')).toBeChecked());
+    expect(screen.getByText('settings.toolbar.width.current.wide')).toBeInTheDocument();
   });
 });
 

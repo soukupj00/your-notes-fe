@@ -94,9 +94,7 @@ describe('the customisation sections', () => {
     mount();
 
     expect(await screen.findByTestId('toolbar-preview')).toBeInTheDocument();
-    expect(
-      screen.getByRole('radio', { name: 'settings.toolbar.width.compact' })
-    ).toBeInTheDocument();
+    expect(screen.getByText(/^settings\.toolbar\.width\.current\./)).toBeInTheDocument();
   });
 
   it('carries the quick-capture list and the note button side', async () => {

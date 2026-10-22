@@ -112,7 +112,7 @@ describe('the toolbar customisation sheet, over a new Draft', () => {
   async function roundTripTheSheet(user: ReturnType<typeof userEvent.setup>) {
     await user.click(await screen.findByTestId('toolbar-customize'));
     const sheet = await screen.findByRole('dialog', { name: 'settings.toolbar.title' });
-    await user.click(within(sheet).getByRole('radio', { name: 'settings.toolbar.width.wide' }));
+    expect(within(sheet).getByText('settings.toolbar.width.current.wide')).toBeInTheDocument();
     await user.keyboard('{Escape}');
 
     await waitFor(() =>

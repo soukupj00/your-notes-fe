@@ -272,10 +272,12 @@
       "back": "Všechny skupiny",
       "fold": "Na telefonu se před touto čarou vejde asi {{slots}} tlačítek",
       "width": {
-        "legend": "Upravujete rozvržení pro",
-        "hint": "Úzké a široké okno mají vlastní rozvržení. Úzké dostanete v úzkém okně a na každém dotykovém zařízení - telefon zůstane úzký i naležato.",
         "compact": "Úzké okno",
-        "wide": "Široké okno"
+        "wide": "Široké okno",
+        "current": {
+          "compact": "Toto je rozvržení pro úzká okna a dotykové obrazovky.",
+          "wide": "Toto je rozvržení pro široká okna."
+        }
       },
       "preset": {
         "legend": "Začít od",

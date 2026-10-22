@@ -272,10 +272,12 @@
       "back": "All groups",
       "fold": "A phone shows about {{slots}} buttons before this line",
       "width": {
-        "legend": "Editing the layout for",
-        "hint": "Narrow and wide are separate layouts. You get the narrow one on a narrow window, and on any touchscreen - a phone stays narrow held sideways.",
         "compact": "Narrow window",
-        "wide": "Wide window"
+        "wide": "Wide window",
+        "current": {
+          "compact": "This is the layout for narrow windows and touchscreens.",
+          "wide": "This is the layout for wide windows."
+        }
       },
       "preset": {
         "legend": "Start from",

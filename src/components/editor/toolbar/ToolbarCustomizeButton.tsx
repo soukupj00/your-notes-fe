@@ -34,7 +34,7 @@ export function ToolbarCustomizeButton() {
         </SheetHeader>
         {/* The preview only earns its space where the sheet covers the live bar; a
             wide window's side sheet leaves the real bar visible. */}
-        <ToolbarLayoutEditor initialWidthClass={widthClass} showPreview={compact} />
+        <ToolbarLayoutEditor showPreview={compact} />
       </SheetContent>
     </Sheet>
   );
