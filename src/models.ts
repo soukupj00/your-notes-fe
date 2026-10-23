@@ -31,6 +31,7 @@ export interface Tag {
   id: string; // uuid v4
   name: string;
   color?: string; // NoteColor token key, shared palette with Note.color
+  position?: string | null; // Label order key (ADR 0027); null = cleared, not yet pushed
   createdAt: string; // ISO
   updatedAt: string; // ISO
 }

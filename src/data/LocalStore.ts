@@ -104,6 +104,13 @@ export interface LocalStore {
      * the target does not exist. Merging a tag into itself changes nothing.
      */
     merge(sourceId: string, targetId: string): Promise<void>;
+    /**
+     * Each listed tag takes its position (`null` clears it, and is pushed as `null`) and a fresh
+     * `updatedAt`, owed like any update. Atomic; an unknown id is skipped.
+     */
+    setPositions(positions: ReadonlyMap<string, string | null>): Promise<void>;
+    /** Per tag id, its Notes that are not trashed; a tag with none is absent. */
+    noteCounts(): Live<Record<string, number>>;
     forNote(noteId: string): Live<Tag[]>;
     /** Idempotent on `[noteId+tagId]`: an existing link is left as it is. */
     link(link: NoteTag): Promise<void>;

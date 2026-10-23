@@ -192,6 +192,31 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           }
         });
       },
+      setPositions: (positions) =>
+        db.transaction('rw', db.tags, async () => {
+          const updatedAt = new Date().toISOString();
+          const stored = await db.tags.bulkGet([...positions.keys()]);
+          await db.tags.bulkPut(
+            stored
+              .filter((row): row is Stored<Tag> => Boolean(row))
+              .map((row) => owed({ ...row, position: positions.get(row.id), updatedAt }, row.rev))
+          );
+        }),
+      noteCounts: () =>
+        live(() =>
+          db.transaction('r', db.notes, db.noteTags, async () => {
+            const [trashedIds, links] = await Promise.all([
+              db.notes.where('state').equals('trashed').primaryKeys(),
+              db.noteTags.toArray(),
+            ]);
+            const trashed = new Set(trashedIds);
+            const counts: Record<string, number> = {};
+            for (const l of links) {
+              if (!trashed.has(l.noteId)) counts[l.tagId] = (counts[l.tagId] ?? 0) + 1;
+            }
+            return counts;
+          })
+        ),
       forNote: (noteId) => live(() => tagsForNote(noteId)),
       link: (link: NoteTag) =>
         db.transaction('rw', db.noteTags, db.tombstones, async () => {

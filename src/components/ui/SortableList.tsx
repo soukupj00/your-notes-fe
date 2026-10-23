@@ -83,6 +83,7 @@ interface SortableRowProps {
   /** Accessible name of the handle - it is the control, so it carries the name. */
   handleLabel: string;
   className?: string;
+  handleClassName?: string;
   children: ReactNode;
 }
 
@@ -90,7 +91,13 @@ interface SortableRowProps {
  * The handle is the only drag origin: rows carry switches, menus and a drill-in, and
  * a row that dragged from anywhere would swallow the start of those gestures.
  */
-export function SortableRow({ id, handleLabel, className, children }: SortableRowProps) {
+export function SortableRow({
+  id,
+  handleLabel,
+  className,
+  handleClassName,
+  children,
+}: SortableRowProps) {
   const reducedMotion = useReducedMotion();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
@@ -115,7 +122,10 @@ export function SortableRow({ id, handleLabel, className, children }: SortableRo
         aria-label={handleLabel}
         // `touch-none` is required rather than cosmetic: without it the browser
         // claims the gesture for scrolling and the pointer sensor never fires.
-        className="flex size-11 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring active:cursor-grabbing"
+        className={cn(
+          'flex size-11 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring active:cursor-grabbing',
+          handleClassName
+        )}
         {...attributes}
         {...listeners}
       >

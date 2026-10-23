@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { isCustomOrder, labelCollator, sortLabels } from '@/lib/label-order.ts';
+import type { Tag } from '@/models.ts';
 import { clearStore, renderHookWithStore, testStore } from '@/test/store.tsx';
 import { useTagActions } from './useTagActions.ts';
 
@@ -153,5 +155,79 @@ describe('note assignment', () => {
 
     expect(await linkedNoteIds(tag.id)).toEqual(['n2']);
     expect(await testStore.tags.get(tag.id)).toBeDefined();
+  });
+});
+
+describe('label order', () => {
+  const sortedNames = async () =>
+    sortLabels(await testStore.tags.list(), labelCollator('en')).map((tag) => tag.name);
+
+  it('createTag gives no position while nothing is arranged, and its A to Z place after', async () => {
+    const { createTag, moveTag } = actions();
+    const work = await createTag('Work');
+    const ideas = await createTag('Ideas');
+    expect(work.position).toBeUndefined();
+    expect(ideas.position).toBeUndefined();
+
+    await moveTag(work.id, ideas.id);
+    const groceries = await createTag('Groceries');
+
+    expect(groceries.position).toEqual(expect.any(String));
+    expect(await sortedNames()).toEqual(['Groceries', 'Work', 'Ideas']);
+  });
+
+  it('moveTag on a never-dragged list positions every label', async () => {
+    const { createTag, moveTag } = actions();
+    await createTag('A');
+    await createTag('B');
+    const c = await createTag('C');
+    const a = (await testStore.tags.findByName('A')) as Tag;
+
+    await moveTag(c.id, a.id);
+
+    const stored = await testStore.tags.list();
+    expect(stored.every((tag) => typeof tag.position === 'string')).toBe(true);
+    expect(await sortedNames()).toEqual(['C', 'A', 'B']);
+  });
+
+  it('arrangeTags then undo restores the previous positions, none included', async () => {
+    const { createTag, arrangeTags } = actions();
+    await createTag('Alpha');
+    await createTag('Beta');
+
+    const undo = await arrangeTags('za');
+    expect(await sortedNames()).toEqual(['Beta', 'Alpha']);
+
+    await undo();
+    expect(isCustomOrder(await testStore.tags.list())).toBe(false);
+    expect((await actions().createTag('Gamma')).position).toBeUndefined();
+    expect(await sortedNames()).toEqual(['Alpha', 'Beta', 'Gamma']);
+  });
+
+  it('arrangeTags undo on a never-dragged list also unpins a label created since', async () => {
+    const { createTag, arrangeTags } = actions();
+    await createTag('Beta');
+    await createTag('Gamma');
+
+    const undo = await arrangeTags('za');
+    await actions().createTag('Alpha');
+    await undo();
+
+    expect(isCustomOrder(await testStore.tags.list())).toBe(false);
+    expect(await sortedNames()).toEqual(['Alpha', 'Beta', 'Gamma']);
+  });
+
+  it('arrangeTags undo puts back a custom order exactly', async () => {
+    const { createTag, moveTag, arrangeTags } = actions();
+    const a = await createTag('A');
+    const b = await createTag('B');
+    await moveTag(b.id, a.id);
+    const before = await sortedNames();
+
+    const undo = await arrangeTags('az');
+    expect(await sortedNames()).toEqual(['A', 'B']);
+    await undo();
+
+    expect(await sortedNames()).toEqual(before);
   });
 });

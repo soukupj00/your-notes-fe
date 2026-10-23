@@ -207,6 +207,25 @@ export function createMemoryLocalStore(): LocalStore {
         remove(tags, sourceId, 'tag');
         changed('tags', 'noteTags');
       },
+      setPositions: async (positions) => {
+        const updatedAt = new Date().toISOString();
+        for (const [id, position] of positions) {
+          const stored = tags.get(id);
+          if (stored) tags.set(id, owed({ ...stored, position, updatedAt }, stored.rev));
+        }
+        changed('tags');
+      },
+      noteCounts: () =>
+        live(['notes', 'noteTags'], () => {
+          const trashed = new Set(
+            [...notes.values()].filter((n) => n.state === 'trashed').map((n) => n.id)
+          );
+          const counts: Record<string, number> = {};
+          for (const l of noteTags.values()) {
+            if (!trashed.has(l.noteId)) counts[l.tagId] = (counts[l.tagId] ?? 0) + 1;
+          }
+          return counts;
+        }),
       forNote: (noteId) => live(['tags', 'noteTags'], () => tagsFor(noteId)),
       link: async (link) => {
         const key = linkKey(link.noteId, link.tagId);

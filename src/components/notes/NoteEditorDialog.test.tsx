@@ -11,7 +11,7 @@ import { EMPTY_CHECKLIST_BODY } from './noteDrafts.ts';
 
 // Keys pass through untranslated so assertions are stable.
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
 // The note bar's controls pair a scale with a material change; the hook behind

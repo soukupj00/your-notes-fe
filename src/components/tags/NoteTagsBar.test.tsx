@@ -10,6 +10,7 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     // Interpolate, so "Create 'x'" and "Remove label x" stay distinguishable.
     t: (key: string, opts?: { name?: string }) => (opts?.name ? `${key}:${opts.name}` : key),
+    i18n: { language: 'en' },
   }),
 }));
 

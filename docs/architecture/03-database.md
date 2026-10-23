@@ -31,6 +31,7 @@ erDiagram
         string id "uuid"
         string name
         string color "palette token"
+        string position "label order key, base-62; absent = A to Z (ADR 0027)"
         string createdAt "ISO"
         string updatedAt "ISO"
     }

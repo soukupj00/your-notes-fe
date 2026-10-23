@@ -8,7 +8,7 @@ import { clearStore, testStore } from '@/test/store.tsx';
 // first open in a file goes through the lazy fallback, and that is the case here.
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
   default: {},
 }));
 
