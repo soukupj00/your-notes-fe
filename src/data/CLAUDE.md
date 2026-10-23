@@ -37,7 +37,7 @@ flowchart LR
   Biome enforces it.
 - **The store stamps nothing a caller could stamp.**
   Ids and a row's birth timestamps are the caller's (`lib/rows.ts`).
-  The exceptions are the store's own bookkeeping: `tags.merge` stamps the links it relabels, and a Tombstone gets its `deletedAt`.
+  The exceptions are the store's own bookkeeping: `tags.merge` stamps the links it relabels, `tags.setPositions` stamps the labels it reorders in one write, and a Tombstone gets its `deletedAt`.
 - Search, sort and held rank live in `src/hooks/data`, in front of the seam.
 - `meta` is bookkeeping about rows: the sync cursor and the attached Account.
   Preferences are not here; they are in `localStorage`.

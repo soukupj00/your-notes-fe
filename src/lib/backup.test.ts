@@ -93,6 +93,17 @@ describe('backup', () => {
     expect(await bytesOf(restored?.thumbnail as Blob)).toEqual(THUMB);
   });
 
+  it('keeps a label position through export and restore', async () => {
+    const positioned: Tag = { ...tag, position: 'a0' };
+    await store.tags.add(positioned);
+
+    const zipped = await bytesOf(await buildBackupZip(store));
+    await store.clear();
+    await restoreBackup(store, await parseBackupZip(zipped));
+
+    expect(await store.tags.list()).toEqual([positioned]);
+  });
+
   it('carries a synced row whose bytes were never downloaded, without them', async () => {
     await store.notes.add(note);
     const remote: Attachment = { ...attachment, id: 'att-remote', thumbnail: undefined };
