@@ -3,7 +3,7 @@
  *
  * This file is vendored verbatim by the frontend (`ni-dip-fe`) and runs in the browser,
  * so it imports nothing but `zod` and nothing from the server.
- * Vendored from ni-dip-be at commit: e2024d7
+ * Vendored from ni-dip-be at commit: label-order-wip
  * When copying it, replace the line above with the backend commit it was taken from.
  */
 import { z } from 'zod';
@@ -74,6 +74,15 @@ export const Tag = z.object({
   id: Id,
   name: z.string(),
   color: z.string().optional(),
+  /**
+   * A fractional-index key, compared by code unit (frontend ADR 0027).
+   * In a push, absent keeps the server's position and `null` clears it.
+   */
+  position: z
+    .string()
+    .regex(/^[0-9A-Za-z]{1,1024}$/)
+    .nullable()
+    .optional(),
   createdAt: IsoDateTime,
   updatedAt: IsoDateTime,
 });
@@ -106,7 +115,6 @@ export function noteTagId(noteId: string, tagId: string): string {
   return `${noteId}:${tagId}`;
 }
 
-/** The two halves of a NoteTag id, or null when `id` is not one. */
 export function parseNoteTagId(id: string): { noteId: string; tagId: string } | null {
   const [noteId, tagId, ...rest] = id.split(':');
   if (rest.length > 0 || !Id.safeParse(noteId).success || !Id.safeParse(tagId).success) return null;
@@ -114,11 +122,9 @@ export function parseNoteTagId(id: string): { noteId: string; tagId: string } | 
 }
 
 /**
- * The record that something was purged, so the deletion reaches offline Devices.
- * `id` is the Note's or Tag's id, or `noteTagId(noteId, tagId)` for a NoteTag.
- * `rev` is the Revision the Device last agreed with for what it purged, absent if it never
- * pushed it; a stale one for a Note or Tag answers `conflict`, so a purge never discards a newer edit.
- * The server keeps Tombstones for `TOMBSTONE_DAYS`; a cursor older than that gets 410.
+ * The record of a purge, so it reaches offline Devices. `id` is the Note's or Tag's, or
+ * `noteTagId(noteId, tagId)`. `rev` is the Revision the Device last agreed with: for a Note or
+ * Tag, any but the server's answers `conflict`, so a purge never discards a newer edit.
  */
 export const Tombstone = z
   .object({
@@ -146,7 +152,6 @@ export type Link = z.infer<typeof Link>;
 export const Links = z.record(z.string(), Link);
 export type Links = z.infer<typeof Links>;
 
-/** The entry point: every route a client needs is reachable from here. */
 export const RootResponse = z.object({
   _links: z.object({
     self: Link,
@@ -303,7 +308,7 @@ export const SharedNote = z.object({
 export type SharedNote = z.infer<typeof SharedNote>;
 
 // ---------------------------------------------------------------------------
-// Sync (PLAN.md "Sync rules"; the frontend's `Remote` seam)
+// Sync (ni-dip-be docs/architecture/sync.md; the frontend's `Remote` seam)
 
 /** Rows in one push, across all four arrays; a bigger batch is 400. */
 export const MAX_BATCH = 500;
@@ -353,6 +358,7 @@ export type PushResponse = z.infer<typeof PushResponse>;
 /**
  * One page of the change feed, ordered by Sequence across the four kinds.
  * `seq` is the Account's current Sequence; without `next` the Device is caught up.
+ * The server keeps Tombstones for `TOMBSTONE_DAYS`; a cursor older than that gets 410.
  */
 export const ChangesPage = z.object({
   notes: z.array(RevisionedNote),
