@@ -31,6 +31,7 @@ erDiagram
         string id "uuid"
         string name
         string color "token palety"
+        string position "klíč pořadí štítku, base-62; chybí = A až Z (ADR 0027)"
         string createdAt "ISO"
         string updatedAt "ISO"
     }

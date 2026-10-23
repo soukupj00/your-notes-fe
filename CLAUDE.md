@@ -176,7 +176,8 @@ In the feed views that heading is `sr-only`.
 `NoteTagsBar` is the one place labels are assigned.
 It is handed the editor's Draft and labels after `draft.ensureSaved()`, so a Draft earns its row on its first label.
 `TagPills` renders a Note's labels read-only on the Card, tinted from the shared Note and Tag palette (`lib/note-colors.ts`).
-`/labels` is the manage view: create, rename, colour, merge, delete.
+`/labels` is the manage view: create, order (drag or Arrange), rename, colour, merge, delete.
+The Label order ([ADR 0027](./docs/adr/0027-label-order-is-a-synced-fractional-position.md)) lives in `lib/label-order.ts`; `useTags` and `TagPills` sort through it, so every list of labels agrees, and a new label in a custom order takes its alphabetical place.
 
 ### Reminders (`src/lib/reminder*.ts`, `src/lib/hand-off.ts`, `src/components/reminders/`)
 

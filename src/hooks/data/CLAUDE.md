@@ -11,7 +11,8 @@ The store itself is described in [`src/data/CLAUDE.md`](../../data/CLAUDE.md).
 | Hook | Returns |
 | ---- | ------- |
 | `useNoteFeed(scope, search?)` | the feed: the Notes of one lifecycle state (and optionally one Tag), searched, sorted and ranked |
-| `useTags()` | every Tag |
+| `useTags()` | every Tag, in Label order |
+| `useTagNoteCounts()` | per Tag, how many of its Notes are not in the trash |
 | `useTagsForNote(noteId)` | one Note's Tags |
 | `useNoteAttachments(noteId)` | one Note's Attachments, by id |
 | `useAttachmentsByNote(noteIds)` | the same for a whole feed, in one query |
@@ -21,7 +22,7 @@ The store itself is described in [`src/data/CLAUDE.md`](../../data/CLAUDE.md).
 | Hook | Does |
 | ---- | ---- |
 | `useNoteActions()` | create, update, purge and restore, plus the lifecycle moves (pin, archive, trash, restore, empty trash) |
-| `useTagActions()` | create, update, delete, merge, and link or unlink a Tag and a Note |
+| `useTagActions()` | create, update, delete, merge, move and arrange, and link or unlink a Tag and a Note |
 | `useAttachmentActions()` | create, read, update, delete, clone, and the two orphan sweeps |
 
 ## Behaviour worth knowing
