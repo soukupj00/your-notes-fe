@@ -1,6 +1,6 @@
 import { ArrowDownUp, Combine, Palette, Plus } from 'lucide-react';
 import type React from 'react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { NoteColorPicker } from '@/components/color-picker/NoteColorPicker.tsx';
@@ -25,6 +25,7 @@ import { useTags } from '@/hooks/data/useTags.ts';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import type { ArrangeKind } from '@/lib/label-order.ts';
+import { moveById } from '@/lib/move-by-id.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { cn } from '@/lib/utils.ts';
 import type { Tag } from '@/models.ts';
@@ -61,7 +62,6 @@ function CreateLabelRow({ onCreated }: { onCreated: (tag: Tag) => void }) {
   );
 }
 
-/** The ⇅ menu: a one-off rewrite of the order, toasted with its undo. */
 function ArrangeLabelsMenu() {
   const { t } = useTranslation();
   const { arrangeTags } = useTagActions();
@@ -256,11 +256,23 @@ function LabelRow({ tag, tags, noteCount, justCreated }: LabelRowProps) {
 export default function LabelsPage() {
   const { t } = useTranslation();
   const headingRef = useFocusOnMount<HTMLHeadingElement>();
-  const tags = useTags();
+  const liveTags = useTags();
   const noteCounts = useTagNoteCounts();
   const { moveTag } = useTagActions();
   const [justCreated, setJustCreated] = useState<string | null>(null);
   const highlightTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // The store's write lands a moment after the drop, and dnd-kit animates a row that moves late
+  // from a stale place, so the dropped order shows until the live list next changes.
+  const [dropped, setDropped] = useState<{ order: Tag[]; over: Tag[] } | null>(null);
+  if (dropped && dropped.over !== liveTags) setDropped(null);
+  const tags = dropped?.order ?? liveTags;
+
+  const reorder = (activeId: string, overId: string) => {
+    setDropped({ order: moveById(liveTags, activeId, overId), over: liveTags });
+    moveTag(activeId, overId).catch(() => setDropped(null));
+  };
+
+  useEffect(() => () => clearTimeout(highlightTimer.current), []);
 
   const highlight = (tag: Tag) => {
     setJustCreated(tag.id);
@@ -293,7 +305,7 @@ export default function LabelsPage() {
           <SortableList
             ids={tags.map((tag) => tag.id)}
             nameOf={(id) => tags.find((tag) => tag.id === id)?.name ?? ''}
-            onReorder={(activeId, overId) => void moveTag(activeId, overId)}
+            onReorder={reorder}
           >
             <ul className="divide-y rounded-lg border bg-card [&>li:first-child>*]:rounded-t-lg [&>li:last-child>*]:rounded-b-lg">
               {tags.map((tag) => (

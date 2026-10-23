@@ -204,6 +204,19 @@ describe('label order', () => {
     expect(await sortedNames()).toEqual(['Alpha', 'Beta', 'Gamma']);
   });
 
+  it('arrangeTags undo on a never-dragged list also unpins a label created since', async () => {
+    const { createTag, arrangeTags } = actions();
+    await createTag('Beta');
+    await createTag('Gamma');
+
+    const undo = await arrangeTags('za');
+    await actions().createTag('Alpha');
+    await undo();
+
+    expect(isCustomOrder(await testStore.tags.list())).toBe(false);
+    expect(await sortedNames()).toEqual(['Alpha', 'Beta', 'Gamma']);
+  });
+
   it('arrangeTags undo puts back a custom order exactly', async () => {
     const { createTag, moveTag, arrangeTags } = actions();
     const a = await createTag('A');

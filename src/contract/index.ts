@@ -75,7 +75,7 @@ export const Tag = z.object({
   name: z.string(),
   color: z.string().optional(),
   /**
-   * A fractional-index key, compared by code unit (frontend ADR 0027).
+   * A fractional-index key, compared by code unit.
    * In a push, absent keeps the server's position and `null` clears it.
    */
   position: z

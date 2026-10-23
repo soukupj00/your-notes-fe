@@ -3,6 +3,7 @@ import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import {
   type ArrangeKind,
   arrangedOrder,
+  isCustomOrder,
   labelCollator,
   positionForMove,
   positionForNew,
@@ -58,12 +59,19 @@ export function useTagActions() {
     if (positions.size > 0) await store.tags.setPositions(positions);
   };
 
-  /** Rewrites every position once, and returns the undo, which puts back none where there was none. */
+  /**
+   * Rewrites every position once, and returns the undo. Undoing on a never-dragged list clears every
+   * label, including one created since, which got a key only because the list had become custom.
+   */
   const arrangeTags = async (kind: ArrangeKind) => {
     const tags = await ordered();
     const previous = new Map(tags.map((tag) => [tag.id, tag.position ?? null]));
     await store.tags.setPositions(positionsInOrder(arrangedOrder(tags, kind, collator())));
-    return () => store.tags.setPositions(previous);
+    if (isCustomOrder(tags)) return () => store.tags.setPositions(previous);
+    return async () => {
+      const now = await store.tags.list();
+      await store.tags.setPositions(new Map(now.map((tag) => [tag.id, null])));
+    };
   };
 
   const addTagToNote = (noteId: string, tagId: string) =>

@@ -16,7 +16,6 @@ const pageOrder = async (page: Page) =>
     )
   );
 
-/** The sidebar's labels, opening the drawer first on a phone. */
 async function sidebarOrder(page: Page, isMobile: boolean) {
   if (isMobile) await page.getByRole('button', { name: 'Toggle navigation' }).click();
   const links = page
@@ -97,4 +96,39 @@ test('a new label in a custom order lands at its alphabetical place', async ({ p
   await expect
     .poll(() => pageOrder(page))
     .toEqual(['Groceries', 'Work', 'Ideas', 'Personal', 'Zoo']);
+});
+
+test('a dropped label settles into its new place without jumping past it', async ({ page }) => {
+  await createLabels(page, 'Alpha', 'Beta', 'Delta', 'Gamma');
+  await expect(page.locator('[data-just-created]')).toHaveCount(0);
+  const handle = page.getByRole('button', { name: 'Move label Gamma' });
+  const box = await handle.boundingBox();
+  if (!box) throw new Error('no handle');
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2, box.y - 20, { steps: 5 });
+  await page.mouse.move(box.x + box.width / 2, box.y - box.height * 2.5, { steps: 10 });
+  await expect(page.locator('[id^="DndLiveRegion"]')).toHaveText('Gamma moved to position 2.');
+  // Held still, as a person does before letting go: the rows it passed have finished sliding.
+  await expect
+    .poll(() =>
+      page.evaluate('document.getAnimations().filter((a) => a instanceof CSSTransition).length')
+    )
+    .toBe(0);
+
+  // Every frame after the drop, so a one-frame jump cannot hide between two polls.
+  await page.evaluate(`window.__tops = [];
+    (function sample() {
+      const field = document.querySelector('[aria-label="Rename label Gamma"]');
+      window.__tops.push(field.getBoundingClientRect().top);
+      if (window.__tops.length < 20) requestAnimationFrame(sample);
+    })();`);
+  await page.mouse.up();
+  await expect.poll(() => pageOrder(page)).toEqual(['Alpha', 'Gamma', 'Beta', 'Delta']);
+  await expect.poll(() => page.evaluate('window.__tops.length')).toBe(20);
+
+  const tops = (await page.evaluate('window.__tops')) as number[];
+  const [held, settled] = [tops[0], tops[tops.length - 1]];
+  expect(Math.min(...tops)).toBeGreaterThanOrEqual(Math.min(held, settled) - 2);
+  expect(Math.max(...tops)).toBeLessThanOrEqual(Math.max(held, settled) + 2);
 });
