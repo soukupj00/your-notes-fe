@@ -1,6 +1,7 @@
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { OverflowCount } from '@/components/ui/OverflowCount.tsx';
+import { labelCollator, sortLabels } from '@/lib/label-order.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { cn } from '@/lib/utils.ts';
 import type { Tag } from '@/models.ts';
@@ -15,11 +16,12 @@ type TagPillsProps = {
 };
 
 export function TagPills({ tags, onRemove, maxVisible, className }: TagPillsProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   if (tags.length === 0) return null;
 
-  const shown = maxVisible === undefined ? tags : tags.slice(0, Math.max(0, maxVisible));
-  const hiddenCount = tags.length - shown.length;
+  const ordered = sortLabels(tags, labelCollator(i18n.language));
+  const shown = maxVisible === undefined ? ordered : ordered.slice(0, Math.max(0, maxVisible));
+  const hiddenCount = ordered.length - shown.length;
 
   return (
     <ul className={cn('flex flex-wrap items-center gap-1', className)}>

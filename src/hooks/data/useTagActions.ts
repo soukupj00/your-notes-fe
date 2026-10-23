@@ -1,4 +1,14 @@
+import { useTranslation } from 'react-i18next';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
+import {
+  type ArrangeKind,
+  arrangedOrder,
+  labelCollator,
+  positionForMove,
+  positionForNew,
+  positionsInOrder,
+  sortLabels,
+} from '@/lib/label-order.ts';
 import { newNoteTag, newTag, nowIso } from '@/lib/rows.ts';
 
 /** The fields a user can edit on a Tag. An explicit `color: undefined` clears it. */
@@ -9,6 +19,9 @@ export type TagChanges = {
 
 export function useTagActions() {
   const store = useLocalStore();
+  const { i18n } = useTranslation();
+  const collator = () => labelCollator(i18n.language);
+  const ordered = async () => sortLabels(await store.tags.list(), collator());
 
   /**
    * Returns the existing tag when the name is taken, case-insensitively: create-on-the-fly runs
@@ -19,7 +32,8 @@ export function useTagActions() {
     const existing = await store.tags.findByName(trimmed);
     if (existing) return existing;
 
-    const tag = newTag(trimmed, color);
+    const position = positionForNew(trimmed, await ordered(), collator());
+    const tag = { ...newTag(trimmed, color), ...(position && { position }) };
     await store.tags.add(tag);
     return tag;
   };
@@ -39,10 +53,32 @@ export function useTagActions() {
    */
   const mergeTags = (sourceId: string, targetId: string) => store.tags.merge(sourceId, targetId);
 
+  const moveTag = async (activeId: string, overId: string) => {
+    const positions = positionForMove(await ordered(), activeId, overId);
+    if (positions.size > 0) await store.tags.setPositions(positions);
+  };
+
+  /** Rewrites every position once, and returns the undo, which puts back none where there was none. */
+  const arrangeTags = async (kind: ArrangeKind) => {
+    const tags = await ordered();
+    const previous = new Map(tags.map((tag) => [tag.id, tag.position ?? null]));
+    await store.tags.setPositions(positionsInOrder(arrangedOrder(tags, kind, collator())));
+    return () => store.tags.setPositions(previous);
+  };
+
   const addTagToNote = (noteId: string, tagId: string) =>
     store.tags.link(newNoteTag(noteId, tagId));
 
   const removeTagFromNote = (noteId: string, tagId: string) => store.tags.unlink(noteId, tagId);
 
-  return { createTag, updateTag, deleteTag, mergeTags, addTagToNote, removeTagFromNote };
+  return {
+    createTag,
+    updateTag,
+    deleteTag,
+    mergeTags,
+    moveTag,
+    arrangeTags,
+    addTagToNote,
+    removeTagFromNote,
+  };
 }

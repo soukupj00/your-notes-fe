@@ -7,6 +7,7 @@ import LabelsPage from './labels.tsx';
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, opts?: { name?: string }) => (opts?.name ? `${key}:${opts.name}` : key),
+    i18n: { language: 'en' },
   }),
 }));
 
