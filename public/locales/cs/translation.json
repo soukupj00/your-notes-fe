@@ -257,23 +257,18 @@
     },
     "toolbar": {
       "title": "Panel nástrojů editoru",
-      "description": "Vyberte, která tlačítka editor zobrazí, v jakém pořadí a která z nich sdílejí nabídku.",
       "back": "Všechny skupiny",
       "fold": "Na telefonu se před touto čarou vejde asi {{slots}} tlačítek",
       "width": {
         "compact": "Úzké okno",
-        "wide": "Široké okno",
-        "current": {
-          "compact": "Toto je rozvržení pro úzká okna a dotykové obrazovky.",
-          "wide": "Toto je rozvržení pro široká okna."
-        }
+        "wide": "Široké okno"
       },
       "preset": {
-        "legend": "Začít od",
+        "legend": "Obnovit na",
         "minimal": "Minimální",
         "balanced": "Vyvážené",
         "everything": "Vše",
-        "isDefault": "· výchozí"
+        "isDefault": "výchozí"
       },
       "family": {
         "summary": "Zapnuto {{on}} z {{total}} tlačítek",
@@ -285,7 +280,11 @@
       "item": {
         "show": "Zobrazit {{name}}"
       },
-      "preview": "Jak to bude vypadat"
+      "preview": "Náhled",
+      "groups": "Skupiny v pořadí na liště",
+      "reset": {
+        "done": "Panel nástrojů obnoven: {{preset}}."
+      }
     },
     "shortcuts": {
       "title": "Klávesové zkratky",

@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, Group, Ungroup } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { icons } from '@/components/icons';
 import { Button } from '@/components/ui/button.tsx';
 import { SortableList, SortableRow } from '@/components/ui/SortableList.tsx';
@@ -39,6 +40,21 @@ export function ToolbarLayoutEditor({ showPreview }: ToolbarLayoutEditorProps) {
   const layout = reconcileLayout(preferences.toolbar[widthClass], widthClass);
   const write = (next: ToolbarLayout) =>
     setPreference('toolbar', { ...preferences.toolbar, [widthClass]: next });
+
+  // A stamp, not a mode (decision 9): nothing remembers it, so there is no active state. One tap
+  // wipes a hand-built layout, so the Undo is what makes it safe. It merges into what is stored
+  // then, so it never touches the other Width Class.
+  const reset = (preset: ToolbarPresetId) => {
+    const before = preferences.toolbar[widthClass];
+    void write(toolbarPreset(preset, widthClass));
+    toast(t('settings.toolbar.reset.done', { preset: t(`settings.toolbar.preset.${preset}`) }), {
+      action: {
+        label: t('notes.undo'),
+        onClick: () =>
+          void setPreference('toolbar', (stored) => ({ ...stored, [widthClass]: before })),
+      },
+    });
+  };
 
   const familyName = (id: string) => {
     const family = getToolbarFamily(id);
@@ -84,34 +100,35 @@ export function ToolbarLayoutEditor({ showPreview }: ToolbarLayoutEditorProps) {
 
   return (
     <div className="flex flex-col">
-      <p className="border-b px-4 py-3 text-sm">
-        {t(`settings.toolbar.width.current.${widthClass}`)}
-      </p>
+      <fieldset className="border-b px-4 pb-3">
+        <legend className="pt-3 font-medium text-muted-foreground text-xs">
+          {t('settings.toolbar.preset.legend')}
+        </legend>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          {PRESETS.map((preset) => (
+            <Button
+              key={preset}
+              type="button"
+              variant="outline"
+              className="h-auto min-h-11 flex-col gap-0 whitespace-normal px-2 py-1.5 leading-tight"
+              onClick={() => reset(preset)}
+            >
+              {t(`settings.toolbar.preset.${preset}`)}
+              {preset === DEFAULT_PRESET[widthClass] && (
+                <span className="font-normal text-muted-foreground text-xs">
+                  {t('settings.toolbar.preset.isDefault')}
+                </span>
+              )}
+            </Button>
+          ))}
+        </div>
+      </fieldset>
 
       {showPreview && <ToolbarPreviewStrip layout={layout} widthClass={widthClass} />}
 
-      <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
-        <span className="mr-auto text-sm">{t('settings.toolbar.preset.legend')}</span>
-        {PRESETS.map((preset) => (
-          <Button
-            key={preset}
-            type="button"
-            variant="outline"
-            size="sm"
-            // A stamp, not a mode (decision 9): nothing remembers it, so there is no
-            // active state and no Reset button; re-stamping the default is the reset.
-            onClick={() => write(toolbarPreset(preset, widthClass))}
-          >
-            {t(`settings.toolbar.preset.${preset}`)}
-            {preset === DEFAULT_PRESET[widthClass] && (
-              <span className="text-muted-foreground text-xs">
-                {t('settings.toolbar.preset.isDefault')}
-              </span>
-            )}
-          </Button>
-        ))}
-      </div>
-
+      <h3 className="px-4 pt-3 pb-1 font-medium text-muted-foreground text-xs">
+        {t('settings.toolbar.groups')}
+      </h3>
       <SortableList
         ids={layout.map((family) => family.id)}
         nameOf={familyName}
@@ -172,7 +189,7 @@ function FamilyRow({ family, name, onOpen, onToggle, onCollapse }: FamilyRowProp
         type="button"
         onClick={onOpen}
         disabled={!registryFamily}
-        className="flex min-h-11 flex-1 items-center gap-2 rounded-md px-1 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-60"
+        className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-md px-1 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-60"
       >
         {Icon && <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />}
         <span className="flex min-w-0 flex-col">

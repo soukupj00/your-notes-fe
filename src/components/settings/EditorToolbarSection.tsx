@@ -1,13 +1,10 @@
-import { useTranslation } from 'react-i18next';
 import { ToolbarLayoutEditor } from '@/components/editor/toolbar/ToolbarLayoutEditor.tsx';
 import { SettingsSection } from './SettingsSection.tsx';
 
+/** Untitled: its page is named Editor toolbar. */
 export function EditorToolbarSection() {
-  const { t } = useTranslation();
-
   return (
-    <SettingsSection title={t('settings.toolbar.title')}>
-      <p className="px-4 py-3 text-muted-foreground text-sm">{t('settings.toolbar.description')}</p>
+    <SettingsSection>
       <ToolbarLayoutEditor showPreview />
     </SettingsSection>
   );

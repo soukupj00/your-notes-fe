@@ -25,8 +25,10 @@ export function ToolbarPreviewStrip({ layout, widthClass }: ToolbarPreviewStripP
   );
 
   return (
-    <div className="flex flex-col gap-1 px-4 py-3">
-      <span className="text-muted-foreground text-xs">{t('settings.toolbar.preview')}</span>
+    <div className="flex flex-col gap-2 border-b px-4 pt-3 pb-3">
+      <span className="font-medium text-muted-foreground text-xs">
+        {t('settings.toolbar.preview')}
+      </span>
       <div
         aria-hidden
         data-testid="toolbar-preview"

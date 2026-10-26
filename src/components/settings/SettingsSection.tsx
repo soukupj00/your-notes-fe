@@ -13,7 +13,8 @@ export function SettingsSection({ title, children }: { title?: string; children:
   return (
     <section className="mb-8">
       {title && <h2 className="mb-2 font-medium text-muted-foreground text-sm">{title}</h2>}
-      <div className="divide-y rounded-card border bg-card">{children}</div>
+      {/* Clipped, so a row's own background never squares off the card's corners. */}
+      <div className="divide-y overflow-clip rounded-card border bg-card">{children}</div>
     </section>
   );
 }

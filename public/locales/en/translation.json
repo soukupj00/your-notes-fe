@@ -257,23 +257,18 @@
     },
     "toolbar": {
       "title": "Editor toolbar",
-      "description": "Choose which buttons the editor shows, in what order, and which of them share a menu.",
       "back": "All groups",
       "fold": "A phone shows about {{slots}} buttons before this line",
       "width": {
         "compact": "Narrow window",
-        "wide": "Wide window",
-        "current": {
-          "compact": "This is the layout for narrow windows and touchscreens.",
-          "wide": "This is the layout for wide windows."
-        }
+        "wide": "Wide window"
       },
       "preset": {
-        "legend": "Start from",
+        "legend": "Reset to",
         "minimal": "Minimal",
         "balanced": "Balanced",
         "everything": "Everything",
-        "isDefault": "· default"
+        "isDefault": "default"
       },
       "family": {
         "summary": "{{on}} of {{total}} buttons on",
@@ -285,7 +280,11 @@
       "item": {
         "show": "Show {{name}}"
       },
-      "preview": "How it will look"
+      "preview": "Preview",
+      "groups": "Groups, in bar order",
+      "reset": {
+        "done": "Toolbar reset to {{preset}}."
+      }
     },
     "shortcuts": {
       "title": "Keyboard shortcuts",

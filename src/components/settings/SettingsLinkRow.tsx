@@ -28,7 +28,7 @@ export function SettingsLinkRow({
     <Link
       to={to}
       data-tour={tourTarget}
-      className="flex min-h-14 items-center gap-3.5 px-4 py-2.5 outline-none first:rounded-t-card last:rounded-b-card hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+      className="flex min-h-14 items-center gap-3.5 px-4 py-2.5 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
     >
       <span
         aria-hidden

@@ -4,7 +4,7 @@ import { useTour } from '@/context/TourProvider.tsx';
 import { SettingsSection } from './SettingsSection.tsx';
 
 const ROW =
-  'flex min-h-14 w-full items-center gap-3.5 px-4 py-2.5 text-left text-sm outline-none first:rounded-t-card last:rounded-b-card hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4.5 [&_svg]:shrink-0 [&_svg]:text-muted-foreground';
+  'flex min-h-14 w-full items-center gap-3.5 px-4 py-2.5 text-left text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4.5 [&_svg]:shrink-0 [&_svg]:text-muted-foreground';
 
 /** The only place the Tour starts by hand. */
 export function HelpSection() {
