@@ -336,16 +336,14 @@
       }
     },
     "quickCapture": {
-      "title": "Rychlé psaní",
-      "description": "Způsoby, jak tlačítko ＋ nabízí založit poznámku.",
       "show": "Nabízet: {{name}}",
       "lastOne": "Poslední možnost v nabídce - na telefonu je to jediný způsob, jak vytvořit poznámku.",
       "alignment": {
-        "label": "Strana tlačítka pro poznámku",
-        "description": "Na které straně obrazovky sedí tlačítko ＋, podle palce, který na něj musí dosáhnout.",
         "left": "Vlevo",
         "right": "Vpravo"
-      }
+      },
+      "placement": "Umístění",
+      "menuItems": "Položky nabídky"
     },
     "pages": {
       "general": "Obecné",
@@ -364,7 +362,8 @@
         "summary": "Předvolby, skupiny, pořadí"
       },
       "quickCapture": {
-        "summary": "Umístění, položky nabídky"
+        "summary": "Umístění, položky nabídky",
+        "summaryWide": "Položky nabídky"
       },
       "dataSync": {
         "summary": "Synchronizace, úložiště, záloha"

@@ -124,6 +124,20 @@ describe('the Settings home', () => {
   });
 });
 
+describe('the Quick capture row', () => {
+  it('names the placement only below sm:, where the ＋ is', async () => {
+    mount();
+
+    const row = await screen.findByRole('link', { name: /settings\.pages\.quickCapture/ });
+    expect(row.querySelector('.sm\\:hidden')).toHaveTextContent(
+      'settings.home.quickCapture.summary'
+    );
+    expect(row.querySelector('.hidden.sm\\:inline')).toHaveTextContent(
+      'settings.home.quickCapture.summaryWide'
+    );
+  });
+});
+
 describe('Help', () => {
   it('replays the tutorial and opens the docs, with no GitHub link', async () => {
     mount();

@@ -1,15 +1,13 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
-  DENSITY_OPTIONS,
-  NOTE_BUTTON_ALIGNMENT_OPTIONS,
   PREFERENCES_STORAGE_KEY,
   type Preferences,
   PreferencesProvider,
 } from '@/context/PreferencesProvider.tsx';
-import { PreferenceSegmented, PreferenceSwitch } from './SettingsSection.tsx';
+import { PreferenceSwitch, SegmentedSetting } from './SettingsSection.tsx';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -66,39 +64,25 @@ describe('PreferenceSwitch without a description', () => {
   });
 });
 
-describe('PreferenceSegmented', () => {
-  it.each([
-    [
-      'noteButtonAlignment',
-      NOTE_BUTTON_ALIGNMENT_OPTIONS,
-      'settings.quickCapture.alignment',
-      'right',
-      'left',
-    ],
-  ] as const)(
-    '%s offers every value, starts at its default and writes a choice',
-    async (pref, options, keys, initial, next) => {
-      render(<PreferenceSegmented pref={pref} options={options} keys={keys} />, { wrapper });
-      const group = screen.getByRole('radiogroup', { name: `${keys}.label` });
-      expect(within(group).getAllByRole('radio')).toHaveLength(options.length);
-      expect(screen.getByRole('radio', { name: `${keys}.${initial}` })).toBeChecked();
-      expect(screen.getByText(`${keys}.description`)).toBeInTheDocument();
-
-      await userEvent.click(screen.getByRole('radio', { name: `${keys}.${next}` }));
-
-      expect(stored()[pref]).toBe(next);
-    }
-  );
-
+describe('SegmentedSetting', () => {
   it('keeps the current value when the active option is pressed again', async () => {
     // Radix clears a single ToggleGroup on a repeat press, and a setting must never be empty.
+    const onChange = vi.fn();
     render(
-      <PreferenceSegmented pref="density" options={DENSITY_OPTIONS} keys="settings.density" />,
-      { wrapper }
+      <SegmentedSetting
+        label="Theme"
+        value="light"
+        options={[
+          { value: 'light', label: 'Light' },
+          { value: 'dark', label: 'Dark' },
+        ]}
+        onChange={onChange}
+      />
     );
 
-    await userEvent.click(screen.getByRole('radio', { name: 'settings.density.comfortable' }));
+    await userEvent.click(screen.getByRole('radio', { name: 'Light' }));
 
-    expect(screen.getByRole('radio', { name: 'settings.density.comfortable' })).toBeChecked();
+    expect(onChange).not.toHaveBeenCalledWith('');
+    expect(screen.getByRole('radio', { name: 'Light' })).toBeChecked();
   });
 });

@@ -79,7 +79,7 @@ export function SegmentedSetting<T extends string>({
   );
 }
 
-/** The Preference keys whose value is a `T`: a switch binds a boolean, a segmented row a string. */
+/** The Preference keys whose value is a `T`, so a switch binds only a boolean one. */
 type PreferenceOf<T> = {
   [K in PreferenceKey]: Preferences[K] extends T ? K : never;
 }[PreferenceKey];
@@ -111,29 +111,5 @@ export function PreferenceSwitch({
         aria-label={label}
       />
     </SettingsRow>
-  );
-}
-
-/** A segmented row bound to a Preference with a fixed set of values; each option is `<keys>.<value>`. */
-export function PreferenceSegmented<K extends PreferenceOf<string>>({
-  pref,
-  options,
-  keys,
-}: {
-  pref: K;
-  options: readonly Preferences[K][];
-  keys: string;
-}) {
-  const { t } = useTranslation();
-  const { preferences, setPreference } = usePreferences();
-
-  return (
-    <SegmentedSetting
-      label={t(`${keys}.label`)}
-      description={t(`${keys}.description`)}
-      value={preferences[pref]}
-      options={options.map((option) => ({ value: option, label: t(`${keys}.${option}`) }))}
-      onChange={(next) => void setPreference(pref, next)}
-    />
   );
 }

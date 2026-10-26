@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -73,16 +73,28 @@ describe('QuickCaptureSection', () => {
     expect(switchFor('audio')).toBeEnabled();
   });
 
-  it('persists which side the note button sits on', async () => {
+  it('offers the placement as Left and Right tiles and persists the side', async () => {
     const user = userEvent.setup();
     render(<QuickCaptureSection />, { wrapper });
 
-    await user.click(
-      await screen.findByRole('radio', { name: 'settings.quickCapture.alignment.left' })
-    );
+    const placement = screen.getByRole('radiogroup', { name: 'settings.quickCapture.placement' });
+    expect(within(placement).getAllByRole('radio')).toHaveLength(2);
+    expect(
+      within(placement).getByRole('radio', { name: 'settings.quickCapture.alignment.right' })
+    ).toBeChecked();
+    await user.click(screen.getByRole('radio', { name: 'settings.quickCapture.alignment.left' }));
 
     await waitFor(async () => {
       expect((await storedPrefs()).noteButtonAlignment).toBe('left');
     });
+  });
+
+  it('titles the sortable list Menu items', () => {
+    render(<QuickCaptureSection />, { wrapper });
+
+    const list = screen.getByRole('heading', { name: 'settings.quickCapture.menuItems' });
+    expect(list.closest('section')?.querySelectorAll('[aria-label^="dnd.handle"]')).toHaveLength(
+      QUICK_CAPTURE_ACTIONS.length
+    );
   });
 });

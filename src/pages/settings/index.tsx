@@ -44,7 +44,14 @@ export default function SettingsHomePage() {
           to="/settings/quick-capture"
           icon={<Plus />}
           label={t('settings.pages.quickCapture')}
-          summary={t('settings.home.quickCapture.summary')}
+          summary={
+            <>
+              <span className="sm:hidden">{t('settings.home.quickCapture.summary')}</span>
+              <span className="hidden sm:inline">
+                {t('settings.home.quickCapture.summaryWide')}
+              </span>
+            </>
+          }
           tourTarget="settings-quick-capture-row"
         />
         <SettingsLinkRow
