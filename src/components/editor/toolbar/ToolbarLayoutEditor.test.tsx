@@ -334,7 +334,7 @@ describe('presets', () => {
       );
       await waitFor(async () => expect((await storedToolbar())[width]).not.toEqual([]));
       const restore = screen.getByRole('button', {
-        name: new RegExp(`settings\\.toolbar\\.preset\\.${preset}`),
+        name: (name) => name.includes(`settings.toolbar.preset.${preset}`),
       });
       expect(restore).toHaveTextContent('settings.toolbar.preset.isDefault');
       await user.click(restore);
@@ -407,7 +407,9 @@ describe('the order on the page', () => {
 
 describe('a reset', () => {
   const preset = (name: string) =>
-    screen.getByRole('button', { name: new RegExp(`settings\\.toolbar\\.preset\\.${name}`) });
+    screen.getByRole('button', {
+      name: (label) => label.includes(`settings.toolbar.preset.${name}`),
+    });
   const undoOf = (call: number) =>
     vi.mocked(toast).mock.calls[call][1]?.action as unknown as { onClick: () => void };
 
