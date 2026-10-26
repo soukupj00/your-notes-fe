@@ -2,6 +2,7 @@ import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NAV_ITEMS } from '@/components/nav/navItems.ts';
+import { FLOATING_BOTTOM_BAR_CLEARANCE } from '@/components/notes/floatingBottomBar.ts';
 import { renderRoute } from '@/test/renderRoute.tsx';
 import { clearStore, testStore } from '@/test/store.tsx';
 import { setViewport } from '@/test/viewport.ts';
@@ -130,7 +131,7 @@ describe('skip to content', () => {
 });
 
 describe('bottom padding', () => {
-  const DIAL_CLEARANCE = 'pb-[calc(6rem+var(--safe-bottom))]';
+  const [CLEARANCE] = FLOATING_BOTTOM_BAR_CLEARANCE.split(' ');
 
   it.each([
     ['/', true],
@@ -142,9 +143,8 @@ describe('bottom padding', () => {
     renderRoute(path);
     await screen.findByRole('heading', { level: 1 });
 
-    const main = document.getElementById('main-content');
-    if (clears) expect(main).toHaveClass(DIAL_CLEARANCE);
-    else expect(main).not.toHaveClass(DIAL_CLEARANCE);
+    const main = document.getElementById('main-content') as HTMLElement;
+    expect(main.querySelector(`.${CLEARANCE}`) !== null).toBe(clears);
   });
 });
 

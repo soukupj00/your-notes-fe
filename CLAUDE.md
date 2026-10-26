@@ -149,6 +149,7 @@ It writes nothing to the viewer's IndexedDB and never asks the server for a Sess
 The shell is the vendored shadcn `Sidebar` ([ADR 0010](./docs/adr/0010-shadcn-sidebar-as-nav-shell.md)): an icon-collapsible sidebar from `sm:` up, a left drawer below it.
 `navItems.ts` is the single list of destinations, so the two cannot drift.
 Settings is not a sidebar destination; the topbar gear is its one entry point.
+A Settings subpage goes back up through the app bar's Back below `sm:`, and from `sm:` up, where that bar is gone, through the link above its title (`SettingsFrame`).
 
 **Quick capture** is one list of Starts (`notes/quickCaptureActions.ts`) rendered two ways: a `＋` speed dial on mobile (`QuickCaptureBar`) and inline icons on the desktop "Take a note" bar.
 Their order and the dial's side are Preferences.
@@ -164,6 +165,7 @@ They need `viewport-fit=cover` in `index.html`; to see a phone's insets on a des
 The software keyboard is `--keyboard-inset`, published by `useKeyboardInset` from `window.visualViewport`, because iOS draws the keyboard over the page instead of resizing it.
 It is a CSS variable rather than React state so the editor does not re-render on every frame of the keyboard's slide.
 A view's floating action sits at the distance in `floatingBottomBar.ts`, shared with the speed dial because both land in that corner.
+The view that floats one also adds its bottom clearance (`FLOATING_BOTTOM_BAR_CLEARANCE`, in `NotesView`), so the shell keeps no list of such routes.
 
 **Checklists on a Card** are ticked by tapping the box or the words (`lib/point-over-text.ts`); press-and-hold opens the Note (`lib/long-press.ts`).
 
@@ -240,6 +242,7 @@ Neither creates or changes Notes.
   The data row renders on every Device, so every step has a cutout.
 - **Targets** resolve to the first match with a non-zero rect (`lib/tour/targets.ts`), because several surfaces are mounted twice with CSS hiding one.
 - **Waiting is on a DOM condition, never a timer** (`lib/tour/waitFor.ts`): `waitForTarget` for something to arrive on screen.
+  The Settings targets also need the home's `data-settled`, set once the server has answered: the home's top card mounts then and moves every row, and driver measures a cutout only once.
 - `welcomeSeenAt` and `onboardingSeenAt` are stamped when each guide is **offered**, not on completion, which would re-arm it after every reload.
 - Both are verified by `e2e/onboarding.spec.ts` at two breakpoints, not by Vitest: jsdom measures every element as 0x0.
 
@@ -247,7 +250,7 @@ Neither creates or changes Notes.
 
 **i18next** with browser language detection; translations are in `public/locales/<lng>/translation.json`, falling back to `en`.
 Numbers and dates go through `src/lib/format.ts` with the app language passed in.
-`src/i18n.test.ts` gates the bundles against each other: the same keys in every locale, and every key the Tour and the Welcome compose at render time.
+`src/i18n.test.ts` gates the bundles against each other: the same keys in every locale, and every key the Tour, the Welcome and the Settings home compose at render time.
 The language is a Device fact like every Preference (not in a Backup, not synced), but i18next's detector keeps it in `localStorage` itself, not `PreferencesProvider`.
 Settings uses a Select for it because the list outgrows a segmented control.
 

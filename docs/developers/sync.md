@@ -41,7 +41,7 @@ Only a Purge removes a row, and it leaves a **Tombstone** carrying the Revision 
    A cursor too old for the server answers `410`, and the Device resyncs from the start, dropping its clean rows and keeping the ones it still owes.
 3. **Move Attachment bytes.**
    Everything goes up, Previews first.
-   Coming down, Previews arrive at once, since the Feed needs them; full bytes arrive when someone opens them, unless "Keep everything on this device" is on.
+   Coming down, Previews arrive at once, since the Feed needs them; full bytes arrive when someone opens them, unless "Keep every attachment" is on.
 
 `src/sync/loop.ts` decides when to run: at start, a moment after a local edit, when the browser comes back online or the tab becomes visible, when the server's hint stream says another Device pushed, and on a slow poll.
 A run that leaves work owed backs off, doubling, so a failing server never makes it spin.

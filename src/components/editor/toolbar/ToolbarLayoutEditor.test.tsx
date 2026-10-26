@@ -149,6 +149,31 @@ describe('the family list', () => {
   });
 });
 
+describe('a family row', () => {
+  // A row without a collapse control would shift its switch left of the column above it.
+  it('lines up its controls with every other row, collapsible or not', async () => {
+    renderEditor('wide');
+
+    const handles = await screen.findAllByRole('button', { name: /^dnd\.handle/ });
+    const widths = new Set(handles.map((handle) => handle.parentElement?.childElementCount));
+    expect(widths).toEqual(new Set([4]));
+  });
+
+  // The visible count is short so a long name fits a phone; a screen reader hears the sentence.
+  it('shows a short count and says the whole sentence, counted by its total', async () => {
+    renderEditor('wide');
+
+    const history = await screen.findByRole('button', {
+      name: /^editor\.toolbar\.family\.history/,
+    });
+    expect(history).toHaveTextContent('settings.toolbar.family.count:2,2');
+    // jsdom lays nothing out, so it joins the name's parts without the space a browser adds.
+    expect(history).toHaveAccessibleName(
+      /^editor\.toolbar\.family\.history\s*settings\.toolbar\.family\.summary:2,2$/
+    );
+  });
+});
+
 describe('the fold marker', () => {
   it('marks where a phone stops showing buttons, on the compact Layout only', async () => {
     // Everything on Compact is 32 buttons on a bar that fits six.

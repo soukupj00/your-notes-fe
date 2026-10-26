@@ -1,4 +1,4 @@
-import { Download, ExternalLink, Smartphone } from 'lucide-react';
+import { Download, ExternalLink, Server, Smartphone } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SignInDialog } from '@/components/account/SignInDialog.tsx';
@@ -38,30 +38,36 @@ export function LocalOnlyCard({
       </div>
 
       {state === 'none' && (
-        <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+        <>
+          <div className="flex justify-end px-4 py-2.5">
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11"
+              disabled={exporting.busy}
+              onClick={() =>
+                void exporting.run(async () => (await exportBackup(store)) === 'saved', {
+                  success: 'settings.backup.exported',
+                  failure: 'settings.backup.error.unknown',
+                })
+              }
+            >
+              <Download aria-hidden />
+              {t('settings.home.local.backUp')}
+            </Button>
+          </div>
           <a
             href={setupUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="touch-reach min-w-0 rounded-control text-primary text-sm underline-offset-2 hover:underline"
+            className="flex min-h-14 items-center gap-3.5 rounded-b-card px-4 py-2.5 text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [&_svg]:size-4.5 [&_svg]:shrink-0 [&_svg]:text-muted-foreground"
           >
-            {t('settings.home.local.syncWithServer')}
+            <Server aria-hidden />
+            <span className="flex-1">{t('settings.home.local.syncWithServer')}</span>
+            <ExternalLink aria-hidden className="size-4!" />
+            <span className="sr-only"> {t('nav.newTab')}</span>
           </a>
-          <Button
-            type="button"
-            className="min-h-11 shrink-0"
-            disabled={exporting.busy}
-            onClick={() =>
-              void exporting.run(async () => (await exportBackup(store)) === 'saved', {
-                success: 'settings.backup.exported',
-                failure: 'settings.backup.error.unknown',
-              })
-            }
-          >
-            <Download aria-hidden />
-            {t('settings.home.local.backUp')}
-          </Button>
-        </div>
+        </>
       )}
 
       {state === 'setup-needed' && (
@@ -70,6 +76,7 @@ export function LocalOnlyCard({
             <a href={setupUrl} target="_blank" rel="noopener noreferrer">
               {t('settings.home.local.setupGuide')}
               <ExternalLink aria-hidden />
+              <span className="sr-only"> {t('nav.newTab')}</span>
             </a>
           </Button>
         </div>
@@ -77,7 +84,12 @@ export function LocalOnlyCard({
 
       {state === 'signed-out' && (
         <div className="flex justify-end px-4 py-2.5">
-          <Button type="button" className="min-h-11" onClick={() => setSigningIn(true)}>
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11"
+            onClick={() => setSigningIn(true)}
+          >
             {t('account.section.signIn')}
           </Button>
           <SignInDialog open={signingIn} onOpenChange={setSigningIn} />

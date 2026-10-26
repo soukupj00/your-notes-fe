@@ -88,7 +88,7 @@ export function BackupSection() {
         <Button
           variant="outline"
           size="sm"
-          className="gap-1"
+          className="min-h-11 gap-1"
           disabled={busy}
           onClick={() => void handleExport()}
         >
@@ -104,7 +104,7 @@ export function BackupSection() {
         <Button
           variant="outline"
           size="sm"
-          className="gap-1"
+          className="min-h-11 gap-1"
           disabled={busy}
           onClick={() => inputRef.current?.click()}
         >

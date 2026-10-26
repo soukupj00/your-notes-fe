@@ -1,4 +1,4 @@
-import { Link, useMatchRoute } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { SideNav } from '@/components/nav/SideNav.tsx';
 import { Navbar } from '@/components/ui/navbar.tsx';
@@ -11,7 +11,6 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar.tsx';
 import { useSidebarOpen } from '@/hooks/useSidebarOpen.ts';
-import { cn } from '@/lib/utils.ts';
 
 function SkipToContentLink({ children }: { children: React.ReactNode }) {
   return (
@@ -54,8 +53,6 @@ function BrandLink() {
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const [open, setOpen] = useSidebarOpen();
-  const matchRoute = useMatchRoute();
-  const floatingBar = Boolean(matchRoute({ to: '/' }) || matchRoute({ to: '/trash' }));
 
   return (
     <SidebarProvider open={open} onOpenChange={setOpen}>
@@ -75,17 +72,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* SidebarInset renders the `<main>` itself; do not nest a second one. */}
       <SidebarInset className="min-w-0">
         <Navbar />
-        {/* `tabIndex={-1}` so the skip link can move focus here. The taller mobile bottom padding
-            clears the floating bar: the `＋` on the Feed, Empty trash on the Trash. */}
+        {/* `tabIndex={-1}` so the skip link can move focus here. A view with a floating bar adds
+            its own clearance (`floatingBottomBar.ts`). */}
         <div
           id="main-content"
           tabIndex={-1}
-          className={cn(
-            'min-w-0 flex-1 pt-6 pr-[calc(1rem+var(--safe-right))] pl-[calc(1rem+var(--safe-left))] outline-none sm:pb-6',
-            floatingBar
-              ? 'pb-[calc(6rem+var(--safe-bottom))]'
-              : 'pb-[calc(1.5rem+var(--safe-bottom))]'
-          )}
+          className="min-w-0 flex-1 pt-6 pr-[calc(1rem+var(--safe-right))] pb-[calc(1.5rem+var(--safe-bottom))] pl-[calc(1rem+var(--safe-left))] outline-none sm:pb-6"
         >
           {children}
         </div>

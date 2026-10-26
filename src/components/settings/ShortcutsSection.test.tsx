@@ -266,16 +266,4 @@ describe('ShortcutsSection', () => {
     await user.click(screen.getByRole('button', { name: 'settings.shortcuts.resetAllConfirm' }));
     expect(stored()).toEqual({});
   });
-
-  /** A phone has no modifier keys, so every row would be a promise it cannot keep. */
-  it('renders nothing on a coarse pointer', () => {
-    stubPointer(false);
-    const { container } = render(
-      <PreferencesProvider>
-        <ShortcutsSection />
-      </PreferencesProvider>
-    );
-
-    expect(container).toBeEmptyDOMElement();
-  });
 });

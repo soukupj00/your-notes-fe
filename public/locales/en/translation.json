@@ -3,6 +3,7 @@
     "primary": "Main navigation",
     "open": "Open navigation",
     "back": "Back",
+    "newTab": "(opens in a new tab)",
     "notes": "Notes",
     "labels": "Labels",
     "editLabels": "Edit labels",
@@ -272,7 +273,9 @@
         "isDefault": "default"
       },
       "family": {
-        "summary": "{{on}} of {{total}} buttons on",
+        "count": "{{on}} of {{total}}",
+        "summary_one": "{{on}} of {{count}} button on",
+        "summary_other": "{{on}} of {{count}} buttons on",
         "show": "Show the {{name}} group",
         "collapse": "Put the {{name}} group in one menu",
         "collapsed": "In one menu",
@@ -288,7 +291,6 @@
       }
     },
     "shortcuts": {
-      "title": "Keyboard shortcuts",
       "description": "Click a shortcut's keys to change it. Shortcuts in Notes work outside an open note; the others work while a note is open, whichever buttons your toolbar shows.",
       "newNote": {
         "label": "New note"
@@ -373,7 +375,7 @@
         "summary": "Export, restore, storage"
       },
       "local": {
-        "title": "Notes stay on this device",
+        "title": "Notes stay on this Device",
         "syncWithServer": "Sync with your own server",
         "backUp": "Back up",
         "setupGuide": "Setup guide"
@@ -691,7 +693,7 @@
       "removeTitle": "Remove {{name}}?",
       "removeDescription": "It is signed out and nothing else changes.",
       "removed": "Device removed.",
-      "add": "Add a device"
+      "add": "Add a Device"
     },
     "members": {
       "title": "Members",
@@ -740,12 +742,13 @@
       "label": "Stored on this Device",
       "persisted": "The browser keeps it even when space runs low.",
       "notPersisted": "The browser may clear it when space runs low.",
-      "title": "This device",
+      "title": "This Device",
       "storedHere": "{{size}} stored here"
     },
     "label": "Sync",
     "never": "Not synced yet",
     "idle": "Last synced {{time}}",
+    "syncedAt": "Synced at {{time}}",
     "syncing": "Syncing…",
     "offline": "Offline. Changes wait on this Device.",
     "error": "Could not sync. It will try again.",
@@ -769,7 +772,7 @@
     "notSynced": "This Note has not reached your server yet. Try again in a moment.",
     "untitled": "Untitled Note",
     "section": {
-      "title": "Shared notes",
+      "title": "Shared Notes",
       "none": "None shared"
     },
     "page": {

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { QUICK_CAPTURE_ACTIONS } from '@/components/notes/quickCaptureActions.ts';
+import { FILE_START, QUICK_CAPTURE_ACTIONS } from '@/components/notes/quickCaptureActions.ts';
 import {
   type QuickCapturePref,
   reconcileQuickCapture,
@@ -9,6 +9,7 @@ import { SettingsSection } from '@/components/settings/SettingsSection.tsx';
 import { SortableList, SortableRow } from '@/components/ui/SortableList.tsx';
 import { Switch } from '@/components/ui/switch.tsx';
 import { NOTE_BUTTON_ALIGNMENT_OPTIONS, usePreferences } from '@/context/PreferencesProvider.tsx';
+import { useIsMobile } from '@/hooks/use-mobile.tsx';
 import { moveById } from '@/lib/move-by-id.ts';
 import { cn } from '@/lib/utils.ts';
 
@@ -18,7 +19,7 @@ function PhonePicture({ side }: { side: 'left' | 'right' }) {
     <span className="relative block h-16 w-full rounded-t-control border-(--rule-control) border-2 border-b-0 bg-muted">
       <span
         className={cn(
-          'absolute bottom-2 flex size-5.5 items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground leading-none',
+          'absolute bottom-2 flex size-5.5 items-center justify-center rounded-full bg-foreground font-semibold text-background leading-none',
           side === 'left' ? 'left-2' : 'right-2'
         )}
       >
@@ -60,9 +61,14 @@ export function QuickCaptureSection() {
   const { preferences, setPreference } = usePreferences();
   const actions = reconcileQuickCapture(preferences.quickCapture);
   const write = (next: QuickCapturePref[]) => setPreference('quickCapture', next);
+  const mobile = useIsMobile();
 
-  const nameOf = (id: string) =>
-    t(QUICK_CAPTURE_ACTIONS.find((action) => action.key === id)?.labelKey ?? id);
+  // As the desktop bar draws it (`resolveDesktopQuickCapture`): File in Camera's slot.
+  const actionOf = (id: string) =>
+    !mobile && id === 'camera'
+      ? FILE_START
+      : QUICK_CAPTURE_ACTIONS.find((action) => action.key === id);
+  const nameOf = (id: string) => t(actionOf(id)?.labelKey ?? id);
   // On a phone the dial is the only way to start a note, so the last start on it
   // may not be switched off. Refusing at the switch says so where the user is,
   // rather than leaving them a `＋` that opens an empty menu.
@@ -79,8 +85,7 @@ export function QuickCaptureSection() {
         >
           <ul className="divide-y py-1">
             {actions.map((entry) => {
-              const action = QUICK_CAPTURE_ACTIONS.find((candidate) => candidate.key === entry.id);
-              const Icon = action?.Icon;
+              const Icon = actionOf(entry.id)?.Icon;
               const last = entry.on && onCount === 1;
               const name = nameOf(entry.id);
               return (

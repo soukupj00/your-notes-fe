@@ -75,7 +75,13 @@ export function DevicesSection() {
           }
         >
           {!device.current && (
-            <Button variant="outline" size="sm" disabled={busy} onClick={() => setRemoving(device)}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="min-h-11"
+              disabled={busy}
+              onClick={() => setRemoving(device)}
+            >
               {t('account.devices.remove')}
             </Button>
           )}

@@ -26,6 +26,7 @@ export function HelpSection() {
         <BookOpen aria-hidden />
         <span className="flex-1">{t('settings.help.docs.label')}</span>
         <ExternalLink aria-hidden className="size-4!" />
+        <span className="sr-only">{t('nav.newTab')}</span>
       </a>
     </SettingsSection>
   );

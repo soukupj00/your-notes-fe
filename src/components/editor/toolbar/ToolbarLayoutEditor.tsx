@@ -1,5 +1,5 @@
-import { ChevronLeft, ChevronRight, Group, Ungroup } from 'lucide-react';
-import { useState } from 'react';
+import { ChevronLeft, Group, Ungroup } from 'lucide-react';
+import { type ComponentType, type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { icons } from '@/components/icons';
@@ -19,9 +19,23 @@ import { useWidthClass } from './useWidthClass';
 
 const PRESETS: ToolbarPresetId[] = ['minimal', 'balanced', 'everything'];
 
+/** A titled block of the editor: a heading above its own card in Settings, a band in the sheet. */
+type ToolbarEditorSection = ComponentType<{ title?: string; children: ReactNode }>;
+
 interface ToolbarLayoutEditorProps {
   /** On in Settings, which has no note open; off over the editor, whose real bar is live. */
   showPreview?: boolean;
+  Section?: ToolbarEditorSection;
+}
+
+/** The sheet's own title is its `<h2>`, so a band's heading is an `<h3>`. */
+function SheetSection({ title, children }: { title?: string; children: ReactNode }) {
+  return (
+    <section className="border-b last:border-b-0">
+      {title && <h3 className="px-4 pt-3 font-medium text-muted-foreground text-xs">{title}</h3>}
+      {children}
+    </section>
+  );
 }
 
 /**
@@ -29,7 +43,10 @@ interface ToolbarLayoutEditorProps {
  * Width Class this screen is in, and writes straight through: the bar behind the sheet is the
  * preview.
  */
-export function ToolbarLayoutEditor({ showPreview }: ToolbarLayoutEditorProps) {
+export function ToolbarLayoutEditor({
+  showPreview,
+  Section = SheetSection,
+}: ToolbarLayoutEditorProps) {
   const { t } = useTranslation();
   const { preferences, setPreference } = usePreferences();
   const widthClass = useWidthClass();
@@ -62,49 +79,59 @@ export function ToolbarLayoutEditor({ showPreview }: ToolbarLayoutEditorProps) {
   };
   const itemName = (id: string) => t(TOOLBAR_ITEMS.find((item) => item.id === id)?.labelKey ?? id);
 
+  const preview = showPreview && (
+    <Section title={t('settings.toolbar.preview')}>
+      <div className="px-4 py-3">
+        <ToolbarPreviewStrip layout={layout} widthClass={widthClass} />
+      </div>
+    </Section>
+  );
+
   const openFamily = openFamilyId ? layout.find((entry) => entry.id === openFamilyId) : undefined;
   if (openFamily) {
     return (
-      <div className="flex flex-col">
-        <div className="flex items-center gap-2 border-b p-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="gap-1"
-            onClick={() => setOpenFamilyId(null)}
-          >
-            <ChevronLeft className="size-4" aria-hidden />
-            {t('settings.toolbar.back')}
-          </Button>
-          {/* The width is named here, or a leaf list is the easiest place to edit
+      <>
+        {preview}
+        <Section>
+          <div className="flex items-center gap-2 border-b p-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="gap-1"
+              onClick={() => setOpenFamilyId(null)}
+            >
+              <ChevronLeft className="size-4" aria-hidden />
+              {t('settings.toolbar.back')}
+            </Button>
+            {/* The width is named here, or a leaf list is the easiest place to edit
               the wrong one of the two Layouts. */}
-          <span className="ml-auto truncate text-muted-foreground text-xs">
-            {familyName(openFamily.id)} · {t(`settings.toolbar.width.${widthClass}`)}
-          </span>
-        </div>
-        {showPreview && <ToolbarPreviewStrip layout={layout} widthClass={widthClass} />}
-        <LeafList
-          family={openFamily}
-          nameOf={itemName}
-          onReorder={(activeId, overId) =>
-            write(moveMember(layout, openFamily.id, activeId, overId))
-          }
-          onToggle={(memberId, on) => write(setMemberOn(layout, openFamily.id, memberId, on))}
-        />
-      </div>
+            <span className="ml-auto truncate text-muted-foreground text-xs">
+              {familyName(openFamily.id)} · {t(`settings.toolbar.width.${widthClass}`)}
+            </span>
+          </div>
+          <LeafList
+            family={openFamily}
+            nameOf={itemName}
+            onReorder={(activeId, overId) =>
+              write(moveMember(layout, openFamily.id, activeId, overId))
+            }
+            onToggle={(memberId, on) => write(setMemberOn(layout, openFamily.id, memberId, on))}
+          />
+        </Section>
+      </>
     );
   }
 
   const fold = widthClass === 'compact' ? foldIndex(layout) : null;
 
   return (
-    <div className="flex flex-col">
-      <fieldset className="border-b px-4 pb-3">
-        <legend className="pt-3 font-medium text-muted-foreground text-xs">
-          {t('settings.toolbar.preset.legend')}
-        </legend>
-        <div className="mt-2 grid grid-cols-3 gap-2">
+    <>
+      <Section title={t('settings.toolbar.preset.legend')}>
+        <fieldset
+          aria-label={t('settings.toolbar.preset.legend')}
+          className="grid min-w-0 grid-cols-3 gap-2 px-4 py-3"
+        >
           {PRESETS.map((preset) => (
             <Button
               key={preset}
@@ -121,35 +148,34 @@ export function ToolbarLayoutEditor({ showPreview }: ToolbarLayoutEditorProps) {
               )}
             </Button>
           ))}
-        </div>
-      </fieldset>
+        </fieldset>
+      </Section>
 
-      {showPreview && <ToolbarPreviewStrip layout={layout} widthClass={widthClass} />}
+      {preview}
 
-      <h3 className="px-4 pt-3 pb-1 font-medium text-muted-foreground text-xs">
-        {t('settings.toolbar.groups')}
-      </h3>
-      <SortableList
-        ids={layout.map((family) => family.id)}
-        nameOf={familyName}
-        onReorder={(activeId, overId) => write(moveFamily(layout, activeId, overId))}
-      >
-        <ul className="divide-y">
-          {layout.map((family, index) => (
-            <li key={family.id}>
-              {index === fold && <FoldMarker />}
-              <FamilyRow
-                family={family}
-                name={familyName(family.id)}
-                onOpen={() => setOpenFamilyId(family.id)}
-                onToggle={(on) => write(updateFamily(layout, family.id, { on }))}
-                onCollapse={(collapsed) => write(updateFamily(layout, family.id, { collapsed }))}
-              />
-            </li>
-          ))}
-        </ul>
-      </SortableList>
-    </div>
+      <Section title={t('settings.toolbar.groups')}>
+        <SortableList
+          ids={layout.map((family) => family.id)}
+          nameOf={familyName}
+          onReorder={(activeId, overId) => write(moveFamily(layout, activeId, overId))}
+        >
+          <ul className="divide-y">
+            {layout.map((family, index) => (
+              <li key={family.id}>
+                {index === fold && <FoldMarker />}
+                <FamilyRow
+                  family={family}
+                  name={familyName(family.id)}
+                  onOpen={() => setOpenFamilyId(family.id)}
+                  onToggle={(on) => write(updateFamily(layout, family.id, { on }))}
+                  onCollapse={(collapsed) => write(updateFamily(layout, family.id, { collapsed }))}
+                />
+              </li>
+            ))}
+          </ul>
+        </SortableList>
+      </Section>
+    </>
   );
 }
 
@@ -157,7 +183,7 @@ export function ToolbarLayoutEditor({ showPreview }: ToolbarLayoutEditorProps) {
 function FoldMarker() {
   const { t } = useTranslation();
   return (
-    <p className="flex items-center gap-2 px-3 py-1 text-[0.7rem] text-muted-foreground uppercase tracking-wide">
+    <p className="flex items-center gap-2 px-4 py-1 text-[0.7rem] text-muted-foreground uppercase tracking-wide">
       <span aria-hidden className="h-px flex-1 bg-border" />
       {/* `slots`, not `count`: `count` is i18next's plural selector, and this
           key has no plural forms to select. */}
@@ -181,7 +207,10 @@ function FamilyRow({ family, name, onOpen, onToggle, onCollapse }: FamilyRowProp
   // A stored family this build cannot render still holds the user's order, so it
   // keeps its row - but there is nothing honest to say about its contents.
   const Icon = registryFamily ? icons[registryFamily.icon] : null;
-  const on = family.members.filter((member) => member.on).length;
+  const counts = {
+    on: family.members.filter((member) => member.on).length,
+    count: family.members.length,
+  };
 
   return (
     <SortableRow id={family.id} handleLabel={t('dnd.handle', { name })}>
@@ -193,15 +222,16 @@ function FamilyRow({ family, name, onOpen, onToggle, onCollapse }: FamilyRowProp
       >
         {Icon && <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />}
         <span className="flex min-w-0 flex-col">
-          <span className="truncate text-sm">{name}</span>
-          <span className="text-muted-foreground text-xs">
-            {t('settings.toolbar.family.summary', { on, total: family.members.length })}
+          <span className="text-sm">{name}</span>
+          {/* Short, so the name fits a phone in Czech; the sentence is for a screen reader. */}
+          <span aria-hidden className="whitespace-nowrap text-muted-foreground text-xs">
+            {t('settings.toolbar.family.count', { on: counts.on, total: counts.count })}
           </span>
+          <span className="sr-only"> {t('settings.toolbar.family.summary', counts)}</span>
         </span>
-        <ChevronRight className="ml-auto size-4 shrink-0 text-muted-foreground" aria-hidden />
       </button>
 
-      {registryFamily?.collapsible && (
+      {registryFamily?.collapsible ? (
         <Toggle
           size="sm"
           className="touch-target size-11"
@@ -220,6 +250,8 @@ function FamilyRow({ family, name, onOpen, onToggle, onCollapse }: FamilyRowProp
             <Ungroup className="size-4" aria-hidden />
           )}
         </Toggle>
+      ) : (
+        <span aria-hidden className="size-11 shrink-0" />
       )}
 
       <Switch

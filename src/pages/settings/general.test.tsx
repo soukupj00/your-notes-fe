@@ -20,6 +20,12 @@ vi.mock('@/i18n', () => ({
   },
 }));
 
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ to, children }: { to: string; children: React.ReactNode }) => (
+    <a href={to}>{children}</a>
+  ),
+}));
+
 afterEach(async () => {
   document.documentElement.classList.remove('cvd');
   localStorage.clear();

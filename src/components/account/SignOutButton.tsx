@@ -58,6 +58,7 @@ export function SignOutButton() {
       <Button
         variant="outline"
         size="sm"
+        className="min-h-11"
         disabled={busy}
         onClick={() => setDialog(sync.pending > 0 ? 'blocked' : 'confirm')}
       >

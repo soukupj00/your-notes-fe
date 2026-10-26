@@ -4,7 +4,7 @@ import { DevicesSection } from '@/components/settings/DevicesSection.tsx';
 import { MembersSection } from '@/components/settings/MembersSection.tsx';
 import { SharesSection } from '@/components/settings/SharesSection.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
-import { SettingsSubpage } from './SettingsSubpage.tsx';
+import { SettingsFrame } from './SettingsFrame.tsx';
 
 export default function AccountSettingsPage() {
   const { status } = useAccount();
@@ -15,11 +15,11 @@ export default function AccountSettingsPage() {
   if (status !== 'signed-in') return <Navigate to="/settings" replace />;
 
   return (
-    <SettingsSubpage titleKey="settings.pages.account">
+    <SettingsFrame titleKey="settings.pages.account">
       <AccountSection />
       <DevicesSection />
       <SharesSection />
       <MembersSection />
-    </SettingsSubpage>
+    </SettingsFrame>
   );
 }

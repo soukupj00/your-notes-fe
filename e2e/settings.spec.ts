@@ -3,6 +3,12 @@ import { signedInServer, signedOutServer, skipTour } from './helpers';
 
 test.beforeEach(async ({ page }) => skipTour(page));
 
+/** The phone's app-bar arrow below `sm:`, the "Settings" link above the page title from `sm:` up. */
+async function goBackToSettings(page: Page, isMobile: boolean) {
+  if (isMobile) await page.getByRole('button', { name: 'Back' }).click();
+  else await page.locator('#main-content').getByRole('link', { name: 'Settings' }).click();
+}
+
 test('a Settings row opens its page, and Back returns to the Settings home', async ({
   page,
   isMobile,
@@ -12,29 +18,35 @@ test('a Settings row opens its page, and Back returns to the Settings home', asy
 
   await expect(page).toHaveURL(/\/settings\/toolbar$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Editor toolbar' })).toBeAttached();
-  if (isMobile) {
-    await expect(page.locator('[data-slot="app-bar"]')).toContainText('Editor toolbar');
-    await page.getByRole('button', { name: 'Back' }).click();
-  } else {
-    await page.goBack();
-  }
+  if (isMobile) await expect(page.locator('[data-slot="app-bar"]')).toContainText('Editor toolbar');
+  await goBackToSettings(page, isMobile);
 
   await expect(page).toHaveURL(/\/settings$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeAttached();
 });
 
 test('Back on a subpage opened cold goes up to the Settings home', async ({ page, isMobile }) => {
-  test.skip(!isMobile, 'Back lives in the phone app bar');
   await page.goto('/settings/toolbar');
 
-  await page.getByRole('button', { name: 'Back' }).click();
+  await goBackToSettings(page, isMobile);
+
+  await expect(page).toHaveURL(/\/settings$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeAttached();
+});
+
+test('Keyboard shortcuts opened on a phone goes to the Settings home', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(!isMobile, 'a fine pointer has the page');
+  await page.goto('/settings/shortcuts');
 
   await expect(page).toHaveURL(/\/settings$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeAttached();
 });
 
 test.describe('the Settings home without an account', () => {
-  const card = (page: Page) => page.locator('section', { hasText: 'Notes stay on this device' });
+  const card = (page: Page) => page.locator('section', { hasText: 'Notes stay on this Device' });
 
   test('with no server, offers a backup and the way to a server', async ({ page }) => {
     await page.goto('/settings');
@@ -64,11 +76,11 @@ test('signing out on the Account page lands on the Settings home', async ({ page
   await signedInServer(page);
   await page.goto('/settings/account');
 
-  await expect(page.getByRole('button', { name: 'Add a device' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Add a Device' })).toBeVisible();
   await expect(page.getByText('None shared')).toBeVisible();
   await page.getByRole('button', { name: 'Sign out' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Sign out and erase' }).click();
 
   await expect(page).toHaveURL(/\/settings$/);
-  await expect(page.getByText('Notes stay on this device')).toBeVisible();
+  await expect(page.getByText('Notes stay on this Device')).toBeVisible();
 });

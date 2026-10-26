@@ -70,4 +70,15 @@ describe('LocalOnlyCard', () => {
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText('account.section.signInDescription')).toBeVisible();
   });
+
+  it.each([
+    ['none', /settings\.home\.local\.syncWithServer/],
+    ['setup-needed', /settings\.home\.local\.setupGuide/],
+  ] as const)('says its link opens a new tab (%s)', (state, name) => {
+    mount(state);
+
+    const link = screen.getByRole('link', { name });
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAccessibleName(expect.stringContaining('nav.newTab'));
+  });
 });

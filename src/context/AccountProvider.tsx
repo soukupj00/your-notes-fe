@@ -20,6 +20,11 @@ export type AccountStatus = 'checking' | 'unavailable' | 'signed-out' | 'signed-
 export type AccountContextValue = {
   status: AccountStatus;
   session: Session | null;
+  /**
+   * Whether the server still has no Owner, so a Sign in cannot succeed. `null` until a
+   * signed-out Device has asked; a signed-in Device proves an Owner, so it is `false` there.
+   */
+  setupNeeded: boolean | null;
   /** `null` when this build has no server to talk to. */
   service: AccountService | null;
   /** The same server's replication half, for `SyncProvider`; `null` with no server. */
@@ -31,6 +36,7 @@ export type AccountContextValue = {
 const NO_SERVER: AccountContextValue = {
   status: 'unavailable',
   session: null,
+  setupNeeded: null,
   service: null,
   remote: null,
   setSession: () => {},
@@ -53,11 +59,13 @@ export function AccountProvider({
 }) {
   const [status, setStatus] = useState<AccountStatus>(service ? 'checking' : 'unavailable');
   const [session, setSessionState] = useState<Session | null>(null);
+  const [setupNeeded, setSetupNeeded] = useState<boolean | null>(null);
 
   // What the server said about this Device, applied the same way whichever ask it answers.
   const apply = useCallback((found: Session | null) => {
     setSessionState(found);
     setStatus(found ? 'signed-in' : 'signed-out');
+    if (found) setSetupNeeded(false);
   }, []);
 
   useAsyncEffect(
@@ -95,18 +103,37 @@ export function AccountProvider({
     };
   }, [service, status, apply]);
 
+  // A failed question reads as `false`: the session check answered, so Sign in is the offer.
+  useAsyncEffect(
+    async (alive) => {
+      if (!service || status !== 'signed-out' || setupNeeded !== null) return;
+      const needed = await service.setupNeeded().catch(() => false);
+      if (alive()) setSetupNeeded(needed);
+    },
+    [service, status, setupNeeded]
+  );
+
+  // The Owner is usually created in another tab, from the server's own Pairing Link.
+  useEffect(() => {
+    if (!service || status !== 'signed-out' || !setupNeeded) return;
+    let current = true;
+    const recheck = () => {
+      if (document.visibilityState === 'hidden') return;
+      service
+        .setupNeeded()
+        .then((needed) => current && setSetupNeeded(needed))
+        .catch(() => {});
+    };
+    document.addEventListener('visibilitychange', recheck);
+    return () => {
+      current = false;
+      document.removeEventListener('visibilitychange', recheck);
+    };
+  }, [service, status, setupNeeded]);
+
   const value = useMemo<AccountContextValue>(
-    () => ({
-      status,
-      session,
-      service,
-      remote,
-      setSession: (next) => {
-        setSessionState(next);
-        setStatus(next ? 'signed-in' : 'signed-out');
-      },
-    }),
-    [status, session, service, remote]
+    () => ({ status, session, setupNeeded, service, remote, setSession: apply }),
+    [status, session, setupNeeded, service, remote, apply]
   );
 
   return <AccountContext.Provider value={value}>{children}</AccountContext.Provider>;

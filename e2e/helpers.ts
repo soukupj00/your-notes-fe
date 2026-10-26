@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 /**
  * A fresh context is offered the Welcome and, in Settings, the Tour, both of which make the app
@@ -146,6 +146,8 @@ export async function closeNote(page: Page) {
   const back = page.getByRole('button', { name: 'Back' });
   if (await back.isVisible()) await back.click();
   else await page.getByRole('button', { name: 'Close' }).click();
+  // Closing pops history, which lands later: a `goto` or `reload` sent before then is aborted.
+  await expect(page).not.toHaveURL(/[?&]note=/);
 }
 
 /** A Card on the wall, found by its title. */

@@ -13,8 +13,10 @@ export function SettingsSection({ title, children }: { title?: string; children:
   return (
     <section className="mb-8">
       {title && <h2 className="mb-2 font-medium text-muted-foreground text-sm">{title}</h2>}
-      {/* Clipped, so a row's own background never squares off the card's corners. */}
-      <div className="divide-y overflow-clip rounded-card border bg-card">{children}</div>
+      {/* Not clipped: a dragged row must be able to leave the card. */}
+      <div className="divide-y rounded-card border bg-card *:first:rounded-t-card *:last:rounded-b-card">
+        {children}
+      </div>
     </section>
   );
 }
@@ -30,8 +32,7 @@ export function SettingsRow({
   children: ReactNode;
 }) {
   return (
-    // The label wraps rather than the control: a control dropped under its label reads as the
-    // next row's.
+    // A control dropped under its label read as the next row's.
     <div className="flex items-center justify-between gap-3 px-4 py-3 *:last:shrink-0">
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="text-sm">{label}</span>
@@ -65,12 +66,15 @@ export function SegmentedSetting<T extends string>({
         type="single"
         value={value}
         onValueChange={(next) => onChange((next as T) || value)}
-        variant="outline"
-        size="sm"
         aria-label={label}
+        className="gap-0.5 rounded-control border border-(--rule-control) p-0.5"
       >
         {options.map((option) => (
-          <ToggleGroupItem key={option.value} value={option.value}>
+          <ToggleGroupItem
+            key={option.value}
+            value={option.value}
+            className="min-h-9.5 rounded-[calc(var(--radius-control)-2px)] px-3 text-muted-foreground data-[state=on]:bg-selected data-[state=on]:text-foreground"
+          >
             {option.label}
           </ToggleGroupItem>
         ))}

@@ -1,10 +1,11 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QUICK_CAPTURE_ACTIONS } from '@/components/notes/quickCaptureActions.ts';
 import type { QuickCapturePref } from '@/components/notes/quickCaptureLayout.ts';
 import { PREFERENCES_STORAGE_KEY, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import { setViewport } from '@/test/viewport.ts';
 import { QuickCaptureSection } from './QuickCaptureSection.tsx';
 
 vi.mock('react-i18next', () => ({
@@ -28,10 +29,14 @@ const switchFor = (key: string) =>
   screen.getByRole('switch', { name: `settings.quickCapture.show:notes.capture.${key}` });
 
 afterEach(() => {
+  vi.restoreAllMocks();
   localStorage.clear();
 });
 
 describe('QuickCaptureSection', () => {
+  // The dial's own width, where every start is listed under its own name.
+  beforeEach(() => setViewport(390));
+
   it('lists every start, all on, before anything is customised', async () => {
     render(<QuickCaptureSection />, { wrapper });
 
@@ -96,5 +101,19 @@ describe('QuickCaptureSection', () => {
     expect(list.closest('section')?.querySelectorAll('[aria-label^="dnd.handle"]')).toHaveLength(
       QUICK_CAPTURE_ACTIONS.length
     );
+  });
+});
+
+// The desktop bar offers File in Camera's slot (`resolveDesktopQuickCapture`); the list says so.
+describe.each([
+  [390, 'camera'],
+  [1280, 'file'],
+])('at %ipx the Camera slot', (width, shown) => {
+  it(`is listed as ${shown}`, async () => {
+    setViewport(width);
+    render(<QuickCaptureSection />, { wrapper });
+
+    expect(await screen.findByText(`notes.capture.${shown}`)).toBeInTheDocument();
+    expect(switchFor(shown)).toBeInTheDocument();
   });
 });

@@ -60,10 +60,10 @@ export function PairingLinkButton({ kind, label }: { kind: 'device' | 'invite'; 
     <>
       <button
         type="button"
-        className="flex min-h-13 w-full items-center gap-3 px-4 py-2.5 text-left font-medium text-primary text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        className="flex min-h-13 w-full items-center gap-3 px-4 py-2.5 text-left text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         onClick={() => void show()}
       >
-        <Plus aria-hidden className="size-4.5 shrink-0" />
+        <Plus aria-hidden className="size-4.5 shrink-0 text-muted-foreground" />
         {label}
       </button>
       <LinkDialog

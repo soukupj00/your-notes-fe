@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AccountStatus } from '@/context/AccountProvider.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import { formatDate, MEDIUM_DATE_TIME, SHORT_TIME } from '@/lib/format.ts';
 import { clearStore, withStore } from '@/test/store.tsx';
 import DataSettingsPage from './data.tsx';
 
@@ -13,7 +14,16 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-const account = vi.hoisted(() => ({ status: 'signed-in' as AccountStatus }));
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ to, children }: { to: string; children: React.ReactNode }) => (
+    <a href={to}>{children}</a>
+  ),
+}));
+
+const account = vi.hoisted(() => ({
+  status: 'signed-in' as AccountStatus,
+  lastSyncedAt: null as string | null,
+}));
 vi.mock('@/context/AccountProvider.tsx', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/context/AccountProvider.tsx')>()),
   useAccount: () => ({ status: account.status, session: null, service: null }),
@@ -24,7 +34,7 @@ vi.mock('@/context/SyncProvider.tsx', async (importOriginal) => ({
   useSync: () => ({
     active: account.status === 'signed-in',
     status: 'idle',
-    lastSyncedAt: null,
+    lastSyncedAt: account.lastSyncedAt,
     pending: 0,
     syncNow: vi.fn(),
   }),
@@ -40,6 +50,7 @@ beforeEach(() => {
 afterEach(async () => {
   Reflect.deleteProperty(navigator, 'storage');
   account.status = 'signed-in';
+  account.lastSyncedAt = null;
   await clearStore();
 });
 
@@ -85,5 +96,18 @@ describe('the data page', () => {
 
     expect(await screen.findByText('sync.storage.storedHere 16 kB')).toBeInTheDocument();
     expect(screen.getByText('sync.storage.notPersisted')).toBeInTheDocument();
+  });
+
+  // A time alone reads as today's, and is what fits a phone in Czech.
+  it.each([
+    ['today', 0, (at: string) => `sync.syncedAt ${formatDate(at, 'en', SHORT_TIME)}`],
+    ['before today', 1, (at: string) => `sync.idle ${formatDate(at, 'en', MEDIUM_DATE_TIME)}`],
+  ])('names a last sync %s by its time or its date', async (_name, daysAgo, expected) => {
+    const at = new Date();
+    at.setDate(at.getDate() - daysAgo);
+    account.lastSyncedAt = at.toISOString();
+    mount('signed-in');
+
+    expect(await screen.findByText(expected(account.lastSyncedAt))).toBeInTheDocument();
   });
 });

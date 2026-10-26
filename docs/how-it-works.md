@@ -12,7 +12,7 @@ So the app works with no internet connection at all, and it is complete without 
 When the editor says "Saved", it means saved on this Device.
 
 The first time you save a Note, the app asks the browser to keep its storage even when space runs low.
-Settings shows whether the browser agreed, under "This device" in "Sync and backup" ("Backup and storage" on a Device with no account).
+Settings shows whether the browser agreed, under "This Device" in "Sync and backup" ("Backup and storage" on a Device with no account).
 If it did not, the browser may clear the app's storage on a full phone, so keep a backup (see below).
 
 ## Installing it

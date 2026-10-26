@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { BackupSection } from '@/components/settings/BackupSection.tsx';
 import { StorageSection, SyncSection } from '@/components/settings/SyncSection.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
-import { SettingsSubpage } from './SettingsSubpage.tsx';
+import { SettingsFrame } from './SettingsFrame.tsx';
 
 export default function DataSettingsPage() {
   const { t } = useTranslation();
@@ -10,7 +10,7 @@ export default function DataSettingsPage() {
   const local = status === 'unavailable' || status === 'signed-out';
 
   return (
-    <SettingsSubpage
+    <SettingsFrame
       titleKey={status === 'signed-in' ? 'settings.pages.dataSync' : 'settings.pages.dataLocal'}
     >
       <SyncSection />
@@ -21,6 +21,6 @@ export default function DataSettingsPage() {
           {t('settings.backup.localFootnote')}
         </p>
       )}
-    </SettingsSubpage>
+    </SettingsFrame>
   );
 }

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountProvider } from '@/context/AccountProvider.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
@@ -46,18 +46,18 @@ function stubService(session: Session | null): AccountService {
   } as Partial<AccountService> as AccountService;
 }
 
-function mount(service: AccountService | null = null) {
-  return render(
-    withStore(
-      <AccountProvider service={service}>
-        <PreferencesProvider>
-          <TourProvider>
-            <SettingsHomePage />
-          </TourProvider>
-        </PreferencesProvider>
-      </AccountProvider>
-    )
+function tree(service: AccountService | null, home = true) {
+  return withStore(
+    <AccountProvider service={service}>
+      <PreferencesProvider>
+        <TourProvider>{home && <SettingsHomePage />}</TourProvider>
+      </PreferencesProvider>
+    </AccountProvider>
   );
+}
+
+function mount(service: AccountService | null = null) {
+  return render(tree(service));
 }
 
 describe('the Settings home', () => {
@@ -80,6 +80,13 @@ describe('the Settings home', () => {
       'href',
       '/settings/data'
     );
+  });
+
+  it('has no link back up, being the top of Settings', async () => {
+    mount();
+
+    await screen.findByRole('link', { name: /settings\.pages\.general/ });
+    expect(screen.queryByRole('link', { name: 'nav.settings' })).toBeNull();
   });
 
   it('offers the Account page only when signed in', async () => {
@@ -110,6 +117,37 @@ describe('the Settings home', () => {
     await screen.findByRole('link', { name: /settings\.pages\.general/ });
     expect(screen.queryByText('settings.home.local.title')).toBeNull();
     expect(screen.queryByRole('link', { name: /ada/ })).toBeNull();
+  });
+
+  it.each([
+    ['with no server', null],
+    ['signed out', stubService(null)],
+    ['signed in', stubService(SESSION)],
+  ])('marks itself settled once the server has answered, %s', async (_name, service) => {
+    const { container } = mount(service);
+
+    await waitFor(() => expect(container.querySelector('[data-settled]')).not.toBeNull());
+  });
+
+  it('is not settled while the session check is in flight', async () => {
+    const { container } = mount({
+      session: () => new Promise(() => {}),
+    } as Partial<AccountService> as AccountService);
+
+    await screen.findByRole('link', { name: /settings\.pages\.general/ });
+    expect(container.querySelector('[data-settled]')).toBeNull();
+  });
+
+  // Every return to the Home: a card that popped in later moved every row under the user.
+  it('shows the right card on its first render once the server has answered', async () => {
+    const service = stubService(null);
+    const { rerender } = mount(service);
+    expect(await screen.findByText('settings.home.local.title')).toBeInTheDocument();
+
+    rerender(tree(service, false));
+    rerender(tree(service));
+
+    expect(screen.getByText('settings.home.local.title')).toBeInTheDocument();
   });
 
   it.each([
@@ -145,10 +183,9 @@ describe('Help', () => {
     expect(
       await screen.findByRole('button', { name: 'settings.help.replay.action' })
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /settings\.help\.docs\.label/ })).toHaveAttribute(
-      'href',
-      'https://soukupj00.github.io/your-notes-fe/'
-    );
+    const docs = screen.getByRole('link', { name: /settings\.help\.docs\.label/ });
+    expect(docs).toHaveAttribute('href', 'https://soukupj00.github.io/your-notes-fe/');
+    expect(docs).toHaveAccessibleName(expect.stringContaining('nav.newTab'));
     expect(screen.queryByRole('link', { name: /github/i })).toBeNull();
   });
 });

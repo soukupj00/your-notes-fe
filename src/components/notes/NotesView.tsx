@@ -2,7 +2,10 @@ import { lazy, type ReactNode, Suspense, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NoteContent } from '@/components/NoteContent.tsx';
 import { DesktopCaptureBar } from '@/components/notes/DesktopCaptureBar.tsx';
-import { FLOATING_BOTTOM_BAR } from '@/components/notes/floatingBottomBar.ts';
+import {
+  FLOATING_BOTTOM_BAR,
+  FLOATING_BOTTOM_BAR_CLEARANCE,
+} from '@/components/notes/floatingBottomBar.ts';
 import { QuickCaptureBar } from '@/components/notes/QuickCaptureBar.tsx';
 import { TagFilterBar } from '@/components/tags/TagFilterBar.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog.tsx';
@@ -57,7 +60,7 @@ export function NotesView({
   }, [showCapture, openNoteId, finePointer, newNoteKey, openNote]);
 
   return (
-    <div className="relative">
+    <div className={cn('relative', (toolbar || showCapture) && FLOATING_BOTTOM_BAR_CLEARANCE)}>
       {/* Visually hidden, but still the focus target a navigation lands on. */}
       <h1 ref={headingRef} tabIndex={-1} className="sr-only">
         {title}

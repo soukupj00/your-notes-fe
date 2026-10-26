@@ -9,12 +9,14 @@ export const TOUR_TARGETS = {
   capture: '[data-tour="capture"]',
   /** The Welcome's second mark: the topbar gear, Settings' one entry point. */
   settingsGear: '[data-tour="settings-gear"]',
+  // The Settings steps wait for `data-settled`: the Home's top card mounts once the server has
+  // answered and moves every row, and driver measures a cutout only once.
   /** Step 1: the Editor toolbar row on the Settings home. */
-  settingsToolbar: '[data-tour="settings-toolbar-row"]',
+  settingsToolbar: '[data-settled] [data-tour="settings-toolbar-row"]',
   /** Step 2: the Quick capture row on the Settings home. */
-  settingsQuickCapture: '[data-tour="settings-quick-capture-row"]',
+  settingsQuickCapture: '[data-settled] [data-tour="settings-quick-capture-row"]',
   /** Step 3: the data row on the Settings home, there whatever the account. */
-  settingsSync: '[data-tour="settings-data-row"]',
+  settingsSync: '[data-settled] [data-tour="settings-data-row"]',
 } as const;
 
 export type TourTargetName = keyof typeof TOUR_TARGETS;

@@ -182,6 +182,29 @@ test.describe('the Tour', () => {
     }
   });
 
+  test('cuts step 1 over the row where it lands once a slow server has answered', async ({
+    page,
+  }) => {
+    await signedOutServer(page);
+    // A slow server: the Home's top card mounts only once it answers, and pushes every row down.
+    await page.route('**/api', async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await route.fallback();
+    });
+    await page.goto('/settings');
+
+    await expectStep(page, 1);
+    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+    // Driver measures once; its cutout's top edge is the second subpath of the overlay.
+    const cutoutTop = async () => {
+      const d = (await page.locator('svg.driver-overlay path').getAttribute('d')) ?? '';
+      return Number(/M[\d.]+,([\d.]+) h/.exec(d)?.[1]) + 8;
+    };
+    const row = page.locator('[data-tour="settings-toolbar-row"]');
+    const rowTop = async () => (await row.boundingBox())?.y ?? Number.NaN;
+    await expect.poll(async () => Math.abs((await cutoutTop()) - (await rowTop()))).toBeLessThan(1);
+  });
+
   test('is not offered on a first visit straight to a subpage', async ({ page }) => {
     await page.goto('/settings/general');
 

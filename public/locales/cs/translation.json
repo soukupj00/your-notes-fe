@@ -3,6 +3,7 @@
     "primary": "Hlavní navigace",
     "open": "Otevřít navigaci",
     "back": "Zpět",
+    "newTab": "(otevře se v nové kartě)",
     "notes": "Poznámky",
     "labels": "Štítky",
     "editLabels": "Upravit štítky",
@@ -272,7 +273,10 @@
         "isDefault": "výchozí"
       },
       "family": {
-        "summary": "Zapnuto {{on}} z {{total}} tlačítek",
+        "count": "{{on}} z {{total}}",
+        "summary_one": "Zapnuto {{on}} z {{count}} tlačítka",
+        "summary_few": "Zapnuto {{on}} z {{count}} tlačítek",
+        "summary_other": "Zapnuto {{on}} z {{count}} tlačítek",
         "show": "Zobrazit skupinu {{name}}",
         "collapse": "Sloučit skupinu {{name}} do jedné nabídky",
         "collapsed": "V jedné nabídce",
@@ -288,7 +292,6 @@
       }
     },
     "shortcuts": {
-      "title": "Klávesové zkratky",
       "description": "Zkratku změníte kliknutím na její klávesy. Zkratky v Poznámkách fungují mimo otevřenou poznámku, ostatní v otevřené poznámce bez ohledu na to, která tlačítka panel zobrazuje.",
       "newNote": {
         "label": "Nová poznámka"
@@ -751,6 +754,7 @@
     "label": "Synchronizace",
     "never": "Zatím nesynchronizováno",
     "idle": "Naposledy synchronizováno {{time}}",
+    "syncedAt": "Synchronizováno v {{time}}",
     "syncing": "Synchronizuji…",
     "offline": "Offline. Změny čekají v tomto zařízení.",
     "error": "Synchronizace se nezdařila. Zkusí to znovu.",

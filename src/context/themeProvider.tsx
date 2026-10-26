@@ -49,25 +49,17 @@ export function ThemeProvider({
 
   useEffect(() => {
     const root = window.document.documentElement;
+    const colorScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = () => {
+      const resolved = theme === 'system' ? (colorScheme.matches ? 'dark' : 'light') : theme;
+      root.classList.remove('light', 'dark');
+      root.classList.add(resolved);
+      paintSystemChrome(root);
+    };
 
-    root.classList.remove('light', 'dark');
-
-    if (theme === 'system') {
-      const colorScheme = window.matchMedia('(prefers-color-scheme: dark)');
-      const applySystemTheme = () => {
-        root.classList.remove('light', 'dark');
-        root.classList.add(colorScheme.matches ? 'dark' : 'light');
-        paintSystemChrome(root);
-      };
-
-      applySystemTheme();
-      colorScheme.addEventListener('change', applySystemTheme);
-
-      return () => colorScheme.removeEventListener('change', applySystemTheme);
-    }
-
-    root.classList.add(theme);
-    paintSystemChrome(root);
+    apply();
+    colorScheme.addEventListener('change', apply);
+    return () => colorScheme.removeEventListener('change', apply);
   }, [theme]);
 
   const value = {

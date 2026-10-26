@@ -11,7 +11,7 @@ export function AccountIdentity({ session }: { session: Session }) {
     <>
       <span
         aria-hidden
-        className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary font-bold font-display text-primary-foreground text-xl"
+        className="flex size-11 shrink-0 items-center justify-center rounded-full bg-muted font-bold font-display text-foreground text-xl"
       >
         {session.username.charAt(0).toUpperCase()}
       </span>

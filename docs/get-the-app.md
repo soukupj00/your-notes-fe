@@ -19,7 +19,7 @@ The easiest way to open the app on a new Device is a Pairing Link, which also si
 
 - **Your first Device** opens the link the server prints when it first starts, and you become the Owner.
   The guide's section [Create the Owner](https://soukupj00.github.io/your-notes-be/setup#5-create-the-owner) walks through it.
-- **Each further Device of yours:** on a Device that is already signed in, open Settings with the gear icon at the top, open Account and tap "Add a device".
+- **Each further Device of yours:** on a Device that is already signed in, open Settings with the gear icon at the top, open Account and tap "Add a Device".
   Scan the QR code it shows with the new Device's camera, then tap "Sign in".
 - **Someone else in your household:** the Owner opens Settings, then Account, and taps "Invite a member".
   The other person scans the QR code and chooses their own username and password.

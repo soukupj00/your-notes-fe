@@ -165,6 +165,8 @@ By night the same identity survives as a single neon value that drives the card'
 - **Rule Control** (`oklch(62% 0.025 80)` / `oklch(52% 0.022 265)`, `--rule-control`): The border of a control whose border *is* its shape, such as a text input, a segmented track or the "no colour" swatch.
   Rule is for dividers and card edges, which never carry a shape alone, and measures only 1.32:1 against the day canvas.
   Rule Control clears WCAG 1.4.11's 3:1 non-text floor by day against both canvas (3.25:1) and raised (3.56:1).
+- **Selected** (`--selected`, a 10% ink wash by day and 17% by night): the chosen one of a few, a segment or a Picker Tile.
+  Stronger than the 9% / 12% hover wash, so the choice still reads at night, and neutral, so it never competes with the accent.
 - **Ink** (`{colors.ink-day}` / `{colors.ink-night}`), **Ink Soft** (`{colors.ink-day-soft}` / `{colors.ink-night-soft}`): Body and secondary text. Near-neutral in both themes by design.
 
 ### Named Rules
@@ -386,10 +388,11 @@ Fill it with the accent and put the on-accent colour on the glyph, exactly like 
 ### Picker Tiles
 
 A Settings choice between two or three options whose difference a picture shows faster than a word: density (a few tall bars against many short ones) and the ＋ button's side (a phone outline with the ＋ in each corner).
-A word-only choice stays a segmented control, as Theme does.
+A word-only choice stays a segmented control, as Theme does: one track in Rule Control, the chosen segment in the Selected fill with ink text and the others ink-soft, 44px tall overall.
 
 - **Shape:** equal tiles in one row, 10px (`{rounded.control}`), each a drawn picture above its label; the picture is drawn with tokens, never an image.
-- **Selected:** a 2px accent edge, the hairline border turned accent plus a 1px ring, so there is no second border weight and nothing shifts.
+- **Selected:** a 2px ink edge, the hairline border turned ink plus a 1px ring, over the Selected fill, so there is no second border weight and nothing shifts.
+  Never the accent: the tiles sit on a card (The One Accent Rule).
 - **Touch:** every tile is far above the 44px floor; the tiles are native radios, so the arrow keys move the choice.
 
 ### Navigation (rail)

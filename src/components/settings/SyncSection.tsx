@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import { useSync } from '@/context/SyncProvider.tsx';
 import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
-import { formatBytes, formatDate, MEDIUM_DATE_TIME } from '@/lib/format.ts';
+import { formatBytes, formatDate, MEDIUM_DATE_TIME, SHORT_TIME } from '@/lib/format.ts';
 import { PreferenceSwitch, SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
 type Storage = { persisted: boolean; usage?: number };
@@ -27,6 +27,12 @@ export function SyncSection() {
   const { active, status, lastSyncedAt, pending, syncNow } = useSync();
   if (!active) return null;
 
+  // A time alone reads as today's, and the full date wraps on a phone in Czech.
+  const lastSynced = (at: string) =>
+    new Date(at).toDateString() === new Date().toDateString()
+      ? t('sync.syncedAt', { time: formatDate(at, i18n.language, SHORT_TIME) })
+      : t('sync.idle', { time: formatDate(at, i18n.language, MEDIUM_DATE_TIME) });
+
   const statusText =
     status === 'syncing'
       ? t('sync.syncing')
@@ -35,7 +41,7 @@ export function SyncSection() {
         : status === 'error'
           ? t('sync.error')
           : lastSyncedAt
-            ? t('sync.idle', { time: formatDate(lastSyncedAt, i18n.language, MEDIUM_DATE_TIME) })
+            ? lastSynced(lastSyncedAt)
             : t('sync.never');
 
   return (
@@ -47,7 +53,7 @@ export function SyncSection() {
         <Button
           variant="outline"
           size="sm"
-          className="gap-1"
+          className="min-h-11 gap-1"
           disabled={status === 'syncing'}
           onClick={() => void syncNow()}
         >

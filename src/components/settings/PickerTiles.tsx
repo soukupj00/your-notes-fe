@@ -27,7 +27,7 @@ export function PickerTiles<T extends string>({
       {options.map((option) => (
         <label
           key={option.value}
-          className="flex min-h-11 cursor-pointer flex-col items-center gap-1.5 rounded-control border bg-background p-1.5 pb-2 text-center font-medium text-sm has-checked:border-primary has-focus-visible:outline-2 has-focus-visible:outline-ring has-focus-visible:outline-offset-2 has-checked:ring-1 has-checked:ring-primary"
+          className="flex min-h-11 cursor-pointer flex-col items-center gap-1.5 rounded-control border bg-background p-1.5 pb-2 text-center font-medium text-sm has-checked:border-foreground has-checked:bg-selected has-focus-visible:outline-2 has-focus-visible:outline-ring has-focus-visible:outline-offset-2 has-checked:ring-1 has-checked:ring-foreground"
         >
           <input
             type="radio"

@@ -49,6 +49,7 @@ function ResetPasswordButton({ member }: { member: Member }) {
       <Button
         variant="outline"
         size="sm"
+        className="min-h-11"
         onClick={() => {
           setPassword('');
           setError(null);

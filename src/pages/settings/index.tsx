@@ -9,17 +9,20 @@ import { SettingsSection } from '@/components/settings/SettingsSection.tsx';
 import { useServerState } from '@/components/settings/useServerState.ts';
 import { useAccount } from '@/context/AccountProvider.tsx';
 import { useFinePointer } from '@/hooks/useFinePointer.ts';
-import { SettingsSubpage } from './SettingsSubpage.tsx';
+import { SettingsFrame } from './SettingsFrame.tsx';
+
+/** The data row is named for the account: `settings.pages.<row>` and `settings.home.<row>.summary`. */
+export const DATA_ROW = { synced: 'dataSync', local: 'dataLocal' } as const;
 
 export default function SettingsHomePage() {
   const { t } = useTranslation();
   const { session } = useAccount();
   const server = useServerState();
   const finePointer = useFinePointer();
-  const data = session ? 'dataSync' : 'dataLocal';
+  const data = session ? DATA_ROW.synced : DATA_ROW.local;
 
   return (
-    <SettingsSubpage titleKey="nav.settings">
+    <SettingsFrame titleKey="nav.settings" home settled={server !== 'checking'}>
       {/* Neither card while the server has not answered, so the wrong one never flashes. */}
       {session && <HomeAccountCard session={session} />}
       {(server === 'none' || server === 'setup-needed' || server === 'signed-out') && (
@@ -74,6 +77,6 @@ export default function SettingsHomePage() {
       <HelpSection />
 
       <PwaInstallSection />
-    </SettingsSubpage>
+    </SettingsFrame>
   );
 }

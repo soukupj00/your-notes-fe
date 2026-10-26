@@ -61,7 +61,13 @@ export function SharesSection() {
       )}
       {rows.map((row) => (
         <SettingsRow key={row.id} label={row.header ?? t('share.untitled')}>
-          <Button variant="outline" size="sm" disabled={busy} onClick={() => void stop(row)}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="min-h-11"
+            disabled={busy}
+            onClick={() => void stop(row)}
+          >
             {t('share.stop')}
           </Button>
         </SettingsRow>

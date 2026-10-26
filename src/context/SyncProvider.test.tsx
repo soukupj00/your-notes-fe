@@ -88,7 +88,7 @@ async function otherDevice(server: ReturnType<typeof createFakeServer>, accountI
 describe('SyncProvider', () => {
   it('syncs once signed in and shows the last sync and what still waits', async () => {
     const { server, owner } = await mountSignedIn();
-    expect(await screen.findByText(/^sync\.idle /)).toBeVisible();
+    expect(await screen.findByText(/^sync\.syncedAt /)).toBeVisible();
 
     const id = crypto.randomUUID();
     await testStore.notes.add({ id, state: 'active', createdAt: T0, updatedAt: T0 });
@@ -100,7 +100,7 @@ describe('SyncProvider', () => {
 
   it('signs this Device out when the server forgets its Session, and keeps what it owes', async () => {
     const { server } = await mountSignedIn();
-    expect(await screen.findByText(/^sync\.idle /)).toBeVisible();
+    expect(await screen.findByText(/^sync\.syncedAt /)).toBeVisible();
     server.devices.splice(
       server.devices.findIndex((d) => d.name === 'Phone'),
       1

@@ -169,6 +169,9 @@
     --accent: color-mix(in oklab, var(--ink) 9%, transparent);
     --accent-foreground: var(--ink);
 
+    /* The chosen one of a few (a segment, a picker tile): a neutral fill, never the accent. */
+    --selected: color-mix(in oklab, var(--ink) 10%, transparent);
+
     --destructive: oklch(48% 0.18 28);
     --destructive-foreground: var(--on-accent-tone);
 
@@ -226,6 +229,7 @@
 
     --muted: color-mix(in oklab, var(--ink) 12%, var(--canvas));
     --accent: color-mix(in oklab, var(--ink) 12%, transparent);
+    --selected: color-mix(in oklab, var(--ink) 17%, transparent);
 
     --destructive: oklch(76% 0.143 25);
     --destructive-foreground: oklch(16% 0.03 25);
@@ -560,6 +564,7 @@
 
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-selected: var(--selected);
 
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
