@@ -25,10 +25,13 @@ const PRESETS: ToolbarPresetId[] = ['minimal', 'balanced', 'everything'];
  */
 type ToolbarEditorSection = ComponentType<{ title?: string; bare?: boolean; children: ReactNode }>;
 
-interface ToolbarLayoutEditorProps {
+export interface ToolbarLayoutEditorProps {
   /** On in Settings, which has no note open; off over the editor, whose real bar is live. */
   showPreview?: boolean;
   Section?: ToolbarEditorSection;
+  /** Settings keeps the open group in the URL, so Back closes it; without these the editor keeps its own. */
+  openFamilyId?: string | null;
+  onOpenFamilyChange?: (id: string | null) => void;
 }
 
 /** The sheet's own title is its `<h2>`, so a band's heading is an `<h3>`. */
@@ -57,11 +60,15 @@ function SheetSection({
 export function ToolbarLayoutEditor({
   showPreview,
   Section = SheetSection,
+  openFamilyId: requestedFamilyId = null,
+  onOpenFamilyChange,
 }: ToolbarLayoutEditorProps) {
   const { t } = useTranslation();
   const { preferences, setPreference } = usePreferences();
   const widthClass = useWidthClass();
-  const [openFamilyId, setOpenFamilyId] = useState<string | null>(null);
+  const [ownFamilyId, setOwnFamilyId] = useState<string | null>(null);
+  const openFamilyId = onOpenFamilyChange ? requestedFamilyId : ownFamilyId;
+  const setOpenFamilyId = onOpenFamilyChange ?? setOwnFamilyId;
 
   // Reconciled, because the stored blob may be empty or predate half the registry,
   // and the editor must show every family the user could turn on.

@@ -253,6 +253,54 @@ describe('drilling into a family', () => {
   });
 });
 
+describe('a family opened from outside', () => {
+  const renderControlled = (openFamilyId: string | null) => {
+    const onOpenFamilyChange = vi.fn();
+    screenWidthClass = 'wide';
+    render(
+      <ToolbarLayoutEditor openFamilyId={openFamilyId} onOpenFamilyChange={onOpenFamilyChange} />,
+      { wrapper }
+    );
+    return onOpenFamilyChange;
+  };
+
+  it('shows the leaf list of the family it is given', async () => {
+    renderControlled('style');
+
+    expect(
+      await screen.findByRole('switch', { name: 'settings.toolbar.item.show:editor.heading.h3' })
+    ).toBeInTheDocument();
+  });
+
+  it.each([
+    ['an unknown family', 'nope'],
+    ['no family', null],
+  ])('shows the family list for %s', async (_, id) => {
+    renderControlled(id);
+
+    expect(await screen.findAllByRole('switch')).toHaveLength(TOOLBAR_FAMILIES.length);
+  });
+
+  it('asks to open a row and leaves the opening to its owner', async () => {
+    const user = userEvent.setup();
+    const onOpenFamilyChange = renderControlled(null);
+
+    await user.click(
+      await screen.findByRole('button', { name: /^editor\.toolbar\.family\.style/ })
+    );
+    expect(onOpenFamilyChange).toHaveBeenLastCalledWith('style');
+    expect(screen.getAllByRole('switch')).toHaveLength(TOOLBAR_FAMILIES.length);
+  });
+
+  it('asks to close from its Back', async () => {
+    const user = userEvent.setup();
+    const onOpenFamilyChange = renderControlled('style');
+
+    await user.click(await screen.findByRole('button', { name: 'settings.toolbar.back' }));
+    expect(onOpenFamilyChange).toHaveBeenLastCalledWith(null);
+  });
+});
+
 describe('presets', () => {
   it('stamps a whole Layout, over whatever was there', async () => {
     const user = userEvent.setup();

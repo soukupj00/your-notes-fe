@@ -34,6 +34,21 @@ test('Back on a subpage opened cold goes up to the Settings home', async ({ page
   await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeAttached();
 });
 
+// The open group is in the URL, so the phone's app-bar Back and a browser's Back both close it.
+test('Back from an open toolbar group returns to the group list', async ({ page, isMobile }) => {
+  await page.goto('/settings');
+  await page.getByRole('link', { name: /Editor toolbar/ }).click();
+  await page.getByRole('button', { name: /^Text style/ }).click();
+  await expect(page.getByRole('switch', { name: /Heading 3/ })).toBeVisible();
+
+  if (isMobile)
+    await page.locator('[data-slot="app-bar"]').getByRole('button', { name: 'Back' }).click();
+  else await page.goBack();
+
+  await expect(page).toHaveURL(/\/settings\/toolbar$/);
+  await expect(page.getByRole('heading', { name: 'Groups, in bar order' })).toBeVisible();
+});
+
 test('Keyboard shortcuts opened on a phone goes to the Settings home', async ({
   page,
   isMobile,

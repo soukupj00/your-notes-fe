@@ -93,6 +93,7 @@ State that lives in the URL, not in a context:
 - **Search and filters** are typed TanStack search params (`q`, `sort`, `dir`, `tags`), validated by `src/lib/note-search-params.ts` and read through `useNoteSearchState()`.
 - **The open Note** is the `note` param ([ADR 0014](./docs/adr/0014-the-open-note-lives-in-the-url.md), `useOpenNote()`), so the platform Back button closes the editor.
   A Note's id is minted when its editor opens, not on first save: the id is the dialog's React key, so swapping it mid-session would remount the editor under the user's cursor.
+- **The open toolbar group** in Settings is the `group` param of `/settings/toolbar`, so Back closes it; the sheet over the editor keeps its own.
 
 Two objects travel with an open Note:
 
