@@ -196,9 +196,6 @@
     }
   },
   "settings": {
-    "appearance": {
-      "title": "Vzhled"
-    },
     "locale": {
       "label": "Jazyk"
     },
@@ -209,29 +206,21 @@
       "dark": "Tmavý",
       "toggle": "Přepnout motiv"
     },
-    "language": {
-      "title": "Jazyk"
-    },
     "density": {
       "label": "Hustota",
-      "description": "Kompaktní zobrazí na obrazovce více poznámek a text vysází o něco menší.",
       "comfortable": "Pohodlná",
       "compact": "Kompaktní"
     },
     "reducedMotion": {
-      "label": "Animace",
-      "description": "Omezené animace vypne, Plné je nechá zapnuté.",
-      "system": "Zařízení",
-      "always": "Omezené",
-      "never": "Plné"
+      "label": "Omezit animace",
+      "description": "Výchozí stav přebírá z nastavení zařízení."
     },
     "colorBlind": {
       "label": "Paleta pro barvoslepé",
-      "description": "Přebarví barvy poznámek a štítků tak, aby šlo všech devět rozlišit. Funguje s oběma motivy."
+      "description": "Barvy poznámek zůstanou snadno rozlišitelné."
     },
     "sinkCheckedItems": {
-      "label": "Přesouvat splněné položky na konec",
-      "description": "V seznamu úkolů se zaškrtnuté položky zobrazují pod nezaškrtnutými. Pořadí, ve kterém jste je napsali, zůstává."
+      "label": "Zaškrtnuté položky se přesouvají na konec seznamu"
     },
     "backup": {
       "title": "Záloha",
@@ -390,6 +379,11 @@
         "backUp": "Zálohovat",
         "setupGuide": "Návod k nastavení"
       }
+    },
+    "general": {
+      "languageAndTheme": "Jazyk a motiv",
+      "display": "Zobrazení",
+      "checklists": "Seznamy úkolů"
     }
   },
   "pwa": {

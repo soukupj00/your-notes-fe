@@ -383,6 +383,15 @@ The primary capture control and the most important button on a phone.
 
 Fill it with the accent and put the on-accent colour on the glyph, exactly like the active rail item. The shadow stays, as depth on top of a shape rather than as a substitute for one.
 
+### Picker Tiles
+
+A Settings choice between two or three options whose difference a picture shows faster than a word: density (a few tall bars against many short ones) and the ＋ button's side (a phone outline with the ＋ in each corner).
+A word-only choice stays a segmented control, as Theme does.
+
+- **Shape:** equal tiles in one row, 10px (`{rounded.control}`), each a drawn picture above its label; the picture is drawn with tokens, never an image.
+- **Selected:** a 2px accent edge, the hairline border turned accent plus a 1px ring, so there is no second border weight and nothing shifts.
+- **Touch:** every tile is far above the 44px floor; the tiles are native radios, so the arrow keys move the choice.
+
 ### Navigation (rail)
 
 - **Style:** Vertical list of icon+label rows, 10px radius, above a labels section listing every tag with its identity-coloured dot

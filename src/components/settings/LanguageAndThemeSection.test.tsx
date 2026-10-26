@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/i18n';
-import { LanguageSection } from './LanguageSection.tsx';
+import { LanguageAndThemeSection } from './LanguageAndThemeSection.tsx';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -20,9 +20,9 @@ beforeEach(() => {
   vi.mocked(i18n.changeLanguage).mockClear();
 });
 
-describe('LanguageSection', () => {
+describe('LanguageAndThemeSection', () => {
   it('shows the active language by its own name', () => {
-    render(<LanguageSection />);
+    render(<LanguageAndThemeSection />);
 
     expect(screen.getByRole('combobox', { name: 'settings.locale.label' })).toHaveTextContent(
       'English'
@@ -31,7 +31,7 @@ describe('LanguageSection', () => {
 
   it('offers every shipped locale, named in itself and never the debug pseudo-locale', async () => {
     const user = userEvent.setup();
-    render(<LanguageSection />);
+    render(<LanguageAndThemeSection />);
 
     await user.click(screen.getByRole('combobox', { name: 'settings.locale.label' }));
 
@@ -44,7 +44,7 @@ describe('LanguageSection', () => {
 
   it('switches the language on selection', async () => {
     const user = userEvent.setup();
-    render(<LanguageSection />);
+    render(<LanguageAndThemeSection />);
 
     await user.click(screen.getByRole('combobox', { name: 'settings.locale.label' }));
     await user.click(await screen.findByRole('option', { name: /Čeština/ }));

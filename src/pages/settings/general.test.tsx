@@ -43,6 +43,36 @@ function mount() {
   );
 }
 
+describe('the General page', () => {
+  it('has the language and theme, display and checklist sections, in order', async () => {
+    mount();
+
+    expect((await screen.findAllByRole('heading', { level: 2 })).map((h) => h.textContent)).toEqual(
+      [
+        'settings.general.languageAndTheme',
+        'settings.general.display',
+        'settings.general.checklists',
+      ]
+    );
+  });
+
+  it('names the checklist switch by what it does and gives it no description', async () => {
+    mount();
+
+    expect(
+      await screen.findByRole('switch', { name: 'settings.sinkCheckedItems.label' })
+    ).toBeVisible();
+    expect(screen.queryByText('settings.sinkCheckedItems.description')).toBeNull();
+  });
+
+  it('makes the colour-blind palette a plain switch with its description', async () => {
+    mount();
+
+    const toggle = await screen.findByRole('switch', { name: 'settings.colorBlind.label' });
+    expect(toggle.parentElement).toHaveTextContent('settings.colorBlind.description');
+  });
+});
+
 describe('the colour-blind palette', () => {
   it('persists its toggle', async () => {
     mount();

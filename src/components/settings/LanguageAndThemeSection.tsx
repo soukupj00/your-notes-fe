@@ -7,20 +7,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select.tsx';
+import { type Theme, useTheme } from '@/context/themeProvider.tsx';
 import i18n from '@/i18n';
 import { listLocales } from '@/lib/locales.ts';
-import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
+import { SegmentedSetting, SettingsRow, SettingsSection } from './SettingsSection.tsx';
+
+const THEMES: Theme[] = ['system', 'light', 'dark'];
 
 /**
  * Not a `PreferencesProvider` field: i18next's detector owns the language and keeps it in
  * `localStorage` itself (CLAUDE.md, i18n). A Select, because the list outgrows a segmented control.
  */
-export function LanguageSection() {
+export function LanguageAndThemeSection() {
   const { t } = useTranslation();
   const locales = listLocales();
 
   return (
-    <SettingsSection title={t('settings.language.title')}>
+    <SettingsSection title={t('settings.general.languageAndTheme')}>
       <SettingsRow label={t('settings.locale.label')}>
         <Select
           value={i18n.resolvedLanguage}
@@ -41,8 +44,22 @@ export function LanguageSection() {
           </SelectContent>
         </Select>
       </SettingsRow>
+      <ThemeSetting />
     </SettingsSection>
   );
 }
 
-export default LanguageSection;
+/** Not a Preference: `ThemeProvider` keeps the theme under its own storage key (CLAUDE.md, Theming). */
+function ThemeSetting() {
+  const { t } = useTranslation();
+  const { theme, setTheme } = useTheme();
+
+  return (
+    <SegmentedSetting
+      label={t('settings.theme.label')}
+      value={theme}
+      options={THEMES.map((option) => ({ value: option, label: t(`settings.theme.${option}`) }))}
+      onChange={setTheme}
+    />
+  );
+}

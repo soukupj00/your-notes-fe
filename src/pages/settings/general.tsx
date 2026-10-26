@@ -1,12 +1,23 @@
-import { AppearanceSection } from '@/components/settings/AppearanceSection.tsx';
-import { LanguageSection } from '@/components/settings/LanguageSection.tsx';
+import { useTranslation } from 'react-i18next';
+import { DisplaySection } from '@/components/settings/DisplaySection.tsx';
+import { LanguageAndThemeSection } from '@/components/settings/LanguageAndThemeSection.tsx';
+import { PreferenceSwitch, SettingsSection } from '@/components/settings/SettingsSection.tsx';
 import { SettingsSubpage } from './SettingsSubpage.tsx';
 
 export default function GeneralSettingsPage() {
+  const { t } = useTranslation();
+
   return (
     <SettingsSubpage titleKey="settings.pages.general">
-      <LanguageSection />
-      <AppearanceSection />
+      <LanguageAndThemeSection />
+      <DisplaySection />
+      <SettingsSection title={t('settings.general.checklists')}>
+        <PreferenceSwitch
+          pref="sinkCheckedItems"
+          keys="settings.sinkCheckedItems"
+          describe={false}
+        />
+      </SettingsSection>
     </SettingsSubpage>
   );
 }

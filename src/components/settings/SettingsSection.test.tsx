@@ -8,7 +8,6 @@ import {
   PREFERENCES_STORAGE_KEY,
   type Preferences,
   PreferencesProvider,
-  REDUCED_MOTION_OPTIONS,
 } from '@/context/PreferencesProvider.tsx';
 import { PreferenceSegmented, PreferenceSwitch } from './SettingsSection.tsx';
 
@@ -33,7 +32,6 @@ afterEach(() => {
 describe('PreferenceSwitch', () => {
   it.each([
     ['colorBlind', 'settings.colorBlind', false],
-    ['sinkCheckedItems', 'settings.sinkCheckedItems', true],
     ['keepEverything', 'sync.keepEverything', false],
   ] as const)(
     '%s starts at its default, says why, and writes the flip',
@@ -50,10 +48,26 @@ describe('PreferenceSwitch', () => {
   );
 });
 
+describe('PreferenceSwitch without a description', () => {
+  it('renders the label alone', () => {
+    render(
+      <PreferenceSwitch
+        pref="sinkCheckedItems"
+        keys="settings.sinkCheckedItems"
+        describe={false}
+      />,
+      {
+        wrapper,
+      }
+    );
+
+    expect(screen.getByRole('switch', { name: 'settings.sinkCheckedItems.label' })).toBeVisible();
+    expect(screen.queryByText('settings.sinkCheckedItems.description')).toBeNull();
+  });
+});
+
 describe('PreferenceSegmented', () => {
   it.each([
-    ['density', DENSITY_OPTIONS, 'settings.density', 'comfortable', 'compact'],
-    ['reducedMotion', REDUCED_MOTION_OPTIONS, 'settings.reducedMotion', 'system', 'always'],
     [
       'noteButtonAlignment',
       NOTE_BUTTON_ALIGNMENT_OPTIONS,

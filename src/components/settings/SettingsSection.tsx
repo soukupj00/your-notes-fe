@@ -84,17 +84,25 @@ type PreferenceOf<T> = {
 }[PreferenceKey];
 
 /**
- * A switch bound to a boolean Preference. `keys` is the i18n base: `<keys>.label` and
- * `<keys>.description`. `touch-reach`, not `touch-target`: a switch keeps its own shape (the 44px
- * Touch Rule).
+ * A switch bound to a boolean Preference. `keys` is the i18n base: `<keys>.label` and, unless
+ * `describe` is off, `<keys>.description`. `touch-reach`, not `touch-target`: a switch keeps its
+ * own shape (the 44px Touch Rule).
  */
-export function PreferenceSwitch({ pref, keys }: { pref: PreferenceOf<boolean>; keys: string }) {
+export function PreferenceSwitch({
+  pref,
+  keys,
+  describe = true,
+}: {
+  pref: PreferenceOf<boolean>;
+  keys: string;
+  describe?: boolean;
+}) {
   const { t } = useTranslation();
   const { preferences, setPreference } = usePreferences();
   const label = t(`${keys}.label`);
 
   return (
-    <SettingsRow label={label} description={t(`${keys}.description`)}>
+    <SettingsRow label={label} description={describe ? t(`${keys}.description`) : undefined}>
       <Switch
         className="touch-reach"
         checked={preferences[pref]}
