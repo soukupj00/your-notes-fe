@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { useFinePointer } from '@/hooks/useFinePointer.ts';
+import { useAnyFinePointer } from '@/hooks/useFinePointer.ts';
 import { isHardwareKey } from '@/lib/hardware-key.ts';
 
 // `sessionStorage`: a reload keeps it, while a new tab or launch, where the keyboard may be
@@ -50,11 +50,11 @@ export function hardwareKeySeen(): boolean {
 }
 
 /**
- * Whether to offer keyboard hints, keys and the Shortcuts page: a Fine pointer, or a hardware
+ * Whether to offer keyboard hints, keys and the Shortcuts page: any Fine pointer, or a hardware
  * key pressed this session (ADR 0028). Layout never reads this, nor does the Width Class.
  */
 export function useKeyboardAffordances(): boolean {
-  const finePointer = useFinePointer();
+  const finePointer = useAnyFinePointer();
   const seen = useSyncExternalStore(subscribe, hardwareKeySeen, () => false);
   return finePointer || seen;
 }

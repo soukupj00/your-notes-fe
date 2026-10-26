@@ -11,7 +11,9 @@ No media query reports a keyboard, so the pointer was standing in for one.
 
 ## Decision
 
-**Keyboard affordances are offered to a Fine pointer, or once a hardware key has been pressed this session.**
+**Keyboard affordances are offered when any pointer is Fine, or once a hardware key has been pressed this session.**
+
+- Any pointer, not the primary one (`any-pointer: fine`): an iPad with a trackpad case or a Surface in tablet mode reports a Coarse primary, yet its trackpad comes with keys.
 
 - `useKeyboardAffordances` answers it; `isHardwareKey` (`lib/hardware-key.ts`) decides what counts.
 - A key counts when it can only have come from a hardware keyboard: a printable key, an arrow, Tab or Escape outside a field, or any key with Ctrl, Cmd or Alt held.
@@ -31,6 +33,6 @@ No media query reports a keyboard, so the pointer was standing in for one.
 
 ## Consequences
 
-- On a touch device the hints appear after the first hardware key, never before it.
+- On a touch-only device the hints appear after the first hardware key, never before it.
 - A reload keeps them, so the Shortcuts page opened cold after a reload renders; a new tab starts without them until its first key.
 - The Width Class is unchanged: a tablet with a keyboard keeps the Compact toolbar, whose 44px slots answer the touch screen, not the keys.

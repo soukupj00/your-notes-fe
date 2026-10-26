@@ -55,8 +55,11 @@ describe('useKeyboardAffordances', () => {
     expect(result.current).toBe(true);
   });
 
-  it('is on for a fine pointer with no key pressed', async () => {
-    setViewport(1024, { finePointer: true });
+  it.each([
+    ['a fine pointer', { finePointer: true }],
+    ['a touch primary with a trackpad beside it', { finePointer: false, anyFinePointer: true }],
+  ])('is on for %s with no key pressed', async (_, pointer) => {
+    setViewport(1024, pointer);
     const { result } = renderHook(await load());
     expect(result.current).toBe(true);
   });

@@ -11,7 +11,9 @@ Dotykový tablet v pouzdře s klávesnicí je případ, který mu uniká: jeho h
 
 ## Rozhodnutí
 
-**Ovládací prvky pro klávesnici se nabízejí přesnému ukazateli, nebo jakmile se v této relaci stiskne hardwarová klávesa.**
+**Ovládací prvky pro klávesnici se nabízejí, když je přesný kterýkoli ukazatel, nebo jakmile se v této relaci stiskne hardwarová klávesa.**
+
+- Kterýkoli ukazatel, ne jen hlavní (`any-pointer: fine`): iPad v pouzdře s trackpadem nebo Surface v režimu tabletu hlásí hlavní ukazatel jako hrubý, a přesto má jejich trackpad vedle sebe klávesy.
 
 - Odpovídá na to `useKeyboardAffordances`; co se počítá, rozhoduje `isHardwareKey` (`lib/hardware-key.ts`).
 - Klávesa se počítá, když mohla přijít jen z hardwarové klávesnice: tisknutelná klávesa, šipka, Tab nebo Escape mimo pole, nebo jakákoli klávesa s drženým Ctrl, Cmd nebo Alt.
@@ -31,6 +33,6 @@ Dotykový tablet v pouzdře s klávesnicí je případ, který mu uniká: jeho h
 
 ## Důsledky
 
-- Na dotykovém zařízení se nápovědy objeví po první hardwarové klávese, nikdy dřív.
+- Na čistě dotykovém zařízení se nápovědy objeví po první hardwarové klávese, nikdy dřív.
 - Obnovení stránky je zachová, takže stránka Klávesové zkratky otevřená po obnovení se vykreslí; nová karta začíná bez nich až do své první klávesy.
 - Šířková třída se nemění: tablet s klávesnicí si nechá úzkou lištu editoru, jejíž 44px pozice odpovídají dotykové obrazovce, ne klávesám.
