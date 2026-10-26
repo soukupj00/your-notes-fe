@@ -164,7 +164,7 @@ describe('the Settings home', () => {
   ])('names the data row for a Device %s', async (_name, session, label, summary) => {
     mount(stubService(session));
 
-    const row = await screen.findByRole('link', { name: new RegExp(label) });
+    const row = await screen.findByRole('link', { name: (name) => name.includes(label) });
     expect(row).toHaveAttribute('href', '/settings/data');
     expect(row).toHaveTextContent(summary);
   });
