@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+import { signedOutServer } from './helpers';
 
 /**
  * The first-run guides' acceptance test (ADR 0024): the Welcome at launch, the Tour on the first
@@ -22,28 +23,6 @@ async function seenWelcome(page: Page) {
     `if (!localStorage.getItem('preferences')) localStorage.setItem('preferences', ${JSON.stringify(
       JSON.stringify({ version: 2, welcomeSeenAt: '2026-01-01T00:00:00.000Z' })
     )});`
-  );
-}
-
-/** A server that answered and has nobody signed in on this Device. */
-async function signedOutServer(page: Page) {
-  const link = (href: string) => ({ href });
-  const root = {
-    _links: Object.fromEntries(
-      ['self', 'health', 'docs', 'openapi', 'session', 'devices', 'codes', 'accounts']
-        .concat(['changes', 'stream', 'blobs', 'shares'])
-        .map((rel) => [rel, link(`/api/${rel}`)])
-    ),
-  };
-  await page.route('**/api', (route) =>
-    route.fulfill({ contentType: 'application/hal+json', body: JSON.stringify(root) })
-  );
-  await page.route('**/api/session', (route) =>
-    route.fulfill({
-      status: 401,
-      contentType: 'application/problem+json',
-      body: JSON.stringify({ type: 'about:blank', title: 'Not signed in', status: 401 }),
-    })
   );
 }
 

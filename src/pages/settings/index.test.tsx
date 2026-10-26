@@ -88,12 +88,53 @@ describe('the Settings home', () => {
     expect(screen.queryByRole('link', { name: /settings\.pages\.account/ })).toBeNull();
   });
 
-  it('links to the Account page when signed in', async () => {
+  it('opens the Account page from the account card when signed in', async () => {
     mount(stubService(SESSION));
 
-    expect(await screen.findByRole('link', { name: /settings\.pages\.account/ })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /ada/ })).toHaveAttribute(
       'href',
       '/settings/account'
     );
+    expect(screen.queryByText('settings.home.local.title')).toBeNull();
+  });
+
+  it('says the notes stay on this device when nothing is signed in', async () => {
+    mount();
+
+    expect(await screen.findByText('settings.home.local.title')).toBeInTheDocument();
+  });
+
+  it('shows neither card while the session check is in flight', async () => {
+    mount({ session: () => new Promise(() => {}) } as Partial<AccountService> as AccountService);
+
+    await screen.findByRole('link', { name: /settings\.pages\.general/ });
+    expect(screen.queryByText('settings.home.local.title')).toBeNull();
+    expect(screen.queryByRole('link', { name: /ada/ })).toBeNull();
+  });
+
+  it.each([
+    ['signed in', SESSION, 'settings.pages.dataSync', 'settings.home.dataSync.summary'],
+    ['not signed in', null, 'settings.pages.dataLocal', 'settings.home.dataLocal.summary'],
+  ])('names the data row for a Device %s', async (_name, session, label, summary) => {
+    mount(stubService(session));
+
+    const row = await screen.findByRole('link', { name: new RegExp(label) });
+    expect(row).toHaveAttribute('href', '/settings/data');
+    expect(row).toHaveTextContent(summary);
+  });
+});
+
+describe('Help', () => {
+  it('replays the tutorial and opens the docs, with no GitHub link', async () => {
+    mount();
+
+    expect(
+      await screen.findByRole('button', { name: 'settings.help.replay.action' })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /settings\.help\.docs\.label/ })).toHaveAttribute(
+      'href',
+      'https://soukupj00.github.io/your-notes-fe/'
+    );
+    expect(screen.queryByRole('link', { name: /github/i })).toBeNull();
   });
 });

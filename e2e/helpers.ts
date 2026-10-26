@@ -16,6 +16,26 @@ export async function skipTour(page: Page) {
 }
 
 /**
+ * A server that answered with nobody signed in on this Device; `setupNeeded` keeps the root's
+ * `setup` link, which a server drops once it has an Owner.
+ */
+export async function signedOutServer(page: Page, { setupNeeded = false } = {}) {
+  const rels = ['self', 'health', 'docs', 'openapi', 'session', 'devices', 'codes', 'accounts'];
+  rels.push('changes', 'stream', 'blobs', 'shares', ...(setupNeeded ? ['setup'] : []));
+  const root = { _links: Object.fromEntries(rels.map((rel) => [rel, { href: `/api/${rel}` }])) };
+  await page.route('**/api', (route) =>
+    route.fulfill({ contentType: 'application/hal+json', body: JSON.stringify(root) })
+  );
+  await page.route('**/api/session', (route) =>
+    route.fulfill({
+      status: 401,
+      contentType: 'application/problem+json',
+      body: JSON.stringify({ type: 'about:blank', title: 'Not signed in', status: 401 }),
+    })
+  );
+}
+
+/**
  * Whichever capture surface this width shows: the dial below `sm:`, the
  * desktop bar above it. Plain text is the bar's own field there, so it has no
  * button named like the dial's; every other start is an icon with that name.

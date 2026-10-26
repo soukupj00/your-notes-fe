@@ -340,16 +340,10 @@
     "help": {
       "title": "Nápověda",
       "replay": {
-        "label": "Průvodce",
-        "description": "Tři kroky v Nastavení.",
         "action": "Spustit průvodce znovu"
       },
       "docs": {
         "label": "Dokumentace",
-        "description": "Jak aplikace funguje a jak spustit vlastní server.",
-        "open": "Otevřít dokumentaci",
-        "github": "GitHub",
-        "setup": "Nastavit vlastní server",
         "setupUrl": "https://soukupj00.github.io/your-notes-be/cs/setup"
       }
     },
@@ -389,14 +383,19 @@
       },
       "dataLocal": {
         "summary": "Export, obnova, úložiště"
+      },
+      "local": {
+        "title": "Poznámky zůstávají v tomto zařízení",
+        "syncWithServer": "Synchronizovat s vlastním serverem",
+        "backUp": "Zálohovat",
+        "setupGuide": "Návod k nastavení"
       }
     }
   },
   "pwa": {
     "install": {
-      "title": "Aplikace",
       "label": "Nainstalovat YourNotes",
-      "description": "Přidejte si YourNotes do zařízení pro rychlý přístup v samostatném okně.",
+      "description": "Otevře se ve vlastním okně.",
       "action": "Nainstalovat"
     },
     "update": {
@@ -679,9 +678,6 @@
     },
     "section": {
       "title": "Účet",
-      "signedOutLabel": "Přihlásit se k serveru",
-      "signedOutDescription": "Synchronizujte poznámky z tohoto zařízení se svým serverem YourNotes.",
-      "setupGuide": "Jak zprovoznit server",
       "signIn": "Přihlásit se",
       "signInDescription": "Použijte uživatelské jméno a heslo, které jste si pro účet zvolili.",
       "signedInLabel": "Účet: {{username}}",

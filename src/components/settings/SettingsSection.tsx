@@ -7,7 +7,6 @@ import {
   type Preferences,
   usePreferences,
 } from '@/context/PreferencesProvider.tsx';
-import { cn } from '@/lib/utils.ts';
 
 /** Sections are the page's only structure: new controls join one rather than invent a layout. */
 export function SettingsSection({ title, children }: { title?: string; children: ReactNode }) {
@@ -30,9 +29,10 @@ export function SettingsRow({
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-      {/* Capped so a long description cannot push the control under it on a wide row. */}
-      <span className={cn('flex flex-col', children != null && 'max-w-[65%]')}>
+    // The label wraps rather than the control: a control dropped under its label reads as the
+    // next row's.
+    <div className="flex items-center justify-between gap-3 px-4 py-3 *:last:shrink-0">
+      <span className="flex min-w-0 flex-1 flex-col">
         <span className="text-sm">{label}</span>
         {description && <span className="text-muted-foreground text-xs">{description}</span>}
       </span>

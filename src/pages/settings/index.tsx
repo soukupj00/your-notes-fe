@@ -1,29 +1,29 @@
-import { Keyboard, Plus, RefreshCw, SlidersHorizontal, Type, UserRound } from 'lucide-react';
+import { Database, Keyboard, Plus, RefreshCw, SlidersHorizontal, Type } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { HelpSection } from '@/components/settings/HelpSection.tsx';
+import { HomeAccountCard } from '@/components/settings/HomeAccountCard.tsx';
+import { LocalOnlyCard } from '@/components/settings/LocalOnlyCard.tsx';
 import { PwaInstallSection } from '@/components/settings/PwaInstallSection.tsx';
 import { SettingsLinkRow } from '@/components/settings/SettingsLinkRow.tsx';
 import { SettingsSection } from '@/components/settings/SettingsSection.tsx';
+import { useServerState } from '@/components/settings/useServerState.ts';
 import { useAccount } from '@/context/AccountProvider.tsx';
 import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { SettingsSubpage } from './SettingsSubpage.tsx';
 
 export default function SettingsHomePage() {
   const { t } = useTranslation();
-  const { status } = useAccount();
+  const { session } = useAccount();
+  const server = useServerState();
   const finePointer = useFinePointer();
-  const data = status === 'signed-in' ? 'dataSync' : 'dataLocal';
+  const data = session ? 'dataSync' : 'dataLocal';
 
   return (
     <SettingsSubpage titleKey="nav.settings">
-      {status === 'signed-in' && (
-        <SettingsSection>
-          <SettingsLinkRow
-            to="/settings/account"
-            icon={<UserRound />}
-            label={t('settings.pages.account')}
-          />
-        </SettingsSection>
+      {/* Neither card while the server has not answered, so the wrong one never flashes. */}
+      {session && <HomeAccountCard session={session} />}
+      {(server === 'none' || server === 'setup-needed' || server === 'signed-out') && (
+        <LocalOnlyCard state={server} />
       )}
 
       <SettingsSection>
@@ -49,7 +49,7 @@ export default function SettingsHomePage() {
         />
         <SettingsLinkRow
           to="/settings/data"
-          icon={<RefreshCw />}
+          icon={session ? <RefreshCw /> : <Database />}
           label={t(`settings.pages.${data}`)}
           summary={t(`settings.home.${data}.summary`)}
           tourTarget="settings-data-row"

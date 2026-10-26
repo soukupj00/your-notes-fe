@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AccountProvider } from '@/context/AccountProvider.tsx';
+import { AccountProvider, useAccount } from '@/context/AccountProvider.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { SyncProvider } from '@/context/SyncProvider.tsx';
 import { createHalAccountService } from '@/data/http/HalAccountService.ts';
@@ -11,6 +11,7 @@ import { createFakeServer, type FakeServer } from '@/test/fakeServer.ts';
 import { clearStore, testStore, withStore } from '@/test/store.tsx';
 import { AccountSection } from './AccountSection.tsx';
 import { DevicesSection } from './DevicesSection.tsx';
+import { LocalOnlyCard } from './LocalOnlyCard.tsx';
 import { MembersSection } from './MembersSection.tsx';
 
 const language = vi.hoisted(() => ({ current: 'en' }));
@@ -36,6 +37,12 @@ afterEach(async () => {
 
 const T0 = '2026-01-01T00:00:00.000Z';
 
+/** Where a signed-out Device signs in: the Settings home's card. */
+function SignInWhenSignedOut() {
+  const { status } = useAccount();
+  return status === 'signed-out' ? <LocalOnlyCard state="signed-out" /> : null;
+}
+
 /** No `remote`: the sync loop stays off, but what the store owes still counts. */
 function mount(server: FakeServer) {
   const service = createHalAccountService(createHalClient(server.fetch));
@@ -44,6 +51,7 @@ function mount(server: FakeServer) {
       <AccountProvider service={service}>
         <PreferencesProvider>
           <SyncProvider>
+            <SignInWhenSignedOut />
             <AccountSection />
             <DevicesSection />
             <MembersSection />
@@ -86,15 +94,6 @@ describe('Settings account sections', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('points a signed-out Device at the server setup guide', async () => {
-    mount(createFakeServer());
-
-    expect(await screen.findByRole('link', { name: 'account.section.setupGuide' })).toHaveAttribute(
-      'href',
-      'https://soukupj00.github.io/your-notes-be/setup'
-    );
-  });
-
   it('signs in, saying so when the password is wrong, then signs out', async () => {
     const server = createFakeServer();
     server.seedOwner('ada', 'correct horse');
@@ -109,7 +108,7 @@ describe('Settings account sections', () => {
 
     expect(await screen.findByText('account.section.signedInLabel ada')).toBeVisible();
     await signOut();
-    expect(await screen.findByText('account.section.signedOutLabel')).toBeVisible();
+    expect(await screen.findByRole('button', { name: 'account.section.signIn' })).toBeVisible();
     expect(screen.queryByText('account.devices.title')).not.toBeInTheDocument();
   });
 
@@ -258,7 +257,7 @@ describe('Settings account sections', () => {
     await signIn('ada', 'correct horse');
 
     await signOut();
-    expect(await screen.findByText('account.section.signedOutLabel')).toBeVisible();
+    expect(await screen.findByRole('button', { name: 'account.section.signIn' })).toBeVisible();
     expect(await testStore.notes.list()).toEqual([]);
   });
 

@@ -340,16 +340,10 @@
     "help": {
       "title": "Help",
       "replay": {
-        "label": "Tutorial",
-        "description": "Three steps through Settings.",
         "action": "Replay tutorial"
       },
       "docs": {
         "label": "Documentation",
-        "description": "How it works, and how to run your own server.",
-        "open": "Open the docs",
-        "github": "GitHub",
-        "setup": "Set up your own server",
         "setupUrl": "https://soukupj00.github.io/your-notes-be/setup"
       }
     },
@@ -389,14 +383,19 @@
       },
       "dataLocal": {
         "summary": "Export, restore, storage"
+      },
+      "local": {
+        "title": "Notes stay on this device",
+        "syncWithServer": "Sync with your own server",
+        "backUp": "Back up",
+        "setupGuide": "Setup guide"
       }
     }
   },
   "pwa": {
     "install": {
-      "title": "App",
       "label": "Install YourNotes",
-      "description": "Add YourNotes to your device for quick access in its own window.",
+      "description": "Opens in its own window.",
       "action": "Install"
     },
     "update": {
@@ -676,9 +675,6 @@
     },
     "section": {
       "title": "Account",
-      "signedOutLabel": "Sign in to your server",
-      "signedOutDescription": "Sync this Device's Notes with your YourNotes server.",
-      "setupGuide": "How to set up a server",
       "signIn": "Sign in",
       "signInDescription": "Use the username and password you chose for your account.",
       "signedInLabel": "Signed in as {{username}}",

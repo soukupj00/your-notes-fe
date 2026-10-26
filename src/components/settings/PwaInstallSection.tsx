@@ -11,9 +11,9 @@ export function PwaInstallSection() {
   if (!canInstall) return null;
 
   return (
-    <SettingsSection title={t('pwa.install.title')}>
+    <SettingsSection>
       <SettingsRow label={t('pwa.install.label')} description={t('pwa.install.description')}>
-        <Button type="button" variant="outline" size="sm" onClick={() => void install()}>
+        <Button type="button" variant="outline" className="min-h-11" onClick={() => void install()}>
           {t('pwa.install.action')}
         </Button>
       </SettingsRow>
