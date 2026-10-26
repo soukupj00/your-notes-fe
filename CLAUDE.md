@@ -147,6 +147,7 @@ It writes nothing to the viewer's IndexedDB and never asks the server for a Sess
 ### Nav shell (`src/components/layout.tsx`, `src/components/nav/`)
 
 The shell is the vendored shadcn `Sidebar` ([ADR 0010](./docs/adr/0010-shadcn-sidebar-as-nav-shell.md)): an icon-collapsible sidebar from `sm:` up, a left drawer below it.
+Until the user toggles it the sidebar follows the width, collapsed below 1024px (`useSidebarOpen`), so a tablet's Feed header keeps one row.
 `navItems.ts` is the single list of destinations, so the two cannot drift.
 Settings is not a sidebar destination; the topbar gear is its one entry point.
 A Settings subpage goes back up through the app bar's Back below `sm:`, and from `sm:` up, where that bar is gone, through the link above its title (`SettingsFrame`).
@@ -156,7 +157,7 @@ Their order and the dial's side are Preferences.
 Each Start carries at most one Intent.
 Image and Camera are picker Starts: `useStartPicker` opens the OS picker inside the tap itself, because the tap's user activation does not survive the route change to the editor.
 A desktop browser ignores `capture`, so for a Fine pointer the desktop bar shows File (any file, inserted as a File attachment) in Camera's slot.
-From `sm:` up the navbar's search box sits over that bar at its width; where the header cannot fit it between its controls (an open sidebar on a tablet), it takes a row of its own, decided by a container query on the header.
+From `sm:` up the navbar's search box sits over that bar at one shared width, `--feed-column` (`globals.css`), measured in two containers of equal width; where it would get less than 20rem (an open sidebar at 768px), the `feed-row` variant gives search a row of its own.
 Keyboard affordances (shortcut chips and hints, the new-note key, the Shortcuts page) follow `useKeyboardAffordances`: a Fine pointer, or a hardware key pressed this session ([ADR 0028](./docs/adr/0028-a-hardware-key-earns-keyboard-affordances.md)).
 The **new-note key** (`N` by default; a Shortcut the user changes or clears in Settings, for WCAG 2.1.4) is the same act as clicking the bar, so `NotesView` listens for it only where the bar is shown; it asks at the press, so a tablet's first N both arms the Shortcuts page and opens a Note.
 It and the search key are matched by `isAppShortcut` (`lib/app-shortcut.ts`) on the one canonical key name (ADR 0026), and never fire inside a dialog or menu, while a modal such as the Welcome is open, or, as a bare key, in a field.

@@ -83,49 +83,52 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
   }, [placeholder, reducedMotion, revealed]);
 
   return (
-    // The Welcome marks this or its `QuickCaptureBar` twin.
-    <div
-      data-tour="capture"
-      className="@container mx-auto mb-6 hidden max-w-lg items-center gap-1 rounded-card border bg-card pr-2 shadow-rest transition-shadow hover:shadow-lift sm:flex"
-    >
-      <button
-        type="button"
-        onClick={() => onStart()}
-        aria-keyshortcuts={newNoteKey ? ariaKeyShortcuts(newNoteKey) : undefined}
-        className="flex min-h-11 flex-1 cursor-text items-center gap-3 px-4 py-3 text-left text-body text-muted-foreground transition-colors hover:text-foreground"
+    // As wide as the navbar's search container, so `--feed-column` agrees with the search box.
+    <div className="@container mb-6 hidden sm:block">
+      {/* The Welcome marks this or its `QuickCaptureBar` twin. */}
+      <div
+        data-tour="capture"
+        className="@container mx-auto flex feed-row:max-w-(--feed-column) max-w-lg items-center gap-1 rounded-card border bg-card pr-2 shadow-rest transition-shadow hover:shadow-lift"
       >
-        {/* Assistive tech gets one stable label, not a prompt renaming itself every five seconds.
+        <button
+          type="button"
+          onClick={() => onStart()}
+          aria-keyshortcuts={newNoteKey ? ariaKeyShortcuts(newNoteKey) : undefined}
+          className="flex min-h-11 min-w-0 flex-1 cursor-text items-center gap-3 px-4 py-3 text-left text-body text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {/* Assistive tech gets one stable label, not a prompt renaming itself every five seconds.
             Tests read `data-prompt`: the MotionValue writes the visible text outside React. */}
-        <m.span aria-hidden data-testid="capture-prompt" data-prompt={key}>
-          {typed}
-        </m.span>
-        <span className="sr-only">{t('notes.createPlaceholder')}</span>
-        {/* Only once there is a keyboard (ADR 0028), and only where the longest prompt still fits
+          <m.span aria-hidden data-testid="capture-prompt" data-prompt={key} className="truncate">
+            {typed}
+          </m.span>
+          <span className="sr-only">{t('notes.createPlaceholder')}</span>
+          {/* Only once there is a keyboard (ADR 0028), and only where the longest prompt still fits
             beside it; `aria-keyshortcuts` tells assistive tech either way. */}
-        {newNoteKey && showShortcut && (
-          <kbd
-            aria-hidden
-            className="ml-auto @md:block hidden select-none rounded border bg-muted px-1.5 py-0.5 font-medium font-sans text-label text-muted-foreground tracking-normal"
-          >
-            {comboLabel(newNoteKey)}
-          </kbd>
-        )}
-      </button>
+          {newNoteKey && showShortcut && (
+            <kbd
+              aria-hidden
+              className="ml-auto @md:block hidden select-none rounded border bg-muted px-1.5 py-0.5 font-medium font-sans text-label text-muted-foreground tracking-normal"
+            >
+              {comboLabel(newNoteKey)}
+            </kbd>
+          )}
+        </button>
 
-      {actions.map((action) => (
-        <IconTooltip key={action.key} label={t(action.labelKey)}>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label={t(action.labelKey)}
-            onClick={() => picker.start(action)}
-          >
-            <action.Icon className="size-4" />
-          </Button>
-        </IconTooltip>
-      ))}
-      {picker.input}
+        {actions.map((action) => (
+          <IconTooltip key={action.key} label={t(action.labelKey)}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={t(action.labelKey)}
+              onClick={() => picker.start(action)}
+            >
+              <action.Icon className="size-4" />
+            </Button>
+          </IconTooltip>
+        ))}
+        {picker.input}
+      </div>
     </div>
   );
 }

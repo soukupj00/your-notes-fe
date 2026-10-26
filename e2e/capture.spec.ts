@@ -59,20 +59,36 @@ test.describe('capture starts', () => {
     test.skip(isMobile, 'the phone has no capture bar, only the dial');
     const search = page.getByRole('searchbox').locator('..');
     const bar = page.locator('[data-tour="capture"]:visible');
+    const trigger = page.locator('header [data-sidebar="trigger"]:visible');
 
-    // Tablet widths too: the open sidebar leaves the header too narrow for search between its
-    // controls there, which once put the box off centre at 768 and 1024.
+    // The sidebar follows the width until toggled: collapsed below 1024px, open from there. Every
+    // case but 700 and an open sidebar at 768 keeps the header on one row. Retried, because the
+    // sidebar slides.
+    const expectOverBar = (width: number, oneRow: boolean) =>
+      expect(async () => {
+        const [s, b, t] = [
+          await search.boundingBox(),
+          await bar.boundingBox(),
+          await trigger.boundingBox(),
+        ];
+        if (!s || !b || !t) throw new Error('all three must be on screen');
+        expect(Math.abs(s.x - b.x), `left edge at ${width}px`).toBeLessThanOrEqual(1);
+        expect(
+          Math.abs(s.x + s.width - (b.x + b.width)),
+          `right edge at ${width}px`
+        ).toBeLessThanOrEqual(1);
+        const sameRow = Math.abs(s.y + s.height / 2 - (t.y + t.height / 2)) <= 1;
+        expect(sameRow, `one row at ${width}px`).toBe(oneRow);
+      }).toPass();
+
     for (const width of [700, 768, 1024, 1280]) {
       await page.setViewportSize({ width, height: 800 });
-      await bar.waitFor();
-      const [s, b] = [await search.boundingBox(), await bar.boundingBox()];
-      if (!s || !b) throw new Error('both must be on screen');
-      expect(Math.abs(s.width - b.width), `width at ${width}px`).toBeLessThanOrEqual(1);
-      expect(
-        Math.abs(s.x + s.width / 2 - (b.x + b.width / 2)),
-        `centre at ${width}px`
-      ).toBeLessThanOrEqual(1);
+      await expectOverBar(width, width !== 700);
     }
+
+    await page.setViewportSize({ width: 768, height: 800 });
+    await trigger.click();
+    await expectOverBar(768, false);
   });
 
   test('Voice note starts recording at once, whatever the toolbar shows', async ({

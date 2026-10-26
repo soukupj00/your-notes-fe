@@ -37,61 +37,62 @@ function Navbar() {
   return (
     // z-10 matches the sidebar panel and stays under QuickCaptureBar's z-40. The safe
     // insets pad the header itself, so `bg-chrome` paints under the status bar.
-    <header className="nav-scroll-shadow @container sticky top-0 z-10 bg-chrome pt-[var(--safe-top)] pr-[var(--safe-right)] pl-[var(--safe-left)] sm:border-b">
-      {/* Search sits over the capture bar at its width (`max-w-lg`), so it needs 32rem between two
-          10rem sides, the right group's width on a coarse pointer. The open sidebar decides whether
-          the header has that, so it is a container query; narrower, search takes a row of its own. */}
-      <div className="hidden @min-[56rem]:grid-cols-[minmax(10rem,1fr)_32rem_minmax(10rem,1fr)] grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-2 px-4 py-2 sm:grid">
-        <SidebarTrigger className="justify-self-start" />
+    <header className="nav-scroll-shadow sticky top-0 z-10 bg-chrome pt-[var(--safe-top)] pr-[var(--safe-right)] pl-[var(--safe-left)] sm:border-b">
+      {/* Search sits over the capture bar at its width (`--feed-column`), so this container is as
+          wide as the bar's. The open sidebar decides whether one row fits; else search drops below. */}
+      <div className="@container hidden px-4 py-2 sm:block">
+        <div className="grid feed-row:grid-cols-[minmax(var(--header-side),1fr)_var(--feed-column)_minmax(var(--header-side),1fr)] grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-2">
+          <SidebarTrigger className="justify-self-start" />
 
-        {searchable && (
-          <div className="@min-[56rem]:col-2 col-span-3 @min-[56rem]:row-start-1 row-start-2 mx-auto w-full max-w-lg">
-            <SearchInput />
-          </div>
-        )}
+          {searchable && (
+            <div className="col-span-3 feed-row:col-span-1 feed-row:col-start-2 feed-row:row-start-1 row-start-2 mx-auto w-full max-w-lg">
+              <SearchInput />
+            </div>
+          )}
 
-        <div className="col-start-3 flex items-center gap-3 justify-self-end">
-          <DropdownMenu>
-            <IconTooltip label={t('settings.locale.label')}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={CHROME_ICON_BUTTON}
-                  aria-label={t('settings.locale.label')}
-                >
-                  <Globe />
-                </Button>
-              </DropdownMenuTrigger>
+          <div className="col-start-3 flex items-center gap-3 justify-self-end">
+            <DropdownMenu>
+              <IconTooltip label={t('settings.locale.label')}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={CHROME_ICON_BUTTON}
+                    aria-label={t('settings.locale.label')}
+                  >
+                    <Globe />
+                  </Button>
+                </DropdownMenuTrigger>
+              </IconTooltip>
+              <DropdownMenuContent align="end">
+                <DropdownMenuGroup>
+                  {locales.map((locale) => {
+                    const isActive = i18n.resolvedLanguage === locale.code;
+                    return (
+                      <DropdownMenuItem
+                        key={locale.code}
+                        onClick={() => {
+                          void i18n.changeLanguage(locale.code);
+                        }}
+                      >
+                        <Check className={isActive ? 'opacity-100' : 'opacity-0'} />
+                        <LocaleFlag locale={locale} />
+                        {locale.name}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <ThemeModeToggleButton />
+            <IconTooltip label={t('nav.settings')}>
+              <Button variant="ghost" size="icon" className={CHROME_ICON_BUTTON} asChild>
+                <Link to="/settings" aria-label={t('nav.settings')} data-tour="settings-gear">
+                  <Settings />
+                </Link>
+              </Button>
             </IconTooltip>
-            <DropdownMenuContent align="end">
-              <DropdownMenuGroup>
-                {locales.map((locale) => {
-                  const isActive = i18n.resolvedLanguage === locale.code;
-                  return (
-                    <DropdownMenuItem
-                      key={locale.code}
-                      onClick={() => {
-                        void i18n.changeLanguage(locale.code);
-                      }}
-                    >
-                      <Check className={isActive ? 'opacity-100' : 'opacity-0'} />
-                      <LocaleFlag locale={locale} />
-                      {locale.name}
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <ThemeModeToggleButton />
-          <IconTooltip label={t('nav.settings')}>
-            <Button variant="ghost" size="icon" className={CHROME_ICON_BUTTON} asChild>
-              <Link to="/settings" aria-label={t('nav.settings')} data-tour="settings-gear">
-                <Settings />
-              </Link>
-            </Button>
-          </IconTooltip>
+          </div>
         </div>
       </div>
 
