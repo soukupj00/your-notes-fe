@@ -129,6 +129,25 @@ describe('skip to content', () => {
   });
 });
 
+describe('bottom padding', () => {
+  const DIAL_CLEARANCE = 'pb-[calc(6rem+var(--safe-bottom))]';
+
+  it.each([
+    ['/', true],
+    ['/?q=milk', true],
+    ['/trash', true],
+    ['/archive', false],
+    ['/settings', false],
+  ])('on %s clears a floating bar: %s', async (path, clears) => {
+    renderRoute(path);
+    await screen.findByRole('heading', { level: 1 });
+
+    const main = document.getElementById('main-content');
+    if (clears) expect(main).toHaveClass(DIAL_CLEARANCE);
+    else expect(main).not.toHaveClass(DIAL_CLEARANCE);
+  });
+});
+
 describe('collapse persistence', () => {
   it('survives a remount', async () => {
     await seedTag();
