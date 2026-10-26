@@ -21,12 +21,11 @@ function useStorage(): Storage | null {
   return storage;
 }
 
-/** "Is my data safe here?" answered in one block (PLAN.md M5). */
-export function SyncStatusSection() {
+/** Signed in only: how far Sync has got, and how much of each Attachment comes down. */
+export function SyncSection() {
   const { t, i18n } = useTranslation();
-  const storage = useStorage();
   const { active, status, lastSyncedAt, pending, syncNow } = useSync();
-  if (!storage && !active) return null;
+  if (!active) return null;
 
   const statusText =
     status === 'syncing'
@@ -38,39 +37,49 @@ export function SyncStatusSection() {
           : lastSyncedAt
             ? t('sync.idle', { time: formatDate(lastSyncedAt, i18n.language, MEDIUM_DATE_TIME) })
             : t('sync.never');
-  const waiting = pending > 0 ? ` · ${t('sync.pending', { count: pending })}` : '';
-  // A fresh library is tens of kilobytes; "0 B used" would read as "nothing is stored".
-  const used =
-    storage?.usage === undefined ? null : formatBytes(Math.max(storage.usage, 1000), i18n.language);
 
   return (
-    <SettingsSection title={t('sync.title')}>
-      {storage && (
-        <SettingsRow
-          label={t('sync.storage.label')}
-          description={
-            (storage.persisted ? t('sync.storage.persisted') : t('sync.storage.notPersisted')) +
-            (used ? ` ${t('sync.storage.used', { size: used })}` : '')
-          }
+    <SettingsSection title={t('sync.label')}>
+      <SettingsRow
+        label={statusText}
+        description={pending > 0 ? t('sync.pending', { count: pending }) : undefined}
+      >
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1"
+          disabled={status === 'syncing'}
+          onClick={() => void syncNow()}
         >
-          {null}
-        </SettingsRow>
-      )}
-      {active && (
-        <SettingsRow label={t('sync.label')} description={statusText + waiting}>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1"
-            disabled={status === 'syncing'}
-            onClick={() => void syncNow()}
-          >
-            {status === 'syncing' && <Spinner />}
-            {t('sync.syncNow')}
-          </Button>
-        </SettingsRow>
-      )}
-      {active && <PreferenceSwitch pref="keepEverything" keys="sync.keepEverything" />}
+          {status === 'syncing' && <Spinner />}
+          {t('sync.syncNow')}
+        </Button>
+      </SettingsRow>
+      <PreferenceSwitch pref="keepEverything" keys="sync.keepEverything" />
+    </SettingsSection>
+  );
+}
+
+/** "Is my data safe here?" (PLAN.md M5), where the browser can say. */
+export function StorageSection() {
+  const { t, i18n } = useTranslation();
+  const storage = useStorage();
+  if (!storage) return null;
+
+  // A fresh library is tens of kilobytes; "0 B" would read as "nothing is stored".
+  const used =
+    storage.usage === undefined ? null : formatBytes(Math.max(storage.usage, 1000), i18n.language);
+
+  return (
+    <SettingsSection title={t('sync.storage.title')}>
+      <SettingsRow
+        label={used ? t('sync.storage.storedHere', { size: used }) : t('sync.storage.label')}
+        description={
+          storage.persisted ? t('sync.storage.persisted') : t('sync.storage.notPersisted')
+        }
+      >
+        {null}
+      </SettingsRow>
     </SettingsSection>
   );
 }

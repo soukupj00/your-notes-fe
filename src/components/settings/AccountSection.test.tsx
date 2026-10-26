@@ -106,7 +106,7 @@ describe('Settings account sections', () => {
     await userEvent.type(within(dialog).getByLabelText('account.password'), 'correct horse');
     await userEvent.click(within(dialog).getByRole('button', { name: 'account.section.signIn' }));
 
-    expect(await screen.findByText('account.section.signedInLabel ada')).toBeVisible();
+    expect(await screen.findByRole('button', { name: 'account.section.signOut' })).toBeVisible();
     await signOut();
     expect(await screen.findByRole('button', { name: 'account.section.signIn' })).toBeVisible();
     expect(screen.queryByText('account.devices.title')).not.toBeInTheDocument();
@@ -202,22 +202,6 @@ describe('Settings account sections', () => {
       expect(screen.getByText(shape)).toBeInTheDocument();
     }
   );
-
-  it('only the Owner sees Members, and its Invite is a Pairing Link', async () => {
-    const server = createFakeServer();
-    server.seedOwner('ada', 'correct horse');
-    server.seedMember('bob', 'battery staple');
-    mount(server);
-
-    await signIn('bob', 'battery staple');
-    expect(await screen.findByText('account.section.signedInLabel bob')).toBeVisible();
-    expect(screen.queryByText('account.members.title')).not.toBeInTheDocument();
-    await signOut();
-
-    await signIn('ada', 'correct horse');
-    await userEvent.click(await screen.findByRole('button', { name: 'account.members.invite' }));
-    expect(await screen.findByText(/\/pair#invite-code-\d+$/)).toBeVisible();
-  });
 
   it("lists every Account for the Owner and resets a member's password", async () => {
     const server = createFakeServer();

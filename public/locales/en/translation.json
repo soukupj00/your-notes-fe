@@ -228,12 +228,12 @@
       "imported": "Backup restored.",
       "export": {
         "label": "Export a backup",
-        "description": "Downloads a .zip with every note, label and attachment.",
+        "description": "Everything, as one .zip.",
         "action": "Export"
       },
       "import": {
-        "label": "Restore from a backup",
-        "description": "Replaces everything currently stored. You can save a backup of it first.",
+        "label": "Restore a backup",
+        "description": "Replaces everything here.",
         "action": "Import"
       },
       "confirmImport": {
@@ -253,7 +253,8 @@
       },
       "importCancelled": "Import cancelled. Nothing was changed.",
       "exporting": "Building your backup…",
-      "importing": "Reading the backup…"
+      "importing": "Reading the backup…",
+      "localFootnote": "Without a server, a backup is the only copy outside this browser."
     },
     "toolbar": {
       "title": "Editor toolbar",
@@ -669,10 +670,8 @@
       "title": "Account",
       "signIn": "Sign in",
       "signInDescription": "Use the username and password you chose for your account.",
-      "signedInLabel": "Signed in as {{username}}",
       "owner": "Owner",
       "member": "Member",
-      "thisDevice": "This Device: {{name}}",
       "signOut": "Sign out",
       "signedOut": "Signed out.",
       "eraseTitle": "Sign out and erase this Device?",
@@ -692,13 +691,11 @@
       "removeTitle": "Remove {{name}}?",
       "removeDescription": "It is signed out and nothing else changes.",
       "removed": "Device removed.",
-      "add": "Add a Device",
-      "addDescription": "Shows a Pairing Link to scan with the new Device's camera."
+      "add": "Add a device"
     },
     "members": {
       "title": "Members",
-      "invite": "Invite",
-      "inviteDescription": "Someone in your household gets their own account. Neither of you sees the other's Notes.",
+      "invite": "Invite a member",
       "you": "You",
       "joined": "Joined {{date}}",
       "reset": "Set a new password",
@@ -739,12 +736,12 @@
     "conflicts_other": "{{count}} conflicts kept as copies",
     "showConflicts": "Show",
     "keptNewer": "Kept the newer version from your server.",
-    "title": "Storage and sync",
     "storage": {
       "label": "Stored on this Device",
       "persisted": "The browser keeps it even when space runs low.",
-      "notPersisted": "The browser may clear it when space runs low. Keep a backup.",
-      "used": "{{size}} used"
+      "notPersisted": "The browser may clear it when space runs low.",
+      "title": "This device",
+      "storedHere": "{{size}} stored here"
     },
     "label": "Sync",
     "never": "Not synced yet",
@@ -758,8 +755,8 @@
     "signedOut": "This Device is no longer signed in. Sign in again to sync; your changes wait here.",
     "tooLarge": "{{name}} is too large to sync",
     "keepEverything": {
-      "label": "Keep everything on this device",
-      "description": "Download every attachment after each sync, not just previews. Uses more storage."
+      "label": "Keep every attachment",
+      "description": "Not just previews. Uses more storage."
     }
   },
   "share": {
@@ -772,8 +769,8 @@
     "notSynced": "This Note has not reached your server yet. Try again in a moment.",
     "untitled": "Untitled Note",
     "section": {
-      "title": "Shared Notes",
-      "none": "No Note is shared."
+      "title": "Shared notes",
+      "none": "None shared"
     },
     "page": {
       "loading": "Opening the Note…",

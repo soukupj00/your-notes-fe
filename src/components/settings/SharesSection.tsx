@@ -56,7 +56,9 @@ export function SharesSection() {
 
   return (
     <SettingsSection title={t('share.section.title')}>
-      {rows.length === 0 && <SettingsRow label={t('share.section.none')}>{null}</SettingsRow>}
+      {rows.length === 0 && (
+        <p className="px-4 py-3 text-muted-foreground text-sm">{t('share.section.none')}</p>
+      )}
       {rows.map((row) => (
         <SettingsRow key={row.id} label={row.header ?? t('share.untitled')}>
           <Button variant="outline" size="sm" disabled={busy} onClick={() => void stop(row)}>

@@ -36,6 +36,76 @@ export async function signedOutServer(page: Page, { setupNeeded = false } = {}) 
 }
 
 /**
+ * A server where this Device is signed in as the Owner, alone, until it signs out. Sync's own
+ * requests are refused: these tests are about the Settings around it, not a run.
+ */
+export async function signedInServer(page: Page) {
+  const [owner, device] = [crypto.randomUUID(), crypto.randomUUID()];
+  let signedIn = true;
+  const hal = (body: object, status = 200) => ({
+    status,
+    contentType: 'application/hal+json',
+    body: JSON.stringify(body),
+  });
+  const list = (rel: string, items: object[] = []) =>
+    hal({ _links: { self: { href: `/api/${rel}` } }, _embedded: { [rel]: items } });
+  await signedOutServer(page);
+  await page.route('**/api/{changes,blobs}**', (route) => route.abort());
+  await page.route('**/api/session', async (route) => {
+    if (route.request().method() === 'DELETE') {
+      signedIn = false;
+      return route.fulfill({ status: 204 });
+    }
+    if (!signedIn) return route.fallback();
+    await route.fulfill(
+      hal({
+        account: { id: owner, username: 'ada', role: 'owner' },
+        device: { id: device, name: 'Phone' },
+        _links: {
+          self: { href: '/api/session' },
+          devices: { href: '/api/devices' },
+          codes: { href: '/api/codes' },
+          changes: { href: '/api/changes' },
+          blobs: { href: '/api/blobs/{id}', templated: true },
+          shares: { href: '/api/shares' },
+        },
+      })
+    );
+  });
+  await page.route('**/api/devices', (route) =>
+    route.fulfill(
+      list('devices', [
+        {
+          id: device,
+          name: 'Phone',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          lastSeenAt: '2026-01-01T00:00:00.000Z',
+          current: true,
+          _links: { self: { href: `/api/devices/${device}` } },
+        },
+      ])
+    )
+  );
+  await page.route('**/api/shares', (route) => route.fulfill(list('shares')));
+  await page.route('**/api/accounts', (route) =>
+    route.fulfill(
+      list('accounts', [
+        {
+          id: owner,
+          username: 'ada',
+          role: 'owner',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          _links: {
+            self: { href: `/api/accounts/${owner}` },
+            password: { href: `/api/accounts/${owner}/password` },
+          },
+        },
+      ])
+    )
+  );
+}
+
+/**
  * Whichever capture surface this width shows: the dial below `sm:`, the
  * desktop bar above it. Plain text is the bar's own field there, so it has no
  * button named like the dial's; every other start is an icon with that name.

@@ -98,8 +98,8 @@ function ResetPasswordButton({ member }: { member: Member }) {
 }
 
 /**
- * Owner only (backend `docs/setup.md` sections 7 and 10). A member who joins appears
- * on the next visit.
+ * Owner only (backend `docs/setup.md` sections 7 and 10): a member's session would get 403.
+ * A member who joins appears on the next visit.
  */
 export function MembersSection() {
   const { t, i18n } = useTranslation();
@@ -121,10 +121,12 @@ export function MembersSection() {
   );
 
   if (!isOwner) return null;
+  // The Owner alone on the server would be a list of one, themselves.
+  const listed = members.some((member) => member.id !== session.accountId) ? members : [];
 
   return (
     <SettingsSection title={t('account.members.title')}>
-      {members.map((member) => (
+      {listed.map((member) => (
         <SettingsRow
           key={member.id}
           label={member.username}
@@ -140,12 +142,7 @@ export function MembersSection() {
           {member.id !== session.accountId && <ResetPasswordButton member={member} />}
         </SettingsRow>
       ))}
-      <SettingsRow
-        label={t('account.members.invite')}
-        description={t('account.members.inviteDescription')}
-      >
-        <PairingLinkButton kind="invite" label={t('account.members.invite')} />
-      </SettingsRow>
+      <PairingLinkButton kind="invite" label={t('account.members.invite')} />
     </SettingsSection>
   );
 }

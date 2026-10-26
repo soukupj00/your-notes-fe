@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SyncStatusSection } from '@/components/settings/SyncStatusSection.tsx';
+import { SyncSection } from '@/components/settings/SyncSection.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { createHalAccountService } from '@/data/http/HalAccountService.ts';
 import { createHalRemote } from '@/data/http/HalRemote.ts';
@@ -51,7 +51,7 @@ async function mountSignedIn() {
       <AccountProvider service={service} remote={createHalRemote(hal)}>
         <PreferencesProvider>
           <SyncProvider>
-            <SyncStatusSection />
+            <SyncSection />
           </SyncProvider>
         </PreferencesProvider>
       </AccountProvider>
@@ -156,7 +156,7 @@ describe('SyncProvider', () => {
         <AccountProvider service={null}>
           <PreferencesProvider>
             <SyncProvider>
-              <SyncStatusSection />
+              <SyncSection />
             </SyncProvider>
           </PreferencesProvider>
         </AccountProvider>

@@ -81,12 +81,7 @@ export function DevicesSection() {
           )}
         </SettingsRow>
       ))}
-      <SettingsRow
-        label={t('account.devices.add')}
-        description={t('account.devices.addDescription')}
-      >
-        <PairingLinkButton kind="device" label={t('account.devices.add')} />
-      </SettingsRow>
+      <PairingLinkButton kind="device" label={t('account.devices.add')} />
 
       <ConfirmDialog
         open={removing !== null}

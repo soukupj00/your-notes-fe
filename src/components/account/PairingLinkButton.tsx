@@ -1,7 +1,7 @@
+import { Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { encode } from 'uqr';
-import { Button } from '@/components/ui/button.tsx';
 import { LinkDialog } from '@/components/ui/LinkDialog.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
 import { pairingLink } from '@/contract/index.ts';
@@ -29,7 +29,10 @@ export function PairingQr({ value, label }: { value: string; label: string }) {
   );
 }
 
-/** Mints a fresh code each time it opens, because each one works once and for ten minutes. */
+/**
+ * A whole row of a Settings card. Mints a fresh code each time it opens, because each one works
+ * once and for ten minutes.
+ */
 export function PairingLinkButton({ kind, label }: { kind: 'device' | 'invite'; label: string }) {
   const { t } = useTranslation();
   const { service } = useAccount();
@@ -55,9 +58,14 @@ export function PairingLinkButton({ kind, label }: { kind: 'device' | 'invite'; 
 
   return (
     <>
-      <Button variant="outline" size="sm" onClick={() => void show()}>
+      <button
+        type="button"
+        className="flex min-h-13 w-full items-center gap-3 px-4 py-2.5 text-left font-medium text-primary text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        onClick={() => void show()}
+      >
+        <Plus aria-hidden className="size-4.5 shrink-0" />
         {label}
-      </Button>
+      </button>
       <LinkDialog
         open={open}
         onOpenChange={setOpen}

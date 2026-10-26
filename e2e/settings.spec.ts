@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { signedOutServer, skipTour } from './helpers';
+import { signedInServer, signedOutServer, skipTour } from './helpers';
 
 test.beforeEach(async ({ page }) => skipTour(page));
 
@@ -58,4 +58,17 @@ test.describe('the Settings home without an account', () => {
     await card(page).getByRole('button', { name: 'Sign in' }).click();
     await expect(page.getByRole('dialog', { name: 'Sign in' })).toBeVisible();
   });
+});
+
+test('signing out on the Account page lands on the Settings home', async ({ page }) => {
+  await signedInServer(page);
+  await page.goto('/settings/account');
+
+  await expect(page.getByRole('button', { name: 'Add a device' })).toBeVisible();
+  await expect(page.getByText('None shared')).toBeVisible();
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Sign out and erase' }).click();
+
+  await expect(page).toHaveURL(/\/settings$/);
+  await expect(page.getByText('Notes stay on this device')).toBeVisible();
 });

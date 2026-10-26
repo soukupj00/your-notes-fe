@@ -228,12 +228,12 @@
       "imported": "Záloha obnovena.",
       "export": {
         "label": "Exportovat zálohu",
-        "description": "Stáhne .zip se všemi poznámkami, štítky a přílohami.",
+        "description": "Vše v jednom souboru .zip.",
         "action": "Exportovat"
       },
       "import": {
-        "label": "Obnovit ze zálohy",
-        "description": "Nahradí vše, co je nyní uloženo. Nejprve si můžete uložit jeho zálohu.",
+        "label": "Obnovit zálohu",
+        "description": "Nahradí vše, co je zde uloženo.",
         "action": "Importovat"
       },
       "confirmImport": {
@@ -253,7 +253,8 @@
       },
       "importCancelled": "Import zrušen. Nic nebylo změněno.",
       "exporting": "Vytvářím zálohu…",
-      "importing": "Načítám zálohu…"
+      "importing": "Načítám zálohu…",
+      "localFootnote": "Bez serveru je záloha jedinou kopií mimo tento prohlížeč."
     },
     "toolbar": {
       "title": "Panel nástrojů editoru",
@@ -672,10 +673,8 @@
       "title": "Účet",
       "signIn": "Přihlásit se",
       "signInDescription": "Použijte uživatelské jméno a heslo, které jste si pro účet zvolili.",
-      "signedInLabel": "Účet: {{username}}",
       "owner": "Vlastník",
       "member": "Člen",
-      "thisDevice": "Toto zařízení: {{name}}",
       "signOut": "Odhlásit se",
       "signedOut": "Odhlášeno.",
       "eraseTitle": "Odhlásit se a vymazat toto zařízení?",
@@ -696,13 +695,11 @@
       "removeTitle": "Odebrat {{name}}?",
       "removeDescription": "Zařízení se odhlásí a nic jiného se nezmění.",
       "removed": "Zařízení odebráno.",
-      "add": "Přidat zařízení",
-      "addDescription": "Zobrazí párovací odkaz, který naskenujete fotoaparátem nového zařízení."
+      "add": "Přidat zařízení"
     },
     "members": {
       "title": "Členové",
-      "invite": "Pozvat",
-      "inviteDescription": "Někdo z vaší domácnosti dostane vlastní účet. Nikdo z vás neuvidí poznámky toho druhého.",
+      "invite": "Pozvat člena",
       "you": "Vy",
       "joined": "Od {{date}}",
       "reset": "Nastavit nové heslo",
@@ -744,12 +741,12 @@
     "conflicts_other": "{{count}} konfliktů uloženo jako kopie",
     "showConflicts": "Zobrazit",
     "keptNewer": "Ponechána novější verze z vašeho serveru.",
-    "title": "Úložiště a synchronizace",
     "storage": {
       "label": "Uloženo v tomto zařízení",
       "persisted": "Prohlížeč data zachová, i když dochází místo.",
-      "notPersisted": "Prohlížeč může data smazat, když dojde místo. Mějte zálohu.",
-      "used": "Využito {{size}}"
+      "notPersisted": "Prohlížeč může data smazat, když dojde místo.",
+      "title": "Toto zařízení",
+      "storedHere": "Uloženo zde: {{size}}"
     },
     "label": "Synchronizace",
     "never": "Zatím nesynchronizováno",
@@ -764,8 +761,8 @@
     "signedOut": "Toto zařízení už není přihlášené. Přihlaste se znovu a synchronizace bude pokračovat; změny zůstávají tady.",
     "tooLarge": "{{name}} je příliš velký na synchronizaci",
     "keepEverything": {
-      "label": "Mít vše v tomto zařízení",
-      "description": "Po každé synchronizaci stáhnout všechny přílohy, nejen náhledy. Zabere víc místa."
+      "label": "Uchovávat všechny přílohy",
+      "description": "Nejen náhledy. Zabere víc místa."
     }
   },
   "share": {
@@ -779,7 +776,7 @@
     "untitled": "Poznámka bez názvu",
     "section": {
       "title": "Sdílené poznámky",
-      "none": "Žádná poznámka se nesdílí."
+      "none": "Nic se nesdílí"
     },
     "page": {
       "loading": "Otevírám poznámku…",

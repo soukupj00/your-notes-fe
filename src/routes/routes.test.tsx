@@ -233,6 +233,12 @@ describe('settings page', () => {
     await waitFor(() => expect(document.documentElement).toHaveClass('light'));
     expect(localStorage.getItem('vite-ui-theme')).toBe('light');
   });
+
+  it('leaves the Account page for Settings when no account is signed in', async () => {
+    const router = renderAt('/settings/account');
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/settings'));
+  });
 });
 
 describe('trash view', () => {
