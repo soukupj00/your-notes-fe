@@ -19,9 +19,9 @@ The easiest way to open the app on a new Device is a Pairing Link, which also si
 
 - **Your first Device** opens the link the server prints when it first starts, and you become the Owner.
   The guide's section [Create the Owner](https://soukupj00.github.io/your-notes-be/setup#5-create-the-owner) walks through it.
-- **Each further Device of yours:** on a Device that is already signed in, open Settings with the gear icon at the top, scroll to Devices and tap "Add a Device".
+- **Each further Device of yours:** on a Device that is already signed in, open Settings with the gear icon at the top, open Account and tap "Add a device".
   Scan the QR code it shows with the new Device's camera, then tap "Sign in".
-- **Someone else in your household:** the Owner opens Settings, scrolls to Members and taps "Invite".
+- **Someone else in your household:** the Owner opens Settings, then Account, and taps "Invite a member".
   The other person scans the QR code and chooses their own username and password.
 
 A Pairing Link works once and for ten minutes; if it runs out, ask for a new one.
@@ -48,7 +48,7 @@ YourNotes is now an icon on your home screen.
 
 - **Chrome or Edge:** click the install icon at the right end of the address bar, then **Install**.
   In Chrome it is a small screen with an arrow.
-  When the browser allows it, the app offers the same in Settings, under App, with an **Install** button.
+  When the browser allows it, the Settings home offers the same as "Install YourNotes", with an **Install** button.
 - **Safari on a Mac:** choose **File**, then **Add to Dock**.
 - **Firefox** does not install web apps; keep YourNotes in a tab, where everything works the same.
 

@@ -51,6 +51,6 @@ Poznámky leží vedle sebe na jedné stěně, takže jich vidíte mnoho najedno
 </div>
 
 Odškrtnuté položky propadají na konec seznamu a pořadí, v jakém jste je napsali, zůstává zachováno.
-Způsoby, jak začít poznámku, od seznamu úkolů po fotku nebo hlasovou nahrávku, si sami vyberete a seřadíte v Nastavení.
+Způsoby, jak začít poznámku, od seznamu úkolů po fotku nebo hlasovou nahrávku, si sami vyberete a seřadíte v Nastavení, v části Rychlé psaní.
 
 Server, který udržuje vaše zařízení v souladu, má [vlastní web](https://soukupj00.github.io/your-notes-be/cs/) s návodem krok za krokem, jak ho nastavit doma.

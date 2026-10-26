@@ -51,6 +51,6 @@ Notes sit side by side on one wall, so you can see many at once and pick the one
 </div>
 
 Ticked items sink to the bottom of the list, and the order you typed them in is kept.
-The ways to start a Note, from a checklist to a photo or a voice recording, are yours to choose and order in Settings.
+The ways to start a Note, from a checklist to a photo or a voice recording, are yours to choose and order in Settings, under Quick capture.
 
 The server that keeps your Devices in step has [its own site](https://soukupj00.github.io/your-notes-be/), with a step-by-step guide for setting it up at home.

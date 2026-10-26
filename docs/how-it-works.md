@@ -12,7 +12,7 @@ So the app works with no internet connection at all, and it is complete without 
 When the editor says "Saved", it means saved on this Device.
 
 The first time you save a Note, the app asks the browser to keep its storage even when space runs low.
-Settings, under "Storage and sync", shows whether the browser agreed.
+Settings shows whether the browser agreed, under "This device" in "Sync and backup" ("Backup and storage" on a Device with no account).
 If it did not, the browser may clear the app's storage on a full phone, so keep a backup (see below).
 
 ## Installing it
@@ -33,7 +33,7 @@ With a server:
 - **Each person has their own Account.** The person who set up the server, the Owner, can invite others in the household. Nobody sees anyone else's Notes.
 - **Signing in is a QR code.** A signed-in Device shows a Pairing Link as a QR code, and the new Device scans it. No password is typed on a phone.
 - **You can share one Note to read.** A Share Link shows a single Note as a web page to anyone who can reach your server. They cannot change it, and you can end the link at any time.
-- **A lost phone can be signed out** from any other Device, in Settings, under Devices.
+- **A lost phone can be signed out** from any other Device, in Settings, under Account, then Devices.
 
 ```mermaid
 flowchart TB
@@ -72,10 +72,10 @@ Your calendar then rings as it does for any other event.
 
 ## Backups
 
-In Settings, under Backup, "Export" saves a `.zip` file with every Note, label and attachment.
+In Settings, "Sync and backup" ("Backup and storage" on a Device with no account) has "Export a backup", which saves a `.zip` file with every Note, label and attachment.
 Keep it somewhere other than the Device, for example on a USB stick or in a folder you already back up.
 
-"Restore from a backup" puts a `.zip` back.
+"Restore a backup" puts a `.zip` back.
 It replaces everything stored on the Device, so it first offers to save a backup of what is there now.
 Your choices in Settings, such as the theme, the language and the editor's buttons, belong to the Device and are not in a backup.
 

@@ -138,7 +138,7 @@ The short version:
 `src/routeTree.gen.ts` is generated and committed: never edit it.
 Route modules stay thin: they pick a scope and a title and delegate to `NotesView` or a page in `src/pages/`.
 
-Routes: `/` (active feed), `/archive`, `/trash`, `/labels`, `/tag/$id`, `/settings`, `/pair` (where a Pairing Link lands; the code rides in the fragment) and `/share/$token` (a Share Link's read-only page).
+Routes: `/` (active feed), `/archive`, `/trash`, `/labels`, `/tag/$id`, `/settings` (a home whose rows open `/settings/general`, `/toolbar`, `/quick-capture`, `/data`, `/account` and `/shortcuts`), `/pair` (where a Pairing Link lands; the code rides in the fragment) and `/share/$token` (a Share Link's read-only page).
 The four feed routes share one `validateSearch`.
 
 `/share/$token` is opened by strangers, so it renders bare: no shell, no Tour, no sync loop, an in-memory Local Store and no Account.
@@ -215,7 +215,8 @@ Colours are **OKLCH** custom properties in `globals.css`, the single token sourc
 Preferences are read synchronously from `localStorage`, so the first render already has the user's choices.
 Those the stylesheet has to act on are stamped onto `<html>` by `DocumentPreferences`: the `cvd` class, `data-density`, `data-reduced-motion` and `data-sink-checked`.
 Every other Preference is read by the component that spends it.
-A Settings row that shows and writes one Preference is a `PreferenceSwitch` or `PreferenceSegmented` bound to its key.
+A Settings row that shows and writes one boolean Preference is a `PreferenceSwitch` bound to its key; a choice of a few is `PickerTiles`.
+Reduce animations is one switch over a three-way Preference: it shows the OS setting until touched, then writes `always` or `never`.
 
 Size in rem, not px: on a large screen the root font steps up (`globals.css`, DESIGN.md Layout), and only rem grows with it; the Masonry columns read the root font for the same reason.
 
@@ -234,9 +235,9 @@ Neither creates or changes Notes.
 - **Everything except the popover is `inert`** for the Tour's lifetime (`lib/tour/inert.ts`), kept as a standing rule by a `MutationObserver` because what portals to `body` can mount later.
   An element that was already inert is never released.
   The Welcome holds the same rule around its own overlay.
-- **Settings anchors** (`data-tour` wrappers) are declared in `src/pages/settings.tsx`, so no section knows the Tour exists.
-  Toolbar and quick capture are two steps because nobody can scroll an inert app and together they do not fit a phone.
-  The last anchor wraps "Storage and sync", which renders nothing without the Storage API or a signed-in Device; that step then shows its copy without a cutout.
+- **Settings anchors** are the Settings home's Editor toolbar, Quick capture and data rows (`data-tour` on `SettingsLinkRow`, declared in `src/pages/settings/index.tsx`), so no subpage knows the Tour exists.
+  The Tour is offered on the home only; a first visit straight to a subpage waits for the home.
+  The data row renders on every Device, so every step has a cutout.
 - **Targets** resolve to the first match with a non-zero rect (`lib/tour/targets.ts`), because several surfaces are mounted twice with CSS hiding one.
 - **Waiting is on a DOM condition, never a timer** (`lib/tour/waitFor.ts`): `waitForTarget` for something to arrive on screen.
 - `welcomeSeenAt` and `onboardingSeenAt` are stamped when each guide is **offered**, not on completion, which would re-arm it after every reload.

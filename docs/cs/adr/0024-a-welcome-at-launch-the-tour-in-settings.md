@@ -29,3 +29,10 @@ Uvítání se řídí stejnými pravidly a své výřezy kreslí samo místo př
 - Průvodce už nemá scény, do kterých by vstupoval a ze kterých by odcházel, takže z jeho kroků zmizely `enter`, `exit` a `continues` a s nimi i označování navigací a `resetScroll`.
 - Dvě nezávislá razítka: instalace, která viděla starého průvodce při spuštění, uvidí uvítání jednou a průvodce už nabídnut nedostane.
 - Text uvítání a jeho dvě značky jsou prvním návrhem; vyhledávání vynechané, protože na počítači by jeho bublina ležela na bublině lišty pro zachycení.
+
+## Dodatek (2026-10-25): kroky ukazují na úvodní stránku Nastavení
+
+Nastavení se stalo úvodní stránkou s řádky, z nichž každý otevře podstránku (Obecné, Panel nástrojů editoru, Rychlé psaní, stránka dat, Účet, Klávesové zkratky).
+Průvodce se nabídne při první návštěvě úvodní stránky, ne podstránky, a jeho tři kroky ukazují na její řádky Panel nástrojů editoru, Rychlé psaní a řádek dat.
+Průvodce dál nikdy nenaviguje, takže nemůže otevřít podstránku a ukázat do ní; řádek říká, kde které nastavení je, a text kroku vyzve k jeho otevření.
+Řádek dat se vykreslí na každém zařízení, přihlášeném i nepřihlášeném, takže krok 3 má teď vždy výřez; dřív jeho sekce bez Storage API nebo účtu nevykreslila nic a krok ukázal jen svůj text.

@@ -29,3 +29,10 @@ The Welcome follows the same rules, and draws its cutouts itself instead of thro
 - The Tour has no scenes left to enter and leave, so `enter`, `exit` and `continues` are gone from its steps, and so are its navigation marking and `resetScroll`.
 - Two independent stamps: an install that saw the old Tour at launch still sees the Welcome once, and is not offered the Tour again.
 - The Welcome's copy and its two marks are a first proposal; search was left out because on a desktop its callout would sit on the capture bar's.
+
+## Amendment (2026-10-25): the steps point at the Settings home
+
+Settings became a home of rows that each open a subpage (General, Editor toolbar, Quick capture, the data page, Account, Keyboard shortcuts).
+The Tour is offered on the first visit to the home, not to a subpage, and its three steps point at the home's Editor toolbar, Quick capture and data rows.
+The Tour still never navigates, so it cannot open a subpage to point inside it; a row names where each setting lives, and the step's copy says to open it.
+The data row renders on every Device, signed in or not, so step 3 now always has a cutout; before, its section rendered nothing without the Storage API or an account, and the step showed only its copy.

@@ -54,7 +54,7 @@ The brief commits to REST + HATEOAS, and ADR 0017 is what keeps that honest: not
 - `AccountProvider`: signed-in state and the current Device, with no token to hold and no URL to configure.
 - `SyncProvider`, running the loop ([04-sync.md](./04-sync.md)); network logic stays out of components.
 - The HAL client (`src/data/http/`), which validates every response against the vendored contract.
-- Settings: sign in and out, Pairing Links, the Devices list with revoke, Members and Invites, Shared Notes, and one block answering "is my data safe here" (storage persistence, last sync, pending changes).
+- Settings: sign-in on the Settings home; the Account page with sign-out, Pairing Links, the Devices list with revoke, Shared Notes, and Members and Invites for the Owner; and "Sync and backup", answering "is my data safe here" (storage persistence, last sync, pending changes).
 - `/pair`, where a Pairing Link signs a new Device in, and `/share/$token`, a Share Link's read-only page.
 - The frontend image ([ADR 0006](../adr/0006-ci-cd-and-container-image-distribution.md)): the backend image builds from it and serves its assets.
 
