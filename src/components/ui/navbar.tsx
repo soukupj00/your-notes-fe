@@ -37,15 +37,20 @@ function Navbar() {
   return (
     // z-10 matches the sidebar panel and stays under QuickCaptureBar's z-40. The safe
     // insets pad the header itself, so `bg-chrome` paints under the status bar.
-    <header className="nav-scroll-shadow sticky top-0 z-10 bg-chrome pt-[var(--safe-top)] pr-[var(--safe-right)] pl-[var(--safe-left)] sm:border-b">
-      {/* From `lg:` both sides share one minimum, the right group's width on a coarse pointer,
-          so search centres over the capture bar (`max-w-lg`). Narrower, search takes what is left. */}
-      <div className="hidden grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 px-4 py-2 sm:grid lg:grid-cols-[minmax(10rem,1fr)_minmax(0,32rem)_minmax(10rem,1fr)]">
+    <header className="nav-scroll-shadow @container sticky top-0 z-10 bg-chrome pt-[var(--safe-top)] pr-[var(--safe-right)] pl-[var(--safe-left)] sm:border-b">
+      {/* Search sits over the capture bar at its width (`max-w-lg`), so it needs 32rem between two
+          10rem sides, the right group's width on a coarse pointer. The open sidebar decides whether
+          the header has that, so it is a container query; narrower, search takes a row of its own. */}
+      <div className="hidden @min-[56rem]:grid-cols-[minmax(10rem,1fr)_32rem_minmax(10rem,1fr)] grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-2 px-4 py-2 sm:grid">
         <SidebarTrigger className="justify-self-start" />
 
-        <div className="mx-auto w-full max-w-lg">{searchable && <SearchInput />}</div>
+        {searchable && (
+          <div className="@min-[56rem]:col-2 col-span-3 @min-[56rem]:row-start-1 row-start-2 mx-auto w-full max-w-lg">
+            <SearchInput />
+          </div>
+        )}
 
-        <div className="flex items-center gap-3 justify-self-end">
+        <div className="col-start-3 flex items-center gap-3 justify-self-end">
           <DropdownMenu>
             <IconTooltip label={t('settings.locale.label')}>
               <DropdownMenuTrigger asChild>

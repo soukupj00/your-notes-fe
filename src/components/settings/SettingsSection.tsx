@@ -8,15 +8,31 @@ import {
   usePreferences,
 } from '@/context/PreferencesProvider.tsx';
 
-/** Sections are the page's only structure: new controls join one rather than invent a layout. */
-export function SettingsSection({ title, children }: { title?: string; children: ReactNode }) {
+/**
+ * Sections are the page's only structure: new controls join one rather than invent a layout.
+ * `bare` is for controls that are their own surface, which a card around them would nest.
+ */
+export function SettingsSection({
+  title,
+  bare,
+  children,
+}: {
+  title?: string;
+  bare?: boolean;
+  children: ReactNode;
+}) {
   return (
     <section className="mb-8">
       {title && <h2 className="mb-2 font-medium text-muted-foreground text-sm">{title}</h2>}
-      {/* Not clipped: a dragged row must be able to leave the card. */}
-      <div className="divide-y rounded-card border bg-card *:first:rounded-t-card *:last:rounded-b-card">
-        {children}
-      </div>
+      {bare ? (
+        children
+      ) : (
+        // Not clipped, so a dragged row can leave the card; its edge rows round themselves instead,
+        // a list's rows too.
+        <div className="divide-y rounded-card border bg-card *:first:rounded-t-card *:last:rounded-b-card [&>:first-child_li:first-child>*]:rounded-t-card [&>:last-child_li:last-child>*]:rounded-b-card">
+          {children}
+        </div>
+      )}
     </section>
   );
 }

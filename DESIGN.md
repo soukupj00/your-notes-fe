@@ -391,6 +391,7 @@ A Settings choice between two or three options whose difference a picture shows 
 A word-only choice stays a segmented control, as Theme does: one track in Rule Control, the chosen segment in the Selected fill with ink text and the others ink-soft, 44px tall overall.
 
 - **Shape:** equal tiles in one row, 10px (`{rounded.control}`), each a drawn picture above its label; the picture is drawn with tokens, never an image.
+  On a phone the tiles share the row; from `sm:` up each is at most 12rem and the row starts at the left, because a tile stretched across the page reads as oversized.
 - **Selected:** a 2px ink edge, the hairline border turned ink plus a 1px ring, over the Selected fill, so there is no second border weight and nothing shifts.
   Never the accent: the tiles sit on a card (The One Accent Rule).
 - **Touch:** every tile is far above the 44px floor; the tiles are native radios, so the arrow keys move the choice.

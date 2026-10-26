@@ -21,8 +21,8 @@ export function PickerTiles<T extends string>({
     <div
       role="radiogroup"
       aria-label={label}
-      className="grid gap-2.5"
-      style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
+      className="grid gap-2.5 [--tile:1fr] sm:[--tile:12rem]"
+      style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, var(--tile)))` }}
     >
       {options.map((option) => (
         <label

@@ -37,6 +37,9 @@ const TourContext = createContext<TourContextValue | undefined>(undefined);
 /** How far the cutout is held off the target it is cut over. */
 const STAGE_PADDING = 8;
 
+/** The Settings home waits for the server before it settles, and a session check can be slow. */
+const SETTLED_WAIT_MS = 8000;
+
 /**
  * Driver's own elements, the only ones left interactive. Named, not "anything added after the
  * start": whatever else portals to `body` mid-Tour must be marked inert too.
@@ -153,9 +156,13 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const start = useCallback(async () => {
     if (indexRef.current !== null) return;
 
-    // Settings must be on screen: every step points into it. Anywhere else this wait's timeout is
-    // a normal answer, not a bug.
-    if (!(await waitForTarget('settingsToolbar', { label: 'Settings to start on' }))) return;
+    // Settings must be on screen and settled: every step points into it. Anywhere else this
+    // wait's timeout is a normal answer, not a bug.
+    const home = await waitForTarget('settingsToolbar', {
+      timeout: SETTLED_WAIT_MS,
+      label: 'Settings to start on',
+    });
+    if (!home) return;
 
     // Driver measures the popover once, and the self-hosted fonts load async: measured in the
     // fallback face, step 1's box hung off the top of the window.

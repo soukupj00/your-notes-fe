@@ -1,12 +1,34 @@
-import { Download, ExternalLink, Server, Smartphone } from 'lucide-react';
-import { useState } from 'react';
+import { BookOpen, Download, ExternalLink, LogIn, Server, Smartphone } from 'lucide-react';
+import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SignInDialog } from '@/components/account/SignInDialog.tsx';
-import { Button } from '@/components/ui/button.tsx';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import { useAction } from '@/hooks/useAction.ts';
 import { exportBackup } from '@/lib/export-backup.ts';
 import type { ServerState } from './useServerState.ts';
+
+const ACTION_ROW =
+  'flex min-h-14 w-full items-center gap-3.5 px-4 py-2.5 text-left text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:opacity-50 [&_svg]:size-4.5 [&_svg]:shrink-0 [&_svg]:text-muted-foreground';
+
+function NewTabRow({
+  href,
+  icon,
+  children,
+}: {
+  href: string;
+  icon: ReactNode;
+  children: ReactNode;
+}) {
+  const { t } = useTranslation();
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={ACTION_ROW}>
+      {icon}
+      <span className="flex-1">{children}</span>
+      <ExternalLink aria-hidden className="size-4!" />
+      <span className="sr-only"> {t('nav.newTab')}</span>
+    </a>
+  );
+}
 
 /**
  * The Settings home's top card for a Device with no account. Its one action follows what the
@@ -24,7 +46,7 @@ export function LocalOnlyCard({
   const setupUrl = t('settings.help.docs.setupUrl');
 
   return (
-    <section className="mb-4 divide-y rounded-card border bg-card">
+    <section className="mb-4 divide-y rounded-card border bg-card *:last:rounded-b-card">
       <div className="flex items-center gap-3 px-4 py-3.5">
         <span
           aria-hidden
@@ -39,61 +61,40 @@ export function LocalOnlyCard({
 
       {state === 'none' && (
         <>
-          <div className="flex justify-end px-4 py-2.5">
-            <Button
-              type="button"
-              variant="outline"
-              className="min-h-11"
-              disabled={exporting.busy}
-              onClick={() =>
-                void exporting.run(async () => (await exportBackup(store)) === 'saved', {
-                  success: 'settings.backup.exported',
-                  failure: 'settings.backup.error.unknown',
-                })
-              }
-            >
-              <Download aria-hidden />
-              {t('settings.home.local.backUp')}
-            </Button>
-          </div>
-          <a
-            href={setupUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex min-h-14 items-center gap-3.5 rounded-b-card px-4 py-2.5 text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [&_svg]:size-4.5 [&_svg]:shrink-0 [&_svg]:text-muted-foreground"
+          <button
+            type="button"
+            className={ACTION_ROW}
+            disabled={exporting.busy}
+            onClick={() =>
+              void exporting.run(async () => (await exportBackup(store)) === 'saved', {
+                success: 'settings.backup.exported',
+                failure: 'settings.backup.error.unknown',
+              })
+            }
           >
-            <Server aria-hidden />
-            <span className="flex-1">{t('settings.home.local.syncWithServer')}</span>
-            <ExternalLink aria-hidden className="size-4!" />
-            <span className="sr-only"> {t('nav.newTab')}</span>
-          </a>
+            <Download aria-hidden />
+            <span className="flex-1">{t('settings.home.local.backUp')}</span>
+          </button>
+          <NewTabRow href={setupUrl} icon={<Server aria-hidden />}>
+            {t('settings.home.local.syncWithServer')}
+          </NewTabRow>
         </>
       )}
 
       {state === 'setup-needed' && (
-        <div className="flex justify-end px-4 py-2.5">
-          <Button asChild variant="outline" className="min-h-11">
-            <a href={setupUrl} target="_blank" rel="noopener noreferrer">
-              {t('settings.home.local.setupGuide')}
-              <ExternalLink aria-hidden />
-              <span className="sr-only"> {t('nav.newTab')}</span>
-            </a>
-          </Button>
-        </div>
+        <NewTabRow href={setupUrl} icon={<BookOpen aria-hidden />}>
+          {t('settings.home.local.setupGuide')}
+        </NewTabRow>
       )}
 
       {state === 'signed-out' && (
-        <div className="flex justify-end px-4 py-2.5">
-          <Button
-            type="button"
-            variant="outline"
-            className="min-h-11"
-            onClick={() => setSigningIn(true)}
-          >
-            {t('account.section.signIn')}
-          </Button>
+        <>
+          <button type="button" className={ACTION_ROW} onClick={() => setSigningIn(true)}>
+            <LogIn aria-hidden />
+            <span className="flex-1">{t('account.section.signIn')}</span>
+          </button>
           <SignInDialog open={signingIn} onOpenChange={setSigningIn} />
-        </div>
+        </>
       )}
     </section>
   );

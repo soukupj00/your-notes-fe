@@ -59,12 +59,20 @@ test.describe('capture starts', () => {
     test.skip(isMobile, 'the phone has no capture bar, only the dial');
     const search = page.getByRole('searchbox').locator('..');
     const bar = page.locator('[data-tour="capture"]:visible');
-    await bar.waitFor();
 
-    const [s, b] = [await search.boundingBox(), await bar.boundingBox()];
-    if (!s || !b) throw new Error('both must be on screen');
-    expect(Math.abs(s.width - b.width)).toBeLessThanOrEqual(1);
-    expect(Math.abs(s.x + s.width / 2 - (b.x + b.width / 2))).toBeLessThanOrEqual(1);
+    // Tablet widths too: the open sidebar leaves the header too narrow for search between its
+    // controls there, which once put the box off centre at 768 and 1024.
+    for (const width of [700, 768, 1024, 1280]) {
+      await page.setViewportSize({ width, height: 800 });
+      await bar.waitFor();
+      const [s, b] = [await search.boundingBox(), await bar.boundingBox()];
+      if (!s || !b) throw new Error('both must be on screen');
+      expect(Math.abs(s.width - b.width), `width at ${width}px`).toBeLessThanOrEqual(1);
+      expect(
+        Math.abs(s.x + s.width / 2 - (b.x + b.width / 2)),
+        `centre at ${width}px`
+      ).toBeLessThanOrEqual(1);
+    }
   });
 
   test('Voice note starts recording at once, whatever the toolbar shows', async ({

@@ -19,8 +19,11 @@ import { useWidthClass } from './useWidthClass';
 
 const PRESETS: ToolbarPresetId[] = ['minimal', 'balanced', 'everything'];
 
-/** A titled block of the editor: a heading above its own card in Settings, a band in the sheet. */
-type ToolbarEditorSection = ComponentType<{ title?: string; children: ReactNode }>;
+/**
+ * A titled block of the editor: a heading above its own card in Settings, a band in the sheet.
+ * `bare` content is controls rather than rows, so Settings puts no card around it.
+ */
+type ToolbarEditorSection = ComponentType<{ title?: string; bare?: boolean; children: ReactNode }>;
 
 interface ToolbarLayoutEditorProps {
   /** On in Settings, which has no note open; off over the editor, whose real bar is live. */
@@ -29,11 +32,19 @@ interface ToolbarLayoutEditorProps {
 }
 
 /** The sheet's own title is its `<h2>`, so a band's heading is an `<h3>`. */
-function SheetSection({ title, children }: { title?: string; children: ReactNode }) {
+function SheetSection({
+  title,
+  bare,
+  children,
+}: {
+  title?: string;
+  bare?: boolean;
+  children: ReactNode;
+}) {
   return (
     <section className="border-b last:border-b-0">
       {title && <h3 className="px-4 pt-3 font-medium text-muted-foreground text-xs">{title}</h3>}
-      {children}
+      {bare ? <div className="px-4 py-3">{children}</div> : children}
     </section>
   );
 }
@@ -80,10 +91,8 @@ export function ToolbarLayoutEditor({
   const itemName = (id: string) => t(TOOLBAR_ITEMS.find((item) => item.id === id)?.labelKey ?? id);
 
   const preview = showPreview && (
-    <Section title={t('settings.toolbar.preview')}>
-      <div className="px-4 py-3">
-        <ToolbarPreviewStrip layout={layout} widthClass={widthClass} />
-      </div>
+    <Section title={t('settings.toolbar.preview')} bare>
+      <ToolbarPreviewStrip layout={layout} widthClass={widthClass} />
     </Section>
   );
 
@@ -127,10 +136,10 @@ export function ToolbarLayoutEditor({
 
   return (
     <>
-      <Section title={t('settings.toolbar.preset.legend')}>
+      <Section title={t('settings.toolbar.preset.legend')} bare>
         <fieldset
           aria-label={t('settings.toolbar.preset.legend')}
-          className="grid min-w-0 grid-cols-3 gap-2 px-4 py-3"
+          className="grid min-w-0 grid-cols-3 gap-2"
         >
           {PRESETS.map((preset) => (
             <Button
@@ -218,7 +227,7 @@ function FamilyRow({ family, name, onOpen, onToggle, onCollapse }: FamilyRowProp
         type="button"
         onClick={onOpen}
         disabled={!registryFamily}
-        className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-md px-1 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-60"
+        className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-md px-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring enabled:active:bg-accent enabled:hover:bg-accent disabled:opacity-60"
       >
         {Icon && <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />}
         <span className="flex min-w-0 flex-col">
