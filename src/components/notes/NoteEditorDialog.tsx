@@ -15,7 +15,7 @@ import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { useIsMobile } from '@/hooks/use-mobile.tsx';
 import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
-import { useFinePointer } from '@/hooks/useFinePointer.ts';
+import { useKeyboardAffordances } from '@/hooks/useKeyboardAffordances.ts';
 import { useKeyboardInset } from '@/hooks/useKeyboardInset.ts';
 import { useLatest } from '@/hooks/useLatest.ts';
 import { useUndoableLifecycle } from '@/hooks/useUndoableLifecycle.ts';
@@ -81,7 +81,7 @@ export function NoteEditorDialog({
   const { collectOrphans } = useAttachmentActions();
   const lifecycle = useUndoableLifecycle();
   const isMobile = useIsMobile();
-  const finePointer = useFinePointer();
+  const keyboard = useKeyboardAffordances();
   // The sheet is the one surface the software keyboard shares the screen with,
   // so it is the one that has to know how much of it the keyboard is covering.
   useKeyboardInset();
@@ -261,16 +261,16 @@ export function NoteEditorDialog({
         // The dialog wears the note's colour, or picking one would visibly change nothing.
         // `bg-note-surface!`: the vendored `bg-background` would otherwise win on stylesheet order.
         {...noteColorAttrs(color)}
-        // Radix would focus the back arrow; the title gets it instead. Not for an existing note on
-        // a Coarse pointer (the keyboard would cover a note opened to read), and not for a
-        // checklist draft, whose editor autofocuses its first item.
+        // Radix would focus the back arrow; the title gets it instead. Not for an existing note
+        // without a hardware keyboard (the software one would cover a note opened to read), and
+        // not for a checklist draft, whose editor autofocuses its first item.
         onOpenAutoFocus={(event) => {
           if (document.activeElement instanceof HTMLElement) {
             openerRef.current = document.activeElement;
           }
           event.preventDefault();
           if (focusBody) return;
-          if (!isNew && !finePointer) return;
+          if (!isNew && !keyboard) return;
           headerInputRef.current?.focus();
         }}
         onCloseAutoFocus={(event) => {

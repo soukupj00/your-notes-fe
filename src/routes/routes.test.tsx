@@ -223,7 +223,7 @@ describe('settings page', () => {
   afterEach(() => localStorage.clear());
 
   it('switches the theme from the appearance section', async () => {
-    renderAt('/settings');
+    renderAt('/settings/general');
 
     // Radix ToggleGroup 1.1.19 exposes a single-select root as `radiogroup`
     // (it was `group` before), which matches the `radio` items queried below.
@@ -232,6 +232,12 @@ describe('settings page', () => {
 
     await waitFor(() => expect(document.documentElement).toHaveClass('light'));
     expect(localStorage.getItem('vite-ui-theme')).toBe('light');
+  });
+
+  it('leaves the Account page for Settings when no account is signed in', async () => {
+    const router = renderAt('/settings/account');
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/settings'));
   });
 });
 

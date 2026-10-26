@@ -3,7 +3,7 @@
  * user is already where it looks, so no step acts and leaving needs nothing undone.
  */
 
-import { resolveTourTarget, type TourTargetName } from './targets.ts';
+import type { TourTargetName } from './targets.ts';
 
 export interface TourStep {
   /** Also names its copy (`onboarding.steps.<key>.title`/`.body`), so the two cannot drift. */
@@ -13,23 +13,14 @@ export interface TourStep {
 }
 
 export const TOUR_STEPS: TourStep[] = [
-  /**
-   * 1 - Your toolbar. It points at the preview strip, not the section, for the size reason on
-   * `settingsToolbar` in `targets.ts`; that is why 1 and 2 split.
-   */
+  /** 1 - Your toolbar. */
   { key: 'toolbar', target: () => 'settingsToolbar' },
 
   /** 2 - Ways to start a note. */
   { key: 'quickCapture', target: () => 'settingsQuickCapture' },
 
-  /**
-   * 3 - Where your notes live. Read, not waited for: the section renders nothing without the
-   * Storage API or a signed-in Device, and a spent wait is always a bug.
-   */
-  {
-    key: 'sync',
-    target: () => (resolveTourTarget('settingsSync') ? 'settingsSync' : null),
-  },
+  /** 3 - Where your notes live. */
+  { key: 'sync', target: () => 'settingsSync' },
 ];
 
 const DEFAULT_STAGE_RADIUS = 16;

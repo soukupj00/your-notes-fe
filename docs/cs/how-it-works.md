@@ -12,7 +12,7 @@ Aplikace proto funguje úplně bez připojení k internetu a je úplná i bez se
 Když editor ukáže „Uloženo“, znamená to uloženo na tomto zařízení.
 
 Když poprvé uložíte poznámku, aplikace požádá prohlížeč, aby její úložiště zachoval, i když dochází místo.
-V Nastavení, v části „Úložiště a synchronizace“, uvidíte, zda prohlížeč souhlasil.
+V Nastavení, v části „Synchronizace a záloha“ (na zařízení bez účtu „Záloha a úložiště“), pod „Toto zařízení“, uvidíte, zda prohlížeč souhlasil.
 Pokud ne, prohlížeč může na zaplněném telefonu úložiště aplikace vymazat, proto si udržujte zálohu (viz níže).
 
 ## Instalace
@@ -33,7 +33,7 @@ Se serverem:
 - **Každý má vlastní účet.** Člověk, který server nastavil, tedy vlastník, může pozvat další členy domácnosti. Nikdo nevidí poznámky nikoho jiného.
 - **Přihlášení je QR kód.** Přihlášené zařízení ukáže párovací odkaz jako QR kód a nové zařízení ho naskenuje. Na telefonu se nezadává žádné heslo.
 - **Jednu poznámku můžete sdílet ke čtení.** Odkaz pro sdílení ukáže jedinou poznámku jako webovou stránku komukoli, kdo se dostane k vašemu serveru. Nemůže ji změnit a odkaz můžete kdykoli zrušit.
-- **Ztracený telefon lze odhlásit** z kteréhokoli jiného zařízení, v Nastavení, v části Zařízení.
+- **Ztracený telefon lze odhlásit** z kteréhokoli jiného zařízení, v Nastavení, v části Účet, pod Zařízení.
 
 ```mermaid
 flowchart TB
@@ -72,10 +72,10 @@ Kalendář pak zazvoní jako u každé jiné události.
 
 ## Zálohy
 
-V Nastavení, v části Záloha, uloží „Exportovat“ soubor `.zip` se všemi poznámkami, štítky a přílohami.
+V Nastavení, v části „Synchronizace a záloha“ (na zařízení bez účtu „Záloha a úložiště“), uloží „Exportovat zálohu“ soubor `.zip` se všemi poznámkami, štítky a přílohami.
 Uchovávejte ho jinde než na zařízení, například na USB disku nebo ve složce, kterou už zálohujete.
 
-„Obnovit ze zálohy“ vrátí soubor `.zip` zpět.
+„Obnovit zálohu“ vrátí soubor `.zip` zpět.
 Nahradí vše, co je na zařízení uložené, proto vám nejdřív nabídne uložit zálohu současného stavu.
 Vaše volby v Nastavení, jako motiv, jazyk nebo tlačítka editoru, patří k zařízení a v záloze nejsou.
 

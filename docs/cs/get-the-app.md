@@ -19,9 +19,9 @@ Nejsnazší způsob, jak otevřít aplikaci na novém zařízení, je párovací
 
 - **Vaše první zařízení** otevře odkaz, který server vypíše při prvním spuštění, a vy se stanete vlastníkem.
   Část návodu [Vytvoření vlastníka](https://soukupj00.github.io/your-notes-be/cs/setup#5-vytvoreni-vlastnika) vás tím provede.
-- **Každé vaše další zařízení:** na zařízení, které už je přihlášené, otevřete Nastavení ikonou ozubeného kola nahoře, sjeďte k části Zařízení a klepněte na „Přidat zařízení“.
+- **Každé vaše další zařízení:** na zařízení, které už je přihlášené, otevřete Nastavení ikonou ozubeného kola nahoře, otevřete Účet a klepněte na „Přidat zařízení“.
   Naskenujte zobrazený QR kód fotoaparátem nového zařízení a pak klepněte na „Přihlásit se“.
-- **Někdo další z vaší domácnosti:** vlastník otevře Nastavení, sjede k části Členové a klepne na „Pozvat“.
+- **Někdo další z vaší domácnosti:** vlastník otevře Nastavení, potom Účet, a klepne na „Pozvat člena“.
   Druhý člověk naskenuje QR kód a zvolí si vlastní uživatelské jméno a heslo.
 
 Párovací odkaz funguje jednou a deset minut; pokud vyprší, požádejte o nový.
@@ -48,7 +48,7 @@ YourNotes je teď ikona na vaší ploše.
 
 - **Chrome nebo Edge:** klikněte na ikonu instalace na pravém konci adresního řádku, pak na **Nainstalovat**.
   V Chrome je to malá obrazovka se šipkou.
-  Když to prohlížeč dovolí, aplikace nabízí totéž v Nastavení, v části Aplikace, tlačítkem **Nainstalovat**.
+  Když to prohlížeč dovolí, nabízí totéž úvodní stránka Nastavení v řádku „Nainstalovat YourNotes“, tlačítkem **Nainstalovat**.
 - **Safari na Macu:** zvolte **Soubor**, pak **Přidat do Docku**.
 - **Firefox** webové aplikace neinstaluje; nechte YourNotes v kartě, kde vše funguje stejně.
 

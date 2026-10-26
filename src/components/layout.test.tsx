@@ -2,6 +2,7 @@ import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NAV_ITEMS } from '@/components/nav/navItems.ts';
+import { FLOATING_BOTTOM_BAR_CLEARANCE } from '@/components/notes/floatingBottomBar.ts';
 import { renderRoute } from '@/test/renderRoute.tsx';
 import { clearStore, testStore } from '@/test/store.tsx';
 import { setViewport } from '@/test/viewport.ts';
@@ -126,6 +127,24 @@ describe('skip to content', () => {
     expect(main).not.toBeNull();
     // A plain anchor target is not focusable; without this the jump is silent.
     expect(main).toHaveAttribute('tabindex', '-1');
+  });
+});
+
+describe('bottom padding', () => {
+  const [CLEARANCE] = FLOATING_BOTTOM_BAR_CLEARANCE.split(' ');
+
+  it.each([
+    ['/', true],
+    ['/?q=milk', true],
+    ['/trash', true],
+    ['/archive', false],
+    ['/settings', false],
+  ])('on %s clears a floating bar: %s', async (path, clears) => {
+    renderRoute(path);
+    await screen.findByRole('heading', { level: 1 });
+
+    const main = document.getElementById('main-content') as HTMLElement;
+    expect(main.querySelector(`.${CLEARANCE}`) !== null).toBe(clears);
   });
 });
 

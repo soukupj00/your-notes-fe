@@ -88,7 +88,7 @@ V opačném případě - toto zařízení upravilo poznámku, kterou jiné zař�
 ## Přenos příloh
 
 - Bajty jsou podle id neměnné, takže nahrání je „PUT, pokud server toto id nemá“ - idempotentní, opakovatelné, bez pravidla konfliktu.
-- **Náhledy se synchronizují hned** (desítky KB; přehled je na novém zařízení okamžitě správný); **plné bajty na vyžádání**, s předvolbou „Mít vše v tomto zařízení“.
+- **Náhledy se synchronizují hned** (desítky KB; přehled je na novém zařízení okamžitě správný); **plné bajty na vyžádání**, s předvolbou „Uchovávat všechny přílohy“.
 - Pohledy uzlů příloh mají třetí stav, „známá, ale nestažená“, ve kterém vykreslí zástupný prvek místo rozbitého prvku.
 - Náhled je samostatný blob pojmenovaný podle `thumbnailId` přílohy na poznámce, takže se synchronizuje před plnými bajty.
   Zařízení si pamatuje, která id blobů server má, místo aby se ptalo pomocí `HEAD`; ztracený záznam stojí jeden opakovaný `PUT`, na který server odpoví 204, aniž by četl tělo.

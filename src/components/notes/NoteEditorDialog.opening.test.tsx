@@ -135,10 +135,10 @@ describe('the mobile app bar', () => {
 });
 
 describe('opening focus', () => {
-  /** `useFinePointer` reads `matchMedia('(pointer: fine)')`. */
+  /** Answers the primary and the any-pointer query alike. */
   const setPointer = (fine: boolean) => {
     vi.stubGlobal('matchMedia', (query: string) => ({
-      matches: query === '(pointer: fine)' ? fine : false,
+      matches: query.includes('pointer: fine') ? fine : false,
       media: query,
       addEventListener: () => {},
       removeEventListener: () => {},

@@ -68,7 +68,7 @@ Jen pomíjivé věci, jako zda je dialog otevřený, jsou stav Reactu.
 
 - [Lokální úložiště](./local-store.md): rozhraní, přes které jde veškerá perzistence, a jak si přinést vlastní implementaci.
 - [Synchronizace](./sync.md): revize, fronta offline změn, konfliktní kopie a rozhraní vzdáleného úložiště.
-- [Editor](./editor.md): rozšíření TipTapu, panel nástrojů a přidání nového druhu přílohy.
+- [Editor](./editor.md): rozšíření TipTapu, lišta editoru a přidání nového druhu přílohy.
 - [Jazyky](./i18n.md): překladové balíčky a přidání jazyka.
 - [Design](./design.md): vizuální pravidla, která každá změna UI dodržuje.
 - [Testování](./testing.md): co se testuje kde a co zůstává ruční.

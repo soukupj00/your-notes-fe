@@ -3,6 +3,7 @@
     "primary": "Hlavní navigace",
     "open": "Otevřít navigaci",
     "back": "Zpět",
+    "newTab": "(otevře se v nové kartě)",
     "notes": "Poznámky",
     "labels": "Štítky",
     "editLabels": "Upravit štítky",
@@ -196,9 +197,6 @@
     }
   },
   "settings": {
-    "appearance": {
-      "title": "Vzhled"
-    },
     "locale": {
       "label": "Jazyk"
     },
@@ -209,29 +207,21 @@
       "dark": "Tmavý",
       "toggle": "Přepnout motiv"
     },
-    "language": {
-      "title": "Jazyk"
-    },
     "density": {
       "label": "Hustota",
-      "description": "Kompaktní zobrazí na obrazovce více poznámek a text vysází o něco menší.",
       "comfortable": "Pohodlná",
       "compact": "Kompaktní"
     },
     "reducedMotion": {
-      "label": "Animace",
-      "description": "Omezené animace vypne, Plné je nechá zapnuté.",
-      "system": "Zařízení",
-      "always": "Omezené",
-      "never": "Plné"
+      "label": "Omezit animace",
+      "description": "Výchozí stav přebírá z nastavení zařízení."
     },
     "colorBlind": {
       "label": "Paleta pro barvoslepé",
-      "description": "Přebarví barvy poznámek a štítků tak, aby šlo všech devět rozlišit. Funguje s oběma motivy."
+      "description": "Barvy poznámek zůstanou snadno rozlišitelné."
     },
     "sinkCheckedItems": {
-      "label": "Přesouvat splněné položky na konec",
-      "description": "V seznamu úkolů se zaškrtnuté položky zobrazují pod nezaškrtnutými. Pořadí, ve kterém jste je napsali, zůstává."
+      "label": "Zaškrtnuté položky se přesouvají na konec seznamu"
     },
     "backup": {
       "title": "Záloha",
@@ -239,12 +229,12 @@
       "imported": "Záloha obnovena.",
       "export": {
         "label": "Exportovat zálohu",
-        "description": "Stáhne .zip se všemi poznámkami, štítky a přílohami.",
+        "description": "Vše v jednom souboru .zip.",
         "action": "Exportovat"
       },
       "import": {
-        "label": "Obnovit ze zálohy",
-        "description": "Nahradí vše, co je nyní uloženo. Nejprve si můžete uložit jeho zálohu.",
+        "label": "Obnovit zálohu",
+        "description": "Nahradí vše, co je zde uloženo.",
         "action": "Importovat"
       },
       "confirmImport": {
@@ -264,30 +254,29 @@
       },
       "importCancelled": "Import zrušen. Nic nebylo změněno.",
       "exporting": "Vytvářím zálohu…",
-      "importing": "Načítám zálohu…"
+      "importing": "Načítám zálohu…",
+      "localFootnote": "Bez serveru je záloha jedinou kopií mimo tento prohlížeč."
     },
     "toolbar": {
-      "title": "Panel nástrojů editoru",
-      "description": "Vyberte, která tlačítka editor zobrazí, v jakém pořadí a která z nich sdílejí nabídku.",
+      "title": "Lišta editoru",
       "back": "Všechny skupiny",
       "fold": "Na telefonu se před touto čarou vejde asi {{slots}} tlačítek",
       "width": {
         "compact": "Úzké okno",
-        "wide": "Široké okno",
-        "current": {
-          "compact": "Toto je rozvržení pro úzká okna a dotykové obrazovky.",
-          "wide": "Toto je rozvržení pro široká okna."
-        }
+        "wide": "Široké okno"
       },
       "preset": {
-        "legend": "Začít od",
+        "legend": "Obnovit předvolbu",
         "minimal": "Minimální",
         "balanced": "Vyvážené",
         "everything": "Vše",
-        "isDefault": "· výchozí"
+        "isDefault": "výchozí"
       },
       "family": {
-        "summary": "Zapnuto {{on}} z {{total}} tlačítek",
+        "count": "{{on}} z {{total}}",
+        "summary_one": "Zapnuto {{on}} z {{count}} tlačítka",
+        "summary_few": "Zapnuto {{on}} z {{count}} tlačítek",
+        "summary_other": "Zapnuto {{on}} z {{count}} tlačítek",
         "show": "Zobrazit skupinu {{name}}",
         "collapse": "Sloučit skupinu {{name}} do jedné nabídky",
         "collapsed": "V jedné nabídce",
@@ -296,11 +285,14 @@
       "item": {
         "show": "Zobrazit {{name}}"
       },
-      "preview": "Jak to bude vypadat"
+      "preview": "Náhled",
+      "groups": "Skupiny v pořadí na liště",
+      "reset": {
+        "done": "Lišta obnovena: {{preset}}."
+      }
     },
     "shortcuts": {
-      "title": "Klávesové zkratky",
-      "description": "Zkratku změníte kliknutím na její klávesy. Zkratky v Poznámkách fungují mimo otevřenou poznámku, ostatní v otevřené poznámce bez ohledu na to, která tlačítka panel zobrazuje.",
+      "description": "Zkratku změníte kliknutím na její klávesy. Zkratky v Poznámkách fungují mimo otevřenou poznámku, ostatní v otevřené poznámce bez ohledu na to, která tlačítka lišta zobrazuje.",
       "newNote": {
         "label": "Nová poznámka"
       },
@@ -340,37 +332,66 @@
     "help": {
       "title": "Nápověda",
       "replay": {
-        "label": "Průvodce",
-        "description": "Tři kroky v Nastavení.",
         "action": "Spustit průvodce znovu"
       },
       "docs": {
         "label": "Dokumentace",
-        "description": "Jak aplikace funguje a jak spustit vlastní server.",
-        "open": "Otevřít dokumentaci",
-        "github": "GitHub",
-        "setup": "Nastavit vlastní server",
         "setupUrl": "https://soukupj00.github.io/your-notes-be/cs/setup"
       }
     },
     "quickCapture": {
-      "title": "Rychlé psaní",
-      "description": "Způsoby, jak tlačítko ＋ nabízí založit poznámku.",
       "show": "Nabízet: {{name}}",
       "lastOne": "Poslední možnost v nabídce - na telefonu je to jediný způsob, jak vytvořit poznámku.",
       "alignment": {
-        "label": "Strana tlačítka pro poznámku",
-        "description": "Na které straně obrazovky sedí tlačítko ＋, podle palce, který na něj musí dosáhnout.",
         "left": "Vlevo",
         "right": "Vpravo"
+      },
+      "placement": "Umístění",
+      "menuItems": "Položky nabídky"
+    },
+    "pages": {
+      "general": "Obecné",
+      "toolbar": "Lišta editoru",
+      "quickCapture": "Rychlé psaní",
+      "dataSync": "Synchronizace a záloha",
+      "dataLocal": "Záloha a úložiště",
+      "account": "Účet",
+      "shortcuts": "Klávesové zkratky"
+    },
+    "home": {
+      "general": {
+        "summary": "Jazyk, motiv, zobrazení"
+      },
+      "toolbar": {
+        "summary": "Předvolby, skupiny, pořadí"
+      },
+      "quickCapture": {
+        "summary": "Umístění, položky nabídky",
+        "summaryWide": "Položky nabídky"
+      },
+      "dataSync": {
+        "summary": "Synchronizace, úložiště, záloha"
+      },
+      "dataLocal": {
+        "summary": "Export, obnova, úložiště"
+      },
+      "local": {
+        "title": "Poznámky zůstávají v tomto zařízení",
+        "syncWithServer": "Synchronizovat s vlastním serverem",
+        "backUp": "Zálohovat",
+        "setupGuide": "Návod k nastavení"
       }
+    },
+    "general": {
+      "languageAndTheme": "Jazyk a motiv",
+      "display": "Zobrazení",
+      "checklists": "Seznamy úkolů"
     }
   },
   "pwa": {
     "install": {
-      "title": "Aplikace",
       "label": "Nainstalovat YourNotes",
-      "description": "Přidejte si YourNotes do zařízení pro rychlý přístup v samostatném okně.",
+      "description": "Otevře se ve vlastním okně.",
       "action": "Nainstalovat"
     },
     "update": {
@@ -492,7 +513,8 @@
       "drawing": "Kresba",
       "picture": "Obrázek",
       "camera": "Fotoaparát",
-      "file": "Soubor"
+      "file": "Soubor",
+      "more": "Další způsoby začátku"
     },
     "emptyingTrash": "Vyprazdňuji koš…",
     "placeholders": {
@@ -603,11 +625,11 @@
     "cancelled": "{{name}} vráceno na původní místo."
   },
   "welcome": {
-    "title": "Vítej v YourNotes",
-    "body": "Poznámky se ukládají v tomhle zařízení a fungují i offline. Začít můžeš tady:",
+    "title": "Vítejte v YourNotes",
+    "body": "Poznámky se ukládají v tomto zařízení a fungují i offline. Začít můžete tady:",
     "marks": {
-      "capture": "Tady začneš poznámku: text, seznam, hlasovou poznámku, kresbu nebo obrázek.",
-      "settings": "Nastavení: uprav si panel nástrojů a způsoby, jak začít poznámku, a připoj vlastní server."
+      "capture": "Tady začnete poznámku: text, seznam, hlasovou poznámku, kresbu nebo obrázek.",
+      "settings": "Nastavení: upravte si lištu a způsoby, jak začít poznámku, a připojte vlastní server."
     },
     "dismiss": "Rozumím"
   },
@@ -621,16 +643,16 @@
     },
     "steps": {
       "toolbar": {
-        "title": "Tvoje lišta",
-        "body": "Vyber, která tlačítka nese lišta editoru a v jakém pořadí. Telefon a počítač si drží každý své uspořádání."
+        "title": "Vaše lišta",
+        "body": "Otevřete Lištu editoru a vyberte, která tlačítka na ní budou a v jakém pořadí. Telefon a počítač si drží každý své uspořádání."
       },
       "quickCapture": {
         "title": "Jak začít poznámku",
-        "body": "Přetáhni nahoru druhy poznámek, které píšeš nejčastěji. Na telefonu si můžeš vybrat i stranu, na které bude tlačítko ＋."
+        "body": "Otevřete Rychlé psaní a dejte na začátek druhy poznámek, které píšete nejčastěji. Na telefonu tam vyberete i stranu, na které bude tlačítko ＋."
       },
       "sync": {
-        "title": "Kde tvoje poznámky žijí",
-        "body": "Každá poznámka se nejdřív uloží na tomhle zařízení, takže aplikace funguje i bez připojení. Přihlas se ke svému vlastnímu serveru, ať máš na všech zařízeních totéž, a kdykoliv si stáhni zálohu v zipu."
+        "title": "Kde vaše poznámky žijí",
+        "body": "Každá poznámka se nejdřív uloží v tomto zařízení, takže aplikace funguje i bez připojení. Přihlaste se ke svému vlastnímu serveru, ať máte na všech zařízeních totéž, a kdykoli si stáhněte zálohu v zipu."
       }
     }
   },
@@ -653,15 +675,10 @@
     },
     "section": {
       "title": "Účet",
-      "signedOutLabel": "Přihlásit se k serveru",
-      "signedOutDescription": "Synchronizujte poznámky z tohoto zařízení se svým serverem YourNotes.",
-      "setupGuide": "Jak zprovoznit server",
       "signIn": "Přihlásit se",
       "signInDescription": "Použijte uživatelské jméno a heslo, které jste si pro účet zvolili.",
-      "signedInLabel": "Účet: {{username}}",
       "owner": "Vlastník",
       "member": "Člen",
-      "thisDevice": "Toto zařízení: {{name}}",
       "signOut": "Odhlásit se",
       "signedOut": "Odhlášeno.",
       "eraseTitle": "Odhlásit se a vymazat toto zařízení?",
@@ -682,13 +699,11 @@
       "removeTitle": "Odebrat {{name}}?",
       "removeDescription": "Zařízení se odhlásí a nic jiného se nezmění.",
       "removed": "Zařízení odebráno.",
-      "add": "Přidat zařízení",
-      "addDescription": "Zobrazí párovací odkaz, který naskenujete fotoaparátem nového zařízení."
+      "add": "Přidat zařízení"
     },
     "members": {
       "title": "Členové",
-      "invite": "Pozvat",
-      "inviteDescription": "Někdo z vaší domácnosti dostane vlastní účet. Nikdo z vás neuvidí poznámky toho druhého.",
+      "invite": "Pozvat člena",
       "you": "Vy",
       "joined": "Od {{date}}",
       "reset": "Nastavit nové heslo",
@@ -700,7 +715,7 @@
     },
     "qr": {
       "deviceDescription": "Naskenujte ho fotoaparátem nového zařízení. Přihlásí se k vašemu účtu bez zadávání hesla.",
-      "inviteDescription": "Druhá osoba ho naskenuje na svém telefonu a zvolí si vlastní uživatelské jméno a heslo.",
+      "inviteDescription": "Druhá osoba ho naskenuje na svém telefonu a zvolí si vlastní uživatelské jméno a heslo. Navzájem své poznámky neuvidíte.",
       "expires": "Odkaz funguje jednou a deset minut.",
       "orOpen": "Nebo otevřete tento odkaz na druhém zařízení:",
       "copy": "Kopírovat odkaz",
@@ -730,16 +745,17 @@
     "conflicts_other": "{{count}} konfliktů uloženo jako kopie",
     "showConflicts": "Zobrazit",
     "keptNewer": "Ponechána novější verze z vašeho serveru.",
-    "title": "Úložiště a synchronizace",
     "storage": {
       "label": "Uloženo v tomto zařízení",
       "persisted": "Prohlížeč data zachová, i když dochází místo.",
-      "notPersisted": "Prohlížeč může data smazat, když dojde místo. Mějte zálohu.",
-      "used": "Využito {{size}}"
+      "notPersisted": "Prohlížeč může data smazat, když dojde místo.",
+      "title": "Toto zařízení",
+      "storedHere": "Uloženo zde: {{size}}"
     },
     "label": "Synchronizace",
     "never": "Zatím nesynchronizováno",
     "idle": "Naposledy synchronizováno {{time}}",
+    "syncedAt": "Synchronizováno v {{time}}",
     "syncing": "Synchronizuji…",
     "offline": "Offline. Změny čekají v tomto zařízení.",
     "error": "Synchronizace se nezdařila. Zkusí to znovu.",
@@ -750,8 +766,8 @@
     "signedOut": "Toto zařízení už není přihlášené. Přihlaste se znovu a synchronizace bude pokračovat; změny zůstávají tady.",
     "tooLarge": "{{name}} je příliš velký na synchronizaci",
     "keepEverything": {
-      "label": "Mít vše v tomto zařízení",
-      "description": "Po každé synchronizaci stáhnout všechny přílohy, nejen náhledy. Zabere víc místa."
+      "label": "Uchovávat všechny přílohy",
+      "description": "Nejen náhledy. Zabere víc místa."
     }
   },
   "share": {
@@ -765,7 +781,7 @@
     "untitled": "Poznámka bez názvu",
     "section": {
       "title": "Sdílené poznámky",
-      "none": "Žádná poznámka se nesdílí."
+      "none": "Nic se nesdílí"
     },
     "page": {
       "loading": "Otevírám poznámku…",

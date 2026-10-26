@@ -26,8 +26,13 @@ Whether this Device is signed in to a Self-hosted Server ([ADR 0018](../../docs/
 - It asks `AccountService.session()` once at startup.
   The session is an `HttpOnly` cookie, so there is nothing to read locally, and the server that served the app is the server, so there is no URL to configure.
 - `status` is `checking`, `unavailable` (nothing answered: a static host, offline, no service), `signed-out` or `signed-in`.
-  **Nothing in the app waits on it**: sync is opt-in, so every screen renders the same whatever it hears.
-  Its readers are the account surfaces: the Account, Devices, Members and Shares sections of Settings, `/pair`, the Share and Pairing Link buttons, sign-out, and `SyncProvider`.
+  No screen but the Settings home waits on it: sync is opt-in, so every other screen renders the same whatever it hears.
+  The home marks itself `data-settled` once the server has answered, because its top card depends on the answer and moves every row, and the Tour waits for that mark (root `CLAUDE.md`, Onboarding).
+- `setupNeeded` says whether the server still has no Owner, so the home offers the setup guide rather than a Sign in that cannot succeed.
+  It is asked once a Device is heard to be signed out, and while it is `true` again whenever the page becomes visible, because the Owner is usually created in another tab.
+  A failed question reads as `false`: the session check answered, so Sign in is the useful offer.
+  A signed-in Device proves an Owner, so it is `false` there without asking; `useServerState` folds it and `status` into the one state the home shows.
+- Its readers are the Settings home (its top card and data row) and the Account and data pages, the Account, Devices, Members and Shares sections, the topbar's title for the data page (`useTopbar`), `/pair`, the Share and Pairing Link buttons, sign-out, and `SyncProvider`.
 - `setSession` takes what a sign-in, pairing or sign-out just answered, so no second request is needed.
 - When nothing answered, it asks again on `online` and when the page becomes visible, so the app starts syncing without a restart.
   A signed-in Device is not re-asked; if the server forgets its Session, `SyncProvider` sets it signed out.

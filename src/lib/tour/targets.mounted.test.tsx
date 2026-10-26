@@ -39,16 +39,14 @@ describe('every named tour target is mounted somewhere', () => {
     expect(found('settingsGear')).toHaveLength(2);
   });
 
-  // Three anchors, not one shared block: that block was 1296px on an 839px phone, which the inert
-  // Tour cannot scroll. The toolbar anchor is on `ToolbarPreviewStrip`, inside its section,
-  // because the section alone is still 880px.
-  it('marks the toolbar, quick-capture and sync blocks in Settings', async () => {
+  it('marks the toolbar, quick-capture and data rows on the Settings home', async () => {
     renderRoute('/settings');
     await screen.findByRole('heading', { level: 1 });
 
     expect(found('settingsToolbar')).toHaveLength(1);
-    expect(found('settingsQuickCapture')).toHaveLength(1);
-    expect(found('settingsSync')).toHaveLength(1);
+    expect(found('settingsToolbar')[0]).toHaveAttribute('href', '/settings/toolbar');
+    expect(found('settingsQuickCapture')[0]).toHaveAttribute('href', '/settings/quick-capture');
+    expect(found('settingsSync')[0]).toHaveAttribute('href', '/settings/data');
   });
 
   it('covers every target the registry declares', () => {

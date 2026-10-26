@@ -93,6 +93,7 @@ State that lives in the URL, not in a context:
 - **Search and filters** are typed TanStack search params (`q`, `sort`, `dir`, `tags`), validated by `src/lib/note-search-params.ts` and read through `useNoteSearchState()`.
 - **The open Note** is the `note` param ([ADR 0014](./docs/adr/0014-the-open-note-lives-in-the-url.md), `useOpenNote()`), so the platform Back button closes the editor.
   A Note's id is minted when its editor opens, not on first save: the id is the dialog's React key, so swapping it mid-session would remount the editor under the user's cursor.
+- **The open toolbar group** in Settings is the `group` param of `/settings/toolbar`, so Back closes it; the sheet over the editor keeps its own.
 
 Two objects travel with an open Note:
 
@@ -138,7 +139,7 @@ The short version:
 `src/routeTree.gen.ts` is generated and committed: never edit it.
 Route modules stay thin: they pick a scope and a title and delegate to `NotesView` or a page in `src/pages/`.
 
-Routes: `/` (active feed), `/archive`, `/trash`, `/labels`, `/tag/$id`, `/settings`, `/pair` (where a Pairing Link lands; the code rides in the fragment) and `/share/$token` (a Share Link's read-only page).
+Routes: `/` (active feed), `/archive`, `/trash`, `/labels`, `/tag/$id`, `/settings` (a home whose rows open `/settings/general`, `/toolbar`, `/quick-capture`, `/data`, `/account` and `/shortcuts`), `/pair` (where a Pairing Link lands; the code rides in the fragment) and `/share/$token` (a Share Link's read-only page).
 The four feed routes share one `validateSearch`.
 
 `/share/$token` is opened by strangers, so it renders bare: no shell, no Tour, no sync loop, an in-memory Local Store and no Account.
@@ -147,15 +148,21 @@ It writes nothing to the viewer's IndexedDB and never asks the server for a Sess
 ### Nav shell (`src/components/layout.tsx`, `src/components/nav/`)
 
 The shell is the vendored shadcn `Sidebar` ([ADR 0010](./docs/adr/0010-shadcn-sidebar-as-nav-shell.md)): an icon-collapsible sidebar from `sm:` up, a left drawer below it.
+Until the user toggles it the sidebar follows the width, collapsed below 1024px (`useSidebarOpen`), so a tablet's Feed header keeps one row.
 `navItems.ts` is the single list of destinations, so the two cannot drift.
 Settings is not a sidebar destination; the topbar gear is its one entry point.
+A Settings subpage goes back up through the app bar's Back below `sm:`, and from `sm:` up, where that bar is gone, through the link above its title (`SettingsFrame`).
 
 **Quick capture** is one list of Starts (`notes/quickCaptureActions.ts`) rendered two ways: a `＋` speed dial on mobile (`QuickCaptureBar`) and inline icons on the desktop "Take a note" bar.
+That bar keeps its whole prompt and shows the Starts that fit, measured before paint (`useStartsThatFit`); the rest wait, in order, behind a ⋯ menu.
+The prompt rotates only where its longest copy leaves room for every Start, else it rests on "Take a note…".
 Their order and the dial's side are Preferences.
 Each Start carries at most one Intent.
 Image and Camera are picker Starts: `useStartPicker` opens the OS picker inside the tap itself, because the tap's user activation does not survive the route change to the editor.
-A desktop browser ignores `capture`, so the desktop bar shows File (any file, inserted as a File attachment) in Camera's slot.
-The **new-note key** (`N` by default; a Shortcut the user changes or clears in Settings, for WCAG 2.1.4) is the same act as clicking the bar, so `NotesView` listens for it only where the bar is shown, and only for a fine pointer, the one that gets the Shortcuts section to clear it in.
+A desktop browser ignores `capture`, so for a Fine pointer the desktop bar shows File (any file, inserted as a File attachment) in Camera's slot.
+From `sm:` up the navbar's search box sits over that bar at one shared width, `--feed-column` (`globals.css`), measured in two containers of equal width; where it would get less than 20rem (an open sidebar at 768px), the `feed-row` variant gives search a row of its own.
+Keyboard affordances (shortcut chips and hints, the new-note key, the Shortcuts page) follow `useKeyboardAffordances`: a Fine pointer, or a hardware key pressed this session ([ADR 0028](./docs/adr/0028-a-hardware-key-earns-keyboard-affordances.md)).
+The **new-note key** (`N` by default; a Shortcut the user changes or clears in Settings, for WCAG 2.1.4) is the same act as clicking the bar, so `NotesView` listens for it only where the bar is shown; it asks at the press, so a tablet's first N both arms the Shortcuts page and opens a Note.
 It and the search key are matched by `isAppShortcut` (`lib/app-shortcut.ts`) on the one canonical key name (ADR 0026), and never fire inside a dialog or menu, while a modal such as the Welcome is open, or, as a bare key, in a field.
 
 **Insets.**
@@ -164,6 +171,7 @@ They need `viewport-fit=cover` in `index.html`; to see a phone's insets on a des
 The software keyboard is `--keyboard-inset`, published by `useKeyboardInset` from `window.visualViewport`, because iOS draws the keyboard over the page instead of resizing it.
 It is a CSS variable rather than React state so the editor does not re-render on every frame of the keyboard's slide.
 A view's floating action sits at the distance in `floatingBottomBar.ts`, shared with the speed dial because both land in that corner.
+The view that floats one also adds its bottom clearance (`FLOATING_BOTTOM_BAR_CLEARANCE`, in `NotesView`), so the shell keeps no list of such routes.
 
 **Checklists on a Card** are ticked by tapping the box or the words (`lib/point-over-text.ts`); press-and-hold opens the Note (`lib/long-press.ts`).
 
@@ -215,7 +223,8 @@ Colours are **OKLCH** custom properties in `globals.css`, the single token sourc
 Preferences are read synchronously from `localStorage`, so the first render already has the user's choices.
 Those the stylesheet has to act on are stamped onto `<html>` by `DocumentPreferences`: the `cvd` class, `data-density`, `data-reduced-motion` and `data-sink-checked`.
 Every other Preference is read by the component that spends it.
-A Settings row that shows and writes one Preference is a `PreferenceSwitch` or `PreferenceSegmented` bound to its key.
+A Settings row that shows and writes one boolean Preference is a `PreferenceSwitch` bound to its key; a choice of a few is `PickerTiles`.
+Reduce animations is one switch over a three-way Preference: it shows the OS setting until touched, then writes `always` or `never`.
 
 Size in rem, not px: on a large screen the root font steps up (`globals.css`, DESIGN.md Layout), and only rem grows with it; the Masonry columns read the root font for the same reason.
 
@@ -234,11 +243,12 @@ Neither creates or changes Notes.
 - **Everything except the popover is `inert`** for the Tour's lifetime (`lib/tour/inert.ts`), kept as a standing rule by a `MutationObserver` because what portals to `body` can mount later.
   An element that was already inert is never released.
   The Welcome holds the same rule around its own overlay.
-- **Settings anchors** (`data-tour` wrappers) are declared in `src/pages/settings.tsx`, so no section knows the Tour exists.
-  Toolbar and quick capture are two steps because nobody can scroll an inert app and together they do not fit a phone.
-  The last anchor wraps "Storage and sync", which renders nothing without the Storage API or a signed-in Device; that step then shows its copy without a cutout.
+- **Settings anchors** are the Settings home's Editor toolbar, Quick capture and data rows (`data-tour` on `SettingsLinkRow`, declared in `src/pages/settings/index.tsx`), so no subpage knows the Tour exists.
+  The Tour is offered on the home only; a first visit straight to a subpage waits for the home.
+  The data row renders on every Device, so every step has a cutout.
 - **Targets** resolve to the first match with a non-zero rect (`lib/tour/targets.ts`), because several surfaces are mounted twice with CSS hiding one.
 - **Waiting is on a DOM condition, never a timer** (`lib/tour/waitFor.ts`): `waitForTarget` for something to arrive on screen.
+  The Settings targets also need the home's `data-settled`, set once the server has answered: the home's top card mounts then and moves every row, and driver measures a cutout only once.
 - `welcomeSeenAt` and `onboardingSeenAt` are stamped when each guide is **offered**, not on completion, which would re-arm it after every reload.
 - Both are verified by `e2e/onboarding.spec.ts` at two breakpoints, not by Vitest: jsdom measures every element as 0x0.
 
@@ -246,7 +256,7 @@ Neither creates or changes Notes.
 
 **i18next** with browser language detection; translations are in `public/locales/<lng>/translation.json`, falling back to `en`.
 Numbers and dates go through `src/lib/format.ts` with the app language passed in.
-`src/i18n.test.ts` gates the bundles against each other: the same keys in every locale, and every key the Tour and the Welcome compose at render time.
+`src/i18n.test.ts` gates the bundles against each other: the same keys in every locale, and every key the Tour, the Welcome and the Settings home compose at render time.
 The language is a Device fact like every Preference (not in a Backup, not synced), but i18next's detector keeps it in `localStorage` itself, not `PreferencesProvider`.
 Settings uses a Select for it because the list outgrows a segmented control.
 

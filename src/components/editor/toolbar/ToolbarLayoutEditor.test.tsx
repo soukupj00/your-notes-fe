@@ -1,9 +1,10 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
+import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PREFERENCES_STORAGE_KEY, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
-import { defaultToolbarLayout, toolbarPreset } from './presets';
+import { DEFAULT_PRESET, defaultToolbarLayout, toolbarPreset } from './presets';
 import { TOOLBAR_FAMILIES } from './registry';
 import { ToolbarLayoutEditor } from './ToolbarLayoutEditor';
 import type { ToolbarLayout, WidthClass } from './types';
@@ -16,6 +17,8 @@ vi.mock('react-i18next', () => ({
       opts ? `${key}:${Object.values(opts).join(',')}` : key,
   }),
 }));
+
+vi.mock('sonner', () => ({ toast: vi.fn() }));
 
 /** The Width Class of the screen the editor is shown on, which is the one it edits. */
 let screenWidthClass: WidthClass = 'wide';
@@ -45,9 +48,9 @@ function setWidth(px: number) {
   }) as unknown as typeof window.matchMedia;
 }
 
-function renderEditor(widthClass: WidthClass = 'wide') {
+function renderEditor(widthClass: WidthClass = 'wide', showPreview = false) {
   screenWidthClass = widthClass;
-  return render(<ToolbarLayoutEditor />, { wrapper });
+  return render(<ToolbarLayoutEditor showPreview={showPreview} />, { wrapper });
 }
 
 /**
@@ -80,6 +83,7 @@ function stubRowGeometry() {
 
 beforeEach(() => setWidth(1280));
 afterEach(async () => {
+  vi.mocked(toast).mockClear();
   // The geometry stub is a prototype spy, and this suite has no `restoreMocks`:
   // left in place it would hand fabricated rects to every test that follows,
   // and a second `stubRowGeometry` would capture the spy as its own original.
@@ -145,6 +149,31 @@ describe('the family list', () => {
   });
 });
 
+describe('a family row', () => {
+  // A row without a collapse control would shift its switch left of the column above it.
+  it('lines up its controls with every other row, collapsible or not', async () => {
+    renderEditor('wide');
+
+    const handles = await screen.findAllByRole('button', { name: /^dnd\.handle/ });
+    const widths = new Set(handles.map((handle) => handle.parentElement?.childElementCount));
+    expect(widths).toEqual(new Set([4]));
+  });
+
+  // The visible count is short so a long name fits a phone; a screen reader hears the sentence.
+  it('shows a short count and says the whole sentence, counted by its total', async () => {
+    renderEditor('wide');
+
+    const history = await screen.findByRole('button', {
+      name: /^editor\.toolbar\.family\.history/,
+    });
+    expect(history).toHaveTextContent('settings.toolbar.family.count:2,2');
+    // jsdom lays nothing out, so it joins the name's parts without the space a browser adds.
+    expect(history).toHaveAccessibleName(
+      /^editor\.toolbar\.family\.history\s*settings\.toolbar\.family\.summary:2,2$/
+    );
+  });
+});
+
 describe('the fold marker', () => {
   it('marks where a phone stops showing buttons, on the compact Layout only', async () => {
     // Everything on Compact is 32 buttons on a bar that fits six.
@@ -183,7 +212,9 @@ describe('drilling into a family', () => {
 
     await user.click(await screen.findByRole('button', { name: /^editor\.toolbar\.family\.list/ }));
 
-    expect(screen.getByText(/editor\.toolbar\.family\.list · settings\.toolbar\.width\.compact/));
+    expect(screen.getByText('editor.toolbar.family.list ·').parentElement).toHaveTextContent(
+      'editor.toolbar.family.list · settings.toolbar.width.compact'
+    );
     expect(screen.getAllByRole('switch')).toHaveLength(3);
     expect(
       screen.getByRole('switch', { name: 'settings.toolbar.item.show:editor.bulletList.tooltip' })
@@ -221,6 +252,54 @@ describe('drilling into a family', () => {
     await user.click(screen.getByRole('button', { name: 'settings.toolbar.back' }));
 
     expect(screen.getAllByRole('switch')).toHaveLength(TOOLBAR_FAMILIES.length);
+  });
+});
+
+describe('a family opened from outside', () => {
+  const renderControlled = (openFamilyId: string | null) => {
+    const onOpenFamilyChange = vi.fn();
+    screenWidthClass = 'wide';
+    render(
+      <ToolbarLayoutEditor openFamilyId={openFamilyId} onOpenFamilyChange={onOpenFamilyChange} />,
+      { wrapper }
+    );
+    return onOpenFamilyChange;
+  };
+
+  it('shows the leaf list of the family it is given', async () => {
+    renderControlled('style');
+
+    expect(
+      await screen.findByRole('switch', { name: 'settings.toolbar.item.show:editor.heading.h3' })
+    ).toBeInTheDocument();
+  });
+
+  it.each([
+    ['an unknown family', 'nope'],
+    ['no family', null],
+  ])('shows the family list for %s', async (_, id) => {
+    renderControlled(id);
+
+    expect(await screen.findAllByRole('switch')).toHaveLength(TOOLBAR_FAMILIES.length);
+  });
+
+  it('asks to open a row and leaves the opening to its owner', async () => {
+    const user = userEvent.setup();
+    const onOpenFamilyChange = renderControlled(null);
+
+    await user.click(
+      await screen.findByRole('button', { name: /^editor\.toolbar\.family\.style/ })
+    );
+    expect(onOpenFamilyChange).toHaveBeenLastCalledWith('style');
+    expect(screen.getAllByRole('switch')).toHaveLength(TOOLBAR_FAMILIES.length);
+  });
+
+  it('asks to close from its Back', async () => {
+    const user = userEvent.setup();
+    const onOpenFamilyChange = renderControlled('style');
+
+    await user.click(await screen.findByRole('button', { name: 'settings.toolbar.back' }));
+    expect(onOpenFamilyChange).toHaveBeenLastCalledWith(null);
   });
 });
 
@@ -283,15 +362,15 @@ describe('presets', () => {
 });
 
 describe('the Width Class', () => {
-  it.each([
-    ['compact', 'settings.toolbar.width.current.compact'],
-    ['wide', 'settings.toolbar.width.current.wide'],
-  ] as const)('on a %s screen, says so and offers no other width', (width, line) => {
-    renderEditor(width);
+  it.each(['compact', 'wide'] as const)(
+    'on a %s screen, edits it without a line naming it or a way to pick the other',
+    (width) => {
+      renderEditor(width, true);
 
-    expect(screen.getByText(line)).toBeInTheDocument();
-    expect(screen.queryByRole('radio')).toBeNull();
-  });
+      expect(screen.queryByText(/settings\.toolbar\.width\.current/)).toBeNull();
+      expect(screen.queryByRole('radio')).toBeNull();
+    }
+  );
 
   it('follows the screen when its Width Class changes', async () => {
     localStorage.setItem(
@@ -309,7 +388,74 @@ describe('the Width Class', () => {
     rerender(<ToolbarLayoutEditor />);
 
     await waitFor(() => expect(switchFor('meta')).toBeChecked());
-    expect(screen.getByText('settings.toolbar.width.current.wide')).toBeInTheDocument();
+  });
+});
+
+describe('the order on the page', () => {
+  it('puts Reset to before the preview, and the preview before the groups', () => {
+    renderEditor('wide', true);
+
+    const reset = screen.getByRole('group', { name: 'settings.toolbar.preset.legend' });
+    const preview = screen.getByTestId('toolbar-preview');
+    const groups = screen.getByText('settings.toolbar.groups');
+    const follows = (a: Element, b: Element) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(follows(reset, preview)).toBe(true);
+    expect(follows(preview, groups)).toBe(true);
+  });
+});
+
+describe('a reset', () => {
+  const preset = (name: string) =>
+    screen.getByRole('button', { name: new RegExp(`settings\\.toolbar\\.preset\\.${name}`) });
+  const undoOf = (call: number) =>
+    vi.mocked(toast).mock.calls[call][1]?.action as unknown as { onClick: () => void };
+
+  it.each(['compact', 'wide'] as const)(
+    'on %s stamps the preset, toasts with Undo, and marks that Width Class default',
+    async (width) => {
+      const user = userEvent.setup();
+      renderEditor(width);
+
+      await user.click(preset('minimal'));
+
+      await waitFor(async () =>
+        expect((await storedToolbar())[width]).toEqual(toolbarPreset('minimal', width))
+      );
+      expect(toast).toHaveBeenCalledWith(
+        'settings.toolbar.reset.done:settings.toolbar.preset.minimal',
+        expect.objectContaining({ action: expect.objectContaining({ label: 'notes.undo' }) })
+      );
+      expect(preset(DEFAULT_PRESET[width])).toHaveTextContent('settings.toolbar.preset.isDefault');
+    }
+  );
+
+  it('Undo writes back the layout from before the reset and never the other Width Class', async () => {
+    const before = toolbarPreset('everything', 'compact');
+    const wideBefore = toolbarPreset('balanced', 'wide');
+    localStorage.setItem(
+      PREFERENCES_STORAGE_KEY,
+      JSON.stringify({ version: 2, toolbar: { compact: before, wide: wideBefore } })
+    );
+    const user = userEvent.setup();
+    renderEditor('compact');
+
+    await user.click(preset('minimal'));
+    await waitFor(async () =>
+      expect((await storedToolbar()).compact).toEqual(toolbarPreset('minimal', 'compact'))
+    );
+    // A second change, to the other Width Class, before the Undo.
+    const wideAfter = toolbarPreset('everything', 'wide');
+    const raw = JSON.parse(localStorage.getItem(PREFERENCES_STORAGE_KEY) ?? '{}');
+    localStorage.setItem(
+      PREFERENCES_STORAGE_KEY,
+      JSON.stringify({ ...raw, toolbar: { ...raw.toolbar, wide: wideAfter } })
+    );
+
+    undoOf(0).onClick();
+
+    await waitFor(async () => expect((await storedToolbar()).compact).toEqual(before));
+    expect((await storedToolbar()).wide).toEqual(wideAfter);
   });
 });
 

@@ -36,6 +36,7 @@ export function LinkButton({ editor, t, tooltip, shortcutKeys }: LinkButtonProps
   // still works when the whole format family is collapsed.
   useEffect(
     () =>
+      // eslint-disable-next-line react-you-might-not-need-an-effect/no-pass-data-to-parent -- a subscription to the editor's coordinator, not data for a parent
       editor.storage.link.prompt.registerButton(() => {
         if (!triggerRef.current?.isConnected) return false;
         openPopover(true);

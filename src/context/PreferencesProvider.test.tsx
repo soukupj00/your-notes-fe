@@ -256,6 +256,17 @@ describe('setPreference', () => {
     expect(await stored()).toEqual({ ...DEFAULT_PREFERENCES, density: 'compact' });
   });
 
+  it('hands an updater the stored value, not the one this render saw', async () => {
+    const result = await prefs();
+    const wide = [{ id: 'format', on: true, collapsed: false, members: [] }];
+    // Another writer since this render, as a second tab or a since-unmounted editor would be.
+    store({ version: PREFERENCES_VERSION, toolbar: { compact: [], wide } });
+
+    await result.current.setPreference('toolbar', (toolbar) => ({ ...toolbar, compact: wide }));
+
+    expect((await stored()).toolbar).toEqual({ compact: wide, wide });
+  });
+
   it('writes a whole Toolbar Layout and reads it back unchanged', async () => {
     const result = await prefs();
     const wide = [

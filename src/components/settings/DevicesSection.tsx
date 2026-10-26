@@ -75,18 +75,19 @@ export function DevicesSection() {
           }
         >
           {!device.current && (
-            <Button variant="outline" size="sm" disabled={busy} onClick={() => setRemoving(device)}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="min-h-11"
+              disabled={busy}
+              onClick={() => setRemoving(device)}
+            >
               {t('account.devices.remove')}
             </Button>
           )}
         </SettingsRow>
       ))}
-      <SettingsRow
-        label={t('account.devices.add')}
-        description={t('account.devices.addDescription')}
-      >
-        <PairingLinkButton kind="device" label={t('account.devices.add')} />
-      </SettingsRow>
+      <PairingLinkButton kind="device" label={t('account.devices.add')} />
 
       <ConfirmDialog
         open={removing !== null}

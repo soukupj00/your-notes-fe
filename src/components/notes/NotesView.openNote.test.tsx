@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { forgetHardwareKey } from '@/hooks/useKeyboardAffordances.ts';
 import type { Note } from '@/models.ts';
 import { renderRoute } from '@/test/renderRoute.tsx';
 import { clearStore, testStore } from '@/test/store.tsx';
@@ -10,6 +11,12 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
   default: {},
 }));
+
+// jsdom trusts no event; `hardware-key.test.ts` covers the trust check.
+vi.mock('@/lib/hardware-key.ts', async (importOriginal) => {
+  const { isHardwareKey } = await importOriginal<typeof import('@/lib/hardware-key.ts')>();
+  return { isHardwareKey: (event: KeyboardEvent) => isHardwareKey(event, true) };
+});
 
 vi.mock('@/i18n', () => ({
   default: { options: { supportedLngs: ['en'] }, resolvedLanguage: 'en', changeLanguage: vi.fn() },
@@ -76,6 +83,7 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
+  forgetHardwareKey();
   globalThis.ResizeObserver = realResizeObserver;
   localStorage.clear();
   await clearStore();
@@ -164,7 +172,7 @@ describe('closing a note', () => {
     await userEvent.click(await screen.findByRole('button', { name: /Milk and bread/ }));
     await waitFor(() => expect(router.state.location.search).toMatchObject({ note: note.id }));
 
-    await userEvent.click(screen.getByText('close-editor'));
+    await userEvent.click(await screen.findByText('close-editor'));
 
     await waitFor(() => noEditor());
     expect(router.state.location.search).not.toHaveProperty('note');
@@ -220,5 +228,31 @@ describe('the feed behind an open note', () => {
     await waitFor(() => expect(router.state.location.search).toMatchObject({ q: 'milk' }));
     expect(router.state.location.search).toMatchObject({ note: note.id });
     expect(await editor()).toBeInTheDocument();
+  });
+});
+
+describe('the new-note key', () => {
+  it('opens a Note on a coarse pointer at the first press, which also arms it', async () => {
+    const router = renderRoute('/');
+    await screen.findByRole('heading', { level: 1 });
+
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', bubbles: true }));
+
+    expect(await editor()).toHaveAttribute('data-new', 'true');
+    expect(router.state.location.search).toHaveProperty('note');
+  });
+
+  it.each([
+    ['an IME composition', { isComposing: true }],
+    ['a software keyboard’s 229', { keyCode: 229 }],
+  ])('opens nothing on a coarse pointer for %s', async (_, init) => {
+    const router = renderRoute('/');
+    await screen.findByRole('heading', { level: 1 });
+
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', bubbles: true, ...init }));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    noEditor();
+    expect(router.state.location.search).not.toHaveProperty('note');
   });
 });

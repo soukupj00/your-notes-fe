@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.tsx';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog.tsx';
-import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { useShortcuts } from '@/hooks/useShortcuts.ts';
 import { SHORTCUTS, type ShortcutScope } from '@/lib/shortcuts.ts';
 import { SettingsSection } from './SettingsSection.tsx';
@@ -11,19 +10,16 @@ import { ShortcutRow } from './ShortcutRow.tsx';
 const GROUPS: readonly ShortcutScope[] = ['app', 'editor'];
 
 /**
- * Not a column in the Layout editor: a shortcut answers how to act without the bar.
- * Hidden on a coarse pointer, as in `ActionButton`: a phone has no modifier keys.
+ * Not a column in the Layout editor: a shortcut answers how to act without the bar. Untitled: its
+ * page is named Keyboard shortcuts, and only a fine pointer reaches it.
  */
 export function ShortcutsSection() {
   const { t } = useTranslation();
-  const finePointer = useFinePointer();
   const { resetAll } = useShortcuts();
   const [confirming, setConfirming] = useState(false);
 
-  if (!finePointer) return null;
-
   return (
-    <SettingsSection title={t('settings.shortcuts.title')}>
+    <SettingsSection>
       <p className="px-4 py-3 text-muted-foreground text-sm">
         {t('settings.shortcuts.description')}
       </p>
@@ -49,7 +45,7 @@ export function ShortcutsSection() {
           cancelLabel={t('settings.shortcuts.cancel')}
           onConfirm={resetAll}
         >
-          <Button type="button" variant="outline" size="sm">
+          <Button type="button" variant="outline" size="sm" className="min-h-11">
             {t('settings.shortcuts.resetAll')}
           </Button>
         </ConfirmDialog>

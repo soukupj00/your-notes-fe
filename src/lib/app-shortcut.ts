@@ -1,7 +1,8 @@
 import { comboFromEvent, hasCommandModifier, typesAltGrCharacter } from './key-combo.ts';
 
 /** Where a bare key is typing, not a command. */
-const TYPES_ITS_KEYS = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
+export const TYPES_ITS_KEYS =
+  'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
 
 /** Where every key belongs to what is open: an open note, a modal, a menu. */
 const OWNS_ITS_KEYS = '[role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"]';

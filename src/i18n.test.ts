@@ -1,12 +1,14 @@
 import { readFileSync } from 'node:fs';
+import i18next from 'i18next';
 import { describe, expect, it } from 'vitest';
 import { TOUR_STEPS } from '@/lib/tour/steps.ts';
 import { WELCOME_MARKS } from '@/lib/tour/welcome.ts';
+import { DATA_ROW } from '@/pages/settings/index.tsx';
 
 /**
  * A key missing from `cs` shows as English mid-Czech-screen, and one missing from `en` (the
- * fallback) as the raw key. The Tour's keys are composed from the step list at render time, so
- * they get their own check: renaming a step is a rename in two files that nothing else notices.
+ * fallback) as the raw key. Keys composed at render time (the Tour's, the Settings home's data row)
+ * get their own check: renaming one is a rename in two files that nothing else notices.
  */
 
 const LOCALES = ['en', 'cs'] as const;
@@ -70,6 +72,14 @@ describe('translation bundles', () => {
       expect(missing).toEqual([]);
     });
 
+    it('names the Settings home’s data row for either account', () => {
+      const missing = Object.values(DATA_ROW)
+        .flatMap((row) => [`settings.pages.${row}`, `settings.home.${row}.summary`])
+        .filter((key) => !resolves(bundle, key));
+
+      expect(missing).toEqual([]);
+    });
+
     it('names the Tour’s own controls', () => {
       const missing = [
         'onboarding.progress',
@@ -82,5 +92,19 @@ describe('translation bundles', () => {
 
       expect(missing).toEqual([]);
     });
+  });
+
+  // Counted by the group's size: "0 of 1 button on", and Czech's genitive after "z".
+  it.each([
+    ['en', 1, '0 of 1 button on'],
+    ['en', 6, '0 of 6 buttons on'],
+    ['cs', 1, 'Zapnuto 0 z 1 tlačítka'],
+    ['cs', 3, 'Zapnuto 0 z 3 tlačítek'],
+    ['cs', 6, 'Zapnuto 0 z 6 tlačítek'],
+  ] as const)('%s counts a toolbar group of %i', async (locale, count, expected) => {
+    const i18n = i18next.createInstance();
+    await i18n.init({ lng: locale, resources: { [locale]: { translation: bundles[locale] } } });
+
+    expect(i18n.t('settings.toolbar.family.summary', { on: 0, count })).toBe(expected);
   });
 });

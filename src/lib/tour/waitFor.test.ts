@@ -89,12 +89,26 @@ describe('waitFor', () => {
 
 describe('waitForTarget', () => {
   it('resolves with the target once it is on screen', async () => {
-    soon(() => onScreen('<div id="bar" data-tour="settings-toolbar"></div>'));
+    soon(() => onScreen('<div id="bar" data-tour="capture"></div>'));
 
-    const found = await waitForTarget('settingsToolbar');
+    const found = await waitForTarget('capture');
 
     expect(found).toBe(document.querySelector('#bar'));
     expect(found).not.toBeNull();
+  });
+
+  it('holds a Settings step until the Home has settled, so its cutout cannot be moved', async () => {
+    const home = onScreen('<div><div data-tour="settings-toolbar-row"></div></div>');
+    const row = home.firstElementChild as Element;
+    row.getBoundingClientRect = () => ({ width: 120, height: 44 }) as DOMRect;
+    let settled = false;
+    soon(() => {
+      settled = true;
+      home.setAttribute('data-settled', '');
+    });
+
+    await expect(waitForTarget('settingsToolbar')).resolves.toBe(row);
+    expect(settled).toBe(true);
   });
 
   it.each([

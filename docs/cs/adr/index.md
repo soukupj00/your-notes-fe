@@ -33,3 +33,4 @@ Rozhodnutí týkající se samotného serveru jsou na [webu serveru](https://sou
 | [0025](./0025-the-closed-note-takes-its-sorted-place.md) | Zavřená poznámka zaujme své seřazené místo |
 | [0026](./0026-shortcuts-are-one-preference-matched-by-one-key-name.md) | Klávesové zkratky jsou jedna předvolba s jedním názvem klávesy |
 | [0027](./0027-label-order-is-a-synced-fractional-position.md) | Pořadí štítků je synchronizovaná zlomková pozice |
+| [0028](./0028-a-hardware-key-earns-keyboard-affordances.md) | Ovládací prvky pro klávesnici si vyslouží hardwarová klávesa |

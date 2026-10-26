@@ -173,7 +173,11 @@ function readStored(): Preferences {
 
 type PreferencesContextType = {
   preferences: Preferences;
-  setPreference: <K extends PreferenceKey>(key: K, value: Preferences[K]) => Promise<void>;
+  /** An updater receives the stored value, for a write that must merge with what is there now. */
+  setPreference: <K extends PreferenceKey>(
+    key: K,
+    value: Preferences[K] | ((stored: Preferences[K]) => Preferences[K])
+  ) => Promise<void>;
 };
 
 const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
@@ -195,11 +199,13 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 
   const setPreference = useCallback(async function setPreference<K extends PreferenceKey>(
     key: K,
-    value: Preferences[K]
+    value: Preferences[K] | ((stored: Preferences[K]) => Preferences[K])
   ) {
     // Read-modify-write against storage, not React state: a second write in
     // the same tick must see the first, and localStorage is synchronous.
-    const next = { ...readStored(), version: PREFERENCES_VERSION, [key]: value } as Preferences;
+    const stored = readStored();
+    const resolved = typeof value === 'function' ? value(stored[key]) : value;
+    const next = { ...stored, version: PREFERENCES_VERSION, [key]: resolved } as Preferences;
     localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(next));
     setPreferences(next);
   }, []);

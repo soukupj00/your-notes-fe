@@ -3,6 +3,7 @@
     "primary": "Main navigation",
     "open": "Open navigation",
     "back": "Back",
+    "newTab": "(opens in a new tab)",
     "notes": "Notes",
     "labels": "Labels",
     "editLabels": "Edit labels",
@@ -196,9 +197,6 @@
     }
   },
   "settings": {
-    "appearance": {
-      "title": "Appearance"
-    },
     "locale": {
       "label": "Language"
     },
@@ -209,29 +207,21 @@
       "dark": "Dark",
       "toggle": "Toggle theme"
     },
-    "language": {
-      "title": "Language"
-    },
     "density": {
       "label": "Density",
-      "description": "Compact fits more notes on the screen and sets text a little smaller.",
       "comfortable": "Comfortable",
       "compact": "Compact"
     },
     "reducedMotion": {
-      "label": "Motion",
-      "description": "Reduced turns animation off; Full keeps it on.",
-      "system": "Device",
-      "always": "Reduced",
-      "never": "Full"
+      "label": "Reduce animations",
+      "description": "Starts from your device's setting."
     },
     "colorBlind": {
       "label": "Colour-blind palette",
-      "description": "Re-tints note and label colours so the nine stay distinguishable. Works with either theme."
+      "description": "Note colours stay easy to tell apart."
     },
     "sinkCheckedItems": {
-      "label": "Move checked items to the bottom",
-      "description": "In a checklist, checked items are shown after the unchecked ones. The order you typed them in is kept."
+      "label": "Checked items move to the bottom of the list"
     },
     "backup": {
       "title": "Backup",
@@ -239,12 +229,12 @@
       "imported": "Backup restored.",
       "export": {
         "label": "Export a backup",
-        "description": "Downloads a .zip with every note, label and attachment.",
+        "description": "Everything, as one .zip.",
         "action": "Export"
       },
       "import": {
-        "label": "Restore from a backup",
-        "description": "Replaces everything currently stored. You can save a backup of it first.",
+        "label": "Restore a backup",
+        "description": "Replaces everything here.",
         "action": "Import"
       },
       "confirmImport": {
@@ -264,30 +254,28 @@
       },
       "importCancelled": "Import cancelled. Nothing was changed.",
       "exporting": "Building your backup…",
-      "importing": "Reading the backup…"
+      "importing": "Reading the backup…",
+      "localFootnote": "Without a server, a backup is the only copy outside this browser."
     },
     "toolbar": {
       "title": "Editor toolbar",
-      "description": "Choose which buttons the editor shows, in what order, and which of them share a menu.",
       "back": "All groups",
       "fold": "A phone shows about {{slots}} buttons before this line",
       "width": {
         "compact": "Narrow window",
-        "wide": "Wide window",
-        "current": {
-          "compact": "This is the layout for narrow windows and touchscreens.",
-          "wide": "This is the layout for wide windows."
-        }
+        "wide": "Wide window"
       },
       "preset": {
-        "legend": "Start from",
+        "legend": "Reset to",
         "minimal": "Minimal",
         "balanced": "Balanced",
         "everything": "Everything",
-        "isDefault": "· default"
+        "isDefault": "default"
       },
       "family": {
-        "summary": "{{on}} of {{total}} buttons on",
+        "count": "{{on}} of {{total}}",
+        "summary_one": "{{on}} of {{count}} button on",
+        "summary_other": "{{on}} of {{count}} buttons on",
         "show": "Show the {{name}} group",
         "collapse": "Put the {{name}} group in one menu",
         "collapsed": "In one menu",
@@ -296,10 +284,13 @@
       "item": {
         "show": "Show {{name}}"
       },
-      "preview": "How it will look"
+      "preview": "Preview",
+      "groups": "Groups, in bar order",
+      "reset": {
+        "done": "Toolbar reset to {{preset}}."
+      }
     },
     "shortcuts": {
-      "title": "Keyboard shortcuts",
       "description": "Click a shortcut's keys to change it. Shortcuts in Notes work outside an open note; the others work while a note is open, whichever buttons your toolbar shows.",
       "newNote": {
         "label": "New note"
@@ -340,37 +331,66 @@
     "help": {
       "title": "Help",
       "replay": {
-        "label": "Tutorial",
-        "description": "Three steps through Settings.",
         "action": "Replay tutorial"
       },
       "docs": {
         "label": "Documentation",
-        "description": "How it works, and how to run your own server.",
-        "open": "Open the docs",
-        "github": "GitHub",
-        "setup": "Set up your own server",
         "setupUrl": "https://soukupj00.github.io/your-notes-be/setup"
       }
     },
     "quickCapture": {
-      "title": "Quick capture",
-      "description": "The ways the ＋ button offers to start a note.",
       "show": "Offer {{name}}",
       "lastOne": "The last start on the dial - on a phone this is the only way to make a note.",
       "alignment": {
-        "label": "Note button side",
-        "description": "Which side of the screen the ＋ button sits on, for the thumb that has to reach it.",
         "left": "Left",
         "right": "Right"
+      },
+      "placement": "Placement",
+      "menuItems": "Menu items"
+    },
+    "pages": {
+      "general": "General",
+      "toolbar": "Editor toolbar",
+      "quickCapture": "Quick capture",
+      "dataSync": "Sync and backup",
+      "dataLocal": "Backup and storage",
+      "account": "Account",
+      "shortcuts": "Keyboard shortcuts"
+    },
+    "home": {
+      "general": {
+        "summary": "Language, theme, display"
+      },
+      "toolbar": {
+        "summary": "Presets, groups, order"
+      },
+      "quickCapture": {
+        "summary": "Placement, menu items",
+        "summaryWide": "Menu items"
+      },
+      "dataSync": {
+        "summary": "Sync, storage, backup"
+      },
+      "dataLocal": {
+        "summary": "Export, restore, storage"
+      },
+      "local": {
+        "title": "Notes stay on this Device",
+        "syncWithServer": "Sync with your own server",
+        "backUp": "Back up",
+        "setupGuide": "Setup guide"
       }
+    },
+    "general": {
+      "languageAndTheme": "Language and theme",
+      "display": "Display",
+      "checklists": "Checklists"
     }
   },
   "pwa": {
     "install": {
-      "title": "App",
       "label": "Install YourNotes",
-      "description": "Add YourNotes to your device for quick access in its own window.",
+      "description": "Opens in its own window.",
       "action": "Install"
     },
     "update": {
@@ -491,7 +511,8 @@
       "drawing": "Drawing",
       "picture": "Image",
       "camera": "Camera",
-      "file": "File"
+      "file": "File",
+      "more": "More ways to start"
     },
     "emptyingTrash": "Emptying trash…",
     "placeholders": {
@@ -619,11 +640,11 @@
     "steps": {
       "toolbar": {
         "title": "Your toolbar",
-        "body": "Choose which buttons the editor's toolbar carries, and in what order. Phone and desktop each keep their own arrangement."
+        "body": "Open Editor toolbar to choose which buttons the editor carries, and in what order. Phone and desktop each keep their own arrangement."
       },
       "quickCapture": {
         "title": "Ways to start a note",
-        "body": "Drag the kinds of note you make most often to the top. On a phone, you can also choose which side the ＋ button sits on."
+        "body": "Open Quick capture to put the kinds of note you make most often first. On a phone, it also sets which side the ＋ button sits on."
       },
       "sync": {
         "title": "Where your notes live",
@@ -650,15 +671,10 @@
     },
     "section": {
       "title": "Account",
-      "signedOutLabel": "Sign in to your server",
-      "signedOutDescription": "Sync this Device's Notes with your YourNotes server.",
-      "setupGuide": "How to set up a server",
       "signIn": "Sign in",
       "signInDescription": "Use the username and password you chose for your account.",
-      "signedInLabel": "Signed in as {{username}}",
       "owner": "Owner",
       "member": "Member",
-      "thisDevice": "This Device: {{name}}",
       "signOut": "Sign out",
       "signedOut": "Signed out.",
       "eraseTitle": "Sign out and erase this Device?",
@@ -678,13 +694,11 @@
       "removeTitle": "Remove {{name}}?",
       "removeDescription": "It is signed out and nothing else changes.",
       "removed": "Device removed.",
-      "add": "Add a Device",
-      "addDescription": "Shows a Pairing Link to scan with the new Device's camera."
+      "add": "Add a Device"
     },
     "members": {
       "title": "Members",
-      "invite": "Invite",
-      "inviteDescription": "Someone in your household gets their own account. Neither of you sees the other's Notes.",
+      "invite": "Invite a member",
       "you": "You",
       "joined": "Joined {{date}}",
       "reset": "Set a new password",
@@ -696,7 +710,7 @@
     },
     "qr": {
       "deviceDescription": "Scan it with the new Device's camera. It signs in to your account without typing a password.",
-      "inviteDescription": "The other person scans it on their own phone and chooses their own username and password.",
+      "inviteDescription": "The other person scans it on their own phone and chooses their own username and password. Neither of you sees the other's Notes.",
       "expires": "The link works once and for ten minutes.",
       "orOpen": "Or open this link on the other Device:",
       "copy": "Copy link",
@@ -725,16 +739,17 @@
     "conflicts_other": "{{count}} conflicts kept as copies",
     "showConflicts": "Show",
     "keptNewer": "Kept the newer version from your server.",
-    "title": "Storage and sync",
     "storage": {
       "label": "Stored on this Device",
       "persisted": "The browser keeps it even when space runs low.",
-      "notPersisted": "The browser may clear it when space runs low. Keep a backup.",
-      "used": "{{size}} used"
+      "notPersisted": "The browser may clear it when space runs low.",
+      "title": "This Device",
+      "storedHere": "{{size}} stored here"
     },
     "label": "Sync",
     "never": "Not synced yet",
     "idle": "Last synced {{time}}",
+    "syncedAt": "Synced at {{time}}",
     "syncing": "Syncing…",
     "offline": "Offline. Changes wait on this Device.",
     "error": "Could not sync. It will try again.",
@@ -744,8 +759,8 @@
     "signedOut": "This Device is no longer signed in. Sign in again to sync; your changes wait here.",
     "tooLarge": "{{name}} is too large to sync",
     "keepEverything": {
-      "label": "Keep everything on this device",
-      "description": "Download every attachment after each sync, not just previews. Uses more storage."
+      "label": "Keep every attachment",
+      "description": "Not just previews. Uses more storage."
     }
   },
   "share": {
@@ -759,7 +774,7 @@
     "untitled": "Untitled Note",
     "section": {
       "title": "Shared Notes",
-      "none": "No Note is shared."
+      "none": "None shared"
     },
     "page": {
       "loading": "Opening the Note…",

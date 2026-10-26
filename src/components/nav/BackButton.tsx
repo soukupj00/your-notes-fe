@@ -6,10 +6,10 @@ import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
 
 /**
  * Needed because an installed standalone PWA on iOS has no system back at all. Pops history when
- * there is some, else falls back to the Feed, since a cold entry has nothing to pop. A button,
+ * there is some, else goes to `fallback`, since a cold entry has nothing to pop. A button,
  * not a Link: the href would be a guess, and open-in-new-tab would go somewhere else.
  */
-export function BackButton() {
+export function BackButton({ fallback = '/' }: { fallback?: string }) {
   const { t } = useTranslation();
   const router = useRouter();
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ export function BackButton() {
         if (canGoBack) {
           router.history.back();
         } else {
-          void navigate({ to: '/' });
+          void navigate({ to: fallback });
         }
       }}
     >

@@ -52,7 +52,7 @@ There is no client-state library: Dexie live queries + URL params + small contex
 | sonner | Toasts | Undo affordances (delete, conflict notices) |
 | fuse.js | Fuzzy search | Ranked in-memory search over the feed; no server, no index to maintain |
 | class-variance-authority, clsx, tailwind-merge | Class composition | shadcn idiom |
-| w3c-keyname | Shortcuts | names a key press as ProseMirror does, so the recorder and every matcher share one name (`lib/key-combo.ts`, [ADR 0026](../adr/0026-shortcuts-are-one-preference-matched-by-one-key-name.md)); shortcuts shown only to Fine pointers ([ADR 0016](../adr/0016-width-decides-layout-pointer-decides-affordances.md)) |
+| w3c-keyname | Shortcuts | names a key press as ProseMirror does, so the recorder and every matcher share one name (`lib/key-combo.ts`, [ADR 0026](../adr/0026-shortcuts-are-one-preference-matched-by-one-key-name.md)); shortcuts shown to a Fine pointer or once a hardware key is pressed ([ADR 0028](../adr/0028-a-hardware-key-earns-keyboard-affordances.md)) |
 | driver.js | Tour spotlight | The one place the Tour touches a library; all Tour logic is dependency-free in `lib/tour/` ([ADR 0024](../adr/0024-a-welcome-at-launch-the-tour-in-settings.md)) |
 | react-colorful, color, country-flag-icons | Small utilities | Color picking, color math, locale flags |
 

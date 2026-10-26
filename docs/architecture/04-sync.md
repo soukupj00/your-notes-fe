@@ -88,7 +88,7 @@ The other way round - this Device edited a Note another Device purged - the edit
 ## Attachment transfer
 
 - Bytes are immutable by id, so upload is "PUT if the server lacks this id" - idempotent, retryable, no conflict rule.
-- **Previews sync eagerly** (tens of KB; the Feed is instantly correct on a new device); **full bytes on demand**, with a "keep everything on this device" preference.
+- **Previews sync eagerly** (tens of KB; the Feed is instantly correct on a new device); **full bytes on demand**, with a "Keep every attachment" preference.
 - Attachment node views have a third state, "known but not downloaded", rendering a placeholder instead of a broken element.
 - A Preview is its own blob, named by the Attachment's `thumbnailId` on the Note, so it syncs ahead of the full bytes.
   The Device remembers which blob ids the server holds instead of asking with `HEAD`; a lost record costs one repeat `PUT`, which the server answers 204 without reading the body.

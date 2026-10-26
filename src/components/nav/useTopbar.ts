@@ -1,6 +1,7 @@
 import { useRouterState } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { resolveTopbar, type TopbarConfig } from '@/components/nav/topbar.ts';
+import { useAccount } from '@/context/AccountProvider.tsx';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import { emptyLive } from '@/data/live.ts';
 import { useLive } from '@/data/useLive.ts';
@@ -17,6 +18,7 @@ export type ResolvedTopbar = Omit<TopbarConfig, 'title'> & {
 export function useTopbar(): ResolvedTopbar {
   const { t } = useTranslation();
   const store = useLocalStore();
+  const { status } = useAccount();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const config = resolveTopbar(pathname);
 
@@ -33,7 +35,9 @@ export function useTopbar(): ResolvedTopbar {
     // Late by a frame, or missing if the tag was deleted elsewhere. Same fallback as the
     // route's heading, so the two never disagree.
     title = tag?.name ?? t('nav.labels');
+  } else if (config.title?.kind === 'settingsData') {
+    title = t(status === 'signed-in' ? 'settings.pages.dataSync' : 'settings.pages.dataLocal');
   }
 
-  return { kind: config.kind, title };
+  return { kind: config.kind, title, parent: config.parent };
 }

@@ -11,9 +11,31 @@ const CASES: [pathname: string, expected: TopbarConfig][] = [
   ['/settings', { kind: 'child', title: { kind: 'key', key: 'nav.settings' } }],
 ];
 
+const SETTINGS_SUBPAGES: [pathname: string, title: TopbarConfig['title']][] = [
+  ['/settings/general', { kind: 'key', key: 'settings.pages.general' }],
+  ['/settings/toolbar', { kind: 'key', key: 'settings.pages.toolbar' }],
+  ['/settings/quick-capture', { kind: 'key', key: 'settings.pages.quickCapture' }],
+  ['/settings/data', { kind: 'settingsData' }],
+  ['/settings/account', { kind: 'key', key: 'settings.pages.account' }],
+  ['/settings/shortcuts', { kind: 'key', key: 'settings.pages.shortcuts' }],
+];
+
 describe('resolveTopbar', () => {
   it.each(CASES)('resolves %s', (pathname, expected) => {
     expect(resolveTopbar(pathname)).toEqual(expected);
+  });
+
+  it.each(
+    SETTINGS_SUBPAGES.flatMap(([path, title]) => [
+      [path, title],
+      [`${path}/`, title],
+    ])
+  )('resolves the Settings subpage %s as a child of the Settings home', (pathname, title) => {
+    expect(resolveTopbar(pathname)).toEqual({ kind: 'child', title, parent: '/settings' });
+  });
+
+  it('gives the Settings home no parent of its own', () => {
+    expect(resolveTopbar('/settings')).not.toHaveProperty('parent');
   });
 
   // The one rule the whole design rests on, asserted as a rule rather than as

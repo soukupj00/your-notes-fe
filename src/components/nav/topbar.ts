@@ -5,7 +5,11 @@
  */
 
 /** A title the topbar can show, before it has been resolved to a string. */
-export type TopbarTitle = { kind: 'key'; key: string } | { kind: 'tag'; id: string };
+export type TopbarTitle =
+  | { kind: 'key'; key: string }
+  | { kind: 'tag'; id: string }
+  // The data page is named after the account, which a pathname cannot know.
+  | { kind: 'settingsData' };
 
 export type TopbarConfig = {
   /**
@@ -15,9 +19,20 @@ export type TopbarConfig = {
   kind: 'destination' | 'child';
   /** `null` on `/`: the default surface does not need to announce itself. */
   title: TopbarTitle | null;
+  /** Where Back goes on a cold entry, with no history to pop; the Feed when absent. */
+  parent?: string;
 };
 
 const TAG_ROUTE = /^\/tag\/([^/]+)$/;
+
+const SETTINGS_SUBPAGES: Record<string, TopbarTitle> = {
+  '/settings/general': { kind: 'key', key: 'settings.pages.general' },
+  '/settings/toolbar': { kind: 'key', key: 'settings.pages.toolbar' },
+  '/settings/quick-capture': { kind: 'key', key: 'settings.pages.quickCapture' },
+  '/settings/data': { kind: 'settingsData' },
+  '/settings/account': { kind: 'key', key: 'settings.pages.account' },
+  '/settings/shortcuts': { kind: 'key', key: 'settings.pages.shortcuts' },
+};
 
 /** Trailing slashes are a router detail; `/archive/` is `/archive`. */
 function normalise(pathname: string): string {
@@ -42,6 +57,9 @@ export function resolveTopbar(pathname: string): TopbarConfig {
     case '/settings':
       return { kind: 'child', title: { kind: 'key', key: 'nav.settings' } };
   }
+
+  const subpage = SETTINGS_SUBPAGES[path];
+  if (subpage) return { kind: 'child', title: subpage, parent: '/settings' };
 
   const tag = TAG_ROUTE.exec(path);
   if (tag) return { kind: 'destination', title: { kind: 'tag', id: tag[1] } };

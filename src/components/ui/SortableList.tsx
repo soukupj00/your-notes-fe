@@ -66,7 +66,8 @@ export function SortableList({ ids, onReorder, nameOf, children }: SortableListP
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
-      accessibility={{ announcements, screenReaderInstructions }}
+      // In `body`, not beside the list: a live region inside a card is a child it rounds and divides.
+      accessibility={{ announcements, screenReaderInstructions, container: document.body }}
       onDragEnd={({ active, over }) => {
         if (over && active.id !== over.id) onReorder(String(active.id), String(over.id));
       }}
@@ -112,8 +113,8 @@ export function SortableRow({
       style={{ transform: CSS.Transform.toString(transform), transition: transition ?? undefined }}
       data-dragging={isDragging || undefined}
       className={cn(
-        'flex min-h-11 items-center gap-1 bg-card px-2',
-        isDragging && 'relative z-10 rounded-md shadow-lift',
+        'flex min-h-11 items-center gap-1 px-2',
+        isDragging && 'relative z-10 rounded-md bg-card shadow-lift',
         className
       )}
     >

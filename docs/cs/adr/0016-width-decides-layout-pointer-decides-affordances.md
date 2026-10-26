@@ -37,3 +37,8 @@ Kapacita šesti slotů pro `foldMarker` zůstává aritmetikou pro 360px: je to 
 Telefon otočený na výšku si ponechal široký panel nástrojů - zalomený do čtyř řádků - přišpendlený ke spodku přes CSS, které se přepnulo správně, protože stylopis se ptá query.
 Hook se teď ptá stejné query, takže JS a CSS nemohou odpovědět různě.
 Cena se platí v testech: jsdom nevyhodnocuje žádné media query, takže nastavení `innerWidth` už viewport nesimuluje a dělá to místo něj `src/test/viewport.ts`.
+
+## Doplněno 2026-10-25
+
+Dotykový tablet v pouzdře s klávesnicí má hrubý ukazatel a všechny klávesy, takže ovládací prvky pro klávesnici teď následují i hardwarovou klávesu stisknutou v této relaci ([ADR 0028](./0028-a-hardware-key-earns-keyboard-affordances.md)).
+Šířka dál nikdy nezastupuje ani jedno a šířková třída klávesnici nečte.

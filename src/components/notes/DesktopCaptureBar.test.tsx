@@ -30,7 +30,7 @@ function stubPointer(fine: boolean) {
   vi.spyOn(window, 'matchMedia').mockImplementation(
     (query: string) =>
       ({
-        matches: query === '(pointer: fine)' && fine,
+        matches: query.includes('pointer: fine') && fine,
         media: query,
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),

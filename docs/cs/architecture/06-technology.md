@@ -47,12 +47,12 @@ Celý seznam formuje jedno produktové omezení: **žádné externí síťové p
 | Primitiva Radix UI + vendorované shadcn | Přístupné komponenty | Dialog, popover, tooltip, switch apod. se zabudovanou přístupností; vendorované a upravené (např. shell s postranním panelem, [ADR 0010](../adr/0010-shadcn-sidebar-as-nav-shell.md)) |
 | Motion | Animace | Veškerý pohyb podléhá omezení pohybu; oficiální knihovna podle `PRODUCT.md` (GSAP z původního zadání byl vypuštěn) |
 | lucide-react | Ikony | Přes registr s textovými klíči (`icons.ts`), nikdy se neimportují přímo do kódu funkcí |
-| @dnd-kit/* | Drag and drop | Řazení při přizpůsobení panelu nástrojů; ovladatelné klávesnicí |
+| @dnd-kit/* | Drag and drop | Řazení při přizpůsobení lišty editoru; ovladatelné klávesnicí |
 | @fontsource-variable/* (Bricolage Grotesque, Work Sans) | Typografie | Lokálně hostované fonty - omezení bez CDN udělalo `@fontsource` povinným |
 | sonner | Toasty | Možnost vrátit akci (smazání, upozornění na konflikt) |
 | fuse.js | Fuzzy vyhledávání | Řazené vyhledávání v paměti nad přehledem; žádný server, žádný index k údržbě |
 | class-variance-authority, clsx, tailwind-merge | Skládání tříd | Idiom shadcn |
-| w3c-keyname | Klávesové zkratky | pojmenuje stisk klávesy stejně jako ProseMirror, takže nahrávání i každé rozpoznávání zkratek sdílí jeden název (`lib/key-combo.ts`, [ADR 0026](../adr/0026-shortcuts-are-one-preference-matched-by-one-key-name.md)); zkratky se zobrazují jen přesným ukazatelům ([ADR 0016](../adr/0016-width-decides-layout-pointer-decides-affordances.md)) |
+| w3c-keyname | Klávesové zkratky | pojmenuje stisk klávesy stejně jako ProseMirror, takže nahrávání i každé rozpoznávání zkratek sdílí jeden název (`lib/key-combo.ts`, [ADR 0026](../adr/0026-shortcuts-are-one-preference-matched-by-one-key-name.md)); zkratky se zobrazují přesnému ukazateli, nebo jakmile se stiskne hardwarová klávesa ([ADR 0028](../adr/0028-a-hardware-key-earns-keyboard-affordances.md)) |
 | driver.js | Zvýraznění v průvodci | Jediné místo, kde se průvodce dotýká knihovny; veškerá logika průvodce je bez závislostí v `lib/tour/` ([ADR 0024](../adr/0024-a-welcome-at-launch-the-tour-in-settings.md)) |
 | react-colorful, color, country-flag-icons | Drobné utility | Výběr barvy, výpočty s barvami, vlajky jazyků |
 

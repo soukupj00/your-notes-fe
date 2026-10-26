@@ -165,6 +165,8 @@ By night the same identity survives as a single neon value that drives the card'
 - **Rule Control** (`oklch(62% 0.025 80)` / `oklch(52% 0.022 265)`, `--rule-control`): The border of a control whose border *is* its shape, such as a text input, a segmented track or the "no colour" swatch.
   Rule is for dividers and card edges, which never carry a shape alone, and measures only 1.32:1 against the day canvas.
   Rule Control clears WCAG 1.4.11's 3:1 non-text floor by day against both canvas (3.25:1) and raised (3.56:1).
+- **Selected** (`--selected`, a 10% ink wash by day and 17% by night): the chosen one of a few, a segment or a Picker Tile.
+  Stronger than the 9% / 12% hover wash, so the choice still reads at night, and neutral, so it never competes with the accent.
 - **Ink** (`{colors.ink-day}` / `{colors.ink-night}`), **Ink Soft** (`{colors.ink-day-soft}` / `{colors.ink-night-soft}`): Body and secondary text. Near-neutral in both themes by design.
 
 ### Named Rules
@@ -382,6 +384,17 @@ The primary capture control and the most important button on a phone.
 **Known defect - the FAB must be filled.** The prototype's FAB has **no background fill in either theme**: only a drop shadow by day and an amber glow by night. Its icon is perfectly legible (13.5:1 against every surface it can float over), so this is not a contrast problem - it is a *shape* problem. A shadow conveys depth but not a boundary, so the primary capture control reads as a glyph floating on the feed rather than as a button, and it gives the thumb no visible edge to aim at. It is also the only piece of chrome that does not carry the accent, in a system where carrying the accent is what marks something as chrome.
 
 Fill it with the accent and put the on-accent colour on the glyph, exactly like the active rail item. The shadow stays, as depth on top of a shape rather than as a substitute for one.
+
+### Picker Tiles
+
+A Settings choice between two or three options whose difference a picture shows faster than a word: density (a few tall bars against many short ones) and the ＋ button's side (a phone outline with the ＋ in each corner).
+A word-only choice stays a segmented control, as Theme does: one track in Rule Control, the chosen segment in the Selected fill with ink text and the others ink-soft, 44px tall overall.
+
+- **Shape:** equal tiles in one row, 10px (`{rounded.control}`), each a drawn picture above its label; the picture is drawn with tokens, never an image.
+  On a phone the tiles share the row; from `sm:` up each is at most 12rem and the row starts at the left, because a tile stretched across the page reads as oversized.
+- **Selected:** a 2px ink edge, the hairline border turned ink plus a 1px ring, over the Selected fill, so there is no second border weight and nothing shifts.
+  Never the accent: the tiles sit on a card (The One Accent Rule).
+- **Touch:** every tile is far above the 44px floor; the tiles are native radios, so the arrow keys move the choice.
 
 ### Navigation (rail)
 

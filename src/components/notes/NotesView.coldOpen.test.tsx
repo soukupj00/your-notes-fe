@@ -31,7 +31,7 @@ beforeEach(() => {
   globalThis.ResizeObserver = undefined;
   // A Fine pointer, so opening moves focus into the title and closing has to bring it back.
   vi.stubGlobal('matchMedia', (query: string) => ({
-    matches: query === '(pointer: fine)',
+    matches: query.includes('pointer: fine'),
     media: query,
     addEventListener: () => {},
     removeEventListener: () => {},

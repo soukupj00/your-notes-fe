@@ -54,6 +54,8 @@ export function formatBytes(bytes: number | undefined, locale: string): string |
 
 /** `Mar 4, 2030` in en, `4. 3. 2030` in cs. */
 export const MEDIUM_DATE: Readonly<Intl.DateTimeFormatOptions> = { dateStyle: 'medium' };
+/** The time of day alone: `9:00 AM` in en, `9:00` in cs. */
+export const SHORT_TIME: Readonly<Intl.DateTimeFormatOptions> = { timeStyle: 'short' };
 /** The date and the time of day: `Mar 4, 2030, 9:00 AM` in en, `4. 3. 2030 9:00` in cs. */
 export const MEDIUM_DATE_TIME: Readonly<Intl.DateTimeFormatOptions> = {
   dateStyle: 'medium',

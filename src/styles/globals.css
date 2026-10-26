@@ -17,6 +17,10 @@
    width breakpoint (ADR 0016). */
 @custom-variant coarse (@media (pointer: coarse));
 
+/* The Feed header keeps one row while search gets 20rem: 20rem + 2 * --header-side + two 1rem
+   gaps. Queried by the header and the capture bar, whose containers are equally wide. */
+@custom-variant feed-row (@container (min-width: 41.5rem));
+
 /* A wait shorter than the delay paints nothing: a loading line shown for one frame reads as a glitch. */
 @utility appear-late {
   animation: appear-late 0s 500ms both;
@@ -77,6 +81,11 @@
        `interactive-widget=resizes-content` is honoured (Chrome/Android); the keyboard's
        height on iOS Safari, which draws it over the page. */
     --keyboard-inset: 0px;
+
+    /* The header's right group on a coarse pointer (three 44px buttons, two gaps); the left
+       column matches it so search stays centred. Search and the capture bar share one width. */
+    --header-side: 9.75rem;
+    --feed-column: min(32rem, 100cqw - 2 * var(--header-side) - 2rem);
   }
 
   /* A large screen is read from further away, so everything sized in rem grows with it; px is
@@ -169,6 +178,9 @@
     --accent: color-mix(in oklab, var(--ink) 9%, transparent);
     --accent-foreground: var(--ink);
 
+    /* The chosen one of a few (a segment, a picker tile): a neutral fill, never the accent. */
+    --selected: color-mix(in oklab, var(--ink) 10%, transparent);
+
     --destructive: oklch(48% 0.18 28);
     --destructive-foreground: var(--on-accent-tone);
 
@@ -226,6 +238,7 @@
 
     --muted: color-mix(in oklab, var(--ink) 12%, var(--canvas));
     --accent: color-mix(in oklab, var(--ink) 12%, transparent);
+    --selected: color-mix(in oklab, var(--ink) 17%, transparent);
 
     --destructive: oklch(76% 0.143 25);
     --destructive-foreground: oklch(16% 0.03 25);
@@ -560,6 +573,7 @@
 
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-selected: var(--selected);
 
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);

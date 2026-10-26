@@ -72,12 +72,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* SidebarInset renders the `<main>` itself; do not nest a second one. */}
       <SidebarInset className="min-w-0">
         <Navbar />
-        {/* `tabIndex={-1}` so the skip link can move focus here. The mobile bottom padding
-            clears the fixed quick-capture bar. */}
+        {/* `tabIndex={-1}` so the skip link can move focus here. A view with a floating bar adds
+            its own clearance (`floatingBottomBar.ts`). */}
         <div
           id="main-content"
           tabIndex={-1}
-          className="min-w-0 flex-1 pt-6 pr-[calc(1rem+var(--safe-right))] pb-[calc(6rem+var(--safe-bottom))] pl-[calc(1rem+var(--safe-left))] outline-none sm:pb-6"
+          className="min-w-0 flex-1 pt-6 pr-[calc(1rem+var(--safe-right))] pb-[calc(1.5rem+var(--safe-bottom))] pl-[calc(1rem+var(--safe-left))] outline-none sm:pb-6"
         >
           {children}
         </div>

@@ -54,7 +54,7 @@ Zadání se zavazuje k REST + HATEOAS a právě ADR 0017 udržuje tento závazek
 - `AccountProvider`: stav přihlášení a aktuální zařízení, bez tokenu k držení a bez URL ke konfiguraci.
 - `SyncProvider`, který spouští smyčku ([04-sync.md](./04-sync.md)); síťová logika zůstává mimo komponenty.
 - Klient HAL (`src/data/http/`), který validuje každou odpověď proti vendorovanému kontraktu.
-- Nastavení: přihlášení a odhlášení, párovací odkazy, seznam zařízení s odvoláním, členové a pozvánky, sdílené poznámky a jeden blok odpovídající na otázku „jsou tu moje data v bezpečí“ (perzistence úložiště, poslední synchronizace, čekající změny).
+- Nastavení: přihlášení na úvodní stránce Nastavení; stránka Účet s odhlášením, párovacími odkazy, seznamem zařízení s odvoláním, sdílenými poznámkami a pro vlastníka členy a pozvánkami; a „Synchronizace a záloha“, která odpovídá na otázku „jsou tu moje data v bezpečí“ (perzistence úložiště, poslední synchronizace, čekající změny).
 - `/pair`, kde párovací odkaz přihlásí nové zařízení, a `/share/$token`, stránka odkazu pro sdílení jen pro čtení.
 - Image frontendu ([ADR 0006](../adr/0006-ci-cd-and-container-image-distribution.md)): image backendu se staví z něj a poskytuje jeho soubory.
 

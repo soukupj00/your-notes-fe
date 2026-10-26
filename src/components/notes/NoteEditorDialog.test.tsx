@@ -78,7 +78,10 @@ const closeButton = () => screen.getByRole('button', { name: 'Close' });
 const dialogSurface = () =>
   document.querySelector('[data-slot="dialog-content"]') as HTMLElement | null;
 
-afterEach(clearStore);
+afterEach(async () => {
+  handOff.mockClear();
+  await clearStore();
+});
 
 describe('NoteEditorDialog', () => {
   it('loads an existing note once and ignores later external writes (no live query)', async () => {

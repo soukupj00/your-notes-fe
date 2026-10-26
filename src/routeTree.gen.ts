@@ -15,6 +15,12 @@ import { Route as LabelsRouteImport } from './routes/labels'
 import { Route as PairRouteImport } from './routes/pair'
 import { Route as TrashRouteImport } from './routes/trash'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
+import { Route as SettingsAccountRouteImport } from './routes/settings.account'
+import { Route as SettingsDataRouteImport } from './routes/settings.data'
+import { Route as SettingsGeneralRouteImport } from './routes/settings.general'
+import { Route as SettingsQuickCaptureRouteImport } from './routes/settings.quick-capture'
+import { Route as SettingsShortcutsRouteImport } from './routes/settings.shortcuts'
+import { Route as SettingsToolbarRouteImport } from './routes/settings.toolbar'
 import { Route as ShareTokenRouteImport } from './routes/share.$token'
 import { Route as TagIdRouteImport } from './routes/tag.$id'
 
@@ -48,6 +54,36 @@ const SettingsIndexRoute = SettingsIndexRouteImport.update({
   path: '/settings/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsAccountRoute = SettingsAccountRouteImport.update({
+  id: '/settings/account',
+  path: '/settings/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsDataRoute = SettingsDataRouteImport.update({
+  id: '/settings/data',
+  path: '/settings/data',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsGeneralRoute = SettingsGeneralRouteImport.update({
+  id: '/settings/general',
+  path: '/settings/general',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsQuickCaptureRoute = SettingsQuickCaptureRouteImport.update({
+  id: '/settings/quick-capture',
+  path: '/settings/quick-capture',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsShortcutsRoute = SettingsShortcutsRouteImport.update({
+  id: '/settings/shortcuts',
+  path: '/settings/shortcuts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsToolbarRoute = SettingsToolbarRouteImport.update({
+  id: '/settings/toolbar',
+  path: '/settings/toolbar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShareTokenRoute = ShareTokenRouteImport.update({
   id: '/share/$token',
   path: '/share/$token',
@@ -65,6 +101,12 @@ export interface FileRoutesByFullPath {
   '/labels': typeof LabelsRoute
   '/pair': typeof PairRoute
   '/trash': typeof TrashRoute
+  '/settings/account': typeof SettingsAccountRoute
+  '/settings/data': typeof SettingsDataRoute
+  '/settings/general': typeof SettingsGeneralRoute
+  '/settings/quick-capture': typeof SettingsQuickCaptureRoute
+  '/settings/shortcuts': typeof SettingsShortcutsRoute
+  '/settings/toolbar': typeof SettingsToolbarRoute
   '/share/$token': typeof ShareTokenRoute
   '/tag/$id': typeof TagIdRoute
   '/settings/': typeof SettingsIndexRoute
@@ -75,6 +117,12 @@ export interface FileRoutesByTo {
   '/labels': typeof LabelsRoute
   '/pair': typeof PairRoute
   '/trash': typeof TrashRoute
+  '/settings/account': typeof SettingsAccountRoute
+  '/settings/data': typeof SettingsDataRoute
+  '/settings/general': typeof SettingsGeneralRoute
+  '/settings/quick-capture': typeof SettingsQuickCaptureRoute
+  '/settings/shortcuts': typeof SettingsShortcutsRoute
+  '/settings/toolbar': typeof SettingsToolbarRoute
   '/share/$token': typeof ShareTokenRoute
   '/tag/$id': typeof TagIdRoute
   '/settings': typeof SettingsIndexRoute
@@ -86,6 +134,12 @@ export interface FileRoutesById {
   '/labels': typeof LabelsRoute
   '/pair': typeof PairRoute
   '/trash': typeof TrashRoute
+  '/settings/account': typeof SettingsAccountRoute
+  '/settings/data': typeof SettingsDataRoute
+  '/settings/general': typeof SettingsGeneralRoute
+  '/settings/quick-capture': typeof SettingsQuickCaptureRoute
+  '/settings/shortcuts': typeof SettingsShortcutsRoute
+  '/settings/toolbar': typeof SettingsToolbarRoute
   '/share/$token': typeof ShareTokenRoute
   '/tag/$id': typeof TagIdRoute
   '/settings/': typeof SettingsIndexRoute
@@ -98,6 +152,12 @@ export interface FileRouteTypes {
     | '/labels'
     | '/pair'
     | '/trash'
+    | '/settings/account'
+    | '/settings/data'
+    | '/settings/general'
+    | '/settings/quick-capture'
+    | '/settings/shortcuts'
+    | '/settings/toolbar'
     | '/share/$token'
     | '/tag/$id'
     | '/settings/'
@@ -108,6 +168,12 @@ export interface FileRouteTypes {
     | '/labels'
     | '/pair'
     | '/trash'
+    | '/settings/account'
+    | '/settings/data'
+    | '/settings/general'
+    | '/settings/quick-capture'
+    | '/settings/shortcuts'
+    | '/settings/toolbar'
     | '/share/$token'
     | '/tag/$id'
     | '/settings'
@@ -118,6 +184,12 @@ export interface FileRouteTypes {
     | '/labels'
     | '/pair'
     | '/trash'
+    | '/settings/account'
+    | '/settings/data'
+    | '/settings/general'
+    | '/settings/quick-capture'
+    | '/settings/shortcuts'
+    | '/settings/toolbar'
     | '/share/$token'
     | '/tag/$id'
     | '/settings/'
@@ -129,6 +201,12 @@ export interface RootRouteChildren {
   LabelsRoute: typeof LabelsRoute
   PairRoute: typeof PairRoute
   TrashRoute: typeof TrashRoute
+  SettingsAccountRoute: typeof SettingsAccountRoute
+  SettingsDataRoute: typeof SettingsDataRoute
+  SettingsGeneralRoute: typeof SettingsGeneralRoute
+  SettingsQuickCaptureRoute: typeof SettingsQuickCaptureRoute
+  SettingsShortcutsRoute: typeof SettingsShortcutsRoute
+  SettingsToolbarRoute: typeof SettingsToolbarRoute
   ShareTokenRoute: typeof ShareTokenRoute
   TagIdRoute: typeof TagIdRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
@@ -178,6 +256,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/account': {
+      id: '/settings/account'
+      path: '/settings/account'
+      fullPath: '/settings/account'
+      preLoaderRoute: typeof SettingsAccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/data': {
+      id: '/settings/data'
+      path: '/settings/data'
+      fullPath: '/settings/data'
+      preLoaderRoute: typeof SettingsDataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/general': {
+      id: '/settings/general'
+      path: '/settings/general'
+      fullPath: '/settings/general'
+      preLoaderRoute: typeof SettingsGeneralRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/quick-capture': {
+      id: '/settings/quick-capture'
+      path: '/settings/quick-capture'
+      fullPath: '/settings/quick-capture'
+      preLoaderRoute: typeof SettingsQuickCaptureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/shortcuts': {
+      id: '/settings/shortcuts'
+      path: '/settings/shortcuts'
+      fullPath: '/settings/shortcuts'
+      preLoaderRoute: typeof SettingsShortcutsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/toolbar': {
+      id: '/settings/toolbar'
+      path: '/settings/toolbar'
+      fullPath: '/settings/toolbar'
+      preLoaderRoute: typeof SettingsToolbarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/share/$token': {
       id: '/share/$token'
       path: '/share/$token'
@@ -201,6 +321,12 @@ const rootRouteChildren: RootRouteChildren = {
   LabelsRoute: LabelsRoute,
   PairRoute: PairRoute,
   TrashRoute: TrashRoute,
+  SettingsAccountRoute: SettingsAccountRoute,
+  SettingsDataRoute: SettingsDataRoute,
+  SettingsGeneralRoute: SettingsGeneralRoute,
+  SettingsQuickCaptureRoute: SettingsQuickCaptureRoute,
+  SettingsShortcutsRoute: SettingsShortcutsRoute,
+  SettingsToolbarRoute: SettingsToolbarRoute,
   ShareTokenRoute: ShareTokenRoute,
   TagIdRoute: TagIdRoute,
   SettingsIndexRoute: SettingsIndexRoute,

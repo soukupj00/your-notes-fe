@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SyncStatusSection } from '@/components/settings/SyncStatusSection.tsx';
+import { SyncSection } from '@/components/settings/SyncSection.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { createHalAccountService } from '@/data/http/HalAccountService.ts';
 import { createHalRemote } from '@/data/http/HalRemote.ts';
@@ -51,7 +51,7 @@ async function mountSignedIn() {
       <AccountProvider service={service} remote={createHalRemote(hal)}>
         <PreferencesProvider>
           <SyncProvider>
-            <SyncStatusSection />
+            <SyncSection />
           </SyncProvider>
         </PreferencesProvider>
       </AccountProvider>
@@ -88,7 +88,7 @@ async function otherDevice(server: ReturnType<typeof createFakeServer>, accountI
 describe('SyncProvider', () => {
   it('syncs once signed in and shows the last sync and what still waits', async () => {
     const { server, owner } = await mountSignedIn();
-    expect(await screen.findByText(/^sync\.idle /)).toBeVisible();
+    expect(await screen.findByText(/^sync\.syncedAt /)).toBeVisible();
 
     const id = crypto.randomUUID();
     await testStore.notes.add({ id, state: 'active', createdAt: T0, updatedAt: T0 });
@@ -100,7 +100,7 @@ describe('SyncProvider', () => {
 
   it('signs this Device out when the server forgets its Session, and keeps what it owes', async () => {
     const { server } = await mountSignedIn();
-    expect(await screen.findByText(/^sync\.idle /)).toBeVisible();
+    expect(await screen.findByText(/^sync\.syncedAt /)).toBeVisible();
     server.devices.splice(
       server.devices.findIndex((d) => d.name === 'Phone'),
       1
@@ -156,7 +156,7 @@ describe('SyncProvider', () => {
         <AccountProvider service={null}>
           <PreferencesProvider>
             <SyncProvider>
-              <SyncStatusSection />
+              <SyncSection />
             </SyncProvider>
           </PreferencesProvider>
         </AccountProvider>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionButton } from '@/components/ui/ActionButton.tsx';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet.tsx';
+import { cn } from '@/lib/utils.ts';
 import { ToolbarLayoutEditor } from './ToolbarLayoutEditor';
 import { useWidthClass } from './useWidthClass';
 
@@ -27,7 +28,10 @@ export function ToolbarCustomizeButton() {
       />
       <SheetContent
         side={compact ? 'bottom' : 'right'}
-        className="flex max-h-[85dvh] w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-md"
+        className={cn(
+          'flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-md',
+          compact && 'max-h-[85dvh]'
+        )}
       >
         <SheetHeader className="border-b px-4 py-3 text-left">
           <SheetTitle>{t('settings.toolbar.title')}</SheetTitle>

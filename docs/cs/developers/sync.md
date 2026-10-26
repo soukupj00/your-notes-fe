@@ -41,7 +41,7 @@ Přesunutí poznámky do koše je běžná změna pole a synchronizuje se jako k
    Kurzor, který je na server příliš starý, dostane odpověď `410` a zařízení se synchronizuje znovu od začátku: zahodí své čisté řádky a ponechá ty, které stále dluží.
 3. **Přenos bajtů příloh.**
    Nahoru jde všechno, náhledy jako první.
-   Směrem dolů přijdou náhledy hned, protože je potřebuje přehled; plné bajty přijdou, až je někdo otevře, pokud není zapnuté „Mít vše v tomto zařízení“.
+   Směrem dolů přijdou náhledy hned, protože je potřebuje přehled; plné bajty přijdou, až je někdo otevře, pokud není zapnuté „Uchovávat všechny přílohy“.
 
 `src/sync/loop.ts` rozhoduje, kdy synchronizaci spustit: při startu, chvíli po lokální úpravě, když se prohlížeč vrátí online nebo se karta stane viditelnou, když proud signálů ze serveru oznámí, že push provedlo jiné zařízení, a při pomalém pravidelném dotazování.
 Běh, po kterém zůstane něco dlužné, odstoupí s dvojnásobnou prodlevou, takže selhávající server ho nikdy neroztočí naprázdno.
