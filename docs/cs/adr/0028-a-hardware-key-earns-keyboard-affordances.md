@@ -20,7 +20,7 @@ Dotykový tablet v pouzdře s klávesnicí je případ, který mu uniká: jeho h
 - Klávesa pro novou poznámku se ptá až při stisku, takže první N ovládací prvky zapne a zároveň otevře poznámku.
   WCAG 2.1.4 platí dál: stránka Klávesové zkratky, kde se klávesa vypíná, se objeví se stejným stiskem.
 - Klávesnici následují: odznaky zkratek, nápovědy v tooltipech, klávesa pro novou poznámku, stránka Klávesové zkratky a zaměření nadpisu existující poznámky při otevření.
-  Co rozhoduje ukazatel, zůstává u ukazatele: Soubor místo Fotoaparátu v rychlém zápisu a šířková třída panelu nástrojů.
+  Co rozhoduje ukazatel, zůstává u ukazatele: Soubor místo Fotoaparátu v rychlém zápisu a šířková třída lišty editoru.
 
 ## Zvažované možnosti
 
@@ -32,4 +32,4 @@ Dotykový tablet v pouzdře s klávesnicí je případ, který mu uniká: jeho h
 ## Důsledky
 
 - Na dotykovém zařízení se nápovědy objeví po první hardwarové klávese, nikdy dřív.
-- Šířková třída se nemění: tablet s klávesnicí si nechá úzký panel nástrojů, jehož 44px pozice odpovídají dotykové obrazovce, ne klávesám.
+- Šířková třída se nemění: tablet s klávesnicí si nechá úzkou lištu editoru, jejíž 44px pozice odpovídají dotykové obrazovce, ne klávesám.

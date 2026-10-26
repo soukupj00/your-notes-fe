@@ -709,7 +709,7 @@
     },
     "qr": {
       "deviceDescription": "Scan it with the new Device's camera. It signs in to your account without typing a password.",
-      "inviteDescription": "The other person scans it on their own phone and chooses their own username and password.",
+      "inviteDescription": "The other person scans it on their own phone and chooses their own username and password. Neither of you sees the other's Notes.",
       "expires": "The link works once and for ten minutes.",
       "orOpen": "Or open this link on the other Device:",
       "copy": "Copy link",

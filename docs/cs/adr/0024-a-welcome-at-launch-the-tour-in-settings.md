@@ -32,7 +32,7 @@ Uvítání se řídí stejnými pravidly a své výřezy kreslí samo místo př
 
 ## Dodatek (2026-10-25): kroky ukazují na úvodní stránku Nastavení
 
-Nastavení se stalo úvodní stránkou s řádky, z nichž každý otevře podstránku (Obecné, Panel nástrojů editoru, Rychlé psaní, stránka dat, Účet, Klávesové zkratky).
-Průvodce se nabídne při první návštěvě úvodní stránky, ne podstránky, a jeho tři kroky ukazují na její řádky Panel nástrojů editoru, Rychlé psaní a řádek dat.
+Nastavení se stalo úvodní stránkou s řádky, z nichž každý otevře podstránku (Obecné, Lišta editoru, Rychlé psaní, stránka dat, Účet, Klávesové zkratky).
+Průvodce se nabídne při první návštěvě úvodní stránky, ne podstránky, a jeho tři kroky ukazují na její řádky Lišta editoru, Rychlé psaní a řádek dat.
 Průvodce dál nikdy nenaviguje, takže nemůže otevřít podstránku a ukázat do ní; řádek říká, kde které nastavení je, a text kroku vyzve k jeho otevření.
 Řádek dat se vykreslí na každém zařízení, přihlášeném i nepřihlášeném, takže krok 3 má teď vždy výřez; dřív jeho sekce bez Storage API nebo účtu nevykreslila nic a krok ukázal jen svůj text.

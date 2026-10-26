@@ -75,9 +75,9 @@ Záměrně neexistuje žádné globální úložiště klientského stavu (žád
 
 Editor postavený na TipTapu je sám malou architekturou ([ADR 0004](../adr/0004-canonical-editor-toolbar-pattern.md), [ADR 0011](../adr/0011-toolbar-items-and-families.md)):
 
-- Každá schopnost je **rozšíření**, které přispívá chováním *i* vlastní továrnou na tlačítko panelu nástrojů - panel nástrojů se skládá z toho, co rozšíření deklarují, ne z centrálního seznamu.
+- Každá schopnost je **rozšíření**, které přispívá chováním *i* vlastní továrnou na tlačítko lišty editoru - lišta se skládá z toho, co rozšíření deklarují, ne z centrálního seznamu.
 - Přílohy (obrázek, zvuk, video, soubor, kresba v Excalidraw) jsou vlastní uzly TipTapu postavené na jednom sdíleném jádru `attachments/`. HTML těla poznámky ukládá jen odkazy `data-attachment-id`; bajty žijí v tabulce `attachments` ([ADR 0007](../adr/0007-blob-over-base64-for-attachment-payloads.md)).
-- Panel nástrojů si uživatel může přizpůsobit pro každou šířkovou třídu (úzkou/širokou) a ukládá se jako předvolba; šířková třída rozhoduje o rozvržení, typ ukazatele o ovládacích prvcích ([ADR 0016](../adr/0016-width-decides-layout-pointer-decides-affordances.md)).
+- Lištu editoru si uživatel může přizpůsobit pro každou šířkovou třídu (úzkou/širokou) a ukládá se jako předvolba; šířková třída rozhoduje o rozvržení, typ ukazatele o ovládacích prvcích ([ADR 0016](../adr/0016-width-decides-layout-pointer-decides-affordances.md)).
 
 ## PWA shell
 

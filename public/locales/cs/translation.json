@@ -258,7 +258,7 @@
       "localFootnote": "Bez serveru je záloha jedinou kopií mimo tento prohlížeč."
     },
     "toolbar": {
-      "title": "Panel nástrojů editoru",
+      "title": "Lišta editoru",
       "back": "Všechny skupiny",
       "fold": "Na telefonu se před touto čarou vejde asi {{slots}} tlačítek",
       "width": {
@@ -266,7 +266,7 @@
         "wide": "Široké okno"
       },
       "preset": {
-        "legend": "Obnovit na",
+        "legend": "Obnovit předvolbu",
         "minimal": "Minimální",
         "balanced": "Vyvážené",
         "everything": "Vše",
@@ -288,11 +288,11 @@
       "preview": "Náhled",
       "groups": "Skupiny v pořadí na liště",
       "reset": {
-        "done": "Panel nástrojů obnoven: {{preset}}."
+        "done": "Lišta obnovena: {{preset}}."
       }
     },
     "shortcuts": {
-      "description": "Zkratku změníte kliknutím na její klávesy. Zkratky v Poznámkách fungují mimo otevřenou poznámku, ostatní v otevřené poznámce bez ohledu na to, která tlačítka panel zobrazuje.",
+      "description": "Zkratku změníte kliknutím na její klávesy. Zkratky v Poznámkách fungují mimo otevřenou poznámku, ostatní v otevřené poznámce bez ohledu na to, která tlačítka lišta zobrazuje.",
       "newNote": {
         "label": "Nová poznámka"
       },
@@ -351,7 +351,7 @@
     },
     "pages": {
       "general": "Obecné",
-      "toolbar": "Panel nástrojů editoru",
+      "toolbar": "Lišta editoru",
       "quickCapture": "Rychlé psaní",
       "dataSync": "Synchronizace a záloha",
       "dataLocal": "Záloha a úložiště",
@@ -624,11 +624,11 @@
     "cancelled": "{{name}} vráceno na původní místo."
   },
   "welcome": {
-    "title": "Vítej v YourNotes",
-    "body": "Poznámky se ukládají v tomhle zařízení a fungují i offline. Začít můžeš tady:",
+    "title": "Vítejte v YourNotes",
+    "body": "Poznámky se ukládají v tomto zařízení a fungují i offline. Začít můžete tady:",
     "marks": {
-      "capture": "Tady začneš poznámku: text, seznam, hlasovou poznámku, kresbu nebo obrázek.",
-      "settings": "Nastavení: uprav si panel nástrojů a způsoby, jak začít poznámku, a připoj vlastní server."
+      "capture": "Tady začnete poznámku: text, seznam, hlasovou poznámku, kresbu nebo obrázek.",
+      "settings": "Nastavení: upravte si lištu a způsoby, jak začít poznámku, a připojte vlastní server."
     },
     "dismiss": "Rozumím"
   },
@@ -642,16 +642,16 @@
     },
     "steps": {
       "toolbar": {
-        "title": "Tvoje lišta",
-        "body": "Otevři Panel nástrojů editoru a vyber, která tlačítka lišta nese a v jakém pořadí. Telefon a počítač si drží každý své uspořádání."
+        "title": "Vaše lišta",
+        "body": "Otevřete Lištu editoru a vyberte, která tlačítka na ní budou a v jakém pořadí. Telefon a počítač si drží každý své uspořádání."
       },
       "quickCapture": {
         "title": "Jak začít poznámku",
-        "body": "Otevři Rychlé psaní a dej na začátek druhy poznámek, které píšeš nejčastěji. Na telefonu tam vybereš i stranu, na které bude tlačítko ＋."
+        "body": "Otevřete Rychlé psaní a dejte na začátek druhy poznámek, které píšete nejčastěji. Na telefonu tam vyberete i stranu, na které bude tlačítko ＋."
       },
       "sync": {
-        "title": "Kde tvoje poznámky žijí",
-        "body": "Každá poznámka se nejdřív uloží na tomhle zařízení, takže aplikace funguje i bez připojení. Přihlas se ke svému vlastnímu serveru, ať máš na všech zařízeních totéž, a kdykoliv si stáhni zálohu v zipu."
+        "title": "Kde vaše poznámky žijí",
+        "body": "Každá poznámka se nejdřív uloží v tomto zařízení, takže aplikace funguje i bez připojení. Přihlaste se ke svému vlastnímu serveru, ať máte na všech zařízeních totéž, a kdykoli si stáhněte zálohu v zipu."
       }
     }
   },
@@ -714,7 +714,7 @@
     },
     "qr": {
       "deviceDescription": "Naskenujte ho fotoaparátem nového zařízení. Přihlásí se k vašemu účtu bez zadávání hesla.",
-      "inviteDescription": "Druhá osoba ho naskenuje na svém telefonu a zvolí si vlastní uživatelské jméno a heslo.",
+      "inviteDescription": "Druhá osoba ho naskenuje na svém telefonu a zvolí si vlastní uživatelské jméno a heslo. Navzájem své poznámky neuvidíte.",
       "expires": "Odkaz funguje jednou a deset minut.",
       "orOpen": "Nebo otevřete tento odkaz na druhém zařízení:",
       "copy": "Kopírovat odkaz",

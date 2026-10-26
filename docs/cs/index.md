@@ -29,7 +29,7 @@ features:
   - title: Synchronizace mezi vašimi zařízeními
     details: Spusťte server YourNotes doma a váš telefon, tablet i notebook budou ukazovat stejné poznámky, pár sekund poté, co některou změníte.
   - title: Přizpůsobte si ji
-    details: Světlý nebo tmavý motiv, paleta pro barvoslepé, vzdušné nebo kompaktní zobrazení a panel nástrojů editoru s tlačítky, která používáte, v pořadí, jaké vám vyhovuje.
+    details: Světlý nebo tmavý motiv, paleta pro barvoslepé, vzdušné nebo kompaktní zobrazení a lišta editoru s tlačítky, která používáte, v pořadí, jaké vám vyhovuje.
   - title: Provozujete ji vy
     details: Open source pod licencí MIT. Žádné reklamy, žádné sledování a nic nikam neodchází kromě serveru, který si nastavíte.
 ---

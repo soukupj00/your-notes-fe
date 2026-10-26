@@ -47,7 +47,7 @@ Celý seznam formuje jedno produktové omezení: **žádné externí síťové p
 | Primitiva Radix UI + vendorované shadcn | Přístupné komponenty | Dialog, popover, tooltip, switch apod. se zabudovanou přístupností; vendorované a upravené (např. shell s postranním panelem, [ADR 0010](../adr/0010-shadcn-sidebar-as-nav-shell.md)) |
 | Motion | Animace | Veškerý pohyb podléhá omezení pohybu; oficiální knihovna podle `PRODUCT.md` (GSAP z původního zadání byl vypuštěn) |
 | lucide-react | Ikony | Přes registr s textovými klíči (`icons.ts`), nikdy se neimportují přímo do kódu funkcí |
-| @dnd-kit/* | Drag and drop | Řazení při přizpůsobení panelu nástrojů; ovladatelné klávesnicí |
+| @dnd-kit/* | Drag and drop | Řazení při přizpůsobení lišty editoru; ovladatelné klávesnicí |
 | @fontsource-variable/* (Bricolage Grotesque, Work Sans) | Typografie | Lokálně hostované fonty - omezení bez CDN udělalo `@fontsource` povinným |
 | sonner | Toasty | Možnost vrátit akci (smazání, upozornění na konflikt) |
 | fuse.js | Fuzzy vyhledávání | Řazené vyhledávání v paměti nad přehledem; žádný server, žádný index k údržbě |
