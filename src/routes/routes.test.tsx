@@ -223,7 +223,7 @@ describe('settings page', () => {
   afterEach(() => localStorage.clear());
 
   it('switches the theme from the appearance section', async () => {
-    renderAt('/settings');
+    renderAt('/settings/general');
 
     // Radix ToggleGroup 1.1.19 exposes a single-select root as `radiogroup`
     // (it was `group` before), which matches the `radio` items queried below.

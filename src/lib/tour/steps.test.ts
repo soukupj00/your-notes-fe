@@ -13,12 +13,6 @@ beforeAll(() => {
   };
 });
 
-const SETTINGS = `
-  <section data-tour="settings-toolbar"></section>
-  <section data-tour="settings-quick-capture"></section>
-  <section data-tour="settings-sync"></section>
-`;
-
 function step(key: string): TourStep {
   const found = TOUR_STEPS.find((candidate) => candidate.key === key);
   if (!found) throw new Error(`no step ${key}`);
@@ -37,20 +31,14 @@ describe('the step list', () => {
   });
 });
 
-describe('step 3, where the notes live', () => {
-  it('points at the sync section when it rendered', () => {
-    document.body.innerHTML = SETTINGS;
-
-    expect(step('sync').target()).toBe('settingsSync');
-  });
-
-  it('points at nothing when the section rendered nothing', () => {
-    // No Storage API and no signed-in Device: the anchor is there, but empty, so it measures 0x0.
-    document.body.innerHTML = '<div data-tour="settings-sync"></div>';
-    const anchor = document.querySelector('[data-tour="settings-sync"]')!;
-    anchor.getBoundingClientRect = () => ({ width: 0, height: 0 }) as DOMRect;
-
-    expect(step('sync').target()).toBeNull();
+describe('the step targets', () => {
+  // The three Home rows always render, so no step has a run without a cutout.
+  it.each([
+    ['toolbar', 'settingsToolbar'],
+    ['quickCapture', 'settingsQuickCapture'],
+    ['sync', 'settingsSync'],
+  ])('points %s at its Home row', (key, target) => {
+    expect(step(key).target()).toBe(target);
   });
 });
 

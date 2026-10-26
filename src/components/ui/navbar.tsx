@@ -94,7 +94,13 @@ function Navbar() {
           (`topbar.ts`). */}
       <div className="sm:hidden">
         <AppBar
-          left={topbar.kind === 'destination' ? <SidebarTrigger /> : <BackButton />}
+          left={
+            topbar.kind === 'destination' ? (
+              <SidebarTrigger />
+            ) : (
+              <BackButton fallback={topbar.parent} />
+            )
+          }
           // With a title, search drops to its own row rather than squeeze between
           // two 44px controls.
           center={

@@ -10,11 +10,11 @@ import {
 import { cn } from '@/lib/utils.ts';
 
 /** Sections are the page's only structure: new controls join one rather than invent a layout. */
-export function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
+export function SettingsSection({ title, children }: { title?: string; children: ReactNode }) {
   return (
     <section className="mb-8">
-      <h2 className="mb-2 font-medium text-muted-foreground text-sm">{title}</h2>
-      <div className="divide-y rounded-lg border bg-card">{children}</div>
+      {title && <h2 className="mb-2 font-medium text-muted-foreground text-sm">{title}</h2>}
+      <div className="divide-y rounded-card border bg-card">{children}</div>
     </section>
   );
 }

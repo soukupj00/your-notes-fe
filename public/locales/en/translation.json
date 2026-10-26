@@ -364,6 +364,32 @@
         "left": "Left",
         "right": "Right"
       }
+    },
+    "pages": {
+      "general": "General",
+      "toolbar": "Editor toolbar",
+      "quickCapture": "Quick capture",
+      "dataSync": "Sync and backup",
+      "dataLocal": "Backup and storage",
+      "account": "Account",
+      "shortcuts": "Keyboard shortcuts"
+    },
+    "home": {
+      "general": {
+        "summary": "Language, theme, display"
+      },
+      "toolbar": {
+        "summary": "Presets, groups, order"
+      },
+      "quickCapture": {
+        "summary": "Placement, menu items"
+      },
+      "dataSync": {
+        "summary": "Sync, storage, backup"
+      },
+      "dataLocal": {
+        "summary": "Export, restore, storage"
+      }
     }
   },
   "pwa": {
@@ -619,11 +645,11 @@
     "steps": {
       "toolbar": {
         "title": "Your toolbar",
-        "body": "Choose which buttons the editor's toolbar carries, and in what order. Phone and desktop each keep their own arrangement."
+        "body": "Open Editor toolbar to choose which buttons the editor carries, and in what order. Phone and desktop each keep their own arrangement."
       },
       "quickCapture": {
         "title": "Ways to start a note",
-        "body": "Drag the kinds of note you make most often to the top. On a phone, you can also choose which side the ＋ button sits on."
+        "body": "Open Quick capture to put the kinds of note you make most often first. On a phone, it also sets which side the ＋ button sits on."
       },
       "sync": {
         "title": "Where your notes live",

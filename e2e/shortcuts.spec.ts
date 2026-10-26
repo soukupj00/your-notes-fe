@@ -4,7 +4,7 @@ import { skipTour } from './helpers';
 test.beforeEach(async ({ page, isMobile }) => {
   test.skip(isMobile, 'a phone has no keyboard, and so no Shortcuts section');
   await skipTour(page);
-  await page.goto('/settings');
+  await page.goto('/settings/shortcuts');
 });
 
 /** Clicks the keys of the row named `name` and presses `keys`. */

@@ -85,6 +85,23 @@ describe('BackButton', () => {
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/'));
   });
+
+  // A reload on a subpage, or a PWA restored there: Back goes up to the Settings home, not out.
+  it('falls back to the Settings home on a cold entry to a Settings subpage', async () => {
+    const router = renderRoute('/settings/toolbar');
+
+    await userEvent.click(await back());
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/settings'));
+  });
+
+  it('pops history on a Settings subpage rather than going to its parent', async () => {
+    const router = renderRoute(['/archive', '/settings/general']);
+
+    await userEvent.click(await back());
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/archive'));
+  });
 });
 
 describe('the topbar title', () => {

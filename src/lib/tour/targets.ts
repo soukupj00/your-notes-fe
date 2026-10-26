@@ -9,15 +9,12 @@ export const TOUR_TARGETS = {
   capture: '[data-tour="capture"]',
   /** The Welcome's second mark: the topbar gear, Settings' one entry point. */
   settingsGear: '[data-tour="settings-gear"]',
-  /**
-   * Step 1: the preview strip, not `EditorToolbarSection`. The section is 880px tall on an 839px
-   * phone and the inert app cannot scroll, so a cutout over it could never be seen whole.
-   */
-  settingsToolbar: '[data-tour="settings-toolbar"]',
-  /** Step 2: the quick-start order and the ＋'s side, in Settings. */
-  settingsQuickCapture: '[data-tour="settings-quick-capture"]',
-  /** Step 3: "Storage and sync", which renders nothing without the Storage API or a server. */
-  settingsSync: '[data-tour="settings-sync"]',
+  /** Step 1: the Editor toolbar row on the Settings home. */
+  settingsToolbar: '[data-tour="settings-toolbar-row"]',
+  /** Step 2: the Quick capture row on the Settings home. */
+  settingsQuickCapture: '[data-tour="settings-quick-capture-row"]',
+  /** Step 3: the data row on the Settings home, there whatever the account. */
+  settingsSync: '[data-tour="settings-data-row"]',
 } as const;
 
 export type TourTargetName = keyof typeof TOUR_TARGETS;

@@ -364,6 +364,32 @@
         "left": "Vlevo",
         "right": "Vpravo"
       }
+    },
+    "pages": {
+      "general": "Obecné",
+      "toolbar": "Panel nástrojů editoru",
+      "quickCapture": "Rychlé psaní",
+      "dataSync": "Synchronizace a záloha",
+      "dataLocal": "Záloha a úložiště",
+      "account": "Účet",
+      "shortcuts": "Klávesové zkratky"
+    },
+    "home": {
+      "general": {
+        "summary": "Jazyk, motiv, zobrazení"
+      },
+      "toolbar": {
+        "summary": "Předvolby, skupiny, pořadí"
+      },
+      "quickCapture": {
+        "summary": "Umístění, položky nabídky"
+      },
+      "dataSync": {
+        "summary": "Synchronizace, úložiště, záloha"
+      },
+      "dataLocal": {
+        "summary": "Export, obnova, úložiště"
+      }
     }
   },
   "pwa": {
@@ -622,11 +648,11 @@
     "steps": {
       "toolbar": {
         "title": "Tvoje lišta",
-        "body": "Vyber, která tlačítka nese lišta editoru a v jakém pořadí. Telefon a počítač si drží každý své uspořádání."
+        "body": "Otevři Panel nástrojů editoru a vyber, která tlačítka lišta nese a v jakém pořadí. Telefon a počítač si drží každý své uspořádání."
       },
       "quickCapture": {
         "title": "Jak začít poznámku",
-        "body": "Přetáhni nahoru druhy poznámek, které píšeš nejčastěji. Na telefonu si můžeš vybrat i stranu, na které bude tlačítko ＋."
+        "body": "Otevři Rychlé psaní a dej na začátek druhy poznámek, které píšeš nejčastěji. Na telefonu tam vybereš i stranu, na které bude tlačítko ＋."
       },
       "sync": {
         "title": "Kde tvoje poznámky žijí",

@@ -89,7 +89,7 @@ describe('waitFor', () => {
 
 describe('waitForTarget', () => {
   it('resolves with the target once it is on screen', async () => {
-    soon(() => onScreen('<div id="bar" data-tour="settings-toolbar"></div>'));
+    soon(() => onScreen('<div id="bar" data-tour="settings-toolbar-row"></div>'));
 
     const found = await waitForTarget('settingsToolbar');
 

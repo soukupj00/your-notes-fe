@@ -67,7 +67,7 @@ test.describe('the new-note key', () => {
   });
 
   test('a key changed in Settings replaces N on the Feed', async ({ page }) => {
-    await page.goto('/settings');
+    await page.goto('/settings/shortcuts');
     await page.getByRole('button', { name: 'New note: N. Change' }).click();
     await page.keyboard.press('k');
     await page.getByRole('link', { name: 'Notes', exact: true }).click();

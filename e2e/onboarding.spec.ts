@@ -25,6 +25,28 @@ async function seenWelcome(page: Page) {
   );
 }
 
+/** A server that answered and has nobody signed in on this Device. */
+async function signedOutServer(page: Page) {
+  const link = (href: string) => ({ href });
+  const root = {
+    _links: Object.fromEntries(
+      ['self', 'health', 'docs', 'openapi', 'session', 'devices', 'codes', 'accounts']
+        .concat(['changes', 'stream', 'blobs', 'shares'])
+        .map((rel) => [rel, link(`/api/${rel}`)])
+    ),
+  };
+  await page.route('**/api', (route) =>
+    route.fulfill({ contentType: 'application/hal+json', body: JSON.stringify(root) })
+  );
+  await page.route('**/api/session', (route) =>
+    route.fulfill({
+      status: 401,
+      contentType: 'application/problem+json',
+      body: JSON.stringify({ type: 'about:blank', title: 'Not signed in', status: 401 }),
+    })
+  );
+}
+
 async function expectStep(page: Page, step: number) {
   await expect(popover(page)).toContainText(`Step ${step} of ${STEP_TITLES.length}`);
   await expect(popover(page).getByRole('heading')).toHaveText(STEP_TITLES[step - 1]);
@@ -166,6 +188,31 @@ test.describe('the Tour', () => {
 
     await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
     await expect(popover(page)).toBeHidden();
+  });
+
+  test('points every step at a Home row, signed out too', async ({ page }) => {
+    await signedOutServer(page);
+    await page.goto('/settings');
+
+    for (const [step, row] of ['toolbar', 'quick-capture', 'data'].entries()) {
+      await expectStep(page, step + 1);
+      await expect(
+        page.locator(`[data-tour="settings-${row}-row"].driver-active-element`)
+      ).toBeVisible();
+      if (step < 2) await popover(page).getByRole('button', { name: 'Next' }).click();
+    }
+  });
+
+  test('is not offered on a first visit straight to a subpage', async ({ page }) => {
+    await page.goto('/settings/general');
+
+    await expect(page.getByRole('heading', { level: 1, name: 'General' })).toBeAttached();
+    await expect(page.getByRole('switch', { name: 'Colour-blind palette' })).toBeVisible();
+    await expect(popover(page)).toBeHidden();
+
+    // Still owed: the Home offers it.
+    await page.goto('/settings');
+    await expectStep(page, 1);
   });
 
   test('Settings replays it', async ({ page }) => {
