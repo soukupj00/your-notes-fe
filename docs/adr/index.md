@@ -33,3 +33,4 @@ Decisions about the server itself are on [the server's site](https://soukupj00.g
 | [0025](./0025-the-closed-note-takes-its-sorted-place.md) | The closed Note takes its sorted place |
 | [0026](./0026-shortcuts-are-one-preference-matched-by-one-key-name.md) | Shortcuts are one Preference, matched by one key name |
 | [0027](./0027-label-order-is-a-synced-fractional-position.md) | Label order is a synced fractional position |
+| [0028](./0028-a-hardware-key-earns-keyboard-affordances.md) | A hardware key earns keyboard affordances |

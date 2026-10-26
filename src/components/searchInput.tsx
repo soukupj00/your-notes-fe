@@ -6,7 +6,7 @@ import { SortMenu } from '@/components/notes/SortMenu.tsx';
 import { ViewModeToggle } from '@/components/notes/ViewModeToggle.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { useTourActive } from '@/context/TourProvider.tsx';
-import { useFinePointer } from '@/hooks/useFinePointer.ts';
+import { useKeyboardAffordances } from '@/hooks/useKeyboardAffordances.ts';
 import { useNoteSearchState } from '@/hooks/useNoteSearchState.ts';
 import { useShortcuts } from '@/hooks/useShortcuts.ts';
 import { isAppShortcut } from '@/lib/app-shortcut.ts';
@@ -18,9 +18,8 @@ function SearchInput({ className, ...props }: React.ComponentProps<'div'>) {
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const tourActive = useTourActive();
-  // Every box binds the key (a Coarse phone may have a Bluetooth keyboard); only a Fine pointer
-  // is shown it (ADR 0016).
-  const showShortcut = useFinePointer();
+  // Every box binds the key; the chip waits for a keyboard to press it on (ADR 0028).
+  const showShortcut = useKeyboardAffordances();
 
   const searchKey = useShortcuts().bindings.search;
 

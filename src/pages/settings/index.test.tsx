@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountProvider } from '@/context/AccountProvider.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
@@ -6,6 +6,12 @@ import { TourProvider } from '@/context/TourProvider.tsx';
 import type { AccountService, Session } from '@/data/Remote.ts';
 import { clearStore, withStore } from '@/test/store.tsx';
 import SettingsHomePage from './index.tsx';
+
+// jsdom trusts no event; `hardware-key.test.ts` covers the trust check.
+vi.mock('@/lib/hardware-key.ts', async (importOriginal) => {
+  const { isHardwareKey } = await importOriginal<typeof import('@/lib/hardware-key.ts')>();
+  return { isHardwareKey: (event: KeyboardEvent) => isHardwareKey(event, true) };
+});
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
@@ -187,5 +193,25 @@ describe('Help', () => {
     expect(docs).toHaveAttribute('href', 'https://soukupj00.github.io/your-notes-fe/');
     expect(docs).toHaveAccessibleName(expect.stringContaining('nav.newTab'));
     expect(screen.queryByRole('link', { name: /github/i })).toBeNull();
+  });
+});
+
+// Last in the file: the key it presses stays seen for the rest of the session.
+describe('the Shortcuts row', () => {
+  it('waits on a coarse pointer for a hardware key', async () => {
+    mount();
+    await screen.findByRole('link', { name: /settings\.pages\.general/ });
+    expect(screen.queryByRole('link', { name: /settings\.pages\.shortcuts/ })).toBeNull();
+
+    act(() => {
+      document.body.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })
+      );
+    });
+
+    expect(screen.getByRole('link', { name: /settings\.pages\.shortcuts/ })).toHaveAttribute(
+      'href',
+      '/settings/shortcuts'
+    );
   });
 });

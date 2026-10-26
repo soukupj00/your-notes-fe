@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button.tsx';
 import { IconTooltip } from '@/components/ui/tooltip.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useFinePointer } from '@/hooks/useFinePointer.ts';
+import { useKeyboardAffordances } from '@/hooks/useKeyboardAffordances.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { useShortcuts } from '@/hooks/useShortcuts.ts';
 import type { Intent } from '@/lib/intent.ts';
@@ -35,9 +36,10 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
   const reducedMotion = useReducedMotion();
   const [index, setIndex] = useState(0);
   const { preferences } = usePreferences();
-  const actions = resolveDesktopQuickCapture(preferences.quickCapture);
+  const finePointer = useFinePointer();
+  const actions = resolveDesktopQuickCapture(preferences.quickCapture, finePointer);
   const newNoteKey = useShortcuts().bindings['new-note'];
-  const showShortcut = useFinePointer();
+  const showShortcut = useKeyboardAffordances();
   // A picker Start opens the OS picker here, inside the click (`useStartPicker`).
   const picker = useStartPicker(onStart);
 
@@ -98,7 +100,7 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
           {typed}
         </m.span>
         <span className="sr-only">{t('notes.createPlaceholder')}</span>
-        {/* For a fine pointer only (ADR 0016), and only where the longest prompt still fits
+        {/* Only once there is a keyboard (ADR 0028), and only where the longest prompt still fits
             beside it; `aria-keyshortcuts` tells assistive tech either way. */}
         {newNoteKey && showShortcut && (
           <kbd

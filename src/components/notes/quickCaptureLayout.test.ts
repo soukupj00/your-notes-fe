@@ -66,20 +66,24 @@ describe('resolveQuickCapture', () => {
     expect(resolveQuickCapture(stored)).toEqual([]);
   });
 
-  it('derives the desktop row by dropping plain text and offering File in Camera’s slot', () => {
-    // The desktop bar's own text field is that start, so offering it twice
-    // would be the drift the derivation exists to prevent.
-    expect(resolveDesktopQuickCapture(undefined).map((action) => action.key)).toEqual([
-      'checklist',
-      'audio',
-      'drawing',
-      'picture',
-      'file',
-    ]);
-  });
+  // The desktop bar's own text field is that start, so offering it twice
+  // would be the drift the derivation exists to prevent.
+  it.each([
+    [true, 'file'],
+    [false, 'camera'],
+  ])(
+    'derives the desktop row without plain text; fine pointer %s puts %s in Camera’s slot',
+    (finePointer, slot) => {
+      expect(
+        resolveDesktopQuickCapture(undefined, finePointer).map((action) => action.key)
+      ).toEqual(['checklist', 'audio', 'drawing', 'picture', slot]);
+    }
+  );
 
   it('offers no File on desktop when Camera is switched off', () => {
     const stored = ALL.map((id) => ({ id, on: id !== 'camera' }));
-    expect(resolveDesktopQuickCapture(stored).map((action) => action.key)).not.toContain('file');
+    expect(resolveDesktopQuickCapture(stored, true).map((action) => action.key)).not.toContain(
+      'file'
+    );
   });
 });

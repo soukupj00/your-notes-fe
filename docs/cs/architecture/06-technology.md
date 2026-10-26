@@ -52,7 +52,7 @@ Celý seznam formuje jedno produktové omezení: **žádné externí síťové p
 | sonner | Toasty | Možnost vrátit akci (smazání, upozornění na konflikt) |
 | fuse.js | Fuzzy vyhledávání | Řazené vyhledávání v paměti nad přehledem; žádný server, žádný index k údržbě |
 | class-variance-authority, clsx, tailwind-merge | Skládání tříd | Idiom shadcn |
-| w3c-keyname | Klávesové zkratky | pojmenuje stisk klávesy stejně jako ProseMirror, takže nahrávání i každé rozpoznávání zkratek sdílí jeden název (`lib/key-combo.ts`, [ADR 0026](../adr/0026-shortcuts-are-one-preference-matched-by-one-key-name.md)); zkratky se zobrazují jen přesným ukazatelům ([ADR 0016](../adr/0016-width-decides-layout-pointer-decides-affordances.md)) |
+| w3c-keyname | Klávesové zkratky | pojmenuje stisk klávesy stejně jako ProseMirror, takže nahrávání i každé rozpoznávání zkratek sdílí jeden název (`lib/key-combo.ts`, [ADR 0026](../adr/0026-shortcuts-are-one-preference-matched-by-one-key-name.md)); zkratky se zobrazují přesnému ukazateli, nebo jakmile se stiskne hardwarová klávesa ([ADR 0028](../adr/0028-a-hardware-key-earns-keyboard-affordances.md)) |
 | driver.js | Zvýraznění v průvodci | Jediné místo, kde se průvodce dotýká knihovny; veškerá logika průvodce je bez závislostí v `lib/tour/` ([ADR 0024](../adr/0024-a-welcome-at-launch-the-tour-in-settings.md)) |
 | react-colorful, color, country-flag-icons | Drobné utility | Výběr barvy, výpočty s barvami, vlajky jazyků |
 

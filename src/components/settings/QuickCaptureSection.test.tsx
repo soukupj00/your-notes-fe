@@ -104,13 +104,15 @@ describe('QuickCaptureSection', () => {
   });
 });
 
-// The desktop bar offers File in Camera's slot (`resolveDesktopQuickCapture`); the list says so.
+// A Fine pointer's bar offers File in Camera's slot (`resolveDesktopQuickCapture`); the list says
+// so. A tablet keeps Camera at any width.
 describe.each([
-  [390, 'camera'],
-  [1280, 'file'],
-])('at %ipx the Camera slot', (width, shown) => {
+  [390, false, 'camera'],
+  [1024, false, 'camera'],
+  [1280, true, 'file'],
+])('at %ipx, fine pointer %s, the Camera slot', (width, finePointer, shown) => {
   it(`is listed as ${shown}`, async () => {
-    setViewport(width);
+    setViewport(width, { finePointer });
     render(<QuickCaptureSection />, { wrapper });
 
     expect(await screen.findByText(`notes.capture.${shown}`)).toBeInTheDocument();

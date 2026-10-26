@@ -5,7 +5,7 @@ import { type IconName, icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
 import { Tooltip, TooltipContent, TooltipTrigger, useTooltipFloor } from '@/components/ui/tooltip';
-import { useFinePointer } from '@/hooks/useFinePointer.ts';
+import { useKeyboardAffordances } from '@/hooks/useKeyboardAffordances.ts';
 import { getShortcutKeys } from '@/lib/shortcut-keys.ts';
 import { cn } from '@/lib/utils';
 import type { ButtonViewReturnComponentProps } from '@/types';
@@ -60,9 +60,9 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
   ) => {
     const Comp = asChild ? Slot : toggle ? Toggle : Button;
     const menuRowLabel = React.useContext(MenuRowLabelContext);
-    // On a touch device a shortcut is noise in the one place the user reads the
-    // button's name, so it is hidden.
-    const finePointer = useFinePointer();
+    // Without a keyboard a shortcut is noise in the one place the user reads the
+    // button's name, so it is hidden (ADR 0028).
+    const keyboard = useKeyboardAffordances();
     const floor = useTooltipFloor();
 
     // Flattens Button's filled `default` variant with classes rather than `variant`,
@@ -113,7 +113,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
               <span>{tooltip}</span>
               {/* Not `text-muted-foreground`: page ink measured ~1.1:1 on the accent
                   surface in both themes. Hierarchy comes from spacing, not dimming. */}
-              {finePointer && !!shortcutKeys?.length && (
+              {keyboard && !!shortcutKeys?.length && (
                 <span className="text-primary-foreground text-xs tracking-wide">
                   {getShortcutKeys(shortcutKeys)
                     .map((k) => k.symbol)

@@ -36,13 +36,15 @@ export function resolveQuickCapture(stored: QuickCapturePref[] | undefined): Qui
 }
 
 /**
- * Minus plain text, which the desktop bar's own field is, and with File in Camera's slot.
+ * Minus plain text, which the desktop bar's own field is. A Fine pointer gets File in Camera's
+ * slot: a desktop browser ignores `capture`, while a tablet's Camera opens the camera.
  * Derived rather than stored twice: nobody asked for a desktop dial that differs from their phone's.
  */
 export function resolveDesktopQuickCapture(
-  stored: QuickCapturePref[] | undefined
+  stored: QuickCapturePref[] | undefined,
+  finePointer: boolean
 ): QuickCaptureAction[] {
   return resolveQuickCapture(stored)
     .filter((action) => action.key !== 'text')
-    .map((action) => (action.key === 'camera' ? FILE_START : action));
+    .map((action) => (finePointer && action.key === 'camera' ? FILE_START : action));
 }

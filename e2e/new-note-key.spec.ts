@@ -1,17 +1,32 @@
 import { expect, test } from '@playwright/test';
 import { skipTour } from './helpers';
 
-// A coarse pointer gets no Shortcuts section to turn the key off in (WCAG 2.1.4), so no key.
-test('a phone ignores the key', async ({ page, isMobile }) => {
-  test.skip(!isMobile, 'the desktop case is below');
-  await skipTour(page);
-  await page.goto('/');
-  await expect(page.getByRole('button', { name: 'New note' })).toBeVisible();
+// A phone's first hardware key both arms the keyboard affordances and acts (ADR 0028).
+test.describe('a phone with a keyboard', () => {
+  test.beforeEach(async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'a fine pointer has them from the start');
+    await skipTour(page);
+  });
 
-  await page.keyboard.press('n');
+  test('opens a note at the first N', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('button', { name: 'New note' })).toBeVisible();
 
-  await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page).not.toHaveURL(/note=/);
+    await page.keyboard.press('n');
+
+    await expect(page.getByRole('dialog').getByRole('textbox', { name: 'Title' })).toHaveValue('');
+  });
+
+  test('gets the Shortcuts row after a key, not before', async ({ page }) => {
+    await page.goto('/settings');
+    const row = page.getByRole('link', { name: /Keyboard shortcuts/ });
+    await expect(page.getByRole('link', { name: /General/ })).toBeVisible();
+    await expect(row).toHaveCount(0);
+
+    await page.keyboard.press('ArrowDown');
+
+    await expect(row).toBeVisible();
+  });
 });
 
 test('N under the launch Welcome opens nothing', async ({ page, isMobile }) => {

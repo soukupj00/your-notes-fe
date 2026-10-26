@@ -14,8 +14,8 @@ function getSnapshot(): boolean {
 }
 
 /**
- * Whether the primary pointer is a mouse or trackpad, which decides keyboard hints; never a width
- * (ADR 0016). Unmeasurable reads as `false`, hiding a hint rather than showing an unusable one.
+ * Whether the primary pointer is a mouse or trackpad; never a width (ADR 0016). Keyboard hints
+ * ask `useKeyboardAffordances`, which adds a hardware key (ADR 0028). Unmeasurable reads `false`.
  */
 export function useFinePointer(): boolean {
   return useSyncExternalStore(subscribe, getSnapshot, () => false);

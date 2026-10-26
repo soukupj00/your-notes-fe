@@ -8,7 +8,7 @@ import { SettingsLinkRow } from '@/components/settings/SettingsLinkRow.tsx';
 import { SettingsSection } from '@/components/settings/SettingsSection.tsx';
 import { useServerState } from '@/components/settings/useServerState.ts';
 import { useAccount } from '@/context/AccountProvider.tsx';
-import { useFinePointer } from '@/hooks/useFinePointer.ts';
+import { useKeyboardAffordances } from '@/hooks/useKeyboardAffordances.ts';
 import { SettingsFrame } from './SettingsFrame.tsx';
 
 /** The data row is named for the account: `settings.pages.<row>` and `settings.home.<row>.summary`. */
@@ -18,7 +18,7 @@ export default function SettingsHomePage() {
   const { t } = useTranslation();
   const { session } = useAccount();
   const server = useServerState();
-  const finePointer = useFinePointer();
+  const keyboard = useKeyboardAffordances();
   const data = session ? DATA_ROW.synced : DATA_ROW.local;
 
   return (
@@ -64,8 +64,8 @@ export default function SettingsHomePage() {
           summary={t(`settings.home.${data}.summary`)}
           tourTarget="settings-data-row"
         />
-        {/* As `ShortcutsSection`: a phone has no modifier keys. */}
-        {finePointer && (
+        {/* Only once there is a keyboard to press them on (ADR 0028). */}
+        {keyboard && (
           <SettingsLinkRow
             to="/settings/shortcuts"
             icon={<Keyboard />}

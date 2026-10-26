@@ -11,8 +11,8 @@ import { TagFilterBar } from '@/components/tags/TagFilterBar.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import type { NoteFeedScope } from '@/hooks/data/useNoteFeed.ts';
-import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
+import { hardwareKeySeen, useKeyboardAffordances } from '@/hooks/useKeyboardAffordances.ts';
 import { useOpenNote } from '@/hooks/useOpenNote.ts';
 import { useShortcuts } from '@/hooks/useShortcuts.ts';
 import { isAppShortcut } from '@/lib/app-shortcut.ts';
@@ -44,20 +44,21 @@ export function NotesView({
   // A Start begins a draft, a Card opens its Note; either may carry an Intent.
   const start = (intent?: Intent) => openNote(null, intent);
   const newNoteKey = useShortcuts().bindings['new-note'];
-  const finePointer = useFinePointer();
+  const keyboard = useKeyboardAffordances();
 
-  // The key is the same act as "Take a note", so it lives only where that bar does. A coarse
-  // pointer has no Shortcuts section to turn it off in (WCAG 2.1.4), so it gets no key.
+  // The key is the same act as "Take a note", so it lives only where that bar does. It needs a
+  // keyboard, which also brings the Shortcuts page to turn it off in (WCAG 2.1.4); asked at the
+  // press, so the first key both arms that and opens the Note (ADR 0028).
   useEffect(() => {
-    if (!showCapture || openNoteId || !finePointer) return;
+    if (!showCapture || openNoteId) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (!isAppShortcut(event, newNoteKey)) return;
+      if (!(keyboard || hardwareKeySeen()) || !isAppShortcut(event, newNoteKey)) return;
       event.preventDefault();
       openNote(null);
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [showCapture, openNoteId, finePointer, newNoteKey, openNote]);
+  }, [showCapture, openNoteId, keyboard, newNoteKey, openNote]);
 
   return (
     <div className={cn('relative', (toolbar || showCapture) && FLOATING_BOTTOM_BAR_CLEARANCE)}>

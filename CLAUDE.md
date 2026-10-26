@@ -155,9 +155,10 @@ A Settings subpage goes back up through the app bar's Back below `sm:`, and from
 Their order and the dial's side are Preferences.
 Each Start carries at most one Intent.
 Image and Camera are picker Starts: `useStartPicker` opens the OS picker inside the tap itself, because the tap's user activation does not survive the route change to the editor.
-A desktop browser ignores `capture`, so the desktop bar shows File (any file, inserted as a File attachment) in Camera's slot.
+A desktop browser ignores `capture`, so for a Fine pointer the desktop bar shows File (any file, inserted as a File attachment) in Camera's slot.
 From `sm:` up the navbar's search box sits over that bar at its width; where the header cannot fit it between its controls (an open sidebar on a tablet), it takes a row of its own, decided by a container query on the header.
-The **new-note key** (`N` by default; a Shortcut the user changes or clears in Settings, for WCAG 2.1.4) is the same act as clicking the bar, so `NotesView` listens for it only where the bar is shown, and only for a fine pointer, the one that gets the Shortcuts section to clear it in.
+Keyboard affordances (shortcut chips and hints, the new-note key, the Shortcuts page) follow `useKeyboardAffordances`: a Fine pointer, or a hardware key pressed this session ([ADR 0028](./docs/adr/0028-a-hardware-key-earns-keyboard-affordances.md)).
+The **new-note key** (`N` by default; a Shortcut the user changes or clears in Settings, for WCAG 2.1.4) is the same act as clicking the bar, so `NotesView` listens for it only where the bar is shown; it asks at the press, so a tablet's first N both arms the Shortcuts page and opens a Note.
 It and the search key are matched by `isAppShortcut` (`lib/app-shortcut.ts`) on the one canonical key name (ADR 0026), and never fire inside a dialog or menu, while a modal such as the Welcome is open, or, as a bare key, in a field.
 
 **Insets.**

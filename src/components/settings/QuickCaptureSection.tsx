@@ -9,7 +9,7 @@ import { SettingsSection } from '@/components/settings/SettingsSection.tsx';
 import { SortableList, SortableRow } from '@/components/ui/SortableList.tsx';
 import { Switch } from '@/components/ui/switch.tsx';
 import { NOTE_BUTTON_ALIGNMENT_OPTIONS, usePreferences } from '@/context/PreferencesProvider.tsx';
-import { useIsMobile } from '@/hooks/use-mobile.tsx';
+import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { moveById } from '@/lib/move-by-id.ts';
 import { cn } from '@/lib/utils.ts';
 
@@ -61,11 +61,12 @@ export function QuickCaptureSection() {
   const { preferences, setPreference } = usePreferences();
   const actions = reconcileQuickCapture(preferences.quickCapture);
   const write = (next: QuickCapturePref[]) => setPreference('quickCapture', next);
-  const mobile = useIsMobile();
+  const finePointer = useFinePointer();
 
-  // As the desktop bar draws it (`resolveDesktopQuickCapture`): File in Camera's slot.
+  // As the desktop bar draws it (`resolveDesktopQuickCapture`): File in Camera's slot for a
+  // Fine pointer.
   const actionOf = (id: string) =>
-    !mobile && id === 'camera'
+    finePointer && id === 'camera'
       ? FILE_START
       : QUICK_CAPTURE_ACTIONS.find((action) => action.key === id);
   const nameOf = (id: string) => t(actionOf(id)?.labelKey ?? id);

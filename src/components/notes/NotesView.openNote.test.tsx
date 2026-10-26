@@ -11,6 +11,12 @@ vi.mock('react-i18next', () => ({
   default: {},
 }));
 
+// jsdom trusts no event; `hardware-key.test.ts` covers the trust check.
+vi.mock('@/lib/hardware-key.ts', async (importOriginal) => {
+  const { isHardwareKey } = await importOriginal<typeof import('@/lib/hardware-key.ts')>();
+  return { isHardwareKey: (event: KeyboardEvent) => isHardwareKey(event, true) };
+});
+
 vi.mock('@/i18n', () => ({
   default: { options: { supportedLngs: ['en'] }, resolvedLanguage: 'en', changeLanguage: vi.fn() },
 }));
@@ -220,5 +226,18 @@ describe('the feed behind an open note', () => {
     await waitFor(() => expect(router.state.location.search).toMatchObject({ q: 'milk' }));
     expect(router.state.location.search).toMatchObject({ note: note.id });
     expect(await editor()).toBeInTheDocument();
+  });
+});
+
+// Last in the file: the key it presses stays seen for the rest of the session.
+describe('the new-note key', () => {
+  it('opens a Note on a coarse pointer at the first press, which also arms it', async () => {
+    const router = renderRoute('/');
+    await screen.findByRole('heading', { level: 1 });
+
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', bubbles: true }));
+
+    expect(await editor()).toHaveAttribute('data-new', 'true');
+    expect(router.state.location.search).toHaveProperty('note');
   });
 });

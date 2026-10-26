@@ -37,3 +37,8 @@ Reading the query rather than the window is what makes any of this hold on a rea
 A phone rotated into portrait kept the Wide toolbar - wrapping, four rows - pinned to the bottom by the CSS, which had switched correctly because the stylesheet asks the query.
 The hook now asks the same query, so JS and CSS cannot answer differently.
 The cost is paid in tests: jsdom evaluates no media query at all, so setting `innerWidth` no longer simulates a viewport and `src/test/viewport.ts` does it instead.
+
+## Amended 2026-10-25
+
+A touch tablet in a keyboard case has a Coarse pointer and every key, so keyboard affordances now also follow a hardware key pressed this session ([ADR 0028](./0028-a-hardware-key-earns-keyboard-affordances.md)).
+Width still never stands in for either, and the Width Class does not read the keyboard.
