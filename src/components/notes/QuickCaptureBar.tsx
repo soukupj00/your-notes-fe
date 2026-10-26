@@ -65,17 +65,16 @@ export function QuickCaptureBar({ onStart }: { onStart: (intent?: Intent) => voi
           // scrim is already gone.
           className="max-h-[none] w-auto animate-none! overflow-visible border-0 bg-transparent p-0 shadow-none"
         >
-          {/* `flex-col-reverse`, not a reversed array: the first start sits nearest the thumb and
-              stays first in tab and screen-reader order. */}
-          <ul className={cn('flex flex-col-reverse gap-2', left ? 'items-start' : 'items-end')}>
+          <ul className={cn('flex flex-col gap-2', left ? 'items-start' : 'items-end')}>
             {actions.map((action, index) => (
               <m.li
                 key={action.key}
                 initial={reducedMotion ? false : { y: 10 }}
                 animate={{ y: 0 }}
+                // Staggered from the ＋ outwards, so the start nearest the thumb lands first.
                 transition={resolveTransition(reducedMotion, {
                   ...NIGHTSHIFT_SPRING,
-                  delay: index * 0.035,
+                  delay: (actions.length - 1 - index) * 0.035,
                 })}
               >
                 <Button

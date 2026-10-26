@@ -110,23 +110,24 @@ describe('QuickCaptureBar', () => {
       }
     });
 
-    it('unrolls from the ＋ upward, keeping the first start nearest the thumb', async () => {
+    it('lists the starts top to bottom in the stored order, as Settings does', async () => {
+      localStorage.setItem(
+        PREFERENCES_STORAGE_KEY,
+        JSON.stringify({
+          version: 1,
+          quickCapture: ['drawing', 'text', 'checklist', 'audio', 'picture', 'camera'].map(
+            (id) => ({ id, on: true })
+          ),
+        })
+      );
       await openDial();
       const list = (await screen.findByRole('button', { name: 'notes.capture.text' })).closest(
         'ul'
       );
 
-      // Bottom-to-top on screen, but `flex-col-reverse` keeps the DOM in the user's order, which is
-      // what tab and screen readers follow.
-      expect(list).toHaveClass('flex-col-reverse');
-      expect(Array.from(list?.querySelectorAll('button') ?? []).map((b) => b.textContent)).toEqual([
-        'notes.capture.text',
-        'notes.capture.checklist',
-        'notes.capture.audio',
-        'notes.capture.drawing',
-        'notes.capture.picture',
-        'notes.capture.camera',
-      ]);
+      expect(list).toHaveClass('flex-col');
+      expect(list).not.toHaveClass('flex-col-reverse');
+      expect(list?.querySelector('li')).toHaveTextContent('notes.capture.drawing');
     });
 
     it('defaults to the right thumb', () => {
