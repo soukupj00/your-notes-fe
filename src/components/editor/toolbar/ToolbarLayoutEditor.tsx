@@ -117,16 +117,17 @@ export function ToolbarLayoutEditor({
               type="button"
               variant="ghost"
               size="sm"
-              className="gap-1"
+              className="shrink-0 gap-1"
               onClick={() => setOpenFamilyId(null)}
             >
               <ChevronLeft className="size-4" aria-hidden />
               {t('settings.toolbar.back')}
             </Button>
             {/* The width is named here, or a leaf list is the easiest place to edit
-              the wrong one of the two Layouts. */}
-            <span className="ml-auto truncate text-muted-foreground text-xs">
-              {familyName(openFamily.id)} · {t(`settings.toolbar.width.${widthClass}`)}
+              the wrong one of the two Layouts. Wrapped, never cut: the width moves down whole. */}
+            <span className="ml-auto min-w-0 text-right text-muted-foreground text-xs">
+              <span>{familyName(openFamily.id)} ·</span>{' '}
+              <span className="whitespace-nowrap">{t(`settings.toolbar.width.${widthClass}`)}</span>
             </span>
           </div>
           <LeafList

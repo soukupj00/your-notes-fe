@@ -29,7 +29,8 @@ const CHAR_MS = 45;
 
 /**
  * The desktop twin of the mobile speed-dial, minus plain text, which the bar itself is.
- * The rotating prompt is decoration, so reduced motion pins it to the resting copy.
+ * The rotating prompt is decoration, so reduced motion, or a bar where turning would cost a
+ * Start (`planCaptureBar`), pins it to the resting copy.
  */
 export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => void }) {
   const { t } = useTranslation();
@@ -42,26 +43,28 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
   const showShortcut = useKeyboardAffordances();
   // A picker Start opens the OS picker here, inside the click (`useStartPicker`).
   const picker = useStartPicker(onStart);
-  const shownPrompts = reducedMotion ? PLACEHOLDER_KEYS.slice(0, 1) : PLACEHOLDER_KEYS;
-  const { fit, barRef, promptRef, promptTextRef, shortcutRef, startsRef } = useStartsThatFit(
+  const candidates = reducedMotion ? PLACEHOLDER_KEYS.slice(0, 1) : PLACEHOLDER_KEYS;
+  const { rotate, fit, barRef, promptRef, measureRef, shortcutRef, startsRef } = useStartsThatFit(
     actions.length,
-    `${shownPrompts.length}:${showShortcut}:${newNoteKey}`
+    `${candidates.length}:${showShortcut}:${newNoteKey}`
   );
+  const turning = !reducedMotion && rotate;
+  const shownPrompts = turning ? PLACEHOLDER_KEYS : PLACEHOLDER_KEYS.slice(0, 1);
 
   // Until a rotation fires, a prompt appears rather than types: on a cold load the copy swaps
   // from its raw key to words as translations arrive, which nobody should watch being typed.
   const hasRotated = useRef(false);
 
   useEffect(() => {
-    if (reducedMotion) return;
+    if (!turning) return;
     const id = setInterval(() => {
       hasRotated.current = true;
       setIndex((i) => (i + 1) % PLACEHOLDER_KEYS.length);
     }, ROTATE_MS);
     return () => clearInterval(id);
-  }, [reducedMotion]);
+  }, [turning]);
 
-  const key = PLACEHOLDER_KEYS[reducedMotion ? 0 : index];
+  const key = PLACEHOLDER_KEYS[turning ? index : 0];
   const placeholder = t(key);
 
   // A MotionValue writes each character to the DOM directly, rather than re-rendering the
@@ -73,7 +76,7 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
   // or every new prompt paints in full for a frame before typing. `hasRotated` needs no
   // dependency: only the rotation flips it, and that changes `placeholder` in the same tick.
   useLayoutEffect(() => {
-    const instant = reducedMotion || !hasRotated.current;
+    const instant = !turning || !hasRotated.current;
     // From 1, not 0 - the swap should never flash an empty line.
     if (!instant) revealed.jump(1);
     const animation = animate(
@@ -85,7 +88,7 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
       })
     );
     return () => animation.stop();
-  }, [placeholder, reducedMotion, revealed]);
+  }, [placeholder, turning, revealed]);
 
   return (
     // As wide as the navbar's search container, so `--feed-column` agrees with the search box.
@@ -101,12 +104,12 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
           type="button"
           onClick={() => onStart()}
           aria-keyshortcuts={newNoteKey ? ariaKeyShortcuts(newNoteKey) : undefined}
-          className="flex min-h-11 flex-1 cursor-text items-center gap-3 px-4 py-3 text-left text-body text-muted-foreground transition-colors hover:text-foreground"
+          className="relative flex min-h-11 flex-1 cursor-text items-center gap-3 px-4 py-3 text-left text-body text-muted-foreground transition-colors hover:text-foreground"
         >
           {/* One stable label for assistive tech, not a prompt renaming itself every five seconds.
             Tests read `data-prompt`: the MotionValue writes the text outside React. The unseen
-            copies hold the longest prompt's width, so the Starts stay put as it turns. */}
-          <span ref={promptTextRef} aria-hidden className="grid whitespace-nowrap">
+            copies hold the longest shown prompt's width, so the Starts stay put as it turns. */}
+          <span aria-hidden className="grid whitespace-nowrap">
             {shownPrompts.map((prompt) => (
               <span key={prompt} className="invisible col-start-1 row-start-1">
                 {t(prompt)}
@@ -119,6 +122,17 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
             >
               {typed}
             </m.span>
+          </span>
+          <span
+            ref={measureRef}
+            aria-hidden
+            className="pointer-events-none invisible absolute top-0 left-0 whitespace-nowrap"
+          >
+            {candidates.map((prompt) => (
+              <span key={prompt} className="block w-max">
+                {t(prompt)}
+              </span>
+            ))}
           </span>
           <span className="sr-only">{t('notes.createPlaceholder')}</span>
           {/* Only once there is a keyboard (ADR 0028), and only where the longest prompt still fits

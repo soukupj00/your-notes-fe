@@ -10,49 +10,82 @@ export function startsThatFit(available: number, slot: number, gap: number, tota
   return slots >= total ? total : Math.max(0, slots - 1);
 }
 
+/**
+ * The rotating prompt is decoration, so it rotates only while its longest copy leaves room for
+ * every Start; otherwise the resting prompt stays and the Starts fit against it.
+ */
+export function planCaptureBar(
+  room: number,
+  prompts: { resting: number; longest: number },
+  slot: number,
+  gap: number,
+  total: number
+) {
+  if (startsThatFit(room - prompts.longest, slot, gap, total) === total) {
+    return { rotate: true, fit: total };
+  }
+  return { rotate: false, fit: startsThatFit(room - prompts.resting, slot, gap, total) };
+}
+
 const px = (value: string) => Number.parseFloat(value) || 0;
 
 /**
- * The capture bar keeps its whole prompt and gives the Starts what is left. Measured before paint,
- * and again on every resize, so the row never shows a count it is about to change.
+ * Measured before paint, and again on every resize, so the row never shows a count it is about to
+ * change. The prompts are measured in a copy that takes no space, so the plan cannot feed back
+ * into what it measures.
  */
-export function useStartsThatFit(total: number, promptKey: unknown) {
+export function useStartsThatFit(total: number, remeasureKey: unknown) {
   const barRef = useRef<HTMLDivElement>(null);
   const promptRef = useRef<HTMLButtonElement>(null);
-  const promptTextRef = useRef<HTMLSpanElement>(null);
+  const measureRef = useRef<HTMLSpanElement>(null);
   const shortcutRef = useRef<HTMLElement>(null);
   const startsRef = useRef<HTMLDivElement>(null);
-  const [fit, setFit] = useState(total);
+  const [plan, setPlan] = useState({ rotate: true, fit: total });
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `promptKey` is the re-measure trigger
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `remeasureKey` is the trigger
   useLayoutEffect(() => {
     const measure = () => {
+      const bar = barRef.current;
+      const prompt = promptRef.current;
+      const copies = Array.from(measureRef.current?.children ?? [], (copy) =>
+        copy instanceof HTMLElement ? copy.offsetWidth : 0
+      );
       const slot = startsRef.current?.querySelector('button');
-      // Hidden below `sm:`, or unmeasured (jsdom): every Start stays inline.
-      if (!barRef.current?.clientWidth || !promptRef.current || !promptTextRef.current || !slot) {
-        setFit(total);
+      // Hidden below `sm:`, or unmeasured (jsdom): every Start inline, the prompt free to turn.
+      if (!bar?.clientWidth || !prompt || !copies.length || !slot) {
+        setPlan({ rotate: true, fit: total });
         return;
       }
-      const barStyle = getComputedStyle(barRef.current);
-      const promptStyle = getComputedStyle(promptRef.current);
+      const barStyle = getComputedStyle(bar);
+      const promptStyle = getComputedStyle(prompt);
       const hint = shortcutRef.current?.offsetWidth ?? 0;
-      const promptWidth =
-        promptTextRef.current.offsetWidth +
-        px(promptStyle.paddingLeft) +
-        px(promptStyle.paddingRight) +
-        (hint && hint + px(promptStyle.columnGap));
       const gap = px(barStyle.columnGap);
-      const available = barRef.current.clientWidth - px(barStyle.paddingRight) - promptWidth - gap;
-      setFit(startsThatFit(available, slot.offsetWidth, gap, total));
+      const room =
+        bar.clientWidth -
+        px(barStyle.paddingRight) -
+        gap -
+        px(promptStyle.paddingLeft) -
+        px(promptStyle.paddingRight) -
+        (hint && hint + px(promptStyle.columnGap));
+      const prompts = { resting: copies[0], longest: Math.max(...copies) };
+      setPlan(planCaptureBar(room, prompts, slot.offsetWidth, gap, total));
     };
 
     measure();
-    if (typeof ResizeObserver !== 'function' || !barRef.current || !promptTextRef.current) return;
+    if (typeof ResizeObserver !== 'function' || !barRef.current || !measureRef.current) return;
     const observer = new ResizeObserver(() => flushSync(measure));
     observer.observe(barRef.current);
-    observer.observe(promptTextRef.current);
+    observer.observe(measureRef.current);
     return () => observer.disconnect();
-  }, [total, promptKey]);
+  }, [total, remeasureKey]);
 
-  return { fit: Math.min(fit, total), barRef, promptRef, promptTextRef, shortcutRef, startsRef };
+  return {
+    rotate: plan.rotate,
+    fit: Math.min(plan.fit, total),
+    barRef,
+    promptRef,
+    measureRef,
+    shortcutRef,
+    startsRef,
+  };
 }

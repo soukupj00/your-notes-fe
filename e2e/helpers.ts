@@ -125,7 +125,14 @@ export async function startNote(page: Page, start: string) {
     await page.getByRole('button', { name: 'Take a note…' }).click();
     return;
   }
-  await page.getByRole('button', { name: start, exact: true }).click();
+  const inline = page.getByRole('button', { name: start, exact: true });
+  if (await inline.isVisible()) {
+    await inline.click();
+    return;
+  }
+  // A narrow bar keeps the Starts that do not fit behind its ⋯.
+  await page.getByRole('button', { name: 'More ways to start' }).click();
+  await page.getByRole('menuitem', { name: start, exact: true }).click();
 }
 
 /** Creates a text note through the UI and closes it, so it sits on the wall. */

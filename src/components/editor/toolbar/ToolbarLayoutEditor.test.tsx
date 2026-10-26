@@ -212,7 +212,9 @@ describe('drilling into a family', () => {
 
     await user.click(await screen.findByRole('button', { name: /^editor\.toolbar\.family\.list/ }));
 
-    expect(screen.getByText(/editor\.toolbar\.family\.list · settings\.toolbar\.width\.compact/));
+    expect(screen.getByText('editor.toolbar.family.list ·').parentElement).toHaveTextContent(
+      'editor.toolbar.family.list · settings.toolbar.width.compact'
+    );
     expect(screen.getAllByRole('switch')).toHaveLength(3);
     expect(
       screen.getByRole('switch', { name: 'settings.toolbar.item.show:editor.bulletList.tooltip' })
