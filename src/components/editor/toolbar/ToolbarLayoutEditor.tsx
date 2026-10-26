@@ -29,7 +29,10 @@ export interface ToolbarLayoutEditorProps {
   /** On in Settings, which has no note open; off over the editor, whose real bar is live. */
   showPreview?: boolean;
   Section?: ToolbarEditorSection;
-  /** Settings keeps the open group in the URL, so Back closes it; without these the editor keeps its own. */
+  /**
+   * Settings keeps the open group in the URL, so Back closes it; without these the editor keeps
+   * its own.
+   */
   openFamilyId?: string | null;
   onOpenFamilyChange?: (id: string | null) => void;
 }

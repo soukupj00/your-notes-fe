@@ -27,6 +27,19 @@ test.describe('a phone with a keyboard', () => {
 
     await expect(row).toBeVisible();
   });
+
+  test('keeps the Shortcuts page across a reload of the tab', async ({ page }) => {
+    await page.goto('/settings');
+    await expect(page.getByRole('link', { name: /General/ })).toBeVisible();
+    await page.keyboard.press('ArrowDown');
+
+    await page.goto('/settings/shortcuts');
+
+    await expect(page).toHaveURL(/\/settings\/shortcuts$/);
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Keyboard shortcuts' })
+    ).toBeAttached();
+  });
 });
 
 test('N under the launch Welcome opens nothing', async ({ page, isMobile }) => {

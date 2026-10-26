@@ -16,9 +16,9 @@ const NAVIGATION_KEYS = new Set([
  * key anywhere is proof; IME composition and Android's `Unidentified`/229 never are.
  */
 export function isHardwareKey(event: KeyboardEvent, trusted = event.isTrusted): boolean {
-  if (!trusted || event.isComposing || event.key === 'Unidentified' || event.keyCode === 229) {
-    return false;
-  }
+  // Autofill can send a keydown with no `key` at all.
+  if (typeof event.key !== 'string' || !trusted || event.isComposing) return false;
+  if (event.key === 'Unidentified' || event.keyCode === 229) return false;
   if (MODIFIER_KEYS.has(event.key)) return false;
   if (event.ctrlKey || event.metaKey || event.altKey) return true;
   const inField = event.target instanceof Element && event.target.closest(TYPES_ITS_KEYS) !== null;

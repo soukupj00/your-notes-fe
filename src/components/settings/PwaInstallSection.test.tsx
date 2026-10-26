@@ -14,7 +14,7 @@ class InstallPromptEvent extends Event {
 }
 
 afterEach(() => {
-  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('PwaInstallSection', () => {
@@ -39,8 +39,11 @@ describe('PwaInstallSection', () => {
   });
 
   it('stays hidden when the app is already running standalone', async () => {
-    vi.spyOn(window, 'matchMedia').mockImplementation(
-      (query) =>
+    // Stubbed, not spied: the setup's `matchMedia` is already a mock, which a restore leaves
+    // answering "standalone" for the next test.
+    vi.stubGlobal(
+      'matchMedia',
+      (query: string) =>
         ({
           matches: query === '(display-mode: standalone)',
           media: query,

@@ -511,7 +511,8 @@
       "drawing": "Drawing",
       "picture": "Image",
       "camera": "Camera",
-      "file": "File"
+      "file": "File",
+      "more": "More ways to start"
     },
     "emptyingTrash": "Emptying trash…",
     "placeholders": {

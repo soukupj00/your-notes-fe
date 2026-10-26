@@ -38,8 +38,9 @@ function Navbar() {
     // z-10 matches the sidebar panel and stays under QuickCaptureBar's z-40. The safe
     // insets pad the header itself, so `bg-chrome` paints under the status bar.
     <header className="nav-scroll-shadow sticky top-0 z-10 bg-chrome pt-[var(--safe-top)] pr-[var(--safe-right)] pl-[var(--safe-left)] sm:border-b">
-      {/* Search sits over the capture bar at its width (`--feed-column`), so this container is as
-          wide as the bar's. The open sidebar decides whether one row fits; else search drops below. */}
+      {/* Search sits over the capture bar at its width (`--feed-column`), so this container is
+          as wide as the bar's. The open sidebar decides whether one row fits; else search drops
+          below. */}
       <div className="@container hidden px-4 py-2 sm:block">
         <div className="grid feed-row:grid-cols-[minmax(var(--header-side),1fr)_var(--feed-column)_minmax(var(--header-side),1fr)] grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-2">
           <SidebarTrigger className="justify-self-start" />

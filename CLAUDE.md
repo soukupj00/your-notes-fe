@@ -154,6 +154,7 @@ Settings is not a sidebar destination; the topbar gear is its one entry point.
 A Settings subpage goes back up through the app bar's Back below `sm:`, and from `sm:` up, where that bar is gone, through the link above its title (`SettingsFrame`).
 
 **Quick capture** is one list of Starts (`notes/quickCaptureActions.ts`) rendered two ways: a `＋` speed dial on mobile (`QuickCaptureBar`) and inline icons on the desktop "Take a note" bar.
+That bar keeps its whole prompt and shows the Starts that fit, measured before paint (`useStartsThatFit`); the rest wait, in order, behind a ⋯ menu.
 Their order and the dial's side are Preferences.
 Each Start carries at most one Intent.
 Image and Camera are picker Starts: `useStartPicker` opens the OS picker inside the tap itself, because the tap's user activation does not survive the route change to the editor.

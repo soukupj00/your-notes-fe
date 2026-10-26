@@ -33,8 +33,16 @@ beforeEach(() => {
     configurable: true,
     value: { getUserMedia: vi.fn(async () => stream) },
   });
+  // A test that stubs the permission answer must not leave it for the next.
+  Object.defineProperty(globalThis.navigator, 'permissions', {
+    configurable: true,
+    value: undefined,
+  });
 });
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
 
 describe('useAudioRecorder', () => {
   it('start -> recording, stop -> blob + tracks released', async () => {

@@ -513,7 +513,8 @@
       "drawing": "Kresba",
       "picture": "Obrázek",
       "camera": "Fotoaparát",
-      "file": "Soubor"
+      "file": "Soubor",
+      "more": "Další způsoby začátku"
     },
     "emptyingTrash": "Vyprazdňuji koš…",
     "placeholders": {

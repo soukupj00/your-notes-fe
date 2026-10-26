@@ -1,10 +1,10 @@
 import { animate, m, useMotionValue, useTransform } from 'motion/react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { CaptureStarts } from '@/components/notes/CaptureStarts.tsx';
 import { resolveDesktopQuickCapture } from '@/components/notes/quickCaptureLayout.ts';
 import { useStartPicker } from '@/components/notes/useStartPicker.tsx';
-import { Button } from '@/components/ui/button.tsx';
-import { IconTooltip } from '@/components/ui/tooltip.tsx';
+import { useStartsThatFit } from '@/components/notes/useStartsThatFit.ts';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useFinePointer } from '@/hooks/useFinePointer.ts';
 import { useKeyboardAffordances } from '@/hooks/useKeyboardAffordances.ts';
@@ -42,6 +42,11 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
   const showShortcut = useKeyboardAffordances();
   // A picker Start opens the OS picker here, inside the click (`useStartPicker`).
   const picker = useStartPicker(onStart);
+  const shownPrompts = reducedMotion ? PLACEHOLDER_KEYS.slice(0, 1) : PLACEHOLDER_KEYS;
+  const { fit, barRef, promptRef, promptTextRef, shortcutRef, startsRef } = useStartsThatFit(
+    actions.length,
+    `${shownPrompts.length}:${showShortcut}:${newNoteKey}`
+  );
 
   // Until a rotation fires, a prompt appears rather than types: on a cold load the copy swaps
   // from its raw key to words as translations arrive, which nobody should watch being typed.
@@ -87,25 +92,40 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
     <div className="@container mb-6 hidden sm:block">
       {/* The Welcome marks this or its `QuickCaptureBar` twin. */}
       <div
+        ref={barRef}
         data-tour="capture"
         className="@container mx-auto flex feed-row:max-w-(--feed-column) max-w-lg items-center gap-1 rounded-card border bg-card pr-2 shadow-rest transition-shadow hover:shadow-lift"
       >
         <button
+          ref={promptRef}
           type="button"
           onClick={() => onStart()}
           aria-keyshortcuts={newNoteKey ? ariaKeyShortcuts(newNoteKey) : undefined}
-          className="flex min-h-11 min-w-0 flex-1 cursor-text items-center gap-3 px-4 py-3 text-left text-body text-muted-foreground transition-colors hover:text-foreground"
+          className="flex min-h-11 flex-1 cursor-text items-center gap-3 px-4 py-3 text-left text-body text-muted-foreground transition-colors hover:text-foreground"
         >
-          {/* Assistive tech gets one stable label, not a prompt renaming itself every five seconds.
-            Tests read `data-prompt`: the MotionValue writes the visible text outside React. */}
-          <m.span aria-hidden data-testid="capture-prompt" data-prompt={key} className="truncate">
-            {typed}
-          </m.span>
+          {/* One stable label for assistive tech, not a prompt renaming itself every five seconds.
+            Tests read `data-prompt`: the MotionValue writes the text outside React. The unseen
+            copies hold the longest prompt's width, so the Starts stay put as it turns. */}
+          <span ref={promptTextRef} aria-hidden className="grid whitespace-nowrap">
+            {shownPrompts.map((prompt) => (
+              <span key={prompt} className="invisible col-start-1 row-start-1">
+                {t(prompt)}
+              </span>
+            ))}
+            <m.span
+              data-testid="capture-prompt"
+              data-prompt={key}
+              className="col-start-1 row-start-1"
+            >
+              {typed}
+            </m.span>
+          </span>
           <span className="sr-only">{t('notes.createPlaceholder')}</span>
           {/* Only once there is a keyboard (ADR 0028), and only where the longest prompt still fits
             beside it; `aria-keyshortcuts` tells assistive tech either way. */}
           {newNoteKey && showShortcut && (
             <kbd
+              ref={shortcutRef}
               aria-hidden
               className="ml-auto @md:block hidden select-none rounded border bg-muted px-1.5 py-0.5 font-medium font-sans text-label text-muted-foreground tracking-normal"
             >
@@ -114,19 +134,7 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
           )}
         </button>
 
-        {actions.map((action) => (
-          <IconTooltip key={action.key} label={t(action.labelKey)}>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label={t(action.labelKey)}
-              onClick={() => picker.start(action)}
-            >
-              <action.Icon className="size-4" />
-            </Button>
-          </IconTooltip>
-        ))}
+        <CaptureStarts ref={startsRef} actions={actions} fit={fit} onPick={picker.start} />
         {picker.input}
       </div>
     </div>

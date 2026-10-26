@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { forgetHardwareKey } from '@/hooks/useKeyboardAffordances.ts';
 import type { Note } from '@/models.ts';
 import { renderRoute } from '@/test/renderRoute.tsx';
 import { clearStore, testStore } from '@/test/store.tsx';
@@ -82,6 +83,7 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
+  forgetHardwareKey();
   globalThis.ResizeObserver = realResizeObserver;
   localStorage.clear();
   await clearStore();
@@ -170,7 +172,7 @@ describe('closing a note', () => {
     await userEvent.click(await screen.findByRole('button', { name: /Milk and bread/ }));
     await waitFor(() => expect(router.state.location.search).toMatchObject({ note: note.id }));
 
-    await userEvent.click(screen.getByText('close-editor'));
+    await userEvent.click(await screen.findByText('close-editor'));
 
     await waitFor(() => noEditor());
     expect(router.state.location.search).not.toHaveProperty('note');
@@ -229,7 +231,6 @@ describe('the feed behind an open note', () => {
   });
 });
 
-// Last in the file: the key it presses stays seen for the rest of the session.
 describe('the new-note key', () => {
   it('opens a Note on a coarse pointer at the first press, which also arms it', async () => {
     const router = renderRoute('/');
@@ -239,5 +240,19 @@ describe('the new-note key', () => {
 
     expect(await editor()).toHaveAttribute('data-new', 'true');
     expect(router.state.location.search).toHaveProperty('note');
+  });
+
+  it.each([
+    ['an IME composition', { isComposing: true }],
+    ['a software keyboard’s 229', { keyCode: 229 }],
+  ])('opens nothing on a coarse pointer for %s', async (_, init) => {
+    const router = renderRoute('/');
+    await screen.findByRole('heading', { level: 1 });
+
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', bubbles: true, ...init }));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    noEditor();
+    expect(router.state.location.search).not.toHaveProperty('note');
   });
 });

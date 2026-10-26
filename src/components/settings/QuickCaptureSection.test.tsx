@@ -108,6 +108,7 @@ describe('QuickCaptureSection', () => {
 // so. A tablet keeps Camera at any width.
 describe.each([
   [390, false, 'camera'],
+  [390, true, 'camera'],
   [1024, false, 'camera'],
   [1280, true, 'file'],
 ])('at %ipx, fine pointer %s, the Camera slot', (width, finePointer, shown) => {

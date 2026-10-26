@@ -4,6 +4,7 @@ import { AccountProvider } from '@/context/AccountProvider.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { TourProvider } from '@/context/TourProvider.tsx';
 import type { AccountService, Session } from '@/data/Remote.ts';
+import { forgetHardwareKey } from '@/hooks/useKeyboardAffordances.ts';
 import { clearStore, withStore } from '@/test/store.tsx';
 import SettingsHomePage from './index.tsx';
 
@@ -32,6 +33,7 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 afterEach(async () => {
+  forgetHardwareKey();
   localStorage.clear();
   await clearStore();
 });
@@ -196,7 +198,6 @@ describe('Help', () => {
   });
 });
 
-// Last in the file: the key it presses stays seen for the rest of the session.
 describe('the Shortcuts row', () => {
   it('waits on a coarse pointer for a hardware key', async () => {
     mount();

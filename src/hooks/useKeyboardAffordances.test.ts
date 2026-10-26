@@ -15,7 +15,10 @@ async function load() {
   return (await import('./useKeyboardAffordances.ts')).useKeyboardAffordances;
 }
 
-beforeEach(() => vi.restoreAllMocks());
+beforeEach(() => {
+  vi.restoreAllMocks();
+  sessionStorage.clear();
+});
 
 describe('useKeyboardAffordances', () => {
   it('is off on a coarse pointer until a hardware key, then stays on', async () => {
@@ -39,6 +42,17 @@ describe('useKeyboardAffordances', () => {
     });
     expect(result.current).toBe(false);
     input.remove();
+  });
+
+  it('keeps a key seen across a reload of the same tab', async () => {
+    setViewport(1024, { finePointer: false });
+    renderHook(await load());
+    act(() => {
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', bubbles: true }));
+    });
+
+    const { result } = renderHook(await load());
+    expect(result.current).toBe(true);
   });
 
   it('is on for a fine pointer with no key pressed', async () => {

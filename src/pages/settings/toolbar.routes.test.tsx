@@ -55,7 +55,7 @@ describe('the open toolbar group', () => {
   });
 
   it.each([
-    ['pushed', ['/settings/toolbar']],
+    ['pushed', ['/settings', '/settings/toolbar']],
     ['cold', ['/settings/toolbar?group=style']],
   ])('leaves no group behind when its Back closes a %s group', async (kind, entries) => {
     const router = renderRoute(entries);
@@ -72,5 +72,9 @@ describe('the open toolbar group', () => {
     expect(router.state.location.pathname).toBe('/settings/toolbar');
     // A pushed group is popped; a cold one is replaced, never pushed over.
     expect(router.history.length).toBe(before);
+    if (kind === 'pushed') {
+      router.history.back();
+      await waitFor(() => expect(router.state.location.pathname).toBe('/settings'));
+    }
   });
 });

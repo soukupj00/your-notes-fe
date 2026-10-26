@@ -262,8 +262,8 @@ export function NoteEditorDialog({
         // `bg-note-surface!`: the vendored `bg-background` would otherwise win on stylesheet order.
         {...noteColorAttrs(color)}
         // Radix would focus the back arrow; the title gets it instead. Not for an existing note
-        // without a hardware keyboard (the software one would cover a note opened to read), and not for a
-        // checklist draft, whose editor autofocuses its first item.
+        // without a hardware keyboard (the software one would cover a note opened to read), and
+        // not for a checklist draft, whose editor autofocuses its first item.
         onOpenAutoFocus={(event) => {
           if (document.activeElement instanceof HTMLElement) {
             openerRef.current = document.activeElement;

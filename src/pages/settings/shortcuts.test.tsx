@@ -45,6 +45,27 @@ describe('the Keyboard shortcuts page', () => {
     expect(screen.getByText('redirected to /settings')).toBeInTheDocument();
   });
 
+  it('renders on a coarse pointer after a reload in a tab that saw a hardware key', async () => {
+    stubPointer(false);
+    sessionStorage.setItem('hardware-key-seen', 'true');
+    vi.resetModules();
+    // The reload is a fresh module graph, so the provider has to come from it too.
+    const { default: ReloadedPage } = await import('./shortcuts.tsx');
+    const { PreferencesProvider: ReloadedProvider } = await import(
+      '@/context/PreferencesProvider.tsx'
+    );
+
+    render(
+      <ReloadedProvider>
+        <ReloadedPage />
+      </ReloadedProvider>
+    );
+
+    expect(screen.queryByText('redirected to /settings')).toBeNull();
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('settings.pages.shortcuts');
+    sessionStorage.clear();
+  });
+
   it('names itself once, in its heading', () => {
     stubPointer(true);
     mount();
