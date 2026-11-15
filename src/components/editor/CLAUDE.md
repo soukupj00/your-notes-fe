@@ -160,6 +160,7 @@ All five kinds (image, audio, video, file, Excalidraw) are custom nodes from one
 
 - The scene is a JSON blob with a cached SVG preview; the node view is a passive preview with tap-to-edit.
 - One shared `ExcalidrawDialog`, lazy-loaded when a drawing first opens, holds the live canvas.
+  `ExcalidrawDialogHost` mounts it and commits a Save; `useOpenDrawing` holds which drawing is open.
   `NotesView` lazy-loads the editor in the same way, so neither TipTap nor the drawing engine is in the initial download.
 - **Commit on Save**: a new drawing creates its Attachment only on Save, and every Save mints a new Attachment and repoints the node, so every blob stays write-once by id for Sync.
   The orphan sweep removes the old one.

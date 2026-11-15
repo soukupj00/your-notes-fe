@@ -2,7 +2,6 @@ import type { Editor } from '@tiptap/react';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from '@/components/editor/extensions/button-types';
 import { TooltipFloorProvider } from '@/components/ui/tooltip.tsx';
 import { cn } from '@/lib/utils.ts';
 import { canRenderItem } from './registry';
@@ -84,8 +83,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   stickyOnMobile,
   className,
 }) => {
-  // The button factories take `t` under our own narrower alias; cast once here.
-  const { t } = useTranslation() as { t: TFunction };
+  const { t } = useTranslation();
   const widthClass = useWidthClass();
   // `resolveLayout` does not know which extensions are mounted, so drop what this
   // editor cannot draw first, or an unmounted family renders as an empty box and
