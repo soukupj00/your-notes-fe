@@ -3,63 +3,33 @@ import type { EditorView } from '@tiptap/pm/view';
 import { EditorContent, useEditor } from '@tiptap/react';
 import 'katex/dist/katex.min.css';
 import type React from 'react';
-import {
-  forwardRef,
-  lazy,
-  Suspense,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { AudioRecorderHost } from '@/components/editor/extensions/Audio';
-import { insertAttachmentNode } from '@/components/editor/extensions/attachments/createAttachmentNode';
-import type { ExcalidrawOpenArgs } from '@/components/editor/extensions/attachments/deps';
 import {
   dedupeForeignAttachments,
   insertFiles,
   insertTransferredFiles,
 } from '@/components/editor/extensions/attachments/insert';
 import { buildEditorExtensions } from '@/components/editor/extensions/build';
-import { commitExcalidrawScene } from '@/components/editor/extensions/Excalidraw/commit';
 import {
-  type ExcalidrawScene,
-  emptyScene,
-  parseScene,
-} from '@/components/editor/extensions/Excalidraw/scene';
+  ExcalidrawDialogHost,
+  useOpenDrawing,
+} from '@/components/editor/extensions/Excalidraw/ExcalidrawDialogHost';
 import { LinkBubbleMenu } from '@/components/editor/extensions/Link';
 import { EditorToolbar } from '@/components/editor/toolbar/EditorToolbar.tsx';
-import { Spinner } from '@/components/ui/Spinner.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useSync } from '@/context/SyncProvider.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useLatest } from '@/hooks/useLatest.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { useShortcuts } from '@/hooks/useShortcuts.ts';
-import {
-  ATTACHMENT_SPECS,
-  AttachmentError,
-  type AttachmentErrorCode,
-  MiB,
-} from '@/lib/attachments.ts';
+import { ATTACHMENT_SPECS, type AttachmentErrorCode, MiB } from '@/lib/attachments.ts';
 import { bodyHasAttachment } from '@/lib/body.ts';
 import type { Intent } from '@/lib/intent.ts';
 import { cn } from '@/lib/utils.ts';
 import type { AttachmentKind } from '@/models.ts';
-
-const ExcalidrawDialog = lazy(
-  () => import('@/components/editor/extensions/Excalidraw/ExcalidrawDialog')
-);
-
-// Excalidraw resolves its bundled fonts/assets relative to this origin - pin it
-// to the app root so it works the same under the PWA's service-worker scope.
-if (typeof window !== 'undefined') {
-  (window as unknown as { EXCALIDRAW_ASSET_PATH?: string }).EXCALIDRAW_ASSET_PATH = '/';
-}
 
 type EditorProps = {
   content?: string;
@@ -117,50 +87,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     useAttachmentActions();
   const { download: downloadAttachment } = useSync();
 
-  // One shared Excalidraw modal; the live canvas never lives inline in the doc.
-  // `attachmentId: null` is a new drawing that Save creates. `onDelete` is the
-  // same node removal as the preview's corner X.
-  const [excalidraw, setExcalidraw] = useState<{
-    open: boolean;
-    attachmentId: string | null;
-    initialScene: ExcalidrawScene | null;
-    onDelete?: () => void;
-    onReplace?: (attachmentId: string) => void;
-    // Bumped on every open so the dialog remounts (fresh dirty/empty state) even
-    // when the same drawing - or another new one - is opened twice in a row.
-    key: number;
-  }>({ open: false, attachmentId: null, initialScene: null, key: 0 });
-  const openSeqRef = useRef(0);
-
-  const openExcalidraw = useCallback(
-    (args: ExcalidrawOpenArgs) => {
-      const { attachmentId, onDelete, onReplace } = args;
-      const key = ++openSeqRef.current;
-      if (!attachmentId) {
-        setExcalidraw({
-          open: true,
-          attachmentId: null,
-          initialScene: emptyScene(),
-          onDelete,
-          key,
-        });
-        return;
-      }
-      // One-shot read: the modal edits its own copy and commits on Save.
-      void getAttachment(attachmentId).then(async (att) => {
-        const scene = att?.blob ? parseScene(await att.blob.text()) : null;
-        setExcalidraw({
-          open: true,
-          attachmentId,
-          initialScene: scene ?? emptyScene(),
-          onDelete,
-          onReplace,
-          key,
-        });
-      });
-    },
-    [getAttachment]
-  );
+  const { drawing, openExcalidraw, closeExcalidraw } = useOpenDrawing(getAttachment);
 
   const attachmentDeps = useMemo(
     () => ({
@@ -325,33 +252,6 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     [editor]
   );
 
-  const replaceExcalidraw = excalidraw.onReplace;
-  // Commit-on-Save: every Save mints a new row. A new drawing inserts its node,
-  // an edit repoints the existing one.
-  const handleExcalidrawSave = useCallback(
-    async (scene: ExcalidrawScene) => {
-      try {
-        await commitExcalidrawScene(getAttachmentDeps(), excalidraw.attachmentId, scene, (id) => {
-          if (excalidraw.attachmentId) {
-            replaceExcalidraw?.(id);
-            return;
-          }
-          const ed = editorRef.current;
-          if (ed) insertAttachmentNode(ed, 'excalidraw', id);
-        });
-      } catch (err) {
-        console.error('Editor: excalidraw save failed', err);
-        getAttachmentDeps().onError(
-          err instanceof AttachmentError ? err.code : 'insert-failed',
-          'excalidraw'
-        );
-      } finally {
-        setExcalidraw((s) => ({ ...s, open: false }));
-      }
-    },
-    [excalidraw.attachmentId, getAttachmentDeps, replaceExcalidraw]
-  );
-
   if (!editor) {
     return null;
   }
@@ -396,30 +296,12 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         {editable && <LinkBubbleMenu editor={editor} t={t} />}
       </div>
 
-      {excalidraw.open && (
-        <Suspense
-          fallback={
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center gap-2 bg-background/80"
-              role="status"
-              aria-label={t('editor.excalidraw.title')}
-            >
-              <Spinner className="size-6" />
-            </div>
-          }
-        >
-          <ExcalidrawDialog
-            key={excalidraw.key}
-            open
-            mode={excalidraw.attachmentId ? 'edit' : 'new'}
-            initialScene={excalidraw.initialScene}
-            onSave={handleExcalidrawSave}
-            onDelete={excalidraw.onDelete}
-            onClose={() => setExcalidraw((s) => ({ ...s, open: false }))}
-            t={t}
-          />
-        </Suspense>
-      )}
+      <ExcalidrawDialogHost
+        drawing={drawing}
+        onClose={closeExcalidraw}
+        editorRef={editorRef}
+        getDeps={getAttachmentDeps}
+      />
     </>
   );
 });

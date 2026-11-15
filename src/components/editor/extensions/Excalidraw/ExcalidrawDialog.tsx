@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { DeleteButton, SaveButton } from '@/components/ui/EntityActionButtons';
+import type { TFunction } from '../button-types';
 import { type ExcalidrawScene, emptyScene } from './scene';
 
 /** Local structural type, so the dialog does not depend on the package's type paths. */
@@ -57,7 +58,7 @@ export interface ExcalidrawDialogProps {
   onDelete?: () => void;
   /** Discard + close (the parent owns `open`). */
   onClose: () => void;
-  t: (k: string) => string;
+  t: TFunction;
 }
 
 /** The one shared drawing surface; the node view is only a preview that opens it.
