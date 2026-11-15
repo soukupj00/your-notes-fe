@@ -108,3 +108,4 @@ A custom theme provider (not `next-themes`).
 - `motionProvider.tsx`: makes the reduced-motion Preference authoritative for the Motion library and lazy-loads its features.
   Presence animations still need an explicit zero duration, because Motion keeps opacity.
 - `PwaInstallProvider.tsx`: captures Chromium's one-shot install prompt so Settings can offer Install later; `canInstall` is false where the browser has no such prompt or the app is already installed.
+  Without a prompt and not installed, `manualInstall` names whose menu steps Settings shows (iOS, Safari on a Mac, Firefox on Android, or `other` for a generic line).
