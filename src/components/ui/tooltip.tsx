@@ -11,7 +11,41 @@ const TooltipProvider = TooltipPrimitive.Provider;
 
 const Tooltip = TooltipPrimitive.Root;
 
-const TooltipTrigger = TooltipPrimitive.Trigger;
+/* Radix opens a tooltip on any focus. A tap focuses its button after the pointer events end,
+   and a menu or popover hands focus back after a click; Chrome even marks that `:focus-visible`.
+   Only focus after a key press opens one. */
+let lastInputWasKey = false;
+if (typeof document !== 'undefined') {
+  document.addEventListener(
+    'keydown',
+    () => {
+      lastInputWasKey = true;
+    },
+    true
+  );
+  document.addEventListener(
+    'pointerdown',
+    () => {
+      lastInputWasKey = false;
+    },
+    true
+  );
+}
+
+const TooltipTrigger = React.forwardRef<
+  React.ElementRef<typeof TooltipPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Trigger>
+>(({ onFocus, ...props }, ref) => (
+  <TooltipPrimitive.Trigger
+    ref={ref}
+    {...props}
+    onFocus={(event) => {
+      onFocus?.(event);
+      if (!lastInputWasKey) event.preventDefault();
+    }}
+  />
+));
+TooltipTrigger.displayName = TooltipPrimitive.Trigger.displayName;
 
 const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
@@ -60,26 +94,6 @@ function useTooltipFloor() {
   };
 }
 
-/* Radix opens a tooltip on any focus, including focus a menu or popover hands back after a
-   click or tap; Chrome even marks that `:focus-visible`. Only focus after a key press opens it. */
-let lastInputWasKey = false;
-if (typeof document !== 'undefined') {
-  document.addEventListener(
-    'keydown',
-    () => {
-      lastInputWasKey = true;
-    },
-    true
-  );
-  document.addEventListener(
-    'pointerdown',
-    () => {
-      lastInputWasKey = false;
-    },
-    true
-  );
-}
-
 /** A name on hover for an icon-only control. Visual only: the child keeps its own `aria-label`.
  *  Its own provider, like `NoteColorPicker`'s, so it works wherever it mounts; Radix permits nesting.
  *  Other props reach the child, so it can sit inside another `asChild` trigger. */
@@ -96,14 +110,7 @@ function IconTooltip({
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger
-          asChild
-          {...trigger}
-          onFocus={(event) => {
-            trigger.onFocus?.(event);
-            if (!lastInputWasKey) event.preventDefault();
-          }}
-        >
+        <TooltipTrigger asChild {...trigger}>
           {children}
         </TooltipTrigger>
         <TooltipContent side={side}>{label}</TooltipContent>
