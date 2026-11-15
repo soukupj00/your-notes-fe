@@ -62,7 +62,12 @@
     },
     "math": {
       "tooltip": "Math (LaTeX)",
-      "prompt": "Enter LaTeX"
+      "prompt": "Enter LaTeX",
+      "insert": "Insert",
+      "apply": "Apply"
+    },
+    "prompt": {
+      "cancel": "Cancel"
     },
     "clearFormatting": {
       "tooltip": "Clear formatting"

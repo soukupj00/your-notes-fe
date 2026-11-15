@@ -152,7 +152,8 @@ describe('editor shortcuts', () => {
       italic: null,
       link: null,
     }));
-    const prompt = vi.spyOn(window, 'prompt');
+    const prompt = vi.fn();
+    editor.storage.textPrompt.registerHost(prompt);
     editor.commands.selectAll();
 
     press(editor, ctrl('i', 73));
@@ -199,21 +200,24 @@ describe('editor shortcuts', () => {
       'the only link button is off screen',
       (editor: Editor) => editor.storage.link.prompt.registerButton(() => false),
     ],
-  ])('falls back to a prompt for Mod+K when %s', (_, mount) => {
+  ])('falls back to the text prompt for Mod+K when %s', async (_, mount) => {
     const editor = createEditor();
     mount(editor);
-    const prompt = vi.spyOn(window, 'prompt').mockReturnValue('https://example.com');
+    editor.storage.textPrompt.registerHost((request, answer) => {
+      expect(request).toMatchObject({ kind: 'url', title: 'editor.link.url' });
+      answer('https://example.com');
+    });
     editor.commands.selectAll();
 
     press(editor, ctrl('k', 75));
 
-    expect(prompt).toHaveBeenCalled();
-    expect(editor.getHTML()).toContain('href="https://example.com"');
+    await vi.waitFor(() => expect(editor.getHTML()).toContain('href="https://example.com"'));
   });
 
   it('prefers the mounted link button over the prompt', () => {
     const editor = createEditor();
-    const prompt = vi.spyOn(window, 'prompt');
+    const prompt = vi.fn();
+    editor.storage.textPrompt.registerHost(prompt);
     let opened = false;
     editor.storage.link.prompt.registerButton(() => {
       opened = true;
