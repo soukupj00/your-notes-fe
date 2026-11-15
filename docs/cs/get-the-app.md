@@ -44,11 +44,14 @@ YourNotes je teď ikona na vaší ploše.
 2. Klepněte na nabídku, tři tečky vpravo nahoře.
 3. Klepněte na **Nainstalovat aplikaci** (na některých telefonech je to **Přidat na plochu**), pak na **Nainstalovat**.
 
+Ve **Firefoxu** otevřete nabídku a klepněte na **Instalovat** (nebo **Přidat na domovskou obrazovku**).
+
 ### Počítač
 
 - **Chrome nebo Edge:** klikněte na ikonu instalace na pravém konci adresního řádku, pak na **Nainstalovat**.
   V Chrome je to malá obrazovka se šipkou.
   Když to prohlížeč dovolí, nabízí totéž úvodní stránka Nastavení v řádku „Nainstalovat YourNotes“, tlačítkem **Nainstalovat**.
+  V prohlížeči, který instaluje jen přes vlastní nabídky, ukazuje tento řádek místo tlačítka postup.
 - **Safari na Macu:** zvolte **Soubor**, pak **Přidat do Docku**.
 - **Firefox** webové aplikace neinstaluje; nechte YourNotes v kartě, kde vše funguje stejně.
 

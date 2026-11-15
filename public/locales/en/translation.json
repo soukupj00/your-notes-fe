@@ -391,7 +391,14 @@
     "install": {
       "label": "Install YourNotes",
       "description": "Opens in its own window.",
-      "action": "Install"
+      "action": "Install",
+      "guide": "Install guide",
+      "manual": {
+        "ios": "Tap the Share button, then Add to Home Screen.",
+        "macosSafari": "In the menu bar, choose File, then Add to Dock.",
+        "firefoxAndroid": "Open the browser menu, then tap Install or Add to Home screen.",
+        "other": "Your browser may offer Install in its menu."
+      }
     },
     "update": {
       "available": "A new version of YourNotes is available.",

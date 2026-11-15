@@ -392,7 +392,14 @@
     "install": {
       "label": "Nainstalovat YourNotes",
       "description": "Otevře se ve vlastním okně.",
-      "action": "Nainstalovat"
+      "action": "Nainstalovat",
+      "guide": "Návod k instalaci",
+      "manual": {
+        "ios": "Klepněte na tlačítko Sdílet a potom na Přidat na plochu.",
+        "macosSafari": "V řádku nabídek zvolte Soubor a potom Přidat do Docku.",
+        "firefoxAndroid": "Otevřete nabídku prohlížeče a klepněte na Instalovat nebo Přidat na domovskou obrazovku.",
+        "other": "Váš prohlížeč může instalaci nabízet ve své nabídce."
+      }
     },
     "update": {
       "available": "Je k dispozici nová verze aplikace YourNotes.",

@@ -44,11 +44,14 @@ YourNotes is now an icon on your home screen.
 2. Tap the menu, the three dots at the top right.
 3. Tap **Install app** (on some phones it says **Add to Home screen**), then **Install**.
 
+In **Firefox**, open the menu and tap **Install** (or **Add to Home screen**).
+
 ### Computer
 
 - **Chrome or Edge:** click the install icon at the right end of the address bar, then **Install**.
   In Chrome it is a small screen with an arrow.
   When the browser allows it, the Settings home offers the same as "Install YourNotes", with an **Install** button.
+  In a browser that installs only through its own menus, that row shows the steps instead.
 - **Safari on a Mac:** choose **File**, then **Add to Dock**.
 - **Firefox** does not install web apps; keep YourNotes in a tab, where everything works the same.
 
