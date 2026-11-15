@@ -3,13 +3,14 @@ import Document from '@tiptap/extension-document';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TextPrompt } from '../TextPrompt/textPrompt';
 import { Mathematics, type MathematicsExtensionOptions } from './Mathematics';
 
 const t = (key: string) => key;
 
 function createEditor() {
   return new Editor({
-    extensions: [Document, Paragraph, Text, Mathematics],
+    extensions: [Document, Paragraph, Text, Mathematics, TextPrompt],
     content: '<p>formula </p>',
   });
 }
@@ -18,6 +19,16 @@ function getButtonProps(editor: Editor) {
   const ext = editor.extensionManager.extensions.find((e) => e.name === 'Mathematics');
   if (!ext) throw new Error('Mathematics not registered');
   return (ext.options as MathematicsExtensionOptions).button({ editor, t }).componentProps;
+}
+
+/** Stands in for `TextPromptHost`: answers every question with `value`. */
+function answerPrompts(editor: Editor, value: string | null) {
+  const asked = vi.fn();
+  editor.storage.textPrompt.registerHost((request, answer) => {
+    asked(request);
+    answer(value);
+  });
+  return asked;
 }
 
 function hasInlineMath(editor: Editor, latex?: string): boolean {
@@ -61,15 +72,25 @@ describe('Mathematics extension', () => {
     expect(typeof props.isActive?.()).toBe('boolean');
   });
 
-  it('button action inserts the LaTeX entered at the prompt', () => {
-    vi.spyOn(window, 'prompt').mockReturnValue('\\frac{a}{b}');
+  it('button action inserts the LaTeX entered at the prompt', async () => {
+    const asked = answerPrompts(editor, '\\frac{a}{b}');
     getButtonProps(editor).action?.();
-    expect(hasInlineMath(editor, '\\frac{a}{b}')).toBe(true);
+    await vi.waitFor(() => expect(hasInlineMath(editor, '\\frac{a}{b}')).toBe(true));
+    expect(asked).toHaveBeenCalledWith({
+      kind: 'math',
+      title: 'editor.math.prompt',
+      confirmLabel: 'editor.math.insert',
+    });
   });
 
-  it('button action inserts nothing when the prompt is cancelled', () => {
-    vi.spyOn(window, 'prompt').mockReturnValue(null);
+  it.each([
+    ['is cancelled', null],
+    ['is answered with nothing', '  '],
+  ])('button action inserts nothing when the prompt %s', async (_, value) => {
+    const asked = answerPrompts(editor, value);
     getButtonProps(editor).action?.();
+    await vi.waitFor(() => expect(asked).toHaveBeenCalled());
+    await Promise.resolve();
     expect(hasInlineMath(editor)).toBe(false);
   });
 });

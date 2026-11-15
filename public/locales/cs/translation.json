@@ -62,7 +62,12 @@
     },
     "math": {
       "tooltip": "Vzorec (LaTeX)",
-      "prompt": "Zadejte LaTeX"
+      "prompt": "Zadejte LaTeX",
+      "insert": "Vložit",
+      "apply": "Použít"
+    },
+    "prompt": {
+      "cancel": "Zrušit"
     },
     "clearFormatting": {
       "tooltip": "Zrušit formátování"

@@ -186,6 +186,9 @@ The commit goes to the selection captured when the popover opened, without focus
 - **Mathematics** is the bundled TipTap extension: `$$...$$` inline, `$$$...$$$` block, or the toolbar button; clicking a rendered node edits it.
 - **Typography** skips its rules inside a formula still being typed, before the closing `$$` makes it a math node, or `x^2` and `->` would be rewritten out of the LaTeX.
 - **Clear** is not a mark: its button clears nodes and marks.
+- **TextPrompt** is how an extension, which is not React, asks for one line of text: Math's formula, and the link Shortcut when no Link button is on screen.
+  `askText` resolves with the answer or `null`; `TextPromptHost`, mounted while the editor is editable, shows the dialog.
+  Never `window.prompt`: it cannot be styled, and some embedded browsers block it.
 - **Intent**: the `Editor` takes the open's Intent (`src/lib/intent.ts`) and acts on it once: start recording, open the drawing, insert the chosen files, play the first clip.
 
 ## The editor sheet

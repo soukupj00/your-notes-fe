@@ -5,7 +5,7 @@ import { openLinkPrompt } from '../Link/linkPrompt';
 import { toggleWholeList } from '../list-toggle';
 import { insertMath } from '../Mathematics/Mathematics';
 
-type Action = (editor: Editor, t: TFunction) => void;
+type Action = (editor: Editor, t: TFunction) => unknown;
 
 const heading =
   (level: 1 | 2 | 3): Action =>

@@ -18,6 +18,7 @@ import {
   useOpenDrawing,
 } from '@/components/editor/extensions/Excalidraw/ExcalidrawDialogHost';
 import { LinkBubbleMenu } from '@/components/editor/extensions/Link';
+import { TextPromptHost } from '@/components/editor/extensions/TextPrompt/TextPromptHost';
 import { EditorToolbar } from '@/components/editor/toolbar/EditorToolbar.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useSync } from '@/context/SyncProvider.tsx';
@@ -294,6 +295,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         {/* `openOnClick` is off inside the editor, so this is the only way to see
             where a link points. */}
         {editable && <LinkBubbleMenu editor={editor} t={t} />}
+        {editable && <TextPromptHost editor={editor} t={t} />}
       </div>
 
       <ExcalidrawDialogHost

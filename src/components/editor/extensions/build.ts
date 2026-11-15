@@ -39,6 +39,7 @@ import { createSlashMenu } from './SlashMenu';
 import { TaskItem } from './TaskItem';
 import { ChecklistFlip, TaskList } from './TaskList';
 import { TextAlign } from './TextAlign';
+import { TextPrompt } from './TextPrompt/textPrompt';
 import { Typography } from './Typography';
 import { createVideo } from './Video';
 
@@ -103,6 +104,7 @@ export function buildEditorExtensions({
     }),
     createMathematics(getEditor, t),
     createShortcuts(getShortcuts, t),
+    TextPrompt,
     Color,
     Highlight,
     FontFamily,

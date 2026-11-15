@@ -3,26 +3,34 @@ import { Mathematics as TiptapMathematics } from '@tiptap/extension-mathematics'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { ActionButton } from '@/components/ui/ActionButton.tsx';
 import type { ButtonContext, ButtonView, TFunction } from '../button-types';
+import { askText } from '../TextPrompt/textPrompt';
 
 export interface MathematicsExtensionOptions {
   button: (context: ButtonContext) => ButtonView;
 }
 
-export function insertMath(editor: Editor, t: TFunction) {
-  const latex = window.prompt(t('editor.math.prompt'), '');
-  if (latex) {
-    editor.chain().focus().insertInlineMath({ latex }).run();
-  }
+export async function insertMath(editor: Editor, t: TFunction) {
+  const latex = await askText(editor, {
+    kind: 'math',
+    title: t('editor.math.prompt'),
+    confirmLabel: t('editor.math.insert'),
+  });
+  if (latex?.trim()) editor.chain().focus().insertInlineMath({ latex }).run();
 }
 
-function editMath(
+async function editMath(
   editor: Editor,
   kind: 'inlineMath' | 'blockMath',
   node: ProseMirrorNode,
   pos: number,
   t: TFunction
 ) {
-  const latex = window.prompt(t('editor.math.prompt'), node.attrs.latex ?? '');
+  const latex = await askText(editor, {
+    kind: 'math',
+    title: t('editor.math.prompt'),
+    confirmLabel: t('editor.math.apply'),
+    initial: node.attrs.latex ?? '',
+  });
   if (latex === null) {
     return;
   }
@@ -42,7 +50,7 @@ export const Mathematics = TiptapMathematics.extend({
       button: ({ editor, t }: ButtonContext) => ({
         component: ActionButton,
         componentProps: {
-          action: () => insertMath(editor, t),
+          action: () => void insertMath(editor, t),
           isActive: () => editor.isActive('inlineMath') || editor.isActive('blockMath'),
           icon: 'Latex',
           tooltip: t('editor.math.tooltip'),
@@ -61,7 +69,7 @@ export function createMathematics(getEditor: () => Editor | null, t: TFunction) 
       onClick: (node, pos) => {
         const editor = getEditor();
         if (editor) {
-          editMath(editor, 'inlineMath', node, pos, t);
+          void editMath(editor, 'inlineMath', node, pos, t);
         }
       },
     },
@@ -69,7 +77,7 @@ export function createMathematics(getEditor: () => Editor | null, t: TFunction) 
       onClick: (node, pos) => {
         const editor = getEditor();
         if (editor) {
-          editMath(editor, 'blockMath', node, pos, t);
+          void editMath(editor, 'blockMath', node, pos, t);
         }
       },
     },

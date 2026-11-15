@@ -5,6 +5,7 @@ import type { AttachmentKind } from '@/models.ts';
 import type { AttachmentDeps } from '../attachments/deps';
 import { insertFiles } from '../attachments/insert';
 import type { TFunction } from '../button-types';
+import { insertMath } from '../Mathematics/Mathematics';
 
 export interface SlashItem {
   /** The Toolbar Item id (ADR 0011, decision 13). Icon and name come from the registry,
@@ -13,7 +14,7 @@ export interface SlashItem {
   /** Extra words the filter should match, so "bullet" finds "Bullet list". */
   keywords: string[];
   /** Must delete the typed `/query` (`range`) first, which is why it is not shared
-   *  with the toolbar action. `t` is for Math's LaTeX prompt. */
+   *  with the toolbar action. `t` is for Math's prompt. */
   run: (ctx: { editor: Editor; range: Range; deps: AttachmentDeps; t: TFunction }) => void;
 }
 
@@ -115,10 +116,11 @@ export const SLASH_ITEMS: SlashItem[] = [
   {
     key: 'math',
     keywords: ['latex', 'formula', 'equation', 'tex'],
+    // The query goes first, like Drawing's: the menu must close before the prompt opens, or
+    // it keeps the prompt's Escape.
     run: ({ editor, range, t }) => {
-      const latex = window.prompt(t('editor.math.prompt'), '');
-      if (!latex) return;
-      consume(editor, range).insertInlineMath({ latex }).run();
+      consume(editor, range).run();
+      void insertMath(editor, t);
     },
   },
   {

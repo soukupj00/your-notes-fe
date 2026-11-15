@@ -9,6 +9,8 @@ import { insertFiles } from '../attachments/insert';
 import { Blockquote, BulletList, CodeBlock, HorizontalRule, OrderedList } from '../formatting';
 import { Heading } from '../Heading';
 import { ListItem } from '../ListItem';
+import { Mathematics } from '../Mathematics/Mathematics';
+import { TextPrompt } from '../TextPrompt/textPrompt';
 import { filterSlashItems, SLASH_ITEMS } from './slashItems';
 
 vi.mock('../attachments/insert', async (importOriginal) => ({
@@ -111,6 +113,24 @@ describe('slash item commands', () => {
       expect(getToolbarItem(slashItem.key), slashItem.key).toBeDefined();
     }
     expect(SLASH_ITEMS.map((slashItem) => slashItem.key)).toContain('math');
+  });
+
+  // It once asked first and inserted at a position the deleted query had made invalid.
+  it('math removes the query, then inserts what the prompt answers', async () => {
+    const math = new Editor({
+      extensions: [Document, Paragraph, Text, Mathematics, TextPrompt],
+      content: '<p>before</p><p></p><p>after</p>',
+    });
+    math.storage.textPrompt.registerHost((_request, answer) => answer('x^2'));
+    math.commands.setTextSelection(9);
+    math.commands.insertContent('/math');
+    const to = math.state.selection.from;
+
+    item('math').run({ editor: math, range: { from: to - 5, to }, deps, t });
+
+    await vi.waitFor(() => expect(math.getHTML()).toContain('data-latex="x^2"'));
+    expect(math.getText()).not.toContain('/math');
+    math.destroy();
   });
 
   it('opens the drawing surface rather than inserting a node itself', () => {
