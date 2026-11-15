@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { handOff } from './hand-off.ts';
 
 const downloadBlob = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/backup.ts', () => ({ downloadBlob }));
+vi.mock('@/lib/download.ts', () => ({ downloadBlob }));
 
 const file = new File(['BEGIN:VCALENDAR'], 'reminder.ics', { type: 'text/calendar' });
 

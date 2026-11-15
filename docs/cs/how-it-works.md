@@ -75,8 +75,10 @@ Kalendář pak zazvoní jako u každé jiné události.
 V Nastavení, v části „Synchronizace a záloha“ (na zařízení bez účtu „Záloha a úložiště“), uloží „Exportovat zálohu“ soubor `.zip` se všemi poznámkami, štítky a přílohami.
 Uchovávejte ho jinde než na zařízení, například na USB disku nebo ve složce, kterou už zálohujete.
 
-„Obnovit zálohu“ vrátí soubor `.zip` zpět.
-Nahradí vše, co je na zařízení uložené, proto vám nejdřív nabídne uložit zálohu současného stavu.
+„Importovat zálohu“ vrátí soubor `.zip` zpět.
+Poznámky, štítky a přílohy ze zálohy přidá k tomu, co na zařízení je, a nic nesmaže.
+Poznámku, která na zařízení už je, nahradí její verze ze zálohy, proto vám import nejdřív nabídne uložit zálohu současného stavu.
+S účtem se vše, co import přinese, poté synchronizuje na server jako každá jiná změna.
 Vaše volby v Nastavení, jako motiv, jazyk nebo tlačítka editoru, patří k zařízení a v záloze nejsou.
 
 Pokud provozujete server, umí vytvořit zálohu všech účtů najednou; [návod serveru](https://soukupj00.github.io/your-notes-be/cs/setup#8-zalohovani-a-obnova) ukazuje jak.

@@ -186,11 +186,11 @@ export interface LocalStore {
   /** A consistent copy of everything a Backup carries. */
   exportAll(): Promise<Snapshot>;
   /**
-   * Replaces everything a Backup carries, atomically, leaving `meta`. Every row comes in owed
-   * with the Revision the store had for its id; pending Tombstones are dropped and none written,
-   * so an Import never deletes anything on the server.
+   * Adds what an Import carries, atomically, and removes nothing (ADR 0019). A Note is written
+   * over the one held under its id; a held Tag or Attachment stays as it is, a Tag also when only
+   * its name matches. What is written is owed with the Revision the store had for its id.
    */
-  replaceAll(snapshot: Snapshot): Promise<void>;
+  importAll(snapshot: Snapshot): Promise<void>;
   /** Empties everything, `meta` included. Tests, and erase-on-sign-out in M5. */
   clear(): Promise<void>;
 }

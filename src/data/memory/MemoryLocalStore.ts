@@ -1,5 +1,6 @@
 import { noteTagId, parseNoteTagId } from '@/contract/index.ts';
 import type { Note, NoteTag, Tag } from '@/models.ts';
+import { matchImport } from '../importRows.ts';
 import type { LocalStore, NoteFeedScope, Snapshot } from '../LocalStore.ts';
 import type { Live } from '../live.ts';
 import type { Tombstone } from '../Remote.ts';
@@ -436,22 +437,19 @@ export function createMemoryLocalStore(): LocalStore {
         noteTags: values(noteTags),
         attachments: plain([...attachments.values()]),
       }) satisfies Snapshot,
-    replaceAll: async (snapshot) => {
-      const noteRev = new Map([...notes.values()].map((n) => [n.id, n.rev]));
-      const tagRev = new Map([...tags.values()].map((t) => [t.id, t.rev]));
-      const linkRev = new Map([...noteTags].map(([key, l]) => [key, l.rev]));
-      notes.clear();
-      tags.clear();
-      noteTags.clear();
-      attachments.clear();
-      tombstones.clear();
-      for (const n of snapshot.notes) notes.set(n.id, owed(n, noteRev.get(n.id)));
-      for (const t of snapshot.tags) tags.set(t.id, owed(t, tagRev.get(t.id)));
-      for (const l of snapshot.noteTags) {
+    importAll: async (snapshot) => {
+      const { tags: newTags, noteTags: links } = matchImport(snapshot, values(tags));
+      for (const n of snapshot.notes) write(notes, n.id, n);
+      for (const t of newTags) write(tags, t.id, t);
+      for (const l of links) {
         const key = linkKey(l.noteId, l.tagId);
-        noteTags.set(key, owed(l, linkRev.get(key)));
+        if (!noteTags.has(key)) write(noteTags, key, l);
       }
-      for (const a of snapshot.attachments) attachments.set(a.id, a);
+      for (const a of snapshot.attachments) {
+        if (attachments.has(a.id)) continue;
+        attachments.set(a.id, a);
+        noteOwed(a.noteId);
+      }
       changed('notes', 'tags', 'noteTags', 'attachments');
     },
     clear: async () => {

@@ -206,12 +206,14 @@ A Reminder is two fields on the Note, `remindAt` and `repeat` ([ADR 0021](./docs
 
 The whole database exports to a `.zip`: a `manifest.json` plus one entry per Attachment blob.
 
-- `parseBackupZip` is the only validation gate and never writes.
-  Restore is replace-all, so an unreadable archive must be rejected while the user's data is still intact.
-- `restoreBackup` wipes and rewrites in one transaction; the confirm dialog offers "save my current data first", checked by default.
+- Putting a Backup back is an Import ([ADR 0019](./docs/adr/0019-import-replaces-restore.md)): it adds to what the app holds and empties nothing.
+  `importBackup` hands the rows to the store's `importAll`, one transaction; what it writes is owed to the server like any other write.
+- A Note the app already holds is overwritten by the file's version; a Tag it holds (by id, or by name ignoring case) and an Attachment it holds stay as they are.
+- `parseBackupZip` is the only validation gate and never writes, so an unreadable archive is rejected before a Note is touched.
+  The confirm dialog offers "save my current data first", checked by default.
 - Saving asks for the destination **before** the bytes are built (`requestSaveTarget`), because the file picker needs the click's user activation.
   On the Firefox and Safari fallback it reports `confirmed: false`, and the UI must not claim the file landed.
-- The three export buttons share `exportBackup(store, suffix)` (`lib/export-backup.ts`).
+- The three export buttons share `exportBackup(store, suffix)` (`lib/export-backup.ts`); a file reaches the browser through `downloadBlob` (`lib/download.ts`), which the Reminder Hand-off shares.
 - Manifest rows are validated loosely, so unknown future fields survive a round trip.
 - Preferences are not in a Backup; they are a Device fact.
 

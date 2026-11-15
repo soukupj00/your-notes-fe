@@ -47,7 +47,7 @@ Capitalized terms are canonical in [`CONTEXT.md`](../../CONTEXT.md).
 | Use case | Notes |
 |---|---|
 | Back up | Whole database to one `.zip` (manifest + attachment blobs). |
-| Restore | Replace-all, validated before any write; the confirm dialog offers "save my current data first" by default. |
+| Import | Additive ([ADR 0019](../adr/0019-import-replaces-restore.md)), validated before any write: new Notes are added, a Note already held is overwritten by the file's version, nothing is emptied; the confirm dialog offers "save my current data first" by default. |
 | Install as PWA | Prompted install; explicit in-app update flow. |
 | Persistent storage | Requested at the first user-saved note. |
 
@@ -80,5 +80,5 @@ Sync is opt-in end to end: every current use case works with no Account, Tour in
 ## For the paper
 
 - The actor list is unusual and worth stating: the app and the sync engine are actors with strictly bounded authority (sweeps; transport but never content decisions).
-- Good scenario walk-throughs: interrupted one-handed mobile capture (the product's defining context), trash-restore-purge, backup-restore, and the conflict story told from the user's chair.
+- Good scenario walk-throughs: interrupted one-handed mobile capture (the product's defining context), trash-restore-purge, backup-import, and the conflict story told from the user's chair.
 - The two-audience framing (self-hoster depth on demand, household-member simplicity by default) explains many UI decisions and belongs in the requirements chapter.

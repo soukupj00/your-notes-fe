@@ -25,7 +25,7 @@ flowchart LR
    - the sync surface split off `LocalStore`;
    - theme, view mode and sidebar state folded into `PreferencesProvider`, with one provider stack shared with the test renderer.
 
-Still open from earlier milestones: a high-contrast or low-vision palette, single-key power shortcuts with a `?` cheat sheet, keyboard shortcuts for the toolbar actions that have none, video poster and waveform extras, and **Import from other apps** ([ADR 0019](./docs/adr/0019-import-replaces-restore.md)).
+Still open from earlier milestones: a high-contrast or low-vision palette, single-key power shortcuts with a `?` cheat sheet, keyboard shortcuts for the toolbar actions that have none, video poster and waveform extras, and **Import from other apps** ([ADR 0019](./docs/adr/0019-import-replaces-restore.md); the additive Import of the app's own Backup is built, Google Keep and Obsidian are not).
 
 Out of scope, deliberately: end-to-end encryption (the threat model is documented in ADR 0018 instead), sharing a Note between Accounts, and any email.
 
@@ -97,7 +97,6 @@ Found by the surveys and reviews, fixed by no slice.
 - `ThemeModeToggleButton` shows the sun while the theme is `system` over a dark OS.
 - `EntityActionButtons` hardcodes English Save, Delete and Edit, and `EditButton` is unused; `ColorPickerPanel`'s "Custom" is untranslated.
 - `/labels` create, merge and delete have no error path.
-- Backups are named `ruflo-backup-...` while the app calls itself YourNotes.
 - Four comments in `src/test/fakeServer.ts` and `fakeSync.ts` cite backend paths that no longer exist; `fakeSync.decide` is a hand copy of the backend's `decide.ts` that `contract:pull` could vendor.
 - A cloned Attachment keeps its source's `thumbnailId`, so two rows name one server blob; this covers the editor's paste clone and the Conflicted Copy, and the impact depends on how the backend sweeps blobs.
 - `notes.update` and `tags.update` take a change typed `Partial<T>`, which can return a new `id`; Dexie then writes a second row while memory keeps the old key.
@@ -120,7 +119,7 @@ Found by the surveys and reviews, fixed by no slice.
 - `SyncStatusSection.useStorage` has no `catch`, so a rejected `navigator.storage.persisted()` is an unhandled rejection.
 - `t` sits in the deps of the Devices, Members and Shares loads, so a language switch re-fetches each list; either drop `t` from those load deps (the app-side cause), or give the suite one shared `react-i18next` mock with a stable `t` (the test-side cause; 39 of the 40 test files that mock `react-i18next` build `t` inline today); the same per-render `t` is why `AccountSection.test.tsx` prints React `act()` warnings from DevicesSection and MembersSection under load (seen in one run of about ten).
 - `LinkDialog.copy` and the clipboard: a rejected `writeText` is unhandled (the two copies it replaced were the same).
-- On a browser without `showSaveFilePicker` (Firefox, Safari) the safety copy before an import is unconfirmed, yet the restore proceeds as if it were saved.
+- On a browser without `showSaveFilePicker` (Firefox, Safari) the safety copy before an import is unconfirmed, yet the import proceeds as if it were saved.
 - `backupFilename` stamps UTC, not local time.
 - The Radix empty-value guard (`(next as T) || value`) is repeated in `SortMenu` (twice) and `ToolbarLayoutEditor`.
 - `index.html` keeps `lang="en"` under a Czech UI; nothing writes `document.documentElement.lang`.

@@ -37,7 +37,7 @@ Each goal maps to one audience from `PRODUCT.md`: goals 1 and 3 to the household
 
 1. Bring up the server from the setup guide alone (compose + one Caddy mode); moderator intervenes only on request, and every intervention is a documentation finding.
 2. Create the Owner account, issue an Invite, sign a second account in on another device.
-3. Export a backup; restore it; say aloud what they believe just happened.
+3. Export a backup; import it; say aloud what they believe just happened.
 4. Revoke a "lost" device from Settings.
 
 ### Session C - sync comprehension (both archetypes)

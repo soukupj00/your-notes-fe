@@ -35,7 +35,7 @@ describe('exportBackup', () => {
       backup.buildBackupZip.mock.invocationCallOrder[0]
     );
     expect(backup.requestSaveTarget.mock.calls[0][0]).toMatch(
-      /^ruflo-backup-.*-before-import\.zip$/
+      /^yournotes-backup-.*-before-import\.zip$/
     );
   });
 
@@ -56,7 +56,7 @@ describe('exportBackup', () => {
     expect(backup.buildBackupZip).not.toHaveBeenCalled();
   });
 
-  it('lets a failed build through, so a caller restoring on top of it stops', async () => {
+  it('lets a failed build through, so a caller importing on top of it stops', async () => {
     const chosen = target(true);
     backup.requestSaveTarget.mockResolvedValue(chosen);
     backup.buildBackupZip.mockRejectedValue(new Error('out of memory'));

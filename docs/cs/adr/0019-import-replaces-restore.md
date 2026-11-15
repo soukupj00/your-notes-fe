@@ -1,6 +1,6 @@
 # 0019 - Import nahrazuje obnovení: jedna aditivní operace pro každý zdroj
 
-- Stav: přijato
+- Stav: přijato; pro zdroj záloha postaveno 2026-11-15, ostatní zdroje zůstávají otevřené
 - Datum: 2026-08-21
 
 ## Kontext
@@ -37,6 +37,9 @@ Jedno tlačítko, jeden vstup pro soubor.
   Přijato, protože to odstraňuje jediné destruktivní tlačítko v aplikaci a jediný způsob, jak by uživatel mohl jedním kliknutím přijít o všechno.
 - Upsert podle id má stejný tvar jako pravidlo pro konflikty synchronizace v M5 ([ADR 0017](./0017-note-level-last-writer-wins-with-conflicted-copies.md)), takže se uživatel učí jediný model: poznámka má identitu a vyhrává to nejnovější, co s touto identitou záměrně uděláte.
 - `restoreBackup` a jeho potvrzení „nejdřív uložit moje současná data“ přežívají v duchu: nabídka zálohy před importem zůstává a je ve výchozím stavu zaškrtnutá jen tehdy, když je zdrojem záloha (jediný zdroj, který může přepisovat).
+- Jak je to postaveno: „soubor vyhrává“ platí jen pro poznámky.
+  Štítek, který aplikace má, ať podle id, nebo podle názvu, a příloha, kterou má, zůstávají beze změny, takže import nikdy nepřejmenuje štítek ani nepřepíše bajty; štítky a přílohy poznámky se jen přidávají.
+  Vše, co import zapíše, aplikace dluží vzdálenému úložišti jako každý jiný zápis, s revizí, kterou pro daný řádek zařízení už mělo.
 - Opakovaný import cizího zdroje s ohledem na duplicity (přeskočit už importované poznámky) by vyžadoval uložené cizí id v poznámce a řešení jeho synchronizace.
   Odloženo, dokud o to někdo nepožádá.
 

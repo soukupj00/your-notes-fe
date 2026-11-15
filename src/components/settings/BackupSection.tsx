@@ -8,7 +8,7 @@ import { LabeledCheckbox } from '@/components/ui/LabeledCheckbox.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import { useAction } from '@/hooks/useAction.ts';
-import { BackupError, type ParsedBackup, parseBackupZip, restoreBackup } from '@/lib/backup.ts';
+import { BackupError, importBackup, type ParsedBackup, parseBackupZip } from '@/lib/backup.ts';
 import { exportBackup } from '@/lib/export-backup.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
@@ -19,8 +19,8 @@ function errorKey(error: unknown): string {
 }
 
 /**
- * Import is replace-all, so the archive is validated before the dialog opens and "back up
- * first" lives in that dialog. Both flows pick a destination first: CLAUDE.md (Backup).
+ * An Import overwrites the Notes it recognises (ADR 0019), so the archive is validated before the
+ * dialog opens and "back up first" lives in that dialog. Both flows pick a destination first.
  */
 export function BackupSection() {
   const { t } = useTranslation();
@@ -54,30 +54,29 @@ export function BackupSection() {
     );
   };
 
-  const confirmRestore = () => {
+  const confirmImport = () => {
     const backup = pending;
     if (!backup) return;
     setPending(null);
     void importing.run(
       async () => {
-        // Backing out of the safety copy backs out of the import: restoring anyway would destroy
-        // exactly the data the user just declined to lose. A failed copy throws before the wipe.
+        // Backing out of the safety copy backs out of the import: it could still overwrite the
+        // Notes the user just declined to lose. A failed copy throws before the first write.
         if (backupFirst && (await exportBackup(store, '-before-import')) === 'cancelled') {
           toast.info(t('settings.backup.importCancelled'));
           return false;
         }
-        await restoreBackup(store, backup);
+        await importBackup(store, backup);
       },
       { success: 'settings.backup.imported', failure: errorKey }
     );
   };
 
   const Download = icons.Download;
-  const counts = pending && {
-    notes: pending.manifest.notes.length,
-    tags: pending.manifest.tags.length,
-    attachments: pending.manifest.attachments.length,
-  };
+  const count = (kind: 'notes' | 'tags' | 'attachments') =>
+    t(`settings.backup.confirmImport.counts.${kind}`, {
+      count: pending?.manifest[kind].length ?? 0,
+    });
 
   return (
     <SettingsSection title={t('settings.backup.title')}>
@@ -127,10 +126,15 @@ export function BackupSection() {
           if (!open) setPending(null);
         }}
         title={t('settings.backup.confirmImport.title')}
-        description={counts ? t('settings.backup.confirmImport.description', counts) : ''}
+        description={t('settings.backup.confirmImport.description', {
+          notes: count('notes'),
+          tags: count('tags'),
+          attachments: count('attachments'),
+        })}
         confirmLabel={t('settings.backup.confirmImport.confirm')}
         cancelLabel={t('settings.backup.confirmImport.cancel')}
-        onConfirm={confirmRestore}
+        onConfirm={confirmImport}
+        destructive={false}
         body={
           <LabeledCheckbox
             label={t('settings.backup.confirmImport.backupFirst')}

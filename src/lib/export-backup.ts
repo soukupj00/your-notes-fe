@@ -6,7 +6,7 @@ export type ExportOutcome = 'cancelled' | 'saved' | 'unconfirmed';
 /**
  * The one export flow: destination first (the picker needs the click's user activation), then
  * the zip, then the write. `unconfirmed` is the anchor fallback, where nobody can say the file
- * landed. A failed build or write throws, so a caller restoring on top of it stops before the wipe.
+ * landed. A failed build or write throws, so a caller importing on top of it stops before the write.
  */
 export async function exportBackup(store: LocalStore, suffix = ''): Promise<ExportOutcome> {
   const target = await requestSaveTarget(backupFilename(suffix));

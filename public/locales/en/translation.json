@@ -226,21 +226,29 @@
     "backup": {
       "title": "Backup",
       "exported": "Backup saved.",
-      "imported": "Backup restored.",
+      "imported": "Backup imported.",
       "export": {
         "label": "Export a backup",
         "description": "Everything, as one .zip.",
         "action": "Export"
       },
       "import": {
-        "label": "Restore a backup",
-        "description": "Replaces everything here.",
+        "label": "Import a backup",
+        "description": "Adds what it holds to what is here.",
         "action": "Import"
       },
       "confirmImport": {
-        "title": "Replace all your data?",
-        "description": "This backup holds {{notes}} notes, {{tags}} labels and {{attachments}} attachments. Everything stored now is deleted and replaced.",
-        "confirm": "Replace everything",
+        "title": "Import this backup?",
+        "description": "This backup holds {{notes}}, {{tags}} and {{attachments}}. They are added to what is stored now. A note that is already here is replaced by the backup's version.",
+        "counts": {
+          "notes_one": "{{count}} note",
+          "notes_other": "{{count}} notes",
+          "tags_one": "{{count}} label",
+          "tags_other": "{{count}} labels",
+          "attachments_one": "{{count}} attachment",
+          "attachments_other": "{{count}} attachments"
+        },
+        "confirm": "Import",
         "cancel": "Cancel",
         "backupFirst": "Save a backup of my current data first"
       },

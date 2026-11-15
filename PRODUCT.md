@@ -51,7 +51,7 @@ Built and shipping:
 - Inline attachments end to end - images, audio (with in-app recording), video, arbitrary files, Excalidraw drawings - stored as bytes in Dexie, referenced from the body, with cascade delete, undo, and orphan GC.
 - Feed with masonry/list toggle, URL-driven search and sort and label filters, pin, archive, trash with undo.
 - Labels with colours and a manage view (rename, recolour, merge, delete).
-- Full-database backup and restore as a `.zip`.
+- Full-database backup as a `.zip`, imported back alongside what is already there.
 - Light/dark theming in OKLCH, i18n (en/cs), PWA install prompt and update flow.
 
 Technical constraints future work must respect:

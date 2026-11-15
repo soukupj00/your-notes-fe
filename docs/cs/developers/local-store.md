@@ -24,7 +24,7 @@ Rozhraní mluví jazykem domény: o poznámkách, štítcích a přílohách, ni
 - `meta` je malé úložiště klíč-hodnota pro evidenci kolem řádků: kurzor synchronizace, připojený účet.
   Předvolby tu nejsou; žijí v `localStorage`, protože patří zařízení.
 - `sync` je to, co aplikace dluží serveru, a volá ho jen synchronizační engine.
-- `exportAll` a `replaceAll` jsou to, co záloha čte a zapisuje.
+- `exportAll` a `importAll` jsou to, co záloha čte a zapisuje; import do úložiště přidává a nic neodebírá.
 
 Komponenty úložiště samy nikdy nevolají.
 Jdou přes hooky v `src/hooks/data/`: `useNoteFeed` pro přehled (feed), `useNoteActions`, `useTagActions` a `useAttachmentActions` pro změny a `useTags`, `useTagsForNote` a `useNoteAttachments` pro živá čtení.

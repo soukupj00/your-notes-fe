@@ -41,7 +41,7 @@ Status: every requirement below has shipped.
 | FR4 ✅ | Organize: labels (create/rename/recolour/merge/delete), per-note colors, pin | Tags + NoteTags, `/labels`, palette tokens | Data-hook and page tests |
 | FR5 ✅ | Lifecycle: archive, trash with undo window, purge after grace period | `state` field, sweeps ([ADR 0009](../adr/0009-note-lifecycle-model.md)) | Migration + lifecycle tests |
 | FR6 ✅ | Find: fuzzy search, sort, AND label filters, shareable as URL | Fuse.js + typed search params | `note-search*.test.ts` |
-| FR7 ✅ | Backup and restore the whole database as one file | `backup.ts` zip export/import | `backup.test.ts` |
+| FR7 ✅ | Back up the whole database as one file and import it back | `backup.ts` zip export/import | `backup.test.ts` |
 | FR8 ✅ | Customize: theme, vision mode, density, reduced motion, locale, toolbar layout, quick-capture | Preferences in `localStorage` (`PreferencesProvider`) | Provider + settings tests |
 | FR9 ✅ | Onboard: a Welcome at launch, a Settings Tour, replayable | `lib/tour/`, `Welcome` + `TourProvider` ([ADR 0024](../adr/0024-a-welcome-at-launch-the-tour-in-settings.md)) | `e2e/onboarding.spec.ts` (two breakpoints) |
 | FR10 ✅ | Install as a PWA and work fully offline | vite-plugin-pwa, Dexie | Manual verification; offline is the default data path |
@@ -64,7 +64,7 @@ Status: every requirement below has shipped.
 | NFR7 | Maintainability | Typed end to end; every decision recorded; each feature lands with its tests | TS strict, Zod at boundaries, 18 ADRs, pragmatic TDD | CI `quality` stage; 900+ tests |
 | NFR8 | Portability (self-host) | One container, approachable for a non-programmer; backup is one file | Server serves the PWA; SQLite; Caddy modes | M5 setup docs + user testing |
 | NFR9 | Security | No script-readable credentials; revocable sessions; closed registration | `HttpOnly` cookies, Invites ([05-server.md](./05-server.md)) | M5; threat model documented |
-| NFR10 | Data safety | Sync never silently discards user writing; restore never destroys before validating | Conflicted Copies; `parseBackupZip` gate; save-first restore dialog | Backup tests; M5 engine tests |
+| NFR10 | Data safety | Sync never silently discards user writing; an import never writes before validating and never empties anything | Conflicted Copies; `parseBackupZip` gate; additive `importAll`; save-first import dialog | Backup tests; M5 engine tests |
 
 ## Explicit non-requirements
 
