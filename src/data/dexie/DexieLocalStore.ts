@@ -1,5 +1,7 @@
+import type { Table } from 'dexie';
 import { noteTagId } from '@/contract/index.ts';
 import type { Attachment, Note, NoteState, NoteTag, Tag } from '@/models.ts';
+import { matchImport } from '../importRows.ts';
 import type { AttachmentChanges, LocalStore, NoteFeedScope, Snapshot } from '../LocalStore.ts';
 import {
   owed,
@@ -44,6 +46,14 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
     const [stored, gone] = await Promise.all([db.tags.get(tag.id), db.tombstones.get(tag.id)]);
     await db.tags.put(owed(tag, stored?.rev ?? gone?.rev));
     if (gone) await db.tombstones.delete(tag.id);
+  }
+
+  /** Inside a transaction over `table` and `tombstones`: each row owed, with the Revision held for its id. */
+  async function putOwed<T extends { id: string }>(table: Table<Stored<T>, string>, rows: T[]) {
+    const ids = rows.map((row) => row.id);
+    const [stored, gone] = await Promise.all([table.bulkGet(ids), db.tombstones.bulkGet(ids)]);
+    await table.bulkPut(rows.map((row, i) => owed(row, stored[i]?.rev ?? gone[i]?.rev)));
+    await db.tombstones.bulkDelete(ids);
   }
 
   /** A new link is owed and takes back a Tombstone for the same pair, with its Revision. */
@@ -320,32 +330,22 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           attachments: plain(attachments),
         } satisfies Snapshot;
       }),
-    replaceAll: (snapshot) =>
+    importAll: (snapshot) =>
       db.transaction(
         'rw',
         [db.notes, db.tags, db.noteTags, db.attachments, db.tombstones],
         async () => {
-          const [notes, tags, links] = await Promise.all([
-            db.notes.toArray(),
-            db.tags.toArray(),
-            db.noteTags.toArray(),
-          ]);
-          const noteRev = new Map(notes.map((n) => [n.id, n.rev]));
-          const tagRev = new Map(tags.map((t) => [t.id, t.rev]));
-          const linkRev = new Map(links.map((l) => [noteTagId(l.noteId, l.tagId), l.rev]));
-          await Promise.all([
-            db.notes.clear(),
-            db.tags.clear(),
-            db.noteTags.clear(),
-            db.attachments.clear(),
-            db.tombstones.clear(),
-          ]);
-          await db.notes.bulkPut(snapshot.notes.map((n) => owed(n, noteRev.get(n.id))));
-          await db.tags.bulkPut(snapshot.tags.map((t) => owed(t, tagRev.get(t.id))));
-          await db.noteTags.bulkPut(
-            snapshot.noteTags.map((l) => owed(l, linkRev.get(noteTagId(l.noteId, l.tagId))))
-          );
-          await db.attachments.bulkPut(snapshot.attachments);
+          const { tags, noteTags } = matchImport(snapshot, await db.tags.toArray());
+          await putOwed(db.notes, snapshot.notes);
+          await putOwed(db.tags, tags);
+
+          const heldLinks = await db.noteTags.bulkGet(noteTags.map((l) => [l.noteId, l.tagId]));
+          await addLinks(noteTags.filter((_, i) => !heldLinks[i]));
+
+          const heldFiles = await db.attachments.bulkGet(snapshot.attachments.map((a) => a.id));
+          const files = snapshot.attachments.filter((_, i) => !heldFiles[i]);
+          await db.attachments.bulkPut(files);
+          await Promise.all([...new Set(files.map((a) => a.noteId))].map(noteOwed));
         }
       ),
     sync: createDexieSync(db),

@@ -1,6 +1,7 @@
 import { strFromU8, strToU8, type Unzipped, unzip, type Zippable, zip } from 'fflate';
 import { z } from 'zod';
 import type { LocalStore } from '@/data/LocalStore.ts';
+import { downloadBlob } from '@/lib/download.ts';
 import { type Attachment, NOTE_STATES, type Note, type NoteTag, type Tag } from '@/models.ts';
 
 /**
@@ -35,8 +36,8 @@ export class BackupError extends Error {
   }
 }
 
-// Loose: only the fields a restore cannot work without are checked, and everything else passes
-// through, so a field a future model gains survives a restore instead of being dropped.
+// Loose: only the fields an import cannot work without are checked, and everything else passes
+// through, so a field a future model gains survives a round trip instead of being dropped.
 const noteSchema = z.looseObject({
   id: z.string(),
   state: z.enum(NOTE_STATES),
@@ -91,16 +92,16 @@ const manifestSchema = z.object({
 /**
  * The manifest *as read back*. Its row types come from the loose schemas, so
  * they carry an index signature and are deliberately not `Note`/`Tag`/... - a
- * restored row is only known to have the fields validated above.
+ * imported row is only known to have the fields validated above.
  */
 export type BackupManifest = z.infer<typeof manifestSchema>;
 
-/** Turns fflate's `Uint8Array<ArrayBufferLike>` into a Blob-safe view. */
+/** fflate types its bytes over `ArrayBufferLike` but never hands out a `SharedArrayBuffer`, so no copy. */
 function toBlobPart(bytes: Uint8Array): BlobPart {
-  return bytes.slice().buffer as ArrayBuffer;
+  return bytes as Uint8Array<ArrayBuffer>;
 }
 
-/** A validated backup, ready for `restoreBackup` - nothing has been written yet. */
+/** A validated backup, ready for `importBackup` - nothing has been written yet. */
 export interface ParsedBackup {
   manifest: BackupManifest;
   /** Attachment bytes keyed by zip entry path. */
@@ -175,8 +176,8 @@ export async function buildBackupZip(store: LocalStore): Promise<Blob> {
 }
 
 /**
- * The only validation gate, and it never writes: restore is replace-all, so every rejection has
- * to surface here while the user's current data is still intact.
+ * The only validation gate, and it never writes: an Import overwrites the Notes it recognises, so
+ * every rejection has to surface here, before the first one is touched.
  */
 export async function parseBackupZip(data: Uint8Array): Promise<ParsedBackup> {
   let files: Unzipped;
@@ -219,11 +220,11 @@ export async function parseBackupZip(data: Uint8Array): Promise<ParsedBackup> {
 }
 
 /**
- * Atomic replace-all, so a failure part-way rolls back to the user's data. Only call it with
+ * Adds the Backup to what the app holds, atomically (ADR 0019). Only call it with
  * `parseBackupZip`'s output, as it trusts that validation. `manifest.settings` is ignored
  * (ADR 0020).
  */
-export async function restoreBackup(
+export async function importBackup(
   store: LocalStore,
   { manifest, files }: ParsedBackup
 ): Promise<void> {
@@ -240,7 +241,7 @@ export async function restoreBackup(
     };
   });
 
-  await store.replaceAll({
+  await store.importAll({
     notes: manifest.notes as unknown as Note[],
     tags: manifest.tags as unknown as Tag[],
     noteTags: manifest.noteTags as unknown as NoteTag[],
@@ -248,21 +249,10 @@ export async function restoreBackup(
   });
 }
 
-/** `ruflo-backup-2026-07-28-1042.zip` - sortable, and unique enough per minute. */
+/** `yournotes-backup-2026-07-28-1042.zip` - sortable, and unique enough per minute. */
 export function backupFilename(suffix = '', now = new Date()): string {
   const [date, time] = now.toISOString().split('T');
-  return `ruflo-backup-${date}-${time.slice(0, 5).replace(':', '')}${suffix}.zip`;
-}
-
-/** Hands a Blob to the browser as a download. Fire-and-forget: the browser may
- *  still show its own "where to save?" dialog, and we never hear the outcome. */
-export function downloadBlob(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  URL.revokeObjectURL(url);
+  return `yournotes-backup-${date}-${time.slice(0, 5).replace(':', '')}${suffix}.zip`;
 }
 
 /** A place the user has agreed to put a file. */

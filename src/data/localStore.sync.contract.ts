@@ -267,22 +267,95 @@ export function describeLocalStoreSyncContract(makeStore: () => Promise<LocalSto
       expect((await store.sync.dirty()).notes).toHaveLength(1);
     });
 
-    it('replaceAll owes every row, keeps known Revisions, and drops pending Tombstones', async () => {
+    it('importAll owes what it writes, keeps known Revisions, and leaves every other row as it was', async () => {
       const kept = note();
       const purged = note();
+      const untouched = note();
       await store.notes.add(kept);
       await store.notes.add(purged);
+      await store.notes.add(untouched);
       await syncAll(store, 7);
       await store.notes.purge(purged.id);
 
       const fresh = note();
-      await store.replaceAll({ notes: [kept, fresh], tags: [], noteTags: [], attachments: [] });
+      await store.importAll({
+        notes: [kept, purged, fresh],
+        tags: [],
+        noteTags: [],
+        attachments: [],
+      });
       const batch = await store.sync.dirty();
       expect(batch.tombstones).toEqual([]);
       expect(Object.fromEntries(batch.notes.map((n) => [n.id, n.rev]))).toEqual({
         [kept.id]: 7,
+        [purged.id]: 7,
         [fresh.id]: undefined,
       });
+    });
+
+    it('importAll keeps a pending Tombstone for a row the import does not bring back', async () => {
+      const purged = note();
+      await store.notes.add(purged);
+      await syncAll(store, 3);
+      await store.notes.purge(purged.id);
+
+      await store.importAll({ notes: [note()], tags: [], noteTags: [], attachments: [] });
+      expect((await store.sync.dirty()).tombstones.map((t) => t.id)).toEqual([purged.id]);
+    });
+
+    it('importAll brings a deleted Tag and a removed link back with the Revisions they had', async () => {
+      const n = note();
+      const t = tag();
+      await store.notes.add(n);
+      await store.tags.add(t);
+      await store.tags.link(link(n.id, t.id));
+      await syncAll(store, 4);
+      await store.tags.delete(t.id);
+
+      await store.importAll({
+        notes: [],
+        tags: [t],
+        noteTags: [link(n.id, t.id)],
+        attachments: [],
+      });
+      const batch = await store.sync.dirty();
+      expect(batch.tombstones).toEqual([]);
+      expect(batch.tags.map((row) => [row.id, row.rev])).toEqual([[t.id, 4]]);
+      expect(batch.noteTags).toHaveLength(1);
+    });
+
+    it('importAll leaves the Tombstone of a deleted Tag whose name a held Tag now carries', async () => {
+      const deleted = tag();
+      await store.tags.add(deleted);
+      await syncAll(store, 4);
+      await store.tags.delete(deleted.id);
+      const held = tag();
+      await store.tags.add(held);
+
+      await store.importAll({ notes: [], tags: [deleted], noteTags: [], attachments: [] });
+      const batch = await store.sync.dirty();
+      expect(batch.tombstones.map((t) => t.id)).toEqual([deleted.id]);
+      expect(batch.tags.map((row) => row.id)).toEqual([held.id]);
+    });
+
+    it('importAll owes the Note a new Attachment hangs off, and a link it adds', async () => {
+      const n = note();
+      const t = tag();
+      await store.notes.add(n);
+      await store.tags.add(t);
+      await syncAll(store, 2);
+
+      await store.importAll({
+        notes: [],
+        tags: [t],
+        noteTags: [link(n.id, t.id)],
+        attachments: [attachment(n.id)],
+      });
+      const batch = await store.sync.dirty();
+      expect(batch.notes.map((row) => row.id)).toEqual([n.id]);
+      expect(batch.notes[0].attachments).toHaveLength(1);
+      expect(batch.tags).toEqual([]);
+      expect(batch.noteTags).toHaveLength(1);
     });
 
     it('clear drops Tombstones too', async () => {

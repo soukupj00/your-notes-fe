@@ -33,12 +33,12 @@ describe('requestSaveTarget', () => {
     const writable = { write: vi.fn(), close: vi.fn() };
     picker.mockResolvedValue({ createWritable: vi.fn().mockResolvedValue(writable) });
 
-    const target = await requestSaveTarget('ruflo-backup.zip');
+    const target = await requestSaveTarget('yournotes-backup.zip');
     const blob = new Blob(['payload']);
     await target?.write(blob);
 
     expect(picker).toHaveBeenCalledWith(
-      expect.objectContaining({ suggestedName: 'ruflo-backup.zip' })
+      expect.objectContaining({ suggestedName: 'yournotes-backup.zip' })
     );
     expect(target?.confirmed).toBe(true);
     expect(writable.write).toHaveBeenCalledWith(blob);
@@ -49,14 +49,14 @@ describe('requestSaveTarget', () => {
   it('returns null when the user cancels the picker', async () => {
     picker.mockRejectedValue(new DOMException('cancelled', 'AbortError'));
 
-    expect(await requestSaveTarget('ruflo-backup.zip')).toBeNull();
+    expect(await requestSaveTarget('yournotes-backup.zip')).toBeNull();
   });
 
   it('falls back to a download when the API is missing, and admits it is unconfirmed', async () => {
     Reflect.deleteProperty(globalThis, 'showSaveFilePicker');
     const click = stubAnchorDownload();
 
-    const target = await requestSaveTarget('ruflo-backup.zip');
+    const target = await requestSaveTarget('yournotes-backup.zip');
     await target?.write(new Blob(['payload']));
 
     expect(target?.confirmed).toBe(false);
@@ -67,7 +67,7 @@ describe('requestSaveTarget', () => {
     picker.mockRejectedValue(new DOMException('blocked', 'SecurityError'));
     const click = stubAnchorDownload();
 
-    const target = await requestSaveTarget('ruflo-backup.zip');
+    const target = await requestSaveTarget('yournotes-backup.zip');
     await target?.write(new Blob(['payload']));
 
     expect(target?.confirmed).toBe(false);

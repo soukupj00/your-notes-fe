@@ -19,7 +19,7 @@ vi.mock('sonner', () => ({
 const backup = vi.hoisted(() => ({
   buildBackupZip: vi.fn(),
   parseBackupZip: vi.fn(),
-  restoreBackup: vi.fn(),
+  importBackup: vi.fn(),
   requestSaveTarget: vi.fn(),
 }));
 
@@ -52,7 +52,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   backup.buildBackupZip.mockResolvedValue(new Blob(['zip']));
   backup.parseBackupZip.mockResolvedValue(parsed);
-  backup.restoreBackup.mockResolvedValue(undefined);
+  backup.importBackup.mockResolvedValue(undefined);
   backup.requestSaveTarget.mockResolvedValue(saveTarget());
 });
 
@@ -67,7 +67,7 @@ describe('export', () => {
     expect(backup.requestSaveTarget.mock.invocationCallOrder[0]).toBeLessThan(
       backup.buildBackupZip.mock.invocationCallOrder[0]
     );
-    expect(backup.requestSaveTarget.mock.calls[0][0]).toMatch(/^ruflo-backup-.*\.zip$/);
+    expect(backup.requestSaveTarget.mock.calls[0][0]).toMatch(/^yournotes-backup-.*\.zip$/);
   });
 
   it('only claims success once the bytes are actually written', async () => {
@@ -116,17 +116,17 @@ describe('export', () => {
 });
 
 describe('import', () => {
-  it('asks for confirmation before restoring anything', async () => {
+  it('asks for confirmation before importing anything', async () => {
     render(<BackupSection />);
 
     await pickFile();
 
     expect(await screen.findByText('settings.backup.confirmImport.title')).toBeInTheDocument();
-    expect(backup.restoreBackup).not.toHaveBeenCalled();
+    expect(backup.importBackup).not.toHaveBeenCalled();
     expect(backup.requestSaveTarget).not.toHaveBeenCalled();
   });
 
-  it('saves the current data before restoring, opted in by default', async () => {
+  it('saves the current data before importing, opted in by default', async () => {
     const target = saveTarget();
     backup.requestSaveTarget.mockResolvedValue(target);
     render(<BackupSection />);
@@ -134,16 +134,16 @@ describe('import', () => {
 
     await confirmImport();
 
-    await waitFor(() => expect(backup.restoreBackup).toHaveBeenCalledWith(testStore, parsed));
+    await waitFor(() => expect(backup.importBackup).toHaveBeenCalledWith(testStore, parsed));
     expect(backup.requestSaveTarget.mock.calls[0][0]).toContain('-before-import');
     expect(target.write.mock.invocationCallOrder[0]).toBeLessThan(
-      backup.restoreBackup.mock.invocationCallOrder[0]
+      backup.importBackup.mock.invocationCallOrder[0]
     );
     expect(toast.success).toHaveBeenCalledWith('settings.backup.imported');
   });
 
   it('abandons the import when the safety copy is cancelled', async () => {
-    // Restoring here would destroy exactly the data the user declined to lose.
+    // Importing here could overwrite the Notes the user declined to lose.
     backup.requestSaveTarget.mockResolvedValue(null);
     render(<BackupSection />);
     await pickFile();
@@ -151,11 +151,11 @@ describe('import', () => {
     await confirmImport();
 
     await waitFor(() => expect(toast.info).toHaveBeenCalledWith('settings.backup.importCancelled'));
-    expect(backup.restoreBackup).not.toHaveBeenCalled();
+    expect(backup.importBackup).not.toHaveBeenCalled();
     expect(toast.success).not.toHaveBeenCalled();
   });
 
-  it('never restores when writing the safety copy fails', async () => {
+  it('never imports when writing the safety copy fails', async () => {
     backup.requestSaveTarget.mockResolvedValue({
       confirmed: true,
       write: vi.fn().mockRejectedValue(new Error('disk full')),
@@ -166,7 +166,7 @@ describe('import', () => {
     await confirmImport();
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('settings.backup.error.unknown'));
-    expect(backup.restoreBackup).not.toHaveBeenCalled();
+    expect(backup.importBackup).not.toHaveBeenCalled();
   });
 
   it('skips the safety copy when the user unticks it', async () => {
@@ -176,11 +176,11 @@ describe('import', () => {
     await userEvent.click(await screen.findByText('settings.backup.confirmImport.backupFirst'));
     await confirmImport();
 
-    await waitFor(() => expect(backup.restoreBackup).toHaveBeenCalledWith(testStore, parsed));
+    await waitFor(() => expect(backup.importBackup).toHaveBeenCalledWith(testStore, parsed));
     expect(backup.requestSaveTarget).not.toHaveBeenCalled();
   });
 
-  it('restores nothing when the confirmation is cancelled', async () => {
+  it('imports nothing when the confirmation is cancelled', async () => {
     render(<BackupSection />);
     await pickFile();
 
@@ -191,7 +191,7 @@ describe('import', () => {
     await waitFor(() =>
       expect(screen.queryByText('settings.backup.confirmImport.title')).not.toBeInTheDocument()
     );
-    expect(backup.restoreBackup).not.toHaveBeenCalled();
+    expect(backup.importBackup).not.toHaveBeenCalled();
     expect(backup.requestSaveTarget).not.toHaveBeenCalled();
   });
 
@@ -205,6 +205,6 @@ describe('import', () => {
       expect(toast.error).toHaveBeenCalledWith('settings.backup.error.unsupported-version')
     );
     expect(screen.queryByText('settings.backup.confirmImport.title')).not.toBeInTheDocument();
-    expect(backup.restoreBackup).not.toHaveBeenCalled();
+    expect(backup.importBackup).not.toHaveBeenCalled();
   });
 });

@@ -419,31 +419,102 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
     });
 
     describe('whole store', () => {
-      it('exportAll / replaceAll round-trip the four data stores and leave meta alone', async () => {
+      it('exportAll / importAll round-trip the four data stores and leave meta alone', async () => {
         const n = note();
         const t = tag();
         await store.notes.add(n);
         await store.tags.add(t);
         await store.tags.link(link(n.id, t.id));
-        await store.attachments.add(attachment(n.id));
+        const a = attachment(n.id);
+        await store.attachments.add(a);
         await store.meta.set('cursor', 'abc');
 
         const snapshot = await store.exportAll();
-        expect(snapshot.notes).toHaveLength(1);
-        expect(snapshot.tags).toHaveLength(1);
-        expect(snapshot.noteTags).toHaveLength(1);
-        expect(snapshot.attachments).toHaveLength(1);
+        await store.clear();
+        await store.meta.set('cursor', 'abc');
+        await store.importAll(snapshot);
 
-        const replacement = note({ header: 'only me' });
-        await store.replaceAll({ notes: [replacement], tags: [], noteTags: [], attachments: [] });
-        expect(ids(await store.notes.list())).toEqual([replacement.id]);
-        expect(await store.tags.list()).toEqual([]);
-        expect(await store.tags.listLinks()).toEqual([]);
-        expect(await store.attachments.list()).toEqual([]);
+        expect(await store.notes.list()).toEqual([n]);
+        expect(await store.tags.list()).toEqual([t]);
+        expect(await store.tags.listLinks()).toEqual([link(n.id, t.id)]);
+        expect(ids(await store.attachments.list())).toEqual([a.id]);
         expect(await store.meta.get('cursor')).toBe('abc');
+      });
 
-        await store.replaceAll(snapshot);
-        expect(ids(await store.notes.list())).toEqual([n.id]);
+      it('importAll adds what is new and removes nothing', async () => {
+        const mine = note({ header: 'written after the backup' });
+        const myTag = tag({ name: 'Home' });
+        await store.notes.add(mine);
+        await store.tags.add(myTag);
+        await store.tags.link(link(mine.id, myTag.id));
+        const myFile = attachment(mine.id);
+        await store.attachments.add(myFile);
+
+        const theirs = note({ header: 'from the file' });
+        const theirTag = tag({ name: 'Work' });
+        const theirFile = attachment(theirs.id);
+        await store.importAll({
+          notes: [theirs],
+          tags: [theirTag],
+          noteTags: [link(theirs.id, theirTag.id)],
+          attachments: [theirFile],
+        });
+
+        expect(ids(await store.notes.list())).toEqual([mine.id, theirs.id].sort());
+        expect(ids(await store.tags.list())).toEqual([myTag.id, theirTag.id].sort());
+        expect(await store.tags.listLinks()).toHaveLength(2);
+        expect(ids(await store.attachments.list())).toEqual([myFile.id, theirFile.id].sort());
+      });
+
+      it('importAll overwrites a Note it already holds with the imported version', async () => {
+        const held = note({ header: 'newer, edited here', state: 'trashed', trashedAt: T0 });
+        await store.notes.add(held);
+
+        const imported = note({ id: held.id, header: 'as the file has it' });
+        await store.importAll({ notes: [imported], tags: [], noteTags: [], attachments: [] });
+
+        expect(await store.notes.list()).toEqual([imported]);
+      });
+
+      it('importAll matches a Tag by name, ignoring case, and never changes one it holds', async () => {
+        const held = tag({ name: 'Work', color: 'red' });
+        const sameId = tag({ name: 'Home' });
+        await store.tags.add(held);
+        await store.tags.add(sameId);
+
+        const n = note();
+        const byName = tag({ name: ' work ', color: 'blue' });
+        const fresh = tag({ name: 'Travel' });
+        await store.importAll({
+          notes: [n],
+          tags: [byName, { ...sameId, name: 'Renamed in the file' }, fresh],
+          noteTags: [link(n.id, byName.id), link(n.id, sameId.id), link(n.id, fresh.id)],
+          attachments: [],
+        });
+
+        const tags = await store.tags.list();
+        expect(tags).toHaveLength(3);
+        expect(tags).toEqual(expect.arrayContaining([held, sameId, fresh]));
+        expect((await store.tags.listLinks()).map((l) => l.tagId).sort()).toEqual(
+          [held.id, sameId.id, fresh.id].sort()
+        );
+      });
+
+      it('importAll leaves an Attachment it already holds as it is', async () => {
+        const n = note();
+        await store.notes.add(n);
+        const held = attachment(n.id, { name: 'mine.png' });
+        await store.attachments.add(held);
+
+        await store.importAll({
+          notes: [n],
+          tags: [],
+          noteTags: [],
+          attachments: [{ ...held, name: 'theirs.png' }],
+        });
+
+        const [kept] = await store.attachments.list();
+        expect(kept.name).toBe('mine.png');
       });
 
       it('clear empties everything, meta included', async () => {

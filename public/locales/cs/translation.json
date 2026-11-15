@@ -226,21 +226,35 @@
     "backup": {
       "title": "Záloha",
       "exported": "Záloha uložena.",
-      "imported": "Záloha obnovena.",
+      "imported": "Záloha importována.",
       "export": {
         "label": "Exportovat zálohu",
         "description": "Vše v jednom souboru .zip.",
         "action": "Exportovat"
       },
       "import": {
-        "label": "Obnovit zálohu",
-        "description": "Nahradí vše, co je zde uloženo.",
+        "label": "Importovat zálohu",
+        "description": "Přidá její obsah k tomu, co tu už je.",
         "action": "Importovat"
       },
       "confirmImport": {
-        "title": "Nahradit všechna vaše data?",
-        "description": "Tato záloha obsahuje {{notes}} poznámek, {{tags}} štítků a {{attachments}} příloh. Vše, co je nyní uloženo, bude smazáno a nahrazeno.",
-        "confirm": "Nahradit vše",
+        "title": "Importovat tuto zálohu?",
+        "description": "Tato záloha obsahuje {{notes}}, {{tags}} a {{attachments}}. Přidají se k tomu, co je nyní uloženo. Poznámku, která tu už je, nahradí její verze ze zálohy.",
+        "counts": {
+          "notes_one": "{{count}} poznámku",
+          "notes_few": "{{count}} poznámky",
+          "notes_many": "{{count}} poznámky",
+          "notes_other": "{{count}} poznámek",
+          "tags_one": "{{count}} štítek",
+          "tags_few": "{{count}} štítky",
+          "tags_many": "{{count}} štítku",
+          "tags_other": "{{count}} štítků",
+          "attachments_one": "{{count}} přílohu",
+          "attachments_few": "{{count}} přílohy",
+          "attachments_many": "{{count}} přílohy",
+          "attachments_other": "{{count}} příloh"
+        },
+        "confirm": "Importovat",
         "cancel": "Zrušit",
         "backupFirst": "Nejprve uložit zálohu mých současných dat"
       },

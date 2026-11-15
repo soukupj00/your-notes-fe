@@ -1,4 +1,4 @@
-import { downloadBlob } from '@/lib/backup.ts';
+import { downloadBlob } from '@/lib/download.ts';
 
 export type HandOffResult = 'shared' | 'downloaded' | 'cancelled';
 

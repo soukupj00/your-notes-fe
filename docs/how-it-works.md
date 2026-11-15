@@ -75,8 +75,10 @@ Your calendar then rings as it does for any other event.
 In Settings, "Sync and backup" ("Backup and storage" on a Device with no account) has "Export a backup", which saves a `.zip` file with every Note, label and attachment.
 Keep it somewhere other than the Device, for example on a USB stick or in a folder you already back up.
 
-"Restore a backup" puts a `.zip` back.
-It replaces everything stored on the Device, so it first offers to save a backup of what is there now.
+"Import a backup" puts a `.zip` back.
+It adds the backup's Notes, labels and attachments to what is on the Device and deletes nothing.
+A Note that is already on the Device is replaced by the backup's version, so the import first offers to save a backup of what is there now.
+With an account, everything the import brings is then synced to the server like any other change.
 Your choices in Settings, such as the theme, the language and the editor's buttons, belong to the Device and are not in a backup.
 
 If you run a server, it can make a backup of every Account at once; [the server's guide](https://soukupj00.github.io/your-notes-be/setup#8-back-up-and-restore) shows how.

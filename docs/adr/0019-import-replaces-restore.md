@@ -1,6 +1,6 @@
 # 0019 - Import replaces Restore: one additive operation for every Source
 
-- Status: Accepted
+- Status: Accepted; built for the Backup Source on 2026-11-15, the other Sources are still open
 - Date: 2026-08-21
 
 ## Context
@@ -37,6 +37,9 @@ One button, one file input.
   Accepted, because it removes the only destructive button in the app and the only way a user could lose everything by clicking.
 - Upsert-by-id is the same shape as M5's sync conflict rule ([ADR 0017](./0017-note-level-last-writer-wins-with-conflicted-copies.md)), so the user learns one model: a Note has an identity, and the newest thing you deliberately do to that identity wins.
 - `restoreBackup` and its "save my current data first" confirm survive in spirit: the pre-import Backup offer stays, checked by default only when the Source is a Backup (the one Source that can overwrite).
+- As built: "file wins" applies to Notes only.
+  A Tag the app holds, by id or by name, and an Attachment it holds are left as they are, so an Import never renames a label or rewrites bytes; a Note's labels and Attachments are only ever added to.
+  Everything an Import writes is owed to the Remote like any other write, with the Revision the Device already had for it.
 - Dedup-aware re-import of a foreign Source (skip notes already imported) would need a stored foreign id on Note and a sync story for it.
   Deferred until someone asks.
 

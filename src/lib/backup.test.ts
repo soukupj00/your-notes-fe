@@ -8,8 +8,8 @@ import {
   BACKUP_VERSION,
   BackupError,
   buildBackupZip,
+  importBackup,
   parseBackupZip,
-  restoreBackup,
 } from '@/lib/backup.ts';
 import type { Attachment, Note, NoteTag, Tag } from '@/models.ts';
 import { clearStore, testStore as store } from '@/test/store.tsx';
@@ -73,12 +73,12 @@ describe('backup', () => {
 
     const zipped = await bytesOf(await buildBackupZip(store));
 
-    // Wipe everything, so a passing assertion can only come from the restore.
+    // Wipe everything, so a passing assertion can only come from the import.
     await store.clear();
     expect(await store.notes.list()).toHaveLength(0);
 
     const parsed = await parseBackupZip(zipped);
-    await restoreBackup(store, parsed);
+    await importBackup(store, parsed);
 
     expect(await store.notes.list()).toEqual([note]);
     expect(await store.tags.list()).toEqual([tag]);
@@ -93,13 +93,13 @@ describe('backup', () => {
     expect(await bytesOf(restored?.thumbnail as Blob)).toEqual(THUMB);
   });
 
-  it('keeps a label position through export and restore', async () => {
+  it('keeps a label position through export and import', async () => {
     const positioned: Tag = { ...tag, position: 'a0' };
     await store.tags.add(positioned);
 
     const zipped = await bytesOf(await buildBackupZip(store));
     await store.clear();
-    await restoreBackup(store, await parseBackupZip(zipped));
+    await importBackup(store, await parseBackupZip(zipped));
 
     expect(await store.tags.list()).toEqual([positioned]);
   });
@@ -114,7 +114,8 @@ describe('backup', () => {
     expect(
       Object.keys(unzipSync(zipped)).filter((name) => name.startsWith('attachments/'))
     ).toEqual([]);
-    await restoreBackup(store, await parseBackupZip(zipped));
+    await store.clear();
+    await importBackup(store, await parseBackupZip(zipped));
     const restored = await store.attachments.get(remote.id);
     expect(restored?.name).toBe('shot.png');
     expect(restored?.blob).toBeUndefined();
@@ -133,30 +134,31 @@ describe('backup', () => {
     expect(entries['attachments/att-1']).toEqual(BINARY);
   });
 
-  it('restores an empty database from an empty backup', async () => {
+  it('imports an empty backup into an empty database', async () => {
     const zipped = await bytesOf(await buildBackupZip(store));
     const parsed = await parseBackupZip(zipped);
-    await restoreBackup(store, parsed);
+    await importBackup(store, parsed);
 
     expect(await store.notes.list()).toHaveLength(0);
     expect(await store.attachments.list()).toHaveLength(0);
   });
 
-  it('replaces existing rows rather than merging into them', async () => {
+  it('adds to the rows already there rather than replacing them', async () => {
     await seed();
     const zipped = await bytesOf(await buildBackupZip(store));
 
     await store.clear();
-    await store.notes.add({ ...note, id: 'stale-note', header: 'Should not survive' });
+    await store.notes.add({ ...note, id: 'newer-note', header: 'Written after the backup' });
 
-    await restoreBackup(store, await parseBackupZip(zipped));
+    await importBackup(store, await parseBackupZip(zipped));
 
-    expect(await store.notes.get('stale-note')).toBeUndefined();
-    expect(await store.notes.list()).toHaveLength(1);
+    expect((await store.notes.list()).map((n) => n.id).sort()).toEqual(
+      [note.id, 'newer-note'].sort()
+    );
   });
 
   describe('validation', () => {
-    /** Every rejection has to happen before the destructive part of the restore. */
+    /** Every rejection has to happen before the import writes anything. */
     async function expectRejectedWithDbIntact(bytes: Uint8Array, code: string) {
       await seed();
       await expect(parseBackupZip(bytes)).rejects.toMatchObject({ code });

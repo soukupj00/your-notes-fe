@@ -24,7 +24,7 @@ It is domain-shaped: it speaks of Notes, Tags and Attachments, never of tables o
 - `meta` is a small key-value store for bookkeeping about rows: the sync cursor, the attached Account.
   Preferences are not here; they live in `localStorage`, because they belong to the Device.
 - `sync` is what the server is owed, and only the sync engine calls it.
-- `exportAll` and `replaceAll` are what a Backup reads and writes.
+- `exportAll` and `importAll` are what a Backup reads and writes; an Import adds to the store and removes nothing.
 
 Components never call the store themselves.
 They go through the hooks in `src/hooks/data/`: `useNoteFeed` for the Feed, `useNoteActions`, `useTagActions` and `useAttachmentActions` for changes, and `useTags`, `useTagsForNote` and `useNoteAttachments` for live reads.

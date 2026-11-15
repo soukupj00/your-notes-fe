@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { NoteColorPicker } from '@/components/color-picker/NoteColorPicker.tsx';
+import { PageHeading } from '@/components/PageHeading.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { ConfirmDeleteButton } from '@/components/ui/ConfirmDeleteButton.tsx';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog.tsx';
@@ -22,7 +23,6 @@ import { IconTooltip } from '@/components/ui/tooltip.tsx';
 import { useTagActions } from '@/hooks/data/useTagActions.ts';
 import { useTagNoteCounts } from '@/hooks/data/useTagNoteCounts.ts';
 import { useTags } from '@/hooks/data/useTags.ts';
-import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import type { ArrangeKind } from '@/lib/label-order.ts';
 import { moveById } from '@/lib/move-by-id.ts';
@@ -255,7 +255,6 @@ function LabelRow({ tag, tags, noteCount, justCreated }: LabelRowProps) {
 /** Manage-labels view (`/labels`): create, order, rename, colour, merge, delete. */
 export default function LabelsPage() {
   const { t } = useTranslation();
-  const headingRef = useFocusOnMount<HTMLHeadingElement>();
   const liveTags = useTags();
   const noteCounts = useTagNoteCounts();
   const { moveTag } = useTagActions();
@@ -282,15 +281,7 @@ export default function LabelsPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      {/* Visible on desktop, carried by the topbar on mobile - see the same
-          heading in `settings.tsx` for why it stays in the DOM regardless. */}
-      <h1
-        ref={headingRef}
-        tabIndex={-1}
-        className="sr-only sm:not-sr-only sm:mb-6 sm:font-semibold sm:text-2xl sm:focus-visible:outline-none"
-      >
-        {t('nav.labels')}
-      </h1>
+      <PageHeading>{t('nav.labels')}</PageHeading>
 
       <CreateLabelRow onCreated={highlight} />
 
