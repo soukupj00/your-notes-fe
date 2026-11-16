@@ -1,19 +1,9 @@
-import { useState, useSyncExternalStore } from 'react';
+import { useState } from 'react';
+import { useMediaQuery } from '@/hooks/useMediaQuery.ts';
 
 const STORAGE_KEY = 'sidebar-open';
 // Below it the expanded sidebar leaves the Feed header too narrow for one row.
 const WIDE = '(min-width: 1024px)';
-
-function subscribe(onChange: () => void): () => void {
-  const media = globalThis.matchMedia?.(WIDE);
-  if (!media) return () => {};
-  media.addEventListener('change', onChange);
-  return () => media.removeEventListener('change', onChange);
-}
-
-function isWide(): boolean {
-  return globalThis.matchMedia?.(WIDE).matches ?? true;
-}
 
 function readStored(): boolean | null {
   const stored = localStorage.getItem(STORAGE_KEY);
@@ -26,7 +16,7 @@ function readStored(): boolean | null {
  */
 export function useSidebarOpen(): [boolean, (open: boolean) => void] {
   const [stored, setStored] = useState(readStored);
-  const wide = useSyncExternalStore(subscribe, isWide, () => true);
+  const wide = useMediaQuery(WIDE, true);
 
   const setOpen = (next: boolean) => {
     localStorage.setItem(STORAGE_KEY, String(next));
