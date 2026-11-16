@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { SYNC_META_KEYS } from '@/data/LocalStore.ts';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import { useLive } from '@/data/useLive.ts';
+import { useLatest } from '@/hooks/useLatest.ts';
 import { downloadAttachment } from '@/sync/attachments.ts';
 import { createSyncEngine, type SyncReport } from '@/sync/engine.ts';
 import { type SyncLoop, type SyncStatus, startSyncLoop } from '@/sync/loop.ts';
@@ -82,8 +83,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
 
   // Kept in a ref so the loop's lifetime depends only on the session, the server
   // and the store: a new `t` (a language change) must not restart syncing.
-  const onReportRef = useRef<(report: SyncReport) => void>(() => {});
-  const onReport = (report: SyncReport) => {
+  const getOnReport = useLatest((report: SyncReport) => {
     void store.meta.get<string>(SYNC_META_KEYS.lastSyncedAt).then((at) => {
       setLastSyncedAt(at ?? null);
     });
@@ -98,9 +98,8 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     }
     if (report.keptNewer > 0) toast.info(t('sync.keptNewer'));
     for (const name of report.tooLarge) toast.error(t('sync.tooLarge', { name }));
-  };
-  const onSignedOutRef = useRef<() => void>(() => {});
-  const onSignedOut = () => {
+  });
+  const getOnSignedOut = useLatest(() => {
     setSession(null);
     // Stays until dismissed: it is the only notice that this Device stopped syncing.
     toast(t('sync.signedOut'), {
@@ -115,10 +114,6 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         onClick: () => undefined,
       },
     });
-  };
-  useEffect(() => {
-    onReportRef.current = onReport;
-    onSignedOutRef.current = onSignedOut;
   });
   useEffect(() => {
     if (accountId) toast.dismiss(SIGNED_OUT_TOAST);
@@ -145,8 +140,8 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         remote,
         store,
         onStatus: setStatus,
-        onReport: (report) => onReportRef.current(report),
-        onSignedOut: () => onSignedOutRef.current(),
+        onReport: (report) => getOnReport()(report),
+        onSignedOut: () => getOnSignedOut()(),
       });
     });
     return () => {
@@ -155,7 +150,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       loopRef.current = null;
       setStatus('idle');
     };
-  }, [accountId, deviceName, remote, store]);
+  }, [accountId, deviceName, remote, store, getOnReport, getOnSignedOut]);
 
   const value = useMemo<SyncContextValue>(
     () =>
