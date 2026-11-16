@@ -4,7 +4,11 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QUICK_CAPTURE_ACTIONS } from '@/components/notes/quickCaptureActions.ts';
 import type { QuickCapturePref } from '@/components/notes/quickCaptureLayout.ts';
-import { PREFERENCES_STORAGE_KEY, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import {
+  PREFERENCES_STORAGE_KEY,
+  PREFERENCES_VERSION,
+  PreferencesProvider,
+} from '@/context/PreferencesProvider.tsx';
 import { setViewport } from '@/test/viewport.ts';
 import { QuickCaptureSection } from './QuickCaptureSection.tsx';
 
@@ -63,7 +67,7 @@ describe('QuickCaptureSection', () => {
     localStorage.setItem(
       PREFERENCES_STORAGE_KEY,
       JSON.stringify({
-        version: 1,
+        version: PREFERENCES_VERSION,
         quickCapture: QUICK_CAPTURE_ACTIONS.map((action) => ({
           id: action.key,
           on: action.key === 'text',

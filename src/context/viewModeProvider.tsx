@@ -4,10 +4,7 @@ import { createContext, useContext, useState } from 'react';
 export type ViewMode = 'masonry' | 'stack';
 
 function parseViewMode(value: string | null): ViewMode {
-  // `list` was the pre-Nightshift name for Stack. Preserve the user's choice
-  // while ensuring unknown or corrupt values never create a third layout.
-  if (value === 'stack' || value === 'list') return 'stack';
-  return 'masonry';
+  return value === 'stack' ? 'stack' : 'masonry';
 }
 
 type ViewModeProviderState = {

@@ -80,7 +80,8 @@ Starý plugin ji uměl vrátit jen na *začátek bloku zaškrtnutých*, což byl
 - **`sinkCheckedItems` má výchozí hodnotu `true`.**
   Zdůvodnění pro `false` bylo, že propadání ničí uživatelovo pořadí; to už neplatí.
   Předvolba zůstává pro případ, kdy pořadí *je* obsahem (kroky receptu, seřazené možnosti), což je skutečný, ale menšinový případ.
-  To vyžaduje migraci, nejen výchozí hodnotu ve schématu: `setPreference` zapisuje celý naparsovaný blob, takže každý stávající uživatel, který kdy změnil jakékoli nastavení, už má na disku `sinkCheckedItems: false`.
+  To vyžadovalo migraci, nejen výchozí hodnotu ve schématu: `setPreference` zapisuje celý naparsovaný blob, takže každý stávající uživatel, který kdy změnil jakékoli nastavení, už měl na disku `sinkCheckedItems: false`.
+  Migrace byla 16. 11. 2026 odstraněna, ještě před prvním vydáním: blob verze 1 existoval jen ve vývojových profilech.
 - **Celý blok CSS je podmíněný předvolbou** přes atribut `data-sink-checked`, který na `<html>` zapisuje `DocumentPreferences`, což odpovídá zdokumentovanému testu pro to, co tam patří („zda hodnotu potřebuje stylopis“).
 - **Zaškrtávací políčka na kartě se stávají ovládacími prvky, takže pravidlo 44px pro dotyk se dostává i na kartu - ale jako oblast zásahu, ne jako výška řádku.**
   Pravidlo bylo na kartu nejprve uplatněno celé, obě poloviny, a to byla chyba, kterou ukázala až obrazovka.
