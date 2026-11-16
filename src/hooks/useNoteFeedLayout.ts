@@ -49,8 +49,8 @@ function layoutsMatch(
 
 /**
  * Measures note cards and resolves both Masonry and Stack through one placement
- * path. Child registration is attribute-based so the observer and ref callback
- * remain stable when notes reorder.
+ * path. Child registration is attribute-based so the observer remains stable
+ * when notes reorder.
  */
 export function useNoteFeedLayout(mode: NoteFeedLayoutMode, ids: readonly string[]) {
   const supported = typeof ResizeObserver !== 'undefined';
@@ -147,14 +147,6 @@ export function useNoteFeedLayout(mode: NoteFeedLayoutMode, ids: readonly string
     });
   }, [measure, syncObservedItems]);
 
-  const containerRef = useCallback((node: HTMLUListElement | null) => {
-    containerNode.current = node;
-  }, []);
-
-  useLayoutEffect(() => {
-    layoutSnapshot.current = layout;
-  }, [layout]);
-
   useLayoutEffect(() => {
     input.current = { mode, ids };
     syncObservedItems();
@@ -185,5 +177,5 @@ export function useNoteFeedLayout(mode: NoteFeedLayoutMode, ids: readonly string
     };
   }, [scheduleMeasure, supported, syncObservedItems]);
 
-  return { containerRef, layout, ready, supported };
+  return { containerRef: containerNode, layout, ready, supported };
 }

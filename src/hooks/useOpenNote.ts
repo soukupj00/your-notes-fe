@@ -45,24 +45,6 @@ export function useOpenNote() {
     [navigate]
   );
 
-  const closeNote = useCallback(() => {
-    // Pop the entry opening the note pushed, so the editor leaves no trace in
-    // history. Replacing instead would leave two identical feed entries
-    // stacked, and the user's *next* back press would appear to do nothing.
-    if (canGoBack) {
-      router.history.back();
-      return;
-    }
-    // Nothing to pop: the note was opened cold, from a shared link or a reload.
-    // Clearing the param in place is the only way back to the feed that does
-    // not leave the app entirely.
-    void navigate({
-      to: '.',
-      search: (prev: NoteSearchParams) => ({ ...prev, note: undefined }),
-      replace: true,
-    });
-  }, [canGoBack, navigate, router]);
-
   /**
    * Drops a `note` that points at nothing, without touching history. Reachable: closing an empty
    * draft purges it, so going forward or reloading a stale tab lands on a missing note.
@@ -74,6 +56,20 @@ export function useOpenNote() {
       replace: true,
     });
   }, [navigate]);
+
+  const closeNote = useCallback(() => {
+    // Pop the entry opening the note pushed, so the editor leaves no trace in
+    // history. Replacing instead would leave two identical feed entries
+    // stacked, and the user's *next* back press would appear to do nothing.
+    if (canGoBack) {
+      router.history.back();
+      return;
+    }
+    // Nothing to pop: the note was opened cold, from a shared link or a reload.
+    // Clearing the param in place is the only way back to the feed that does
+    // not leave the app entirely.
+    dismissMissingNote();
+  }, [canGoBack, dismissMissingNote, router]);
 
   return {
     openNoteId: note ?? null,
