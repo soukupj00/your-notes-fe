@@ -53,7 +53,6 @@ function layoutsMatch(
  * when notes reorder.
  */
 export function useNoteFeedLayout(mode: NoteFeedLayoutMode, ids: readonly string[]) {
-  const supported = typeof ResizeObserver !== 'undefined';
   const containerNode = useRef<HTMLUListElement | null>(null);
   const observer = useRef<ResizeObserver | null>(null);
   const observedItems = useRef(new Set<HTMLElement>());
@@ -161,7 +160,7 @@ export function useNoteFeedLayout(mode: NoteFeedLayoutMode, ids: readonly string
 
   useEffect(() => {
     const container = containerNode.current;
-    if (!supported || !container) return;
+    if (!container) return;
 
     const instance = new ResizeObserver(scheduleMeasure);
     observer.current = instance;
@@ -175,7 +174,7 @@ export function useNoteFeedLayout(mode: NoteFeedLayoutMode, ids: readonly string
       observer.current = null;
       observedItems.current.clear();
     };
-  }, [scheduleMeasure, supported, syncObservedItems]);
+  }, [scheduleMeasure, syncObservedItems]);
 
-  return { containerRef: containerNode, layout, ready, supported };
+  return { containerRef: containerNode, layout, ready };
 }

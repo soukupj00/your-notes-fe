@@ -252,7 +252,6 @@ Columns are `minmax(13.5rem, 1fr)` (216px at the default root size), auto-filled
 
 **Stack** is the alternative: every card takes the **full container width** and sits directly below the previous one, one per row.
 It is the reading layout rather than the scanning layout - a longer note gets its full measure instead of being squeezed into a 216px column, and a person working down a list in order is not asked to track two columns at once.
-It is also the honest fallback when measurement is unavailable, because it needs no JS placement at all.
 
 Card content does not change between the layouts. The same anatomy, the same caps on labels and attachments, the same footer. Only the width and the placement change.
 

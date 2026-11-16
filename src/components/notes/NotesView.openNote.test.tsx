@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { forgetHardwareKey } from '@/hooks/useKeyboardAffordances.ts';
 import type { Note } from '@/models.ts';
+import { stubFeedLayout } from '@/test/feedLayout.ts';
 import { renderRoute } from '@/test/renderRoute.tsx';
 import { clearStore, testStore } from '@/test/store.tsx';
 import { allNotes } from '@/test/storeReads.ts';
@@ -73,19 +74,16 @@ function makeNote(overrides: Partial<Note> = {}): Note {
 const editor = () => screen.findByTestId('editor');
 const noEditor = () => expect(screen.queryByTestId('editor')).not.toBeInTheDocument();
 
-const realResizeObserver = globalThis.ResizeObserver;
+let restoreFeedLayout: () => void;
 
 beforeEach(() => {
   window.innerWidth = 1024;
-  // Without ResizeObserver `NoteFeed` renders a plain stack. Needed: the global no-op observer
-  // never measures, so masonry cards stay in an invisible `aria-hidden` `li` and cannot be clicked.
-  // @ts-expect-error deliberately removing the global for this suite
-  globalThis.ResizeObserver = undefined;
+  restoreFeedLayout = stubFeedLayout();
 });
 
 afterEach(async () => {
   forgetHardwareKey();
-  globalThis.ResizeObserver = realResizeObserver;
+  restoreFeedLayout();
   localStorage.clear();
   await clearStore();
 });
