@@ -3,6 +3,8 @@ import { createContext, useContext, useState } from 'react';
 /** The complete set of note-feed layouts from DESIGN.md. */
 export type ViewMode = 'masonry' | 'stack';
 
+const STORAGE_KEY = 'notes-view-mode';
+
 function parseViewMode(value: string | null): ViewMode {
   return value === 'stack' ? 'stack' : 'masonry';
 }
@@ -14,19 +16,13 @@ type ViewModeProviderState = {
 
 const ViewModeContext = createContext<ViewModeProviderState | undefined>(undefined);
 
-export function ViewModeProvider({
-  children,
-  storageKey = 'notes-view-mode',
-}: {
-  children: React.ReactNode;
-  storageKey?: string;
-}) {
+export function ViewModeProvider({ children }: { children: React.ReactNode }) {
   const [viewMode, setViewModeState] = useState<ViewMode>(() =>
-    parseViewMode(localStorage.getItem(storageKey))
+    parseViewMode(localStorage.getItem(STORAGE_KEY))
   );
 
   const setViewMode = (mode: ViewMode) => {
-    localStorage.setItem(storageKey, mode);
+    localStorage.setItem(STORAGE_KEY, mode);
     setViewModeState(mode);
   };
 

@@ -40,7 +40,7 @@ function App({
       {/* The boundary sits inside ThemeProvider so its fallback is themed, but
       outside everything else: a crash in any provider or route still lands on
       a recoverable screen rather than a white page. */}
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <ThemeProvider defaultTheme="dark">
         <ErrorBoundary>
           <PreferencesProvider>
             <DocumentPreferences />

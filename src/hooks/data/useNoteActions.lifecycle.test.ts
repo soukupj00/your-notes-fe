@@ -170,15 +170,6 @@ describe('purgeExpiredTrash', () => {
     expect(await purgeExpiredTrash()).toBe(0);
     expect(await testStore.notes.get(note.id)).toBeTruthy();
   });
-
-  it('honours a caller-supplied grace period', async () => {
-    const { purgeExpiredTrash } = actions();
-    const note = await putNote({ state: 'trashed', trashedAt: daysAgo(3) });
-
-    expect(await purgeExpiredTrash(30)).toBe(0);
-    expect(await purgeExpiredTrash(2)).toBe(1);
-    expect(await testStore.notes.get(note.id)).toBeUndefined();
-  });
 });
 
 describe('emptyTrash', () => {

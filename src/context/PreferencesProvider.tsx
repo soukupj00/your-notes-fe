@@ -19,10 +19,11 @@ export const PREFERENCES_STORAGE_KEY = 'preferences';
  */
 export const PREFERENCES_VERSION = 2;
 
-/** The choices a segmented Settings row offers, in display order; the schema validates the same lists. */
+/** The choices its segmented Settings row offers, in display order; the schema validates the same list. */
 export const NOTE_BUTTON_ALIGNMENT_OPTIONS = ['left', 'right'] as const;
-export const DENSITY_OPTIONS = ['comfortable', 'compact'] as const;
-export const REDUCED_MOTION_OPTIONS = ['system', 'always', 'never'] as const;
+
+const DENSITY_OPTIONS = ['comfortable', 'compact'] as const;
+const REDUCED_MOTION_OPTIONS = ['system', 'always', 'never'] as const;
 
 /** One leaf inside a stored family: array position is its order on the bar. */
 const toolbarMemberSchema = z.object({ id: z.string(), on: z.boolean() });

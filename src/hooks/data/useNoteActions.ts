@@ -21,8 +21,8 @@ function snapshotOf(note: Note): LifecycleSnapshot {
   };
 }
 
-function graceCutoff(days = TRASH_GRACE_DAYS) {
-  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+function graceCutoff() {
+  return new Date(Date.now() - TRASH_GRACE_DAYS * 24 * 60 * 60 * 1000).toISOString();
 }
 
 // Memoized on the store alone, which the provider creates once: NoteEditorDialog's autosave
@@ -122,15 +122,12 @@ export function useNoteActions() {
    * Purge every Trashed note whose grace period has elapsed, cascading its
    * attachments. Runs at startup, alongside the attachment orphan sweep.
    */
-  const purgeExpiredTrash = useCallback(
-    async (graceDays = TRASH_GRACE_DAYS) => {
-      const expired = await store.notes.listTrashedBefore(graceCutoff(graceDays));
-      const stale = expired.filter((note) => note.state === 'trashed');
-      for (const note of stale) await purgeNote(note.id);
-      return stale.length;
-    },
-    [store, purgeNote]
-  );
+  const purgeExpiredTrash = useCallback(async () => {
+    const expired = await store.notes.listTrashedBefore(graceCutoff());
+    const stale = expired.filter((note) => note.state === 'trashed');
+    for (const note of stale) await purgeNote(note.id);
+    return stale.length;
+  }, [store, purgeNote]);
 
   /** The manual "Empty trash" action - purges everything currently trashed. */
   const emptyTrash = useCallback(async () => {
