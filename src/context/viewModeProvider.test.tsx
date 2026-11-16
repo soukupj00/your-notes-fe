@@ -18,10 +18,16 @@ describe('ViewModeProvider', () => {
     expect(result.current.viewMode).toBe('masonry');
   });
 
-  it('migrates the legacy persisted list mode to Stack', () => {
-    localStorage.setItem(STORAGE_KEY, 'list');
+  it('reads a persisted Stack choice', () => {
+    localStorage.setItem(STORAGE_KEY, 'stack');
     const { result } = renderHook(() => useViewMode(), { wrapper });
     expect(result.current.viewMode).toBe('stack');
+  });
+
+  it('falls back to masonry for a value it does not know', () => {
+    localStorage.setItem(STORAGE_KEY, 'grid');
+    const { result } = renderHook(() => useViewMode(), { wrapper });
+    expect(result.current.viewMode).toBe('masonry');
   });
 
   it('persists the mode to localStorage when set', () => {

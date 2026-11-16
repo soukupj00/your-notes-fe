@@ -80,7 +80,8 @@ The old plugin could only float it back to the *top of the checked block*, which
 - **`sinkCheckedItems` defaults to `true`.**
   The justification for `false` was that sinking destroyed the user's order; it no longer does.
   The preference survives for the case where sequence *is* the content (recipe steps, ranked options), which is real but a minority.
-  This needs a migration, not just a schema default: `setPreference` writes the whole parsed blob, so every existing user who has ever changed any setting already has `sinkCheckedItems: false` on disk.
+  This needed a migration, not just a schema default: `setPreference` writes the whole parsed blob, so every existing user who has ever changed any setting already had `sinkCheckedItems: false` on disk.
+  The migration was removed on 2026-11-16, before the first release: only development profiles ever held a version 1 blob.
 - **The whole CSS block is gated on the preference** via a `data-sink-checked` attribute stamped onto `<html>` by `DocumentPreferences`, which matches the documented test for belonging there ("whether the stylesheet needs the value").
 - **The card's checkboxes become controls, so the 44px Touch Rule reaches the card - but as a hit box, not as a row height.**
   The rule was first applied to the card in full, both halves, and that was wrong in a way only the screen showed.

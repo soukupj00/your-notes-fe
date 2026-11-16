@@ -1,7 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PREFERENCES_STORAGE_KEY, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import {
+  PREFERENCES_STORAGE_KEY,
+  PREFERENCES_VERSION,
+  PreferencesProvider,
+} from '@/context/PreferencesProvider.tsx';
 import { FLOATING_BOTTOM_BAR } from './floatingBottomBar.ts';
 import { QuickCaptureBar } from './QuickCaptureBar.tsx';
 
@@ -114,7 +118,7 @@ describe('QuickCaptureBar', () => {
       localStorage.setItem(
         PREFERENCES_STORAGE_KEY,
         JSON.stringify({
-          version: 1,
+          version: PREFERENCES_VERSION,
           quickCapture: ['drawing', 'text', 'checklist', 'audio', 'picture', 'camera'].map(
             (id) => ({ id, on: true })
           ),
@@ -139,7 +143,7 @@ describe('QuickCaptureBar', () => {
     it('mirrors the whole dial, not just the button, for a left-handed layout', async () => {
       localStorage.setItem(
         PREFERENCES_STORAGE_KEY,
-        JSON.stringify({ version: 1, noteButtonAlignment: 'left' })
+        JSON.stringify({ version: PREFERENCES_VERSION, noteButtonAlignment: 'left' })
       );
       const onStart = vi.fn();
       render(<QuickCaptureBar onStart={onStart} />, { wrapper });

@@ -3,7 +3,11 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PREFERENCES_STORAGE_KEY, PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import {
+  PREFERENCES_STORAGE_KEY,
+  PREFERENCES_VERSION,
+  PreferencesProvider,
+} from '@/context/PreferencesProvider.tsx';
 import { DEFAULT_PRESET, defaultToolbarLayout, toolbarPreset } from './presets';
 import { TOOLBAR_FAMILIES } from './registry';
 import { ToolbarLayoutEditor } from './ToolbarLayoutEditor';
@@ -180,7 +184,7 @@ describe('the fold marker', () => {
     localStorage.setItem(
       PREFERENCES_STORAGE_KEY,
       JSON.stringify({
-        version: 1,
+        version: PREFERENCES_VERSION,
         toolbar: { compact: toolbarPreset('everything', 'compact'), wide: [] },
       })
     );
@@ -376,7 +380,7 @@ describe('the Width Class', () => {
     localStorage.setItem(
       PREFERENCES_STORAGE_KEY,
       JSON.stringify({
-        version: 1,
+        version: PREFERENCES_VERSION,
         toolbar: { compact: [], wide: toolbarPreset('minimal', 'wide') },
       })
     );
@@ -513,7 +517,7 @@ describe('a stored family this build cannot render', () => {
     ];
     localStorage.setItem(
       PREFERENCES_STORAGE_KEY,
-      JSON.stringify({ version: 1, toolbar: { compact: [], wide: stored } })
+      JSON.stringify({ version: PREFERENCES_VERSION, toolbar: { compact: [], wide: stored } })
     );
     renderEditor('wide');
 

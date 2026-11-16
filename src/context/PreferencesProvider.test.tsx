@@ -118,33 +118,6 @@ describe('graceful fallback', () => {
     expect(result.current.preferences.toolbar.wide).toHaveLength(1);
   });
 
-  it.each([
-    ['nothing stored', undefined, {}],
-    ['the default key', 'n', {}],
-    ['a key turned off', null, { 'new-note': null }],
-    ['a remapped key', 'J', { 'new-note': 'j' }],
-    ['two characters, which F3 read as the default', 'ab', {}],
-    ['a number, which F3 read as the default', 5, {}],
-  ])('carries the F3 new-note key over from %s', async (_label, newNoteKey, expected) => {
-    store({ version: PREFERENCES_VERSION, newNoteKey, density: 'compact' });
-
-    const result = await prefs();
-
-    expect(result.current.preferences.shortcuts).toEqual(expected);
-    expect(result.current.preferences.density).toBe('compact');
-    expect(result.current.preferences).not.toHaveProperty('newNoteKey');
-  });
-
-  it('keeps a new-note Shortcut already stored over the old key', async () => {
-    store({
-      version: PREFERENCES_VERSION,
-      newNoteKey: 'j',
-      shortcuts: { 'new-note': 'Mod-Alt-n' },
-    });
-
-    expect((await prefs()).current.preferences.shortcuts).toEqual({ 'new-note': 'Mod-Alt-n' });
-  });
-
   it('absorbs an unreadable shortcuts value without resetting its neighbours', async () => {
     store({ version: PREFERENCES_VERSION, shortcuts: 'oops', density: 'compact' });
 
@@ -181,68 +154,6 @@ describe('graceful fallback', () => {
     const result = await prefs();
 
     expect(result.current.preferences.toolbar.compact).toEqual(layout);
-  });
-});
-
-describe('v1 → v2 migration (ADR 0013)', () => {
-  it('opts a v1 blob into sinking without touching its other settings', async () => {
-    // Why a migration and not a changed default: `setPreference` persists the whole blob, so every
-    // existing user already stores `sinkCheckedItems: false` and a new default would reach none.
-    store({
-      version: 1,
-      sinkCheckedItems: false,
-      density: 'compact',
-      reducedMotion: 'always',
-      colorBlind: true,
-      noteButtonAlignment: 'left',
-    });
-
-    const result = await prefs();
-
-    expect(result.current.preferences.sinkCheckedItems).toBe(true);
-    expect(result.current.preferences.density).toBe('compact');
-    expect(result.current.preferences.reducedMotion).toBe('always');
-    expect(result.current.preferences.colorBlind).toBe(true);
-    expect(result.current.preferences.noteButtonAlignment).toBe('left');
-  });
-
-  it('leaves a v2 blob that has opted out alone', async () => {
-    store({ version: 2, sinkCheckedItems: false });
-
-    const result = await prefs();
-
-    expect(result.current.preferences.sinkCheckedItems).toBe(false);
-  });
-
-  it('does not rewrite the stored blob on read', async () => {
-    // The existing contract: a read never destroys data we might want to
-    // inspect. The migration is therefore re-applied on every read until the
-    // next `setPreference` persists version 2, which is why it is idempotent.
-    const v1 = { version: 1, sinkCheckedItems: false, density: 'compact' };
-    store(v1);
-
-    await prefs();
-
-    expect(await stored()).toEqual(v1);
-  });
-
-  it('persists version 2 once any preference is written', async () => {
-    store({ version: 1, sinkCheckedItems: false, density: 'compact' });
-    const result = await prefs();
-
-    await result.current.setPreference('density', 'comfortable');
-
-    const blob = (await stored()) as Record<string, unknown>;
-    expect(blob.version).toBe(PREFERENCES_VERSION);
-    expect(blob.sinkCheckedItems).toBe(true);
-  });
-
-  it('still rejects a version it has never heard of', async () => {
-    store({ version: 999, sinkCheckedItems: false, density: 'compact' });
-
-    const result = await prefs();
-
-    expect(result.current.preferences).toEqual(DEFAULT_PREFERENCES);
   });
 });
 
