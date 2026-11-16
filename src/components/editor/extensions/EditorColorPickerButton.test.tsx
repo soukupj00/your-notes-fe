@@ -37,7 +37,7 @@ describe('editor color picker buttons', () => {
     );
 
     await userEvent.click(screen.getByRole('button', { name: 'Text color' }));
-    await userEvent.click(await screen.findByRole('button', { name: 'Red' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'colors.red' }));
 
     expect(editor.getAttributes('textStyle').color).toBe('#ef4444');
   });
@@ -51,7 +51,7 @@ describe('editor color picker buttons', () => {
     );
 
     await userEvent.click(screen.getByRole('button', { name: 'Highlight' }));
-    await userEvent.click(await screen.findByRole('button', { name: 'Yellow' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'colors.yellow' }));
 
     expect(editor.getAttributes('textStyle').backgroundColor).toBe('#fef08a');
   });

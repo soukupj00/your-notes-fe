@@ -9,7 +9,7 @@ import { EditorColorPickerButton } from '../EditorColorPickerButton';
 
 /** What the shortcut applies: the common case, the picker covers the rest. */
 const SHORTCUT_COLOR =
-  HIGHLIGHT_COLORS.colors.find((color) => color.label === 'Yellow')?.cssValue ?? '#fef08a';
+  HIGHLIGHT_COLORS.colors.find((color) => color.token === 'yellow')?.cssValue ?? '#fef08a';
 
 /** Toggles rather than opening the picker: a popover cannot open from a shortcut while its
  *  button sits in a collapsed family. */

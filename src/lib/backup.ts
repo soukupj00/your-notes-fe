@@ -2,6 +2,7 @@ import { strFromU8, strToU8, type Unzipped, unzip, type Zippable, zip } from 'ff
 import { z } from 'zod';
 import type { LocalStore } from '@/data/LocalStore.ts';
 import { downloadBlob } from '@/lib/download.ts';
+import { nowIso } from '@/lib/rows.ts';
 import { type Attachment, NOTE_STATES, type Note, type NoteTag, type Tag } from '@/models.ts';
 
 /**
@@ -160,7 +161,7 @@ export async function buildBackupZip(store: LocalStore): Promise<Blob> {
   // whose loosely-validated rows are a wider type than the models we write.
   const manifest = {
     version: BACKUP_VERSION,
-    exportedAt: new Date().toISOString(),
+    exportedAt: nowIso(),
     notes,
     tags,
     noteTags,

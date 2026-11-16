@@ -18,7 +18,7 @@ export function HelpSection() {
         <span className="flex-1">{t('settings.help.replay.action')}</span>
       </button>
       <a
-        href="https://soukupj00.github.io/your-notes-fe/"
+        href={t('settings.help.docs.url')}
         target="_blank"
         rel="noopener noreferrer"
         className={ROW}

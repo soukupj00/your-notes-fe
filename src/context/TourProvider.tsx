@@ -15,6 +15,7 @@ import { TourPopover } from '@/components/tour/TourPopover.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
+import { nowIso } from '@/lib/rows.ts';
 import { holdBodyInert } from '@/lib/tour/inert.ts';
 import { stageRadiusOf, TOUR_STEPS } from '@/lib/tour/steps.ts';
 import { waitFor, waitForTarget } from '@/lib/tour/waitFor.ts';
@@ -170,7 +171,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
     // Stamped when offered, not on completion, or it re-arms after every reload (ADR 0015).
     if (!preferences.onboardingSeenAt) {
-      await setPreference('onboardingSeenAt', new Date().toISOString());
+      await setPreference('onboardingSeenAt', nowIso());
     }
 
     releaseInertRef.current = holdBodyInert(isDriverElement);

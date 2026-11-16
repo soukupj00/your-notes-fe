@@ -192,7 +192,7 @@ describe('Help', () => {
       await screen.findByRole('button', { name: 'settings.help.replay.action' })
     ).toBeInTheDocument();
     const docs = screen.getByRole('link', { name: /settings\.help\.docs\.label/ });
-    expect(docs).toHaveAttribute('href', 'https://soukupj00.github.io/your-notes-fe/');
+    expect(docs).toHaveAttribute('href', 'settings.help.docs.url');
     expect(docs).toHaveAccessibleName(expect.stringContaining('nav.newTab'));
     expect(screen.queryByRole('link', { name: /github/i })).toBeNull();
   });

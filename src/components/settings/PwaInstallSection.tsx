@@ -29,11 +29,7 @@ export function PwaInstallSection() {
           </Button>
         ) : (
           <Button asChild variant="outline" className="min-h-11">
-            <a
-              href="https://soukupj00.github.io/your-notes-fe/get-the-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href={t('pwa.install.guideUrl')} target="_blank" rel="noopener noreferrer">
               {t('pwa.install.guide')}
             </a>
           </Button>

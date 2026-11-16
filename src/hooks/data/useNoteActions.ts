@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import type { PurgedRelations } from '@/data/LocalStore.ts';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
-import { newNote } from '@/lib/rows.ts';
+import { newNote, nowIso } from '@/lib/rows.ts';
 import type { Note } from '@/models.ts';
 
 /** How long a Trashed note is kept before the sweep purges it (ADR 0009). */
@@ -53,7 +53,7 @@ export function useNoteActions() {
     async (id: string, updates: Partial<Note>) => {
       const result = await store.notes.update(id, () => ({
         ...updates,
-        updatedAt: new Date().toISOString(),
+        updatedAt: nowIso(),
       }));
       return result?.after ?? null;
     },
@@ -74,7 +74,7 @@ export function useNoteActions() {
     ): Promise<LifecycleSnapshot | null> => {
       const result = await store.notes.update(id, (note) => ({
         ...next(note),
-        updatedAt: new Date().toISOString(),
+        updatedAt: nowIso(),
       }));
       return result ? snapshotOf(result.before) : null;
     },
@@ -98,7 +98,7 @@ export function useNoteActions() {
   );
 
   const pinNote = useCallback(
-    (id: string) => transition(id, () => ({ pinnedAt: new Date().toISOString() })),
+    (id: string) => transition(id, () => ({ pinnedAt: nowIso() })),
     [transition]
   );
   const unpinNote = useCallback(
@@ -118,7 +118,7 @@ export function useNoteActions() {
     (id: string) =>
       transition(id, () => ({
         state: 'trashed',
-        trashedAt: new Date().toISOString(),
+        trashedAt: nowIso(),
         pinnedAt: undefined,
       })),
     [transition]

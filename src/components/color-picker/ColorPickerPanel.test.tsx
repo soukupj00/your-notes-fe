@@ -22,15 +22,15 @@ describe('ColorPickerPanel', () => {
   it('clicking a swatch fires onChange with its cssValue', () => {
     const onChange = vi.fn();
     renderPanel(onChange);
-    const red = CARD_COLORS.colors.find((c) => c.label === 'Red');
-    fireEvent.click(screen.getByRole('button', { name: 'Red' }));
+    const red = CARD_COLORS.colors.find((c) => c.token === 'red');
+    fireEvent.click(screen.getByRole('button', { name: 'colors.red' }));
     expect(onChange).toHaveBeenCalledWith(red?.cssValue);
   });
 
   it('clicking the Default swatch fires onChange with an empty string', () => {
     const onChange = vi.fn();
     renderPanel(onChange);
-    fireEvent.click(screen.getByRole('button', { name: 'Default' }));
+    fireEvent.click(screen.getByRole('button', { name: 'colors.default' }));
     expect(onChange).toHaveBeenCalledWith('');
   });
 

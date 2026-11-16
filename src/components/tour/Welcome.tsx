@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
+import { nowIso } from '@/lib/rows.ts';
 import { holdBodyInert } from '@/lib/tour/inert.ts';
 import { stageRadiusOf } from '@/lib/tour/steps.ts';
 import { waitForTarget } from '@/lib/tour/waitFor.ts';
@@ -75,7 +76,7 @@ export function Welcome() {
       if (!alive() || offeredRef.current || found.some((element) => !element)) return;
       offeredRef.current = true;
       setElements(found as Element[]);
-      await setPreference('welcomeSeenAt', new Date().toISOString());
+      await setPreference('welcomeSeenAt', nowIso());
     },
     [pathname, preferences.welcomeSeenAt, setPreference]
   );

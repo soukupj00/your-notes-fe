@@ -45,7 +45,7 @@ export function plan(
       thumbnailsDown.push({ id: a.id, blobId: a.thumbnailId, part: 'thumbnail' });
     }
     // An image too small to be given a thumbnail is its own Preview, so it comes with them.
-    // ponytail: one whose thumbnail failed to render (an undecodable format) comes too, at full size.
+    // One whose thumbnail failed to render (an undecodable format) comes too, at full size.
     const ownPreview = a.kind === 'image' && !a.thumbnailId;
     if (!a.blob && ownPreview) {
       thumbnailsDown.push({ id: a.id, blobId: a.id, part: 'blob' });

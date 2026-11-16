@@ -248,7 +248,7 @@ describe('a trashed note', () => {
     const { note, onClose } = await openStored({ ...trashed, header: '', body: '' });
     await screen.findByRole('button', { name: 'notes.deleteForever' });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await userEvent.click(screen.getByRole('button', { name: 'dialog.close' }));
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(await testStore.notes.get(note.id)).toEqual(note);

@@ -43,7 +43,7 @@ export async function keepConflictedCopy(
   for (const from of extractAttachmentIds(local.body)) {
     const row = await store.attachments.get(from);
     if (!row) continue;
-    // ponytail: bytes the server does not have either are lost to the copy; it keeps the metadata.
+    // Bytes the server does not have either are lost to the copy; it keeps the metadata.
     const blob = row.blob ?? (await fetchBytes(from).catch(() => undefined));
     clones.push({ from, clone: cloneAttachment(blob ? { ...row, blob } : row, id, now) });
   }

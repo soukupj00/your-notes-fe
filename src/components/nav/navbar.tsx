@@ -19,12 +19,11 @@ import {
 import { SidebarTrigger } from '@/components/ui/sidebar.tsx';
 import { IconTooltip } from '@/components/ui/tooltip.tsx';
 import { useIsFeedRoute } from '@/hooks/useNoteSearchState.ts';
-import i18n from '@/i18n';
 import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
 import { listLocales } from '@/lib/locales.ts';
 
 function Navbar() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   // Settings has no feed, so it gets no search box: a control that silently
   // does nothing is worse than an absent one.
   const searchable = useIsFeedRoute();
