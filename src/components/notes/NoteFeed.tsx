@@ -26,30 +26,9 @@ export function NoteFeed({ notes, mode, label, onSelect }: NoteFeedProps) {
   // to one note does not re-mint every other card's thumbnails.
   const attachmentsByNote = useAttachmentsByNote(ids);
   const reducedMotion = useReducedMotion();
-  const { containerRef, layout, ready, supported } = useNoteFeedLayout(mode, ids);
+  const { containerRef, layout, ready } = useNoteFeedLayout(mode, ids);
   const layoutTransition = resolveTransition(reducedMotion);
   const presenceTransition = resolveTransition(reducedMotion, PRESENCE_TRANSITION);
-
-  // Without ResizeObserver, a plain Stack is the honest fallback rather than a broken Masonry.
-  if (!supported) {
-    return (
-      <ul
-        className="mx-auto flex w-full max-w-[44rem] flex-col gap-[var(--feed-gap)]"
-        aria-label={label}
-        data-layout="stack"
-      >
-        {notes.map((note) => (
-          <li key={note.id}>
-            <NoteCard
-              note={note}
-              attachments={attachmentsByNote.get(note.id)}
-              onSelect={onSelect}
-            />
-          </li>
-        ))}
-      </ul>
-    );
-  }
 
   return (
     <m.ul

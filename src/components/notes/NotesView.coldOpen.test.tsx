@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { stubFeedLayout } from '@/test/feedLayout.ts';
 import { renderRoute } from '@/test/renderRoute.tsx';
 import { clearStore, testStore } from '@/test/store.tsx';
 
@@ -21,14 +22,11 @@ vi.mock('@/components/editor/editor.tsx', () => ({
   Editor: () => <textarea data-testid="editor" />,
 }));
 
-const realResizeObserver = globalThis.ResizeObserver;
+let restoreFeedLayout: () => void;
 
 beforeEach(() => {
   window.innerWidth = 1024;
-  // The feed's no-measurement path, so the Card is clickable in jsdom (see
-  // `NotesView.openNote.test.tsx`).
-  // @ts-expect-error deliberately removing the global for this test
-  globalThis.ResizeObserver = undefined;
+  restoreFeedLayout = stubFeedLayout();
   // A Fine pointer, so opening moves focus into the title and closing has to bring it back.
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches: query.includes('pointer: fine'),
@@ -39,7 +37,7 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
-  globalThis.ResizeObserver = realResizeObserver;
+  restoreFeedLayout();
   vi.unstubAllGlobals();
   localStorage.clear();
   await clearStore();
