@@ -42,7 +42,7 @@ const none: ServerChanges = { notes: [], tags: [], noteTags: [], tombstones: [] 
  * order matters: the server answers `gone` for a link whose Note or Tag it does
  * not hold yet, so a link must never travel ahead of them.
  */
-export function chunk(owed: PushBatch, size = MAX_BATCH): PushBatch[] {
+function chunk(owed: PushBatch, size = MAX_BATCH): PushBatch[] {
   const ordered = [
     ...owed.notes.map((row) => ['notes', row] as const),
     ...owed.tags.map((row) => ['tags', row] as const),

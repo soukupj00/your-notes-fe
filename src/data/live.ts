@@ -1,4 +1,4 @@
-export type Unsubscribe = () => void;
+type Unsubscribe = () => void;
 
 /**
  * Delivers the present value (asynchronously), then every value later writes produce.

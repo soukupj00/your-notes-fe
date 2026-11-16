@@ -12,7 +12,7 @@ export type NoteFeedScope = {
   tagId?: string;
 };
 
-export type NoteUpdate = { before: Note; after: Note };
+type NoteUpdate = { before: Note; after: Note };
 
 /** What `notes.purge` removed alongside the note, for a lossless undo. */
 export type PurgedRelations = { removedTags: NoteTag[]; removedAttachments: Attachment[] };
@@ -59,7 +59,7 @@ export const SYNC_META_KEYS = {
  * leaves an owed row or one with a pending Tombstone alone, so the next push
  * decides it; `server-wins` (resolving a push outcome) overwrites it.
  */
-export type ApplyMode = 'keep-local' | 'server-wins';
+type ApplyMode = 'keep-local' | 'server-wins';
 
 /**
  * The only way app code reads or writes persisted data (ADR 0020). Its rules are in

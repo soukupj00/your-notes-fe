@@ -60,7 +60,7 @@ function attachmentMeta(attachment: StoredAttachment): AttachmentMeta {
  * bytes and transfer state this Device already had for the id. A thumbnail is
  * kept only while `thumbnailId` still names it.
  */
-export function fromServerAttachment(
+function fromServerAttachment(
   meta: AttachmentMeta,
   local: StoredAttachment | undefined
 ): StoredAttachment {
@@ -165,18 +165,13 @@ export function settle<T extends object>(
   return next;
 }
 
-export type AcceptedRow = { rev: number } & (
-  | { kind: 'note'; row: RevisionedNote }
-  | { kind: 'tag'; row: RevisionedTag }
-  | { kind: 'noteTag'; row: RevisionedNoteTag }
-  | { kind: 'tombstone'; row: Tombstone }
-);
-
 export type PushedRow =
   | { kind: 'note'; row: RevisionedNote }
   | { kind: 'tag'; row: RevisionedTag }
   | { kind: 'noteTag'; row: RevisionedNoteTag }
   | { kind: 'tombstone'; row: Tombstone };
+
+export type AcceptedRow = PushedRow & { rev: number };
 
 /**
  * Each pushed row with the outcome the server gave it. Outcomes come back one

@@ -35,19 +35,6 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
   /** Inside a transaction over `notes`: the Note owes its Attachment metadata. No-op if it is gone. */
   const noteOwed = (noteId: string) => db.notes.update(noteId, { dirty: 1 });
 
-  /** Inside a transaction over `notes` and `tombstones`: the Note written owed, keeping its stored Revision. */
-  async function writeNote(note: Note) {
-    const [stored, gone] = await Promise.all([db.notes.get(note.id), db.tombstones.get(note.id)]);
-    await db.notes.put(owed(note, stored?.rev ?? gone?.rev));
-    if (gone) await db.tombstones.delete(note.id);
-  }
-
-  async function writeTag(tag: Tag) {
-    const [stored, gone] = await Promise.all([db.tags.get(tag.id), db.tombstones.get(tag.id)]);
-    await db.tags.put(owed(tag, stored?.rev ?? gone?.rev));
-    if (gone) await db.tombstones.delete(tag.id);
-  }
-
   /** Inside a transaction over `table` and `tombstones`: each row owed, with the Revision held for its id. */
   async function putOwed<T extends { id: string }>(table: Table<Stored<T>, string>, rows: T[]) {
     const ids = rows.map((row) => row.id);
@@ -109,7 +96,7 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           await db.notes.add(owed(note, undefined));
           await db.tombstones.delete(note.id);
         }),
-      put: (note) => db.transaction('rw', db.notes, db.tombstones, () => writeNote(note)),
+      put: (note) => db.transaction('rw', db.notes, db.tombstones, () => putOwed(db.notes, [note])),
       update: (id, change) =>
         db.transaction('rw', db.notes, async () => {
           const stored = await db.notes.get(id);
@@ -135,7 +122,7 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
         }),
       restore: (note, removed = {}) =>
         db.transaction('rw', [db.notes, db.noteTags, db.attachments, db.tombstones], async () => {
-          await writeNote(note);
+          await putOwed(db.notes, [note]);
           if (removed.removedTags?.length) await addLinks(removed.removedTags);
           if (removed.removedAttachments?.length)
             await db.attachments.bulkPut(removed.removedAttachments);
@@ -155,7 +142,7 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           await db.tags.add(owed(tag, undefined));
           await db.tombstones.delete(tag.id);
         }),
-      put: (tag) => db.transaction('rw', db.tags, db.tombstones, () => writeTag(tag)),
+      put: (tag) => db.transaction('rw', db.tags, db.tombstones, () => putOwed(db.tags, [tag])),
       update: (id, change) =>
         db.transaction('rw', db.tags, async () => {
           const stored = await db.tags.get(id);

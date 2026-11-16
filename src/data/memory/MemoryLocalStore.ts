@@ -23,7 +23,7 @@ import {
   withReceived,
 } from '../syncRows.ts';
 
-type Table = 'notes' | 'tags' | 'noteTags' | 'attachments' | 'meta';
+type Table = 'notes' | 'tags' | 'noteTags' | 'attachments';
 
 const linkKey = noteTagId;
 
@@ -303,11 +303,9 @@ export function createMemoryLocalStore(): LocalStore {
       get: async <T>(key: string) => meta.get(key) as T | undefined,
       set: async (key, value) => {
         meta.set(key, value);
-        changed('meta');
       },
       delete: async (key) => {
         meta.delete(key);
-        changed('meta');
       },
     },
 
@@ -459,7 +457,7 @@ export function createMemoryLocalStore(): LocalStore {
       attachments.clear();
       tombstones.clear();
       meta.clear();
-      changed('notes', 'tags', 'noteTags', 'attachments', 'meta');
+      changed('notes', 'tags', 'noteTags', 'attachments');
     },
   };
 }

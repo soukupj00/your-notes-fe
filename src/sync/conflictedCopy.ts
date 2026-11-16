@@ -11,7 +11,7 @@ import type { Attachment, Note } from '@/models.ts';
 export const CONFLICTS_TAG_NAME = 'Conflicts';
 
 /** `Groceries (conflict from Pixel 8, 2026-09-28)`: whose version it was, and when it lost. */
-export function conflictedHeader(header: string | undefined, deviceName: string, at: Date) {
+function conflictedHeader(header: string | undefined, deviceName: string, at: Date) {
   const title = header?.trim() || 'Untitled';
   return `${title} (conflict from ${deviceName}, ${at.toISOString().slice(0, 10)})`;
 }
