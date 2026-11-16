@@ -14,9 +14,6 @@ export type NoteFeedScope = {
 
 type NoteUpdate = { before: Note; after: Note };
 
-/** What `notes.purge` removed alongside the note, for a lossless undo. */
-export type PurgedRelations = { removedTags: NoteTag[]; removedAttachments: Attachment[] };
-
 /**
  * Never `blob`: bytes are write-once by id (ADR 0017), so new bytes are a new row and
  * downloaded ones arrive through `sync.received`. A new thumbnail needs a new `thumbnailId`.
@@ -77,10 +74,8 @@ export interface LocalStore {
     add(note: Note): Promise<void>;
     /** Atomic read-modify-write; `null` when there is no such note. */
     update(id: string, change: (note: Note) => Partial<Note>): Promise<NoteUpdate | null>;
-    /** Removes the note, its links and its attachments, and returns the latter two. */
-    purge(id: string): Promise<PurgedRelations>;
-    /** The inverse of `purge`: puts the note and whatever was removed back verbatim. */
-    restore(note: Note, removed?: Partial<PurgedRelations>): Promise<void>;
+    /** Removes the note, its links and its attachments. */
+    purge(id: string): Promise<void>;
   };
 
   readonly tags: {
@@ -121,7 +116,6 @@ export interface LocalStore {
     forNotes(noteIds: readonly string[]): Live<Attachment[]>;
     add(attachment: Attachment): Promise<void>;
     update(id: string, changes: AttachmentChanges): Promise<void>;
-    delete(id: string): Promise<void>;
     /** Deletes this note's rows whose id is not in `keep`; returns how many. */
     sweepNote(noteId: string, keep: readonly string[]): Promise<number>;
     /**

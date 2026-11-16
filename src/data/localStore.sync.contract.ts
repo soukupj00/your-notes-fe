@@ -150,7 +150,7 @@ export function describeLocalStoreSyncContract(makeStore: () => Promise<LocalSto
       expect((await store.sync.dirty()).notes[0]?.attachments).toEqual([]);
     });
 
-    it('purge leaves one Tombstone with the Revision; restore takes it back', async () => {
+    it('purge leaves one Tombstone with the Revision', async () => {
       const n = note();
       const t = tag();
       await store.notes.add(n);
@@ -158,18 +158,12 @@ export function describeLocalStoreSyncContract(makeStore: () => Promise<LocalSto
       await store.tags.link(link(n.id, t.id));
       await syncAll(store, 4);
 
-      const removed = await store.notes.purge(n.id);
+      await store.notes.purge(n.id);
       const afterPurge = await store.sync.dirty();
       expect(afterPurge.notes).toEqual([]);
       expect(afterPurge.tombstones).toEqual([
         { id: n.id, kind: 'note', rev: 4, deletedAt: expect.any(String) },
       ]);
-
-      await store.notes.restore(n, removed);
-      const afterRestore = await store.sync.dirty();
-      expect(afterRestore.tombstones).toEqual([]);
-      expect(afterRestore.notes[0]?.rev).toBe(4);
-      expect(afterRestore.noteTags).toEqual([link(n.id, t.id)]);
     });
 
     it('removing something never pushed leaves nothing to tell the server', async () => {

@@ -21,9 +21,9 @@ The store itself is described in [`src/data/CLAUDE.md`](../../data/CLAUDE.md).
 
 | Hook | Does |
 | ---- | ---- |
-| `useNoteActions()` | create, update, purge and restore, plus the lifecycle moves (pin, archive, trash, restore, empty trash) |
+| `useNoteActions()` | create, update and purge, plus the lifecycle moves (pin, archive, trash, restore, empty trash) |
 | `useTagActions()` | create, update, delete, merge, move and arrange, and link or unlink a Tag and a Note |
-| `useAttachmentActions()` | create, read, update, delete, clone, and the two orphan sweeps |
+| `useAttachmentActions()` | create, read, update, clone, and the two orphan sweeps |
 
 ## Behaviour worth knowing
 
@@ -31,7 +31,7 @@ The store itself is described in [`src/data/CLAUDE.md`](../../data/CLAUDE.md).
   `createNote` also accepts an id, which is how a Draft keeps the id its URL already shows ([ADR 0014](../../../docs/adr/0014-the-open-note-lives-in-the-url.md)).
 - **"Delete" is `trashNote`, not `purgeNote`** ([ADR 0009](../../../docs/adr/0009-note-lifecycle-model.md)).
   Every lifecycle move returns a snapshot of the fields it overwrote; hand it to `revertLifecycle` to undo without a trace.
-  `purgeNote` is the irreversible one: it removes the Note with its links and Attachments in one store call and returns what it removed, so `restoreNote` can undo it losslessly.
+  `purgeNote` is the irreversible one: it removes the Note with its links and Attachments in one store call.
   Trashed Notes older than the grace period are purged at app start.
 - **Tags.**
   `createTag` is idempotent by name, case-insensitively, because create-on-the-fly runs from a free-text field.

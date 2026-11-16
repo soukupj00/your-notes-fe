@@ -1,5 +1,4 @@
 import { useCallback } from 'react';
-import type { PurgedRelations } from '@/data/LocalStore.ts';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import { newNote, nowIso } from '@/lib/rows.ts';
 import type { Note } from '@/models.ts';
@@ -40,15 +39,6 @@ export function useNoteActions() {
     [store]
   );
 
-  // Puts a purged note back verbatim (original id and timestamps, tags and attachments re-linked).
-  const restoreNote = useCallback(
-    async (note: Note, removed: Partial<PurgedRelations> = {}) => {
-      await store.notes.restore(note, removed);
-      return note;
-    },
-    [store]
-  );
-
   const updateNote = useCallback(
     async (id: string, updates: Partial<Note>) => {
       const result = await store.notes.update(id, () => ({
@@ -60,8 +50,7 @@ export function useNoteActions() {
     [store]
   );
 
-  // The irreversible removal (CONTEXT.md "Purge"); returns what it removed so `restoreNote` can
-  // undo it. The user-facing delete is `trashNote`.
+  // The irreversible removal (CONTEXT.md "Purge"). The user-facing delete is `trashNote`.
   const purgeNote = useCallback((id: string) => store.notes.purge(id), [store]);
 
   // ---- Lifecycle (ADR 0009) -------------------------------------------------
@@ -152,7 +141,6 @@ export function useNoteActions() {
 
   return {
     createNote,
-    restoreNote,
     updateNote,
     purgeNote,
     revertLifecycle,

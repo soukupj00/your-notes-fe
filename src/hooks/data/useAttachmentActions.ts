@@ -37,8 +37,6 @@ export function useAttachmentActions() {
   /** The row, live: a download or a pull re-renders whatever shows it. */
   const watchAttachment = useCallback((id: string) => store.attachments.watch(id), [store]);
 
-  const deleteAttachment = useCallback((id: string) => store.attachments.delete(id), [store]);
-
   const cloneAttachment = useCallback(
     async (source: Attachment, noteId: string): Promise<Attachment> => {
       const clone = cloneRow(source, noteId);
@@ -85,7 +83,6 @@ export function useAttachmentActions() {
     createAttachment,
     getAttachment,
     watchAttachment,
-    deleteAttachment,
     cloneAttachment,
     updateAttachment,
     collectOrphans,
