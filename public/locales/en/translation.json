@@ -348,6 +348,7 @@
       },
       "docs": {
         "label": "Documentation",
+        "url": "https://soukupj00.github.io/your-notes-fe/",
         "setupUrl": "https://soukupj00.github.io/your-notes-be/setup"
       }
     },
@@ -406,6 +407,7 @@
       "description": "Opens in its own window.",
       "action": "Install",
       "guide": "Install guide",
+      "guideUrl": "https://soukupj00.github.io/your-notes-fe/get-the-app",
       "manual": {
         "ios": "Tap the Share button, then Add to Home Screen.",
         "macosSafari": "In the menu bar, choose File, then Add to Dock.",
@@ -613,6 +615,9 @@
     },
     "merging": "Merging labels…"
   },
+  "dialog": {
+    "close": "Close"
+  },
   "colors": {
     "default": "No colour",
     "red": "Red",
@@ -621,9 +626,11 @@
     "green": "Green",
     "teal": "Teal",
     "blue": "Blue",
+    "indigo": "Indigo",
     "purple": "Purple",
     "pink": "Pink",
-    "gray": "Grey"
+    "gray": "Grey",
+    "custom": "Custom"
   },
   "errors": {
     "crash": {

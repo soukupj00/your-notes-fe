@@ -7,6 +7,7 @@ import {
   mintId,
   type NewAttachmentOptions,
   newAttachment,
+  nowIso,
 } from '@/lib/rows.ts';
 import type { Attachment, AttachmentKind } from '@/models.ts';
 
@@ -55,7 +56,7 @@ export function useAttachmentActions() {
       id: string,
       { thumbnail, ...changes }: { preview?: string; thumbnail?: Blob; duration?: number }
     ) => {
-      const updatedAt = new Date().toISOString();
+      const updatedAt = nowIso();
       // New thumbnail bytes are a new blob: bytes are write-once by id (ADR 0017).
       return store.attachments.update(
         id,

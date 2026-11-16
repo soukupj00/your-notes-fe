@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { Navbar } from '@/components/nav/navbar.tsx';
 import { SideNav } from '@/components/nav/SideNav.tsx';
-import { Navbar } from '@/components/ui/navbar.tsx';
 import {
   Sidebar,
   SidebarContent,

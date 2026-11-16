@@ -107,7 +107,7 @@ describe('PwaInstallSection', () => {
       expect(screen.getByText(`pwa.install.manual.${variant}`)).toBeInTheDocument();
       expect(screen.getByRole('link', { name: 'pwa.install.guide' })).toHaveAttribute(
         'href',
-        'https://soukupj00.github.io/your-notes-fe/get-the-app'
+        'pwa.install.guideUrl'
       );
     }
   );

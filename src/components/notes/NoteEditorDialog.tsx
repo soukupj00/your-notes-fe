@@ -24,6 +24,7 @@ import { createNoteDraft, isEmpty } from '@/lib/draft.ts';
 import type { Intent } from '@/lib/intent.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { type Reminder, reminderOf } from '@/lib/reminder.ts';
+import { nowIso } from '@/lib/rows.ts';
 import { cn } from '@/lib/utils.ts';
 import type { NoteState } from '@/models.ts';
 
@@ -159,7 +160,7 @@ export function NoteEditorDialog({
   );
 
   const handlePinToggle = useCallback(async () => {
-    const next = pinnedAt ? undefined : new Date().toISOString();
+    const next = pinnedAt ? undefined : nowIso();
     setPinnedAt(next);
     const id = await draft.ensureSaved();
     // The lifecycle transitions own the pin field (ADR 0009) rather than a raw

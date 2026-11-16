@@ -3,7 +3,7 @@
  *
  * This file is vendored verbatim by the frontend (`ni-dip-fe`) and runs in the browser,
  * so it imports nothing but `zod` and nothing from the server.
- * Vendored from ni-dip-be at commit: label-order-wip
+ * Vendored from ni-dip-be at commit: af4f38c
  * When copying it, replace the line above with the backend commit it was taken from.
  */
 import { z } from 'zod';

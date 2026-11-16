@@ -8,7 +8,6 @@ import {
   SelectValue,
 } from '@/components/ui/select.tsx';
 import { type Theme, useTheme } from '@/context/themeProvider.tsx';
-import i18n from '@/i18n';
 import { listLocales } from '@/lib/locales.ts';
 import { SegmentedSetting, SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
@@ -19,7 +18,7 @@ const THEMES: Theme[] = ['system', 'light', 'dark'];
  * `localStorage` itself (CLAUDE.md, i18n). A Select, because the list outgrows a segmented control.
  */
 export function LanguageAndThemeSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const locales = listLocales();
 
   return (

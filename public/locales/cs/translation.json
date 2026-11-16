@@ -355,6 +355,7 @@
       },
       "docs": {
         "label": "Dokumentace",
+        "url": "https://soukupj00.github.io/your-notes-fe/cs/",
         "setupUrl": "https://soukupj00.github.io/your-notes-be/cs/setup"
       }
     },
@@ -413,6 +414,7 @@
       "description": "Otevře se ve vlastním okně.",
       "action": "Nainstalovat",
       "guide": "Návod k instalaci",
+      "guideUrl": "https://soukupj00.github.io/your-notes-fe/cs/get-the-app",
       "manual": {
         "ios": "Klepněte na tlačítko Sdílet a potom na Přidat na plochu.",
         "macosSafari": "V řádku nabídek zvolte Soubor a potom Přidat do Docku.",
@@ -623,6 +625,9 @@
     },
     "merging": "Slučuji štítky…"
   },
+  "dialog": {
+    "close": "Zavřít"
+  },
   "colors": {
     "default": "Bez barvy",
     "red": "Červená",
@@ -631,9 +636,11 @@
     "green": "Zelená",
     "teal": "Modrozelená",
     "blue": "Modrá",
+    "indigo": "Indigová",
     "purple": "Fialová",
     "pink": "Růžová",
-    "gray": "Šedá"
+    "gray": "Šedá",
+    "custom": "Vlastní"
   },
   "errors": {
     "crash": {

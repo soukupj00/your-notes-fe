@@ -73,7 +73,7 @@ function makeNote(overrides: Partial<Note> = {}): Note {
 
 const headerInput = () => screen.getByLabelText('notes.titlePlaceholder');
 const editorTextarea = () => screen.getByTestId('editor') as HTMLTextAreaElement;
-const closeButton = () => screen.getByRole('button', { name: 'Close' });
+const closeButton = () => screen.getByRole('button', { name: 'dialog.close' });
 // By slot, not by role: an open Radix popover is also a `dialog`.
 const dialogSurface = () =>
   document.querySelector('[data-slot="dialog-content"]') as HTMLElement | null;

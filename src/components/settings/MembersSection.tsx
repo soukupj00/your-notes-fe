@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
+import { Password } from '@/contract/index.ts';
 import type { Member } from '@/data/Remote.ts';
 import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { formatDate, MEDIUM_DATE } from '@/lib/format.ts';
@@ -74,8 +75,8 @@ function ResetPasswordButton({ member }: { member: Member }) {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="new-password"
-              minLength={8}
-              maxLength={256}
+              minLength={Password.minLength ?? undefined}
+              maxLength={Password.maxLength ?? undefined}
             />
             {error && (
               <p role="alert" className="text-destructive text-sm">

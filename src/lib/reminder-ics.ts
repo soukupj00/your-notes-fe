@@ -84,7 +84,7 @@ export function buildReminderIcs(event: ReminderEvent): string {
     // calendar honours UID + SEQUENCE, instead of adding a second one.
     `UID:${event.noteId}`,
     `DTSTAMP:${utcStamp(now)}`,
-    // ponytail: epoch seconds stand in for a stored counter; SEQUENCE is an
+    // Epoch seconds stand in for a stored counter; SEQUENCE is an
     // int32, so this overflows in 2038 - store a real counter before then.
     `SEQUENCE:${Math.floor(now.getTime() / 1000)}`,
     `DTSTART:${floating(remindAt)}`,

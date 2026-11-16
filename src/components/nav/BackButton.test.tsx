@@ -6,10 +6,10 @@ import { clearStore, testStore } from '@/test/store.tsx';
 import { setViewport } from '@/test/viewport.ts';
 
 // Vitest hoists `vi.mock`, so these cannot come from a shared helper.
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-  default: {},
-}));
+vi.mock('react-i18next', async () => {
+  const { default: i18n } = await import('@/i18n');
+  return { useTranslation: () => ({ t: (key: string) => key, i18n }), default: {} };
+});
 
 vi.mock('@/i18n', () => ({
   default: { options: { supportedLngs: ['en'] }, resolvedLanguage: 'en', changeLanguage: vi.fn() },

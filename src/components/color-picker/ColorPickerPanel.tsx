@@ -2,6 +2,7 @@ import Color from 'color';
 import { Check, Pipette } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { HexColorPicker } from 'react-colorful';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -23,13 +24,15 @@ interface SwatchProps {
 }
 
 function Swatch({ color, selected, onSelect }: SwatchProps) {
+  const { t } = useTranslation();
+  const label = t(`colors.${color.token}`);
   const isDefault = color.cssValue === '';
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <button
           type="button"
-          aria-label={color.label}
+          aria-label={label}
           aria-pressed={selected}
           onClick={() => onSelect(color.cssValue)}
           className={cn(
@@ -51,7 +54,7 @@ function Swatch({ color, selected, onSelect }: SwatchProps) {
           )}
         </button>
       </TooltipTrigger>
-      <TooltipContent side="bottom">{color.label}</TooltipContent>
+      <TooltipContent side="bottom">{label}</TooltipContent>
     </Tooltip>
   );
 }
@@ -80,6 +83,7 @@ export function ColorPickerPanel({
   showCustom = true,
   className,
 }: ColorPickerPanelProps) {
+  const { t } = useTranslation();
   const inPalette = palette.colors.some((c) => c.cssValue === value);
   const [customOpen, setCustomOpen] = useState(!inPalette && value !== '');
 
@@ -127,7 +131,7 @@ export function ColorPickerPanel({
             onClick={() => setCustomOpen((open) => !open)}
           >
             <Pipette className="size-4" />
-            Custom
+            {t('colors.custom')}
           </Button>
           {customOpen && (
             // Release (pointerup) commits the drafted color once; dragging only previews.

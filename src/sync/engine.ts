@@ -2,6 +2,7 @@ import { MAX_BATCH, type RevisionedNote } from '@/contract/index.ts';
 import { type LocalStore, SYNC_META_KEYS } from '@/data/LocalStore.ts';
 import type { PushBatch, PushOutcome, Remote, ServerChanges } from '@/data/Remote.ts';
 import { type PushedRow, pairOutcomes } from '@/data/syncRows.ts';
+import { nowIso } from '@/lib/rows.ts';
 import type { Note } from '@/models.ts';
 import { runTransfers } from './attachments.ts';
 import { keepConflictedCopy } from './conflictedCopy.ts';
@@ -107,7 +108,7 @@ export function createSyncEngine({
       // Purged elsewhere while this Device edited it: the edit survives as a copy,
       // and the row goes (the server already holds its Tombstone).
       if (outcome.kind === 'note' && pushed.kind === 'note') await keepLocal(outcome.id, report);
-      const deletedAt = new Date().toISOString();
+      const deletedAt = nowIso();
       await serverWins({ tombstones: [{ id: outcome.id, kind: outcome.kind, deletedAt }] });
       return;
     }
@@ -158,7 +159,7 @@ export function createSyncEngine({
         const owed = new Set((await store.sync.dirty()).notes.map((n) => n.id));
         for (const t of purged) if (owed.has(t.id)) await keepLocal(t.id, report);
       }
-      // ponytail: an owed row whose server version arrives here is left as it is; the
+      // An owed row whose server version arrives here is left as it is; the
       // next push turns it into a conflict, which is the intended path (04-sync.md).
       await store.sync.applyPage(page);
       // Caught up, the cursor is the server's `resume` link: it answers what comes
@@ -183,7 +184,7 @@ export function createSyncEngine({
     const moved = await runTransfers(store, remote, { keepEverything: keepEverything() });
     report.tooLarge = moved.tooLarge;
     report.transfersLeft = moved.left;
-    await store.meta.set(SYNC_META_KEYS.lastSyncedAt, new Date().toISOString());
+    await store.meta.set(SYNC_META_KEYS.lastSyncedAt, nowIso());
     return report;
   }
 

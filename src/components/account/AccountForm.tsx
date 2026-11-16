@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
+import { DeviceName, Password, Username } from '@/contract/index.ts';
 import { ProblemError } from '@/data/http/hal.ts';
 import { platformOf } from '@/lib/deviceName.ts';
 
@@ -119,7 +120,7 @@ export function AccountForm({
             autoCapitalize="none"
             spellCheck={false}
             pattern="\S+"
-            maxLength={64}
+            maxLength={Username.maxLength ?? undefined}
           />
           <Field
             label={t('account.password')}
@@ -127,8 +128,8 @@ export function AccountForm({
             value={values.password}
             onChange={set('password')}
             autoComplete={credentials === 'new' ? 'new-password' : 'current-password'}
-            minLength={8}
-            maxLength={256}
+            minLength={Password.minLength ?? undefined}
+            maxLength={Password.maxLength ?? undefined}
             hint={credentials === 'new' ? t('account.passwordHint') : undefined}
           />
         </>
@@ -138,7 +139,7 @@ export function AccountForm({
         hint={t('account.deviceName.hint')}
         value={values.deviceName}
         onChange={set('deviceName')}
-        maxLength={64}
+        maxLength={DeviceName.maxLength ?? undefined}
       />
       {error && (
         <p id={errorId} role="alert" className="text-destructive text-sm">

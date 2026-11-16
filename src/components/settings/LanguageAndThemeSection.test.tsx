@@ -4,9 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/i18n';
 import { LanguageAndThemeSection } from './LanguageAndThemeSection.tsx';
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+vi.mock('react-i18next', async () => {
+  const { default: i18n } = await import('@/i18n');
+  return { useTranslation: () => ({ t: (key: string) => key, i18n }) };
+});
 
 vi.mock('@/i18n', () => ({
   default: {
