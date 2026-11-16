@@ -58,7 +58,7 @@ erDiagram
     }
     SETTING {
         string key "PK"
-        any value "e.g. the versioned preferences blob"
+        any value "e.g. the sync cursor"
     }
 ```
 

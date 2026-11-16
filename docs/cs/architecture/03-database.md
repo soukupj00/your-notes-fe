@@ -58,7 +58,7 @@ erDiagram
     }
     SETTING {
         string key "PK"
-        any value "např. verzovaný blob předvoleb"
+        any value "např. kurzor synchronizace"
     }
 ```
 

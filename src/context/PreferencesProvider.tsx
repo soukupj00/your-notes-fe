@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { z } from 'zod';
 
-/** Row key Preferences live under in `localStorage`; `legacyPreferences.ts` writes the same key. */
+/** Row key Preferences live under in `localStorage`. */
 export const PREFERENCES_STORAGE_KEY = 'preferences';
 
 /**

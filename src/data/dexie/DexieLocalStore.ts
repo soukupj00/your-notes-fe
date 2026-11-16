@@ -12,7 +12,6 @@ import {
   tombstone,
 } from '../syncRows.ts';
 import { db as defaultDb, type NotesDB } from './db.ts';
-import { migrateLegacyPreferences } from './legacyPreferences.ts';
 import { live } from './live.ts';
 import { createDexieSync } from './sync.ts';
 
@@ -21,11 +20,6 @@ import { createDexieSync } from './sync.ts';
  * can use a throwaway database per test.
  */
 export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
-  // A failure is logged, not rethrown: the store stays usable and the move retries next start.
-  void migrateLegacyPreferences(db).catch((error) =>
-    console.error('Legacy preferences migration failed', error)
-  );
-
   const stripAll = <T extends object>(rows: Stored<T>[]): T[] => rows.map(strip);
   const stripOne = <T extends object>(row: Stored<T> | undefined): T | undefined =>
     row && strip(row);
