@@ -41,11 +41,6 @@ export type PullPage =
        * The HAL adapter maps an absent `_links.next` to `null`.
        */
       next: string | null;
-      /**
-       * This page's own address. Once `next` is null it is the cursor to keep:
-       * asking it again later answers what came after it.
-       */
-      self: string;
       /** Where to pick up next time: `next` on a full page, else the Account's current Sequence. */
       resume: string;
       /** The Account's Sequence when the page was read; a Live Update hint past it is news. */
