@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Note } from '@/models.ts';
 import { clearStore, renderWithStore as render, testStore } from '@/test/store.tsx';
+import { allNotes } from '@/test/storeReads.ts';
 import { NoteEditorDialog } from './NoteEditorDialog.tsx';
 
 // Archive, trash and restore from the open Note, and the trash's read-only preview. What it saves
@@ -119,7 +120,7 @@ describe('NoteEditorDialog lifecycle', () => {
     await userEvent.click(screen.getByRole('button', { name: 'notes.moveToTrash' }));
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    expect(await testStore.notes.list()).toHaveLength(0);
+    expect(await allNotes(testStore)).toHaveLength(0);
     expect(toastMock).not.toHaveBeenCalled();
   });
 

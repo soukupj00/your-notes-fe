@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Tag } from '@/models.ts';
+import { tagById } from '@/test/storeReads.ts';
 import type { LocalStore } from './LocalStore.ts';
 import type { Live } from './live.ts';
 import { link, note, syncAll, tag } from './localStore.sync.contract.ts';
@@ -62,7 +63,7 @@ export function describeLocalStoreLabelsContract(makeStore: () => Promise<LocalS
 
       await store.tags.setPositions(new Map([[t.id, null]]));
 
-      expect((await store.tags.get(t.id))?.position ?? undefined).toBeUndefined();
+      expect((await tagById(store, t.id))?.position ?? undefined).toBeUndefined();
       expect((await store.sync.dirty()).tags).toEqual([
         expect.objectContaining({ id: t.id, position: null }),
       ]);

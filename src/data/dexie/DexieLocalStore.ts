@@ -78,7 +78,6 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
   return {
     notes: {
       get: async (id) => stripOne(await db.notes.get(id)),
-      list: async () => stripAll(await db.notes.toArray()),
       listByState: async (state: NoteState) =>
         stripAll(await db.notes.where('state').equals(state).toArray()),
       // `trashedAt` is indexed, so this is a range scan; it runs on every app start.
@@ -90,7 +89,6 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           await db.notes.add(owed(note, undefined));
           await db.tombstones.delete(note.id);
         }),
-      put: (note) => db.transaction('rw', db.notes, db.tombstones, () => putOwed(db.notes, [note])),
       update: (id, change) =>
         db.transaction('rw', db.notes, async () => {
           const stored = await db.notes.get(id);
@@ -124,7 +122,6 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
     },
 
     tags: {
-      get: async (id) => stripOne(await db.tags.get(id)),
       watch: (id) => live(async () => stripOne(await db.tags.get(id))),
       list: async () => stripAll(await db.tags.toArray()),
       all: () => live(async () => stripAll(await db.tags.toArray())),
@@ -136,7 +133,6 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           await db.tags.add(owed(tag, undefined));
           await db.tombstones.delete(tag.id);
         }),
-      put: (tag) => db.transaction('rw', db.tags, db.tombstones, () => putOwed(db.tags, [tag])),
       update: (id, change) =>
         db.transaction('rw', db.tags, async () => {
           const stored = await db.tags.get(id);
@@ -229,7 +225,6 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
     attachments: {
       get: async (id) => plainOne(await db.attachments.get(id)),
       watch: (id) => live(async () => plainOne(await db.attachments.get(id))),
-      list: async () => plain(await db.attachments.toArray()),
       forNote: (noteId) =>
         live(async () => plain(await db.attachments.where('noteId').equals(noteId).toArray())),
       forNotes: (noteIds) =>

@@ -5,6 +5,7 @@ import { createHalClient } from '@/data/http/hal.ts';
 import { createMemoryLocalStore } from '@/data/memory/MemoryLocalStore.ts';
 import type { Attachment, Note } from '@/models.ts';
 import { createFakeServer, type FakeServer } from '@/test/fakeServer.ts';
+import { allAttachments } from '@/test/storeReads.ts';
 import { downloadAttachment } from './attachments.ts';
 import { createSyncEngine } from './engine.ts';
 
@@ -117,7 +118,7 @@ describe('sync engine: attachment bytes', () => {
     server.state.blobRequests.length = 0;
 
     await b.engine.sync();
-    const rows = new Map((await b.store.attachments.list()).map((r) => [r.id, r]));
+    const rows = new Map((await allAttachments(b.store)).map((r) => [r.id, r]));
     expect(rows.get(img.id)).toMatchObject({ name: 'cat.png', thumbnailId: img.thumbnailId });
     expect(await rows.get(img.id)?.thumbnail?.text()).toBe('t');
     expect(rows.get(img.id)?.blob).toBeUndefined();
@@ -174,7 +175,7 @@ describe('sync engine: attachment bytes', () => {
 
     await b.engine.sync();
     expect(server.state.blobRequests).toEqual([`GET ${small.id}`, `GET ${big.id}`]);
-    for (const row of await b.store.attachments.list()) expect(row.blob).toBeDefined();
+    for (const row of await allAttachments(b.store)) expect(row.blob).toBeDefined();
   });
 
   it('a thumbnail from before thumbnailIds gets one, travels with the Note and uploads', async () => {

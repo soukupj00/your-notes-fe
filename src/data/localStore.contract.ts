@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Attachment, Note, NoteTag, Tag } from '@/models.ts';
+import { allAttachments, allNotes, tagById } from '@/test/storeReads.ts';
 import type { LocalStore } from './LocalStore.ts';
 import type { Live } from './live.ts';
 import { describeLocalStoreLabelsContract } from './localStore.labels.contract.ts';
@@ -79,13 +80,10 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
     });
 
     describe('notes', () => {
-      it('add / get / list / put', async () => {
+      it('add / get', async () => {
         const n = note();
         await store.notes.add(n);
         expect(await store.notes.get(n.id)).toEqual(n);
-        await store.notes.put({ ...n, header: 'changed' });
-        expect((await store.notes.get(n.id))?.header).toBe('changed');
-        expect(await store.notes.list()).toHaveLength(1);
         expect(await store.notes.get('missing')).toBeUndefined();
       });
 
@@ -140,7 +138,7 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
         expect(await store.notes.get(n.id)).toBeUndefined();
         expect(await store.attachments.get(a.id)).toBeUndefined();
         expect(await store.tags.listLinks()).toEqual([]);
-        expect(await store.tags.get(t.id)).toEqual(t); // the tag itself survives
+        expect(await tagById(store, t.id)).toEqual(t); // the tag itself survives
 
         await store.notes.restore(n, removed);
         expect(await store.notes.get(n.id)).toEqual(n);
@@ -196,7 +194,7 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
         await store.tags.add(t);
         const after = await store.tags.update(t.id, (current) => ({ name: `${current.name}!` }));
         expect(after).toEqual({ ...t, name: 'Work!' });
-        expect(await store.tags.get(t.id)).toEqual({ ...t, name: 'Work!' });
+        expect(await tagById(store, t.id)).toEqual({ ...t, name: 'Work!' });
         expect(await store.tags.update('missing', () => ({}))).toBeNull();
       });
 
@@ -204,7 +202,7 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
         const t = tag({ color: 'blue' });
         await store.tags.add(t);
         await store.tags.update(t.id, () => ({ color: undefined }));
-        expect((await store.tags.get(t.id))?.color).toBeUndefined();
+        expect((await tagById(store, t.id))?.color).toBeUndefined();
       });
 
       it('two updates in the same tick both land', async () => {
@@ -214,7 +212,7 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
           store.tags.update(t.id, () => ({ name: 'Home' })),
           store.tags.update(t.id, () => ({ color: 'red' })),
         ]);
-        expect(await store.tags.get(t.id)).toMatchObject({ name: 'Home', color: 'red' });
+        expect(await tagById(store, t.id)).toMatchObject({ name: 'Home', color: 'red' });
       });
 
       it('link is idempotent and unlink removes exactly one link', async () => {
@@ -242,7 +240,7 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
         await store.tags.add(t);
         await store.tags.link(link(n.id, t.id));
         await store.tags.delete(t.id);
-        expect(await store.tags.get(t.id)).toBeUndefined();
+        expect(await tagById(store, t.id)).toBeUndefined();
         expect(await store.tags.listLinks()).toEqual([]);
       });
 
@@ -263,12 +261,12 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
         const links = await store.tags.listLinks();
         expect(links.every((l) => l.tagId === target.id)).toBe(true);
         expect(links.map((l) => l.noteId).sort()).toEqual([both.id, onlySource.id].sort());
-        expect(await store.tags.get(source.id)).toBeUndefined();
+        expect(await tagById(store, source.id)).toBeUndefined();
 
         await expect(store.tags.merge(target.id, 'missing')).rejects.toThrow();
         // a rejected merge must not have relabelled anything: target.id is
         // the source of this second, failing merge and must survive intact
-        expect(await store.tags.get(target.id)).toEqual(target);
+        expect(await tagById(store, target.id)).toEqual(target);
         expect(await store.tags.listLinks()).toHaveLength(2);
       });
 
@@ -281,7 +279,7 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
 
         await store.tags.merge(t.id, t.id);
 
-        expect(await store.tags.get(t.id)).toEqual(t);
+        expect(await tagById(store, t.id)).toEqual(t);
         expect(await store.tags.listLinks()).toHaveLength(1);
       });
 
@@ -306,7 +304,7 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
         await store.tags.link(link(n.id, one.id));
         await until(() => forNote.latest().length === 1, 'forNote to see the link');
 
-        await store.tags.put({ ...one, name: 'renamed' });
+        await store.tags.update(one.id, () => ({ name: 'renamed' }));
         await until(() => watched.latest()?.name === 'renamed', 'watch to see the rename');
         await until(() => forNote.latest()[0]?.name === 'renamed', 'forNote to see the rename');
 
@@ -388,7 +386,7 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
         const elsewhere = attachment(other.id);
         for (const a of [keep, drop, elsewhere]) await store.attachments.add(a);
         expect(await store.attachments.sweepNote(n.id, [keep.id])).toBe(1);
-        expect(ids(await store.attachments.list())).toEqual(ids([keep, elsewhere]));
+        expect(ids(await allAttachments(store))).toEqual(ids([keep, elsewhere]));
       });
 
       it('sweepAll drops rows with no owner and rows the owner no longer references', async () => {
@@ -402,7 +400,7 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
           n.body?.includes('ref:KEEP') ? ['KEEP'] : []
         );
         expect(count).toBe(2);
-        expect(ids(await store.attachments.list())).toEqual(['KEEP']);
+        expect(ids(await allAttachments(store))).toEqual(['KEEP']);
       });
     });
 
@@ -434,10 +432,10 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
         await store.meta.set('cursor', 'abc');
         await store.importAll(snapshot);
 
-        expect(await store.notes.list()).toEqual([n]);
+        expect(await allNotes(store)).toEqual([n]);
         expect(await store.tags.list()).toEqual([t]);
         expect(await store.tags.listLinks()).toEqual([link(n.id, t.id)]);
-        expect(ids(await store.attachments.list())).toEqual([a.id]);
+        expect(ids(await allAttachments(store))).toEqual([a.id]);
         expect(await store.meta.get('cursor')).toBe('abc');
       });
 
@@ -460,10 +458,10 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
           attachments: [theirFile],
         });
 
-        expect(ids(await store.notes.list())).toEqual([mine.id, theirs.id].sort());
+        expect(ids(await allNotes(store))).toEqual([mine.id, theirs.id].sort());
         expect(ids(await store.tags.list())).toEqual([myTag.id, theirTag.id].sort());
         expect(await store.tags.listLinks()).toHaveLength(2);
-        expect(ids(await store.attachments.list())).toEqual([myFile.id, theirFile.id].sort());
+        expect(ids(await allAttachments(store))).toEqual([myFile.id, theirFile.id].sort());
       });
 
       it('importAll overwrites a Note it already holds with the imported version', async () => {
@@ -473,7 +471,7 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
         const imported = note({ id: held.id, header: 'as the file has it' });
         await store.importAll({ notes: [imported], tags: [], noteTags: [], attachments: [] });
 
-        expect(await store.notes.list()).toEqual([imported]);
+        expect(await allNotes(store)).toEqual([imported]);
       });
 
       it('importAll matches a Tag by name, ignoring case, and never changes one it holds', async () => {
@@ -513,7 +511,7 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
           attachments: [{ ...held, name: 'theirs.png' }],
         });
 
-        const [kept] = await store.attachments.list();
+        const [kept] = await allAttachments(store);
         expect(kept.name).toBe('mine.png');
       });
 
@@ -521,7 +519,7 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
         await store.notes.add(note());
         await store.meta.set('k', 1);
         await store.clear();
-        expect(await store.notes.list()).toEqual([]);
+        expect(await allNotes(store)).toEqual([]);
         expect(await store.meta.get('k')).toBeUndefined();
       });
     });

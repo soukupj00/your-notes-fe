@@ -34,7 +34,7 @@ function setViewportWidth(width: number) {
 
 async function seedTag() {
   const now = new Date().toISOString();
-  await testStore.tags.put({
+  await testStore.tags.add({
     id: 't1',
     name: 'Work',
     color: 'blue',

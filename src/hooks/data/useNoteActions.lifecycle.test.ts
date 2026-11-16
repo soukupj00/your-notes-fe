@@ -20,7 +20,7 @@ async function putNote(overrides: Partial<Note> = {}): Promise<Note> {
     updatedAt: now,
     ...overrides,
   };
-  await testStore.notes.put(note);
+  await testStore.notes.add(note);
   return note;
 }
 

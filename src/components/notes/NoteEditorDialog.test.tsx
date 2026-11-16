@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Note } from '@/models.ts';
 import { clearStore, renderWithStore as render, testStore } from '@/test/store.tsx';
+import { allNotes } from '@/test/storeReads.ts';
 import { NoteEditorDialog } from './NoteEditorDialog.tsx';
 import { EMPTY_CHECKLIST_BODY } from './noteDrafts.ts';
 
@@ -107,10 +108,10 @@ describe('NoteEditorDialog', () => {
 
     await userEvent.type(headerInput(), 'First draft');
 
-    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1), {
+    await waitFor(async () => expect((await allNotes(testStore)).length).toBe(1), {
       timeout: 2000,
     });
-    const notes = await testStore.notes.list();
+    const notes = await allNotes(testStore);
     expect(notes[0].header).toBe('First draft');
     const persistedId = notes[0].id;
 
@@ -123,7 +124,7 @@ describe('NoteEditorDialog', () => {
       },
       { timeout: 2000 }
     );
-    expect((await testStore.notes.list()).length).toBe(1);
+    expect((await allNotes(testStore)).length).toBe(1);
   });
 
   it('creates a draft from a body-only edit (empty header), exactly once', async () => {
@@ -131,10 +132,10 @@ describe('NoteEditorDialog', () => {
 
     await userEvent.type(editorTextarea(), 'Body only draft');
 
-    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1), {
+    await waitFor(async () => expect((await allNotes(testStore)).length).toBe(1), {
       timeout: 2000,
     });
-    const notes = await testStore.notes.list();
+    const notes = await allNotes(testStore);
     expect(notes[0].header).toBe('');
     expect(notes[0].body).toBe('Body only draft');
   });
@@ -146,7 +147,7 @@ describe('NoteEditorDialog', () => {
     await userEvent.click(closeButton());
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    expect((await testStore.notes.list()).length).toBe(0);
+    expect((await allNotes(testStore)).length).toBe(0);
   });
 
   it('deletes an existing note that is emptied out before closing', async () => {
@@ -197,10 +198,10 @@ describe('NoteEditorDialog', () => {
 
     await userEvent.type(editorTextarea(), 'Buy milk');
 
-    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1), {
+    await waitFor(async () => expect((await allNotes(testStore)).length).toBe(1), {
       timeout: 2000,
     });
-    const [saved] = await testStore.notes.list();
+    const [saved] = await allNotes(testStore);
     expect(saved.body).toContain('Buy milk');
     expect(saved.body).toContain('data-type="taskList"');
   });
@@ -217,23 +218,23 @@ describe('NoteEditorDialog', () => {
 
   it('stops writing once an edit settles (no autosave re-render loop)', async () => {
     const addSpy = vi.spyOn(testStore.notes, 'add');
-    const putSpy = vi.spyOn(testStore.notes, 'put');
+    const updateSpy = vi.spyOn(testStore.notes, 'update');
     render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
 
     await userEvent.type(headerInput(), 'Hi');
-    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1), {
+    await waitFor(async () => expect((await allNotes(testStore)).length).toBe(1), {
       timeout: 2000,
     });
 
-    const writesAtSettle = addSpy.mock.calls.length + putSpy.mock.calls.length;
+    const writesAtSettle = addSpy.mock.calls.length + updateSpy.mock.calls.length;
     // Wait well past the debounce with no further edits. A loop (unstable save
     // deps + status re-renders) would keep writing every ~600ms.
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    expect(addSpy.mock.calls.length + putSpy.mock.calls.length).toBe(writesAtSettle);
+    expect(addSpy.mock.calls.length + updateSpy.mock.calls.length).toBe(writesAtSettle);
 
     addSpy.mockRestore();
-    putSpy.mockRestore();
+    updateSpy.mockRestore();
   });
 
   it.each([
@@ -248,7 +249,7 @@ describe('NoteEditorDialog', () => {
     await user.click(closeButton());
 
     await waitFor(async () => {
-      const notes = await testStore.notes.list();
+      const notes = await allNotes(testStore);
       expect(notes).toHaveLength(1);
       expect(notes[0].body).toBe(body);
     });
@@ -264,10 +265,10 @@ describe('NoteEditorDialog', () => {
     fireEvent.click(screen.getByTestId('ensure-note'));
     fireEvent.click(closeButton());
 
-    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1));
+    await waitFor(async () => expect((await allNotes(testStore)).length).toBe(1));
     // And it must be a stable count, not still resolving toward 2.
     await new Promise((resolve) => setTimeout(resolve, 50));
-    expect((await testStore.notes.list()).length).toBe(1);
+    expect((await allNotes(testStore)).length).toBe(1);
   });
 
   it('persists an edit to an existing note on close', async () => {
@@ -288,7 +289,7 @@ describe('NoteEditorDialog', () => {
 
   it('labels a new Draft, which earns its row first', async () => {
     const now = new Date().toISOString();
-    await testStore.tags.put({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
+    await testStore.tags.add({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
 
     render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
 
@@ -310,8 +311,8 @@ describe('NoteEditorDialog', () => {
 
     for (const name of taps) await userEvent.click(await screen.findByRole('button', { name }));
 
-    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1));
-    const [saved] = await testStore.notes.list();
+    await waitFor(async () => expect((await allNotes(testStore)).length).toBe(1));
+    const [saved] = await allNotes(testStore);
     check(saved);
   });
 
@@ -349,9 +350,9 @@ describe('NoteEditorDialog', () => {
 
     await setReminderFromBar();
 
-    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1));
+    await waitFor(async () => expect((await allNotes(testStore)).length).toBe(1));
     await waitFor(async () => {
-      const [saved] = await testStore.notes.list();
+      const [saved] = await allNotes(testStore);
       expect(saved.remindAt).toBe('2030-03-04T09:00');
       expect(saved.repeat).toBe('weekly');
     });
@@ -380,12 +381,12 @@ describe('NoteEditorDialog', () => {
     render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={onClose} />);
 
     await setReminderFromBar();
-    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1));
+    await waitFor(async () => expect((await allNotes(testStore)).length).toBe(1));
 
     await userEvent.click(closeButton());
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    const [saved] = await testStore.notes.list();
+    const [saved] = await allNotes(testStore);
     expect(saved).toBeDefined();
     expect(saved.remindAt).toBe('2030-03-04T09:00');
   });

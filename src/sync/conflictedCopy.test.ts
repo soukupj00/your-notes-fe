@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createMemoryLocalStore } from '@/data/memory/MemoryLocalStore.ts';
 import { newAttachment, newNote, newTag } from '@/lib/rows.ts';
+import { allAttachments, allNotes } from '@/test/storeReads.ts';
 import { CONFLICTS_TAG_NAME, keepConflictedCopy } from './conflictedCopy.ts';
 
 const AT = new Date('2030-05-06T07:08:09.000Z');
@@ -26,7 +27,7 @@ describe('keepConflictedCopy', () => {
     const { store, note, work } = await seeded();
     await keepConflictedCopy(store, { ...note, tags: [work] }, 'Pixel 8', AT);
 
-    const copies = (await store.notes.list()).filter((n) => n.id !== note.id);
+    const copies = (await allNotes(store)).filter((n) => n.id !== note.id);
     expect(copies).toHaveLength(1);
     const copy = copies[0]!;
     expect(copy.header).toBe('Groceries (conflict from Pixel 8, 2030-05-06)');
@@ -53,7 +54,7 @@ describe('keepConflictedCopy', () => {
     const { store, note } = await seeded();
     const att = newAttachment(note.id, png(), 'image', {}, '2020-01-01T00:00:00.000Z');
     await store.attachments.add(att);
-    await store.notes.put({ ...note, body: `<img data-attachment-id="${att.id}">` });
+    await store.notes.update(note.id, () => ({ body: `<img data-attachment-id="${att.id}">` }));
 
     await keepConflictedCopy(
       store,
@@ -62,8 +63,8 @@ describe('keepConflictedCopy', () => {
       AT
     );
 
-    const copy = (await store.notes.list()).find((n) => n.id !== note.id)!;
-    const clones = (await store.attachments.list()).filter((a) => a.noteId === copy.id);
+    const copy = (await allNotes(store)).find((n) => n.id !== note.id)!;
+    const clones = (await allAttachments(store)).filter((a) => a.noteId === copy.id);
     expect(clones).toHaveLength(1);
     const clone = clones[0]!;
     expect(clone.id).not.toBe(att.id);
@@ -81,14 +82,14 @@ describe('keepConflictedCopy', () => {
     await keepConflictedCopy(store, local, 'Pixel 8', AT, async (id) =>
       id === att.id ? new Blob(['fetched']) : undefined
     );
-    let clones = (await store.attachments.list()).filter((a) => a.id !== att.id);
+    let clones = (await allAttachments(store)).filter((a) => a.id !== att.id);
     expect(clones).toHaveLength(1);
     expect(await clones[0]!.blob?.text()).toBe('fetched');
 
     await keepConflictedCopy(store, local, 'Laptop', AT, async () => {
       throw new Error('offline');
     });
-    clones = (await store.attachments.list()).filter((a) => a.id !== att.id);
+    clones = (await allAttachments(store)).filter((a) => a.id !== att.id);
     expect(clones).toHaveLength(2);
     expect(clones.some((c) => c.blob === undefined && c.name === 'pic.png')).toBe(true);
   });

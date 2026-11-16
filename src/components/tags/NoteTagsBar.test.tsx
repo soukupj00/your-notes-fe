@@ -17,7 +17,7 @@ vi.mock('react-i18next', () => ({
 async function putTag(id: string, name: string): Promise<Tag> {
   const now = new Date().toISOString();
   const tag = { id, name, createdAt: now, updatedAt: now };
-  await testStore.tags.put(tag);
+  await testStore.tags.add(tag);
   return tag;
 }
 

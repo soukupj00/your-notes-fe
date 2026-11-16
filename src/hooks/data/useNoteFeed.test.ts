@@ -17,7 +17,7 @@ async function putNote(overrides: Partial<Note> & { id: string }): Promise<Note>
     updatedAt: now,
     ...overrides,
   };
-  await testStore.notes.put(note);
+  await testStore.notes.add(note);
   return note;
 }
 
@@ -31,7 +31,7 @@ async function feed(scope: NoteFeedScope, search?: NoteSearchParams | string) {
 
 async function putTag(id: string, noteIds: string[]) {
   const now = new Date().toISOString();
-  await testStore.tags.put({ id, name: id, createdAt: now, updatedAt: now });
+  await testStore.tags.add({ id, name: id, createdAt: now, updatedAt: now });
   for (const noteId of noteIds) {
     await testStore.tags.link({ noteId, tagId: id, createdAt: now, updatedAt: now });
   }
@@ -60,7 +60,7 @@ describe('scoping by state', () => {
     await putNote({ id: 'tagged' });
     await putNote({ id: 'untagged' });
     const now = new Date().toISOString();
-    await testStore.tags.put({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
+    await testStore.tags.add({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
     await testStore.tags.link({ noteId: 'tagged', tagId: 't1', createdAt: now, updatedAt: now });
 
     const result = await feed({ state: 'active', tagId: 't1' });
@@ -339,7 +339,7 @@ describe('search within a scope', () => {
     await putNote({ id: 'by-tag', header: 'x' });
     await putNote({ id: 'no-match', header: 'x' });
     const now = new Date().toISOString();
-    await testStore.tags.put({ id: 't1', name: 'Groceries', createdAt: now, updatedAt: now });
+    await testStore.tags.add({ id: 't1', name: 'Groceries', createdAt: now, updatedAt: now });
     await testStore.tags.link({ noteId: 'by-tag', tagId: 't1', createdAt: now, updatedAt: now });
 
     const result = await feed({ state: 'active' }, 'grocer');

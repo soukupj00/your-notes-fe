@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { isCustomOrder, labelCollator, sortLabels } from '@/lib/label-order.ts';
 import type { Tag } from '@/models.ts';
 import { clearStore, renderHookWithStore, testStore } from '@/test/store.tsx';
+import { tagById } from '@/test/storeReads.ts';
 import { useTagActions } from './useTagActions.ts';
 
 const actions = () => renderHookWithStore(() => useTagActions()).result.current;
@@ -18,7 +19,7 @@ describe('createTag', () => {
   it('creates a tag with a colour', async () => {
     const tag = await actions().createTag('Work', 'blue');
 
-    expect(await testStore.tags.get(tag.id)).toMatchObject({ name: 'Work', color: 'blue' });
+    expect(await tagById(testStore, tag.id)).toMatchObject({ name: 'Work', color: 'blue' });
   });
 
   it('trims the name', async () => {
@@ -50,18 +51,18 @@ describe('updateTag', () => {
     const tag = await actions().createTag('Work', 'blue');
 
     await actions().updateTag(tag.id, { color: 'red' });
-    expect(await testStore.tags.get(tag.id)).toMatchObject({ name: 'Work', color: 'red' });
+    expect(await tagById(testStore, tag.id)).toMatchObject({ name: 'Work', color: 'red' });
 
     // `undefined` is the "no colour" value, and must actually clear the field.
     await actions().updateTag(tag.id, { color: undefined });
-    expect((await testStore.tags.get(tag.id))?.color).toBeUndefined();
+    expect((await tagById(testStore, tag.id))?.color).toBeUndefined();
   });
 
   it('keeps the old name when the new one is only whitespace', async () => {
     const tag = await actions().createTag('Work');
     const updated = await actions().updateTag(tag.id, { name: '   ' });
     expect(updated?.name).toBe('Work');
-    expect((await testStore.tags.get(tag.id))?.name).toBe('Work');
+    expect((await tagById(testStore, tag.id))?.name).toBe('Work');
   });
 
   it('returns null for an unknown tag', async () => {
@@ -77,7 +78,7 @@ describe('deleteTag', () => {
 
     await actions().deleteTag(tag.id);
 
-    expect(await testStore.tags.get(tag.id)).toBeUndefined();
+    expect(await tagById(testStore, tag.id)).toBeUndefined();
     expect((await testStore.tags.listLinks()).filter((l) => l.tagId === tag.id)).toHaveLength(0);
   });
 });
@@ -94,7 +95,7 @@ describe('mergeTags', () => {
     await mergeTags(source.id, target.id);
 
     expect(await linkedNoteIds(target.id)).toEqual(['n1', 'n2', 'n3']);
-    expect(await testStore.tags.get(source.id)).toBeUndefined();
+    expect(await tagById(testStore, source.id)).toBeUndefined();
     expect((await testStore.tags.listLinks()).filter((l) => l.tagId === source.id)).toHaveLength(0);
   });
 
@@ -118,7 +119,7 @@ describe('mergeTags', () => {
 
     await mergeTags(tag.id, tag.id);
 
-    expect(await testStore.tags.get(tag.id)).toBeDefined();
+    expect(await tagById(testStore, tag.id)).toBeDefined();
     expect(await linkedNoteIds(tag.id)).toEqual(['n1']);
   });
 
@@ -129,7 +130,7 @@ describe('mergeTags', () => {
 
     await expect(mergeTags(source.id, 'nope')).rejects.toThrow();
 
-    expect(await testStore.tags.get(source.id)).toBeDefined();
+    expect(await tagById(testStore, source.id)).toBeDefined();
     expect(await linkedNoteIds(source.id)).toEqual(['n1']);
   });
 });
@@ -154,7 +155,7 @@ describe('note assignment', () => {
     await removeTagFromNote('n1', tag.id);
 
     expect(await linkedNoteIds(tag.id)).toEqual(['n2']);
-    expect(await testStore.tags.get(tag.id)).toBeDefined();
+    expect(await tagById(testStore, tag.id)).toBeDefined();
   });
 });
 

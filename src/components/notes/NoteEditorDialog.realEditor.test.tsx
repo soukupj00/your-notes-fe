@@ -4,6 +4,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { clearStore, testStore, withStore } from '@/test/store.tsx';
+import { allNotes } from '@/test/storeReads.ts';
 import { setViewport } from '@/test/viewport.ts';
 import { NoteEditorDialog } from './NoteEditorDialog.tsx';
 
@@ -38,7 +39,7 @@ afterEach(async () => {
 
 async function seedNote(body: string) {
   const now = new Date().toISOString();
-  await testStore.notes.put({
+  await testStore.notes.add({
     id: 'n1',
     header: 'Hello',
     description: '',
@@ -130,7 +131,7 @@ describe('the toolbar customisation sheet, over a new Draft', () => {
 
     await roundTripTheSheet(user);
 
-    expect(await testStore.notes.list()).toHaveLength(0);
+    expect(await allNotes(testStore)).toHaveLength(0);
   });
 
   it('leaves the draft open, with what was typed still in it', async () => {

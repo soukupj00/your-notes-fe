@@ -13,6 +13,7 @@ import {
 } from '@/lib/backup.ts';
 import type { Attachment, Note, NoteTag, Tag } from '@/models.ts';
 import { clearStore, testStore as store } from '@/test/store.tsx';
+import { allAttachments, allNotes } from '@/test/storeReads.ts';
 
 const NOW = '2026-07-28T10:00:00.000Z';
 
@@ -75,12 +76,12 @@ describe('backup', () => {
 
     // Wipe everything, so a passing assertion can only come from the import.
     await store.clear();
-    expect(await store.notes.list()).toHaveLength(0);
+    expect(await allNotes(store)).toHaveLength(0);
 
     const parsed = await parseBackupZip(zipped);
     await importBackup(store, parsed);
 
-    expect(await store.notes.list()).toEqual([note]);
+    expect(await allNotes(store)).toEqual([note]);
     expect(await store.tags.list()).toEqual([tag]);
     expect(await store.tags.listLinks()).toEqual([noteTag]);
 
@@ -139,8 +140,8 @@ describe('backup', () => {
     const parsed = await parseBackupZip(zipped);
     await importBackup(store, parsed);
 
-    expect(await store.notes.list()).toHaveLength(0);
-    expect(await store.attachments.list()).toHaveLength(0);
+    expect(await allNotes(store)).toHaveLength(0);
+    expect(await allAttachments(store)).toHaveLength(0);
   });
 
   it('adds to the rows already there rather than replacing them', async () => {
@@ -152,9 +153,7 @@ describe('backup', () => {
 
     await importBackup(store, await parseBackupZip(zipped));
 
-    expect((await store.notes.list()).map((n) => n.id).sort()).toEqual(
-      [note.id, 'newer-note'].sort()
-    );
+    expect((await allNotes(store)).map((n) => n.id).sort()).toEqual([note.id, 'newer-note'].sort());
   });
 
   describe('validation', () => {
@@ -162,8 +161,8 @@ describe('backup', () => {
     async function expectRejectedWithDbIntact(bytes: Uint8Array, code: string) {
       await seed();
       await expect(parseBackupZip(bytes)).rejects.toMatchObject({ code });
-      expect(await store.notes.list()).toHaveLength(1);
-      expect(await store.attachments.list()).toHaveLength(1);
+      expect(await allNotes(store)).toHaveLength(1);
+      expect(await allAttachments(store)).toHaveLength(1);
     }
 
     it('rejects bytes that are not a zip', async () => {

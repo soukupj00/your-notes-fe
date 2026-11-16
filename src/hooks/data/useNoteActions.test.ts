@@ -105,7 +105,7 @@ describe('purgeNote / restoreNote cascade attachments', () => {
   it('purgeNote removes + returns the note attachments', async () => {
     const a = actions();
     const note = makeNote();
-    await testStore.notes.put(note);
+    await testStore.notes.add(note);
     const att = makeAtt(note.id);
     await testStore.attachments.add(att);
 
@@ -117,7 +117,7 @@ describe('purgeNote / restoreNote cascade attachments', () => {
   it('restoreNote re-puts the note and its attachments', async () => {
     const a = actions();
     const note = makeNote();
-    await testStore.notes.put(note);
+    await testStore.notes.add(note);
     const att = makeAtt(note.id);
     await testStore.attachments.add(att);
 

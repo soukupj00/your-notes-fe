@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Note } from '@/models.ts';
 import { clearStore, renderWithStore as render, testStore } from '@/test/store.tsx';
+import { allAttachments } from '@/test/storeReads.ts';
 import { NoteCard } from './NoteCard.tsx';
 
 // Keys pass through untranslated so assertions are stable.
@@ -412,7 +413,7 @@ describe('NoteCard', () => {
     render(<NoteCard note={note} attachments={attachments} onSelect={vi.fn()} />);
 
     await waitFor(() => expect(document.querySelector('svg#from-prop')).toBeTruthy());
-    expect(await testStore.attachments.list()).toHaveLength(0);
+    expect(await allAttachments(testStore)).toHaveLength(0);
   });
 
   it('opens the note when a video preview is clicked, like any other part of the card', async () => {
@@ -494,7 +495,7 @@ describe('NoteCard', () => {
     it('ticks an item from the card and persists it', async () => {
       // The original defect: the box flipped, nothing was written, and the note reopened unchecked.
       const note = makeNote({ body: checklist(['Milk', false], ['Bread', false]) });
-      await testStore.notes.put(note);
+      await testStore.notes.add(note);
       render(<NoteCard note={note} onSelect={vi.fn()} />);
 
       await userEvent.click(screen.getAllByRole('checkbox')[0]);
@@ -506,7 +507,7 @@ describe('NoteCard', () => {
 
     it('does not open the note when the box itself is clicked', async () => {
       const note = makeNote({ body: checklist(['Milk', false]) });
-      await testStore.notes.put(note);
+      await testStore.notes.add(note);
       const onSelect = vi.fn();
       render(<NoteCard note={note} onSelect={onSelect} />);
 
@@ -530,7 +531,7 @@ describe('NoteCard', () => {
       // at the words, not at a 32px square beside them.
       layText({ left: 0, right: 40, top: 0, bottom: 20 });
       const note = makeNote({ body: checklist(['Milk', false]) });
-      await testStore.notes.put(note);
+      await testStore.notes.add(note);
       const onSelect = vi.fn();
       render(<NoteCard note={note} onSelect={onSelect} />);
 
@@ -547,7 +548,7 @@ describe('NoteCard', () => {
       // The row is not the control: past the end of the words it is the card.
       layText({ left: 100, right: 140, top: 0, bottom: 20 });
       const note = makeNote({ body: checklist(['Milk', false]) });
-      await testStore.notes.put(note);
+      await testStore.notes.add(note);
       const onSelect = vi.fn();
       render(<NoteCard note={note} onSelect={onSelect} />);
 
@@ -559,7 +560,7 @@ describe('NoteCard', () => {
 
     it('opens the note from a long press on the row', async () => {
       const note = makeNote({ body: checklist(['Milk', false]) });
-      await testStore.notes.put(note);
+      await testStore.notes.add(note);
       const onSelect = vi.fn();
       render(<NoteCard note={note} onSelect={onSelect} />);
       const row = screen.getByText('Milk').closest('li') as HTMLElement;
@@ -585,7 +586,7 @@ describe('NoteCard', () => {
       // Space on a focused checkbox fires a click, which reaches the delegate by
       // bubbling. The a11y suppression in `NoteBody` rests on this test.
       const note = makeNote({ body: checklist(['Milk', false]) });
-      await testStore.notes.put(note);
+      await testStore.notes.add(note);
       render(<NoteCard note={note} onSelect={vi.fn()} />);
 
       screen.getAllByRole('checkbox')[0].focus();
@@ -598,7 +599,7 @@ describe('NoteCard', () => {
 
     it('unticks an item that was checked', async () => {
       const note = makeNote({ body: checklist(['Milk', true]) });
-      await testStore.notes.put(note);
+      await testStore.notes.add(note);
       render(<NoteCard note={note} onSelect={vi.fn()} />);
 
       await userEvent.click(screen.getAllByRole('checkbox')[0]);
@@ -612,7 +613,7 @@ describe('NoteCard', () => {
       const note = makeNote({
         body: checklist(['Milk', false], ['Bread', false], ['Eggs', false]),
       });
-      await testStore.notes.put(note);
+      await testStore.notes.add(note);
       render(<NoteCard note={note} onSelect={vi.fn()} />);
 
       await userEvent.click(screen.getAllByRole('checkbox')[2]);
@@ -630,7 +631,7 @@ describe('NoteCard', () => {
       const note = makeNote({
         body: checklist(['Milk', false], ['Bread', false], ['Eggs', false]),
       });
-      await testStore.notes.put(note);
+      await testStore.notes.add(note);
       render(<NoteCard note={note} onSelect={vi.fn()} />);
 
       await userEvent.click(screen.getAllByRole('checkbox')[0]);

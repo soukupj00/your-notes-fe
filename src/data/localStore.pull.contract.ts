@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { type AttachmentMeta, noteTagId } from '@/contract/index.ts';
 import type { Attachment, Note } from '@/models.ts';
+import { allAttachments, allNotes, tagById } from '@/test/storeReads.ts';
 import type { LocalStore } from './LocalStore.ts';
 import type { Live } from './live.ts';
 import { attachment, link, note, syncAll, tag } from './localStore.sync.contract.ts';
@@ -67,7 +68,7 @@ export function describeLocalStorePullContract(makeStore: () => Promise<LocalSto
       });
 
       expect(await store.notes.get(n.id)).toEqual(n);
-      expect(await store.tags.get(t.id)).toEqual(t);
+      expect(await tagById(store, t.id)).toEqual(t);
       expect(await store.tags.listLinks()).toEqual([link(n.id, t.id)]);
       expect(await store.sync.dirty()).toEqual(none);
       // The Revision is kept: the next local edit reports it.
@@ -140,7 +141,7 @@ export function describeLocalStorePullContract(makeStore: () => Promise<LocalSto
         ],
       });
       expect(await store.notes.get(n.id)).toBeUndefined();
-      expect(await store.attachments.list()).toEqual([]);
+      expect(await allAttachments(store)).toEqual([]);
       expect(await store.tags.list()).toEqual([kept]);
       expect(await store.tags.listLinks()).toEqual([]);
       expect(await store.sync.dirty()).toEqual(none);
@@ -155,7 +156,7 @@ export function describeLocalStorePullContract(makeStore: () => Promise<LocalSto
       });
 
       expect(await store.notes.get(n.id)).toEqual(n);
-      expect(await store.attachments.list()).toEqual([meta]);
+      expect(await allAttachments(store)).toEqual([meta]);
       expect(await store.sync.dirty()).toEqual(none);
     });
 
@@ -173,7 +174,7 @@ export function describeLocalStorePullContract(makeStore: () => Promise<LocalSto
         ...none,
         notes: [{ ...fromServer(n, 2), attachments: [renamed] }],
       });
-      expect((await store.attachments.list()).map(bytes)).toEqual([
+      expect((await allAttachments(store)).map(bytes)).toEqual([
         { ...renamed, blob: 'blob', thumbnail: 'thumbnail' },
       ]);
 
@@ -195,13 +196,13 @@ export function describeLocalStorePullContract(makeStore: () => Promise<LocalSto
       await store.notes.update(n.id, () => ({ header: 'mine' }));
 
       await store.sync.applyPage({ ...none, notes: [{ ...fromServer(n, 2), attachments: [] }] });
-      expect((await store.attachments.list()).map(bytes)).toEqual([bytes(a)]);
+      expect((await allAttachments(store)).map(bytes)).toEqual([bytes(a)]);
 
       await syncAll(store, 2);
       const bare: Partial<ReturnType<typeof fromServer>> = fromServer(n, 3);
       delete bare.attachments;
       await store.sync.applyPage({ ...none, notes: [bare as ReturnType<typeof fromServer>] });
-      expect((await store.attachments.list()).map(bytes)).toEqual([bytes(a)]);
+      expect((await allAttachments(store)).map(bytes)).toEqual([bytes(a)]);
     });
 
     it('transfer state: which blobs the server holds, too large, received bytes', async () => {
@@ -268,8 +269,8 @@ export function describeLocalStorePullContract(makeStore: () => Promise<LocalSto
       await store.notes.purge(purged.id);
 
       await store.sync.resetClean();
-      expect((await store.notes.list()).map((n) => n.id)).toEqual([owed.id]);
-      expect((await store.attachments.list()).map((a) => a.id)).toEqual([bytes.id]);
+      expect((await allNotes(store)).map((n) => n.id)).toEqual([owed.id]);
+      expect((await allAttachments(store)).map((a) => a.id)).toEqual([bytes.id]);
       expect((await store.sync.dirty()).tombstones.map((t) => t.id)).toEqual([purged.id]);
     });
 
