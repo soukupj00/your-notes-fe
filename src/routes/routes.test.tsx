@@ -35,7 +35,7 @@ async function seed() {
     { id: 'n-archived', header: 'Archived note', state: 'archived', ...base },
     { id: 'n-trashed', header: 'Trashed note', state: 'trashed', trashedAt: daysAgo(1), ...base },
   ];
-  for (const note of notes) await testStore.notes.put(note);
+  for (const note of notes) await testStore.notes.add(note);
 }
 
 afterEach(clearStore);
@@ -56,7 +56,7 @@ describe('route -> note set', () => {
   it('/tag/$id shows only the active notes carrying that tag', async () => {
     await seed();
     const now = new Date().toISOString();
-    await testStore.notes.put({
+    await testStore.notes.add({
       id: 'n-tagged',
       header: 'Tagged note',
       body: '',
@@ -64,7 +64,7 @@ describe('route -> note set', () => {
       createdAt: now,
       updatedAt: now,
     });
-    await testStore.tags.put({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
+    await testStore.tags.add({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
     await testStore.tags.link({ noteId: 'n-tagged', tagId: 't1', createdAt: now, updatedAt: now });
 
     renderAt('/tag/t1');
@@ -83,9 +83,9 @@ describe('search state in the URL', () => {
       { id: 'n-cake', header: 'Cake recipe', ...base },
       { id: 'n-car', header: 'Car service', ...base },
     ]) {
-      await testStore.notes.put(note);
+      await testStore.notes.add(note);
     }
-    await testStore.tags.put({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
+    await testStore.tags.add({ id: 't1', name: 'Work', createdAt: now, updatedAt: now });
     await testStore.tags.link({ noteId: 'n-car', tagId: 't1', createdAt: now, updatedAt: now });
   }
 
@@ -203,7 +203,7 @@ describe('nav shell', () => {
 
   it('lists each tag as a link to its own feed', async () => {
     const now = new Date().toISOString();
-    await testStore.tags.put({
+    await testStore.tags.add({
       id: 't1',
       name: 'Work',
       color: 'blue',

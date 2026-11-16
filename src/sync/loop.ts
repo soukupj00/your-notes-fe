@@ -25,8 +25,6 @@ export function startSyncLoop({
   onSignedOut,
   pollMs = 5 * 60_000,
   editDelayMs = 2_000,
-  target = window,
-  doc = document,
 }: {
   engine: SyncEngine;
   remote: Remote;
@@ -38,8 +36,6 @@ export function startSyncLoop({
   pollMs?: number;
   /** How long a burst of typing settles before its edits are pushed. */
   editDelayMs?: number;
-  target?: Pick<Window, 'addEventListener' | 'removeEventListener'>;
-  doc?: Pick<Document, 'addEventListener' | 'removeEventListener' | 'visibilityState'>;
 }): SyncLoop {
   let stopped = false;
   let running = 0;
@@ -116,10 +112,10 @@ export function startSyncLoop({
 
   const onOnline = () => void syncNow();
   const onVisible = () => {
-    if (doc.visibilityState === 'visible') void syncNow();
+    if (document.visibilityState === 'visible') void syncNow();
   };
-  target.addEventListener('online', onOnline);
-  doc.addEventListener('visibilitychange', onVisible);
+  window.addEventListener('online', onOnline);
+  document.addEventListener('visibilitychange', onVisible);
   const poll = setInterval(() => void syncNow(), pollMs);
   void syncNow();
 
@@ -131,8 +127,8 @@ export function startSyncLoop({
       clearInterval(poll);
       unsubscribePending();
       unsubscribeHints?.();
-      target.removeEventListener('online', onOnline);
-      doc.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('online', onOnline);
+      document.removeEventListener('visibilitychange', onVisible);
       await inflight.catch(() => undefined);
     },
   };

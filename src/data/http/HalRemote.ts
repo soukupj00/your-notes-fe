@@ -29,7 +29,6 @@ export function createHalRemote(hal: HalClient): Remote {
           noteTags,
           tombstones,
           next: page._links.next?.href ?? null,
-          self: page._links.self.href,
           resume: page._links.resume.href,
           seq: page.seq,
         };

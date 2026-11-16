@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Note } from '@/models.ts';
 import { clearStore, renderWithStore as render, testStore } from '@/test/store.tsx';
+import { allNotes } from '@/test/storeReads.ts';
 import { NoteEditorDialog } from './NoteEditorDialog.tsx';
 
 // How the dialog opens and closes: the id it is given, the sheet's app bar and where focus lands.
@@ -59,10 +60,10 @@ describe('the id in the URL', () => {
 
     await userEvent.type(headerInput(), 'Shopping');
 
-    await waitFor(async () => expect((await testStore.notes.list()).length).toBe(1), {
+    await waitFor(async () => expect((await allNotes(testStore)).length).toBe(1), {
       timeout: 2000,
     });
-    const [saved] = await testStore.notes.list();
+    const [saved] = await allNotes(testStore);
     // Anything else and the URL would be naming a note that does not exist.
     expect(saved.id).toBe(draftId);
   });
@@ -77,7 +78,7 @@ describe('the id in the URL', () => {
 
     await waitFor(() => expect(onNoteMissing).toHaveBeenCalled());
     // Nothing was written under the dead id on the way past.
-    expect((await testStore.notes.list()).length).toBe(0);
+    expect((await allNotes(testStore)).length).toBe(0);
   });
 
   it('says nothing when the note is there', async () => {

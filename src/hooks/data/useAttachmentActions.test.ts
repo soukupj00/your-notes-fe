@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { clearStore, renderHookWithStore, testStore } from '@/test/store.tsx';
+import { allAttachments } from '@/test/storeReads.ts';
 import { useAttachmentActions } from './useAttachmentActions.ts';
 
 function actions() {
@@ -38,7 +39,7 @@ describe('useAttachmentActions', () => {
     await expect(a.createAttachment(crypto.randomUUID(), bad)).rejects.toMatchObject({
       code: 'unsupported-type',
     });
-    expect(await testStore.attachments.list()).toHaveLength(0);
+    expect(await allAttachments(testStore)).toHaveLength(0);
   });
 
   it('getAttachment + deleteAttachment round-trip', async () => {
@@ -57,7 +58,7 @@ describe('useAttachmentActions', () => {
     expect(clone.id).not.toBe(src.id);
     expect(clone.noteId).toBe(targetNote);
     expect(clone.blob).toBeInstanceOf(Blob);
-    expect(await testStore.attachments.list()).toHaveLength(2);
+    expect(await allAttachments(testStore)).toHaveLength(2);
   });
 
   it('collectOrphans removes unreferenced rows for the note, keeps referenced', async () => {
@@ -78,7 +79,7 @@ describe('useAttachmentActions', () => {
     const drop = await a.createAttachment(liveNote, pngFile());
     const missingOwner = await a.createAttachment(crypto.randomUUID(), pngFile());
     const now = new Date().toISOString();
-    await testStore.notes.put({
+    await testStore.notes.add({
       id: liveNote,
       header: '',
       description: '',

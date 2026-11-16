@@ -16,7 +16,7 @@ export class ProblemError extends Error {
   }
 }
 
-export type Rel = keyof RootResponse['_links'];
+type Rel = keyof RootResponse['_links'];
 
 /**
  * The one door to the Self-hosted Server: it follows the HAL root's links, so no route is written
@@ -33,7 +33,7 @@ export type HalClient = {
   send(url: string, init?: RequestInit): Promise<Response>;
 };
 
-export type JsonInit = { method?: string; body?: unknown };
+type JsonInit = { method?: string; body?: unknown };
 
 const ROOT = '/api';
 

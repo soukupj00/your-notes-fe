@@ -12,7 +12,7 @@ export type NoteFeedScope = {
   tagId?: string;
 };
 
-export type NoteUpdate = { before: Note; after: Note };
+type NoteUpdate = { before: Note; after: Note };
 
 /** What `notes.purge` removed alongside the note, for a lossless undo. */
 export type PurgedRelations = { removedTags: NoteTag[]; removedAttachments: Attachment[] };
@@ -59,7 +59,7 @@ export const SYNC_META_KEYS = {
  * leaves an owed row or one with a pending Tombstone alone, so the next push
  * decides it; `server-wins` (resolving a push outcome) overwrites it.
  */
-export type ApplyMode = 'keep-local' | 'server-wins';
+type ApplyMode = 'keep-local' | 'server-wins';
 
 /**
  * The only way app code reads or writes persisted data (ADR 0020). Its rules are in
@@ -69,14 +69,12 @@ export type ApplyMode = 'keep-local' | 'server-wins';
 export interface LocalStore {
   readonly notes: {
     get(id: string): Promise<Note | undefined>;
-    list(): Promise<Note[]>;
     listByState(state: NoteState): Promise<Note[]>;
     /** Notes whose `trashedAt` is older than `cutoff` (ISO), whatever their state. */
     listTrashedBefore(cutoff: string): Promise<Note[]>;
     /** Live, scoped, each note carrying its `tags`. */
     feed(scope: NoteFeedScope): Live<Note[]>;
     add(note: Note): Promise<void>;
-    put(note: Note): Promise<void>;
     /** Atomic read-modify-write; `null` when there is no such note. */
     update(id: string, change: (note: Note) => Partial<Note>): Promise<NoteUpdate | null>;
     /** Removes the note, its links and its attachments, and returns the latter two. */
@@ -86,14 +84,12 @@ export interface LocalStore {
   };
 
   readonly tags: {
-    get(id: string): Promise<Tag | undefined>;
     watch(id: string): Live<Tag | undefined>;
     list(): Promise<Tag[]>;
     all(): Live<Tag[]>;
     /** Case-insensitive, exact after trimming. */
     findByName(name: string): Promise<Tag | undefined>;
     add(tag: Tag): Promise<void>;
-    put(tag: Tag): Promise<void>;
     /** Atomic read-modify-write; `null` when there is no such tag. */
     update(id: string, change: (tag: Tag) => Partial<Tag>): Promise<Tag | null>;
     /** Deletes the tag and every link to it. */
@@ -121,7 +117,6 @@ export interface LocalStore {
   readonly attachments: {
     get(id: string): Promise<Attachment | undefined>;
     watch(id: string): Live<Attachment | undefined>;
-    list(): Promise<Attachment[]>;
     forNote(noteId: string): Live<Attachment[]>;
     forNotes(noteIds: readonly string[]): Live<Attachment[]>;
     add(attachment: Attachment): Promise<void>;

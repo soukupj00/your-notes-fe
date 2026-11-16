@@ -5,6 +5,7 @@ import { forgetHardwareKey } from '@/hooks/useKeyboardAffordances.ts';
 import type { Note } from '@/models.ts';
 import { renderRoute } from '@/test/renderRoute.tsx';
 import { clearStore, testStore } from '@/test/store.tsx';
+import { allNotes } from '@/test/storeReads.ts';
 
 // Vitest hoists `vi.mock`, so these cannot come from a shared helper.
 vi.mock('react-i18next', () => ({
@@ -137,7 +138,7 @@ describe('opening a note', () => {
     // A Start's Draft, not an existing note: nothing has been written yet.
     expect(el).toHaveAttribute('data-new', 'true');
     expect(router.state.location.search).toMatchObject({ note: id });
-    expect((await testStore.notes.list()).length).toBe(0);
+    expect((await allNotes(testStore)).length).toBe(0);
   });
 });
 

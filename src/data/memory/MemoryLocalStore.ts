@@ -23,7 +23,7 @@ import {
   withReceived,
 } from '../syncRows.ts';
 
-type Table = 'notes' | 'tags' | 'noteTags' | 'attachments' | 'meta';
+type Table = 'notes' | 'tags' | 'noteTags' | 'attachments';
 
 const linkKey = noteTagId;
 
@@ -117,17 +117,12 @@ export function createMemoryLocalStore(): LocalStore {
   return {
     notes: {
       get: async (id) => stripOne(notes.get(id)),
-      list: async () => values(notes),
       listByState: async (state) => values(notes).filter((n) => n.state === state),
       listTrashedBefore: async (cutoff) =>
         values(notes).filter((n) => n.trashedAt !== undefined && n.trashedAt < cutoff),
       feed: (scope) => live(['notes', 'tags', 'noteTags'], () => readFeed(scope)),
       add: async (note) => {
         if (notes.has(note.id)) throw new Error(`Note ${note.id} already exists`);
-        write(notes, note.id, note);
-        changed('notes');
-      },
-      put: async (note) => {
         write(notes, note.id, note);
         changed('notes');
       },
@@ -158,7 +153,6 @@ export function createMemoryLocalStore(): LocalStore {
     },
 
     tags: {
-      get: async (id) => stripOne(tags.get(id)),
       watch: (id) => live(['tags'], () => stripOne(tags.get(id))),
       list: async () => values(tags),
       all: () => live(['tags'], () => values(tags)),
@@ -168,10 +162,6 @@ export function createMemoryLocalStore(): LocalStore {
       },
       add: async (tag) => {
         if (tags.has(tag.id)) throw new Error(`Tag ${tag.id} already exists`);
-        write(tags, tag.id, tag);
-        changed('tags');
-      },
-      put: async (tag) => {
         write(tags, tag.id, tag);
         changed('tags');
       },
@@ -244,7 +234,6 @@ export function createMemoryLocalStore(): LocalStore {
     attachments: {
       get: async (id) => plainOne(attachments.get(id)),
       watch: (id) => live(['attachments'], () => plainOne(attachments.get(id))),
-      list: async () => plain([...attachments.values()]),
       forNote: (noteId) => live(['attachments'], () => plain(attachmentsFor(noteId))),
       forNotes: (noteIds) => {
         const wanted = new Set(noteIds);
@@ -303,11 +292,9 @@ export function createMemoryLocalStore(): LocalStore {
       get: async <T>(key: string) => meta.get(key) as T | undefined,
       set: async (key, value) => {
         meta.set(key, value);
-        changed('meta');
       },
       delete: async (key) => {
         meta.delete(key);
-        changed('meta');
       },
     },
 
@@ -459,7 +446,7 @@ export function createMemoryLocalStore(): LocalStore {
       attachments.clear();
       tombstones.clear();
       meta.clear();
-      changed('notes', 'tags', 'noteTags', 'attachments', 'meta');
+      changed('notes', 'tags', 'noteTags', 'attachments');
     },
   };
 }

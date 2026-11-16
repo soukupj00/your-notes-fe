@@ -12,7 +12,6 @@ import {
   tombstone,
 } from '../syncRows.ts';
 import { db as defaultDb, type NotesDB } from './db.ts';
-import { migrateLegacyPreferences } from './legacyPreferences.ts';
 import { live } from './live.ts';
 import { createDexieSync } from './sync.ts';
 
@@ -21,11 +20,6 @@ import { createDexieSync } from './sync.ts';
  * can use a throwaway database per test.
  */
 export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
-  // A failure is logged, not rethrown: the store stays usable and the move retries next start.
-  void migrateLegacyPreferences(db).catch((error) =>
-    console.error('Legacy preferences migration failed', error)
-  );
-
   const stripAll = <T extends object>(rows: Stored<T>[]): T[] => rows.map(strip);
   const stripOne = <T extends object>(row: Stored<T> | undefined): T | undefined =>
     row && strip(row);
@@ -34,19 +28,6 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
 
   /** Inside a transaction over `notes`: the Note owes its Attachment metadata. No-op if it is gone. */
   const noteOwed = (noteId: string) => db.notes.update(noteId, { dirty: 1 });
-
-  /** Inside a transaction over `notes` and `tombstones`: the Note written owed, keeping its stored Revision. */
-  async function writeNote(note: Note) {
-    const [stored, gone] = await Promise.all([db.notes.get(note.id), db.tombstones.get(note.id)]);
-    await db.notes.put(owed(note, stored?.rev ?? gone?.rev));
-    if (gone) await db.tombstones.delete(note.id);
-  }
-
-  async function writeTag(tag: Tag) {
-    const [stored, gone] = await Promise.all([db.tags.get(tag.id), db.tombstones.get(tag.id)]);
-    await db.tags.put(owed(tag, stored?.rev ?? gone?.rev));
-    if (gone) await db.tombstones.delete(tag.id);
-  }
 
   /** Inside a transaction over `table` and `tombstones`: each row owed, with the Revision held for its id. */
   async function putOwed<T extends { id: string }>(table: Table<Stored<T>, string>, rows: T[]) {
@@ -97,7 +78,6 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
   return {
     notes: {
       get: async (id) => stripOne(await db.notes.get(id)),
-      list: async () => stripAll(await db.notes.toArray()),
       listByState: async (state: NoteState) =>
         stripAll(await db.notes.where('state').equals(state).toArray()),
       // `trashedAt` is indexed, so this is a range scan; it runs on every app start.
@@ -109,7 +89,6 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           await db.notes.add(owed(note, undefined));
           await db.tombstones.delete(note.id);
         }),
-      put: (note) => db.transaction('rw', db.notes, db.tombstones, () => writeNote(note)),
       update: (id, change) =>
         db.transaction('rw', db.notes, async () => {
           const stored = await db.notes.get(id);
@@ -135,7 +114,7 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
         }),
       restore: (note, removed = {}) =>
         db.transaction('rw', [db.notes, db.noteTags, db.attachments, db.tombstones], async () => {
-          await writeNote(note);
+          await putOwed(db.notes, [note]);
           if (removed.removedTags?.length) await addLinks(removed.removedTags);
           if (removed.removedAttachments?.length)
             await db.attachments.bulkPut(removed.removedAttachments);
@@ -143,7 +122,6 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
     },
 
     tags: {
-      get: async (id) => stripOne(await db.tags.get(id)),
       watch: (id) => live(async () => stripOne(await db.tags.get(id))),
       list: async () => stripAll(await db.tags.toArray()),
       all: () => live(async () => stripAll(await db.tags.toArray())),
@@ -155,7 +133,6 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           await db.tags.add(owed(tag, undefined));
           await db.tombstones.delete(tag.id);
         }),
-      put: (tag) => db.transaction('rw', db.tags, db.tombstones, () => writeTag(tag)),
       update: (id, change) =>
         db.transaction('rw', db.tags, async () => {
           const stored = await db.tags.get(id);
@@ -248,7 +225,6 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
     attachments: {
       get: async (id) => plainOne(await db.attachments.get(id)),
       watch: (id) => live(async () => plainOne(await db.attachments.get(id))),
-      list: async () => plain(await db.attachments.toArray()),
       forNote: (noteId) =>
         live(async () => plain(await db.attachments.where('noteId').equals(noteId).toArray())),
       forNotes: (noteIds) =>

@@ -123,7 +123,7 @@ describe('the topbar title', () => {
 
   it('resolves a tag route to the tag name', async () => {
     const now = new Date().toISOString();
-    await testStore.tags.put({
+    await testStore.tags.add({
       id: 't1',
       name: 'Work',
       color: 'blue',

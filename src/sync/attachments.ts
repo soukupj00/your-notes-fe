@@ -3,7 +3,7 @@ import type { Remote } from '@/data/Remote.ts';
 import { mintId } from '@/lib/rows.ts';
 
 /** One blob to move: the Attachment row it belongs to, and its id on the server. */
-export type Transfer = {
+type Transfer = {
   id: string;
   /** The row's own id for the full bytes, its `thumbnailId` for the Preview. */
   blobId: string;

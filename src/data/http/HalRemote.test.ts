@@ -50,7 +50,6 @@ describe('HalRemote', () => {
       status: 'ok',
       notes: [{ id: second, rev: 1 }],
       next: null,
-      self: '/api/changes?since=1',
       resume: '/api/changes?since=2',
       seq: 2,
     });

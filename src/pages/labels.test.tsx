@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import type { NoteState } from '@/models.ts';
 import { clearStore, testStore, withStore } from '@/test/store.tsx';
+import { tagById } from '@/test/storeReads.ts';
 import LabelsPage from './labels.tsx';
 
 vi.mock('react-i18next', () => ({
@@ -26,7 +27,7 @@ const render = (ui: ReactElement) =>
 
 async function putTag(id: string, name: string, color?: string, position?: string) {
   const now = new Date().toISOString();
-  await testStore.tags.put({ id, name, color, position, createdAt: now, updatedAt: now });
+  await testStore.tags.add({ id, name, color, position, createdAt: now, updatedAt: now });
 }
 
 async function putNote(id: string, state: NoteState) {
@@ -79,7 +80,7 @@ describe('renaming', () => {
     await userEvent.type(field, 'Job');
     await userEvent.tab();
 
-    await waitFor(async () => expect((await testStore.tags.get('t1'))?.name).toBe('Job'));
+    await waitFor(async () => expect((await tagById(testStore, 't1'))?.name).toBe('Job'));
   });
 
   it('snaps back rather than saving an empty name', async () => {
@@ -91,7 +92,7 @@ describe('renaming', () => {
     await userEvent.tab();
 
     expect(field).toHaveValue('Work');
-    expect((await testStore.tags.get('t1'))?.name).toBe('Work');
+    expect((await tagById(testStore, 't1'))?.name).toBe('Work');
   });
 });
 
@@ -103,7 +104,7 @@ describe('colour', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'labels.color:Work' }));
     await userEvent.click(await screen.findByRole('button', { name: 'colors.blue' }));
 
-    await waitFor(async () => expect((await testStore.tags.get('t1'))?.color).toBe('blue'));
+    await waitFor(async () => expect((await tagById(testStore, 't1'))?.color).toBe('blue'));
   });
 
   it('clears the colour with the "no colour" swatch', async () => {
@@ -113,7 +114,7 @@ describe('colour', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'labels.color:Work' }));
     await userEvent.click(await screen.findByRole('button', { name: 'colors.default' }));
 
-    await waitFor(async () => expect((await testStore.tags.get('t1'))?.color).toBeUndefined());
+    await waitFor(async () => expect((await tagById(testStore, 't1'))?.color).toBeUndefined());
   });
 });
 
@@ -129,7 +130,7 @@ describe('deleting', () => {
       within(dialog).getByRole('button', { name: 'labels.confirmDelete.confirm' })
     );
 
-    await waitFor(async () => expect(await testStore.tags.get('t1')).toBeUndefined());
+    await waitFor(async () => expect(await tagById(testStore, 't1')).toBeUndefined());
     expect((await testStore.tags.listLinks()).length).toBe(0);
   });
 
@@ -143,7 +144,7 @@ describe('deleting', () => {
       within(dialog).getByRole('button', { name: 'labels.confirmDelete.cancel' })
     );
 
-    expect(await testStore.tags.get('t1')).toBeDefined();
+    expect(await tagById(testStore, 't1')).toBeDefined();
   });
 });
 
@@ -166,7 +167,7 @@ describe('merging', () => {
       within(dialog).getByRole('button', { name: 'labels.confirmMerge.confirm' })
     );
 
-    await waitFor(async () => expect(await testStore.tags.get('t1')).toBeUndefined());
+    await waitFor(async () => expect(await tagById(testStore, 't1')).toBeUndefined());
     expect(await linkedNoteIds('t2')).toEqual(['n1', 'n2']);
   });
 
@@ -205,7 +206,7 @@ describe('label order', () => {
     );
     await userEvent.tab();
 
-    await waitFor(async () => expect((await testStore.tags.get('t1'))?.name).toBe('Home office'));
+    await waitFor(async () => expect((await tagById(testStore, 't1'))?.name).toBe('Home office'));
   });
 
   it('Arrange A to Z reorders, toasts, and Undo puts the order back', async () => {

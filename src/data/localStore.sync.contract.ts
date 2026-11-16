@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { noteTagId } from '@/contract/index.ts';
 import type { Attachment, Note, Tag } from '@/models.ts';
+import { tagById } from '@/test/storeReads.ts';
 import type { LocalStore } from './LocalStore.ts';
 import type { PushBatch, PushOutcome } from './Remote.ts';
 
@@ -83,7 +84,7 @@ export function describeLocalStoreSyncContract(makeStore: () => Promise<LocalSto
 
       await syncAll(store);
       expect(await store.notes.get(n.id)).toEqual(n);
-      expect(await store.tags.get(t.id)).toEqual(t);
+      expect(await tagById(store, t.id)).toEqual(t);
       expect(await store.tags.listLinks()).toEqual([link(n.id, t.id)]);
       expect((await store.exportAll()).notes).toEqual([n]);
     });
@@ -103,20 +104,6 @@ export function describeLocalStoreSyncContract(makeStore: () => Promise<LocalSto
       expect((await store.sync.dirty()).notes).toEqual([
         { ...n, header: 'edited', rev: 3, attachments: [] },
       ]);
-    });
-
-    it('keeps the Revision when a caller puts a row without one', async () => {
-      const n = note();
-      const t = tag();
-      await store.notes.add(n);
-      await store.tags.add(t);
-      await syncAll(store, 2);
-
-      await store.notes.put({ ...n, header: 'put' });
-      await store.tags.put({ ...t, name: 'Home' });
-      const batch = await store.sync.dirty();
-      expect(batch.notes[0]?.rev).toBe(2);
-      expect(batch.tags[0]?.rev).toBe(2);
     });
 
     it('tags.update owes the row at the Revision it holds', async () => {

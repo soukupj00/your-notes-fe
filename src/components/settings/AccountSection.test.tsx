@@ -9,6 +9,7 @@ import { createHalAccountService } from '@/data/http/HalAccountService.ts';
 import { createHalClient } from '@/data/http/hal.ts';
 import { createFakeServer, type FakeServer } from '@/test/fakeServer.ts';
 import { clearStore, testStore, withStore } from '@/test/store.tsx';
+import { allNotes } from '@/test/storeReads.ts';
 import { AccountSection } from './AccountSection.tsx';
 import { DevicesSection } from './DevicesSection.tsx';
 import { LocalOnlyCard } from './LocalOnlyCard.tsx';
@@ -242,7 +243,7 @@ describe('Settings account sections', () => {
 
     await signOut();
     expect(await screen.findByRole('button', { name: 'account.section.signIn' })).toBeVisible();
-    expect(await testStore.notes.list()).toEqual([]);
+    expect(await allNotes(testStore)).toEqual([]);
   });
 
   it('refuses to sign out while a change is still owed, offering a way out', async () => {
@@ -265,7 +266,7 @@ describe('Settings account sections', () => {
       within(dialog).getByRole('button', { name: 'account.section.saveBackup' })
     ).toBeVisible();
     expect(within(dialog).getByRole('button', { name: 'sync.syncNow' })).toBeVisible();
-    expect(await testStore.notes.list()).toHaveLength(1);
+    expect(await allNotes(testStore)).toHaveLength(1);
     // Still signed in: the seeded Laptop and this Device.
     expect(server.devices).toHaveLength(2);
   });

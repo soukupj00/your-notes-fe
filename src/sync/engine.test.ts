@@ -7,6 +7,7 @@ import { SYNC_META_KEYS } from '@/data/LocalStore.ts';
 import { createMemoryLocalStore } from '@/data/memory/MemoryLocalStore.ts';
 import type { Note, Tag } from '@/models.ts';
 import { createFakeServer, type FakeServer } from '@/test/fakeServer.ts';
+import { allAttachments, allNotes } from '@/test/storeReads.ts';
 import { CONFLICTS_TAG_NAME } from './conflictedCopy.ts';
 import { createSyncEngine } from './engine.ts';
 
@@ -125,10 +126,10 @@ describe('sync engine', () => {
     expect(report.conflicts).toBe(1);
     expect((await b.store.notes.get(n.id))?.body).toBe("<p>A's text</p>");
 
-    const copy = (await b.store.notes.list()).find((x) => x.id !== n.id)!;
+    const copy = (await allNotes(b.store)).find((x) => x.id !== n.id)!;
     expect(copy.header).toMatch(/^Plan \(conflict from Phone, \d{4}-\d{2}-\d{2}\)$/);
     expect(copy).toMatchObject({ state: 'active', color: 'teal' });
-    const [clone] = (await b.store.attachments.list()).filter((x) => x.noteId === copy.id);
+    const [clone] = (await allAttachments(b.store)).filter((x) => x.noteId === copy.id);
     expect(clone?.id).not.toBe(drawing);
     expect(copy.body).toBe(`<p>B's text</p><img data-attachment-id="${clone?.id}">`);
     const conflicts = await b.store.tags.findByName(CONFLICTS_TAG_NAME);
@@ -161,7 +162,7 @@ describe('sync engine', () => {
       tooLarge: [],
       transfersLeft: 0,
     });
-    expect(await a.store.notes.list()).toHaveLength(1);
+    expect(await allNotes(a.store)).toHaveLength(1);
     expect(await pendingOf(a.store)).toBe(0);
   });
 
@@ -173,9 +174,9 @@ describe('sync engine', () => {
     await a.store.tags.add(t);
     await a.engine.sync();
     await b.engine.sync();
-    await a.store.tags.put({ ...t, name: 'Home' });
+    await a.store.tags.update(t.id, () => ({ name: 'Home' }));
     await a.engine.sync();
-    await b.store.tags.put({ ...t, name: 'House' });
+    await b.store.tags.update(t.id, () => ({ name: 'House' }));
 
     expect(await b.engine.sync()).toEqual({
       conflicts: 0,
@@ -218,7 +219,7 @@ describe('sync engine', () => {
     const report = await b.engine.sync();
     expect(report.conflicts).toBe(1);
     expect(await b.store.notes.get(n.id)).toBeUndefined();
-    const [copy] = await b.store.notes.list();
+    const [copy] = await allNotes(b.store);
     expect(copy?.header).toMatch(/^Edited \(conflict from Phone, \d{4}-\d{2}-\d{2}\)$/);
     // The copy is a new Note with nothing to delete on the server: it only waits to go up.
     expect((await b.store.sync.dirty()).tombstones).toEqual([]);
@@ -245,7 +246,7 @@ describe('sync engine', () => {
     const report = await b.engine.sync();
     expect(report.conflicts).toBe(1);
     expect(await b.store.notes.get(n.id)).toBeUndefined();
-    expect((await b.store.notes.list()).map((x) => x.header)).toEqual([
+    expect((await allNotes(b.store)).map((x) => x.header)).toEqual([
       expect.stringMatching(/^Typed just now \(conflict from Phone/),
     ]);
   });
@@ -283,7 +284,7 @@ describe('sync engine', () => {
     await a.engine.sync();
 
     await b.engine.sync();
-    expect(await b.store.notes.list()).toHaveLength(5);
+    expect(await allNotes(b.store)).toHaveLength(5);
     expect(await b.store.meta.get(SYNC_META_KEYS.cursor)).toBe('/api/changes?since=5');
     expect(await b.store.meta.get(SYNC_META_KEYS.seq)).toBe(5);
   });
@@ -295,7 +296,7 @@ describe('sync engine', () => {
     for (const header of ['1', '2']) await a.store.notes.add(note(header));
     await a.engine.sync();
     await b.engine.sync();
-    expect(await b.store.notes.list()).toHaveLength(2);
+    expect(await allNotes(b.store)).toHaveLength(2);
 
     const rows: number[] = [];
     const pull = b.remote.pull;
@@ -347,7 +348,7 @@ describe('sync engine', () => {
     await b.store.notes.add(offline);
 
     await b.engine.sync();
-    expect((await b.store.notes.list()).map((n) => n.header).sort()).toEqual([
+    expect((await allNotes(b.store)).map((n) => n.header).sort()).toEqual([
       'Kept',
       'Written offline',
     ]);

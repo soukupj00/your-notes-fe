@@ -5,9 +5,6 @@ import type * as Contract from '@/contract/index.ts';
  * vendored contract (`src/contract/`, `pnpm contract:pull`); this file adds only the seam's own.
  */
 
-/** A row plus the Revision (ADR 0017) it was last in agreement with. Absent = never pushed. */
-export type Revisioned<T> = T & { rev?: number };
-
 /**
  * Records a purge so the deletion reaches offline Devices. A NoteTag's `id` is the contract's
  * `noteTagId(noteId, tagId)`; `rev` is the Revision last agreed with, absent = never pushed.
@@ -33,7 +30,7 @@ export type ServerChanges = Pick<
   'notes' | 'tags' | 'noteTags' | 'tombstones'
 >;
 
-export type PullPage =
+type PullPage =
   | ({
       status: 'ok';
       /**
@@ -41,11 +38,6 @@ export type PullPage =
        * The HAL adapter maps an absent `_links.next` to `null`.
        */
       next: string | null;
-      /**
-       * This page's own address. Once `next` is null it is the cursor to keep:
-       * asking it again later answers what came after it.
-       */
-      self: string;
       /** Where to pick up next time: `next` on a full page, else the Account's current Sequence. */
       resume: string;
       /** The Account's Sequence when the page was read; a Live Update hint past it is news. */
