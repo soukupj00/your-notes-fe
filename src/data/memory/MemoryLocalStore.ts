@@ -136,18 +136,9 @@ export function createMemoryLocalStore(): LocalStore {
         return { before, after };
       },
       purge: async (id) => {
-        const removedTags = values(noteTags).filter((l) => l.noteId === id);
-        const removedAttachments = plain(attachmentsFor(id));
         remove(notes, id, 'note');
         deleteLinksWhere((l) => l.noteId === id);
-        for (const a of removedAttachments) attachments.delete(a.id);
-        changed('notes', 'noteTags', 'attachments');
-        return { removedTags, removedAttachments };
-      },
-      restore: async (note, removed = {}) => {
-        write(notes, note.id, note);
-        for (const l of removed.removedTags ?? []) write(noteTags, linkKey(l.noteId, l.tagId), l);
-        for (const a of removed.removedAttachments ?? []) attachments.set(a.id, a);
+        for (const a of attachmentsFor(id)) attachments.delete(a.id);
         changed('notes', 'noteTags', 'attachments');
       },
     },
@@ -252,13 +243,6 @@ export function createMemoryLocalStore(): LocalStore {
         const row = attachments.get(id);
         if (!row) return;
         attachments.set(id, { ...row, ...changes });
-        noteOwed(row.noteId);
-        changed('attachments', 'notes');
-      },
-      delete: async (id) => {
-        const row = attachments.get(id);
-        if (!row) return;
-        attachments.delete(id);
         noteOwed(row.noteId);
         changed('attachments', 'notes');
       },

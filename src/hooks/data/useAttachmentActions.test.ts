@@ -42,12 +42,10 @@ describe('useAttachmentActions', () => {
     expect(await allAttachments(testStore)).toHaveLength(0);
   });
 
-  it('getAttachment + deleteAttachment round-trip', async () => {
+  it('getAttachment reads a created row', async () => {
     const a = actions();
     const att = await a.createAttachment(crypto.randomUUID(), pngFile());
     expect((await a.getAttachment(att.id))?.id).toBe(att.id);
-    await a.deleteAttachment(att.id);
-    expect(await a.getAttachment(att.id)).toBeUndefined();
   });
 
   it('cloneAttachment mints a distinct owned row with copied bytes', async () => {

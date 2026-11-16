@@ -101,23 +101,11 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
       purge: (id) =>
         db.transaction('rw', [db.notes, db.noteTags, db.attachments, db.tombstones], async () => {
           const stored = await db.notes.get(id);
-          const removedTags = stripAll(await db.noteTags.where('noteId').equals(id).toArray());
-          const removedAttachments = plain(
-            await db.attachments.where('noteId').equals(id).toArray()
-          );
           await db.notes.delete(id);
           await db.noteTags.where('noteId').equals(id).delete();
           await db.attachments.where('noteId').equals(id).delete();
           // One Tombstone: the server removes the Note's links with it.
           if (stored?.rev !== undefined) await db.tombstones.put(tombstone(id, 'note', stored.rev));
-          return { removedTags, removedAttachments };
-        }),
-      restore: (note, removed = {}) =>
-        db.transaction('rw', [db.notes, db.noteTags, db.attachments, db.tombstones], async () => {
-          await putOwed(db.notes, [note]);
-          if (removed.removedTags?.length) await addLinks(removed.removedTags);
-          if (removed.removedAttachments?.length)
-            await db.attachments.bulkPut(removed.removedAttachments);
         }),
     },
 
@@ -248,13 +236,6 @@ export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
           const row = await db.attachments.get(id);
           if (!row) return;
           await db.attachments.update(id, changes);
-          await noteOwed(row.noteId);
-        }),
-      delete: (id) =>
-        db.transaction('rw', db.attachments, db.notes, async () => {
-          const row = await db.attachments.get(id);
-          if (!row) return;
-          await db.attachments.delete(id);
           await noteOwed(row.noteId);
         }),
       sweepNote: (noteId, keep) =>

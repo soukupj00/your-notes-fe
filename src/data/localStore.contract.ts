@@ -123,7 +123,7 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
         expect((await store.notes.get(n.id))?.pinnedAt).toBeUndefined();
       });
 
-      it('purge removes links and attachments and returns them; restore puts everything back', async () => {
+      it('purge removes the note with its links and attachments', async () => {
         const n = note();
         const t = tag();
         const a = attachment(n.id);
@@ -132,18 +132,11 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
         await store.tags.link(link(n.id, t.id));
         await store.attachments.add(a);
 
-        const removed = await store.notes.purge(n.id);
-        expect(removed.removedTags.map((l) => l.tagId)).toEqual([t.id]);
-        expect(ids(removed.removedAttachments)).toEqual([a.id]);
+        await store.notes.purge(n.id);
         expect(await store.notes.get(n.id)).toBeUndefined();
         expect(await store.attachments.get(a.id)).toBeUndefined();
         expect(await store.tags.listLinks()).toEqual([]);
         expect(await tagById(store, t.id)).toEqual(t); // the tag itself survives
-
-        await store.notes.restore(n, removed);
-        expect(await store.notes.get(n.id)).toEqual(n);
-        expect(await store.tags.listLinks()).toHaveLength(1);
-        expect(await store.attachments.get(a.id)).toBeDefined();
       });
 
       it('feed is live, scoped by state and tag, and joins tags on', async () => {
@@ -328,8 +321,6 @@ export function describeLocalStoreContract(makeStore: () => Promise<LocalStore>)
         const row = await store.attachments.get(a.id);
         expect(row?.duration).toBe(12);
         expect(row?.updatedAt).toBe('2026-02-02T00:00:00.000Z');
-        await store.attachments.delete(a.id);
-        expect(await store.attachments.get(a.id)).toBeUndefined();
       });
 
       it('forNote, forNotes and watch are live', async () => {

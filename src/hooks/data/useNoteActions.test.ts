@@ -75,8 +75,8 @@ describe('useNoteActions', () => {
     expect((await testStore.notes.get(created.id))?.body).toBe('<p>new</p>');
   });
 
-  it('purgeNote returns the removed noteTags and restoreNote reproduces the exact prior state', async () => {
-    const { createNote, purgeNote, restoreNote } = actions();
+  it('purgeNote removes the note and its links', async () => {
+    const { createNote, purgeNote } = actions();
     const created = await createNote({ header: 'Tagged', body: '<p>x</p>' });
     const tag: NoteTag = {
       noteId: created.id,
@@ -86,44 +86,21 @@ describe('useNoteActions', () => {
     };
     await testStore.tags.link(tag);
 
-    const removed = await purgeNote(created.id);
+    await purgeNote(created.id);
     expect(await testStore.notes.get(created.id)).toBeUndefined();
     expect((await testStore.tags.listLinks()).filter((l) => l.noteId === created.id)).toEqual([]);
-    expect(removed.removedTags).toEqual([tag]);
-    expect(removed.removedAttachments).toEqual([]);
-
-    await restoreNote(created as Note, removed);
-
-    expect(await testStore.notes.get(created.id)).toEqual(created);
-    expect((await testStore.tags.listLinks()).filter((l) => l.noteId === created.id)).toEqual([
-      tag,
-    ]);
   });
 });
 
-describe('purgeNote / restoreNote cascade attachments', () => {
-  it('purgeNote removes + returns the note attachments', async () => {
+describe('purgeNote cascades to attachments', () => {
+  it('purgeNote removes the note attachments', async () => {
     const a = actions();
     const note = makeNote();
     await testStore.notes.add(note);
     const att = makeAtt(note.id);
     await testStore.attachments.add(att);
 
-    const removed = await a.purgeNote(note.id);
-    expect(removed.removedAttachments.map((r) => r.id)).toEqual([att.id]);
+    await a.purgeNote(note.id);
     expect(await testStore.attachments.get(att.id)).toBeUndefined();
-  });
-
-  it('restoreNote re-puts the note and its attachments', async () => {
-    const a = actions();
-    const note = makeNote();
-    await testStore.notes.add(note);
-    const att = makeAtt(note.id);
-    await testStore.attachments.add(att);
-
-    const removed = await a.purgeNote(note.id);
-    await a.restoreNote(note, removed);
-    expect(await testStore.notes.get(note.id)).toBeTruthy();
-    expect(await testStore.attachments.get(att.id)).toBeTruthy();
   });
 });
