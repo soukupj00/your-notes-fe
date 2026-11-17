@@ -5,16 +5,16 @@ import Text from '@tiptap/extension-text';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Placeholder } from '@tiptap/extensions';
 import { resolveShortcuts, type ShortcutBindings } from '@/lib/shortcuts.ts';
-import { createAudio } from './Audio';
+import { createAudio } from './Audio/Audio';
 import type { AttachmentDeps } from './attachments/deps';
 import type { TFunction } from './button-types';
-import { Clear } from './Clear';
-import { Color } from './Color';
+import { Clear } from './Clear/Clear';
+import { Color } from './Color/Color';
 import { ColorPreview } from './color-preview';
-import { createExcalidraw } from './Excalidraw';
-import { createFile } from './File';
-import { FontFamily } from './FontFamily';
-import { FontSize } from './FontSize';
+import { createExcalidraw } from './Excalidraw/Excalidraw';
+import { createFile } from './File/File';
+import { FontFamily } from './FontFamily/FontFamily';
+import { FontSize } from './FontSize/FontSize';
 import {
   Blockquote,
   Bold,
@@ -27,21 +27,22 @@ import {
   Strike,
   Underline,
 } from './formatting';
-import { Heading } from './Heading';
-import { Highlight } from './Highlight';
-import { History } from './history';
-import { createImage } from './Image';
-import { Link } from './Link';
-import { ListItem } from './ListItem';
-import { createMathematics } from './Mathematics';
-import { createShortcuts } from './Shortcuts';
-import { createSlashMenu } from './SlashMenu';
-import { TaskItem } from './TaskItem';
-import { ChecklistFlip, TaskList } from './TaskList';
-import { TextAlign } from './TextAlign';
+import { Heading } from './Heading/Heading';
+import { Highlight } from './Highlight/Highlight';
+import { History } from './history/History';
+import { createImage } from './Image/Image';
+import { Link } from './Link/Link';
+import { ListItem } from './ListItem/ListItem';
+import { createMathematics } from './Mathematics/Mathematics';
+import { createShortcuts } from './Shortcuts/Shortcuts';
+import { createSlashMenu } from './SlashMenu/SlashMenu';
+import { TaskItem } from './TaskItem/TaskItem';
+import { ChecklistFlip } from './TaskList/ChecklistFlip';
+import { TaskList } from './TaskList/TaskList';
+import { TextAlign } from './TextAlign/TextAlign';
 import { TextPrompt } from './TextPrompt/textPrompt';
-import { Typography } from './Typography';
-import { createVideo } from './Video';
+import { Typography } from './Typography/Typography';
+import { createVideo } from './Video/Video';
 
 interface BuildOptions {
   /** Live attachment dependencies, read through a getter because the nodes are

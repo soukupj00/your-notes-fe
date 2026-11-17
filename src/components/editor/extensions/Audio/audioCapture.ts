@@ -1,4 +1,4 @@
-export type RecorderCleanup = () => void;
+type RecorderCleanup = () => void;
 
 export interface AudioCaptureCoordinator {
   /** Ask for a recording to start as soon as a recorder exists. */

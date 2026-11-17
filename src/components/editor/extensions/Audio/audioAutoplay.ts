@@ -1,4 +1,4 @@
-export type ReadyAudioCleanup = () => void;
+type ReadyAudioCleanup = () => void;
 
 export interface AudioAutoplayCoordinator {
   requestAutoplay(attachmentId: string): void;

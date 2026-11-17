@@ -8,8 +8,8 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { afterEach, describe, expect, it } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { EditorTextStyleSelect } from './EditorTextStyleSelect';
-import { FontFamily } from './FontFamily';
-import { FontSize } from './FontSize';
+import { FontFamily } from './FontFamily/FontFamily';
+import { FontSize } from './FontSize/FontSize';
 
 const editors: Editor[] = [];
 

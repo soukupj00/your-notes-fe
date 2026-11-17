@@ -10,7 +10,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger, useTooltipFloor } from '@/components/ui/tooltip';
 import type { TFunction } from './button-types';
 
-export type EditorTextStyleVariant = 'fontFamily' | 'fontSize';
+type EditorTextStyleVariant = 'fontFamily' | 'fontSize';
 
 interface EditorTextStyleSelectProps {
   editor: Editor;

@@ -43,5 +43,3 @@ export function ToolbarCustomizeButton() {
     </Sheet>
   );
 }
-
-export default ToolbarCustomizeButton;

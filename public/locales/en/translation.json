@@ -111,7 +111,7 @@
       "stop": "Stop",
       "cancel": "Cancel",
       "errors": {
-        "permission": "Microphone access was denied",
+        "denied": "Microphone access was denied",
         "unsupported": "Audio recording is not supported in this browser",
         "no-device": "No microphone was found",
         "in-use": "The microphone is being used by another app",

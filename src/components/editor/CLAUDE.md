@@ -18,7 +18,7 @@ flowchart LR
 
 - `editor.tsx` - the `Editor` component.
 - `extensions/formatting.ts` - the one-button marks and blocks, as declarations.
-- `extensions/<Name>/` - an extension with more than its declaration (a node view, a plugin, a coordinator), as `<Name>.ts` plus an `index.ts` re-export.
+- `extensions/<Name>/` - an extension with more than its declaration (a node view, a plugin, a coordinator), as `<Name>.ts` beside what it needs; importers name the file, not the folder.
 - `extensions/build.ts` - every extension the editor mounts, in one function, so the registry's tests resolve ids against the real set.
 - `extensions/attachments/` - what the five attachment nodes share.
 - `toolbar/` - the customisable toolbar.

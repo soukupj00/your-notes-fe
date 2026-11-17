@@ -52,5 +52,3 @@ export function ToolbarPreviewStrip({ layout, widthClass }: ToolbarPreviewStripP
     </div>
   );
 }
-
-export default ToolbarPreviewStrip;

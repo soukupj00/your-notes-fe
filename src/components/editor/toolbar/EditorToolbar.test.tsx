@@ -6,11 +6,11 @@ import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Bold, BulletList, Italic, OrderedList } from '@/components/editor/extensions/formatting';
-import { ListItem } from '@/components/editor/extensions/ListItem';
+import { ListItem } from '@/components/editor/extensions/ListItem/ListItem';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import { setViewport } from '@/test/viewport.ts';
-import EditorToolbar from './EditorToolbar';
+import { EditorToolbar } from './EditorToolbar';
 import type { ToolbarLayout } from './types';
 
 vi.mock('react-i18next', () => ({

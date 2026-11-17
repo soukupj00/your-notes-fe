@@ -26,10 +26,10 @@ async function queryMicrophonePermission(): Promise<PermissionState | null> {
   }
 }
 
-export type RecorderStatus = 'idle' | 'requesting' | 'recording' | 'error';
+type RecorderStatus = 'idle' | 'requesting' | 'recording' | 'error';
 
 /** 'no-device' rejects instantly with no prompt, so it must not read as a denial. */
-export type RecorderError = 'unsupported' | 'denied' | 'no-device' | 'in-use' | 'failed';
+type RecorderError = 'unsupported' | 'denied' | 'no-device' | 'in-use' | 'failed';
 
 function mapGetUserMediaError(err: unknown): RecorderError {
   const name = err instanceof DOMException ? err.name : '';

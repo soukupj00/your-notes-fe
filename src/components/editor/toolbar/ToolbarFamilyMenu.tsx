@@ -82,5 +82,3 @@ export const ToolbarFamilyMenu: React.FC<ToolbarFamilyMenuProps> = ({
     </Popover>
   );
 };
-
-export default ToolbarFamilyMenu;

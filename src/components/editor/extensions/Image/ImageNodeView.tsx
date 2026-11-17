@@ -26,5 +26,3 @@ export function ImageNodeView(props: ReactNodeViewProps) {
     </AttachmentNodeView>
   );
 }
-
-export default ImageNodeView;

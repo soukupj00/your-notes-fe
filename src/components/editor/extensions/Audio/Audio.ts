@@ -5,7 +5,7 @@ import { AudioRecordButton } from './AudioRecordButton';
 import { type AudioAutoplayCoordinator, createAudioAutoplayCoordinator } from './audioAutoplay';
 import { type AudioCaptureCoordinator, createAudioCaptureCoordinator } from './audioCapture';
 
-export interface AudioAttachmentStorage {
+interface AudioAttachmentStorage {
   autoplay: AudioAutoplayCoordinator;
   /** Lets the editor start a recording without owning the recorder. */
   capture: AudioCaptureCoordinator;

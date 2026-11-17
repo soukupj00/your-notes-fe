@@ -44,5 +44,3 @@ export const ToolbarLeaf: React.FC<ToolbarLeafProps> = ({ item, editor, t, inMen
     </MenuRowLabelProvider>
   );
 };
-
-export default ToolbarLeaf;

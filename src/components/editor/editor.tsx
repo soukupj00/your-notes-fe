@@ -6,7 +6,7 @@ import type React from 'react';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { AudioRecorderHost } from '@/components/editor/extensions/Audio';
+import { AudioRecorderHost } from '@/components/editor/extensions/Audio/AudioRecorderHost';
 import {
   dedupeForeignAttachments,
   insertFiles,
@@ -17,7 +17,7 @@ import {
   ExcalidrawDialogHost,
   useOpenDrawing,
 } from '@/components/editor/extensions/Excalidraw/ExcalidrawDialogHost';
-import { LinkBubbleMenu } from '@/components/editor/extensions/Link';
+import { LinkBubbleMenu } from '@/components/editor/extensions/Link/LinkBubbleMenu';
 import { TextPromptHost } from '@/components/editor/extensions/TextPrompt/TextPromptHost';
 import { EditorToolbar } from '@/components/editor/toolbar/EditorToolbar.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';

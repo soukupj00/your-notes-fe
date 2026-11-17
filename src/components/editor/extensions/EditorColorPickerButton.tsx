@@ -15,7 +15,7 @@ import type { IconName } from '@/components/icons';
 import { ActionButton } from '@/components/ui/ActionButton.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-export type EditorColorPickerVariant = 'text' | 'highlight';
+type EditorColorPickerVariant = 'text' | 'highlight';
 
 interface EditorColorPickerButtonProps {
   editor: Editor;
