@@ -1,5 +1,5 @@
 import { useCanGoBack, useNavigate, useRouter, useSearch } from '@tanstack/react-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { Intent } from '@/lib/intent.ts';
 import type { NoteSearchParams } from '@/lib/note-search-params.ts';
 import { mintId } from '@/lib/rows.ts';
@@ -22,15 +22,14 @@ export function useOpenNote() {
   const canGoBack = useCanGoBack();
   const [opened, setOpened] = useState<OpenedNote | null>(null);
 
-  // A gesture lasts one open. The router is the record of the open ending, whichever way it did
-  // (Done, Back, a dead id), so Forward onto the same note opens it plain.
-  useEffect(
-    () =>
-      router.subscribe('onResolved', ({ toLocation }) => {
-        if (!(toLocation.search as NoteSearchParams).note) setOpened(null);
-      }),
-    [router]
-  );
+  // A gesture lasts one open, which ends once a render shows no note (Done, Back, a dead id), so
+  // Forward onto the same note opens it plain. Not the router's onResolved: a Forward pressed
+  // before the Back resolves supersedes it, and that resolve never comes.
+  const [shownNote, setShownNote] = useState(note);
+  if (note !== shownNote) {
+    setShownNote(note);
+    if (!note) setOpened(null);
+  }
 
   /**
    * Opening is navigation: it pushes, so back closes the note. `null` starts a draft, whose id is
