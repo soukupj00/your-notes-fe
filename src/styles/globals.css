@@ -868,6 +868,54 @@
   }
 }
 
+/* The phone's label filter row fades an edge only while labels hide past it (DESIGN.md Chips).
+   Guarded because without a timeline the keyframes run once and stick on their last frame. */
+@property --filter-fade-start {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --filter-fade-end {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@supports (animation-timeline: scroll()) {
+  @keyframes filter-row-fade {
+    0% {
+      --filter-fade-start: 0px;
+      --filter-fade-end: var(--filter-fade-right);
+    }
+    10%,
+    90% {
+      --filter-fade-start: var(--filter-fade-left);
+      --filter-fade-end: var(--filter-fade-right);
+    }
+    100% {
+      --filter-fade-start: var(--filter-fade-left);
+      --filter-fade-end: 0px;
+    }
+  }
+
+  @media (width < 40rem) {
+    .filter-row {
+      --filter-fade-left: calc(2.5rem + var(--safe-left));
+      --filter-fade-right: calc(2.5rem + var(--safe-right));
+      animation: filter-row-fade linear both;
+      animation-timeline: scroll(self inline);
+      mask-image: linear-gradient(
+        to right,
+        transparent,
+        #000 var(--filter-fade-start),
+        #000 calc(100% - var(--filter-fade-end)),
+        transparent
+      );
+    }
+  }
+}
+
 /*
  * ── The Tour ────────────────────────────────────────────────────────────────
  *
