@@ -156,6 +156,22 @@ describe('backup', () => {
     expect((await allNotes(store)).map((n) => n.id).sort()).toEqual([note.id, 'newer-note'].sort());
   });
 
+  it('imports an archive that still carries the settings array of earlier builds', async () => {
+    const zipped = zipWith({
+      version: BACKUP_VERSION,
+      exportedAt: NOW,
+      notes: [note],
+      tags: [],
+      noteTags: [],
+      attachments: [],
+      settings: [{ key: 'preferences', value: { version: 1 } }],
+    });
+
+    await importBackup(store, await parseBackupZip(zipped));
+
+    expect(await allNotes(store)).toEqual([note]);
+  });
+
   describe('validation', () => {
     /** Every rejection has to happen before the import writes anything. */
     async function expectRejectedWithDbIntact(bytes: Uint8Array, code: string) {
@@ -193,7 +209,6 @@ describe('backup', () => {
           tags: [],
           noteTags: [],
           attachments: [],
-          settings: [],
         }),
         'invalid-manifest'
       );
@@ -208,7 +223,6 @@ describe('backup', () => {
           tags: [],
           noteTags: [],
           attachments: [],
-          settings: [],
         }),
         'unsupported-version'
       );
@@ -232,7 +246,6 @@ describe('backup', () => {
               updatedAt: NOW,
             },
           ],
-          settings: [],
         }),
         'missing-attachment'
       );
@@ -258,7 +271,6 @@ describe('backup', () => {
                 updatedAt: NOW,
               },
             ],
-            settings: [],
           },
           { 'attachments/att-1': BINARY }
         ),
