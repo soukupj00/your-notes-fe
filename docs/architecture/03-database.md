@@ -90,7 +90,8 @@ The v3 lesson generalizes and is the repo's canonical migration rule: adding an 
 
 An upgrade made in one tab reaches the others as IndexedDB's `versionchange`, and each of them reloads at once, because its code was written for the older schema; a deleted database reloads them too.
 Left alone, Dexie 4 reopens the newer database silently and lets that code write rows in the old shape.
-A tab whose service worker still serves the old code reloads into it, and the update prompt is what moves it on.
+The reload goes through the service worker (`lib/appUpdate.ts`, handed to the store by `main.tsx`): a plain reload would come back on the old code the worker still serves.
+So it asks the server for the newer worker, activates it, and reloads once that worker controls the tab; with no service worker, or nothing newer, it is a plain reload.
 
 ## Sync metadata (v5)
 
@@ -108,7 +109,7 @@ Shape fixed by [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicte
 ## Testing the layer
 
 Data-layer tests run in Vitest against `fake-indexeddb`, including a dedicated migration test (`lifecycle.migration.test.ts`) and a Blob round-trip test that must run in the `node` environment (jsdom reads a stored Blob back as a plain object).
-The `NotesDB` constructor takes a database name and a reload only so tests can spin up throwaway instances and watch the reload; the app uses one singleton.
+The `NotesDB` constructor takes a database name, so tests can spin up throwaway instances, and the reload, which tests watch and `main.tsx` supplies for the app's one instance.
 
 ## For the paper
 

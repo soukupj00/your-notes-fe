@@ -3,7 +3,9 @@
 // native Blob round-trips as a real browser's does.
 import { describe, expect, it } from 'vitest';
 import type { Attachment } from '@/models.ts';
-import { db } from './db.ts';
+import { NotesDB } from './db.ts';
+
+const db = new NotesDB();
 
 function makeAttachment(overrides: Partial<Attachment> = {}): Attachment {
   const now = new Date().toISOString();

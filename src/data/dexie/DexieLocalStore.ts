@@ -11,15 +11,21 @@ import {
   stripAttachment,
   tombstone,
 } from '../syncRows.ts';
-import { db as defaultDb, type NotesDB } from './db.ts';
+import { NotesDB } from './db.ts';
 import { live } from './live.ts';
 import { createDexieSync } from './sync.ts';
 
 /**
- * The default Local Store (ADR 0001, ADR 0020). `db` is a parameter only so the contract test
- * can use a throwaway database per test.
+ * The default Local Store (ADR 0001, ADR 0020). `reload` runs when another tab upgrades or deletes
+ * the database; `db` is a parameter only so tests can use a throwaway database.
  */
-export function createDexieLocalStore(db: NotesDB = defaultDb): LocalStore {
+export function createDexieLocalStore({
+  reload,
+  db = new NotesDB('NotesDB', reload),
+}: {
+  reload?: () => void;
+  db?: NotesDB;
+} = {}): LocalStore {
   const stripAll = <T extends object>(rows: Stored<T>[]): T[] => rows.map(strip);
   const stripOne = <T extends object>(row: Stored<T> | undefined): T | undefined =>
     row && strip(row);

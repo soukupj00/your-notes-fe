@@ -90,7 +90,8 @@ Ponaučení z v3 platí obecně a je kanonickým pravidlem migrací v repozitá�
 
 Navýšení verze provedené v jedné záložce dorazí do ostatních jako událost IndexedDB `versionchange` a každá z nich se hned znovu načte, protože její kód byl psán pro starší schéma; smazaná databáze je znovu načte také.
 Bez toho by Dexie 4 novější databázi tiše znovu otevřela a nechala ten kód zapisovat řádky ve starém tvaru.
-Záložka, které service worker stále podává starý kód, se znovu načte do něj a dál ji posune až výzva k aktualizaci.
+Znovunačtení jde přes service worker (`lib/appUpdate.ts`, který úložišti předává `main.tsx`): prosté znovunačtení by se vrátilo ke starému kódu, který worker stále podává.
+Proto si od serveru vyžádá novější worker, aktivuje ho a záložku znovu načte, jakmile ji tento worker ovládá; bez service workeru, nebo když nic novějšího není, jde o prosté znovunačtení.
 
 ## Metadata synchronizace (v5)
 
@@ -108,7 +109,7 @@ Tvar stanovuje [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicte
 ## Testování vrstvy
 
 Testy datové vrstvy běží ve Vitestu proti `fake-indexeddb`, včetně samostatného testu migrace (`lifecycle.migration.test.ts`) a testu cesty Blobu tam a zpět, který musí běžet v prostředí `node` (jsdom čte uložený Blob zpět jako prostý objekt).
-Konstruktor `NotesDB` přijímá název databáze a znovunačtení jen proto, aby si testy mohly vytvářet jednorázové instance a znovunačtení sledovat; aplikace používá jeden singleton.
+Konstruktor `NotesDB` přijímá název databáze, aby si testy mohly vytvářet jednorázové instance, a znovunačtení, které testy sledují a které pro jedinou instanci aplikace dodává `main.tsx`.
 
 ## Pro text práce
 

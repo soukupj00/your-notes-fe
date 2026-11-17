@@ -92,4 +92,5 @@ There is no seeder, and a fresh install has no Notes.
   Rows from before sync need none: an absent `rev` correctly means "never pushed", and the first sign-in adopts them.
 - **Another tab's upgrade or delete reloads this tab** (`versionchange` in `db.ts`).
   Left alone, Dexie 4 reopens the newer database and lets this tab's older code write rows in the old shape.
-  A tab whose service worker still serves the old code comes back on that code, and the update prompt moves it on.
+  The reload is `main.tsx`'s, passed through `createDexieLocalStore({ reload })`: it activates a newer service worker first (`lib/appUpdate.ts`), since a plain reload comes back on the old code the worker still serves.
+  `src/data` knows nothing of the service worker.
