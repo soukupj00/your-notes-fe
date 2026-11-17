@@ -18,7 +18,6 @@ erDiagram
     NOTE {
         string id "uuid"
         string header "optional"
-        string description "optional plaintext subtitle (dormant)"
         string body "rich-text HTML; references attachments by id"
         string state "active | archived | trashed (indexed)"
         string pinnedAt "ISO; presence = pinned, value orders pins"

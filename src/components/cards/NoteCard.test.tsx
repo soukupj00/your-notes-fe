@@ -26,7 +26,6 @@ function makeNote(overrides: Partial<Note> = {}): Note {
   return {
     id: crypto.randomUUID(),
     header: 'My note',
-    description: '',
     body: '<p>hello</p>',
     state: 'active',
     createdAt: now,

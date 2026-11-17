@@ -9,7 +9,7 @@ describe('newNote', () => {
   it('fills every default and stamps both timestamps equal', () => {
     const note = newNote({});
     expect(note.id).toMatch(UUID);
-    expect(note).toMatchObject({ header: '', description: '', body: '', state: 'active' });
+    expect(note).toMatchObject({ header: '', body: '', state: 'active' });
     expect(note.createdAt).toBe(note.updatedAt);
   });
 

@@ -34,7 +34,6 @@ function legacyNote(id: string, overrides: Record<string, unknown> = {}) {
   return {
     id,
     header: id,
-    description: '',
     body: '',
     checklist: ['a', 'b'],
     createdAt: now,

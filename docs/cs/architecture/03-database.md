@@ -18,7 +18,6 @@ erDiagram
     NOTE {
         string id "uuid"
         string header "volitelný"
-        string description "volitelný prostý podtitulek (nevyužitý)"
         string body "HTML formátovaného textu; odkazuje na přílohy podle id"
         string state "active | archived | trashed (indexováno)"
         string pinnedAt "ISO; přítomnost = připnutá, hodnota řadí připnuté"

@@ -80,7 +80,6 @@ describe('useAttachmentActions', () => {
     await testStore.notes.add({
       id: liveNote,
       header: '',
-      description: '',
       body: `<img data-attachment-id="${keep.id}">`,
       state: 'active',
       createdAt: now,

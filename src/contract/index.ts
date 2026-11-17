@@ -3,7 +3,7 @@
  *
  * This file is vendored verbatim by the frontend (`ni-dip-fe`) and runs in the browser,
  * so it imports nothing but `zod` and nothing from the server.
- * Vendored from ni-dip-be at commit: af4f38c
+ * Vendored from ni-dip-be at commit: 9e69a6f
  * When copying it, replace the line above with the backend commit it was taken from.
  */
 import { z } from 'zod';
@@ -56,7 +56,6 @@ export type AttachmentMeta = z.infer<typeof AttachmentMeta>;
 export const Note = z.object({
   id: Id,
   header: z.string().optional(),
-  description: z.string().optional(),
   body: z.string().optional(),
   state: NoteState,
   pinnedAt: IsoDateTime.optional(),
