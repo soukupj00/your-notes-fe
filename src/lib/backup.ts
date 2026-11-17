@@ -78,8 +78,6 @@ const attachmentMetaSchema = z.looseObject({
   updatedAt: z.string(),
 });
 
-const settingSchema = z.object({ key: z.string(), value: z.unknown() });
-
 const manifestSchema = z.object({
   version: z.number(),
   exportedAt: z.string(),
@@ -87,7 +85,6 @@ const manifestSchema = z.object({
   tags: z.array(tagSchema),
   noteTags: z.array(noteTagSchema),
   attachments: z.array(attachmentMetaSchema),
-  settings: z.array(settingSchema),
 });
 
 /**
@@ -166,9 +163,6 @@ export async function buildBackupZip(store: LocalStore): Promise<Blob> {
     tags,
     noteTags,
     attachments: attachmentMeta,
-    // Preferences left the store in ADR 0020; kept as an empty array so the
-    // manifest shape (and every archive written before) still validates.
-    settings: [],
   };
 
   entries[BACKUP_MANIFEST_NAME] = [strToU8(JSON.stringify(manifest)), { level: 6 }];
@@ -222,8 +216,7 @@ export async function parseBackupZip(data: Uint8Array): Promise<ParsedBackup> {
 
 /**
  * Adds the Backup to what the app holds, atomically (ADR 0019). Only call it with
- * `parseBackupZip`'s output, as it trusts that validation. `manifest.settings` is ignored
- * (ADR 0020).
+ * `parseBackupZip`'s output, as it trusts that validation.
  */
 export async function importBackup(
   store: LocalStore,

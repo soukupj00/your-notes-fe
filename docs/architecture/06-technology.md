@@ -18,7 +18,7 @@ A product constraint shapes the whole list: **no external network requests at ru
 | Technology | Role | Rationale |
 |---|---|---|
 | TanStack Router | File-based routing | Chosen over React Router for **typed search params** - the URL is the app's state model, so params being first-class and validated decided it ([ADR 0008](../adr/0008-tanstack-router-over-react-router.md)); `routeTree.gen.ts` generated and committed |
-| Zod 4 | Runtime validation | URL params, the preferences blob, backup manifests (`z.looseObject` so unknown future fields survive a round-trip), and every server response at the boundary |
+| Zod 4 | Runtime validation | URL params, the preferences blob, backup manifests (their rows as `z.looseObject`, so unknown future fields survive a round-trip), and every server response at the boundary |
 
 There is no client-state library: Dexie live queries + URL params + small contexts cover it (see [01-architecture.md](./01-architecture.md)).
 

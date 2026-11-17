@@ -18,7 +18,7 @@ Celý seznam formuje jedno produktové omezení: **žádné externí síťové p
 | Technologie | Role | Zdůvodnění |
 |---|---|---|
 | TanStack Router | Souborové routování | Zvolen místo React Routeru kvůli **typovaným search parametrům** - URL je modelem stavu aplikace, takže rozhodlo, že parametry jsou plnohodnotné a validované ([ADR 0008](../adr/0008-tanstack-router-over-react-router.md)); `routeTree.gen.ts` je generovaný a commitnutý |
-| Zod 4 | Validace za běhu | Parametry URL, blob předvoleb, manifesty záloh (`z.looseObject`, aby neznámá budoucí pole přežila cestu tam a zpět) a každá odpověď serveru na hranici |
+| Zod 4 | Validace za běhu | Parametry URL, blob předvoleb, manifesty záloh (jejich řádky jako `z.looseObject`, aby neznámá budoucí pole přežila cestu tam a zpět) a každá odpověď serveru na hranici |
 
 Žádná knihovna pro klientský stav není: pokrývají ho živé dotazy Dexie + parametry URL + malé kontexty (viz [01-architecture.md](./01-architecture.md)).
 
