@@ -241,6 +241,40 @@ export function describeLocalStoreSyncContract(makeStore: () => Promise<LocalSto
       ]);
     });
 
+    it.each([
+      {
+        removed: 'a Note purged',
+        remove: (s: LocalStore, n: Note) => s.notes.purge(n.id),
+        gone: (n: Note) => ({ id: n.id, kind: 'note' }),
+      },
+      {
+        removed: 'a Tag deleted',
+        remove: (s: LocalStore, _: Note, t: Tag) => s.tags.delete(t.id),
+        gone: (_: Note, t: Tag) => ({ id: t.id, kind: 'tag' }),
+      },
+      {
+        removed: 'a link removed',
+        remove: (s: LocalStore, n: Note, t: Tag) => s.tags.unlink(n.id, t.id),
+        gone: (n: Note, t: Tag) => ({ id: noteTagId(n.id, t.id), kind: 'noteTag' }),
+      },
+    ])(
+      '$removed during its first push owes a Tombstone at the accepted Revision',
+      async ({ remove, gone }) => {
+        const n = note();
+        const t = tag();
+        await store.notes.add(n);
+        await store.tags.add(t);
+        await store.tags.link(link(n.id, t.id));
+        const batch = await store.sync.dirty();
+        await remove(store, n, t);
+        await store.sync.applied(batch, acceptAll(batch, 1));
+
+        expect((await store.sync.dirty()).tombstones).toEqual([
+          { ...gone(n, t), rev: 1, deletedAt: expect.any(String) },
+        ]);
+      }
+    );
+
     it('applied refuses outcomes that do not pair with the batch', async () => {
       await store.notes.add(note());
       const batch = await store.sync.dirty();

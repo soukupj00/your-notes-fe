@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { noteTagId } from '@/contract/index.ts';
 import { createHalAccountService } from '@/data/http/HalAccountService.ts';
 import { createHalRemote } from '@/data/http/HalRemote.ts';
@@ -202,6 +202,37 @@ describe('sync engine', () => {
     expect(await b.store.notes.get(n.id)).toBeUndefined();
     expect(await pendingOf(a.store)).toBe(0);
     expect(await pendingOf(b.store)).toBe(0);
+  });
+
+  it('a purge made while the first push is in flight reaches the server and stays', async () => {
+    const { server, owner } = setup();
+    const a = await device(server, owner.id, 'Laptop');
+    const b = await device(server, owner.id, 'Phone');
+    const n = note('Gone soon');
+    await a.store.notes.add(n);
+    let answered!: () => void;
+    const held = new Promise<void>((resolve) => {
+      answered = resolve;
+    });
+    const push = a.remote.push;
+    a.remote.push = async (batch) => {
+      const outcomes = await push(batch);
+      await held;
+      return outcomes;
+    };
+
+    const running = a.engine.sync();
+    await vi.waitFor(() => expect(server.sync.row(owner.id, 'note', n.id)).toBeDefined());
+    await a.store.notes.purge(n.id);
+    answered();
+    await running;
+    await a.engine.sync();
+    await b.engine.sync();
+
+    expect(await a.store.notes.get(n.id)).toBeUndefined();
+    expect(await b.store.notes.get(n.id)).toBeUndefined();
+    expect(server.sync.row(owner.id, 'note', n.id)).toBeUndefined();
+    expect(await pendingOf(a.store)).toBe(0);
   });
 
   it('an edit to something purged elsewhere survives as a Conflicted Copy', async () => {

@@ -50,6 +50,7 @@ flowchart LR
 - Every write owes its row.
   An Attachment write owes its Note, because an Attachment's metadata rides on the Note's Revision.
 - Removing a row the server has seen leaves a Tombstone with its `rev`; one never pushed leaves nothing, and putting the row back takes the Tombstone back.
+  A row removed while its push is in flight gets its Tombstone at the accepted `rev` in `applied`, because the server now holds it; a link removed with its Note or Tag gets none, as that one's Tombstone covers it.
 - `applyPage` writes what the server answers, in two modes.
   In `keep-local` (a pull) an owed row or a pending purge waits for its push; in `server-wins` (resolving a push outcome) the server's row overwrites it.
   A server Tombstone removes the row with everything that hangs off it, and writes no local Tombstone.
