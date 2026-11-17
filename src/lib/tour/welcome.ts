@@ -28,26 +28,19 @@ export interface CalloutPlacement {
   arrow: number;
 }
 
+const GUTTER = 16;
+const ARROW_INSET = 20;
+
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 export function placeCallout(
   target: Box,
   viewport: { width: number; height: number },
-  {
-    width,
-    gap,
-    gutter = 16,
-    arrowInset = 20,
-  }: {
-    width: number;
-    gap: number;
-    gutter?: number;
-    arrowInset?: number;
-  }
+  { width, gap }: { width: number; gap: number }
 ): CalloutPlacement {
   const centre = target.left + target.width / 2;
-  const left = clamp(centre - width / 2, gutter, viewport.width - gutter - width);
-  const arrow = clamp(centre - left, arrowInset, width - arrowInset);
+  const left = clamp(centre - width / 2, GUTTER, viewport.width - GUTTER - width);
+  const arrow = clamp(centre - left, ARROW_INSET, width - ARROW_INSET);
   if (target.top + target.height / 2 < viewport.height / 2) {
     return { side: 'below', left, offset: target.top + target.height + gap, arrow };
   }

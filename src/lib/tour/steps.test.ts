@@ -38,7 +38,7 @@ describe('the step targets', () => {
     ['quickCapture', 'settingsQuickCapture'],
     ['sync', 'settingsSync'],
   ])('points %s at its Home row', (key, target) => {
-    expect(step(key).target()).toBe(target);
+    expect(step(key).target).toBe(target);
   });
 });
 

@@ -96,7 +96,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
   );
 
   /**
-   * Cuts the spotlight over the step's target, if any. Waits for `data-tour-step` first: driver
+   * Cuts the spotlight over the step's target. Waits for `data-tour-step` first: driver
    * measures the popover once, and an empty box put step 1 half off the top of the window.
    */
   const showStep = useCallback(
@@ -105,10 +105,9 @@ export function TourProvider({ children }: { children: ReactNode }) {
         () => popoverHost.firstElementChild?.getAttribute('data-tour-step') === String(at),
         { label: `the popover to render step ${at + 1}` }
       );
-      const target = TOUR_STEPS[at].target();
       // The app may still be painting the target. A step that never gets one is shown centred
       // with no spotlight rather than dropped - the copy is still worth reading.
-      const element = target ? await waitForTarget(target) : null;
+      const element = await waitForTarget(TOUR_STEPS[at].target);
       driverRef.current?.setConfig(driverConfig(element));
       driverRef.current?.highlight({
         element: element ?? undefined,

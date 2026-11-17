@@ -20,7 +20,7 @@ describe('attachLongPress', () => {
     root.append(row);
     document.body.append(root);
     onLongPress = vi.fn();
-    detach = attachLongPress(root, { isTarget: (t) => t === row, onLongPress, delayMs: 500 });
+    detach = attachLongPress(root, { isTarget: (t) => t === row, onLongPress });
   });
 
   afterEach(() => {

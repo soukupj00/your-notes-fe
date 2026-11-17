@@ -12,6 +12,9 @@ import { TASK_LIST } from '@/lib/body.ts';
  */
 export type RowSnapshot = number[][];
 
+const FLIP_MS = 200;
+const FLIP_EASING = 'cubic-bezier(0.65, 0, 0.35, 1)';
+
 /** Direct row children only: a nested checklist is its own list, with its own seam. */
 function rowsOf(list: Element): HTMLElement[] {
   return Array.from(list.querySelectorAll<HTMLElement>(':scope > li'));
@@ -33,11 +36,7 @@ export function captureRows(root: ParentNode): RowSnapshot {
  * Animates every row that moved, not just the ticked one, so the list reads as re-settling.
  * Callers gate this on reduced motion; it stays pure DOM arithmetic.
  */
-export function playRows(
-  root: ParentNode,
-  before: RowSnapshot,
-  { duration = 200, easing = 'cubic-bezier(0.65, 0, 0.35, 1)' } = {}
-): void {
+export function playRows(root: ParentNode, before: RowSnapshot): void {
   listsOf(root).forEach((list, listIndex) => {
     const previous = before[listIndex];
     if (!previous) return;
@@ -54,8 +53,8 @@ export function playRows(
       if (typeof row.animate !== 'function') return;
 
       row.animate([{ transform: `translateY(${delta}px)` }, { transform: 'translateY(0)' }], {
-        duration,
-        easing,
+        duration: FLIP_MS,
+        easing: FLIP_EASING,
       });
     });
   });

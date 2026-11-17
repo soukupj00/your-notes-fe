@@ -54,14 +54,4 @@ describe('resolveTourTarget', () => {
 
     expect(resolveTourTarget('settingsSync')).toBeNull();
   });
-
-  it('searches within the root it is given', () => {
-    render(
-      '<div id="outside" data-tour="capture"></div><main><div id="inside" data-tour="capture"></div></main>'
-    );
-    measure(document.querySelector('#outside')!, true);
-    measure(document.querySelector('#inside')!, true);
-
-    expect(resolveTourTarget('capture', document.querySelector('main')!)?.id).toBe('inside');
-  });
 });

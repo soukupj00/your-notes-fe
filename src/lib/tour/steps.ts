@@ -8,19 +8,18 @@ import type { TourTargetName } from './targets.ts';
 export interface TourStep {
   /** Also names its copy (`onboarding.steps.<key>.title`/`.body`), so the two cannot drift. */
   key: string;
-  /** `null` when this run has nothing to point at; the popover then shows without a cutout. */
-  target: () => TourTargetName | null;
+  target: TourTargetName;
 }
 
 export const TOUR_STEPS: TourStep[] = [
   /** 1 - Your toolbar. */
-  { key: 'toolbar', target: () => 'settingsToolbar' },
+  { key: 'toolbar', target: 'settingsToolbar' },
 
   /** 2 - Ways to start a note. */
-  { key: 'quickCapture', target: () => 'settingsQuickCapture' },
+  { key: 'quickCapture', target: 'settingsQuickCapture' },
 
   /** 3 - Where your notes live. */
-  { key: 'sync', target: () => 'settingsSync' },
+  { key: 'sync', target: 'settingsSync' },
 ];
 
 const DEFAULT_STAGE_RADIUS = 16;

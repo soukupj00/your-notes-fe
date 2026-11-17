@@ -1,6 +1,6 @@
 export type NoteFeedLayoutMode = 'masonry' | 'stack';
 
-export type NoteFeedPlacement = {
+type NoteFeedPlacement = {
   x: number;
   y: number;
   width: number;
