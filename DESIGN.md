@@ -365,6 +365,9 @@ Measured on the current build, **7 of 11 cards place an unbacked pin over media*
 - **Style:** Pill (`{rounded.pill}`), `{typography.label}`, uppercase. By day a 48% mix of the card's edge colour; by night an 18% mix of the identity colour with the identity colour as text.
 - **Overflow:** Labels cap at three, then a `+N` chip. The `+N` chip differs by fill, never by a dashed border.
 - **Media badges:** Same chip form, used for attachment kind and duration.
+- **Filter row:** Below `sm:` the label filter under the search box is one row that scrolls sideways and runs to the screen edge; from `sm:` up it wraps.
+  An edge fades only while labels hide past it, and the first selected label is scrolled into view when the row appears, never on a later tap.
+  Wrapped onto a phone, twenty labels took five rows and pushed every result below the fold.
 
 ### Buttons
 
