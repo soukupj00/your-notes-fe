@@ -18,21 +18,28 @@ vi.mock('@/lib/registerServiceWorker.ts', () => ({
   registerAppServiceWorker: serviceWorker.register,
 }));
 
+const appUpdate = vi.hoisted(() => ({ reloadOnTakeover: vi.fn() }));
+
+vi.mock('@/lib/appUpdate.ts', () => ({ appUpdate }));
+
 beforeEach(() => {
   vi.clearAllMocks();
   serviceWorker.register.mockReturnValue(serviceWorker.update);
 });
 
 describe('PwaUpdatePrompt', () => {
-  it('offers to reload when an update is waiting and activates it on confirmation', async () => {
+  it('offers a waiting update, follows any tab that accepts it, and activates it on confirmation', async () => {
     render(<PwaUpdatePrompt />);
 
     expect(serviceWorker.register).toHaveBeenCalledTimes(1);
     const { onNeedRefresh } = serviceWorker.register.mock.calls[0][0];
 
+    expect(appUpdate.reloadOnTakeover).not.toHaveBeenCalled();
     await act(async () => {
       await onNeedRefresh();
     });
+
+    expect(appUpdate.reloadOnTakeover).toHaveBeenCalledOnce();
 
     expect(toast).toHaveBeenCalledWith(
       'pwa.update.available',
