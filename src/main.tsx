@@ -7,6 +7,7 @@ import { createHalRemote } from '@/data/http/HalRemote.ts';
 import { createHalClient } from '@/data/http/hal.ts';
 import { isSharePath } from '@/data/http/publicShare.ts';
 import { createMemoryLocalStore } from '@/data/memory/MemoryLocalStore.ts';
+import { appUpdate } from '@/lib/appUpdate.ts';
 import App from './App.tsx';
 import './i18n.ts';
 
@@ -14,7 +15,10 @@ import './i18n.ts';
 // A Share Link's page is opened by strangers: it writes nothing to their Local Store and has no
 // Account, so it never opens IndexedDB or asks for a Session.
 const shared = isSharePath(window.location.pathname);
-const store = shared ? createMemoryLocalStore() : createDexieLocalStore();
+// A tab whose database another tab upgraded reloads into the newest code, not the cached old code.
+const store = shared
+  ? createMemoryLocalStore()
+  : createDexieLocalStore({ reload: () => void appUpdate.reloadIntoLatest() });
 // The server that serves the PWA is the server (ADR 0018); where none answers,
 // `AccountProvider` says so and the app runs local-only.
 const hal = createHalClient();

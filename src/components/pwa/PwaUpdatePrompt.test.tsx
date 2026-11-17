@@ -9,22 +9,21 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('sonner', () => ({ toast: vi.fn() }));
 
-const serviceWorker = vi.hoisted(() => ({
-  register: vi.fn(),
-  update: vi.fn().mockResolvedValue(undefined),
-}));
+const serviceWorker = vi.hoisted(() => ({ register: vi.fn() }));
 
 vi.mock('@/lib/registerServiceWorker.ts', () => ({
   registerAppServiceWorker: serviceWorker.register,
 }));
 
-const appUpdate = vi.hoisted(() => ({ reloadOnTakeover: vi.fn() }));
+const appUpdate = vi.hoisted(() => ({
+  reloadOnTakeover: vi.fn(),
+  reloadIntoLatest: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock('@/lib/appUpdate.ts', () => ({ appUpdate }));
 
 beforeEach(() => {
   vi.clearAllMocks();
-  serviceWorker.register.mockReturnValue(serviceWorker.update);
 });
 
 describe('PwaUpdatePrompt', () => {
@@ -54,6 +53,6 @@ describe('PwaUpdatePrompt', () => {
     const action = options?.action as Action;
     action.onClick({} as Parameters<Action['onClick']>[0]);
 
-    expect(serviceWorker.update).toHaveBeenCalledWith(true);
+    expect(appUpdate.reloadIntoLatest).toHaveBeenCalledOnce();
   });
 });

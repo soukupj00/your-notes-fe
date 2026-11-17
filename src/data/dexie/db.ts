@@ -11,7 +11,8 @@ export class NotesDB extends Dexie {
   settings!: Table<Setting, string>;
   tombstones!: Table<Tombstone, string>;
 
-  // The parameters exist for tests: a throwaway database, a reload they can observe.
+  // `reload` is how this tab leaves code older than the database: `main.tsx` passes the app's,
+  // tests one they can observe.
   constructor(name = 'NotesDB', reload = () => window.location.reload()) {
     super(name);
     this.version(1).stores({
@@ -63,5 +64,3 @@ export class NotesDB extends Dexie {
     });
   }
 }
-
-export const db = new NotesDB();

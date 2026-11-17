@@ -53,3 +53,30 @@ test('Reload on the update toast moves the tab that first installed the worker',
   await page.waitForFunction(RELOADED, undefined, { timeout: 20_000 });
   expect(await page.evaluate(UNDER_NEXT_WORKER)).toBe(true);
 });
+
+/** What newer code does on its first start: opens the database at a version above this tab's. */
+const UPGRADE_DATABASE = `new Promise((resolve, reject) => {
+  const current = indexedDB.open('NotesDB');
+  current.onsuccess = () => {
+    const version = current.result.version;
+    current.result.close();
+    const newer = indexedDB.open('NotesDB', version + 10);
+    newer.onsuccess = () => resolve(newer.result.close());
+    newer.onerror = () => reject(newer.error);
+  };
+})`;
+
+test('a tab reloaded for a newer database comes back on the update the server has', async ({
+  page,
+  context,
+}) => {
+  await firstVisit(page);
+  await publishUpdate();
+
+  const newerTab = await context.newPage();
+  await newerTab.goto('/note-128.png');
+  await newerTab.evaluate(UPGRADE_DATABASE);
+
+  await page.waitForFunction(RELOADED, undefined, { timeout: 20_000 });
+  expect(await page.evaluate(UNDER_NEXT_WORKER)).toBe(true);
+});

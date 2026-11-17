@@ -35,7 +35,7 @@ describe('Dexie v5 sync metadata', () => {
     await seedV4Database();
 
     const db = new NotesDB(NAME);
-    const store = createDexieLocalStore(db);
+    const store = createDexieLocalStore({ db });
     expect(await store.notes.get('n1')).toMatchObject({ id: 'n1', state: 'active' });
     expect(await store.tags.listLinks()).toHaveLength(1);
     // No backfill: an absent `rev` is "never pushed", an absent `dirty` is "not owed".
@@ -49,7 +49,7 @@ describe('Dexie v5 sync metadata', () => {
     await seedV4Database();
 
     const db = new NotesDB(NAME);
-    const store = createDexieLocalStore(db);
+    const store = createDexieLocalStore({ db });
     await store.notes.update('n1', () => ({ header: 'edited' }));
     expect(await db.notes.where('dirty').equals(1).primaryKeys()).toEqual(['n1']);
     db.close();

@@ -8,7 +8,6 @@ import { registerAppServiceWorker } from '@/lib/registerServiceWorker.ts';
 export function PwaUpdatePrompt() {
   const { t } = useTranslation();
   const translateRef = useRef(t);
-  const updateRef = useRef<ReturnType<typeof registerAppServiceWorker> | null>(null);
   const registeredRef = useRef(false);
 
   useEffect(() => {
@@ -19,7 +18,7 @@ export function PwaUpdatePrompt() {
     if (registeredRef.current) return;
     registeredRef.current = true;
 
-    updateRef.current = registerAppServiceWorker({
+    registerAppServiceWorker({
       // `appUpdate` reloads instead: the plugin skips the visit that first installed the worker,
       // which then stayed on the old code under the new worker.
       onNeedReload: () => undefined,
@@ -31,7 +30,7 @@ export function PwaUpdatePrompt() {
           duration: Number.POSITIVE_INFINITY,
           action: {
             label: translate('pwa.update.reload'),
-            onClick: () => void updateRef.current?.(true),
+            onClick: () => void appUpdate.reloadIntoLatest(),
           },
           cancel: {
             label: translate('pwa.update.later'),
