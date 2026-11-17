@@ -838,8 +838,7 @@
   background-color: transparent;
 }
 
-/* The feed slides under the Navbar's growing shadow. Scroll-driven, so no JS; Firefox lacks
-   `animation-timeline` and gets no shadow (ADR 0010). */
+/* The feed slides under the Navbar's growing shadow. Scroll-driven, so no JS (ADR 0010). */
 @supports (animation-timeline: scroll()) {
   @keyframes nav-scroll-shadow {
     from {
