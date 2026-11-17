@@ -31,16 +31,10 @@ export function sceneToFile(scene: ExcalidrawScene): File {
   return new File([JSON.stringify(persistableScene)], name, { type: 'application/json' });
 }
 
-/** Tolerant parse: returns null on malformed JSON so the NodeView can show the
- *  "unavailable" state instead of throwing. Also repairs scenes saved before
- *  transient collaboration state was excluded. */
+/** Null on malformed JSON, which the dialog opens as a blank canvas. */
 export function parseScene(text: string): ExcalidrawScene | null {
   try {
-    const scene = JSON.parse(text) as ExcalidrawScene;
-    return {
-      ...scene,
-      appState: withoutTransientAppState(scene.appState),
-    };
+    return JSON.parse(text) as ExcalidrawScene;
   } catch {
     return null;
   }

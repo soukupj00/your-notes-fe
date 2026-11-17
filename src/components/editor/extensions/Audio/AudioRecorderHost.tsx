@@ -15,15 +15,6 @@ export interface AudioRecorderHostProps {
   getDeps: () => AttachmentDeps;
 }
 
-/** 'denied' keeps the legacy 'permission' key. */
-const ERROR_KEY: Record<string, string> = {
-  denied: 'editor.audio.errors.permission',
-  unsupported: 'editor.audio.errors.unsupported',
-  'no-device': 'editor.audio.errors.no-device',
-  'in-use': 'editor.audio.errors.in-use',
-  failed: 'editor.audio.errors.failed',
-};
-
 /** The editor's one recorder, mounted while the editor is editable whatever the toolbar
  *  shows, so a voice note started from the dial never waits on a collapsed menu.
  *  See src/components/editor/CLAUDE.md, Audio. */
@@ -37,7 +28,7 @@ export function AudioRecorderHost({ editor, getDeps }: AudioRecorderHostProps) {
   const deps = useLatest(getDeps());
   useEffect(() => {
     if (rec.status === 'error') {
-      toast(deps().t(ERROR_KEY[rec.error ?? 'failed'] ?? ERROR_KEY.failed));
+      toast(deps().t(`editor.audio.errors.${rec.error ?? 'failed'}`));
     }
   }, [rec.status, rec.error, deps]);
 

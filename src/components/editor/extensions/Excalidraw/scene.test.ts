@@ -35,14 +35,6 @@ describe('excalidraw scene helpers', () => {
     expect(parsed?.appState.viewBackgroundColor).toBe('#ffffff');
   });
 
-  it('repairs legacy scenes whose collaborators Map was serialized as an object', () => {
-    const parsed = parseScene(
-      '{"elements":[],"appState":{"viewBackgroundColor":"#ffffff","collaborators":{}},"files":{}}'
-    );
-
-    expect(parsed?.appState).not.toHaveProperty('collaborators');
-  });
-
   it('parseScene returns null on malformed JSON', () => {
     expect(parseScene('{not json')).toBeNull();
   });
