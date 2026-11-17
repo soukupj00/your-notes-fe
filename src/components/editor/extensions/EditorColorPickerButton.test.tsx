@@ -7,9 +7,9 @@ import Text from '@tiptap/extension-text';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { afterEach, describe, expect, it } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { Color } from './Color';
+import { Color } from './Color/Color';
 import { EditorColorPickerButton } from './EditorColorPickerButton';
-import { Highlight } from './Highlight';
+import { Highlight } from './Highlight/Highlight';
 
 const editors: Editor[] = [];
 

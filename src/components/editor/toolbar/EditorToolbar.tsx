@@ -158,5 +158,3 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
     </TooltipFloorProvider>
   );
 };
-
-export default EditorToolbar;

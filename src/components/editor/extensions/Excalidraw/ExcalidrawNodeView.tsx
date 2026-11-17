@@ -108,5 +108,3 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
     </NodeViewWrapper>
   );
 }
-
-export default ExcalidrawNodeView;

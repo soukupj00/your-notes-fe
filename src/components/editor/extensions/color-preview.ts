@@ -55,5 +55,3 @@ export const ColorPreview = Extension.create({
     ];
   },
 });
-
-export default ColorPreview;

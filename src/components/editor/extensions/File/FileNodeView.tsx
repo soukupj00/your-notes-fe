@@ -38,5 +38,3 @@ export function FileNodeView(props: ReactNodeViewProps) {
     </AttachmentNodeView>
   );
 }
-
-export default FileNodeView;

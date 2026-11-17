@@ -6,8 +6,8 @@ import Text from '@tiptap/extension-text';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { ButtonView } from './button-types';
 import { BulletList, OrderedList } from './formatting';
-import { ListItem } from './ListItem';
-import { TaskList } from './TaskList';
+import { ListItem } from './ListItem/ListItem';
+import { TaskList } from './TaskList/TaskList';
 
 const t = (key: string) => key;
 

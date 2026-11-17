@@ -8,7 +8,7 @@ import { AttachmentUnavailable } from './AttachmentUnavailable';
 import type { AttachmentDeps } from './deps';
 import { type AttachmentUrlState, useAttachmentObjectUrl } from './useAttachmentObjectUrl';
 
-export type ReadyAttachment = Extract<AttachmentUrlState, { status: 'ready' }>;
+type ReadyAttachment = Extract<AttachmentUrlState, { status: 'ready' }>;
 
 /** The three i18n keys a kind supplies: its delete label, its missing label, and the name
  *  shown for a row that has none. */

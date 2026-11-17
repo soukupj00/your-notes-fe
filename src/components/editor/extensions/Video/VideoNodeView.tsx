@@ -31,5 +31,3 @@ export function VideoNodeView(props: ReactNodeViewProps) {
     </AttachmentNodeView>
   );
 }
-
-export default VideoNodeView;

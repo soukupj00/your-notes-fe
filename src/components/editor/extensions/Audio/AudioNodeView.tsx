@@ -158,5 +158,3 @@ export function AudioNodeView(props: ReactNodeViewProps) {
     </NodeViewWrapper>
   );
 }
-
-export default AudioNodeView;

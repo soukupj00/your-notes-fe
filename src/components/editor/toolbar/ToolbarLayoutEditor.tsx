@@ -329,5 +329,3 @@ function LeafList({ family, nameOf, onReorder, onToggle }: LeafListProps) {
     </SortableList>
   );
 }
-
-export default ToolbarLayoutEditor;

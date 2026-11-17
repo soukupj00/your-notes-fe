@@ -5,9 +5,9 @@ import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { afterEach, describe, expect, it } from 'vitest';
 import { BulletList, Code, CodeBlock, HorizontalRule, OrderedList } from './extensions/formatting';
-import { Heading } from './extensions/Heading';
-import { ListItem } from './extensions/ListItem';
-import { TaskList } from './extensions/TaskList';
+import { Heading } from './extensions/Heading/Heading';
+import { ListItem } from './extensions/ListItem/ListItem';
+import { TaskList } from './extensions/TaskList/TaskList';
 
 /**
  * Not re-testing TipTap: proves the markdown shorthands survive our composition, since a
