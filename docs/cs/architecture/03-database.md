@@ -47,7 +47,7 @@ erDiagram
         string kind "image | audio | video | file | excalidraw"
         string mime
         Blob blob "autoritativní bajty, zapsané jednou podle id"
-        Blob thumbnail "náhled obrázku (WebP <=512px)"
+        Blob thumbnail "náhled obrázku nebo videa (WebP <=512px)"
         string thumbnailId "vlastní id blobu náhledu na serveru"
         string preview "SVG snímek excalidraw"
         string name "původní název souboru"
