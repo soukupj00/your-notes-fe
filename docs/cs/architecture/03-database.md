@@ -96,10 +96,11 @@ Tvar stanovuje [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicte
 - **`rev` + indexovaný příznak změny** na `notes`, `tags`, `noteTags`. `rev` je serverová revize, se kterou se řádek naposledy shodoval; chybějící hodnota znamená, že řádek nebyl nikdy odeslán - což přesně odpovídá databázi z doby před synchronizací, takže nebylo potřeba nic doplňovat.
   Obojí je soukromé pro úložiště: žádné čtení je nevrací, takže žádný volající nemůže do zápisu zanést zastaralou revizi.
 - **Fronta offline změn je dotaz, ne tabulka**: řádky s příznakem změny. Úložiště fronty záměrně neexistuje - byl by to druhý zdroj pravdy, který by po pádu mohl zůstat v rozporu se samotnými řádky.
-- **Úložiště `tombstones`**, do kterého zapisuje jen trvalé smazání; přesun do koše je aktualizace `state` a synchronizuje se jako běžná úprava.
+- **Úložiště `tombstones`**, do kterého zapisuje jen trvalé smazání řádku, který server už viděl (má `rev`); řádek, který nebyl nikdy odeslán, nezanechá nic.
+  Trvalé smazání poznámky nebo štítku zapíše jeden Tombstone a server s ním odstraní i jeho vazby; přesun do koše je aktualizace `state` a synchronizuje se jako běžná úprava.
 - **Přílohy nemají `rev`.** Metadata se vezou na revizi vlastnící poznámky; bajty se zapisují jednou podle id, takže jejich jediným stavem synchronizace je, které bloby server má a zda jsou bajty k dispozici lokálně (náhledy se synchronizují hned, plné bajty na vyžádání).
   Jediný přepisovač, uložení Excalidraw, vytvoří nové id přílohy a přesměruje na něj tělo poznámky.
-- **Kurzor a identita účtu žijí v `meta`**: neprůhledná URL kurzoru, čas poslední synchronizace a id připojeného účtu (díky kterému lze vynutit vymazání při odhlášení).
+- **Kurzor a identita účtu žijí v `meta`**: neprůhledná URL kurzoru, sekvence účtu při posledním stažení, čas poslední synchronizace a id připojeného účtu (díky kterému lze vynutit vymazání při odhlášení).
 
 ## Testování vrstvy
 

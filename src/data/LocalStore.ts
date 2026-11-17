@@ -43,7 +43,7 @@ export type Snapshot = {
 export const SYNC_META_KEYS = {
   /** The opaque `_links.next` URL the server last handed out. */
   cursor: 'sync.cursor',
-  /** ISO time of the last completed pull. */
+  /** ISO time the last sync run finished. */
   lastSyncedAt: 'sync.lastSyncedAt',
   /** The Account this database is attached to; what makes erase-on-sign-out enforceable. */
   accountId: 'sync.accountId',
