@@ -18,7 +18,6 @@ erDiagram
     NOTE {
         string id "uuid"
         string header "optional"
-        string description "optional plaintext subtitle (dormant)"
         string body "rich-text HTML; references attachments by id"
         string state "active | archived | trashed (indexed)"
         string pinnedAt "ISO; presence = pinned, value orders pins"
@@ -96,10 +95,11 @@ Shape fixed by [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicte
 - **`rev` + an indexed dirty marker** on `notes`, `tags`, `noteTags`. `rev` is the server Revision the row last agreed with; absent means never pushed - which is exactly what a pre-sync database is, so no backfill was needed.
   Both are store-private: no read returns them, so no caller can carry a stale Revision into a write.
 - **The Offline Mutation Queue is a query, not a table**: the rows with the dirty marker. There is deliberately no queue store - it would be a second source of truth a crash could leave disagreeing with the rows themselves.
-- **A `tombstones` store**, written only by a Purge; trashing is a `state` update and syncs as an ordinary edit.
+- **A `tombstones` store**, written only by a Purge of a row the server has seen (one with a `rev`); a row never pushed leaves nothing to tell.
+  Purging a Note or Tag writes one Tombstone, and the server drops its links with it; trashing is a `state` update and syncs as an ordinary edit.
 - **Attachments carry no `rev`.** Metadata rides on the owning Note's Revision; bytes are write-once by id, so their only sync state is which blobs the server holds and whether the bytes are present locally (previews sync eagerly, full bytes on demand).
   The one rewriter, the Excalidraw save, mints a new attachment id and repoints the Body.
-- **Cursor and account identity live in `meta`**: the opaque cursor URL, the last sync time, and the attached Account id (what makes erase-on-sign-out enforceable).
+- **Cursor and account identity live in `meta`**: the opaque cursor URL, the account Sequence at the last pull, the last sync time, and the attached Account id (what makes erase-on-sign-out enforceable).
 
 ## Testing the layer
 

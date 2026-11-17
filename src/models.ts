@@ -12,7 +12,6 @@ export type ReminderRepeat = (typeof REMINDER_REPEATS)[number];
 export interface Note {
   id: string; // uuid v4
   header?: string;
-  description?: string; // Optional plaintext subtitle (dormant until a later milestone gives it UI)
   body?: string; // Rich-text HTML from the editor (see "Body" in CONTEXT.md)
   state: NoteState; // Lifecycle stage; every row carries one (Dexie v3 stamps legacy rows 'active')
   pinnedAt?: string; // ISO; presence = pinned, value orders pinned notes. Cleared on archive/trash

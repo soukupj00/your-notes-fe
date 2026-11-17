@@ -13,7 +13,6 @@ export function newNote(data: Partial<Note>, now = nowIso()): Note {
   return {
     id: data.id ?? mintId(),
     header: data.header ?? '',
-    description: data.description ?? '',
     body: data.body ?? '',
     state: data.state ?? 'active',
     pinnedAt: data.pinnedAt,

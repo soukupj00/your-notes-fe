@@ -51,7 +51,6 @@ function note(id: string): Note {
   return {
     id,
     header: id,
-    description: '',
     body: '',
     state: 'active',
     createdAt: now,

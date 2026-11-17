@@ -21,17 +21,8 @@ const hal = createHalClient();
 const accountService = shared ? null : createHalAccountService(hal);
 const remote = shared ? null : createHalRemote(hal);
 
-// Any `meta` read waits for the legacy migration, which must land before PreferencesProvider's
-// first synchronous localStorage read. The timeout keeps a blocked IndexedDB (another tab on an
-// older version) from blanking the app: losing the race costs default preferences for one render.
-const ready = store.meta
-  .get('storeReady')
-  .catch((error) => console.error('Local Store not ready', error));
-const timeout = new Promise<void>((resolve) => setTimeout(resolve, 3000));
-void Promise.race([ready, timeout]).then(() => {
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <App store={store} accountService={accountService} remote={remote} />
-    </StrictMode>
-  );
-});
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App store={store} accountService={accountService} remote={remote} />
+  </StrictMode>
+);

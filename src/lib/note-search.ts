@@ -10,14 +10,13 @@ export type NoteSearchEntry = {
 /** `body` is the editor HTML as plain text, checklists included, so markup never matches. */
 type NoteSearchDoc = {
   header: string;
-  description: string;
   body: string;
   tagNames: string[];
   note: Note;
 };
 
 /**
- * A title hit means more than a passing mention; the description has no UI yet, so it is last.
+ * A title hit means more than a passing mention.
  * Without `ignoreLocation` Fuse only scores near a field's start and misses deep matches.
  */
 const FUSE_OPTIONS: IFuseOptions<NoteSearchDoc> = {
@@ -25,7 +24,6 @@ const FUSE_OPTIONS: IFuseOptions<NoteSearchDoc> = {
     { name: 'header', weight: 0.5 },
     { name: 'body', weight: 0.25 },
     { name: 'tagNames', weight: 0.15 },
-    { name: 'description', weight: 0.1 },
   ],
   threshold: 0.35,
   ignoreLocation: true,
@@ -35,7 +33,6 @@ const FUSE_OPTIONS: IFuseOptions<NoteSearchDoc> = {
 function toDoc({ note, tagNames }: NoteSearchEntry): NoteSearchDoc {
   return {
     header: note.header ?? '',
-    description: note.description ?? '',
     body: stripHtml(note.body),
     tagNames,
     note,

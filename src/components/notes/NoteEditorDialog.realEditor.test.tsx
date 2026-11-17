@@ -42,7 +42,6 @@ async function seedNote(body: string) {
   await testStore.notes.add({
     id: 'n1',
     header: 'Hello',
-    description: '',
     body,
     state: 'active',
     createdAt: now,
