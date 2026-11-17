@@ -11,9 +11,8 @@ export class NotesDB extends Dexie {
   settings!: Table<Setting, string>;
   tombstones!: Table<Tombstone, string>;
 
-  // The name is a parameter only so migration tests can spin up a throwaway
-  // database; the app always uses the default singleton below.
-  constructor(name = 'NotesDB') {
+  // The parameters exist for tests: a throwaway database, a reload they can observe.
+  constructor(name = 'NotesDB', reload = () => window.location.reload()) {
     super(name);
     this.version(1).stores({
       notes: 'id, header, createdAt, updatedAt',
@@ -57,6 +56,10 @@ export class NotesDB extends Dexie {
       tags: 'id, name, dirty',
       noteTags: '[noteId+tagId], noteId, tagId, dirty',
       tombstones: 'id',
+    });
+    // Another tab upgraded or deleted the database, so this tab's code or state no longer matches it.
+    this.on('versionchange', () => {
+      reload();
     });
   }
 }
