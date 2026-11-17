@@ -89,6 +89,10 @@ Dexie strings declare *indexes*, not columns - non-indexed fields are free, whic
 
 The v3 lesson generalizes and is the repo's canonical migration rule: adding an *optional, non-indexed* field is free; adding an *indexed* field requires backfilling every existing row or those rows become invisible to queries on it.
 
+An upgrade made in one tab reaches the others as IndexedDB's `versionchange`, and each of them reloads at once, because its code was written for the older schema; a deleted database reloads them too.
+Left alone, Dexie 4 reopens the newer database silently and lets that code write rows in the old shape.
+A tab whose service worker still serves the old code reloads into it, and the update prompt is what moves it on.
+
 ## Sync metadata (v5)
 
 Shape fixed by [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicted-copies.md); the rules are in [`src/data/CLAUDE.md`](https://github.com/soukupj00/your-notes-fe/blob/main/src/data/CLAUDE.md).
@@ -104,7 +108,7 @@ Shape fixed by [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicte
 ## Testing the layer
 
 Data-layer tests run in Vitest against `fake-indexeddb`, including a dedicated migration test (`lifecycle.migration.test.ts`) and a Blob round-trip test that must run in the `node` environment (jsdom reads a stored Blob back as a plain object).
-The `NotesDB` constructor takes a database name only so migration tests can spin up throwaway instances; the app uses one singleton.
+The `NotesDB` constructor takes a database name and a reload only so tests can spin up throwaway instances and watch the reload; the app uses one singleton.
 
 ## For the paper
 

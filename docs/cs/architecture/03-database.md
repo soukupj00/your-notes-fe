@@ -89,6 +89,10 @@ Existuje jedna denormalizace: `Note.tags?: Tag[]` je volitelné předem načten�
 
 Ponaučení z v3 platí obecně a je kanonickým pravidlem migrací v repozitáři: přidání *volitelného, neindexovaného* pole je zdarma; přidání *indexovaného* pole vyžaduje doplnění hodnoty do každého existujícího řádku, jinak se tyto řádky stanou pro dotazy na něj neviditelnými.
 
+Navýšení verze provedené v jedné záložce dorazí do ostatních jako událost IndexedDB `versionchange` a každá z nich se hned znovu načte, protože její kód byl psán pro starší schéma; smazaná databáze je znovu načte také.
+Bez toho by Dexie 4 novější databázi tiše znovu otevřela a nechala ten kód zapisovat řádky ve starém tvaru.
+Záložka, které service worker stále podává starý kód, se znovu načte do něj a dál ji posune až výzva k aktualizaci.
+
 ## Metadata synchronizace (v5)
 
 Tvar stanovuje [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicted-copies.md); pravidla jsou v [`src/data/CLAUDE.md`](https://github.com/soukupj00/your-notes-fe/blob/main/src/data/CLAUDE.md).
@@ -104,7 +108,7 @@ Tvar stanovuje [ADR 0017](../adr/0017-note-level-last-writer-wins-with-conflicte
 ## Testování vrstvy
 
 Testy datové vrstvy běží ve Vitestu proti `fake-indexeddb`, včetně samostatného testu migrace (`lifecycle.migration.test.ts`) a testu cesty Blobu tam a zpět, který musí běžet v prostředí `node` (jsdom čte uložený Blob zpět jako prostý objekt).
-Konstruktor `NotesDB` přijímá název databáze jen proto, aby si migrační testy mohly vytvářet jednorázové instance; aplikace používá jeden singleton.
+Konstruktor `NotesDB` přijímá název databáze a znovunačtení jen proto, aby si testy mohly vytvářet jednorázové instance a znovunačtení sledovat; aplikace používá jeden singleton.
 
 ## Pro text práce
 
