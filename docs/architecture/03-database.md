@@ -47,7 +47,7 @@ erDiagram
         string kind "image | audio | video | file | excalidraw"
         string mime
         Blob blob "authoritative bytes, write-once by id"
-        Blob thumbnail "image Preview (WebP <=512px)"
+        Blob thumbnail "image or video Preview (WebP <=512px)"
         string thumbnailId "the Preview's own blob id on the server"
         string preview "excalidraw SVG snapshot"
         string name "original filename"

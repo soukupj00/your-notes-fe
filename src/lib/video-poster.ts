@@ -1,5 +1,4 @@
-const MAX_POSTER_EDGE = 512;
-const WEBP_QUALITY = 0.75;
+import { encodePreview } from '@/lib/image-thumbnail.ts';
 
 /** Where to sample. Not 0: many encoders open on a black or blank first frame. */
 const SAMPLE_SECONDS = 0.6;
@@ -65,18 +64,7 @@ export async function generateVideoPoster(
     const height = video.videoHeight;
     if (!seeked || width <= 0 || height <= 0) return metadata;
 
-    const scale = Math.min(1, MAX_POSTER_EDGE / Math.max(width, height));
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, Math.round(width * scale));
-    canvas.height = Math.max(1, Math.round(height * scale));
-    const context = canvas.getContext('2d');
-    if (!context) return metadata;
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const poster = await new Promise<Blob | undefined>((resolve) => {
-      canvas.toBlob((result) => resolve(result ?? undefined), 'image/webp', WEBP_QUALITY);
-    });
-
+    const poster = await encodePreview(video, width, height);
     return { poster, ...metadata };
   } catch {
     return {};
