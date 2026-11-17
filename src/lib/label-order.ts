@@ -22,7 +22,7 @@ export function isCustomOrder(tags: readonly Tag[]): boolean {
 const byName = (collator: Intl.Collator) => (a: Tag, b: Tag) =>
   collator.compare(a.name, b.name) || byCodeUnit(a.id, b.id);
 
-export function compareLabels(collator: Intl.Collator): (a: Tag, b: Tag) => number {
+function compareLabels(collator: Intl.Collator): (a: Tag, b: Tag) => number {
   const names = byName(collator);
   return (a, b) => {
     const keyA = keyOf(a);

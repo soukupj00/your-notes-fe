@@ -22,11 +22,8 @@ export const TOUR_TARGETS = {
 export type TourTargetName = keyof typeof TOUR_TARGETS;
 
 /** `null` is a normal answer: a step whose target is absent is shown without a cutout. */
-export function resolveTourTarget(
-  target: TourTargetName,
-  root: ParentNode = document
-): Element | null {
-  for (const element of root.querySelectorAll(TOUR_TARGETS[target])) {
+export function resolveTourTarget(target: TourTargetName): Element | null {
+  for (const element of document.querySelectorAll(TOUR_TARGETS[target])) {
     const { width, height } = element.getBoundingClientRect();
     if (width > 0 && height > 0) return element;
   }

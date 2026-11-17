@@ -11,12 +11,12 @@ export type KeyEventLike = Pick<
   'key' | 'keyCode' | 'ctrlKey' | 'metaKey' | 'altKey' | 'shiftKey'
 >;
 
-export interface KeyPlatform {
+interface KeyPlatform {
   mac: boolean;
   windows: boolean;
 }
 
-export const PLATFORM: KeyPlatform = { mac: IS_MAC, windows: IS_WINDOWS };
+const PLATFORM: KeyPlatform = { mac: IS_MAC, windows: IS_WINDOWS };
 
 /** What a held modifier sends on its own; recording waits past it for the key itself. */
 export const MODIFIER_KEYS = new Set(['Shift', 'Control', 'Alt', 'AltGraph', 'Meta', 'CapsLock']);
@@ -74,9 +74,6 @@ export function hasCommandModifier(combo: string): boolean {
 const ARIA_NAMES: Record<string, string> = {
   ' ': 'Space',
   Ctrl: 'Control',
-  Meta: 'Meta',
-  Alt: 'Alt',
-  Shift: 'Shift',
 };
 
 /** The `aria-keyshortcuts` spelling: `Control+Alt+N`. */

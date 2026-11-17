@@ -2,10 +2,9 @@ export interface LongPressOptions {
   /** Which element under the pointer counts. Receives the event target. */
   isTarget: (target: Element) => boolean;
   onLongPress: (target: Element) => void;
-  delayMs?: number;
 }
 
-const DEFAULT_DELAY_MS = 500;
+const DELAY_MS = 500;
 /** Movement past this is a scroll, not a hold. */
 const SLOP_PX = 10;
 
@@ -15,7 +14,6 @@ const SLOP_PX = 10;
  * contextmenu are swallowed so the row is not ticked and Android's menu does not open.
  */
 export function attachLongPress(el: HTMLElement, opts: LongPressOptions): () => void {
-  const delay = opts.delayMs ?? DEFAULT_DELAY_MS;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let origin: { x: number; y: number } | null = null;
   let fired = false;
@@ -38,7 +36,7 @@ export function attachLongPress(el: HTMLElement, opts: LongPressOptions): () => 
       origin = null;
       fired = true;
       opts.onLongPress(target);
-    }, delay);
+    }, DELAY_MS);
   };
 
   const onMove = (event: PointerEvent) => {

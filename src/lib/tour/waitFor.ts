@@ -11,7 +11,7 @@ type WaitOptions = { timeout?: number; label?: string };
  * Generous because giving up early cuts a spotlight over nothing, while waiting long is only a
  * pause. Nothing retries, so the budget is only ever spent on a real bug.
  */
-export const TOUR_WAIT_MS = 3000;
+const TOUR_WAIT_MS = 3000;
 
 /**
  * Resolves `null` rather than rejecting when the budget runs out, so a step without its target

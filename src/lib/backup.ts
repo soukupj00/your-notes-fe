@@ -92,7 +92,7 @@ const manifestSchema = z.object({
  * they carry an index signature and are deliberately not `Note`/`Tag`/... - a
  * imported row is only known to have the fields validated above.
  */
-export type BackupManifest = z.infer<typeof manifestSchema>;
+type BackupManifest = z.infer<typeof manifestSchema>;
 
 /** fflate types its bytes over `ArrayBufferLike` but never hands out a `SharedArrayBuffer`, so no copy. */
 function toBlobPart(bytes: Uint8Array): BlobPart {
@@ -244,8 +244,8 @@ export async function importBackup(
 }
 
 /** `yournotes-backup-2026-07-28-1042.zip` - sortable, and unique enough per minute. */
-export function backupFilename(suffix = '', now = new Date()): string {
-  const [date, time] = now.toISOString().split('T');
+export function backupFilename(suffix = ''): string {
+  const [date, time] = new Date().toISOString().split('T');
   return `yournotes-backup-${date}-${time.slice(0, 5).replace(':', '')}${suffix}.zip`;
 }
 
