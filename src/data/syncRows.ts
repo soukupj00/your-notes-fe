@@ -145,6 +145,21 @@ export function tombstone(id: string, kind: Tombstone['kind'], rev: number | und
   return t;
 }
 
+/**
+ * What a row removed while its push was in flight owes, now that the server holds it at `accepted.rev`:
+ * its Tombstone at that Revision, or a new one if the row had never been pushed when it was removed.
+ * Nothing if the Tombstone is for a different Revision.
+ */
+export function removedInFlight(
+  id: string,
+  accepted: AcceptedRow,
+  gone: Tombstone | undefined
+): Tombstone | undefined {
+  if (accepted.kind === 'tombstone') return undefined;
+  if (!gone) return tombstone(id, accepted.kind, accepted.rev);
+  return gone.rev === accepted.row.rev ? { ...gone, rev: accepted.rev } : undefined;
+}
+
 /** Whether two wire rows say the same thing, `rev` aside. A false "changed" only costs a re-push. */
 function sameContent(a: object, b: object): boolean {
   return JSON.stringify({ ...a, rev: undefined }) === JSON.stringify({ ...b, rev: undefined });

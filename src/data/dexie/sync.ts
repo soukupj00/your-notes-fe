@@ -6,6 +6,7 @@ import {
   fromServerNote,
   markOnServer,
   reconcileAttachments,
+  removedInFlight,
   settle,
   transferOf,
   wireNote,
@@ -54,30 +55,32 @@ export function createDexieSync(db: NotesDB): LocalStore['sync'] {
         'rw',
         [db.notes, db.tags, db.noteTags, db.attachments, db.tombstones],
         async () => {
-          /** Removed while the push was in flight: its Tombstone must carry the new Revision. */
-          const rebase = async (id: string, a: AcceptedRow) => {
-            const gone = await db.tombstones.get(id);
-            if (gone && gone.rev === a.row.rev) await db.tombstones.put({ ...gone, rev: a.rev });
+          const keepRemoved = async (id: string, a: AcceptedRow) => {
+            const owed = removedInFlight(id, a, await db.tombstones.get(id));
+            if (owed) await db.tombstones.put(owed);
           };
           for (const a of accepted) {
             if (a.kind === 'tombstone') {
               await db.tombstones.delete(a.row.id);
             } else if (a.kind === 'note') {
               const stored = await db.notes.get(a.row.id);
-              if (!stored) await rebase(a.row.id, a);
+              if (!stored) await keepRemoved(a.row.id, a);
               else {
                 const attachments = await db.attachments.where('noteId').equals(a.row.id).toArray();
                 await db.notes.put(settle(stored, wireNote(stored, attachments), a));
               }
             } else if (a.kind === 'tag') {
               const stored = await db.tags.get(a.row.id);
-              if (!stored) await rebase(a.row.id, a);
+              if (!stored) await keepRemoved(a.row.id, a);
               else await db.tags.put(settle(stored, wireRow(stored), a));
             } else {
               const { noteId, tagId } = a.row;
               const stored = await db.noteTags.get([noteId, tagId]);
-              if (!stored) await rebase(noteTagId(noteId, tagId), a);
-              else await db.noteTags.put(settle(stored, wireRow(stored), a));
+              if (stored) await db.noteTags.put(settle(stored, wireRow(stored), a));
+              // A link removed with its Note or Tag goes with that one's Tombstone.
+              else if ((await db.notes.get(noteId)) && (await db.tags.get(tagId))) {
+                await keepRemoved(noteTagId(noteId, tagId), a);
+              }
             }
           }
         }

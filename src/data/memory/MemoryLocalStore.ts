@@ -11,6 +11,7 @@ import {
   markOnServer,
   owed,
   reconcileAttachments,
+  removedInFlight,
   type Stored,
   type StoredAttachment,
   settle,
@@ -293,27 +294,27 @@ export function createMemoryLocalStore(): LocalStore {
       }),
       applied: async (batch, outcomes) => {
         const accepted = acceptedRows(batch, outcomes);
-        /** Removed while the push was in flight: its Tombstone must carry the new Revision. */
-        const rebase = (key: string, a: AcceptedRow) => {
-          const gone = tombstones.get(key);
-          if (gone && gone.rev === a.row.rev) tombstones.set(key, { ...gone, rev: a.rev });
+        const keepRemoved = (key: string, a: AcceptedRow) => {
+          const owed = removedInFlight(key, a, tombstones.get(key));
+          if (owed) tombstones.set(key, owed);
         };
         for (const a of accepted) {
           if (a.kind === 'tombstone') {
             tombstones.delete(a.row.id);
           } else if (a.kind === 'note') {
             const stored = notes.get(a.row.id);
-            if (!stored) rebase(a.row.id, a);
+            if (!stored) keepRemoved(a.row.id, a);
             else notes.set(a.row.id, settle(stored, wireNote(stored, attachmentsFor(a.row.id)), a));
           } else if (a.kind === 'tag') {
             const stored = tags.get(a.row.id);
-            if (!stored) rebase(a.row.id, a);
+            if (!stored) keepRemoved(a.row.id, a);
             else tags.set(a.row.id, settle(stored, wireRow(stored), a));
           } else {
             const key = linkKey(a.row.noteId, a.row.tagId);
             const stored = noteTags.get(key);
-            if (!stored) rebase(key, a);
-            else noteTags.set(key, settle(stored, wireRow(stored), a));
+            if (stored) noteTags.set(key, settle(stored, wireRow(stored), a));
+            // A link removed with its Note or Tag goes with that one's Tombstone.
+            else if (notes.has(a.row.noteId) && tags.has(a.row.tagId)) keepRemoved(key, a);
           }
         }
         changed('notes', 'tags', 'noteTags');
