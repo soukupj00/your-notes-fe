@@ -160,6 +160,26 @@ describe('closing a note', () => {
     expect(reopened).toHaveAttribute('data-note-id', id);
   });
 
+  // A Forward pressed before the Back has finished resolving supersedes it.
+  it('does not replay a Start on a Forward that overtakes the close', async () => {
+    const router = renderRoute('/');
+    await userEvent.click(await screen.findByRole('button', { name: 'notes.capture.audio' }));
+    const id = (await editor()).getAttribute('data-note-id');
+
+    const forwardOnceClosed = new MutationObserver(() => {
+      if (screen.queryByTestId('editor')) return;
+      forwardOnceClosed.disconnect();
+      router.history.forward();
+    });
+    forwardOnceClosed.observe(document.body, { childList: true, subtree: true });
+    await userEvent.click(screen.getByRole('button', { name: 'close-editor' }));
+
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ note: id }));
+    const reopened = await editor();
+    expect(reopened).toHaveAttribute('data-intent', '');
+    expect(reopened).toHaveAttribute('data-new', '');
+  });
+
   it('pops the entry it pushed, leaving no dead stop in history', async () => {
     const note = makeNote();
     await testStore.notes.add(note);

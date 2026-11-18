@@ -1,13 +1,19 @@
 import { render as rtlRender, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
-import { Toaster } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
 import type { NoteState } from '@/models.ts';
 import { clearStore, testStore, withStore } from '@/test/store.tsx';
 import { tagById } from '@/test/storeReads.ts';
 import LabelsPage from './labels.tsx';
+
+// The real Toaster removes a dismissed toast on a timer of its own that outlives the test file's
+// window; the Undo button itself is driven in e2e/label-order.spec.ts.
+const toastMock = vi.fn();
+vi.mock('sonner', () => ({
+  toast: (...args: unknown[]) => toastMock(...args),
+}));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -18,12 +24,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 const render = (ui: ReactElement) =>
-  rtlRender(
-    <PreferencesProvider>
-      {withStore(ui)}
-      <Toaster />
-    </PreferencesProvider>
-  );
+  rtlRender(<PreferencesProvider>{withStore(ui)}</PreferencesProvider>);
 
 async function putTag(id: string, name: string, color?: string, position?: string) {
   const now = new Date().toISOString();
@@ -220,9 +221,11 @@ describe('label order', () => {
     await userEvent.click(await screen.findByRole('menuitem', { name: 'labels.arrange.az' }));
 
     await waitFor(() => expect(rowNames()).toEqual(['Alpha', 'Beta']));
-    expect(await screen.findByText('labels.arrange.done_az')).toBeInTheDocument();
+    expect(toastMock).toHaveBeenCalledWith('labels.arrange.done_az', {
+      action: { label: 'notes.undo', onClick: expect.any(Function) },
+    });
 
-    await userEvent.click(screen.getByRole('button', { name: 'notes.undo' }));
+    toastMock.mock.lastCall?.[1].action.onClick();
     await waitFor(() => expect(rowNames()).toEqual(['Beta', 'Alpha']));
   });
 });

@@ -380,7 +380,8 @@ describe('NoteEditorDialog', () => {
     render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={onClose} />);
 
     await setReminderFromBar();
-    await waitFor(async () => expect((await allNotes(testStore)).length).toBe(1));
+    // The modal popover closes once the Reminder is recorded, and until then it hides Close.
+    await waitFor(() => expect(screen.queryByLabelText('reminders.hour')).not.toBeInTheDocument());
 
     await userEvent.click(closeButton());
 

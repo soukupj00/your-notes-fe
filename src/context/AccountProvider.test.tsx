@@ -27,11 +27,15 @@ function stub(session: Session | null, setupNeeded: () => Promise<boolean>) {
 }
 
 function renderStatus(service: AccountService) {
-  render(
+  const tree = () => (
     <AccountProvider service={service}>
       <Status />
     </AccountProvider>
   );
+  const { rerender } = render(tree());
+  // React runs a commit's pending effects before it renders again, so this leaves no listener
+  // that the screen has already outgrown.
+  return { settle: () => rerender(tree()) };
 }
 
 describe('AccountProvider', () => {
@@ -107,7 +111,7 @@ describe('AccountProvider', () => {
     it('is asked again on becoming visible while no Owner exists, until one does', async () => {
       let ownerExists = false;
       const service = stub(null, async () => !ownerExists);
-      renderStatus(service);
+      const { settle } = renderStatus(service);
       expect(await screen.findByText('signed-out true')).toBeVisible();
 
       ownerExists = true;
@@ -115,10 +119,10 @@ describe('AccountProvider', () => {
         document.dispatchEvent(new Event('visibilitychange'));
         expect(screen.getByText('signed-out false')).toBeVisible();
       });
+      settle();
       const asked = vi.mocked(service.setupNeeded).mock.calls.length;
 
       document.dispatchEvent(new Event('visibilitychange'));
-      await new Promise((resolve) => setTimeout(resolve, 20));
       expect(service.setupNeeded).toHaveBeenCalledTimes(asked);
     });
   });

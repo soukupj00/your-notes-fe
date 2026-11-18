@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const PORT = 4173;
+const PORT = Number(process.env.E2E_PWA_PORT ?? 4173);
 const BASE_URL = `http://localhost:${PORT}`;
 
 /**
@@ -19,6 +19,7 @@ export default defineConfig({
   projects: [{ name: 'desktop', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
     command: `pnpm build && pnpm preview --port ${PORT} --strictPort`,
+    env: { NO_API_PROXY: '1' },
     url: BASE_URL,
     reuseExistingServer: false,
     timeout: 240_000,

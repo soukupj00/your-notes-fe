@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const PORT = 5173;
+// Overridable so parallel checkouts do not reuse each other's dev server.
+const PORT = Number(process.env.E2E_PORT ?? 5173);
 const BASE_URL = `http://localhost:${PORT}`;
 const MEDIA_ARGS = ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'];
 
@@ -45,6 +46,7 @@ export default defineConfig({
   ],
   webServer: {
     command: `pnpm dev --port ${PORT} --strictPort`,
+    env: { NO_API_PROXY: '1' },
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

@@ -53,6 +53,8 @@ pnpm docs:dev     # the docs site; pnpm docs:build is what Pages runs
 For the Account screens (Settings, `/pair`), run the backend's `pnpm dev` alongside, in the `ni-dip-be` repository checked out next to this one: Vite proxies `/api` and `/health` to port 3000.
 The Pairing Link the backend prints points at port 3000, which serves no app in dev, so open its `/pair#<code>` on port 5173.
 First Playwright run on a machine needs `pnpm exec playwright install chromium`.
+Locally `pnpm test:e2e` reuses whatever already serves its port, so a second checkout running it at the same time sets its own: `E2E_PORT` (default 5173) and, for the PWA run, `E2E_PWA_PORT` (default 4173).
+Both runs start Vite with `NO_API_PROXY` set, so a backend left running on port 3000 never answers a spec, which mocks the server or expects none.
 Vitest sees `src/**` only and Playwright sees `e2e/` only.
 
 ## Architecture
