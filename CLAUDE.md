@@ -301,5 +301,8 @@ Red → green → refactor, applied per layer ([ADR 0003](./docs/adr/0003-testin
 - **A user-started call that toasts its outcome:** `useAction()` gives `busy` and `run(act, { success, failure })`.
 - **A lifecycle move (pin, archive, trash, restore):** `useUndoableLifecycle()`, which toasts its undo; the Card and the open Note both go through it.
 - **Tailwind v4:** CSS-based config in `globals.css`, no `tailwind.config.js`.
+- **Browser support:** anything a feature depends on must be Baseline Widely available.
+  A Newly available feature is used only as progressive enhancement that degrades harmlessly, with no fallback code or polyfill.
+  The targets are Safari on iOS (the installed app), Chrome and Edge, and Firefox in a tab.
 - **Files stay under 500 lines.**
 - **Vendored and generated files are never edited:** `src/contract/index.ts` (refreshed by `pnpm contract:pull`, which copies it from the `ni-dip-be` repository checked out next to this one), `src/routeTree.gen.ts`.
