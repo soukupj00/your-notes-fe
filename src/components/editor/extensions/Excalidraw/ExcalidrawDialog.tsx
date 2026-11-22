@@ -1,5 +1,6 @@
 import '@excalidraw/excalidraw/index.css';
 import { Excalidraw } from '@excalidraw/excalidraw';
+import { useBlocker, useRouter } from '@tanstack/react-router';
 import { XIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -32,17 +33,22 @@ function elementFingerprint(element: unknown): unknown {
       id: candidate.id,
       version: candidate.version,
       versionNonce: candidate.versionNonce,
-      isDeleted: candidate.isDeleted,
     };
   }
   return element;
+}
+
+/** Excalidraw's onChange keeps erased elements, flagged; Save and the dirty check read
+ *  only the live ones. */
+function isLive(element: unknown): boolean {
+  return !(element as { isDeleted?: boolean } | null)?.isDeleted;
 }
 
 /** The dirty check compares only what the user authors: element versions and the
  *  background colour. onChange also fires for viewport, zoom and selection. */
 function sceneFingerprint(scene: ExcalidrawScene): string {
   return JSON.stringify({
-    elements: scene.elements.map(elementFingerprint),
+    elements: scene.elements.filter(isLive).map(elementFingerprint),
     viewBackgroundColor: scene.appState.viewBackgroundColor ?? '#ffffff',
   });
 }
@@ -62,8 +68,8 @@ export interface ExcalidrawDialogProps {
 }
 
 /** The one shared drawing surface; the node view is only a preview that opens it.
- *  Cancel is dirty-guarded, Delete is confirm-guarded, backdrop and Escape never
- *  dismiss. The parent keys it per drawing so its state resets on each open. */
+ *  Cancel and a navigation away are dirty-guarded, Delete is confirm-guarded, backdrop
+ *  and Escape never dismiss. The parent keys it per drawing so its state resets on each open. */
 export function ExcalidrawDialog({
   open,
   mode,
@@ -78,8 +84,47 @@ export function ExcalidrawDialog({
     initialScene ? sceneFingerprint(initialScene) : sceneFingerprint(emptyScene())
   );
   const [dirty, setDirty] = useState(false);
-  const [hasElements, setHasElements] = useState((initialScene?.elements.length ?? 0) > 0);
-  const [confirm, setConfirm] = useState<'discard' | 'delete' | null>(null);
+  const [hasElements, setHasElements] = useState(initialScene?.elements.some(isLive) ?? false);
+  const [saving, setSaving] = useState(false);
+  // `kind` outlives `open`, so the texts hold still while the confirm fades out.
+  const [confirm, setConfirm] = useState<{ kind: 'discard' | 'delete'; open: boolean }>({
+    kind: 'discard',
+    open: false,
+  });
+  const ask = (kind: 'discard' | 'delete') => setConfirm({ kind, open: true });
+
+  // The platform Back pops the Note's history entry (ADR 0014) and would take a dirty
+  // Drawing with it, so the navigation is refused and repeated once Discard is chosen.
+  // Why it answers at once and owns its beforeunload: src/components/editor/CLAUDE.md.
+  const router = useRouter();
+  const blockedLeaveRef = useRef<(() => void) | null>(null);
+  useBlocker({
+    disabled: !dirty,
+    enableBeforeUnload: false,
+    shouldBlockFn: ({ action, next }) => {
+      if (saving) return true;
+      blockedLeaveRef.current = () => {
+        if (action === 'BACK') router.history.back({ ignoreBlocker: true });
+        else if (action === 'FORWARD') router.history.forward({ ignoreBlocker: true });
+        else
+          void router.navigate({
+            to: next.pathname,
+            search: next.search,
+            replace: action === 'REPLACE',
+            ignoreBlocker: true,
+          });
+      };
+      ask('discard');
+      return true;
+    },
+  });
+
+  useEffect(() => {
+    if (!dirty) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [dirty]);
 
   const canvasAreaRef = useRef<HTMLDivElement>(null);
 
@@ -116,7 +161,8 @@ export function ExcalidrawDialog({
   }, [open]);
 
   const requestClose = () => {
-    if (dirty) setConfirm('discard');
+    blockedLeaveRef.current = null;
+    if (dirty) ask('discard');
     else onClose();
   };
 
@@ -124,8 +170,13 @@ export function ExcalidrawDialog({
     const api = apiRef.current;
     if (!api) return;
     const elements = api.getSceneElements();
-    if (elements.length === 0) return;
-    await onSave({ elements, appState: api.getAppState(), files: api.getFiles() });
+    if (elements.length === 0 || saving) return;
+    setSaving(true);
+    try {
+      await onSave({ elements, appState: api.getAppState(), files: api.getFiles() });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -161,7 +212,7 @@ export function ExcalidrawDialog({
             <SaveButton
               size="sm"
               label={t('editor.excalidraw.save')}
-              disabled={!hasElements}
+              disabled={!hasElements || saving}
               onClick={() => void handleSave()}
             />
             {mode === 'edit' && onDelete && (
@@ -170,7 +221,7 @@ export function ExcalidrawDialog({
                 size="sm"
                 label={t('editor.excalidraw.deleteAction')}
                 className="text-destructive hover:text-destructive"
-                onClick={() => setConfirm('delete')}
+                onClick={() => ask('delete')}
               />
             )}
             <Button
@@ -199,7 +250,7 @@ export function ExcalidrawDialog({
                     files: files as unknown as Record<string, unknown>,
                   }) !== initialFingerprintRef.current
                 );
-                setHasElements(elements.length > 0);
+                setHasElements(elements.some(isLive));
               }}
             />
           </div>
@@ -207,29 +258,28 @@ export function ExcalidrawDialog({
       </Dialog>
 
       <ConfirmDialog
-        open={confirm !== null}
-        onOpenChange={(next) => {
-          if (!next) setConfirm(null);
-        }}
+        open={confirm.open}
+        onOpenChange={(open) => setConfirm((current) => ({ ...current, open }))}
         title={
-          confirm === 'delete'
+          confirm.kind === 'delete'
             ? t('editor.excalidraw.deleteModal')
             : t('editor.excalidraw.discardTitle')
         }
         description={
-          confirm === 'delete'
+          confirm.kind === 'delete'
             ? t('attachments.confirmDelete.description')
             : t('editor.excalidraw.discardDescription')
         }
         confirmLabel={
-          confirm === 'delete'
+          confirm.kind === 'delete'
             ? t('editor.excalidraw.deleteAction')
             : t('editor.excalidraw.discardConfirm')
         }
         cancelLabel={t('editor.excalidraw.discardCancel')}
         onConfirm={() => {
-          if (confirm === 'delete') onDelete?.();
-          else onClose();
+          if (confirm.kind === 'delete') return onDelete?.();
+          onClose();
+          blockedLeaveRef.current?.();
         }}
       />
     </>
