@@ -1,10 +1,6 @@
 import { moveById } from '@/lib/move-by-id.ts';
 import type { ToolbarFamilyPref, ToolbarLayout } from './types';
 
-export function moveFamily(layout: ToolbarLayout, activeId: string, overId: string): ToolbarLayout {
-  return moveById(layout, activeId, overId);
-}
-
 export function moveMember(
   layout: ToolbarLayout,
   familyId: string,

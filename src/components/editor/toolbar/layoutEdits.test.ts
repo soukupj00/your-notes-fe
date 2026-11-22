@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { COMPACT_FOLD_SLOTS, familySlots, foldIndex } from './foldMarker';
-import { moveFamily, moveMember, setMemberOn, updateFamily } from './layoutEdits';
+import { moveMember, setMemberOn, updateFamily } from './layoutEdits';
 import { defaultToolbarLayout } from './presets';
 import { reconcileLayout } from './resolveLayout';
 import type { ToolbarFamilyPref, ToolbarLayout } from './types';
@@ -20,27 +20,6 @@ const layout: ToolbarLayout = [
   family('style', ['h1', 'h2', 'h3']),
   family('list', ['bullet-list', 'ordered-list', 'task-list']),
 ];
-
-const ids = (result: ToolbarLayout) => result.map((entry) => entry.id);
-
-describe('moveFamily', () => {
-  it('moves a family to where the one it was dropped on sits', () => {
-    expect(ids(moveFamily(layout, 'list', 'history'))).toEqual(['list', 'history', 'style']);
-    expect(ids(moveFamily(layout, 'history', 'list'))).toEqual(['style', 'list', 'history']);
-  });
-
-  it('leaves the layout alone when a drag ends over nothing, or over itself', () => {
-    expect(moveFamily(layout, 'history', 'nowhere')).toBe(layout);
-    expect(moveFamily(layout, 'history', 'history')).toBe(layout);
-  });
-
-  it('does not touch the members of the families it moves past', () => {
-    const moved = moveFamily(layout, 'list', 'history');
-    expect(moved.map((entry) => entry.members)).toEqual(
-      ['list', 'history', 'style'].map((id) => layout.find((entry) => entry.id === id)?.members)
-    );
-  });
-});
 
 describe('moveMember', () => {
   it('reorders leaves inside one family only', () => {

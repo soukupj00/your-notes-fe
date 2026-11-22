@@ -8,8 +8,9 @@ import { SortableList, SortableRow } from '@/components/ui/SortableList.tsx';
 import { Switch } from '@/components/ui/switch.tsx';
 import { Toggle } from '@/components/ui/toggle.tsx';
 import { usePreferences } from '@/context/PreferencesProvider.tsx';
+import { moveById } from '@/lib/move-by-id.ts';
 import { COMPACT_FOLD_SLOTS, foldIndex } from './foldMarker';
-import { moveFamily, moveMember, setMemberOn, updateFamily } from './layoutEdits';
+import { moveMember, setMemberOn, updateFamily } from './layoutEdits';
 import { DEFAULT_PRESET, type ToolbarPresetId, toolbarPreset } from './presets';
 import { getToolbarFamily, itemsInFamily, TOOLBAR_ITEMS } from './registry';
 import { reconcileLayout } from './resolveLayout';
@@ -177,7 +178,7 @@ export function ToolbarLayoutEditor({
         <SortableList
           ids={layout.map((family) => family.id)}
           nameOf={familyName}
-          onReorder={(activeId, overId) => write(moveFamily(layout, activeId, overId))}
+          onReorder={(activeId, overId) => write(moveById(layout, activeId, overId))}
         >
           <ul className="divide-y">
             {layout.map((family, index) => (
