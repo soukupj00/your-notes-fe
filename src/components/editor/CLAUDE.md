@@ -175,6 +175,7 @@ All five kinds (image, audio, video, file, Excalidraw) are custom nodes from one
 - Save and the dirty check read the live elements only: Excalidraw's `onChange` also reports erased ones, flagged `isDeleted`, so a scene drawn and erased again is neither savable nor dirty.
 - **The dialog withholds pointer moves above the canvas** during a drag that started on it, with a capture-phase `window` listener.
   The canvas takes pointer capture, so without it a stroke kept extending under the header, hidden but still in the exported image.
+- Excalidraw is given no theme and always draws light, so its canvas area pins `color-scheme: light`; the night theme's scheme would put dark scrollbars on its white panels.
 - **The dialog's entrance does not scale**, and that is load-bearing.
   Excalidraw sizes its canvas from a rect that includes transforms, so opening mid-scale left every stroke off the cursor; the fade is kept.
 - The SVG exporter imports Excalidraw dynamically, because importing it eagerly touches a canvas at module scope and crashes under jsdom.

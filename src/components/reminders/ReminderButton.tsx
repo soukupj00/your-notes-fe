@@ -17,10 +17,8 @@ type ReminderButtonProps = {
   className?: string;
 };
 
-// `dark:[color-scheme:dark]` is the only way into the UA-drawn parts of native controls (picker
-// glyph, select arrow, picker panel), which otherwise paint black-on-black at night.
 const FIELD =
-  'h-9 w-full rounded-control border border-input bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:[color-scheme:dark]';
+  'h-9 w-full rounded-control border border-input bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 const today = () => toLocalInput(new Date()).slice(0, 10);
 

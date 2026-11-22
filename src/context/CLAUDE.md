@@ -103,6 +103,8 @@ A custom theme provider (not `next-themes`).
   It is written from JS because the app's theme is an explicit choice that may disagree with the OS, which is all a media-query `<meta>` can follow.
   It is always the app's frame, never a Note's tint: a tint would have to be unset on every path out of the editor.
 - The colour values are the OKLCH tokens in `src/styles/globals.css`.
+- Each theme block there also sets `color-scheme`, so what the browser draws itself (checkboxes, picker glyphs, scrollbars) follows the class; no control sets its own.
+  The one exception is the Drawing, whose canvas area stays `light` because Excalidraw always draws its light theme.
 
 ## The small ones
 
