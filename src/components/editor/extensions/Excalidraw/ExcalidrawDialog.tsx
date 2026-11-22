@@ -199,7 +199,8 @@ export function ExcalidrawDialog({
                     files: files as unknown as Record<string, unknown>,
                   }) !== initialFingerprintRef.current
                 );
-                setHasElements(elements.length > 0);
+                // onChange keeps erased elements, flagged; Save reads only the live ones.
+                setHasElements(elements.some((element) => !element.isDeleted));
               }}
             />
           </div>

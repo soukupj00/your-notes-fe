@@ -36,6 +36,16 @@ vi.mock('@excalidraw/excalidraw', () => ({
         </button>
         <button
           type="button"
+          data-testid="erase"
+          onClick={() => {
+            mockState.elements = [];
+            onChange?.([{ id: 'e1', isDeleted: true }], {}, {});
+          }}
+        >
+          erase
+        </button>
+        <button
+          type="button"
           data-testid="unchanged"
           onClick={() =>
             onChange?.(
@@ -101,6 +111,14 @@ describe('ExcalidrawDialog', () => {
     expect(save).toBeEnabled();
     await userEvent.click(save);
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ elements: [{ id: 'e1' }] }));
+  });
+
+  // Excalidraw's onChange keeps erased elements, flagged `isDeleted`.
+  it('disables Save again once everything drawn is erased', async () => {
+    setup();
+    await userEvent.click(screen.getByTestId('draw'));
+    await userEvent.click(screen.getByTestId('erase'));
+    expect(screen.getByRole('button', { name: 'editor.excalidraw.save' })).toBeDisabled();
   });
 
   it('shows the discard-confirm when cancelling a dirty scene; confirm closes, keep-editing does not', async () => {
