@@ -16,9 +16,9 @@ import { Spinner } from '@/components/ui/Spinner.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
 import { Password } from '@/contract/index.ts';
 import type { Member } from '@/data/Remote.ts';
-import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { formatDate, MEDIUM_DATE } from '@/lib/format.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
+import { useAccountList } from './useAccountList.ts';
 
 /** The Owner sets a member's password (backend `docs/setup.md` section 10); their Devices stay signed in. */
 function ResetPasswordButton({ member }: { member: Member }) {
@@ -98,22 +98,9 @@ function ResetPasswordButton({ member }: { member: Member }) {
  */
 export function MembersSection() {
   const { t, i18n } = useTranslation();
-  const { session, service } = useAccount();
-  const [members, setMembers] = useState<Member[]>([]);
+  const { session } = useAccount();
   const isOwner = session?.role === 'owner';
-
-  useAsyncEffect(
-    async (alive) => {
-      if (!isOwner || !service) return;
-      try {
-        const found = await service.accounts();
-        if (alive()) setMembers(found);
-      } catch {
-        if (alive()) toast.error(t('account.errors.unknown'));
-      }
-    },
-    [isOwner, service, t]
-  );
+  const { items: members } = useAccountList(isOwner ? (account) => account.accounts() : null);
 
   if (!isOwner) return null;
   // The Owner alone on the server would be a list of one, themselves.

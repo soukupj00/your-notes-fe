@@ -1,15 +1,14 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
 import { PairingLinkButton } from '@/components/account/PairingLinkButton.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
 import type { Device } from '@/data/Remote.ts';
 import { useAction } from '@/hooks/useAction.ts';
-import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { formatDate, MEDIUM_DATE_TIME } from '@/lib/format.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
+import { useAccountList } from './useAccountList.ts';
 
 /**
  * Removing a Device signs it out and changes nothing else (backend `docs/setup.md`
@@ -18,31 +17,9 @@ import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 export function DevicesSection() {
   const { t, i18n } = useTranslation();
   const { session, service } = useAccount();
-  const [devices, setDevices] = useState<Device[]>([]);
+  const { items: devices, reload } = useAccountList((account) => account.devices());
   const [removing, setRemoving] = useState<Device | null>(null);
   const { busy, run } = useAction();
-
-  const load = useCallback(
-    async (alive: () => boolean = () => true) => {
-      if (!service) return;
-      try {
-        const found = await service.devices();
-        if (alive()) setDevices(found);
-      } catch {
-        if (alive()) toast.error(t('account.errors.unknown'));
-      }
-    },
-    [service, t]
-  );
-
-  // Once per signed-in session: another Device's pairing shows up on the next visit.
-  const accountId = session?.accountId;
-  useAsyncEffect(
-    (alive) => {
-      if (accountId) return load(alive);
-    },
-    [accountId, load]
-  );
 
   if (!session || !service) return null;
 
@@ -54,7 +31,7 @@ export function DevicesSection() {
         try {
           await service.revokeDevice(device.id);
         } finally {
-          await load();
+          await reload();
         }
       },
       { success: 'account.devices.removed' }
