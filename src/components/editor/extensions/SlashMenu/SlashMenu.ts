@@ -1,4 +1,4 @@
-import { computePosition, flip, offset, shift } from '@floating-ui/dom';
+import { autoUpdate, computePosition, flip, offset, shift } from '@floating-ui/dom';
 import { Extension } from '@tiptap/core';
 import { ReactRenderer } from '@tiptap/react';
 import Suggestion, { exitSuggestion, type SuggestionOptions } from '@tiptap/suggestion';
@@ -40,9 +40,11 @@ function createRenderer(t: TFunction): SuggestionOptions<SlashItem>['render'] {
     let component: ReactRenderer<SlashMenuListHandle> | null = null;
     let container: HTMLElement | null = null;
     let closeOnEscape: ((event: KeyboardEvent) => void) | null = null;
+    let caretRect: (() => DOMRect | null) | null | undefined = null;
+    let stopPlacing: (() => void) | null = null;
 
-    const place = (clientRect: (() => DOMRect | null) | null | undefined) => {
-      const rect = clientRect?.();
+    const place = () => {
+      const rect = caretRect?.();
       if (!rect || !container) return;
       void computePosition(
         {
@@ -76,7 +78,10 @@ function createRenderer(t: TFunction): SuggestionOptions<SlashItem>['render'] {
         const dialog = props.editor.view.dom.closest('[role="dialog"]');
         (dialog ?? document.body).appendChild(container);
         container.showPopover?.();
-        place(props.clientRect);
+        caretRect = props.clientRect;
+        // Placed again whenever its size changes, as the rows render after this runs and a
+        // query changes their count, and whenever the Note scrolls, to stay on the caret.
+        stopPlacing = autoUpdate(props.editor.view.dom, container, place);
 
         // The note dialog closes on Escape in the document's capture phase, before the editor
         // sees the key, so the menu takes it earlier still, on window.
@@ -92,7 +97,7 @@ function createRenderer(t: TFunction): SuggestionOptions<SlashItem>['render'] {
 
       onUpdate: (props) => {
         component?.updateProps({ items: props.items, command: props.command, t });
-        place(props.clientRect);
+        caretRect = props.clientRect;
       },
 
       onKeyDown: (props) => component?.ref?.onKeyDown(props) ?? false,
@@ -100,6 +105,8 @@ function createRenderer(t: TFunction): SuggestionOptions<SlashItem>['render'] {
       onExit: () => {
         if (closeOnEscape) window.removeEventListener('keydown', closeOnEscape, { capture: true });
         closeOnEscape = null;
+        stopPlacing?.();
+        stopPlacing = null;
         container?.remove();
         component?.destroy();
         container = null;
