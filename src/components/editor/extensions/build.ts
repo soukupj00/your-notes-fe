@@ -3,10 +3,10 @@ import Document from '@tiptap/extension-document';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { TextStyle } from '@tiptap/extension-text-style';
-import { Placeholder } from '@tiptap/extensions';
 import { resolveShortcuts, type ShortcutBindings } from '@/lib/shortcuts.ts';
 import { createAudio } from './Audio/Audio';
 import type { AttachmentDeps } from './attachments/deps';
+import { createBodyHint } from './BodyHint/BodyHint';
 import type { TFunction } from './button-types';
 import { Clear } from './Clear/Clear';
 import { Color } from './Color/Color';
@@ -97,12 +97,7 @@ export function buildEditorExtensions({
     // Registered for its buttons too: a phone has no Ctrl+Z, so they are its only undo.
     History,
     createSlashMenu(getDeps, t),
-    // Only the body gets a placeholder - the title input has its own, and a
-    // second prompt on every empty paragraph would be noise.
-    Placeholder.configure({
-      placeholder: ({ node }) => (node.type.name === 'paragraph' ? t('editor.placeholder') : ''),
-      showOnlyWhenEditable: true,
-    }),
+    createBodyHint(t),
     createMathematics(getEditor, t),
     createShortcuts(getShortcuts, t),
     TextPrompt,

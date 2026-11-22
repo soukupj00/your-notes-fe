@@ -195,6 +195,11 @@ The commit goes to the selection captured when the popover opened, without focus
 - **Mathematics** is the bundled TipTap extension: `$$...$$` inline, `$$$...$$$` block, or the toolbar button; clicking a rendered node edits it.
 - **Typography** skips its rules inside a formula still being typed, before the closing `$$` makes it a math node, or `x^2` and `->` would be rewritten out of the LaTeX.
 - **Clear** is not a mark: its button clears nodes and marks.
+- **BodyHint** is TipTap's `Placeholder` for the untouched Body ("press '/' for commands").
+  `Placeholder` only marks the empty paragraph; the rule that draws the hint is in `globals.css`, and the same words go on the textbox as `aria-placeholder`, because drawn `content` is not text a screen reader can rely on.
+  The drawn copy has empty alt text, so the hint is announced once.
+  Untouched means one empty paragraph: TipTap's `isEmpty` is also true of blank lines and of a new Checklist's first row, where no hint belongs.
+  The attribute comes from a plugin: TipTap spreads `editorProps.attributes`, so a function passed there is dropped.
 - **TextPrompt** is how an extension, which is not React, asks for one line of text: Math's formula, and the link Shortcut when no Link button is on screen.
   `askText` resolves with the answer or `null`; `TextPromptHost`, mounted while the editor is editable, shows the dialog.
   Never `window.prompt`: it cannot be styled, and some embedded browsers block it.

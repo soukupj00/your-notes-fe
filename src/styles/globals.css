@@ -689,6 +689,20 @@
   outline: none;
 }
 
+/* TipTap only marks the empty Body (`extensions/BodyHint/`); the hint is drawn here. The empty
+   alt text keeps it out of the accessibility tree, where `aria-placeholder` says it once. */
+.tiptap p.is-editor-empty:only-child {
+  position: relative;
+}
+
+.tiptap p.is-editor-empty:only-child::before {
+  content: attr(data-placeholder) / "";
+  position: absolute;
+  inset-inline: 0;
+  pointer-events: none;
+  color: var(--muted-foreground);
+}
+
 /* Task lists, scoped to `.prose` so the editor and the card render them alike. Trap: a `flex`
    row defeats `-webkit-line-clamp`, which is why `NoteCard` caps a checklist with `max-height`. */
 .prose ul[data-type="taskList"] {

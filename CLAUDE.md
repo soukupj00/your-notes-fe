@@ -308,5 +308,6 @@ Red → green → refactor, applied per layer ([ADR 0003](./docs/adr/0003-testin
   A Newly available feature is used only as progressive enhancement that degrades harmlessly, with no fallback code or polyfill.
   The targets are Safari on iOS (the installed app), Chrome and Edge, and Firefox in a tab.
   In use: the slash menu's `popover="manual"` (Newly available); without it the menu is clipped by the Note's dialog and its rows still work.
+  Also the empty alt text on the Body hint's `content` (Newly available); without it the hint is not drawn and the textbox's `aria-placeholder` still says it.
 - **Files stay under 500 lines.**
 - **Vendored and generated files are never edited:** `src/contract/index.ts` (refreshed by `pnpm contract:pull`, which copies it from the `ni-dip-be` repository checked out next to this one), `src/routeTree.gen.ts`.

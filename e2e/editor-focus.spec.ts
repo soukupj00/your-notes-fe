@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test';
-import { newTextNote, skipTour, startNote } from './helpers';
+import { expect, type Page, test } from '@playwright/test';
+import { closeNote, newTextNote, skipTour, startNote } from './helpers';
 
 test.describe('opening focus', () => {
   test.beforeEach(async ({ page }) => {
@@ -226,5 +226,51 @@ test.describe('icon tooltips', () => {
     await page.keyboard.press('Shift+Tab');
 
     await expect(page.getByRole('tooltip', { name: 'Language' })).toBeVisible();
+  });
+});
+
+test.describe('the empty body', () => {
+  test.beforeEach(async ({ page }) => {
+    await skipTour(page);
+    await page.goto('/');
+  });
+
+  // A string: `tsconfig.node.json` has no DOM lib (see `skipTour`).
+  const drawnHint = (page: Page) =>
+    page.evaluate(
+      `getComputedStyle(document.querySelector('[role="dialog"] .tiptap p'), '::before').content`
+    );
+
+  // Playwright, not Vitest: jsdom applies no stylesheet, and the hint is drawn by one.
+  test('draws its hint until the first character', async ({ page }) => {
+    const hint = "Write something, or press '/' for commands…";
+    await startNote(page, 'Note');
+    const body = page.locator('.tiptap');
+    await body.locator('p').first().waitFor();
+
+    await expect.poll(() => drawnHint(page)).toContain(hint);
+    await expect(body).toHaveAttribute('aria-placeholder', hint);
+
+    await body.click();
+    await page.keyboard.type('a');
+    await expect.poll(() => drawnHint(page)).toBe('none');
+    await expect(body).not.toHaveAttribute('aria-placeholder');
+  });
+
+  test('keeps its hint off blank lines and off a new Checklist', async ({ page }) => {
+    await startNote(page, 'Note');
+    const body = page.locator('.tiptap');
+    await body.locator('p').first().waitFor();
+    await body.click();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('ArrowUp');
+
+    await expect.poll(() => drawnHint(page)).toBe('none');
+    await expect(body).not.toHaveAttribute('aria-placeholder');
+
+    await closeNote(page);
+    await startNote(page, 'Checklist');
+    await page.locator('.tiptap li').waitFor();
+    await expect(page.locator('.tiptap')).not.toHaveAttribute('aria-placeholder');
   });
 });
