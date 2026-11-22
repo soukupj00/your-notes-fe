@@ -125,9 +125,11 @@
    * ── nightshift: the day desk ──────────────────────────────────────────────
    *
    * DESIGN.md is the contract. Semantic tokens map onto the primitives, so the
-   * two themes differ only in the primitives.
+   * two themes differ only in the primitives and `color-scheme`.
    */
   :root {
+    color-scheme: light;
+
     /* `canvas` is the wall, `chrome` the topbar and rail, `raised` anything lifted off the wall. */
     --canvas: oklch(96% 0.015 84);
     --canvas-chrome: oklch(97.6% 0.011 84);
@@ -213,10 +215,12 @@
   /*
    * ── nightshift: the same desk, lit ────────────────────────────────────────
    *
-   * Only the primitives move. Every semantic mapping above is inherited, so a
+   * Only the primitives and `color-scheme` move. Every semantic mapping above is inherited, so a
    * component cannot be right in one theme and wrong in the other.
    */
   .dark {
+    color-scheme: dark;
+
     --canvas: oklch(17% 0.012 265);
     --canvas-chrome: oklch(13% 0.014 265);
     --canvas-raised: oklch(21% 0.012 265);
