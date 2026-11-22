@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import { renderInRouter } from '@/test/renderInRouter.tsx';
 import { withStore } from '@/test/store.tsx';
 import { setViewport } from '@/test/viewport.ts';
 import { Editor, type EditorHandle } from './editor.tsx';
@@ -159,8 +160,13 @@ describe('Editor auto-capture', () => {
   });
 
   it('opens the drawing canvas when opened for a drawing', async () => {
-    const { findByRole } = render(
-      <Editor content="" intent={{ kind: 'draw' }} getNoteId={vi.fn()} />
+    // The dialog guards a navigation away, so it needs a router around it.
+    const { findByRole } = await renderInRouter(
+      withStore(
+        <PreferencesProvider>
+          <Editor content="" intent={{ kind: 'draw' }} getNoteId={vi.fn()} />
+        </PreferencesProvider>
+      )
     );
 
     // The shared Excalidraw dialog is the editor's own, so it can be asserted

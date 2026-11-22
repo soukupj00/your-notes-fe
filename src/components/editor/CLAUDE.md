@@ -164,6 +164,15 @@ All five kinds (image, audio, video, file, Excalidraw) are custom nodes from one
   `NotesView` lazy-loads the editor in the same way, so neither TipTap nor the drawing engine is in the initial download.
 - **Commit on Save**: a new drawing creates its Attachment only on Save, and every Save mints a new Attachment and repoints the node, so every blob stays write-once by id for Sync.
   The orphan sweep removes the old one.
+- **A dirty Drawing blocks navigation** (`useBlocker` in the dialog): the platform Back pops the Note's history entry and would unmount the Drawing with it, so it goes through the same "Discard drawing?" confirm as Cancel.
+  The Drawing has no history entry of its own, so Back never closes only the Drawing.
+  - The blocker refuses at once and Discard repeats the navigation with `ignoreBlocker`.
+    The router's waiting form (`withResolver`) leaves the URL on the entry behind until the user answers, so a second Back popped a second entry and only one came back.
+  - The dialog owns its `beforeunload` listener for a reload or tab close.
+    The router's own is skipped once after every `history.back()` of the app's, which closing any Note is.
+  - While a Save commits, a navigation is refused without a question and Save is disabled, so the commit lands in a Note that is still open, once.
+  - The dialog therefore needs a router around it; a test renders it through `src/test/renderInRouter.tsx`.
+- Save and the dirty check read the live elements only: Excalidraw's `onChange` also reports erased ones, flagged `isDeleted`, so a scene drawn and erased again is neither savable nor dirty.
 - **The dialog withholds pointer moves above the canvas** during a drag that started on it, with a capture-phase `window` listener.
   The canvas takes pointer capture, so without it a stroke kept extending under the header, hidden but still in the exported image.
 - **The dialog's entrance does not scale**, and that is load-bearing.

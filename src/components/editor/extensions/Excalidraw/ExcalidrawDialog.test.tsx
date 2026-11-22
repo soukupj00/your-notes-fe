@@ -1,6 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { renderInRouter } from '@/test/renderInRouter.tsx';
 import type { ExcalidrawScene } from './scene';
 
 // Shared mutable scene state the mocked canvas reads/writes, so a "draw" click is
@@ -74,7 +75,7 @@ import { ExcalidrawDialog } from './ExcalidrawDialog';
 
 const t = (k: string) => k;
 
-function setup(overrides: Partial<Parameters<typeof ExcalidrawDialog>[0]> = {}) {
+async function setup(overrides: Partial<Parameters<typeof ExcalidrawDialog>[0]> = {}) {
   const onSave = vi.fn();
   const onClose = vi.fn();
   const onDelete = vi.fn();
@@ -88,8 +89,8 @@ function setup(overrides: Partial<Parameters<typeof ExcalidrawDialog>[0]> = {}) 
     t,
     ...overrides,
   };
-  render(<ExcalidrawDialog {...props} />);
-  return { onSave, onClose, onDelete };
+  const { router } = await renderInRouter(<ExcalidrawDialog {...props} />);
+  return { onSave, onClose, onDelete, router };
 }
 
 beforeEach(() => {
@@ -97,15 +98,15 @@ beforeEach(() => {
 });
 
 describe('ExcalidrawDialog', () => {
-  it('disables Save when the scene is empty and shows the shared Save icon', () => {
-    setup();
+  it('disables Save when the scene is empty and shows the shared Save icon', async () => {
+    await setup();
     const save = screen.getByRole('button', { name: 'editor.excalidraw.save' });
     expect(save).toBeDisabled();
     expect(save.querySelector('.lucide-save')).toBeTruthy();
   });
 
   it('enables Save after a draw and emits the scene to onSave', async () => {
-    const { onSave } = setup();
+    const { onSave } = await setup();
     await userEvent.click(screen.getByTestId('draw'));
     const save = screen.getByRole('button', { name: 'editor.excalidraw.save' });
     expect(save).toBeEnabled();
@@ -115,14 +116,14 @@ describe('ExcalidrawDialog', () => {
 
   // Excalidraw's onChange keeps erased elements, flagged `isDeleted`.
   it('disables Save again once everything drawn is erased', async () => {
-    setup();
+    await setup();
     await userEvent.click(screen.getByTestId('draw'));
     await userEvent.click(screen.getByTestId('erase'));
     expect(screen.getByRole('button', { name: 'editor.excalidraw.save' })).toBeDisabled();
   });
 
   it('shows the discard-confirm when cancelling a dirty scene; confirm closes, keep-editing does not', async () => {
-    const { onClose } = setup();
+    const { onClose } = await setup();
     await userEvent.click(screen.getByTestId('draw')); // make dirty
     await userEvent.click(screen.getByRole('button', { name: 'editor.excalidraw.cancel' }));
     expect(await screen.findByText('editor.excalidraw.discardTitle')).toBeInTheDocument();
@@ -135,8 +136,64 @@ describe('ExcalidrawDialog', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  // A push stands in for Back: the memory history runs blockers on push and replace only.
+  // The real Back is e2e/drawing.spec.ts.
+  it('holds a navigation away from a dirty scene behind the discard-confirm', async () => {
+    const { router, onClose } = await setup();
+    await userEvent.click(screen.getByTestId('draw'));
+
+    router.history.push('/away');
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'editor.excalidraw.discardCancel' })
+    );
+    await waitFor(() =>
+      expect(screen.queryByText('editor.excalidraw.discardTitle')).not.toBeInTheDocument()
+    );
+    expect(router.history.location.pathname).toBe('/');
+
+    router.history.push('/away');
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'editor.excalidraw.discardConfirm' })
+    );
+    await waitFor(() => expect(router.history.location.pathname).toBe('/away'));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('while a Save commits, refuses a second Save and a navigation, without asking', async () => {
+    let finish = () => {};
+    const onSave = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
+    const { router } = await setup({ onSave });
+    await userEvent.click(screen.getByTestId('draw'));
+    const save = screen.getByRole('button', { name: 'editor.excalidraw.save' });
+    await userEvent.click(save);
+    expect(save).toBeDisabled();
+
+    router.history.push('/away');
+    await waitFor(() => expect(router.history.location.pathname).toBe('/'));
+    expect(screen.queryByText('editor.excalidraw.discardTitle')).not.toBeInTheDocument();
+
+    finish();
+    await waitFor(() => expect(save).toBeEnabled());
+    expect(onSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes silently once everything drawn is erased again', async () => {
+    const { onClose } = await setup();
+    await userEvent.click(screen.getByTestId('draw'));
+    await userEvent.click(screen.getByTestId('erase'));
+    await userEvent.click(screen.getByRole('button', { name: 'editor.excalidraw.cancel' }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets a navigation away from an untouched scene through', async () => {
+    const { router } = await setup();
+    router.history.push('/away');
+    await waitFor(() => expect(router.history.location.pathname).toBe('/away'));
+    expect(screen.queryByText('editor.excalidraw.discardTitle')).not.toBeInTheDocument();
+  });
+
   it('closes silently (no discard-confirm) when Excalidraw reports an unchanged scene', async () => {
-    const { onClose } = setup();
+    const { onClose } = await setup();
     await userEvent.click(screen.getByTestId('unchanged'));
     await userEvent.click(screen.getByRole('button', { name: 'editor.excalidraw.cancel' }));
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -144,7 +201,7 @@ describe('ExcalidrawDialog', () => {
   });
 
   it('renders Delete in edit mode (calls onDelete) and none in new mode', async () => {
-    const { onDelete } = setup({
+    const { onDelete } = await setup({
       mode: 'edit',
       initialScene: { elements: [{ id: 'x' }], appState: {}, files: {} },
     });
@@ -162,15 +219,15 @@ describe('ExcalidrawDialog', () => {
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
 
-  it('does not render Delete in new mode', () => {
-    setup({ mode: 'new' });
+  it('does not render Delete in new mode', async () => {
+    await setup({ mode: 'new' });
     expect(
       screen.queryByRole('button', { name: 'editor.excalidraw.deleteAction' })
     ).not.toBeInTheDocument();
   });
 
   it('does not close on Escape (no accidental dismiss)', async () => {
-    const { onClose } = setup();
+    const { onClose } = await setup();
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(onClose).not.toHaveBeenCalled());
   });
