@@ -130,6 +130,21 @@ test.describe('keys', () => {
     await expect(heading).toBeHidden();
     await expect(page.locator('.tiptap')).toBeFocused();
   });
+
+  test('a press on a slash menu row runs it', async ({ page, isMobile }) => {
+    await startNote(page, 'Note');
+    const body = page.locator('.tiptap');
+    await body.click();
+    await page.keyboard.type('/');
+    const heading = page.getByRole('listitem').getByRole('button', { name: 'Heading 1' });
+
+    if (isMobile) await heading.tap();
+    else await heading.click();
+
+    await expect(heading).toBeHidden();
+    await expect(body.locator('h1')).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Title' })).toBeVisible();
+  });
 });
 
 // iPadOS 12 says "iPad ... like Mac OS X": a library reading it as no Mac would split search from the

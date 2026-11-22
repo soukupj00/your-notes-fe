@@ -32,8 +32,9 @@ export function createSlashMenu(getDeps: () => AttachmentDeps, t: TFunction) {
   });
 }
 
-/** Positioned with floating-ui against the caret, not mounted inline, so it escapes the
- *  editor's overflow and flips above the caret near the bottom of the screen. */
+/** Mounted in the Note's dialog, the only subtree a Radix modal leaves open to the pointer and
+ *  to scrolling, and shown in the top layer so the dialog's overflow does not clip it.
+ *  Without the Popover API the rows still work, clipped: CLAUDE.md, "Browser support". */
 function createRenderer(t: TFunction): SuggestionOptions<SlashItem>['render'] {
   return () => {
     let component: ReactRenderer<SlashMenuListHandle> | null = null;
@@ -49,7 +50,11 @@ function createRenderer(t: TFunction): SuggestionOptions<SlashItem>['render'] {
           contextElement: document.body,
         },
         container,
-        { placement: 'bottom-start', middleware: [offset(6), flip(), shift({ padding: 8 })] }
+        {
+          strategy: 'fixed',
+          placement: 'bottom-start',
+          middleware: [offset(6), flip(), shift({ padding: 8 })],
+        }
       ).then(({ x, y }) => {
         if (!container) return;
         Object.assign(container.style, { left: `${x}px`, top: `${y}px` });
@@ -63,10 +68,14 @@ function createRenderer(t: TFunction): SuggestionOptions<SlashItem>['render'] {
           editor: props.editor,
         });
         container = document.createElement('div');
-        container.style.position = 'absolute';
-        container.style.zIndex = '50';
+        container.popover = 'manual';
+        // The classes undo the browser's popover box (centred, bordered, padded, opaque).
+        container.className =
+          'fixed inset-auto z-50 m-0 overflow-visible border-0 bg-transparent p-0';
         container.appendChild(component.element);
-        document.body.appendChild(container);
+        const dialog = props.editor.view.dom.closest('[role="dialog"]');
+        (dialog ?? document.body).appendChild(container);
+        container.showPopover?.();
         place(props.clientRect);
 
         // The note dialog closes on Escape in the document's capture phase, before the editor
