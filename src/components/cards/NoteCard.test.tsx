@@ -415,6 +415,40 @@ describe('NoteCard', () => {
     expect(await allAttachments(testStore)).toHaveLength(0);
   });
 
+  // Without the size the picture is 0px tall until it decodes, and the wall packs on that.
+  it.each([
+    { stored: 'a stored size', size: { width: 600, height: 1500 } },
+    { stored: 'no stored size', size: {} },
+  ])("reserves a single picture's box from $stored", async ({ size }) => {
+    const now = new Date().toISOString();
+    const note = makeNote({ header: '', body: '<img data-attachment-id="p1">' });
+    const attachments = new Map([
+      [
+        'p1',
+        {
+          id: 'p1',
+          noteId: note.id,
+          kind: 'image' as const,
+          mime: 'image/png',
+          blob: new Blob(['png'], { type: 'image/png' }),
+          ...size,
+          createdAt: now,
+          updatedAt: now,
+        },
+      ],
+    ]);
+
+    render(<NoteCard note={note} attachments={attachments} onSelect={vi.fn()} />);
+
+    const img = await waitFor(() => {
+      const found = document.querySelector('[data-slot="card-media-visual"] img');
+      expect(found).toBeTruthy();
+      return found;
+    });
+    expect(img?.getAttribute('width')).toBe(size.width?.toString() ?? null);
+    expect(img?.getAttribute('height')).toBe(size.height?.toString() ?? null);
+  });
+
   it('opens the note when a video preview is clicked, like any other part of the card', async () => {
     const note = makeNote({ body: '<p>hello</p><video data-attachment-id="v1"></video>' });
     const onSelect = vi.fn();

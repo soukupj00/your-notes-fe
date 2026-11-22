@@ -111,6 +111,8 @@ function VisualArt({
     <img
       src={url}
       alt=""
+      width={visual.row?.width}
+      height={visual.row?.height}
       loading="lazy"
       className={cn('block size-full object-cover', className)}
     />
