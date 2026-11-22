@@ -72,7 +72,7 @@ export function useStartsThatFit(total: number, remeasureKey: unknown) {
     };
 
     measure();
-    if (typeof ResizeObserver !== 'function' || !barRef.current || !measureRef.current) return;
+    if (!barRef.current || !measureRef.current) return;
     const observer = new ResizeObserver(() => flushSync(measure));
     observer.observe(barRef.current);
     observer.observe(measureRef.current);

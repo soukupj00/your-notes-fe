@@ -46,6 +46,13 @@ export function NoteFeed({ notes, mode, label, onSelect }: NoteFeedProps) {
       <AnimatePresence initial={false}>
         {notes.map((note) => {
           const placement = layout.placements[note.id];
+          const card = (
+            <NoteCard
+              note={note}
+              attachments={attachmentsByNote.get(note.id)}
+              onSelect={onSelect}
+            />
+          );
 
           // A new card must exist to be measured but must not flash at the origin meanwhile,
           // so it is measured invisibly and gets Motion only once it is placed.
@@ -58,11 +65,7 @@ export function NoteFeed({ notes, mode, label, onSelect }: NoteFeedProps) {
                 className="invisible absolute top-0 left-0"
                 style={{ width: layout.itemWidth || '100%' }}
               >
-                <NoteCard
-                  note={note}
-                  attachments={attachmentsByNote.get(note.id)}
-                  onSelect={onSelect}
-                />
+                {card}
               </li>
             );
           }
@@ -94,11 +97,7 @@ export function NoteFeed({ notes, mode, label, onSelect }: NoteFeedProps) {
               }}
               className="absolute top-0 left-0"
             >
-              <NoteCard
-                note={note}
-                attachments={attachmentsByNote.get(note.id)}
-                onSelect={onSelect}
-              />
+              {card}
             </m.li>
           );
         })}

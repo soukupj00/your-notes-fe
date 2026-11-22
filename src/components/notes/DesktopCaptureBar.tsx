@@ -154,5 +154,3 @@ export function DesktopCaptureBar({ onStart }: { onStart: (intent?: Intent) => v
     </div>
   );
 }
-
-export default DesktopCaptureBar;

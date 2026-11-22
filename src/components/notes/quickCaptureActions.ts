@@ -3,7 +3,7 @@ import { Camera, Image, ListChecks, Mic, Paperclip, PencilRuler, SquarePen } fro
 import { ATTACHMENT_SPECS } from '@/lib/attachments.ts';
 import type { Intent } from '@/lib/intent.ts';
 
-export type QuickCaptureActionKey =
+type QuickCaptureActionKey =
   | 'text'
   | 'checklist'
   | 'audio'
@@ -13,7 +13,7 @@ export type QuickCaptureActionKey =
   | 'file';
 
 /** A Start that begins by choosing files: the OS picker opens inside the tap. */
-export interface StartPicker {
+interface StartPicker {
   accept: string;
   /** Straight to the camera on a phone; ignored by a desktop browser. */
   capture?: 'environment';
