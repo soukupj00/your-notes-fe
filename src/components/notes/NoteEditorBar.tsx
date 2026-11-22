@@ -47,7 +47,7 @@ export function NoteEditorBar({
   onReminderClear,
 }: NoteEditorBarProps) {
   const { t } = useTranslation();
-  const reducedMotion = useReducedMotion();
+  const barButton = noteControlButton(useReducedMotion());
   // Pinning means nothing outside the Active state, and the server shows nobody a trashed Note.
   const pinnable = state === 'active';
   const shareable = state !== 'trashed';
@@ -59,20 +59,16 @@ export function NoteEditorBar({
       <NoteTagsBar draft={draft} className="min-w-0 flex-1 basis-32" />
 
       <div className="ml-auto flex shrink-0 items-center gap-0.5">
-        {shareable && <ShareButton draft={draft} className={noteControlButton(reducedMotion)} />}
+        {shareable && <ShareButton draft={draft} className={barButton} />}
 
         <ReminderButton
           reminder={reminder}
           onSet={onReminderSet}
           onClear={onReminderClear}
-          className={noteControlButton(reducedMotion)}
+          className={barButton}
         />
 
-        <NoteColorButton
-          value={color}
-          onChange={onColorChange}
-          className={noteControlButton(reducedMotion)}
-        />
+        <NoteColorButton value={color} onChange={onColorChange} className={barButton} />
 
         {pinnable && (
           <IconTooltip label={t(pinned ? 'notes.unpin' : 'notes.pin')}>
@@ -81,8 +77,8 @@ export function NoteEditorBar({
               aria-label={t(pinned ? 'notes.unpin' : 'notes.pin')}
               aria-pressed={pinned}
               onClick={onPinToggle}
-              className={noteControlButton(
-                reducedMotion,
+              className={cn(
+                barButton,
                 // Pinned is chrome, so it takes the accent, like the card's pin.
                 pinned &&
                   'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
@@ -98,7 +94,7 @@ export function NoteEditorBar({
           onArchive={onArchive}
           onRestore={onRestore}
           onTrash={onTrash}
-          className={noteControlButton(reducedMotion)}
+          className={barButton}
         />
       </div>
     </div>

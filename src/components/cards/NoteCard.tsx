@@ -56,9 +56,6 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
 
   const handlePin = () => lifecycle.pin(note.id);
   const handleUnpin = () => lifecycle.unpin(note.id);
-  const handleArchive = () => lifecycle.archive(note.id);
-  const handleTrash = () => lifecycle.trash(note.id);
-  const handleRestore = () => lifecycle.restore(note.id);
 
   // Read at click time and written by the handler too, so two quick ticks compose
   // instead of the second being computed from a body the first already replaced.
@@ -82,8 +79,8 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
       const target = event.target as Element;
       const item = closestChecklistItem(target);
       if (!item) return;
-      const onText = !target.closest('label') && pointOverText(item, event.clientX, event.clientY);
-      if (!target.closest('label') && !onText) return;
+      const onBox = target.closest('label');
+      if (!onBox && !pointOverText(item, event.clientX, event.clientY)) return;
 
       event.stopPropagation();
 
@@ -216,13 +213,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
 
           <TagPills tags={tags} maxVisible={3} className="min-w-0" />
 
-          <CardActions
-            note={note}
-            onArchive={handleArchive}
-            onRestore={handleRestore}
-            onTrash={handleTrash}
-            onColorChange={(color) => void updateNote(note.id, { color })}
-          />
+          <CardActions note={note} />
         </div>
       </div>
     </Card>

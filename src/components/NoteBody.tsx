@@ -47,5 +47,3 @@ function NoteBodyRenderer({
  * and `NoteCard` re-renders for many reasons the prose has no part in.
  */
 export const NoteBody = memo(NoteBodyRenderer);
-
-export default NoteBody;
