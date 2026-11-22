@@ -88,7 +88,10 @@ Components read and write through the hooks in `src/hooks/data/`:
 
 - `useNoteFeed` - the one feed query: lifecycle and tag scoping plus fuzzy ranked search.
 - `useNoteActions`, `useTagActions`, `useAttachmentActions` - the mutations.
-- `useTags`, `useTagsForNote`, `useNoteAttachments` - live reads.
+- `useTags`, `useTag`, `useTagsForNote`, `useNoteAttachments` - live reads.
+- `useBackup`, `useSaveBackup`, `useEraseDevice` - the whole-store acts: a Backup out or in, and erasing the Device at sign-out.
+
+Only these hooks, the providers in `src/context` and the composition points (`main.tsx`, `App.tsx`, `src/test`) call `useLocalStore()`.
 
 State that lives in the URL, not in a context:
 

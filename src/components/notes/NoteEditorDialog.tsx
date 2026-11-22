@@ -10,7 +10,6 @@ import { AppBar } from '@/components/ui/AppBar.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog.tsx';
 import { IconTooltip } from '@/components/ui/tooltip.tsx';
-import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { useIsMobile } from '@/hooks/use-mobile.tsx';
@@ -77,8 +76,7 @@ export function NoteEditorDialog({
   onNoteMissing,
 }: NoteEditorDialogProps) {
   const { t } = useTranslation();
-  const store = useLocalStore();
-  const { createNote, updateNote, purgeNote, pinNote, unpinNote } = useNoteActions();
+  const { getNote, createNote, updateNote, purgeNote, pinNote, unpinNote } = useNoteActions();
   const { collectOrphans } = useAttachmentActions();
   const lifecycle = useUndoableLifecycle();
   const isMobile = useIsMobile();
@@ -126,7 +124,7 @@ export function NoteEditorDialog({
   useAsyncEffect(
     async (alive) => {
       if (isNew) return;
-      const n = await store.notes.get(noteId);
+      const n = await getNote(noteId);
       if (!alive()) return;
       if (n) {
         setHeader(n.header ?? '');
@@ -141,7 +139,7 @@ export function NoteEditorDialog({
       // Not a blank editor: typing into it would silently recreate the note under the dead id.
       onNoteMissing?.();
     },
-    [noteId, isNew, onNoteMissing, store]
+    [noteId, isNew, onNoteMissing, getNote]
   );
 
   const { handleReminderSet, handleReminderClear } = useNoteReminder(draft, content, setReminder);

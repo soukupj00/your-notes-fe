@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
+import { emptyLive } from '@/data/live.ts';
 import { useLive } from '@/data/useLive.ts';
 import { labelCollator, sortLabels } from '@/lib/label-order.ts';
 import type { Tag } from '@/models.ts';
@@ -11,4 +12,10 @@ export function useTags(): Tag[] {
   const { i18n } = useTranslation();
   const tags = useLive(() => store.tags.all(), [store]);
   return useMemo(() => sortLabels(tags ?? [], labelCollator(i18n.language)), [tags, i18n.language]);
+}
+
+/** One Tag, live; undefined while it loads, when `id` is absent, or once it is deleted. */
+export function useTag(id: string | undefined): Tag | undefined {
+  const store = useLocalStore();
+  return useLive(() => (id ? store.tags.watch(id) : emptyLive(undefined)), [store, id]);
 }

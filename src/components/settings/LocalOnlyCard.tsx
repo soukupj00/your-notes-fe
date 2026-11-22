@@ -2,7 +2,7 @@ import { BookOpen, Download, LogIn, Server, Smartphone } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SignInDialog } from '@/components/account/SignInDialog.tsx';
-import { useSaveBackup } from '@/hooks/data/useSaveBackup.ts';
+import { useSaveBackup } from '@/hooks/data/useBackup.ts';
 import { NewTabRow, SETTINGS_ACTION_ROW } from './SettingsActionRow.tsx';
 import type { ServerState } from './useServerState.ts';
 

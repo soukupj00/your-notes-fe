@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
-import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import type { Share } from '@/data/Remote.ts';
+import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { useAction } from '@/hooks/useAction.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 import { useAccountList } from './useAccountList.ts';
@@ -16,10 +16,10 @@ type Row = Share & { header: string | undefined };
 export function SharesSection() {
   const { t } = useTranslation();
   const { session, service } = useAccount();
-  const store = useLocalStore();
+  const { getNote } = useNoteActions();
   const { items: rows, setItems: setRows } = useAccountList<Row>(async (account) => {
     const shares = await account.shares();
-    const notes = await Promise.all(shares.map((s) => store.notes.get(s.noteId)));
+    const notes = await Promise.all(shares.map((s) => getNote(s.noteId)));
     return shares.map((s, i) => ({ ...s, header: notes[i]?.header?.trim() || undefined }));
   });
   const { busy, run } = useAction();

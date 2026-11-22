@@ -6,11 +6,9 @@ import { Button } from '@/components/ui/button.tsx';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog.tsx';
 import { LabeledCheckbox } from '@/components/ui/LabeledCheckbox.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
-import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
-import { useSaveBackup } from '@/hooks/data/useSaveBackup.ts';
+import { useBackup, useSaveBackup } from '@/hooks/data/useBackup.ts';
 import { useAction } from '@/hooks/useAction.ts';
-import { BackupError, importBackup, type ParsedBackup, parseBackupZip } from '@/lib/backup.ts';
-import { exportBackup } from '@/lib/export-backup.ts';
+import { BackupError, type ParsedBackup, parseBackupZip } from '@/lib/backup.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
 function errorKey(error: unknown): string {
@@ -25,7 +23,7 @@ function errorKey(error: unknown): string {
  */
 export function BackupSection() {
   const { t } = useTranslation();
-  const store = useLocalStore();
+  const { exportBackup, importBackup } = useBackup();
   const inputRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<ParsedBackup | null>(null);
   const [backupFirst, setBackupFirst] = useState(true);
@@ -57,11 +55,11 @@ export function BackupSection() {
       async () => {
         // Backing out of the safety copy backs out of the import: it could still overwrite the
         // Notes the user just declined to lose. A failed copy throws before the first write.
-        if (backupFirst && (await exportBackup(store, '-before-import')) === 'cancelled') {
+        if (backupFirst && (await exportBackup('-before-import')) === 'cancelled') {
           toast.info(t('settings.backup.importCancelled'));
           return false;
         }
-        await importBackup(store, backup);
+        await importBackup(backup);
       },
       { success: 'settings.backup.imported', failure: errorKey }
     );

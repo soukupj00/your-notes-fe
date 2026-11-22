@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 import {
   createContext,
   type ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -29,6 +30,8 @@ export type SyncContextValue = {
   /** Rows and Tombstones the server is owed (the Offline Mutation Queue), live. */
   pending: number;
   syncNow(): Promise<void>;
+  /** Whether the server is owed anything now: asked of the store, not read off `pending`. */
+  owes(): Promise<boolean>;
   /** Stops syncing and waits for a run in flight: the step before erasing this Device. */
   stop(): Promise<void>;
   /**
@@ -44,6 +47,7 @@ const INACTIVE: SyncContextValue = {
   lastSyncedAt: null,
   pending: 0,
   syncNow: async () => {},
+  owes: async () => false,
   stop: async () => {},
   download: async () => {
     throw new Error('Not signed in to a server');
@@ -69,6 +73,10 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const pending = useLive(() => store.sync.pending(), [store]) ?? 0;
   const loopRef = useRef<SyncLoop | null>(null);
+  const owes = useCallback(async () => {
+    const owed = await store.sync.dirty();
+    return Object.values(owed).some((rows) => rows.length > 0);
+  }, [store]);
 
   const accountId = session?.accountId;
   const deviceName = session?.deviceName ?? '';
@@ -161,6 +169,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
             lastSyncedAt,
             pending,
             syncNow: () => loopRef.current?.syncNow() ?? Promise.resolve(),
+            owes,
             stop: async () => {
               const loop = loopRef.current;
               loopRef.current = null;
@@ -168,8 +177,8 @@ export function SyncProvider({ children }: { children: ReactNode }) {
             },
             download: (id: string) => downloadAttachment(store, remote!, id),
           }
-        : { ...INACTIVE, pending },
-    [active, status, lastSyncedAt, pending, store, remote]
+        : { ...INACTIVE, pending, owes },
+    [active, status, lastSyncedAt, pending, owes, store, remote]
   );
 
   return <SyncContext.Provider value={value}>{children}</SyncContext.Provider>;

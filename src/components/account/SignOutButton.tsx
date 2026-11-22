@@ -12,8 +12,8 @@ import {
 } from '@/components/ui/dialog.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
 import { useSync } from '@/context/SyncProvider.tsx';
-import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
-import { useSaveBackup } from '@/hooks/data/useSaveBackup.ts';
+import { useSaveBackup } from '@/hooks/data/useBackup.ts';
+import { useEraseDevice } from '@/hooks/data/useEraseDevice.ts';
 import { useAction } from '@/hooks/useAction.ts';
 
 /**
@@ -22,7 +22,7 @@ import { useAction } from '@/hooks/useAction.ts';
  */
 export function SignOutButton() {
   const { t } = useTranslation();
-  const store = useLocalStore();
+  const eraseDevice = useEraseDevice();
   const { service, setSession } = useAccount();
   const sync = useSync();
   const [dialog, setDialog] = useState<'blocked' | 'confirm' | null>(null);
@@ -36,14 +36,13 @@ export function SignOutButton() {
     await erasing.run(
       async () => {
         // Asked again at the last moment: an edit may have landed since the dialog opened.
-        const owed = await store.sync.dirty();
-        if (Object.values(owed).some((rows) => rows.length > 0)) {
+        if (await sync.owes()) {
           setDialog('blocked');
           return false;
         }
         await service.signOut();
         await sync.stop();
-        await store.clear();
+        await eraseDevice();
         setSession(null);
       },
       { success: 'account.section.signedOut' }

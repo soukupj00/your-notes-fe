@@ -50,6 +50,9 @@ export function useNoteActions() {
     [store]
   );
 
+  // A plain read, not a live one: the editor loads a Note once and keeps its own copy.
+  const getNote = useCallback((id: string) => store.notes.get(id), [store]);
+
   // The irreversible removal (CONTEXT.md "Purge"). The user-facing delete is `trashNote`.
   const purgeNote = useCallback((id: string) => store.notes.purge(id), [store]);
 
@@ -137,6 +140,7 @@ export function useNoteActions() {
   }, [store, purgeNote]);
 
   return {
+    getNote,
     createNote,
     updateNote,
     purgeNote,
