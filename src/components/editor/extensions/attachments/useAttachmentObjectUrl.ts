@@ -13,15 +13,12 @@ export type AttachmentUrlState =
 
 const NO_ROW = emptyLive<Attachment | null>(null);
 
-/** Revokes the URL on unmount or id change (ADR 0007). The row is read live, so a download or
- *  a pull turns `remote` into `ready` without reopening the Note. `watchAttachment` must be
- *  stable, or it is re-subscribed every render. */
-export function useAttachmentObjectUrl(
+/** The row, live: `undefined` while loading, `null` when there is no such row. */
+export function useAttachmentRow(
   attachmentId: string | null,
   watchAttachment: AttachmentDeps['watchAttachment']
-): AttachmentUrlState {
-  // undefined = loading, null = no such row.
-  const row = useLive(
+): Attachment | null | undefined {
+  return useLive(
     () =>
       attachmentId
         ? {
@@ -31,6 +28,16 @@ export function useAttachmentObjectUrl(
         : NO_ROW,
     [attachmentId, watchAttachment]
   );
+}
+
+/** Revokes the URL on unmount or id change (ADR 0007). The row is read live, so a download or
+ *  a pull turns `remote` into `ready` without reopening the Note. `watchAttachment` must be
+ *  stable, or it is re-subscribed every render. */
+export function useAttachmentObjectUrl(
+  attachmentId: string | null,
+  watchAttachment: AttachmentDeps['watchAttachment']
+): AttachmentUrlState {
+  const row = useAttachmentRow(attachmentId, watchAttachment);
 
   // Minted during render and revoked by the effect's cleanup, as CardMedia does:
   // an effect that set state would paint one empty frame first.

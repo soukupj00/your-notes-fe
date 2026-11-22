@@ -21,13 +21,15 @@ export function AudioNodeView(props: ReactNodeViewProps) {
   const Pause = icons.Pause;
   const canDelete = props.editor?.isEditable ?? false;
 
-  const deleteButton = canDelete ? (
-    <AttachmentDeleteButton
-      onConfirm={() => props.deleteNode()}
-      label={deps.t('editor.audio.delete')}
-      t={deps.t}
-    />
-  ) : null;
+  const deleteButton = (overlay?: boolean) =>
+    canDelete ? (
+      <AttachmentDeleteButton
+        onConfirm={() => props.deleteNode()}
+        label={deps.t('editor.audio.delete')}
+        t={deps.t}
+        overlay={overlay}
+      />
+    ) : null;
 
   // A callback ref, because the <audio> mounts only once the URL is ready: an effect with []
   // would run while it is still null. React 19 runs the returned cleanup on unmount.
@@ -95,16 +97,7 @@ export function AudioNodeView(props: ReactNodeViewProps) {
         attachment={state.attachment}
         deps={deps}
         fallbackName={deps.t('editor.audio.label')}
-        deleteButton={
-          canDelete ? (
-            <AttachmentDeleteButton
-              onConfirm={() => props.deleteNode()}
-              label={deps.t('editor.audio.delete')}
-              t={deps.t}
-              overlay
-            />
-          ) : null
-        }
+        deleteButton={deleteButton(true)}
       />
     );
   }
@@ -114,11 +107,13 @@ export function AudioNodeView(props: ReactNodeViewProps) {
       <NodeViewWrapper as="div" className="my-2" data-drag-handle>
         <div className="flex items-center gap-3 rounded-md border border-dashed p-4 text-muted-foreground text-sm">
           <span className="flex-1 text-center">{deps.t('editor.audio.unavailable')}</span>
-          {deleteButton}
+          {deleteButton()}
         </div>
       </NodeViewWrapper>
     );
   }
+
+  const total = duration || (state.status === 'ready' ? (state.attachment.duration ?? 0) : 0);
 
   return (
     <NodeViewWrapper as="div" className="my-2" data-drag-handle>
@@ -135,7 +130,7 @@ export function AudioNodeView(props: ReactNodeViewProps) {
         <input
           type="range"
           min={0}
-          max={duration || (state.status === 'ready' ? (state.attachment.duration ?? 0) : 0)}
+          max={total}
           value={current}
           step={0.1}
           onChange={(e) => seek(Number(e.target.value))}
@@ -143,12 +138,9 @@ export function AudioNodeView(props: ReactNodeViewProps) {
           className="h-1 flex-1 accent-primary"
         />
         <span className="text-muted-foreground text-xs tabular-nums">
-          {formatElapsed(current)} /{' '}
-          {formatElapsed(
-            duration || (state.status === 'ready' ? (state.attachment.duration ?? 0) : 0)
-          )}
+          {formatElapsed(current)} / {formatElapsed(total)}
         </span>
-        {deleteButton}
+        {deleteButton()}
         {state.status === 'ready' && (
           <audio ref={bindAudio} src={state.url} preload="metadata" className="hidden">
             <track kind="captions" />

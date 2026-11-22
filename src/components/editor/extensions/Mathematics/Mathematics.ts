@@ -18,9 +18,11 @@ export async function insertMath(editor: Editor, t: TFunction) {
   if (latex?.trim()) editor.chain().focus().insertInlineMath({ latex }).run();
 }
 
+type MathKind = 'inlineMath' | 'blockMath';
+
 async function editMath(
   editor: Editor,
-  kind: 'inlineMath' | 'blockMath',
+  kind: MathKind,
   node: ProseMirrorNode,
   pos: number,
   t: TFunction
@@ -34,13 +36,10 @@ async function editMath(
   if (latex === null) {
     return;
   }
+  const update = kind === 'inlineMath' ? 'updateInlineMath' : 'updateBlockMath';
   // Pass `pos` explicitly: without it the update command reads the original cursor
   // selection (not the clicked node) and would no-op inside a chain.
-  if (kind === 'inlineMath') {
-    editor.chain().updateInlineMath({ latex, pos }).focus().run();
-  } else {
-    editor.chain().updateBlockMath({ latex, pos }).focus().run();
-  }
+  editor.chain()[update]({ latex, pos }).focus().run();
 }
 
 export const Mathematics = TiptapMathematics.extend({
@@ -63,23 +62,13 @@ export const Mathematics = TiptapMathematics.extend({
 
 /** `getEditor` is a getter because the editor does not exist yet when this is built. */
 export function createMathematics(getEditor: () => Editor | null, t: TFunction) {
+  const onClick = (kind: MathKind) => (node: ProseMirrorNode, pos: number) => {
+    const editor = getEditor();
+    if (editor) void editMath(editor, kind, node, pos, t);
+  };
   return Mathematics.configure({
     katexOptions: { throwOnError: false },
-    inlineOptions: {
-      onClick: (node, pos) => {
-        const editor = getEditor();
-        if (editor) {
-          void editMath(editor, 'inlineMath', node, pos, t);
-        }
-      },
-    },
-    blockOptions: {
-      onClick: (node, pos) => {
-        const editor = getEditor();
-        if (editor) {
-          void editMath(editor, 'blockMath', node, pos, t);
-        }
-      },
-    },
+    inlineOptions: { onClick: onClick('inlineMath') },
+    blockOptions: { onClick: onClick('blockMath') },
   });
 }

@@ -1,14 +1,12 @@
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
 import DOMPurify from 'dompurify';
-import { emptyLive } from '@/data/live.ts';
-import { useLive } from '@/data/useLive.ts';
 import { cn } from '@/lib/utils.ts';
-import type { Attachment } from '@/models.ts';
 import { AttachmentDeleteButton } from '../attachments/AttachmentDeleteButton';
 import { DownloadButton, useDownloadAttachment } from '../attachments/AttachmentNotDownloaded';
 import { AttachmentUnavailable } from '../attachments/AttachmentUnavailable';
 import type { AttachmentDeps } from '../attachments/deps';
+import { useAttachmentRow } from '../attachments/useAttachmentObjectUrl';
 
 /** A passive preview; the live canvas is the shared dialog, opened on tap. Live-queried, so
  *  when a Save repoints the node at a new row the preview follows. */
@@ -17,17 +15,7 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
   const deps = (props.extension.options.getDeps as () => AttachmentDeps)();
   const editable = props.editor?.isEditable ?? false;
 
-  // undefined = loading, null = missing, object = ready.
-  const row = useLive(
-    () =>
-      attachmentId
-        ? {
-            subscribe: (next: (row: Attachment | null) => void) =>
-              deps.watchAttachment(attachmentId).subscribe((r) => next(r ?? null)),
-          }
-        : emptyLive<Attachment | null>(null),
-    [deps.watchAttachment, attachmentId]
-  );
+  const row = useAttachmentRow(attachmentId, deps.watchAttachment);
 
   // A sibling of the surface, not a child, so a delete tap never opens the canvas.
   const deleteButton = editable ? (
