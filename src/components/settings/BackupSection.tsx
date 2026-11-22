@@ -6,10 +6,9 @@ import { Button } from '@/components/ui/button.tsx';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog.tsx';
 import { LabeledCheckbox } from '@/components/ui/LabeledCheckbox.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
-import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
+import { useBackup, useSaveBackup } from '@/hooks/data/useBackup.ts';
 import { useAction } from '@/hooks/useAction.ts';
-import { BackupError, importBackup, type ParsedBackup, parseBackupZip } from '@/lib/backup.ts';
-import { exportBackup } from '@/lib/export-backup.ts';
+import { BackupError, type ParsedBackup, parseBackupZip } from '@/lib/backup.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
 
 function errorKey(error: unknown): string {
@@ -24,20 +23,14 @@ function errorKey(error: unknown): string {
  */
 export function BackupSection() {
   const { t } = useTranslation();
-  const store = useLocalStore();
+  const { exportBackup, importBackup } = useBackup();
   const inputRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<ParsedBackup | null>(null);
   const [backupFirst, setBackupFirst] = useState(true);
 
-  const exporting = useAction();
+  const exporting = useSaveBackup();
   const importing = useAction();
   const busy = exporting.busy || importing.busy;
-
-  const handleExport = () =>
-    exporting.run(async () => (await exportBackup(store)) === 'saved', {
-      success: 'settings.backup.exported',
-      failure: 'settings.backup.error.unknown',
-    });
 
   const handleFile = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -62,11 +55,11 @@ export function BackupSection() {
       async () => {
         // Backing out of the safety copy backs out of the import: it could still overwrite the
         // Notes the user just declined to lose. A failed copy throws before the first write.
-        if (backupFirst && (await exportBackup(store, '-before-import')) === 'cancelled') {
+        if (backupFirst && (await exportBackup('-before-import')) === 'cancelled') {
           toast.info(t('settings.backup.importCancelled'));
           return false;
         }
-        await importBackup(store, backup);
+        await importBackup(backup);
       },
       { success: 'settings.backup.imported', failure: errorKey }
     );
@@ -89,7 +82,7 @@ export function BackupSection() {
           size="sm"
           className="min-h-11 gap-1"
           disabled={busy}
-          onClick={() => void handleExport()}
+          onClick={() => void exporting.save()}
         >
           {exporting.busy ? <Spinner /> : <Download className="size-4" aria-hidden />}
           {exporting.busy ? t('settings.backup.exporting') : t('settings.backup.export.action')}

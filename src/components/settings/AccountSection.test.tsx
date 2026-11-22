@@ -246,6 +246,29 @@ describe('Settings account sections', () => {
     expect(await allNotes(testStore)).toEqual([]);
   });
 
+  it('asks again what is owed when the erase is confirmed, and refuses if an edit landed', async () => {
+    const server = createFakeServer();
+    server.seedOwner('ada', 'correct horse');
+    mount(server);
+    await signIn('ada', 'correct horse');
+    await userEvent.click(screen.getByRole('button', { name: 'account.section.signOut' }));
+    const confirm = await screen.findByRole('dialog');
+
+    await testStore.notes.add({
+      id: crypto.randomUUID(),
+      state: 'active',
+      createdAt: T0,
+      updatedAt: T0,
+    });
+    await userEvent.click(
+      within(confirm).getByRole('button', { name: 'account.section.eraseConfirm' })
+    );
+
+    expect(await screen.findByText('account.section.blockedTitle')).toBeVisible();
+    expect(await allNotes(testStore)).toHaveLength(1);
+    expect(server.devices).toHaveLength(2);
+  });
+
   it('refuses to sign out while a change is still owed, offering a way out', async () => {
     const server = createFakeServer();
     server.seedOwner('ada', 'correct horse');
@@ -290,6 +313,29 @@ describe('Settings account sections', () => {
     );
 
     await waitFor(() => expect(exportBackup).toHaveBeenCalledTimes(1));
-    expect(exportBackup).toHaveBeenCalledWith(testStore);
+    expect(exportBackup).toHaveBeenCalledWith(testStore, undefined);
+  });
+
+  it('holds Sign out while the Backup from the blocked dialog is being saved', async () => {
+    exportBackup.mockReturnValue(new Promise(() => {}));
+    const server = createFakeServer();
+    server.seedOwner('ada', 'correct horse');
+    await testStore.notes.add({
+      id: crypto.randomUUID(),
+      state: 'active',
+      createdAt: T0,
+      updatedAt: T0,
+    });
+    mount(server);
+    await signIn('ada', 'correct horse');
+    await userEvent.click(await screen.findByRole('button', { name: 'account.section.signOut' }));
+
+    const save = await screen.findByRole('button', { name: 'account.section.saveBackup' });
+    await userEvent.click(save);
+
+    await waitFor(() => expect(save).toBeDisabled());
+    expect(
+      screen.getByRole('button', { name: 'account.section.signOut', hidden: true })
+    ).toBeDisabled();
   });
 });

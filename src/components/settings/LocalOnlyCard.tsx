@@ -1,34 +1,10 @@
-import { BookOpen, Download, ExternalLink, LogIn, Server, Smartphone } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
+import { BookOpen, Download, LogIn, Server, Smartphone } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SignInDialog } from '@/components/account/SignInDialog.tsx';
-import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
-import { useAction } from '@/hooks/useAction.ts';
-import { exportBackup } from '@/lib/export-backup.ts';
+import { useSaveBackup } from '@/hooks/data/useBackup.ts';
+import { NewTabRow, SETTINGS_ACTION_ROW } from './SettingsActionRow.tsx';
 import type { ServerState } from './useServerState.ts';
-
-const ACTION_ROW =
-  'flex min-h-14 w-full items-center gap-3.5 px-4 py-2.5 text-left text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:opacity-50 [&_svg]:size-4.5 [&_svg]:shrink-0 [&_svg]:text-muted-foreground';
-
-function NewTabRow({
-  href,
-  icon,
-  children,
-}: {
-  href: string;
-  icon: ReactNode;
-  children: ReactNode;
-}) {
-  const { t } = useTranslation();
-  return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={ACTION_ROW}>
-      {icon}
-      <span className="flex-1">{children}</span>
-      <ExternalLink aria-hidden className="size-4!" />
-      <span className="sr-only"> {t('nav.newTab')}</span>
-    </a>
-  );
-}
 
 /**
  * The Settings home's top card for a Device with no account. Its one action follows what the
@@ -40,8 +16,7 @@ export function LocalOnlyCard({
   state: Extract<ServerState, 'none' | 'setup-needed' | 'signed-out'>;
 }) {
   const { t } = useTranslation();
-  const store = useLocalStore();
-  const exporting = useAction();
+  const backup = useSaveBackup();
   const [signingIn, setSigningIn] = useState(false);
   const setupUrl = t('settings.help.docs.setupUrl');
 
@@ -63,14 +38,9 @@ export function LocalOnlyCard({
         <>
           <button
             type="button"
-            className={ACTION_ROW}
-            disabled={exporting.busy}
-            onClick={() =>
-              void exporting.run(async () => (await exportBackup(store)) === 'saved', {
-                success: 'settings.backup.exported',
-                failure: 'settings.backup.error.unknown',
-              })
-            }
+            className={SETTINGS_ACTION_ROW}
+            disabled={backup.busy}
+            onClick={() => void backup.save()}
           >
             <Download aria-hidden />
             <span className="flex-1">{t('settings.home.local.backUp')}</span>
@@ -89,7 +59,7 @@ export function LocalOnlyCard({
 
       {state === 'signed-out' && (
         <>
-          <button type="button" className={ACTION_ROW} onClick={() => setSigningIn(true)}>
+          <button type="button" className={SETTINGS_ACTION_ROW} onClick={() => setSigningIn(true)}>
             <LogIn aria-hidden />
             <span className="flex-1">{t('account.section.signIn')}</span>
           </button>

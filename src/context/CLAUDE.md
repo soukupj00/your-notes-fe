@@ -50,10 +50,12 @@ Both are plain TypeScript, tested against `src/test/fakeServer.ts`.
 - **Attachment bytes** move at the end of each run (`src/sync/attachments.ts`): thumbnails up first, then blobs, every missing thumbnail down.
   Full bytes come down on a tap (`download(id)`), or after every run while the `keepEverything` Preference is on.
   A blob the server refuses for its size is one toast and is never retried.
-- It exposes `{ active, status, lastSyncedAt, pending, syncNow, stop, download }`.
+- It exposes `{ active, status, lastSyncedAt, pending, syncNow, owes, stop, download }`.
   `pending` is the store's live count of what the server is owed, so it is right signed out too.
+  `owes()` asks the store the same question at one moment, for a step that must not act on a count a frame old.
   `stop()` waits for a run in flight, which is what makes erasing safe.
-- Sign-out (`components/account/SignOutButton.tsx`) is refused while `pending > 0`, offering Sync now and a Backup; otherwise it ends the Session, stops the loop and clears the store.
+- Sign-out (`components/account/SignOutButton.tsx`) is refused while `pending > 0`, offering Sync now and a Backup.
+  Otherwise it asks `owes()` once more, then ends the Session, stops the loop and erases the store (`useEraseDevice`).
 
 ```mermaid
 sequenceDiagram

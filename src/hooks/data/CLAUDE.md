@@ -12,6 +12,7 @@ The store itself is described in [`src/data/CLAUDE.md`](../../data/CLAUDE.md).
 | ---- | ------- |
 | `useNoteFeed(scope, search?)` | the feed: the Notes of one lifecycle state (and optionally one Tag), searched, sorted and ranked |
 | `useTags()` | every Tag, in Label order |
+| `useTag(id)` | one Tag, or undefined while it loads or once it is deleted |
 | `useTagNoteCounts()` | per Tag, how many of its Notes are not in the trash |
 | `useTagsForNote(noteId)` | one Note's Tags |
 | `useNoteAttachments(noteId)` | one Note's Attachments, by id |
@@ -21,9 +22,12 @@ The store itself is described in [`src/data/CLAUDE.md`](../../data/CLAUDE.md).
 
 | Hook | Does |
 | ---- | ---- |
-| `useNoteActions()` | create, update and purge, plus the lifecycle moves (pin, archive, trash, restore, empty trash) |
+| `useNoteActions()` | read one Note once (`getNote`), create, update and purge, plus the lifecycle moves (pin, archive, trash, restore, empty trash) |
 | `useTagActions()` | create, update, delete, merge, move and arrange, and link or unlink a Tag and a Note |
 | `useAttachmentActions()` | create, read, update, clone, and the two orphan sweeps |
+| `useBackup()` | export and import a Backup (`lib/`), bound to the store |
+| `useSaveBackup()` | "Save a Backup" as one user act: `busy`, and `save`, which toasts its outcome |
+| `useEraseDevice()` | empties the store, the last step of a sign-out |
 
 ## Behaviour worth knowing
 

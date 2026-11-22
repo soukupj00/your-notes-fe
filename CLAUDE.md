@@ -88,7 +88,10 @@ Components read and write through the hooks in `src/hooks/data/`:
 
 - `useNoteFeed` - the one feed query: lifecycle and tag scoping plus fuzzy ranked search.
 - `useNoteActions`, `useTagActions`, `useAttachmentActions` - the mutations.
-- `useTags`, `useTagsForNote`, `useNoteAttachments` - live reads.
+- `useTags`, `useTag`, `useTagsForNote`, `useNoteAttachments` - live reads.
+- `useBackup`, `useSaveBackup`, `useEraseDevice` - the whole-store acts: a Backup out or in, and erasing the Device at sign-out.
+
+Only these hooks, the providers in `src/context` and the composition points (`main.tsx`, `App.tsx`, `src/test`) call `useLocalStore()`.
 
 State that lives in the URL, not in a context:
 
@@ -215,7 +218,7 @@ The whole database exports to a `.zip`: a `manifest.json` plus one entry per Att
   The confirm dialog offers "save my current data first", checked by default.
 - Saving asks for the destination **before** the bytes are built (`requestSaveTarget`), because the file picker needs the click's user activation.
   On the Firefox and Safari fallback it reports `confirmed: false`, and the UI must not claim the file landed.
-- The three export buttons share `exportBackup(store, suffix)` (`lib/export-backup.ts`); a file reaches the browser through `downloadBlob` (`lib/download.ts`), which the Reminder Hand-off shares.
+- The three export buttons share `useSaveBackup()` (`hooks/data`), one act over `exportBackup(store, suffix)` (`lib/export-backup.ts`); a file reaches the browser through `downloadBlob` (`lib/download.ts`), which the Reminder Hand-off shares.
 - Manifest rows are validated loosely, so unknown future fields survive a round trip.
 - Preferences are not in a Backup; they are a Device fact.
 

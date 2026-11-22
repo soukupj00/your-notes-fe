@@ -1,5 +1,5 @@
 import { ArrowLeft, RefreshCw } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Editor, type EditorHandle } from '@/components/editor/editor.tsx';
 import { NoteEditorBar } from '@/components/notes/NoteEditorBar.tsx';
@@ -10,7 +10,6 @@ import { AppBar } from '@/components/ui/AppBar.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog.tsx';
 import { IconTooltip } from '@/components/ui/tooltip.tsx';
-import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { useIsMobile } from '@/hooks/use-mobile.tsx';
@@ -77,8 +76,7 @@ export function NoteEditorDialog({
   onNoteMissing,
 }: NoteEditorDialogProps) {
   const { t } = useTranslation();
-  const store = useLocalStore();
-  const { createNote, updateNote, purgeNote, pinNote, unpinNote } = useNoteActions();
+  const { getNote, createNote, updateNote, purgeNote, pinNote, unpinNote } = useNoteActions();
   const { collectOrphans } = useAttachmentActions();
   const lifecycle = useUndoableLifecycle();
   const isMobile = useIsMobile();
@@ -100,8 +98,6 @@ export function NoteEditorDialog({
   const [state, setState] = useState<NoteState>('active');
   const [reminder, setReminder] = useState<Reminder | undefined>(undefined);
   const [loaded, setLoaded] = useState(isNew);
-
-  const focusBody = checklistDraft;
 
   const editorRef = useRef<EditorHandle>(null);
   const headerInputRef = useRef<HTMLInputElement>(null);
@@ -128,7 +124,7 @@ export function NoteEditorDialog({
   useAsyncEffect(
     async (alive) => {
       if (isNew) return;
-      const n = await store.notes.get(noteId);
+      const n = await getNote(noteId);
       if (!alive()) return;
       if (n) {
         setHeader(n.header ?? '');
@@ -143,23 +139,20 @@ export function NoteEditorDialog({
       // Not a blank editor: typing into it would silently recreate the note under the dead id.
       onNoteMissing?.();
     },
-    [noteId, isNew, onNoteMissing, store]
+    [noteId, isNew, onNoteMissing, getNote]
   );
 
   const { handleReminderSet, handleReminderClear } = useNoteReminder(draft, content, setReminder);
 
   // Local state is set before the write so the tint and the pin answer on the tap.
   // A draft that was only coloured is still empty, so closing discards it.
-  const handleColorChange = useCallback(
-    async (next?: string) => {
-      setColor(next);
-      const id = await draft.ensureSaved();
-      await updateNote(id, { color: next });
-    },
-    [draft, updateNote]
-  );
+  async function handleColorChange(next?: string) {
+    setColor(next);
+    const id = await draft.ensureSaved();
+    await updateNote(id, { color: next });
+  }
 
-  const handlePinToggle = useCallback(async () => {
+  async function handlePinToggle() {
     const next = pinnedAt ? undefined : nowIso();
     setPinnedAt(next);
     const id = await draft.ensureSaved();
@@ -167,7 +160,7 @@ export function NoteEditorDialog({
     // updateNote, so the editor and the card write it the same way.
     if (next) await pinNote(id);
     else await unpinNote(id);
-  }, [pinnedAt, draft, pinNote, unpinNote]);
+  }
 
   // dirtyRef keeps the initial load from counting as an edit.
   useEffect(() => {
@@ -188,7 +181,7 @@ export function NoteEditorDialog({
   // writes nothing, which also keeps an empty one from being purged.
   const preview = state === 'trashed';
 
-  const closeDraft = useCallback(async () => {
+  async function closeDraft() {
     if (timerRef.current) clearTimeout(timerRef.current);
     // Before the load the fields are blank, not the Note's content, and an empty close purges.
     if (preview || !loaded) return;
@@ -198,12 +191,12 @@ export function NoteEditorDialog({
       keepEmpty: reminder !== undefined,
       edited: dirtyRef.current,
     });
-  }, [preview, loaded, draft, header, body, reminder]);
+  }
 
-  const handleClose = useCallback(async () => {
+  async function handleClose() {
     await closeDraft();
     onClose();
-  }, [closeDraft, onClose]);
+  }
 
   // The last save lands before the move, so its undo returns the Note as it was left. A Draft
   // that closed empty has no row to move, which makes this a plain close.
@@ -270,7 +263,7 @@ export function NoteEditorDialog({
             openerRef.current = document.activeElement;
           }
           event.preventDefault();
-          if (focusBody) return;
+          if (checklistDraft) return;
           if (!isNew && !keyboard) return;
           headerInputRef.current?.focus();
         }}
@@ -370,7 +363,7 @@ export function NoteEditorDialog({
           content={body}
           editable={!preview}
           getNoteId={draft.ensureSaved}
-          autoFocus={focusBody}
+          autoFocus={checklistDraft}
           intent={intent}
           stickyToolbarOnMobile
           footer={isMobile ? noteBar : undefined}

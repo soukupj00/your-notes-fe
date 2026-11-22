@@ -1,13 +1,11 @@
-import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.tsx';
 import { useAccount } from '@/context/AccountProvider.tsx';
-import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
 import type { Share } from '@/data/Remote.ts';
+import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { useAction } from '@/hooks/useAction.ts';
-import { useAsyncEffect } from '@/hooks/useAsyncEffect.ts';
 import { SettingsRow, SettingsSection } from './SettingsSection.tsx';
+import { useAccountList } from './useAccountList.ts';
 
 type Row = Share & { header: string | undefined };
 
@@ -18,30 +16,13 @@ type Row = Share & { header: string | undefined };
 export function SharesSection() {
   const { t } = useTranslation();
   const { session, service } = useAccount();
-  const store = useLocalStore();
-  const [rows, setRows] = useState<Row[]>([]);
-  const { busy, run } = useAction();
-
-  const load = useCallback(async () => {
-    if (!service) return;
-    const shares = await service.shares();
-    const notes = await Promise.all(shares.map((s) => store.notes.get(s.noteId)));
+  const { getNote } = useNoteActions();
+  const { items: rows, setItems: setRows } = useAccountList<Row>(async (account) => {
+    const shares = await account.shares();
+    const notes = await Promise.all(shares.map((s) => getNote(s.noteId)));
     return shares.map((s, i) => ({ ...s, header: notes[i]?.header?.trim() || undefined }));
-  }, [service, store]);
-
-  const accountId = session?.accountId;
-  useAsyncEffect(
-    async (alive) => {
-      if (!accountId) return;
-      try {
-        const found = await load();
-        if (alive() && found) setRows(found);
-      } catch {
-        if (alive()) toast.error(t('account.errors.unknown'));
-      }
-    },
-    [accountId, load, t]
-  );
+  });
+  const { busy, run } = useAction();
 
   if (!session || !service) return null;
 
