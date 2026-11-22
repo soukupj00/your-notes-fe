@@ -24,6 +24,7 @@ The store itself is described in [`src/data/CLAUDE.md`](../../data/CLAUDE.md).
 | `useNoteActions()` | create, update and purge, plus the lifecycle moves (pin, archive, trash, restore, empty trash) |
 | `useTagActions()` | create, update, delete, merge, move and arrange, and link or unlink a Tag and a Note |
 | `useAttachmentActions()` | create, read, update, clone, and the two orphan sweeps |
+| `useSaveBackup()` | "Save a Backup" as one user act: `busy`, and `save`, which toasts its outcome |
 
 ## Behaviour worth knowing
 

@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { accountErrorKey, Field } from '@/components/account/AccountForm.tsx';
+import { Field, useAccountSubmit } from '@/components/account/AccountForm.tsx';
 import { PairingLinkButton } from '@/components/account/PairingLinkButton.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import {
@@ -26,23 +26,16 @@ function ResetPasswordButton({ member }: { member: Member }) {
   const { service } = useAccount();
   const [open, setOpen] = useState(false);
   const [password, setPassword] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { busy, error, clearError, submit } = useAccountSubmit('password');
 
-  const submit = async (event: FormEvent) => {
+  const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (!service) return;
-    setBusy(true);
-    setError(null);
-    try {
+    void submit(async () => {
       await service.resetPassword(member.id, password);
       setOpen(false);
       toast.success(t('account.members.resetDone'));
-    } catch (caught) {
-      setError(accountErrorKey(caught, 'password'));
-    } finally {
-      setBusy(false);
-    }
+    });
   };
 
   return (
@@ -53,7 +46,7 @@ function ResetPasswordButton({ member }: { member: Member }) {
         className="min-h-11"
         onClick={() => {
           setPassword('');
-          setError(null);
+          clearError();
           setOpen(true);
         }}
       >
@@ -67,7 +60,7 @@ function ResetPasswordButton({ member }: { member: Member }) {
             </DialogTitle>
             <DialogDescription>{t('account.members.resetDescription')}</DialogDescription>
           </DialogHeader>
-          <form className="flex flex-col gap-4" onSubmit={(event) => void submit(event)}>
+          <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
             <Field
               label={t('account.members.newPassword')}
               hint={t('account.passwordHint')}

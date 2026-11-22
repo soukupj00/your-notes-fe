@@ -13,7 +13,7 @@ export type AccountValues = { username: string; password: string; deviceName: st
  * A 401 means a wrong password when one was typed, and a spent or expired link when a
  * Pairing Link was followed: the server never says why (backend ADR 0001).
  */
-export function accountErrorKey(error: unknown, via: 'password' | 'link'): string {
+function accountErrorKey(error: unknown, via: 'password' | 'link'): string {
   if (error instanceof ProblemError) {
     if (error.status === 401) {
       return via === 'password' ? 'account.errors.wrongCredentials' : 'account.errors.linkUsed';
@@ -23,6 +23,26 @@ export function accountErrorKey(error: unknown, via: 'password' | 'link'): strin
   }
   // `fetch` rejects with a TypeError when nothing answered at all.
   return error instanceof TypeError ? 'account.errors.unreachable' : 'account.errors.unknown';
+}
+
+/** A submit that shows its failure in the form: `busy` while `act` runs, `error` a locale key. */
+export function useAccountSubmit(via: 'password' | 'link') {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async (act: () => Promise<void>) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await act();
+    } catch (caught) {
+      setError(accountErrorKey(caught, via));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return { busy, error, clearError: () => setError(null), submit };
 }
 
 function useDefaultDeviceName(): string {
@@ -84,30 +104,21 @@ export function AccountForm({
     password: '',
     deviceName: defaultName,
   });
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { busy, error, submit } = useAccountSubmit(via);
   const errorId = useId();
 
   const set = (key: keyof AccountValues) => (event: React.ChangeEvent<HTMLInputElement>) =>
     setValues((v) => ({ ...v, [key]: event.target.value }));
 
-  const submit = async (event: FormEvent) => {
+  const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
-      await onSubmit({ ...values, username: values.username.trim() });
-    } catch (caught) {
-      setError(accountErrorKey(caught, via));
-    } finally {
-      setBusy(false);
-    }
+    void submit(() => onSubmit({ ...values, username: values.username.trim() }));
   };
 
   return (
     <form
       className="flex flex-col gap-4"
-      onSubmit={(event) => void submit(event)}
+      onSubmit={handleSubmit}
       aria-describedby={error ? errorId : undefined}
     >
       {credentials && (

@@ -13,8 +13,8 @@ import {
 import { useAccount } from '@/context/AccountProvider.tsx';
 import { useSync } from '@/context/SyncProvider.tsx';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
+import { useSaveBackup } from '@/hooks/data/useSaveBackup.ts';
 import { useAction } from '@/hooks/useAction.ts';
-import { exportBackup } from '@/lib/export-backup.ts';
 
 /**
  * Signing out erases this Device (04-sync.md "Account boundary"), so it is refused while
@@ -26,11 +26,14 @@ export function SignOutButton() {
   const { service, setSession } = useAccount();
   const sync = useSync();
   const [dialog, setDialog] = useState<'blocked' | 'confirm' | null>(null);
-  const { busy, run } = useAction();
+  const erasing = useAction();
+  const backup = useSaveBackup();
+  // One lock for both: clearing the store while a Backup still reads it would save a partial file.
+  const busy = erasing.busy || backup.busy;
 
   const erase = async () => {
     if (!service) return;
-    await run(
+    await erasing.run(
       async () => {
         // Asked again at the last moment: an edit may have landed since the dialog opened.
         const owed = await store.sync.dirty();
@@ -46,12 +49,6 @@ export function SignOutButton() {
       { success: 'account.section.signedOut' }
     );
   };
-
-  const saveBackup = () =>
-    run(async () => (await exportBackup(store)) === 'saved', {
-      success: 'settings.backup.exported',
-      failure: 'settings.backup.error.unknown',
-    });
 
   return (
     <>
@@ -94,7 +91,7 @@ export function SignOutButton() {
             <Button variant="outline" onClick={() => setDialog(null)}>
               {t('account.section.close')}
             </Button>
-            <Button variant="outline" disabled={busy} onClick={() => void saveBackup()}>
+            <Button variant="outline" disabled={busy} onClick={() => void backup.save()}>
               {t('account.section.saveBackup')}
             </Button>
             <Button

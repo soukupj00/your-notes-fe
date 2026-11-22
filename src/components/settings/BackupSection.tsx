@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog.tsx';
 import { LabeledCheckbox } from '@/components/ui/LabeledCheckbox.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import { useLocalStore } from '@/data/LocalStoreProvider.tsx';
+import { useSaveBackup } from '@/hooks/data/useSaveBackup.ts';
 import { useAction } from '@/hooks/useAction.ts';
 import { BackupError, importBackup, type ParsedBackup, parseBackupZip } from '@/lib/backup.ts';
 import { exportBackup } from '@/lib/export-backup.ts';
@@ -29,15 +30,9 @@ export function BackupSection() {
   const [pending, setPending] = useState<ParsedBackup | null>(null);
   const [backupFirst, setBackupFirst] = useState(true);
 
-  const exporting = useAction();
+  const exporting = useSaveBackup();
   const importing = useAction();
   const busy = exporting.busy || importing.busy;
-
-  const handleExport = () =>
-    exporting.run(async () => (await exportBackup(store)) === 'saved', {
-      success: 'settings.backup.exported',
-      failure: 'settings.backup.error.unknown',
-    });
 
   const handleFile = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -89,7 +84,7 @@ export function BackupSection() {
           size="sm"
           className="min-h-11 gap-1"
           disabled={busy}
-          onClick={() => void handleExport()}
+          onClick={() => void exporting.save()}
         >
           {exporting.busy ? <Spinner /> : <Download className="size-4" aria-hidden />}
           {exporting.busy ? t('settings.backup.exporting') : t('settings.backup.export.action')}
