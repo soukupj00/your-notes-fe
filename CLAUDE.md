@@ -307,5 +307,6 @@ Red → green → refactor, applied per layer ([ADR 0003](./docs/adr/0003-testin
 - **Browser support:** anything a feature depends on must be Baseline Widely available.
   A Newly available feature is used only as progressive enhancement that degrades harmlessly, with no fallback code or polyfill.
   The targets are Safari on iOS (the installed app), Chrome and Edge, and Firefox in a tab.
+  In use: the slash menu's `popover="manual"` (Newly available); without it the menu is clipped by the Note's dialog and its rows still work.
 - **Files stay under 500 lines.**
 - **Vendored and generated files are never edited:** `src/contract/index.ts` (refreshed by `pnpm contract:pull`, which copies it from the `ni-dip-be` repository checked out next to this one), `src/routeTree.gen.ts`.

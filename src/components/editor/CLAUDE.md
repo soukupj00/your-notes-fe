@@ -200,6 +200,9 @@ The commit goes to the selection captured when the popover opened, without focus
   For the same reason the Back arrow is a plain button, not a `DialogClose`, which would carry that `data-slot` and be hidden too.
 - Below `sm:` the sheet has no bottom padding: the format toolbar owns the bottom edge and its insets, so it sits on the keyboard.
 - Top and side padding are tighter than the dialog's default, with the safe-area insets added, so the Back arrow never sits under the status bar.
+- The slash menu mounts inside the dialog, never on `body`.
+  A Radix modal sets `pointer-events: none` on `body` and locks scrolling outside its own subtree, so a menu on `body` shows but takes no click, tap or wheel.
+  The dialog scrolls and is transformed, which would clip a fixed child, so the menu is a `popover="manual"` shown in the top layer.
 
 ## Testing extensions
 

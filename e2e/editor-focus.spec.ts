@@ -130,6 +130,55 @@ test.describe('keys', () => {
     await expect(heading).toBeHidden();
     await expect(page.locator('.tiptap')).toBeFocused();
   });
+
+  test('a press on a slash menu row runs it', async ({ page, isMobile }) => {
+    await startNote(page, 'Note');
+    const body = page.locator('.tiptap');
+    await body.click();
+    await page.keyboard.type('/');
+    const heading = page.getByRole('listitem').getByRole('button', { name: 'Heading 1' });
+
+    if (isMobile) await heading.tap();
+    else await heading.click();
+
+    await expect(heading).toBeHidden();
+    await expect(body.locator('h1')).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Title' })).toBeVisible();
+  });
+
+  test('the slash menu stays on screen at the bottom of a long note', async ({ page }) => {
+    await startNote(page, 'Note');
+    await page.locator('.tiptap').click();
+    for (let line = 0; line < 40; line++) await page.keyboard.type(`line ${line}\n`);
+    await page.keyboard.type('/');
+    const menu = page.getByRole('list').filter({ hasText: 'Heading 1' });
+
+    await expect(menu).toBeInViewport({ ratio: 1 });
+
+    await page.keyboard.type('h');
+
+    await expect(menu).toBeInViewport({ ratio: 1 });
+  });
+
+  test('the slash menu follows the caret when the note scrolls', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'the wheel is a mouse gesture');
+    await startNote(page, 'Note');
+    await page.locator('.tiptap').click();
+    for (let line = 0; line < 40; line++) await page.keyboard.type(`line ${line}\n`);
+    await page.keyboard.type('/');
+    const menu = page.getByRole('list').filter({ hasText: 'Heading 1' });
+    const caretLine = page.locator('.tiptap [data-decoration-id]');
+    const gap = async () =>
+      ((await caretLine.boundingBox())?.y ?? 0) - ((await menu.boundingBox())?.y ?? 0);
+    await expect(menu).toBeInViewport({ ratio: 1 });
+    const before = await gap();
+
+    await page.getByRole('textbox', { name: 'Title' }).hover();
+    await page.mouse.wheel(0, -120);
+
+    await expect(caretLine).not.toBeInViewport();
+    await expect.poll(gap).toBeCloseTo(before, 0);
+  });
 });
 
 // iPadOS 12 says "iPad ... like Mac OS X": a library reading it as no Mac would split search from the
