@@ -1,6 +1,6 @@
 # 0010 — shadcn `Sidebar` as the nav shell
 
-- Status: Accepted, amended 2026-10-21 (collapsed rail shows labels) and 2026-11-24 (the drawer's close button)
+- Status: Accepted, amended 2026-10-21 (collapsed rail shows labels) and 2026-11-24 (the drawer's close button and closing on navigation)
 - Date: 2026-07-29
 
 ## Context
@@ -111,10 +111,14 @@ The rail scrolls when the labels do not fit, with its scrollbar hidden so the ic
 The rejected option above still names the cost: an uncoloured label is a grey dot and two labels sharing a colour look the same, so the tooltip and the accessible name carry the difference.
 Collapsed, a row's name is screen-reader-only rather than removed, so every rail link keeps an accessible name.
 
-## Amended 2026-11-24: the drawer's close button
+## Amended 2026-11-24: the drawer's close button and closing
 
 Upstream's drawer hides the `Sheet`'s X (`[&>button]:hidden`), leaving a tap on the overlay, Escape or a destination as the ways out.
 A VoiceOver or TalkBack user can reach neither the overlay, which Radix hides from the accessibility tree, nor Escape, so the only way out was to pick a page.
 The X stays now, centred on the brand row and below the status bar.
 The `Sheet`'s X was a bare 16px icon, which the coarse-pointer 44px floor misses, so it takes `dialog.tsx`'s disc.
 Radix focuses it on every open, a tap included, so its ring waits for `focus-visible`.
+
+Every navigation now closes the drawer in one place, the mobile `Sidebar`, which subscribes to the router while the drawer is open; the per-link closers are gone.
+Before, only a tap on a link in the drawer closed it, so Back or the Android back gesture changed the page behind an open drawer.
+Back still navigates; a history entry that lets Back close only the drawer was considered and not taken.

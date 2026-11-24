@@ -1,4 +1,5 @@
 import { Slot } from '@radix-ui/react-slot';
+import { useRouter } from '@tanstack/react-router';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { PanelLeft } from 'lucide-react';
 import * as React from 'react';
@@ -151,6 +152,13 @@ const Sidebar = React.forwardRef<
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
     const { t } = useTranslation();
+    const router = useRouter();
+
+    // ADR 0010: any navigation closes the drawer, a link in it, Back and Forward alike.
+    React.useEffect(() => {
+      if (!openMobile) return;
+      return router.subscribe('onBeforeNavigate', () => setOpenMobile(false));
+    }, [openMobile, setOpenMobile, router]);
 
     if (collapsible === 'none') {
       return (

@@ -38,3 +38,34 @@ test('the drawer has its own close button, with a 44px hit box', async ({ page }
   await close.click();
   await expect(drawer(page)).toBeHidden();
 });
+
+test('Back and Forward with the drawer open close it on the page they land on', async ({
+  page,
+}) => {
+  await openDrawer(page);
+  await drawer(page).getByRole('link', { name: 'Archive' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Archive' })).toBeFocused();
+
+  await openDrawer(page);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(drawer(page)).toBeHidden();
+
+  await openDrawer(page);
+  await page.goForward();
+  await expect(page).toHaveURL(/\/archive$/);
+  await expect(drawer(page)).toBeHidden();
+});
+
+test('a tap on the page already shown closes the drawer and leaves the trigger alone', async ({
+  page,
+}) => {
+  await page.goto('/?q=milk');
+  const trigger = page.getByRole('button', { name: 'Toggle navigation' });
+  await openDrawer(page);
+  await drawer(page).getByRole('link', { name: 'Notes', exact: true }).click();
+
+  await expect(page).toHaveURL(/\/$/);
+  await expect(drawer(page)).toBeHidden();
+  await expect(trigger).not.toBeFocused();
+});

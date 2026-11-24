@@ -1,6 +1,6 @@
 # 0010 - shadcn `Sidebar` jako navigační kostra
 
-- Stav: přijato, doplněno 2026-10-21 (sbalená lišta ukazuje štítky) a 2026-11-24 (zavírací tlačítko zásuvky)
+- Stav: přijato, doplněno 2026-10-21 (sbalená lišta ukazuje štítky) a 2026-11-24 (zavírací tlačítko zásuvky a zavření při navigaci)
 - Datum: 2026-07-29
 
 ## Kontext
@@ -125,10 +125,14 @@ Když se štítky nevejdou, lišta se posouvá, se skrytým posuvníkem, aby iko
 Zamítnutá možnost výše cenu stále popisuje: štítek bez barvy je šedá tečka a dva štítky se stejnou barvou vypadají stejně, takže rozdíl nese tooltip a přístupné jméno.
 Ve sbaleném stavu je jméno řádku dostupné jen čtečce obrazovky místo odstranění, takže každý odkaz v liště má přístupné jméno.
 
-## Doplněno 2026-11-24: zavírací tlačítko zásuvky
+## Doplněno 2026-11-24: zavírací tlačítko zásuvky a zavírání
 
 Zásuvka z upstreamu skrývá křížek `Sheet` (`[&>button]:hidden`), takže z ní vede ven klepnutí na pozadí, Esc nebo volba cíle.
 Uživatel VoiceOveru nebo TalkBacku nedosáhne ani na pozadí, které Radix skrývá před stromem přístupnosti, ani na Esc, takže jedinou cestou ven byl výběr stránky.
 Křížek teď zůstává, vycentrovaný na řádek loga a pod stavovým řádkem.
 Křížek `Sheet` byla holá 16px ikona, kterou 44px minimum pro hrubý ukazatel mine, a tak dostává kotouč z `dialog.tsx`.
 Radix ho zaměří při každém otevření, i po klepnutí, a proto jeho prstenec čeká na `focus-visible`.
+
+Každá navigace teď zavírá zásuvku na jednom místě, v mobilním `Sidebar`, který po dobu otevření zásuvky odebírá události routeru; zavírání u jednotlivých odkazů odpadlo.
+Dřív ji zavíralo jen klepnutí na odkaz v ní, takže tlačítko Zpět nebo gesto zpět na Androidu změnilo stránku za otevřenou zásuvkou.
+Zpět dál naviguje; záznam v historii, díky němuž by Zpět zavřelo jen zásuvku, byl zvážen a nepřijat.
