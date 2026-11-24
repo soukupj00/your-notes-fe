@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LinkDialog } from './LinkDialog.tsx';
 
 vi.mock('react-i18next', () => ({
@@ -16,6 +16,10 @@ const LINK = 'https://notes.example/share/abc';
 
 beforeEach(() => {
   vi.clearAllMocks();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe('LinkDialog', () => {
@@ -46,6 +50,19 @@ describe('LinkDialog', () => {
 
     await user.click(screen.getByRole('button', { name: 'account.qr.done' }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('says so when the browser refuses the copy', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(
+      new DOMException('Write permission denied.', 'NotAllowedError')
+    );
+    render(<LinkDialog open onOpenChange={vi.fn()} title="Title" description="Why" link={LINK} />);
+
+    await user.click(screen.getByRole('button', { name: 'account.qr.copy' }));
+
+    expect(toast.error).toHaveBeenCalledWith('account.qr.copyFailed');
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it('waits visibly while the link is still being made, with Copy disabled', () => {

@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.tsx';
 import {
   Dialog,
@@ -11,6 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
+import { useAction } from '@/hooks/useAction.ts';
 
 /**
  * A link to hand on: the Share Link and both Pairing Links. `link` is null while the server is
@@ -34,11 +34,14 @@ export function LinkDialog({
   actions?: ReactNode;
 }) {
   const { t } = useTranslation();
+  const { run } = useAction();
 
-  const copy = async () => {
+  const copy = () => {
     if (!link) return;
-    await navigator.clipboard.writeText(link);
-    toast.success(t('account.qr.copied'));
+    void run(() => navigator.clipboard.writeText(link), {
+      success: 'account.qr.copied',
+      failure: 'account.qr.copyFailed',
+    });
   };
 
   return (
@@ -63,7 +66,7 @@ export function LinkDialog({
         )}
         <DialogFooter>
           {actions}
-          <Button variant="outline" disabled={!link} onClick={() => void copy()}>
+          <Button variant="outline" disabled={!link} onClick={copy}>
             {t('account.qr.copy')}
           </Button>
           <Button onClick={() => onOpenChange(false)}>{t('account.qr.done')}</Button>

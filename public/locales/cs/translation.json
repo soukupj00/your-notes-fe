@@ -754,6 +754,7 @@
       "orOpen": "Nebo otevřete tento odkaz na druhém zařízení:",
       "copy": "Kopírovat odkaz",
       "copied": "Odkaz zkopírován.",
+      "copyFailed": "Odkaz se nepodařilo zkopírovat. Označte ho a zkopírujte ručně.",
       "done": "Hotovo",
       "failed": "Odkaz se nepodařilo vytvořit. Zkuste to znovu.",
       "making": "Vytvářím odkaz…"

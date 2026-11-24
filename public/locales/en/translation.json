@@ -743,6 +743,7 @@
       "orOpen": "Or open this link on the other Device:",
       "copy": "Copy link",
       "copied": "Link copied.",
+      "copyFailed": "Could not copy. Select the link and copy it.",
       "done": "Done",
       "failed": "Could not make a link. Try again.",
       "making": "Making a link…"
