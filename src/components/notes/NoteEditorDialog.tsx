@@ -1,5 +1,6 @@
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Editor, type EditorHandle } from '@/components/editor/editor.tsx';
 import { NoteEditorBar } from '@/components/notes/NoteEditorBar.tsx';
@@ -61,6 +62,7 @@ type NoteEditorDialogProps = {
   /** What the Editor does as it opens, beyond showing the Note (CONTEXT.md "Intent"). */
   intent?: Intent;
   onClose: () => void;
+  returnFocus?: () => void;
 };
 
 /**
@@ -74,6 +76,7 @@ export function NoteEditorDialog({
   intent,
   onClose,
   onNoteMissing,
+  returnFocus,
 }: NoteEditorDialogProps) {
   const { t } = useTranslation();
   const { getNote, createNote, updateNote, purgeNote, pinNote, unpinNote } = useNoteActions();
@@ -101,9 +104,8 @@ export function NoteEditorDialog({
 
   const editorRef = useRef<EditorHandle>(null);
   const headerInputRef = useRef<HTMLInputElement>(null);
-  // Radix hands focus back only to a `DialogTrigger`, and this dialog opens from
-  // the URL with none, so it remembers what had focus (a Card's open button).
-  const openerRef = useRef<HTMLElement | null>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const dirtyRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -127,13 +129,20 @@ export function NoteEditorDialog({
       const n = await getNote(noteId);
       if (!alive()) return;
       if (n) {
-        setHeader(n.header ?? '');
-        setBody(n.body ?? '');
-        setColor(n.color);
-        setReminder(reminderOf(n));
-        setPinnedAt(n.pinnedAt);
-        setState(n.state);
-        setLoaded(true);
+        // Rendered first, so the heading is read with the Note's name and, in the trash, its line.
+        flushSync(() => {
+          setHeader(n.header ?? '');
+          setBody(n.body ?? '');
+          setColor(n.color);
+          setReminder(reminderOf(n));
+          setPinnedAt(n.pinnedAt);
+          setState(n.state);
+          setLoaded(true);
+        });
+        // Radix parks focus on the content itself while nothing else in it has focus.
+        const active = document.activeElement;
+        const content = contentRef.current;
+        if (active === content || !content?.contains(active)) titleRef.current?.focus();
         return;
       }
       // Not a blank editor: typing into it would silently recreate the note under the dead id.
@@ -176,6 +185,13 @@ export function NoteEditorDialog({
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [header, body, draft]);
+
+  const title = header.trim();
+  const dialogName = isNew
+    ? t('notes.newNoteTitle')
+    : title
+      ? t('notes.editNamedNoteTitle', { title })
+      : t('notes.editNoteTitle');
 
   // In the trash a Note is a read-only preview: it cannot be edited, so closing it
   // writes nothing, which also keeps an empty one from being purged.
@@ -252,24 +268,22 @@ export function NoteEditorDialog({
       }}
     >
       <DialogContent
+        ref={contentRef}
         // The dialog wears the note's colour, or picking one would visibly change nothing.
         // `bg-note-surface!`: the vendored `bg-background` would otherwise win on stylesheet order.
         {...noteColorAttrs(color)}
-        // Radix would focus the back arrow; the title gets it instead. Not for an existing note
-        // without a hardware keyboard (the software one would cover a note opened to read), and
-        // not for a checklist draft, whose editor autofocuses its first item.
+        // Radix would focus the back arrow; the title gets it instead. An existing note without a
+        // hardware keyboard waits for its load to focus the heading, so the software keyboard
+        // stays down; a checklist draft's editor autofocuses its first item.
         onOpenAutoFocus={(event) => {
-          if (document.activeElement instanceof HTMLElement) {
-            openerRef.current = document.activeElement;
-          }
           event.preventDefault();
           if (checklistDraft) return;
-          if (!isNew && !keyboard) return;
-          headerInputRef.current?.focus();
+          if (isNew || keyboard) headerInputRef.current?.focus();
         }}
+        // Radix hands focus back only to a `DialogTrigger`, and this dialog opens from the URL.
         onCloseAutoFocus={(event) => {
           event.preventDefault();
-          openerRef.current?.focus({ preventScroll: true });
+          returnFocus?.();
         }}
         // Clicking the dialog's own padding/gaps (not a child element) drops the
         // cursor into the body, so tapping the margins feels editable too.
@@ -284,8 +298,8 @@ export function NoteEditorDialog({
         // Both traps: src/components/editor/CLAUDE.md, "The editor sheet".
         className="top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-3 overflow-y-auto rounded-none border-0 bg-note-surface! pt-[calc(0.5rem+var(--safe-top))] pr-[calc(1rem+var(--safe-right))] pb-0 pl-[calc(1rem+var(--safe-left))] sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-card sm:border sm:border-note-border sm:p-6 [&_[data-slot=dialog-close]]:hidden sm:[&_[data-slot=dialog-close]]:flex"
       >
-        <DialogTitle className="sr-only">
-          {isNew ? t('notes.newNoteTitle') : t('notes.editNoteTitle')}
+        <DialogTitle ref={titleRef} tabIndex={-1} className="sr-only">
+          {dialogName}
         </DialogTitle>
 
         {/* One always-mounted live region for both breakpoints: a region only announces changes

@@ -47,6 +47,12 @@ function makeNote(overrides: Partial<Note> = {}): Note {
 
 const headerInput = () => screen.getByLabelText('notes.titlePlaceholder');
 
+/** The heading the dialog is named by. */
+const dialogTitle = () => {
+  const id = screen.getByRole('dialog').getAttribute('aria-labelledby');
+  return document.getElementById(id ?? '');
+};
+
 afterEach(clearStore);
 
 // The note's id is in the URL from the moment the editor opens (ADR 0014), so
@@ -134,6 +140,25 @@ describe('the mobile app bar', () => {
   });
 });
 
+// A screen reader hears which Note opened, not "Edit note" for every one.
+describe("the dialog's name", () => {
+  it.each([
+    ['its title', 'Groceries', 'notes.editNamedNoteTitle'],
+    ['the plain name without one', '  ', 'notes.editNoteTitle'],
+  ])('names an existing note by %s', async (_, header, name) => {
+    const note = makeNote({ header });
+    await testStore.notes.add(note);
+    render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
+    await screen.findByDisplayValue('Original body');
+    expect(screen.getByRole('dialog')).toHaveAccessibleName(name);
+  });
+
+  it('names a new note as new', () => {
+    render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
+    expect(screen.getByRole('dialog')).toHaveAccessibleName('notes.newNoteTitle');
+  });
+});
+
 describe('opening focus', () => {
   /** Answers the primary and the any-pointer query alike. */
   const setPointer = (fine: boolean) => {
@@ -161,13 +186,67 @@ describe('opening focus', () => {
     });
   });
 
-  it('focuses nothing for an existing note on a Coarse pointer, so the keyboard stays down', async () => {
+  // Not the title, so the software keyboard stays down; not nothing, which would leave focus on
+  // the Card behind the modal, hidden from a screen reader.
+  it("focuses the dialog's heading for an existing note on a Coarse pointer", async () => {
     setPointer(false);
     const note = makeNote({ header: 'Kept', body: '<p>text</p>' });
     await testStore.notes.add(note);
     render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
     await screen.findByDisplayValue('Kept');
-    expect(headerInput()).not.toHaveFocus();
+    expect(dialogTitle()).toHaveFocus();
+  });
+
+  // On a Fine pointer the title takes focus at the open and leaves when the load finds the Note
+  // in the trash.
+  it.each([
+    ['Coarse', false],
+    ['Fine', true],
+  ])("focuses the dialog's heading for a Trash preview on a %s pointer", async (_, fine) => {
+    setPointer(fine);
+    const note = makeNote({ state: 'trashed', trashedAt: new Date().toISOString() });
+    await testStore.notes.add(note);
+    render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
+    await screen.findByText('notes.trashedPreview');
+    await waitFor(() => expect(dialogTitle()).toHaveFocus());
+  });
+
+  // A screen reader reads the heading as focus lands on it; a later change is not announced.
+  it.each([
+    ['an existing note', 'active' as const, 'notes.editNamedNoteTitle', false],
+    ['a Trash preview', 'trashed' as const, 'notes.editNamedNoteTitle', true],
+  ])(
+    'focuses the heading of %s only once it reads the loaded note',
+    async (_, state, name, described) => {
+      setPointer(false);
+      const note = makeNote({
+        state,
+        trashedAt: state === 'trashed' ? new Date().toISOString() : undefined,
+      });
+      await testStore.notes.add(note);
+      const heard: { name: string; described: boolean }[] = [];
+      const onFocusIn = (event: FocusEvent) => {
+        if (event.target !== dialogTitle()) return;
+        heard.push({
+          name: dialogTitle()?.textContent ?? '',
+          described: screen.getByRole('dialog').hasAttribute('aria-describedby'),
+        });
+      };
+      document.addEventListener('focusin', onFocusIn);
+      render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
+
+      await waitFor(() => expect(dialogTitle()).toHaveFocus());
+      document.removeEventListener('focusin', onFocusIn);
+      expect(heard).toEqual([{ name, described }]);
+    }
+  );
+
+  it('describes a Trash preview by its trash line, read as it opens', async () => {
+    const note = makeNote({ state: 'trashed', trashedAt: new Date().toISOString() });
+    await testStore.notes.add(note);
+    render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
+    await screen.findByText('notes.trashedPreview');
+    expect(screen.getByRole('dialog')).toHaveAccessibleDescription('notes.trashedPreview');
   });
 
   it('still focuses the title of an existing note on a Fine pointer', async () => {
@@ -180,16 +259,18 @@ describe('opening focus', () => {
     });
   });
 
-  it('hands focus back to what had it when the editor opened', async () => {
-    setPointer(true);
-    const opener = document.body.appendChild(document.createElement('button'));
-    opener.focus();
+  it('hands focus back once it has closed', async () => {
+    const returnFocus = vi.fn();
     const { unmount } = render(
-      <NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />
+      <NoteEditorDialog
+        noteId={crypto.randomUUID()}
+        isNew
+        onClose={vi.fn()}
+        returnFocus={returnFocus}
+      />
     );
     await waitFor(() => expect(headerInput()).toHaveFocus());
     unmount();
-    await waitFor(() => expect(opener).toHaveFocus());
-    opener.remove();
+    await waitFor(() => expect(returnFocus).toHaveBeenCalledOnce());
   });
 });

@@ -7,6 +7,7 @@ import {
   FLOATING_BOTTOM_BAR_CLEARANCE,
 } from '@/components/notes/floatingBottomBar.ts';
 import { QuickCaptureBar } from '@/components/notes/QuickCaptureBar.tsx';
+import { useOpenerFocus } from '@/components/notes/useOpenerFocus.ts';
 import { TagFilterBar } from '@/components/tags/TagFilterBar.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
@@ -41,6 +42,7 @@ export function NotesView({
   const { t } = useTranslation();
   const headingRef = useFocusOnMount<HTMLHeadingElement>();
   const { openNoteId, opened, openNote, closeNote, dismissMissingNote } = useOpenNote();
+  const returnFocus = useOpenerFocus(Boolean(openNoteId));
   // A Start begins a draft, a Card opens its Note; either may carry an Intent.
   const start = (intent?: Intent) => openNote(null, intent);
   const newNoteKey = useShortcuts().bindings['new-note'];
@@ -96,9 +98,13 @@ export function NotesView({
             <Dialog open>
               <DialogContent
                 showCloseButton={false}
-                // Leaves focus where the open came from, so the editor that
-                // replaces this can record it and hand it back on close.
+                // The editor that replaces this decides the opening focus; a close before it
+                // arrives returns focus as the editor would.
                 onOpenAutoFocus={(event) => event.preventDefault()}
+                onCloseAutoFocus={(event) => {
+                  event.preventDefault();
+                  returnFocus();
+                }}
                 className="flex items-center justify-center"
               >
                 <DialogTitle className="sr-only">{t('notes.loadingEditor')}</DialogTitle>
@@ -121,6 +127,7 @@ export function NotesView({
             intent={opened?.intent}
             onClose={closeNote}
             onNoteMissing={dismissMissingNote}
+            returnFocus={returnFocus}
           />
         </Suspense>
       )}

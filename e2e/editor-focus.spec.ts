@@ -1,5 +1,16 @@
 import { expect, type Page, test } from '@playwright/test';
-import { closeNote, newTextNote, skipTour, startNote } from './helpers';
+import { card, closeNote, newTextNote, skipTour, startNote } from './helpers';
+
+/**
+ * Chrome's own tree, not Playwright's role queries, which apply aria-hidden themselves: Chrome
+ * ignores an aria-hidden set while focus is under it, for the rest of the page load.
+ */
+async function exposedToChrome(page: Page, name: string) {
+  const cdp = await page.context().newCDPSession(page);
+  const { nodes } = await cdp.send('Accessibility.getFullAXTree');
+  await cdp.detach();
+  return nodes.some((node) => !node.ignored && node.name?.value === name);
+}
 
 test.describe('opening focus', () => {
   test.beforeEach(async ({ page }) => {
@@ -12,7 +23,9 @@ test.describe('opening focus', () => {
     await expect(page.getByRole('textbox', { name: 'Title' })).toBeFocused();
   });
 
-  test('an existing note opens with nothing focused on a phone, and the title focused on a desktop', async ({
+  // On a phone no field, so the software keyboard stays down, yet focus inside the dialog: left on
+  // the Card, it sits under the modal's aria-hidden, where a screen reader never hears the dialog.
+  test('an existing note opens with its heading focused on a phone, and the title focused on a desktop', async ({
     page,
     isMobile,
   }) => {
@@ -21,11 +34,28 @@ test.describe('opening focus', () => {
 
     const title = page.getByRole('textbox', { name: 'Title' });
     await expect(title).toHaveValue('Kept');
+    await expect(page.getByRole('dialog', { name: 'Edit note: Kept', exact: true })).toBeVisible();
     if (isMobile) {
-      await expect(title).not.toBeFocused();
-      await expect(page.locator('.tiptap')).not.toBeFocused();
+      await expect(
+        page.getByRole('dialog').getByRole('heading', { name: 'Edit note: Kept', exact: true })
+      ).toBeFocused();
     } else {
       await expect(title).toBeFocused();
+    }
+  });
+
+  // After a reload the first open goes through the loading fallback, the second through the
+  // editor alone; either one leaving focus on the Card would leave the feed exposed from then on.
+  test('an opened note hides the feed from Chrome, cold and warm', async ({ page }) => {
+    await newTextNote(page, 'Kept');
+    await page.reload();
+
+    for (const open of ['cold', 'warm']) {
+      await expect.poll(() => exposedToChrome(page, 'Toggle navigation'), open).toBe(true);
+      await card(page, 'Kept').getByRole('heading', { name: 'Kept', exact: true }).click();
+      await expect(page.getByRole('textbox', { name: 'Title' })).toHaveValue('Kept');
+      await expect.poll(() => exposedToChrome(page, 'Toggle navigation'), open).toBe(false);
+      await closeNote(page);
     }
   });
 });

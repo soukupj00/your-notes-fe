@@ -90,7 +90,7 @@ The TipTap-based Editor is itself a small architecture ([ADR 0004](../adr/0004-c
 ## Cross-cutting concerns
 
 - **Theming**: OKLCH design tokens in `src/styles/globals.css`; a custom `ThemeProvider` toggles the `light`/`dark` class; colors are stored as palette *tokens*, never raw values, so the colour-blind Vision Mode can re-value them.
-- **Accessibility**: 44px touch-target rules, focus moved to the destination `<h1>` on navigation, `inert`-based focus trapping in the Tour, reduced-motion as a hard gate on every animation.
+- **Accessibility**: 44px touch-target rules, focus moved to the destination `<h1>` on navigation and into an opened Note, `inert`-based focus trapping in the Tour, reduced-motion as a hard gate on every animation.
 - **i18n**: i18next, `en`/`cs` with `en` fallback; a test gates the two bundles against key drift.
 - **Error handling**: a top-level `ErrorBoundary`; validation at boundaries (URL params via the router's `validateSearch`, backup import via `parseBackupZip`, and every server response via Zod).
 

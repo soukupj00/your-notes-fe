@@ -26,36 +26,43 @@ vi.mock('@/i18n', () => ({
 
 // A stand-in for the editor: the real one is TipTap and this suite is about the
 // URL, not the surface. It reports the props that decide what gets edited, and
-// offers the two callbacks the URL responds to.
-vi.mock('@/components/notes/NoteEditorDialog.tsx', () => ({
-  NoteEditorDialog: ({
-    noteId,
-    isNew,
-    intent,
-    onClose,
-    onNoteMissing,
-  }: {
-    noteId: string;
-    isNew?: boolean;
-    intent?: { kind: string };
-    onClose: () => void;
-    onNoteMissing?: () => void;
-  }) => (
-    <div
-      data-testid="editor"
-      data-note-id={noteId}
-      data-new={isNew ? 'true' : ''}
-      data-intent={intent?.kind ?? ''}
-    >
-      <button type="button" onClick={onClose}>
-        close-editor
-      </button>
-      <button type="button" onClick={() => onNoteMissing?.()}>
-        report-missing
-      </button>
-    </div>
-  ),
-}));
+// offers the two callbacks the URL responds to. Like the real one, it takes focus as it opens.
+vi.mock('@/components/notes/NoteEditorDialog.tsx', () => {
+  const focusOnMount = (node: HTMLElement | null) => node?.focus();
+  return {
+    NoteEditorDialog: ({
+      noteId,
+      isNew,
+      intent,
+      onClose,
+      onNoteMissing,
+    }: {
+      noteId: string;
+      isNew?: boolean;
+      intent?: { kind: string };
+      onClose: () => void;
+      onNoteMissing?: () => void;
+    }) => (
+      <div
+        role="dialog"
+        data-slot="dialog-content"
+        tabIndex={-1}
+        ref={focusOnMount}
+        data-testid="editor"
+        data-note-id={noteId}
+        data-new={isNew ? 'true' : ''}
+        data-intent={intent?.kind ?? ''}
+      >
+        <button type="button" onClick={onClose}>
+          close-editor
+        </button>
+        <button type="button" onClick={() => onNoteMissing?.()}>
+          report-missing
+        </button>
+      </div>
+    ),
+  };
+});
 
 function makeNote(overrides: Partial<Note> = {}): Note {
   const now = new Date().toISOString();
