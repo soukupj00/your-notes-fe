@@ -4,11 +4,11 @@ import { useTheme } from '@/context/themeProvider.tsx';
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = 'system' } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   return (
     <Sonner
-      theme={theme as ToasterProps['theme']}
+      theme={resolvedTheme}
       className="toaster group"
       // Sonner's unlayered stylesheet sets a system font stack that beats any Tailwind utility.
       style={{ fontFamily: 'var(--font-sans)' }}
