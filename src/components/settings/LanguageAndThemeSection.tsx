@@ -7,11 +7,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select.tsx';
-import { type Theme, useTheme } from '@/context/themeProvider.tsx';
+import { THEMES, useTheme } from '@/context/themeProvider.tsx';
 import { listLocales } from '@/lib/locales.ts';
 import { SegmentedSetting, SettingsRow, SettingsSection } from './SettingsSection.tsx';
-
-const THEMES: Theme[] = ['system', 'light', 'dark'];
 
 /**
  * Not a `PreferencesProvider` field: i18next's detector owns the language and keeps it in

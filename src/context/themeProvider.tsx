@@ -2,13 +2,16 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery.ts';
 
 export type Theme = 'dark' | 'light' | 'system';
+/** In the order Settings offers them. */
+export const THEMES: readonly Theme[] = ['system', 'light', 'dark'];
 export type ResolvedTheme = Exclude<Theme, 'system'>;
 
+// public/theme-boot.js restates both for the first frames; themeBoot.test.tsx keeps them in step.
 const STORAGE_KEY = 'vite-ui-theme';
+const DEFAULT_THEME: Theme = 'dark';
 
 type ThemeProviderProps = {
   children: React.ReactNode;
-  defaultTheme?: Theme;
 };
 
 type ThemeProviderState = {
@@ -45,10 +48,18 @@ function paintSystemChrome(root: HTMLElement) {
   meta.content = color;
 }
 
-export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(STORAGE_KEY) as Theme) || defaultTheme
-  );
+// This provider sits outside the error boundary, so a blocked storage throw here would blank the page.
+function readStoredTheme(): Theme {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return THEMES.find((theme) => theme === stored) ?? DEFAULT_THEME;
+  } catch {
+    return DEFAULT_THEME;
+  }
+}
+
+export function ThemeProvider({ children }: ThemeProviderProps) {
+  const [theme, setTheme] = useState<Theme>(readStoredTheme);
 
   const systemTheme: ResolvedTheme = useMediaQuery('(prefers-color-scheme: dark)')
     ? 'dark'

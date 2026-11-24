@@ -226,6 +226,7 @@ The whole database exports to a `.zip`: a `manifest.json` plus one entry per Att
 
 Colours are **OKLCH** custom properties in `globals.css`, the single token source for light and dark.
 `ThemeProvider` is a custom provider (not `next-themes`): it persists the choice under its own `localStorage` key and toggles the `light`/`dark` class on `<html>`.
+`public/theme-boot.js` sets that class before the first paint, so it must change together with the provider (`src/context/CLAUDE.md`).
 
 Preferences are read synchronously from `localStorage`, so the first render already has the user's choices.
 Those the stylesheet has to act on are stamped onto `<html>` by `DocumentPreferences`: the `cvd` class, `data-density`, `data-reduced-motion` and `data-sink-checked`.

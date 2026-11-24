@@ -98,7 +98,11 @@ The rules of the Tour are in the root `CLAUDE.md`, Onboarding.
 
 A custom theme provider (not `next-themes`).
 
-- The theme is `dark`, `light` or `system`, persisted under its own `localStorage` key; `App.tsx` defaults to dark.
+- The theme is `dark`, `light` or `system`, persisted under its own `localStorage` key; the default is dark.
+  Blocked storage or an unknown stored value reads as the default: the provider sits outside the error boundary, so a throw here would leave a blank page.
+- `public/theme-boot.js`, a blocking classic script in `index.html`'s head, sets the same class and the `color-scheme` meta before the first paint, so a dark theme never flashes the day canvas while the app loads.
+  It restates the storage key, the default and the validation; `themeBoot.test.tsx` runs it beside the provider for every stored value.
+  The meta is not kept up to date after that: once the stylesheet loads, each theme block's `color-scheme` rules.
 - `resolvedTheme` is what is on screen, `system` resolved against the OS and followed live; the header toggle and the toasts read it, because under `system` the stored choice does not say which scheme it is showing.
 - The header toggle flips what is on screen and stores `light` or `dark`, unless that is the OS's own scheme (`systemTheme`): then it stores `system`, so an OS day and night schedule keeps working after a press.
   Settings is where a scheme is pinned to match the OS.

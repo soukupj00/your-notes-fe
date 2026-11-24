@@ -22,6 +22,7 @@ describe('ThemeProvider', () => {
     mediaQuery.addListener = vi.fn();
     mediaQuery.removeListener = vi.fn();
     vi.spyOn(window, 'matchMedia').mockReturnValue(mediaQuery);
+    localStorage.setItem('vite-ui-theme', 'system');
 
     render(<ThemeProvider>content</ThemeProvider>);
     expect(document.documentElement).toHaveClass('light');
@@ -41,6 +42,7 @@ describe('ThemeProvider', () => {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     } as unknown as MediaQueryList);
+    localStorage.setItem('vite-ui-theme', 'system');
     function ResolvedTheme() {
       return useTheme().resolvedTheme;
     }
@@ -59,7 +61,7 @@ describe('ThemeProvider', () => {
   it('hands the resolved background to the platform as theme-color', () => {
     document.documentElement.style.setProperty('--background', 'oklch(17% 0.012 265)');
 
-    render(<ThemeProvider defaultTheme="dark">content</ThemeProvider>);
+    render(<ThemeProvider>content</ThemeProvider>);
 
     expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute(
       'content',
