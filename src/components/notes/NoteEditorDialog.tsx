@@ -61,6 +61,8 @@ type NoteEditorDialogProps = {
   /** What the Editor does as it opens, beyond showing the Note (CONTEXT.md "Intent"). */
   intent?: Intent;
   onClose: () => void;
+  /** Where focus goes once the dialog has closed. */
+  returnFocus?: () => void;
 };
 
 /**
@@ -74,6 +76,7 @@ export function NoteEditorDialog({
   intent,
   onClose,
   onNoteMissing,
+  returnFocus,
 }: NoteEditorDialogProps) {
   const { t } = useTranslation();
   const { getNote, createNote, updateNote, purgeNote, pinNote, unpinNote } = useNoteActions();
@@ -102,9 +105,6 @@ export function NoteEditorDialog({
   const editorRef = useRef<EditorHandle>(null);
   const headerInputRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
-  // Radix hands focus back only to a `DialogTrigger`, and this dialog opens from
-  // the URL with none, so it remembers what had focus (a Card's open button).
-  const openerRef = useRef<HTMLElement | null>(null);
 
   const dirtyRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -262,17 +262,15 @@ export function NoteEditorDialog({
         // hardware keyboard focuses the heading, so the software keyboard stays down; a checklist
         // draft's editor autofocuses its first item.
         onOpenAutoFocus={(event) => {
-          if (document.activeElement instanceof HTMLElement) {
-            openerRef.current = document.activeElement;
-          }
           event.preventDefault();
           if (checklistDraft) return;
           if (isNew || keyboard) headerInputRef.current?.focus();
           else titleRef.current?.focus();
         }}
+        // Radix hands focus back only to a `DialogTrigger`, and this dialog opens from the URL.
         onCloseAutoFocus={(event) => {
           event.preventDefault();
-          openerRef.current?.focus({ preventScroll: true });
+          returnFocus?.();
         }}
         // Clicking the dialog's own padding/gaps (not a child element) drops the
         // cursor into the body, so tapping the margins feels editable too.

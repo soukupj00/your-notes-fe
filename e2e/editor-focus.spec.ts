@@ -1,6 +1,17 @@
 import { expect, type Page, test } from '@playwright/test';
 import { closeNote, newTextNote, skipTour, startNote } from './helpers';
 
+/**
+ * Chrome's own tree, not Playwright's role queries, which apply aria-hidden themselves: Chrome
+ * ignores an aria-hidden set while focus is under it, for the rest of the page load.
+ */
+async function exposedToChrome(page: Page, name: string) {
+  const cdp = await page.context().newCDPSession(page);
+  const { nodes } = await cdp.send('Accessibility.getFullAXTree');
+  await cdp.detach();
+  return nodes.some((node) => !node.ignored && node.name?.value === name);
+}
+
 test.describe('opening focus', () => {
   test.beforeEach(async ({ page }) => {
     await skipTour(page);
@@ -29,6 +40,23 @@ test.describe('opening focus', () => {
       ).toBeFocused();
     } else {
       await expect(title).toBeFocused();
+    }
+  });
+
+  // After a reload the first open goes through the loading fallback, the second through the
+  // editor alone; either one leaving focus on the Card would leave the feed exposed from then on.
+  test('an opened note hides the feed from Chrome, cold and warm', async ({ page }) => {
+    await newTextNote(page, 'Kept');
+    await page.reload();
+
+    for (const open of ['cold', 'warm']) {
+      const kept = page.getByRole('heading', { name: 'Kept' });
+      await kept.waitFor();
+      expect(await exposedToChrome(page, 'Toggle navigation'), open).toBe(true);
+      await kept.click();
+      await expect(page.getByRole('textbox', { name: 'Title' })).toHaveValue('Kept');
+      await expect.poll(() => exposedToChrome(page, 'Toggle navigation'), open).toBe(false);
+      await closeNote(page);
     }
   });
 });

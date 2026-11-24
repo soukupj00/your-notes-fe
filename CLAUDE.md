@@ -184,6 +184,7 @@ The view that floats one also adds its bottom clearance (`FLOATING_BOTTOM_BAR_CL
 Every view renders an `<h1 tabIndex={-1}>` and focuses it on mount (`useFocusOnMount`), so a navigation moves focus to the destination heading.
 In the feed views that heading is `sr-only`.
 An opened Note focuses its title, or, without a hardware keyboard, its `sr-only` heading, so the software keyboard stays down and focus never stays behind the modal.
+While a Note's dialog hides the page, `NotesView` holds focus off the page until the dialog takes it, and hands it back to the opener on close (`useOpenerFocus`): Chrome ignores an `aria-hidden` set over focus for the rest of the page load.
 
 ### Tags (`src/components/tags/`, `src/pages/labels.tsx`)
 

@@ -210,16 +210,18 @@ describe('opening focus', () => {
     });
   });
 
-  it('hands focus back to what had it when the editor opened', async () => {
-    setPointer(true);
-    const opener = document.body.appendChild(document.createElement('button'));
-    opener.focus();
+  it('hands focus back once it has closed', async () => {
+    const returnFocus = vi.fn();
     const { unmount } = render(
-      <NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />
+      <NoteEditorDialog
+        noteId={crypto.randomUUID()}
+        isNew
+        onClose={vi.fn()}
+        returnFocus={returnFocus}
+      />
     );
     await waitFor(() => expect(headerInput()).toHaveFocus());
     unmount();
-    await waitFor(() => expect(opener).toHaveFocus());
-    opener.remove();
+    await waitFor(() => expect(returnFocus).toHaveBeenCalledOnce());
   });
 });
