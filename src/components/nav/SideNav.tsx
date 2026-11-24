@@ -8,7 +8,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from '@/components/ui/sidebar.tsx';
 import { useTags } from '@/hooks/data/useTags.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
@@ -17,12 +16,9 @@ import { noteColorAttrs } from '@/lib/note-colors.ts';
 // Collapsed, `px-2` leaves a 48px slot, where 44px hit boxes at the default pitch would overlap.
 const GROUP_PADDING = 'px-4 group-data-[collapsible=icon]:px-2';
 
-/** Closes the drawer itself on selection, so callers need not know a drawer exists. */
 export function SideNav() {
   const { t } = useTranslation();
   const tags = useTags();
-  const { setOpenMobile } = useSidebar();
-  const closeDrawer = () => setOpenMobile(false);
 
   const activeProps = {
     className: 'bg-sidebar-primary font-medium text-sidebar-primary-foreground',
@@ -39,7 +35,6 @@ export function SideNav() {
                 <SidebarMenuButton asChild tooltip={t(labelKey)}>
                   <Link
                     to={to}
-                    onClick={closeDrawer}
                     // `exact` so "/" is not highlighted on every nested route.
                     activeProps={activeProps}
                     activeOptions={{ exact: to === '/' }}
@@ -63,12 +58,7 @@ export function SideNav() {
                 <SidebarMenuItem key={tag.id}>
                   {/* Collapsed, the dot is all that shows, so the name rides in the rail's tooltip. */}
                   <SidebarMenuButton asChild tooltip={tag.name}>
-                    <Link
-                      to="/tag/$id"
-                      params={{ id: tag.id }}
-                      onClick={closeDrawer}
-                      activeProps={activeProps}
-                    >
+                    <Link to="/tag/$id" params={{ id: tag.id }} activeProps={activeProps}>
                       {/* The dot is a label's only identity in the rail, so it takes the identity's
                           strongest value over a 3:1 boundary rather than the pale card tint. */}
                       <span

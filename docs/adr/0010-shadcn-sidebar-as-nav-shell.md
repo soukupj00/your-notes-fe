@@ -1,6 +1,6 @@
 # 0010 — shadcn `Sidebar` as the nav shell
 
-- Status: Accepted, amended 2026-10-21 (collapsed rail shows labels)
+- Status: Accepted, amended 2026-10-21 (collapsed rail shows labels) and 2026-11-24 (the drawer's close button, closing on navigation, focus return)
 - Date: 2026-07-29
 
 ## Context
@@ -34,15 +34,16 @@ On mobile that gear opens quick settings with an "All settings" link to the full
 
 **Sidebar colour tokens alias the existing semantic tokens** rather than introducing a second palette.
 
-**Seven deliberate edits to the vendored `src/components/ui/sidebar.tsx`**, each carrying a one-line comment in situ:
+**Eight deliberate edits to the vendored files**, each carrying a short comment in situ:
 
 1. The `document.cookie` write in `setOpen` is deleted.
 2. The `Cmd/Ctrl+B` window keydown listener is deleted.
 3. `md:` becomes `sm:` (the desktop-branch visibility classes and the touch-target helpers).
-4. `onCloseAutoFocus` is prevented on the mobile `SheetContent`.
+4. The mobile `SheetContent` returns focus itself (`onOpenAutoFocus`, `onCloseAutoFocus`); amended 2026-11-24.
 5. The hardcoded English `SheetTitle` / `SheetDescription` go through `t()`.
 6. (In `use-mobile.tsx`, not `sidebar.tsx`) `MOBILE_BREAKPOINT` 768 → 640.
-7. The mobile drawer uses 70% of the viewport width and removes the inherited right border and focus outline.
+7. The mobile drawer uses 70% of the viewport width and removes the inherited right border and focus outline; it keeps the `Sheet`'s X, on its brand row.
+8. (In `sheet.tsx`) The X is `dialog.tsx`'s 32px disc with a 44px hit box, its ring on `focus-visible` only.
 
 Recording these is the main reason this ADR exists.
 A future reader finds a vendored file with deletions in it and will reasonably assume they were accidents, or "fix" them by re-running `shadcn add --overwrite`.
@@ -73,7 +74,7 @@ Radix restores focus to the trigger when a `Sheet` closes.
 Tapping a nav link both navigates (mounting a view that focuses its `<h1>`) and closes the drawer, so focus was pulled back to the hamburger immediately after landing.
 That contradicts the contract `useFocusOnMount` exists to enforce across `NotesView`, `labels`, and `settings`.
 Preventing restoration lets the destination heading win.
-The trade-off is that dismissing without navigating (Esc, backdrop) now leaves focus on `<body>` rather than the trigger; closing-by-navigation is the dominant path for a nav menu, and a conditional implementation was judged not worth its state-threading until there is evidence the Esc path matters.
+The trade-off was that dismissing without navigating (Esc, backdrop) left focus on `<body>`; amended 2026-11-24 below.
 
 **The drawer's accessible name was untranslated.**
 `SheetTitle` was the hardcoded English string "Sidebar" - the accessible name of the entire nav drawer, in an app that ships `en` and `cs`.
@@ -109,3 +110,19 @@ So the collapsed rail now shows every label as its colour dot, linking to `/tag/
 The rail scrolls when the labels do not fit, with its scrollbar hidden so the icons stay centred.
 The rejected option above still names the cost: an uncoloured label is a grey dot and two labels sharing a colour look the same, so the tooltip and the accessible name carry the difference.
 Collapsed, a row's name is screen-reader-only rather than removed, so every rail link keeps an accessible name.
+
+## Amended 2026-11-24: the drawer's close button, closing and focus
+
+Upstream's drawer hides the `Sheet`'s X (`[&>button]:hidden`), leaving a tap on the overlay, Escape or a destination as the ways out.
+A VoiceOver or TalkBack user can reach neither the overlay, which Radix hides from the accessibility tree, nor Escape, so the only way out was to pick a page.
+The X stays now, centred on the brand row and below the status bar.
+The `Sheet`'s X was a bare 16px icon, which the coarse-pointer 44px floor misses, so it takes `dialog.tsx`'s disc.
+Radix focuses it on every open, a tap included, so its ring waits for `focus-visible`.
+
+Every navigation now closes the drawer in one place, the mobile `Sidebar`, which subscribes to the router while the drawer is open; the per-link closers are gone.
+Before, only a tap on a link in the drawer closed it, so Back or the Android back gesture changed the page behind an open drawer.
+Back still navigates; a history entry that lets Back close only the drawer was considered and not taken.
+
+Dismissing without navigating (Esc, the overlay, the X) now hands focus back to what held it when the drawer opened, the trigger for a keyboard user.
+Radix returns focus only to a `Dialog.Trigger`, and the hamburger is a plain button outside the `Sheet`, so the drawer records the opener itself and restores it on close.
+A close that a navigation caused restores nothing, so the destination heading keeps the focus `useFocusOnMount` gives it.

@@ -8,7 +8,6 @@ import {
   SidebarHeader,
   SidebarInset,
   SidebarProvider,
-  useSidebar,
 } from '@/components/ui/sidebar.tsx';
 import { useSidebarOpen } from '@/hooks/useSidebarOpen.ts';
 
@@ -23,16 +22,13 @@ function SkipToContentLink({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Closes the drawer like every `SideNav` link, since nothing else closes it on navigation. */
 function BrandLink() {
   const { t } = useTranslation();
-  const { setOpenMobile } = useSidebar();
 
   return (
     <Link
       to="/"
       aria-label={t('navbar.logo')}
-      onClick={() => setOpenMobile(false)}
       className="flex h-10 w-full items-center justify-center gap-2 overflow-hidden rounded-control outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
     >
       <span
