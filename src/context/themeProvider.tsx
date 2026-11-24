@@ -15,12 +15,14 @@ type ThemeProviderState = {
   theme: Theme;
   /** What is on screen: `system` resolved against the OS. */
   resolvedTheme: ResolvedTheme;
+  systemTheme: ResolvedTheme;
   setTheme: (theme: Theme) => void;
 };
 
 const initialState: ThemeProviderState = {
   theme: 'system',
   resolvedTheme: 'light',
+  systemTheme: 'light',
   setTheme: () => null,
 };
 
@@ -63,6 +65,7 @@ export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProvid
   const value = {
     theme,
     resolvedTheme,
+    systemTheme,
     setTheme: (theme: Theme) => {
       localStorage.setItem(STORAGE_KEY, theme);
       setTheme(theme);

@@ -33,14 +33,22 @@ afterEach(() => {
 });
 
 describe('ThemeModeToggleButton', () => {
-  it('turns System on a dark OS light with one press', async () => {
-    osPrefersDark(true);
-    const button = renderToggle('system');
-    expect(button.querySelector('.lucide-moon')).toBeInTheDocument();
+  it.each<{ os: string; stored: string; shown: 'dark' | 'light'; next: string }>([
+    { os: 'dark', stored: 'system', shown: 'dark', next: 'light' },
+    { os: 'light', stored: 'system', shown: 'light', next: 'dark' },
+    { os: 'dark', stored: 'light', shown: 'light', next: 'system' },
+    { os: 'light', stored: 'dark', shown: 'dark', next: 'system' },
+  ])('flips $stored on a $os OS to $next', async ({ os, stored, shown, next }) => {
+    const flipped = shown === 'dark' ? 'light' : 'dark';
+    const icon = { dark: '.lucide-moon', light: '.lucide-sun' };
+    osPrefersDark(os === 'dark');
+    const button = renderToggle(stored);
+    expect(button.querySelector(icon[shown])).toBeInTheDocument();
 
     await userEvent.click(button);
 
-    expect(document.documentElement).toHaveClass('light');
-    expect(button.querySelector('.lucide-sun')).toBeInTheDocument();
+    expect(localStorage.getItem('vite-ui-theme')).toBe(next);
+    expect(document.documentElement).toHaveClass(flipped);
+    expect(button.querySelector(icon[flipped])).toBeInTheDocument();
   });
 });

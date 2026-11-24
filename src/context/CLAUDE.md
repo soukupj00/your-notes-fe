@@ -100,6 +100,8 @@ A custom theme provider (not `next-themes`).
 
 - The theme is `dark`, `light` or `system`, persisted under its own `localStorage` key; `App.tsx` defaults to dark.
 - `resolvedTheme` is what is on screen, `system` resolved against the OS and followed live; the header toggle and the toasts read it, because under `system` the stored choice does not say which scheme it is showing.
+- The header toggle flips what is on screen and stores `light` or `dark`, unless that is the OS's own scheme (`systemTheme`): then it stores `system`, so an OS day and night schedule keeps working after a press.
+  Settings is where a scheme is pinned to match the OS.
 - On change it toggles the `light` or `dark` class on `<html>`, then writes the resolved `--background` into `<meta name="theme-color">`, which colours Android's status bar and a browser tab's toolbar.
   It is written from JS because the app's theme is an explicit choice that may disagree with the OS, which is all a media-query `<meta>` can follow.
   It is always the app's frame, never a Note's tint: a tint would have to be unset on every path out of the editor.
