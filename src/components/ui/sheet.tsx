@@ -63,8 +63,10 @@ const SheetContent = React.forwardRef<
         className={cn(sheetVariants({ side }), className)}
         {...props}
       >
-        <SheetPrimitive.Close className="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-          <X className="h-4 w-4" />
+        {/* Vendored edit (ADR 0010): `dialog.tsx`'s X, for the 44px Touch Rule. Radix focuses
+            it on every open, a tap included, so the ring waits for `focus-visible`. */}
+        <SheetPrimitive.Close className="absolute top-2.5 right-2 flex size-8 items-center justify-center rounded-md text-muted-foreground ring-offset-background transition-colors before:absolute before:-inset-1.5 before:content-[''] hover:bg-muted hover:text-foreground focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none">
+          <X aria-hidden className="size-4" />
           <span className="sr-only">{t('dialog.close')}</span>
         </SheetPrimitive.Close>
         {children}

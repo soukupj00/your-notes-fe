@@ -172,10 +172,11 @@ const Sidebar = React.forwardRef<
         <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
           <SheetContent
             // ADR 0010: the overlay is the mobile boundary, so the drawer uses
-            // 70vw without the bright inherited border or browser focus seam.
+            // 70vw without the bright inherited border or browser focus seam. Its X stays:
+            // a screen reader reaches neither the overlay nor Escape.
             data-sidebar="sidebar"
             data-mobile="true"
-            className="w-(--sidebar-width) border-r-0 bg-sidebar p-0 text-sidebar-foreground outline-none [&>button]:hidden"
+            className="w-(--sidebar-width) border-r-0 bg-sidebar p-0 text-sidebar-foreground outline-none [&>button]:top-[calc(0.75rem+var(--safe-top))]"
             style={{ '--sidebar-width': SIDEBAR_WIDTH_MOBILE } as React.CSSProperties}
             side={side}
             // ADR 0010: no focus restore on close, or it yanks focus off the destination

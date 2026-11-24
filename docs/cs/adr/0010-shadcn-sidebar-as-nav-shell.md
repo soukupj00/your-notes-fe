@@ -1,6 +1,6 @@
 # 0010 - shadcn `Sidebar` jako navigační kostra
 
-- Stav: přijato, doplněno 2026-10-21 (sbalená lišta ukazuje štítky)
+- Stav: přijato, doplněno 2026-10-21 (sbalená lišta ukazuje štítky) a 2026-11-24 (zavírací tlačítko zásuvky)
 - Datum: 2026-07-29
 
 ## Kontext
@@ -34,7 +34,7 @@ Na mobilu toto kolečko otevírá rychlá nastavení s odkazem „Všechna nasta
 
 **Barevné tokeny postranního panelu jsou aliasy stávajících sémantických tokenů**, místo aby zaváděly druhou paletu.
 
-**Sedm záměrných úprav vendorovaného `src/components/ui/sidebar.tsx`**, každá s jednořádkovým komentářem přímo na místě:
+**Osm záměrných úprav vendorovaných souborů**, každá s krátkým komentářem přímo na místě:
 
 1. Zápis `document.cookie` v `setOpen` je smazán.
 2. Posluchač události keydown na window pro `Cmd/Ctrl+B` je smazán.
@@ -42,7 +42,8 @@ Na mobilu toto kolečko otevírá rychlá nastavení s odkazem „Všechna nasta
 4. Na mobilním `SheetContent` je potlačen `onCloseAutoFocus`.
 5. Natvrdo anglické `SheetTitle` / `SheetDescription` procházejí přes `t()`.
 6. (V `use-mobile.tsx`, ne v `sidebar.tsx`) `MOBILE_BREAKPOINT` 768 → 640.
-7. Mobilní zásuvka zabírá 70 % šířky viewportu a odstraňuje zděděný pravý okraj a obrys fokusu.
+7. Mobilní zásuvka zabírá 70 % šířky viewportu a odstraňuje zděděný pravý okraj a obrys fokusu; křížek `Sheet` si ponechává, v řádku loga.
+8. (V `sheet.tsx`) Křížek je 32px kotouč z `dialog.tsx` s 44px plochou pro dotyk a jeho prstenec se ukazuje jen při `focus-visible`.
 
 Zaznamenání těchto úprav je hlavní důvod, proč tento ADR existuje.
 Budoucí čtenář najde vendorovaný soubor, v němž jsou smazané části, a bude rozumně předpokládat, že jde o omyly, nebo je „opraví“ opětovným spuštěním `shadcn add --overwrite`.
@@ -123,3 +124,11 @@ Sbalená lišta proto teď ukazuje každý štítek jako jeho barevnou tečku, k
 Když se štítky nevejdou, lišta se posouvá, se skrytým posuvníkem, aby ikony zůstaly vystředěné.
 Zamítnutá možnost výše cenu stále popisuje: štítek bez barvy je šedá tečka a dva štítky se stejnou barvou vypadají stejně, takže rozdíl nese tooltip a přístupné jméno.
 Ve sbaleném stavu je jméno řádku dostupné jen čtečce obrazovky místo odstranění, takže každý odkaz v liště má přístupné jméno.
+
+## Doplněno 2026-11-24: zavírací tlačítko zásuvky
+
+Zásuvka z upstreamu skrývá křížek `Sheet` (`[&>button]:hidden`), takže z ní vede ven klepnutí na pozadí, Esc nebo volba cíle.
+Uživatel VoiceOveru nebo TalkBacku nedosáhne ani na pozadí, které Radix skrývá před stromem přístupnosti, ani na Esc, takže jedinou cestou ven byl výběr stránky.
+Křížek teď zůstává, vycentrovaný na řádek loga a pod stavovým řádkem.
+Křížek `Sheet` byla holá 16px ikona, kterou 44px minimum pro hrubý ukazatel mine, a tak dostává kotouč z `dialog.tsx`.
+Radix ho zaměří při každém otevření, i po klepnutí, a proto jeho prstenec čeká na `focus-visible`.
