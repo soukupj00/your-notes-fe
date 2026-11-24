@@ -140,6 +140,25 @@ describe('the mobile app bar', () => {
   });
 });
 
+// A screen reader hears which Note opened, not "Edit note" for every one.
+describe("the dialog's name", () => {
+  it.each([
+    ['its title', 'Groceries', 'notes.editNamedNoteTitle'],
+    ['the plain name without one', '  ', 'notes.editNoteTitle'],
+  ])('names an existing note by %s', async (_, header, name) => {
+    const note = makeNote({ header });
+    await testStore.notes.add(note);
+    render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
+    await screen.findByDisplayValue('Original body');
+    expect(screen.getByRole('dialog')).toHaveAccessibleName(name);
+  });
+
+  it('names a new note as new', () => {
+    render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
+    expect(screen.getByRole('dialog')).toHaveAccessibleName('notes.newNoteTitle');
+  });
+});
+
 describe('opening focus', () => {
   /** Answers the primary and the any-pointer query alike. */
   const setPointer = (fine: boolean) => {

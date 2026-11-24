@@ -34,9 +34,10 @@ test.describe('opening focus', () => {
 
     const title = page.getByRole('textbox', { name: 'Title' });
     await expect(title).toHaveValue('Kept');
+    await expect(page.getByRole('dialog', { name: 'Edit note: Kept', exact: true })).toBeVisible();
     if (isMobile) {
       await expect(
-        page.getByRole('dialog').getByRole('heading', { name: 'Edit note' })
+        page.getByRole('dialog').getByRole('heading', { name: 'Edit note: Kept', exact: true })
       ).toBeFocused();
     } else {
       await expect(title).toBeFocused();

@@ -180,6 +180,13 @@ export function NoteEditorDialog({
     };
   }, [header, body, draft]);
 
+  const title = header.trim();
+  const dialogName = isNew
+    ? t('notes.newNoteTitle')
+    : title
+      ? t('notes.editNamedNoteTitle', { title })
+      : t('notes.editNoteTitle');
+
   // In the trash a Note is a read-only preview: it cannot be edited, so closing it
   // writes nothing, which also keeps an empty one from being purged.
   const preview = state === 'trashed';
@@ -286,7 +293,7 @@ export function NoteEditorDialog({
         className="top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-3 overflow-y-auto rounded-none border-0 bg-note-surface! pt-[calc(0.5rem+var(--safe-top))] pr-[calc(1rem+var(--safe-right))] pb-0 pl-[calc(1rem+var(--safe-left))] sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-card sm:border sm:border-note-border sm:p-6 [&_[data-slot=dialog-close]]:hidden sm:[&_[data-slot=dialog-close]]:flex"
       >
         <DialogTitle ref={titleRef} tabIndex={-1} className="sr-only">
-          {isNew ? t('notes.newNoteTitle') : t('notes.editNoteTitle')}
+          {dialogName}
         </DialogTitle>
 
         {/* One always-mounted live region for both breakpoints: a region only announces changes
