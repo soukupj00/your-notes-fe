@@ -153,11 +153,17 @@ const Sidebar = React.forwardRef<
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
     const { t } = useTranslation();
     const router = useRouter();
+    const focusedBeforeOpen = React.useRef<Element | null>(null);
+    const closedByNavigation = React.useRef(false);
 
     // ADR 0010: any navigation closes the drawer, a link in it, Back and Forward alike.
     React.useEffect(() => {
       if (!openMobile) return;
-      return router.subscribe('onBeforeNavigate', () => setOpenMobile(false));
+      closedByNavigation.current = false;
+      return router.subscribe('onBeforeNavigate', () => {
+        closedByNavigation.current = true;
+        setOpenMobile(false);
+      });
     }, [openMobile, setOpenMobile, router]);
 
     if (collapsible === 'none') {
@@ -187,9 +193,16 @@ const Sidebar = React.forwardRef<
             className="w-(--sidebar-width) border-r-0 bg-sidebar p-0 text-sidebar-foreground outline-none [&>button]:top-[calc(0.75rem+var(--safe-top))]"
             style={{ '--sidebar-width': SIDEBAR_WIDTH_MOBILE } as React.CSSProperties}
             side={side}
-            // ADR 0010: no focus restore on close, or it yanks focus off the destination
-            // heading `useFocusOnMount` just moved it to.
-            onCloseAutoFocus={(event) => event.preventDefault()}
+            // ADR 0010: Radix returns focus only to a `Dialog.Trigger`, which the drawer lacks;
+            // after a navigation, the heading `useFocusOnMount` focuses wins.
+            onOpenAutoFocus={() => {
+              focusedBeforeOpen.current = document.activeElement;
+            }}
+            onCloseAutoFocus={(event) => {
+              event.preventDefault();
+              const opener = focusedBeforeOpen.current;
+              if (!closedByNavigation.current && opener instanceof HTMLElement) opener.focus();
+            }}
           >
             <SheetHeader className="sr-only">
               {/* ADR 0010: this is the accessible name of the whole nav drawer,

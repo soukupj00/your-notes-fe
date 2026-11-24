@@ -155,7 +155,7 @@ It writes nothing to the viewer's IndexedDB and never asks the server for a Sess
 The shell is the vendored shadcn `Sidebar` ([ADR 0010](./docs/adr/0010-shadcn-sidebar-as-nav-shell.md)): an icon-collapsible sidebar from `sm:` up, a left drawer below it.
 Until the user toggles it the sidebar follows the width, collapsed below 1024px (`useSidebarOpen`), so a tablet's Feed header keeps one row.
 `navItems.ts` is the single list of destinations, so the two cannot drift.
-The phone's drawer closes on any navigation, Back and Forward included (the mobile `Sidebar`).
+The phone's drawer closes on any navigation, Back and Forward included (the mobile `Sidebar`); closed without one, it hands focus back to its opener.
 Settings is not a sidebar destination; the topbar gear is its one entry point.
 A Settings subpage goes back up through the app bar's Back below `sm:`, and from `sm:` up, where that bar is gone, through the link above its title (`SettingsFrame`).
 

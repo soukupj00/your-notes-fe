@@ -1,6 +1,6 @@
 # 0010 - shadcn `Sidebar` jako navigační kostra
 
-- Stav: přijato, doplněno 2026-10-21 (sbalená lišta ukazuje štítky) a 2026-11-24 (zavírací tlačítko zásuvky a zavření při navigaci)
+- Stav: přijato, doplněno 2026-10-21 (sbalená lišta ukazuje štítky) a 2026-11-24 (zavírací tlačítko zásuvky, zavření při navigaci, návrat fokusu)
 - Datum: 2026-07-29
 
 ## Kontext
@@ -39,7 +39,7 @@ Na mobilu toto kolečko otevírá rychlá nastavení s odkazem „Všechna nasta
 1. Zápis `document.cookie` v `setOpen` je smazán.
 2. Posluchač události keydown na window pro `Cmd/Ctrl+B` je smazán.
 3. `md:` se mění na `sm:` (třídy viditelnosti desktopové větve a pomocné třídy pro dotykové cíle).
-4. Na mobilním `SheetContent` je potlačen `onCloseAutoFocus`.
+4. Mobilní `SheetContent` vrací fokus sám (`onOpenAutoFocus`, `onCloseAutoFocus`); doplněno 2026-11-24.
 5. Natvrdo anglické `SheetTitle` / `SheetDescription` procházejí přes `t()`.
 6. (V `use-mobile.tsx`, ne v `sidebar.tsx`) `MOBILE_BREAKPOINT` 768 → 640.
 7. Mobilní zásuvka zabírá 70 % šířky viewportu a odstraňuje zděděný pravý okraj a obrys fokusu; křížek `Sheet` si ponechává, v řádku loga.
@@ -74,7 +74,7 @@ Radix při zavření `Sheet` vrací fokus na spouštěcí prvek.
 Klepnutí na navigační odkaz zároveň naviguje (připojí pohled, který zaměří svůj `<h1>`) i zavře zásuvku, takže fokus byl hned po příchodu stažen zpět na hamburger.
 To odporuje kontraktu, který `useFocusOnMount` vynucuje napříč `NotesView`, `labels` a `settings`.
 Potlačení obnovení nechá vyhrát nadpis cíle.
-Cenou je, že zavření bez navigace (Esc, kliknutí na pozadí) teď nechá fokus na `<body>` místo na spouštěcím prvku; zavření navigací je u navigační nabídky převládající cesta a podmíněná implementace nebyla vyhodnocena jako hodná protahování stavu, dokud nebude důkaz, že na cestě přes Esc záleží.
+Cenou bylo, že zavření bez navigace (Esc, kliknutí na pozadí) nechalo fokus na `<body>`; doplněno 2026-11-24 níže.
 
 **Přístupný název zásuvky nebyl přeložený.**
 `SheetTitle` byl natvrdo anglický řetězec "Sidebar" - přístupný název celé navigační zásuvky v aplikaci, která se dodává v `en` a `cs`.
@@ -125,7 +125,7 @@ Když se štítky nevejdou, lišta se posouvá, se skrytým posuvníkem, aby iko
 Zamítnutá možnost výše cenu stále popisuje: štítek bez barvy je šedá tečka a dva štítky se stejnou barvou vypadají stejně, takže rozdíl nese tooltip a přístupné jméno.
 Ve sbaleném stavu je jméno řádku dostupné jen čtečce obrazovky místo odstranění, takže každý odkaz v liště má přístupné jméno.
 
-## Doplněno 2026-11-24: zavírací tlačítko zásuvky a zavírání
+## Doplněno 2026-11-24: zavírací tlačítko zásuvky, zavírání a fokus
 
 Zásuvka z upstreamu skrývá křížek `Sheet` (`[&>button]:hidden`), takže z ní vede ven klepnutí na pozadí, Esc nebo volba cíle.
 Uživatel VoiceOveru nebo TalkBacku nedosáhne ani na pozadí, které Radix skrývá před stromem přístupnosti, ani na Esc, takže jedinou cestou ven byl výběr stránky.
@@ -136,3 +136,7 @@ Radix ho zaměří při každém otevření, i po klepnutí, a proto jeho prsten
 Každá navigace teď zavírá zásuvku na jednom místě, v mobilním `Sidebar`, který po dobu otevření zásuvky odebírá události routeru; zavírání u jednotlivých odkazů odpadlo.
 Dřív ji zavíralo jen klepnutí na odkaz v ní, takže tlačítko Zpět nebo gesto zpět na Androidu změnilo stránku za otevřenou zásuvkou.
 Zpět dál naviguje; záznam v historii, díky němuž by Zpět zavřelo jen zásuvku, byl zvážen a nepřijat.
+
+Zavření bez navigace (Esc, pozadí, křížek) teď vrací fokus tam, kde byl při otevření zásuvky, u uživatele klávesnice na spouštěcí prvek.
+Radix vrací fokus jen na `Dialog.Trigger` a hamburger je obyčejné tlačítko mimo `Sheet`, takže si zásuvka otevírající prvek zapamatuje sama a při zavření ho obnoví.
+Zavření způsobené navigací nic neobnovuje, takže nadpis cíle si ponechá fokus, který mu dá `useFocusOnMount`.

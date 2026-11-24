@@ -37,6 +37,7 @@ test('the drawer has its own close button, with a 44px hit box', async ({ page }
 
   await close.click();
   await expect(drawer(page)).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Toggle navigation' })).toBeFocused();
 });
 
 test('Back and Forward with the drawer open close it on the page they land on', async ({
@@ -55,6 +56,23 @@ test('Back and Forward with the drawer open close it on the page they land on', 
   await page.goForward();
   await expect(page).toHaveURL(/\/archive$/);
   await expect(drawer(page)).toBeHidden();
+});
+
+test('closing without a navigation hands focus back to the trigger', async ({ page }) => {
+  const trigger = page.getByRole('button', { name: 'Toggle navigation' });
+
+  await openDrawer(page);
+  await page.keyboard.press('Escape');
+  await expect(drawer(page)).toBeHidden();
+  await expect(trigger).toBeFocused();
+
+  await openDrawer(page);
+  // The overlay, right of the 70vw drawer.
+  const viewport = page.viewportSize();
+  if (!viewport) throw new Error('no viewport');
+  await page.mouse.click(viewport.width - 10, viewport.height / 2);
+  await expect(drawer(page)).toBeHidden();
+  await expect(trigger).toBeFocused();
 });
 
 test('a tap on the page already shown closes the drawer and leaves the trigger alone', async ({
