@@ -7,9 +7,9 @@ import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
 
 export function ThemeModeToggleButton() {
   const { t } = useTranslation();
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
 
-  const isDark = theme === 'dark';
+  const isDark = resolvedTheme === 'dark';
 
   const handleToggle = () => {
     setTheme(isDark ? 'light' : 'dark');
