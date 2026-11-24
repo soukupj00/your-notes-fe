@@ -99,6 +99,7 @@ The rules of the Tour are in the root `CLAUDE.md`, Onboarding.
 A custom theme provider (not `next-themes`).
 
 - The theme is `dark`, `light` or `system`, persisted under its own `localStorage` key; `App.tsx` defaults to dark.
+  Blocked storage or an unknown stored value reads as the default: the provider sits outside the error boundary, so a throw here would leave a blank page.
 - `resolvedTheme` is what is on screen, `system` resolved against the OS and followed live; the header toggle and the toasts read it, because under `system` the stored choice does not say which scheme it is showing.
 - The header toggle flips what is on screen and stores `light` or `dark`, unless that is the OS's own scheme (`systemTheme`): then it stores `system`, so an OS day and night schedule keeps working after a press.
   Settings is where a scheme is pinned to match the OS.

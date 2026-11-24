@@ -11,6 +11,26 @@ afterEach(() => {
 });
 
 describe('ThemeProvider', () => {
+  it.each([
+    {
+      reason: 'storage is blocked',
+      arrange: () =>
+        vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+          throw new DOMException('The operation is insecure.', 'SecurityError');
+        }),
+    },
+    {
+      reason: 'the stored theme is unknown',
+      arrange: () => localStorage.setItem('vite-ui-theme', 'blue'),
+    },
+  ])('falls back to the default theme when $reason', ({ arrange }) => {
+    arrange();
+
+    render(<ThemeProvider defaultTheme="dark">content</ThemeProvider>);
+
+    expect(document.documentElement.className).toBe('dark');
+  });
+
   it('updates the active theme when the system color scheme changes', () => {
     let prefersDark = false;
     const mediaQuery = new EventTarget() as MediaQueryList;

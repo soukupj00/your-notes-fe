@@ -45,10 +45,20 @@ function paintSystemChrome(root: HTMLElement) {
   meta.content = color;
 }
 
+const THEMES: readonly string[] = ['dark', 'light', 'system'] satisfies Theme[];
+
+// This provider sits outside the error boundary, so a blocked storage throw here would blank the page.
+function readStoredTheme(fallback: Theme): Theme {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored !== null && THEMES.includes(stored) ? (stored as Theme) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(STORAGE_KEY) as Theme) || defaultTheme
-  );
+  const [theme, setTheme] = useState<Theme>(() => readStoredTheme(defaultTheme));
 
   const systemTheme: ResolvedTheme = useMediaQuery('(prefers-color-scheme: dark)')
     ? 'dark'
