@@ -1,5 +1,15 @@
 import { expect, type Page } from '@playwright/test';
 
+/** A 1x1 PNG, for a picker that wants a picture. */
+export const PICTURE = {
+  name: 'dot.png',
+  mimeType: 'image/png',
+  buffer: Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+    'base64'
+  ),
+};
+
 /**
  * A fresh context is offered the Welcome and, in Settings, the Tour, both of which make the app
  * `inert`, so both offers are recorded as made in the Preferences schema's own shape. A string, not

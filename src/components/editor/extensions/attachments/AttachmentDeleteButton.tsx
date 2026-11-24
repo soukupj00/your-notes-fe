@@ -26,7 +26,7 @@ export function AttachmentDeleteButton({
       cancelLabel={t('attachments.confirmDelete.cancel')}
       triggerClassName={
         overlay
-          ? 'size-9 bg-destructive text-white shadow-sm hover:bg-destructive/90 hover:text-white'
+          ? 'size-9 bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:text-destructive-foreground'
           : undefined
       }
       iconClassName={overlay ? 'size-5' : undefined}

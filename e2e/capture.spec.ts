@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { closeNote, skipTour, startNote } from './helpers';
+import { closeNote, PICTURE, skipTour, startNote } from './helpers';
 
 test.describe('capture starts', () => {
   test.beforeEach(async ({ page }) => {
@@ -14,14 +14,7 @@ test.describe('capture starts', () => {
     await startNote(page, 'Image');
     const picker = await chooser;
     expect(picker.isMultiple()).toBe(true);
-    await picker.setFiles({
-      name: 'dot.png',
-      mimeType: 'image/png',
-      buffer: Buffer.from(
-        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-        'base64'
-      ),
-    });
+    await picker.setFiles(PICTURE);
 
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByRole('dialog').locator('img')).toHaveCount(1);
