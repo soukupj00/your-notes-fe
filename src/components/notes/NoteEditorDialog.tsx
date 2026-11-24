@@ -1,5 +1,6 @@
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Editor, type EditorHandle } from '@/components/editor/editor.tsx';
 import { NoteEditorBar } from '@/components/notes/NoteEditorBar.tsx';
@@ -61,7 +62,6 @@ type NoteEditorDialogProps = {
   /** What the Editor does as it opens, beyond showing the Note (CONTEXT.md "Intent"). */
   intent?: Intent;
   onClose: () => void;
-  /** Where focus goes once the dialog has closed. */
   returnFocus?: () => void;
 };
 
@@ -105,6 +105,7 @@ export function NoteEditorDialog({
   const editorRef = useRef<EditorHandle>(null);
   const headerInputRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const dirtyRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -128,15 +129,20 @@ export function NoteEditorDialog({
       const n = await getNote(noteId);
       if (!alive()) return;
       if (n) {
-        setHeader(n.header ?? '');
-        setBody(n.body ?? '');
-        setColor(n.color);
-        setReminder(reminderOf(n));
-        setPinnedAt(n.pinnedAt);
-        setState(n.state);
-        setLoaded(true);
-        // A preview unmounts the title field, which may hold the opening focus.
-        if (n.state === 'trashed') titleRef.current?.focus();
+        // Rendered first, so the heading is read with the Note's name and, in the trash, its line.
+        flushSync(() => {
+          setHeader(n.header ?? '');
+          setBody(n.body ?? '');
+          setColor(n.color);
+          setReminder(reminderOf(n));
+          setPinnedAt(n.pinnedAt);
+          setState(n.state);
+          setLoaded(true);
+        });
+        // Radix parks focus on the content itself while nothing else in it has focus.
+        const active = document.activeElement;
+        const content = contentRef.current;
+        if (active === content || !content?.contains(active)) titleRef.current?.focus();
         return;
       }
       // Not a blank editor: typing into it would silently recreate the note under the dead id.
@@ -262,17 +268,17 @@ export function NoteEditorDialog({
       }}
     >
       <DialogContent
+        ref={contentRef}
         // The dialog wears the note's colour, or picking one would visibly change nothing.
         // `bg-note-surface!`: the vendored `bg-background` would otherwise win on stylesheet order.
         {...noteColorAttrs(color)}
         // Radix would focus the back arrow; the title gets it instead. An existing note without a
-        // hardware keyboard focuses the heading, so the software keyboard stays down; a checklist
-        // draft's editor autofocuses its first item.
+        // hardware keyboard waits for its load to focus the heading, so the software keyboard
+        // stays down; a checklist draft's editor autofocuses its first item.
         onOpenAutoFocus={(event) => {
           event.preventDefault();
           if (checklistDraft) return;
           if (isNew || keyboard) headerInputRef.current?.focus();
-          else titleRef.current?.focus();
         }}
         // Radix hands focus back only to a `DialogTrigger`, and this dialog opens from the URL.
         onCloseAutoFocus={(event) => {

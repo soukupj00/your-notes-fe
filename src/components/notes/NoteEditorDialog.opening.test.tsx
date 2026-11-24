@@ -47,7 +47,7 @@ function makeNote(overrides: Partial<Note> = {}): Note {
 
 const headerInput = () => screen.getByLabelText('notes.titlePlaceholder');
 
-/** The heading the dialog is named by, `sr-only` above the title field. */
+/** The heading the dialog is named by. */
 const dialogTitle = () => {
   const id = screen.getByRole('dialog').getAttribute('aria-labelledby');
   return document.getElementById(id ?? '');
@@ -210,6 +210,36 @@ describe('opening focus', () => {
     await screen.findByText('notes.trashedPreview');
     await waitFor(() => expect(dialogTitle()).toHaveFocus());
   });
+
+  // A screen reader reads the heading as focus lands on it; a later change is not announced.
+  it.each([
+    ['an existing note', 'active' as const, 'notes.editNamedNoteTitle', false],
+    ['a Trash preview', 'trashed' as const, 'notes.editNamedNoteTitle', true],
+  ])(
+    'focuses the heading of %s only once it reads the loaded note',
+    async (_, state, name, described) => {
+      setPointer(false);
+      const note = makeNote({
+        state,
+        trashedAt: state === 'trashed' ? new Date().toISOString() : undefined,
+      });
+      await testStore.notes.add(note);
+      const heard: { name: string; described: boolean }[] = [];
+      const onFocusIn = (event: FocusEvent) => {
+        if (event.target !== dialogTitle()) return;
+        heard.push({
+          name: dialogTitle()?.textContent ?? '',
+          described: screen.getByRole('dialog').hasAttribute('aria-describedby'),
+        });
+      };
+      document.addEventListener('focusin', onFocusIn);
+      render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
+
+      await waitFor(() => expect(dialogTitle()).toHaveFocus());
+      document.removeEventListener('focusin', onFocusIn);
+      expect(heard).toEqual([{ name, described }]);
+    }
+  );
 
   it('describes a Trash preview by its trash line, read as it opens', async () => {
     const note = makeNote({ state: 'trashed', trashedAt: new Date().toISOString() });

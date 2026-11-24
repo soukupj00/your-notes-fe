@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { closeNote, newTextNote, skipTour, startNote } from './helpers';
+import { card, closeNote, newTextNote, skipTour, startNote } from './helpers';
 
 /**
  * Chrome's own tree, not Playwright's role queries, which apply aria-hidden themselves: Chrome
@@ -51,10 +51,8 @@ test.describe('opening focus', () => {
     await page.reload();
 
     for (const open of ['cold', 'warm']) {
-      const kept = page.getByRole('heading', { name: 'Kept' });
-      await kept.waitFor();
-      expect(await exposedToChrome(page, 'Toggle navigation'), open).toBe(true);
-      await kept.click();
+      await expect.poll(() => exposedToChrome(page, 'Toggle navigation'), open).toBe(true);
+      await card(page, 'Kept').getByRole('heading', { name: 'Kept', exact: true }).click();
       await expect(page.getByRole('textbox', { name: 'Title' })).toHaveValue('Kept');
       await expect.poll(() => exposedToChrome(page, 'Toggle navigation'), open).toBe(false);
       await closeNote(page);

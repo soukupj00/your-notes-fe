@@ -7,8 +7,10 @@ import { useCallback, useLayoutEffect, useRef } from 'react';
  */
 export function useOpenerFocus(open: boolean) {
   const openerRef = useRef<HTMLElement | null>(null);
+  const openRef = useRef(open);
 
   useLayoutEffect(() => {
+    openRef.current = open;
     if (!open) return;
     openerRef.current = null;
     if (inNoteDialog(document.activeElement)) return;
@@ -27,7 +29,10 @@ export function useOpenerFocus(open: boolean) {
     return () => document.removeEventListener('focusin', onFocusIn);
   }, [open]);
 
-  return useCallback(() => openerRef.current?.focus({ preventScroll: true }), []);
+  // The loading fallback also "closes" as the editor replaces it, with the Note still open.
+  return useCallback(() => {
+    if (!openRef.current) openerRef.current?.focus({ preventScroll: true });
+  }, []);
 }
 
 /** Not `role=dialog`: the dial's menu is one, and it holds focus as the Note opens. */

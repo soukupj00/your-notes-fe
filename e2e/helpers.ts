@@ -155,6 +155,8 @@ export async function closeNote(page: Page) {
   else await page.getByRole('button', { name: 'Close' }).click();
   // Closing pops history, which lands later: a `goto` or `reload` sent before then is aborted.
   await expect(page).not.toHaveURL(/[?&]note=/);
+  // Until its exit fade ends, the dialog's heading names the Note and the feed stays hidden.
+  await expect(page.getByRole('dialog')).toBeHidden();
 }
 
 /** A Card on the wall, found by its title. */

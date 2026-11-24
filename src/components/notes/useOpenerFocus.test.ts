@@ -25,6 +25,26 @@ describe('useOpenerFocus', () => {
     expect(card).toHaveFocus();
   });
 
+  // The loading fallback hands focus back as the editor replaces it, with the Note still open.
+  it('hands focus back only once the Note has closed', () => {
+    const card = opener();
+    card.focus();
+    const { result, rerender } = renderHook(({ open }) => useOpenerFocus(open), {
+      initialProps: { open: true },
+    });
+    const dialog = document.body.appendChild(document.createElement('div'));
+    dialog.dataset.slot = 'dialog-content';
+    const title = dialog.appendChild(document.createElement('input'));
+    title.focus();
+
+    result.current();
+    expect(title).toHaveFocus();
+
+    rerender({ open: false });
+    result.current();
+    expect(card).toHaveFocus();
+  });
+
   // A menu that opened the Note hands focus back to its trigger a task after it closes.
   it('holds focus off the page until the dialog takes it, and returns it to the trigger', () => {
     const { result, rerender } = renderHook(({ open }) => useOpenerFocus(open), {

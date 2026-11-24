@@ -98,8 +98,13 @@ export function NotesView({
             <Dialog open>
               <DialogContent
                 showCloseButton={false}
-                // The editor that replaces this decides the opening focus.
+                // The editor that replaces this decides the opening focus; a close before it
+                // arrives returns focus as the editor would.
                 onOpenAutoFocus={(event) => event.preventDefault()}
+                onCloseAutoFocus={(event) => {
+                  event.preventDefault();
+                  returnFocus();
+                }}
                 className="flex items-center justify-center"
               >
                 <DialogTitle className="sr-only">{t('notes.loadingEditor')}</DialogTitle>
