@@ -47,6 +47,12 @@ function makeNote(overrides: Partial<Note> = {}): Note {
 
 const headerInput = () => screen.getByLabelText('notes.titlePlaceholder');
 
+/** The heading the dialog is named by, `sr-only` above the title field. */
+const dialogTitle = () => {
+  const id = screen.getByRole('dialog').getAttribute('aria-labelledby');
+  return document.getElementById(id ?? '');
+};
+
 afterEach(clearStore);
 
 // The note's id is in the URL from the moment the editor opens (ADR 0014), so
@@ -161,13 +167,37 @@ describe('opening focus', () => {
     });
   });
 
-  it('focuses nothing for an existing note on a Coarse pointer, so the keyboard stays down', async () => {
+  // Not the title, so the software keyboard stays down; not nothing, which would leave focus on
+  // the Card behind the modal, hidden from a screen reader.
+  it("focuses the dialog's heading for an existing note on a Coarse pointer", async () => {
     setPointer(false);
     const note = makeNote({ header: 'Kept', body: '<p>text</p>' });
     await testStore.notes.add(note);
     render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
     await screen.findByDisplayValue('Kept');
-    expect(headerInput()).not.toHaveFocus();
+    expect(dialogTitle()).toHaveFocus();
+  });
+
+  // On a Fine pointer the title takes focus at the open and leaves when the load finds the Note
+  // in the trash.
+  it.each([
+    ['Coarse', false],
+    ['Fine', true],
+  ])("focuses the dialog's heading for a Trash preview on a %s pointer", async (_, fine) => {
+    setPointer(fine);
+    const note = makeNote({ state: 'trashed', trashedAt: new Date().toISOString() });
+    await testStore.notes.add(note);
+    render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
+    await screen.findByText('notes.trashedPreview');
+    await waitFor(() => expect(dialogTitle()).toHaveFocus());
+  });
+
+  it('describes a Trash preview by its trash line, read as it opens', async () => {
+    const note = makeNote({ state: 'trashed', trashedAt: new Date().toISOString() });
+    await testStore.notes.add(note);
+    render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
+    await screen.findByText('notes.trashedPreview');
+    expect(screen.getByRole('dialog')).toHaveAccessibleDescription('notes.trashedPreview');
   });
 
   it('still focuses the title of an existing note on a Fine pointer', async () => {

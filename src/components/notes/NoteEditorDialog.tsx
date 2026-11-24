@@ -101,6 +101,7 @@ export function NoteEditorDialog({
 
   const editorRef = useRef<EditorHandle>(null);
   const headerInputRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
   // Radix hands focus back only to a `DialogTrigger`, and this dialog opens from
   // the URL with none, so it remembers what had focus (a Card's open button).
   const openerRef = useRef<HTMLElement | null>(null);
@@ -134,6 +135,8 @@ export function NoteEditorDialog({
         setPinnedAt(n.pinnedAt);
         setState(n.state);
         setLoaded(true);
+        // A preview unmounts the title field, which may hold the opening focus.
+        if (n.state === 'trashed') titleRef.current?.focus();
         return;
       }
       // Not a blank editor: typing into it would silently recreate the note under the dead id.
@@ -255,17 +258,17 @@ export function NoteEditorDialog({
         // The dialog wears the note's colour, or picking one would visibly change nothing.
         // `bg-note-surface!`: the vendored `bg-background` would otherwise win on stylesheet order.
         {...noteColorAttrs(color)}
-        // Radix would focus the back arrow; the title gets it instead. Not for an existing note
-        // without a hardware keyboard (the software one would cover a note opened to read), and
-        // not for a checklist draft, whose editor autofocuses its first item.
+        // Radix would focus the back arrow; the title gets it instead. An existing note without a
+        // hardware keyboard focuses the heading, so the software keyboard stays down; a checklist
+        // draft's editor autofocuses its first item.
         onOpenAutoFocus={(event) => {
           if (document.activeElement instanceof HTMLElement) {
             openerRef.current = document.activeElement;
           }
           event.preventDefault();
           if (checklistDraft) return;
-          if (!isNew && !keyboard) return;
-          headerInputRef.current?.focus();
+          if (isNew || keyboard) headerInputRef.current?.focus();
+          else titleRef.current?.focus();
         }}
         onCloseAutoFocus={(event) => {
           event.preventDefault();
@@ -284,7 +287,7 @@ export function NoteEditorDialog({
         // Both traps: src/components/editor/CLAUDE.md, "The editor sheet".
         className="top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-3 overflow-y-auto rounded-none border-0 bg-note-surface! pt-[calc(0.5rem+var(--safe-top))] pr-[calc(1rem+var(--safe-right))] pb-0 pl-[calc(1rem+var(--safe-left))] sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-card sm:border sm:border-note-border sm:p-6 [&_[data-slot=dialog-close]]:hidden sm:[&_[data-slot=dialog-close]]:flex"
       >
-        <DialogTitle className="sr-only">
+        <DialogTitle ref={titleRef} tabIndex={-1} className="sr-only">
           {isNew ? t('notes.newNoteTitle') : t('notes.editNoteTitle')}
         </DialogTitle>
 

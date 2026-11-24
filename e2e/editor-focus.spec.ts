@@ -12,7 +12,9 @@ test.describe('opening focus', () => {
     await expect(page.getByRole('textbox', { name: 'Title' })).toBeFocused();
   });
 
-  test('an existing note opens with nothing focused on a phone, and the title focused on a desktop', async ({
+  // On a phone no field, so the software keyboard stays down, yet focus inside the dialog: left on
+  // the Card, it sits under the modal's aria-hidden, where a screen reader never hears the dialog.
+  test('an existing note opens with its heading focused on a phone, and the title focused on a desktop', async ({
     page,
     isMobile,
   }) => {
@@ -22,8 +24,9 @@ test.describe('opening focus', () => {
     const title = page.getByRole('textbox', { name: 'Title' });
     await expect(title).toHaveValue('Kept');
     if (isMobile) {
-      await expect(title).not.toBeFocused();
-      await expect(page.locator('.tiptap')).not.toBeFocused();
+      await expect(
+        page.getByRole('dialog').getByRole('heading', { name: 'Edit note' })
+      ).toBeFocused();
     } else {
       await expect(title).toBeFocused();
     }
