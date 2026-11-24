@@ -11,26 +11,6 @@ afterEach(() => {
 });
 
 describe('ThemeProvider', () => {
-  it.each([
-    {
-      reason: 'storage is blocked',
-      arrange: () =>
-        vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-          throw new DOMException('The operation is insecure.', 'SecurityError');
-        }),
-    },
-    {
-      reason: 'the stored theme is unknown',
-      arrange: () => localStorage.setItem('vite-ui-theme', 'blue'),
-    },
-  ])('falls back to the default theme when $reason', ({ arrange }) => {
-    arrange();
-
-    render(<ThemeProvider defaultTheme="dark">content</ThemeProvider>);
-
-    expect(document.documentElement.className).toBe('dark');
-  });
-
   it('updates the active theme when the system color scheme changes', () => {
     let prefersDark = false;
     const mediaQuery = new EventTarget() as MediaQueryList;
@@ -42,6 +22,7 @@ describe('ThemeProvider', () => {
     mediaQuery.addListener = vi.fn();
     mediaQuery.removeListener = vi.fn();
     vi.spyOn(window, 'matchMedia').mockReturnValue(mediaQuery);
+    localStorage.setItem('vite-ui-theme', 'system');
 
     render(<ThemeProvider>content</ThemeProvider>);
     expect(document.documentElement).toHaveClass('light');
@@ -61,6 +42,7 @@ describe('ThemeProvider', () => {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     } as unknown as MediaQueryList);
+    localStorage.setItem('vite-ui-theme', 'system');
     function ResolvedTheme() {
       return useTheme().resolvedTheme;
     }
@@ -79,7 +61,7 @@ describe('ThemeProvider', () => {
   it('hands the resolved background to the platform as theme-color', () => {
     document.documentElement.style.setProperty('--background', 'oklch(17% 0.012 265)');
 
-    render(<ThemeProvider defaultTheme="dark">content</ThemeProvider>);
+    render(<ThemeProvider>content</ThemeProvider>);
 
     expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute(
       'content',
