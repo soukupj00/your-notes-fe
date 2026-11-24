@@ -7,12 +7,14 @@ import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
 
 export function ThemeModeToggleButton() {
   const { t } = useTranslation();
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, systemTheme, setTheme } = useTheme();
 
-  const isDark = theme === 'dark';
+  const isDark = resolvedTheme === 'dark';
 
+  // Landing on the OS's own scheme hands the choice back to System, so an OS schedule keeps working.
   const handleToggle = () => {
-    setTheme(isDark ? 'light' : 'dark');
+    const next = isDark ? 'light' : 'dark';
+    setTheme(next === systemTheme ? 'system' : next);
   };
 
   return (

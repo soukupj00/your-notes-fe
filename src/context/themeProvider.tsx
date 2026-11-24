@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { useMediaQuery } from '@/hooks/useMediaQuery.ts';
 
 export type Theme = 'dark' | 'light' | 'system';
+export type ResolvedTheme = Exclude<Theme, 'system'>;
 
 const STORAGE_KEY = 'vite-ui-theme';
 
@@ -11,11 +13,16 @@ type ThemeProviderProps = {
 
 type ThemeProviderState = {
   theme: Theme;
+  /** What is on screen: `system` resolved against the OS. */
+  resolvedTheme: ResolvedTheme;
+  systemTheme: ResolvedTheme;
   setTheme: (theme: Theme) => void;
 };
 
 const initialState: ThemeProviderState = {
   theme: 'system',
+  resolvedTheme: 'light',
+  systemTheme: 'light',
   setTheme: () => null,
 };
 
@@ -43,23 +50,22 @@ export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProvid
     () => (localStorage.getItem(STORAGE_KEY) as Theme) || defaultTheme
   );
 
+  const systemTheme: ResolvedTheme = useMediaQuery('(prefers-color-scheme: dark)')
+    ? 'dark'
+    : 'light';
+  const resolvedTheme = theme === 'system' ? systemTheme : theme;
+
   useEffect(() => {
     const root = window.document.documentElement;
-    const colorScheme = window.matchMedia('(prefers-color-scheme: dark)');
-    const apply = () => {
-      const resolved = theme === 'system' ? (colorScheme.matches ? 'dark' : 'light') : theme;
-      root.classList.remove('light', 'dark');
-      root.classList.add(resolved);
-      paintSystemChrome(root);
-    };
-
-    apply();
-    colorScheme.addEventListener('change', apply);
-    return () => colorScheme.removeEventListener('change', apply);
-  }, [theme]);
+    root.classList.remove('light', 'dark');
+    root.classList.add(resolvedTheme);
+    paintSystemChrome(root);
+  }, [resolvedTheme]);
 
   const value = {
     theme,
+    resolvedTheme,
+    systemTheme,
     setTheme: (theme: Theme) => {
       localStorage.setItem(STORAGE_KEY, theme);
       setTheme(theme);
