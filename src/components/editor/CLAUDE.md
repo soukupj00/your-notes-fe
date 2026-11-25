@@ -125,6 +125,8 @@ Do not reintroduce a document mutation here: the stored order is what a Backup a
 `extensions/TaskItem/` adds the reorder grip in the editable node view only, driven by pointer events so a finger can use it; the stored Body and the Card never carry a grip.
 Its `ignoreMutation` must keep treating the row's own attribute changes as non-edits, or a rebuilt node view drops the row from under the pointer mid-drag.
 A row is named by its words (`taskItemName`), and its box takes that name through TipTap's `a11y.checkboxLabel`, whose own fallback is English.
+The grip is named "Reorder <row>" like a Settings handle, and the extension places two things beside the editor: one hidden hint its `aria-describedby` points at (`aria-description` is not Widely available), and one `role="status"` that speaks a keyboard move.
+The position a move announces is the stored one, which is what the keys change, even with Sinking on.
 
 List buttons convert the whole list when the cursor is collapsed inside one (`extensions/list-toggle.ts`), because a task list uses a different item type from the other two.
 

@@ -56,7 +56,7 @@
     },
     "taskItem": {
       "empty": "Prázdná položka",
-      "grip": "Přesunout položku"
+      "gripKeys": "Šipkami nahoru a dolů ji přesunete."
     },
     "blockquote": {
       "tooltip": "Citace"

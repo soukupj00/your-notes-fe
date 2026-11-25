@@ -56,7 +56,7 @@
     },
     "taskItem": {
       "empty": "Empty item",
-      "grip": "Reorder item"
+      "gripKeys": "Press the up and down arrow keys to move it."
     },
     "blockquote": {
       "tooltip": "Quote"

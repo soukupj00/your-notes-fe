@@ -48,7 +48,7 @@ test.describe('checklist', () => {
     const rows = page.locator('.tiptap ul[data-type="taskList"] > li');
     const first = rows.nth(0);
     await first.hover();
-    const grip = first.getByRole('button', { name: 'Reorder item' });
+    const grip = first.getByRole('button', { name: 'Reorder One' });
     const gripBox = await grip.boundingBox();
     const lastBox = await rows.nth(2).boundingBox();
     if (!gripBox || !lastBox) throw new Error('rows not laid out');

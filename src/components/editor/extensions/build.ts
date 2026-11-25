@@ -86,7 +86,7 @@ export function buildEditorExtensions({
     ListItem,
     TaskList,
     TaskItem.configure({
-      gripLabel: () => t('editor.taskItem.grip'),
+      t,
       a11y: { checkboxLabel: (node) => taskItemName(node, t) },
     }),
     ChecklistFlip.configure({ animate: animateChecklist ?? (() => false) }),
