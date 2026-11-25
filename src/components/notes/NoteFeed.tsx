@@ -33,6 +33,8 @@ export function NoteFeed({ notes, mode, label, onSelect }: NoteFeedProps) {
   return (
     <m.ul
       ref={containerRef}
+      // WebKit drops the role from an unstyled list outside `nav`.
+      role="list"
       aria-label={label}
       aria-busy={!ready}
       data-layout={mode}

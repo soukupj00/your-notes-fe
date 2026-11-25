@@ -49,6 +49,13 @@ describe('QuickCaptureBar', () => {
     }
   });
 
+  // WebKit drops the list role from a flex list outside `nav`, and with it VoiceOver's count.
+  it('keeps an explicit list role on the open dial', async () => {
+    await openDial();
+
+    expect(await screen.findByRole('list')).toHaveAttribute('role', 'list');
+  });
+
   it('dims the wall while open, and a tap on the dim closes it', async () => {
     await openDial();
     await screen.findByRole('button', { name: 'notes.capture.text' });

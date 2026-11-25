@@ -65,7 +65,11 @@ export function QuickCaptureBar({ onStart }: { onStart: (intent?: Intent) => voi
           // scrim is already gone.
           className="max-h-[none] w-auto animate-none! overflow-visible border-0 bg-transparent p-0 shadow-none"
         >
-          <ul className={cn('flex flex-col gap-2', left ? 'items-start' : 'items-end')}>
+          <ul
+            // biome-ignore lint/a11y/noRedundantRoles: WebKit drops the role from a flex list outside `nav`
+            role="list"
+            className={cn('flex flex-col gap-2', left ? 'items-start' : 'items-end')}
+          >
             {actions.map((action, index) => (
               <m.li
                 key={action.key}
