@@ -79,6 +79,7 @@ describe('NoteCard names', () => {
     card(overrides);
 
     expect(screen.getByRole('button', { name })).toHaveAttribute('data-slot', 'note-card-open');
+    expect(screen.getByRole('article', { name })).toBeInTheDocument();
   });
 
   // Twenty "Archive" buttons in a wall read as one column of identical words.

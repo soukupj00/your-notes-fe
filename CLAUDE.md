@@ -185,7 +185,7 @@ The stored `<label>` wraps only the box, so `NoteBody` names each box by its ite
 **A11y.**
 Every view renders an `<h1 tabIndex={-1}>` and focuses it on mount (`useFocusOnMount`), so a navigation moves focus to the destination heading.
 In the feed views that heading is `sr-only`.
-A Card is named once, by its title, else its first line, else its first attachment's kind (`untitledCardName`), and every control on it adds that name after its own label (`labelledWith`), so twenty Cards do not offer twenty buttons named "Archive".
+A Card is an `article` named once, by its title, else its first line, else its first attachment's kind (`untitledCardName`), and every control on it adds that name after its own label (`labelledWith`), so twenty Cards do not offer twenty buttons named "Archive".
 An opened Note focuses its title, or, without a hardware keyboard, its `sr-only` heading, so the software keyboard stays down and focus never stays behind the modal.
 While a Note's dialog hides the page, `NotesView` holds focus off the page until the dialog takes it, and hands it back to the opener on close (`useOpenerFocus`): Chrome ignores an `aria-hidden` set over focus for the rest of the page load.
 

@@ -8,7 +8,6 @@ import { untitledCardName } from '@/components/cards/untitledCardName.ts';
 import { NoteBody } from '@/components/NoteBody.tsx';
 import { ReminderChip } from '@/components/reminders/ReminderChip.tsx';
 import { TagPills } from '@/components/tags/TagPills.tsx';
-import { Card } from '@/components/ui/card.tsx';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import type { NoteAttachments } from '@/hooks/data/useNoteAttachments.ts';
 import { useTagsForNote } from '@/hooks/data/useTagsForNote.ts';
@@ -142,7 +141,10 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
   const nameId = useId();
 
   return (
-    <Card
+    // biome-ignore lint/a11y/useKeyWithClickEvents: keyboards open the Note through the open button inside
+    <article
+      data-slot="card"
+      aria-labelledby={nameId}
       {...noteColorAttrs(note.color)}
       data-pinned={note.pinnedAt ? '' : undefined}
       // A click anywhere opens the note. Keyboards and screen readers use the open button
@@ -151,7 +153,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
       onClick={(e) => {
         if (e.currentTarget.contains(e.target as Node)) select();
       }}
-      className="group has-[[data-slot=note-card-open]:focus-visible]:focus-outline relative isolate w-full cursor-pointer break-inside-avoid gap-0 rounded-card border-0 bg-transparent py-0 text-card-foreground shadow-none"
+      className="group has-[[data-slot=note-card-open]:focus-visible]:focus-outline relative isolate flex w-full cursor-pointer break-inside-avoid flex-col rounded-xl text-card-foreground"
     >
       {/* Its click bubbles to the Card's `onClick`, so it needs no handler of its own. */}
       <button
@@ -228,6 +230,6 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
           <CardActions note={note} nameId={nameId} />
         </div>
       </div>
-    </Card>
+    </article>
   );
 };
