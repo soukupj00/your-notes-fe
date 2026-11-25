@@ -195,7 +195,7 @@ export function ExcalidrawDialog({
           // `zoom-in-100` is load-bearing: Excalidraw measures its canvas mid-entrance and
           // never re-measures, so a scale animation puts every stroke off the cursor.
           // Details: src/components/editor/CLAUDE.md, Excalidraw.
-          className="data-[state=closed]:zoom-out-100 data-[state=open]:zoom-in-100 flex h-[100dvh] w-screen max-w-none flex-col gap-0 rounded-none border-0 p-0 sm:h-[92vh] sm:w-[94vw] sm:max-w-none sm:rounded-lg sm:border"
+          className="data-[state=closed]:zoom-out-100 data-[state=open]:zoom-in-100 flex h-[100dvh] max-h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-visible rounded-none border-0 p-0 sm:h-[92vh] sm:w-[94vw] sm:max-w-none sm:rounded-lg sm:border"
         >
           <DialogHeader className="flex shrink-0 flex-row items-center gap-2 space-y-0 border-b p-3 text-left">
             <DialogTitle className="flex-1">{t('editor.excalidraw.title')}</DialogTitle>

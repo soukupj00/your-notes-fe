@@ -187,6 +187,8 @@ All five kinds (image, audio, video, file, Excalidraw) are custom nodes from one
 - **The dialog withholds pointer moves above the canvas** during a drag that started on it, with a capture-phase `window` listener.
   The canvas takes pointer capture, so without it a stroke kept extending under the header, hidden but still in the exported image.
 - Excalidraw is given no theme and always draws light, so its canvas area pins `color-scheme: light`; the night theme's scheme would put dark scrollbars on its white panels.
+- **The dialog sets its own height and overflow**, overriding the shared dialog's height cap and inner scroll, because Excalidraw sizes its canvas to fill the box.
+  `e2e/dialog-fit.spec.ts` checks it keeps the whole phone screen.
 - **The dialog's entrance does not scale**, and that is load-bearing.
   Excalidraw sizes its canvas from a rect that includes transforms, so opening mid-scale left every stroke off the cursor; the fade is kept.
 - The SVG exporter imports Excalidraw dynamically, because importing it eagerly touches a canvas at module scope and crashes under jsdom.
