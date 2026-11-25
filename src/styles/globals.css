@@ -517,6 +517,35 @@
   }
 }
 
+/* Forced colours (Windows High Contrast) paints every fill as Canvas, so a state shown by a fill
+   alone is repainted in system colours. `forced-color-adjust: none` drops the Canvas backplate
+   the browser puts behind text, which hid HighlightText. Unlayered, to beat the utilities. */
+@media (forced-colors: active) {
+  [data-sidebar="menu-button"][aria-current="page"],
+  [role="radio"][aria-checked="true"],
+  [role="radiogroup"] label:has(:checked),
+  [role="switch"][aria-checked="true"],
+  [data-highlighted] {
+    forced-color-adjust: none;
+    background-color: Highlight;
+    color: HighlightText;
+
+    /* The opt-out is inherited, so a glyph with its own colour class would keep it. */
+    & * {
+      color: inherit;
+    }
+  }
+
+  [role="switch"] > span {
+    forced-color-adjust: none;
+    background-color: CanvasText;
+  }
+
+  [role="switch"][aria-checked="true"] > span {
+    background-color: HighlightText;
+  }
+}
+
 @theme {
   /* `font-display` is opt-in, for titles and the brand mark only. */
   --font-sans: "Work Sans Variable", ui-sans-serif, system-ui, sans-serif;

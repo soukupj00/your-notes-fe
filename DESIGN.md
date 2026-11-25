@@ -323,6 +323,7 @@ Borders are always hairline (`1px`). By day the border is a slightly deepened ve
 There is no second border weight and no dashed or dotted variant - a chip that needs to read as incomplete (an overflow `+N`) should differ by fill, not by border style.
 
 Focus is a `2px` solid outline in the accent colour at `2px` offset, on every focusable element, in both themes.
+In forced colours (Windows High Contrast) every fill paints as the system canvas, so a state carried by a fill alone - the active rail item, a chosen segment or tile, a switch, a highlighted menu row - is repainted in the system `Highlight` (`globals.css`).
 
 ## Components
 
