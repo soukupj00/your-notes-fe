@@ -119,6 +119,8 @@ export async function signedInServer(page: Page) {
  * Whichever capture surface this width shows: the dial below `sm:`, the
  * desktop bar above it. Plain text is the bar's own field there, so it has no
  * button named like the dial's; every other start is an icon with that name.
+ * Starts are looked up inside their surface: an untitled Card is named by its
+ * attachment's kind, so a Drawing's Card is also a button named "Drawing".
  */
 export async function startNote(page: Page, start: string) {
   const dial = page.getByRole('button', { name: 'New note' });
@@ -128,14 +130,14 @@ export async function startNote(page: Page, start: string) {
   await dial.or(bar).waitFor();
   if (await dial.isVisible()) {
     await dial.click();
-    await page.getByRole('button', { name: start, exact: true }).click();
+    await page.getByRole('dialog').getByRole('button', { name: start, exact: true }).click();
     return;
   }
   if (start === 'Note') {
-    await page.getByRole('button', { name: 'Take a note…' }).click();
+    await bar.click();
     return;
   }
-  const inline = page.getByRole('button', { name: start, exact: true });
+  const inline = bar.locator('..').getByRole('button', { name: start, exact: true });
   if (await inline.isVisible()) {
     await inline.click();
     return;
