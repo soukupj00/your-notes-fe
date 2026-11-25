@@ -93,6 +93,7 @@ export function NoteEditorDialog({
   const checklistDraft = isNew && intent?.kind === 'checklist';
   const [body, setBody] = useState(checklistDraft ? EMPTY_CHECKLIST_BODY : '');
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [hasSaved, setHasSaved] = useState(false);
 
   // Note-bar fields are written through on each tap, not debounced like header and body:
   // a colour or a pin is one deliberate tap, not a stream of keystrokes.
@@ -179,7 +180,10 @@ export function NoteEditorDialog({
       // Skip the status flicker when there's nothing to persist (empty draft).
       if (!draft.saved && isEmpty(header, body)) return;
       setSaveStatus('saving');
-      void draft.save(header, body).then(() => setSaveStatus('saved'));
+      void draft.save(header, body).then(() => {
+        setSaveStatus('saved');
+        setHasSaved(true);
+      });
     }, AUTOSAVE_DELAY_MS);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -303,9 +307,10 @@ export function NoteEditorDialog({
         </DialogTitle>
 
         {/* One always-mounted live region for both breakpoints: a region only announces changes
-            made after it mounted, and a second one would announce everything twice. */}
+            made after it mounted, and a second one would announce everything twice. Its text never
+            changes after the first save, so it speaks once per open, not on every pause in typing. */}
         <div aria-live="polite" className="sr-only">
-          {saveStatus !== 'idle' && t(`notes.saveStatus.${saveStatus}`)}
+          {hasSaved && t('notes.saveStatus.saved')}
         </div>
 
         {/* Mobile closes with Back top-left, where a thumb reaches; the far-corner X reads as

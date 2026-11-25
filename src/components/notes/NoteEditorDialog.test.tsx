@@ -205,14 +205,30 @@ describe('NoteEditorDialog', () => {
     expect(saved.body).toContain('data-type="taskList"');
   });
 
-  it('surfaces a "saved" status after an edit autosaves', async () => {
+  // A save takes milliseconds, so a status read on every pause would only interrupt the typing echo.
+  it('announces "saved" once, after the first autosave only', async () => {
     render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
+    const region = await waitFor(() => {
+      const found = document.querySelector('[aria-live="polite"]');
+      if (!found) throw new Error('no live region');
+      return found;
+    });
+    const announced: string[] = [];
+    const observer = new MutationObserver(() => announced.push(region.textContent ?? ''));
+    observer.observe(region, { childList: true, subtree: true, characterData: true });
 
     await userEvent.type(headerInput(), 'Hello');
 
-    expect(
-      await screen.findByText('notes.saveStatus.saved', undefined, { timeout: 2000 })
-    ).toBeInTheDocument();
+    await waitFor(() => expect(region).toHaveTextContent('notes.saveStatus.saved'), {
+      timeout: 2000,
+    });
+    await userEvent.type(headerInput(), ' again');
+    await waitFor(async () => expect((await allNotes(testStore))[0]?.header).toBe('Hello again'), {
+      timeout: 2000,
+    });
+    observer.disconnect();
+
+    expect(announced).toEqual(['notes.saveStatus.saved']);
   });
 
   it('stops writing once an edit settles (no autosave re-render loop)', async () => {
