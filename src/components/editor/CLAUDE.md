@@ -195,6 +195,8 @@ All five kinds (image, audio, video, file, Excalidraw) are custom nodes from one
 - **Excalidraw's fonts come from this origin**, under `/assets/excalidraw/fonts/`: `vite.config.ts` serves them in dev and copies them into the build, and `EXCALIDRAW_ASSET_PATH` points there.
   Left to itself Excalidraw fetches them from esm.sh, a runtime request to a third party (NFR2), and offline a Drawing's text loses its font.
   The build also drops esm.sh from each font's fallback list, which the Content Security Policy would otherwise report on every open; the build fails if that code moves in an upgrade.
+- **Of Excalidraw's language chunks only Czech is precached** (`vite.config.ts`, judged by the modules a chunk holds); its English is bundled.
+  A `langCode` for any other language must be added there too, or offline the Drawing falls back to English with a console error.
 
 ## Text styling
 
