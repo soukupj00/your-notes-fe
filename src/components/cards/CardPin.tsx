@@ -21,7 +21,7 @@ export function CardPin({ pinned, onToggle }: CardPinProps) {
     <button
       type="button"
       data-slot="note-card-pin"
-      aria-label={t(pinned ? 'notes.unpin' : 'notes.pin')}
+      aria-label={t('notes.pin')}
       aria-pressed={pinned}
       // A click on the card opens the editor; pinning must not also open it.
       onClick={(e) => {

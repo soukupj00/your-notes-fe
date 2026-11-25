@@ -179,13 +179,13 @@ describe('NoteCard', () => {
     );
   });
 
-  it('offers unpin on an already pinned note', async () => {
+  // The name stays "Pin" and `aria-pressed` alone says it is on, so the state is not read twice.
+  it('unpins a pinned note from its pressed pin', async () => {
     const note = makeNote({ pinnedAt: new Date().toISOString() });
     await testStore.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    const pin = screen.getByRole('button', { name: 'notes.unpin' });
-    expect(pin).toHaveAttribute('aria-pressed', 'true');
+    const pin = screen.getByRole('button', { name: 'notes.pin', pressed: true });
 
     await userEvent.click(pin);
 

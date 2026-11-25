@@ -434,16 +434,11 @@ describe('NoteEditorDialog', () => {
 
     render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
 
-    const pin = await screen.findByRole('button', { name: 'notes.pin' });
-    expect(pin).toHaveAttribute('aria-pressed', 'false');
-
-    await userEvent.click(pin);
+    await userEvent.click(await screen.findByRole('button', { name: 'notes.pin', pressed: false }));
 
     await waitFor(async () => expect((await testStore.notes.get(note.id))?.pinnedAt).toBeDefined());
-    const unpin = await screen.findByRole('button', { name: 'notes.unpin' });
-    expect(unpin).toHaveAttribute('aria-pressed', 'true');
 
-    await userEvent.click(unpin);
+    await userEvent.click(await screen.findByRole('button', { name: 'notes.pin', pressed: true }));
     await waitFor(async () =>
       expect((await testStore.notes.get(note.id))?.pinnedAt).toBeUndefined()
     );
@@ -457,7 +452,6 @@ describe('NoteEditorDialog', () => {
     await screen.findByDisplayValue(note.header as string);
 
     expect(screen.queryByRole('button', { name: 'notes.pin' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'notes.unpin' })).not.toBeInTheDocument();
     // Colour and labels are authoring moves and stay available.
     expect(screen.getByRole('button', { name: 'notes.color' })).toBeInTheDocument();
   });
