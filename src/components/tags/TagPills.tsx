@@ -44,7 +44,7 @@ export function TagPills({ tags, onRemove, maxVisible, className }: TagPillsProp
                 e.stopPropagation();
                 onRemove(tag);
               }}
-              className="rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="rounded-full text-muted-foreground hover:text-foreground"
             >
               <X className="size-3" aria-hidden />
             </button>

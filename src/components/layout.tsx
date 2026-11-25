@@ -29,7 +29,7 @@ function BrandLink() {
     <Link
       to="/"
       aria-label={t('navbar.logo')}
-      className="flex h-10 w-full items-center justify-center gap-2 overflow-hidden rounded-control outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+      className="flex h-10 w-full items-center justify-center gap-2 overflow-hidden rounded-control"
     >
       <span
         aria-hidden="true"

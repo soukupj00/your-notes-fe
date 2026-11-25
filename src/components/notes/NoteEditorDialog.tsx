@@ -384,7 +384,9 @@ export function NoteEditorDialog({
           // A preview drops the frame, which would read as a field to type in.
           className={cn(
             'flex-1 rounded-none border-0 p-0',
-            !preview && 'sm:rounded-card sm:border sm:border-note-border sm:px-4'
+            // The top padding keeps a toolbar button's focus outline inside the frame and its
+            // tooltip above it.
+            !preview && 'sm:rounded-card sm:border sm:border-note-border sm:px-4 sm:pt-1.5'
           )}
           onUpdate={(html) => {
             dirtyRef.current = true;

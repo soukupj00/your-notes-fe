@@ -1,12 +1,10 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
-import { skipTour } from './helpers';
+import { newTextNote, skipTour } from './helpers';
 
 /**
- * Forced colours (Windows High Contrast) paints every background as Canvas and drops every
- * box-shadow, so a state shown by a fill alone has to be repainted in system colours.
- * Colours are read from pixels: the computed background keeps the author's alpha, so a
- * transparent segment and a filled one differ there and still paint alike.
- */
+ * Forced colours (Windows High Contrast) paints every fill as Canvas and drops box-shadows.
+ * Read from pixels: the computed background keeps the author's alpha, so it differs where the
+ * painted colour does not. */
 async function paintedAt(page: Page, x: number, y: number) {
   const png = await page.screenshot({ clip: { x, y, width: 1, height: 1 } });
   // A string, not a function: `tsconfig.node.json` has no DOM lib.
@@ -23,8 +21,10 @@ async function paintedAt(page: Page, x: number, y: number) {
 /** Where `target` rests once a drawer's slide or a menu's zoom has finished. */
 async function settledBox(target: Locator) {
   await target.scrollIntoViewIfNeeded();
-  // Scroll-driven and endless animations never finish, so only the time-bound ones are awaited.
+  // Scroll-driven, endless and filled-forwards animations never leave the list, so only running
+  // time-bound ones are awaited.
   await target.page().waitForFunction(`document.getAnimations().every((animation) =>
+    animation.playState === 'finished' ||
     animation.timeline !== document.timeline ||
     animation.effect?.getComputedTiming().iterations === Infinity)`);
   return target.boundingBox();
@@ -114,4 +114,42 @@ test('the highlighted row of a menu stands out', async ({ page, isMobile }) => {
     rows.and(page.locator('[data-highlighted]')),
     rows.and(page.locator(':not([data-highlighted])')).first()
   );
+});
+
+// `document.activeElement`, not `:focus`, which fails to match while the window lacks focus.
+// The box the user sees outlined: the Card for its invisible open button, the pill for search.
+const FOCUS_OUTLINE = `(() => {
+  if (document.activeElement === document.body) return 'focus lost to body';
+  const drawn = (box) => {
+    const style = getComputedStyle(box);
+    return style.outlineStyle !== 'none' && style.opacity !== '0';
+  };
+  let box = document.activeElement;
+  while (box.parentElement && !drawn(box)) box = box.parentElement;
+  const style = getComputedStyle(box);
+  return style.outlineStyle + ' ' + style.outlineWidth;
+})()`;
+
+// Every stop over two Cards, not one control: the rings this replaced were set per control.
+// Read at once, not polled: the outline must not animate in.
+test('every control on the feed shows its focus as an outline', async ({ page }) => {
+  await page.goto('/');
+  for (const title of ['Groceries', 'Trip plan']) await newTextNote(page, title);
+  await page.bringToFront();
+  for (let stop = 0; stop < 8; stop++) {
+    await page.keyboard.press('Tab');
+    expect(await page.evaluate(FOCUS_OUTLINE)).toBe('solid 2px');
+  }
+});
+
+// Sonner's own stylesheet turns outlines off on its toasts.
+test("a toast's button shows its focus as an outline", async ({ page }) => {
+  await page.goto('/');
+  await newTextNote(page, 'Groceries');
+  await page.getByRole('button', { name: 'Archive' }).first().click();
+  await page.getByRole('button', { name: 'Undo' }).focus();
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Tab');
+
+  expect(await page.evaluate(FOCUS_OUTLINE)).toBe('solid 2px');
 });

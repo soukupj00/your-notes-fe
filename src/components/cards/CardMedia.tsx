@@ -262,7 +262,7 @@ function AudioRow({
           onActivate();
         }}
         className={cn(
-          'flex size-11 shrink-0 items-center justify-center rounded-full bg-note-chip text-note-on-chip shadow-rest hover:shadow-note-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+          'flex size-11 shrink-0 items-center justify-center rounded-full bg-note-chip text-note-on-chip shadow-rest hover:shadow-note-lift',
           !reducedMotion && 'transition-[background-color,box-shadow,transform] hover:scale-[1.04]'
         )}
       >

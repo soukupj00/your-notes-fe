@@ -59,7 +59,7 @@ export function TagFilterBar() {
                 // next to `text-note-on-chip`, taking the 11px size with it.
                 className={clsx(
                   'flex min-h-11 max-w-full items-center gap-1 rounded-full bg-note-chip px-3 py-1 text-label text-note-on-chip uppercase transition-shadow',
-                  'hover:shadow-rest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  'hover:shadow-rest',
                   // A ring, not opacity: a dimmed pill reads as disabled, the opposite state.
                   selected ? 'ring-2 ring-note-swatch-ring' : ''
                 )}

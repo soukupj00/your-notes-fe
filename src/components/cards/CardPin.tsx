@@ -33,7 +33,6 @@ export function CardPin({ pinned, onToggle }: CardPinProps) {
         // Invisible 44px hit box, since a 44px disc would hang into the note's first line.
         // -5px, not -4px: the pseudo-element sits in the padding box, so it must cover the border.
         'before:absolute pointer-coarse:before:-inset-[5px] before:content-[""]',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         pinned
           ? 'border-transparent bg-primary text-primary-foreground'
           : 'border-note-border bg-note-surface text-muted-foreground hover:border-note-border-hover hover:text-foreground',

@@ -124,7 +124,7 @@ export function SortableRow({
         // `touch-none` is required rather than cosmetic: without it the browser
         // claims the gesture for scrolling and the pointer sensor never fires.
         className={cn(
-          'flex size-11 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring active:cursor-grabbing',
+          'flex size-11 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground hover:bg-muted active:cursor-grabbing',
           handleClassName
         )}
         {...attributes}

@@ -149,7 +149,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
       onClick={(e) => {
         if (e.currentTarget.contains(e.target as Node)) select();
       }}
-      className="group relative isolate w-full cursor-pointer break-inside-avoid gap-0 rounded-card border-0 bg-transparent py-0 text-card-foreground shadow-none has-[[data-slot=note-card-open]:focus-visible]:ring-2 has-[[data-slot=note-card-open]:focus-visible]:ring-ring has-[[data-slot=note-card-open]:focus-visible]:ring-offset-2 has-[[data-slot=note-card-open]:focus-visible]:ring-offset-background"
+      className="group has-[[data-slot=note-card-open]:focus-visible]:focus-outline relative isolate w-full cursor-pointer break-inside-avoid gap-0 rounded-card border-0 bg-transparent py-0 text-card-foreground shadow-none"
     >
       {/* Its click bubbles to the Card's `onClick`, so it needs no handler of its own. */}
       <button

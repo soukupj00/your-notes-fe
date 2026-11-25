@@ -17,8 +17,7 @@ type ReminderButtonProps = {
   className?: string;
 };
 
-const FIELD =
-  'h-9 w-full rounded-control border border-input bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+const FIELD = 'h-9 w-full rounded-control border border-input bg-transparent px-2 text-sm';
 
 const today = () => toLocalInput(new Date()).slice(0, 10);
 

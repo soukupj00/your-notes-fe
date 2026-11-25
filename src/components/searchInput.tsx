@@ -41,7 +41,7 @@ function SearchInput({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       className={cn(
-        'relative flex w-full items-center rounded-full border border-input bg-card shadow-rest transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30',
+        'has-[input:focus-visible]:focus-outline relative flex w-full items-center rounded-full border border-input bg-card shadow-rest',
         className
       )}
       {...props}
@@ -54,7 +54,7 @@ function SearchInput({ className, ...props }: React.ComponentProps<'div'>) {
         ref={inputRef}
         type="search"
         placeholder={t('notes.searchPlaceholder')}
-        className="h-11 min-w-0 flex-1 rounded-full border-0 bg-transparent py-2 pr-2 pl-9 text-body text-foreground shadow-none placeholder:text-muted-foreground focus:outline-none focus-visible:border-transparent focus-visible:ring-0 dark:bg-transparent"
+        className="h-11 min-w-0 flex-1 rounded-full border-0 bg-transparent py-2 pr-2 pl-9 text-body text-foreground shadow-none outline-none placeholder:text-muted-foreground dark:bg-transparent"
         value={search.q}
         // Typing is not navigation: replace the history entry so the back
         // button leaves the search rather than un-typing it letter by letter.
