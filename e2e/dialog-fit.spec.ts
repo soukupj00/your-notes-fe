@@ -1,4 +1,4 @@
-import { expect, type Locator, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 import { signedOutServer, skipTour, startNote } from './helpers';
 
 async function settledBox(dialog: Locator) {
@@ -8,6 +8,19 @@ async function settledBox(dialog: Locator) {
   const box = await dialog.boundingBox();
   if (!box) throw new Error('no dialog box');
   return box;
+}
+
+/** A one-finger swipe through the DevTools Protocol; Playwright has no touch move of its own. */
+async function touchDrag(page: Page, x: number, y: number, dy: number) {
+  const cdp = await page.context().newCDPSession(page);
+  const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', at: number) =>
+    cdp.send('Input.dispatchTouchEvent', {
+      type,
+      touchPoints: type === 'touchEnd' ? [] : [{ x, y: at }],
+    });
+  await touch('touchStart', y);
+  for (let step = 1; step <= 6; step++) await touch('touchMove', y + (dy * step) / 6);
+  await touch('touchEnd', y + dy);
 }
 
 test.beforeEach(async ({ page }) => skipTour(page));
@@ -35,6 +48,33 @@ test.describe('on a landscape phone', () => {
     const cancel = dialog.getByRole('button', { name: 'Cancel' });
     await cancel.scrollIntoViewIfNeeded();
     await expect(cancel).toBeInViewport({ ratio: 1 });
+  });
+
+  test('a toolbar menu in the open Note scrolls by touch, and a row in it still hands back the text', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'the toolbar folds into menus only for a coarse pointer');
+    await page.goto('/');
+    await startNote(page, 'Note');
+    await page.locator('.ProseMirror').click();
+    await page.keyboard.type('word');
+    await page.getByTestId('toolbar-family-media').click();
+
+    const menu = page
+      .getByRole('dialog')
+      .filter({ has: page.getByRole('button', { name: 'Insert drawing' }) });
+    const box = await settledBox(menu);
+    await expect.poll(() => menu.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+    await touchDrag(page, box.x + box.width / 2, box.y + box.height - 10, -120);
+    await expect.poll(() => menu.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+
+    await page.keyboard.press('Control+a');
+    await menu.getByRole('button', { name: 'Link', exact: true }).click();
+    await page.getByPlaceholder('https://').fill('https://example.com');
+    await page.getByRole('button', { name: 'Apply' }).click();
+    await expect(menu).toBeHidden();
+    await expect(page.locator('.ProseMirror')).toBeFocused();
   });
 });
 
