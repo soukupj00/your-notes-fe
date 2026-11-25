@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { closeNote, skipTour, startNote } from './helpers';
+import { card, closeNote, PICTURE, skipTour, startNote } from './helpers';
 
 async function openDrawing(page: Page) {
   await startNote(page, 'Drawing');
@@ -74,4 +74,27 @@ test.describe('the platform Back over an open Drawing', () => {
     await expect(page.getByRole('dialog', { name: 'Discard drawing?' })).toHaveCount(0);
     await expect(page).toHaveURL(/[?&]note=/);
   });
+});
+
+test('a picture inserted into a Drawing shows in its preview, in the Note and on the Card', async ({
+  page,
+}) => {
+  // Without the File System Access picker, Excalidraw falls back to an `<input>` Playwright can fill.
+  await page.addInitScript('delete window.showOpenFilePicker;');
+  await skipTour(page);
+  await page.goto('/');
+  await openDrawing(page);
+  const chooser = page.waitForEvent('filechooser');
+  await page.locator('[data-testid="toolbar-image"]').click({ force: true });
+  await (await chooser).setFiles(PICTURE);
+  const box = await page.locator('canvas.interactive').boundingBox();
+  if (!box) throw new Error('no canvas');
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await page.getByRole('button', { name: 'Save' }).click();
+
+  const preview = page.getByRole('button', { name: 'Edit drawing' });
+  await expect(preview.locator('use[href^="#image-"]')).toHaveCount(1);
+  await page.getByRole('textbox', { name: 'Title' }).fill('Picture');
+  await closeNote(page);
+  await expect(card(page, 'Picture').locator('use[href^="#image-"]')).toHaveCount(1);
 });

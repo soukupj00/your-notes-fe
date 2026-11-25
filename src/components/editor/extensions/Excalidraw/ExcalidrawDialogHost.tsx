@@ -9,10 +9,10 @@ import { type ExcalidrawScene, emptyScene, parseScene } from './scene';
 
 const ExcalidrawDialog = lazy(() => import('./ExcalidrawDialog'));
 
-// Excalidraw resolves its bundled fonts/assets relative to this origin - pin it
-// to the app root so it works the same under the PWA's service-worker scope.
+// Excalidraw's fonts, which `vite.config.ts` serves from this origin rather than esm.sh.
 if (typeof window !== 'undefined') {
-  (window as unknown as { EXCALIDRAW_ASSET_PATH?: string }).EXCALIDRAW_ASSET_PATH = '/';
+  (window as unknown as { EXCALIDRAW_ASSET_PATH?: string }).EXCALIDRAW_ASSET_PATH =
+    '/assets/excalidraw/';
 }
 
 /** `attachmentId: null` is a new drawing that Save creates. `onDelete` is the same node

@@ -1,6 +1,6 @@
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
-import DOMPurify from 'dompurify';
+import { sanitizeDrawingPreview } from '@/lib/drawing-preview.ts';
 import { cn } from '@/lib/utils.ts';
 import { AttachmentDeleteButton } from '../attachments/AttachmentDeleteButton';
 import { DownloadButton, useDownloadAttachment } from '../attachments/AttachmentNotDownloaded';
@@ -56,9 +56,8 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
     'block max-w-full overflow-hidden rounded-md border [&>svg]:block [&>svg]:h-auto [&>svg]:max-w-full',
     loading && 'h-32 w-64 animate-pulse border-0 bg-muted'
   );
-  // Self-generated SVG snapshot (see sceneToSvgString), still run through
-  // DOMPurify to match the read-only NoteBody trust model.
-  const previewMarkup = loading ? undefined : { __html: DOMPurify.sanitize(row.preview ?? '') };
+  // Self-generated SVG snapshot (see sceneToSvgString), still sanitized, as the Body is.
+  const previewMarkup = loading ? undefined : { __html: sanitizeDrawingPreview(row.preview ?? '') };
 
   return (
     <NodeViewWrapper as="div" className="my-2" data-drag-handle>

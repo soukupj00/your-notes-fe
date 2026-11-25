@@ -159,6 +159,9 @@ All five kinds (image, audio, video, file, Excalidraw) are custom nodes from one
 ### Excalidraw
 
 - The scene is a JSON blob with a cached SVG preview; the node view is a passive preview with tap-to-edit.
+- Every place that draws a preview (the node view, the Card, the Share Link page) sanitizes it with `sanitizeDrawingPreview` (`lib/drawing-preview.ts`).
+  Excalidraw draws a picture once as a `<symbol>` and places it with `<use>`, which DOMPurify's defaults drop, so plain `DOMPurify.sanitize` loses every picture.
+  A `<use>` is kept only outside the definitions and only when it names a `<symbol>` of pictures in the same SVG, so a hostile preview can neither reach outside itself nor nest clones until the tab hangs.
 - One shared `ExcalidrawDialog`, lazy-loaded when a drawing first opens, holds the live canvas.
   `ExcalidrawDialogHost` mounts it and commits a Save; `useOpenDrawing` holds which drawing is open.
   `NotesView` lazy-loads the editor in the same way, so neither TipTap nor the drawing engine is in the initial download.
@@ -179,6 +182,9 @@ All five kinds (image, audio, video, file, Excalidraw) are custom nodes from one
 - **The dialog's entrance does not scale**, and that is load-bearing.
   Excalidraw sizes its canvas from a rect that includes transforms, so opening mid-scale left every stroke off the cursor; the fade is kept.
 - The SVG exporter imports Excalidraw dynamically, because importing it eagerly touches a canvas at module scope and crashes under jsdom.
+- **Excalidraw's fonts come from this origin**, under `/assets/excalidraw/fonts/`: `vite.config.ts` serves them in dev and copies them into the build, and `EXCALIDRAW_ASSET_PATH` points there.
+  Left to itself Excalidraw fetches them from esm.sh, a runtime request to a third party (NFR2), and offline a Drawing's text loses its font.
+  The build also drops esm.sh from each font's fallback list, which the Content Security Policy would otherwise report on every open; the build fails if that code moves in an upgrade.
 
 ## Text styling
 

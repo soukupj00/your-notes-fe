@@ -93,6 +93,23 @@ describe('/share/$token', () => {
     expect(container.innerHTML).not.toContain('javascript:');
   });
 
+  it("keeps a Drawing's picture and drops a `<use>` that reaches outside it", async () => {
+    const preview =
+      '<svg xmlns="http://www.w3.org/2000/svg"><defs><symbol id="image-1">' +
+      '<image href="data:image/png;base64,iVBORw0KGgo="/></symbol></defs>' +
+      '<use href="#image-1"/><use href="/api/blobs/x#icon"/></svg>';
+    const token = await shared({
+      header: 'Sketch',
+      body: `<excalidraw-drawing data-attachment-id="${DRAWING}"></excalidraw-drawing>`,
+      attachments: [meta(DRAWING, 'excalidraw', { preview })],
+    });
+    const { container } = render(<SharePage token={token} />);
+    await screen.findByRole('heading', { name: 'Sketch' });
+
+    const hrefs = [...container.querySelectorAll('use')].map((use) => use.getAttribute('href'));
+    expect(hrefs).toEqual(['#image-1']);
+  });
+
   it('a revoked, unknown or trashed share says nothing is shared', async () => {
     await shared({ header: 'Gone', state: 'trashed' });
     render(<SharePage token="share-token-x" />);
