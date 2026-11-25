@@ -108,6 +108,22 @@ export function validateAttachmentFile(
   return null;
 }
 
+/** What the app names the files it makes itself; a recording or a drawing has no name of the user's. */
+const APP_MADE_BASE = { audio: 'recording', excalidraw: 'drawing' } as const;
+
+export function appMadeName(kind: keyof typeof APP_MADE_BASE, extension: string): string {
+  return `${APP_MADE_BASE[kind]}.${extension}`;
+}
+
+/** Names that say nothing of the file: the app's own, and the one a browser gives a pasted
+ *  picture or an iPhone a camera shot (`image.png`, `image.jpg`). */
+const GENERIC_BASE: Partial<Record<AttachmentKind, string>> = { ...APP_MADE_BASE, image: 'image' };
+
+export function isGenericName(kind: AttachmentKind, name: string): boolean {
+  const base = GENERIC_BASE[kind];
+  return base !== undefined && name.startsWith(`${base}.`);
+}
+
 /** The extension a file of this kind gets when the app names it, such as a recording. */
 export function fileExtension(kind: AttachmentKind, mime: string): string | undefined {
   return ATTACHMENT_SPECS[kind].extensions[baseMimeType(mime)];

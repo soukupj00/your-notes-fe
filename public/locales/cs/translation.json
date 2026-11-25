@@ -98,17 +98,17 @@
       "tooltip": "Vložit obrázek",
       "unavailable": "Obrázek není k dispozici",
       "fallbackAlt": "Obrázek",
-      "delete": "Smazat obrázek",
+      "delete": "Smazat: {{name}}",
       "label": "Obrázek"
     },
     "audio": {
       "recording": "Nahrávání",
-      "play": "Přehrát",
-      "pause": "Pozastavit",
-      "seek": "Přetáčet",
+      "play": "Přehrát: {{name}}",
+      "pause": "Pozastavit: {{name}}",
+      "seek": "Přetáčet: {{name}}",
       "unavailable": "Zvuk není k dispozici",
       "tooltip": "Nahrát zvuk",
-      "delete": "Smazat zvuk",
+      "delete": "Smazat: {{name}}",
       "stop": "Zastavit",
       "cancel": "Zrušit",
       "errors": {
@@ -122,22 +122,22 @@
     },
     "video": {
       "tooltip": "Připojit video",
-      "delete": "Smazat video",
+      "delete": "Smazat: {{name}}",
       "unavailable": "Video není k dispozici",
       "label": "Video"
     },
     "file": {
       "tooltip": "Připojit soubor",
-      "open": "Otevřít soubor",
-      "delete": "Smazat soubor",
+      "open": "Otevřít: {{name}}",
+      "delete": "Smazat: {{name}}",
       "unavailable": "Soubor není k dispozici",
       "fallbackName": "Soubor",
       "label": "Soubor"
     },
     "excalidraw": {
       "tooltip": "Vložit kresbu",
-      "delete": "Smazat kresbu",
-      "edit": "Upravit kresbu",
+      "delete": "Smazat: {{name}}",
+      "edit": "Upravit: {{name}}",
       "unavailable": "Kresba není k dispozici",
       "title": "Kresba",
       "save": "Uložit",
@@ -192,7 +192,8 @@
       }
     },
     "attachment": {
-      "download": "Stáhnout",
+      "madeAt": "{{kind}}, {{time}}",
+      "download": "Stáhnout: {{name}}",
       "notDownloaded": "Zatím není v tomto zařízení",
       "notOnServer": "Na serveru zatím není. Zkuste to za chvíli.",
       "downloadFailed": "Stažení se nezdařilo. Zkontrolujte připojení.",

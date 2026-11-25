@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { icons } from '@/components/icons';
 import { useLatest } from '@/hooks/useLatest.ts';
-import { AttachmentError, fileExtension } from '@/lib/attachments.ts';
+import { AttachmentError, appMadeName, fileExtension } from '@/lib/attachments.ts';
 import { formatElapsed } from '@/lib/format.ts';
 import { insertAttachmentNode } from '../attachments/createAttachmentNode';
 import type { AttachmentDeps } from '../attachments/deps';
@@ -50,7 +50,7 @@ export function AudioRecorderHost({ editor, getDeps }: AudioRecorderHostProps) {
     try {
       const noteId = await d.getNoteId();
       const ext = fileExtension('audio', out.mime) ?? 'webm';
-      const file = new File([out.blob], `recording.${ext}`, { type: out.mime });
+      const file = new File([out.blob], appMadeName('audio', ext), { type: out.mime });
       // The recorder already measured this; persisting it is what lets a card
       // show a clip's length without decoding the audio on the feed.
       const att = await d.createAttachment(noteId, file, 'audio', {

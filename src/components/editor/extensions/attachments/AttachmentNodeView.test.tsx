@@ -40,9 +40,13 @@ function row(kind: AttachmentKind, mime: string, name: string, blob?: Blob): Att
   return { id: 'a1', noteId: 'n1', kind, mime, blob, name, createdAt: now, updatedAt: now };
 }
 
+/** Shows the values a key was given, so a test sees what a name interpolated. */
+const withValues = (k: string, o?: Record<string, unknown>) =>
+  [k, ...Object.values(o ?? {})].join(' ');
+
 function props(
   get: (id: string) => Promise<Attachment | undefined>,
-  opts: { isEditable?: boolean; deleteNode?: () => void } = {}
+  opts: { isEditable?: boolean; deleteNode?: () => void; t?: typeof withValues } = {}
 ) {
   const watchAttachment = liveRow(get);
   return {
@@ -50,13 +54,21 @@ function props(
     editor: { isEditable: opts.isEditable ?? true },
     deleteNode: opts.deleteNode ?? vi.fn(),
     extension: {
-      options: { getDeps: () => ({ watchAttachment, t: (k: string) => k }) },
+      options: { getDeps: () => ({ watchAttachment, t: opts.t ?? ((k: string) => k) }) },
     },
   } as unknown as ReactNodeViewProps;
 }
 
 describe.each(KINDS)('$kind node view through the shell', ({ kind, View, mime, name, ready }) => {
   const bytes = () => row(kind, mime, name, new Blob(['x'], { type: mime }));
+
+  it("names its delete button by the attachment's name", async () => {
+    render(<View {...props(async () => bytes(), { t: withValues })} />);
+
+    expect(
+      await screen.findByRole('button', { name: `editor.${kind}.delete ${name}` })
+    ).toBeInTheDocument();
+  });
 
   it('pulses while the row loads, then draws the ready element inside the same wrapper', async () => {
     let land!: (a: Attachment) => void;

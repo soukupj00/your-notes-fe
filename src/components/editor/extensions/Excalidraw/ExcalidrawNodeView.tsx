@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils.ts';
 import { AttachmentDeleteButton } from '../attachments/AttachmentDeleteButton';
 import { DownloadButton, useDownloadAttachment } from '../attachments/AttachmentNotDownloaded';
 import { AttachmentUnavailable } from '../attachments/AttachmentUnavailable';
+import { attachmentLabelName } from '../attachments/attachmentLabelName';
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentRow } from '../attachments/useAttachmentObjectUrl';
 
@@ -16,12 +17,13 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
   const editable = props.editor?.isEditable ?? false;
 
   const row = useAttachmentRow(attachmentId, deps.watchAttachment);
+  const name = attachmentLabelName('excalidraw', row, deps);
 
   // A sibling of the surface, not a child, so a delete tap never opens the canvas.
   const deleteButton = editable ? (
     <AttachmentDeleteButton
       onConfirm={() => props.deleteNode()}
-      label={deps.t('editor.excalidraw.delete')}
+      label={deps.t('editor.excalidraw.delete', { name })}
       t={deps.t}
       overlay
     />
@@ -69,7 +71,7 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
         {editable ? (
           <button
             type="button"
-            aria-label={deps.t('editor.excalidraw.edit')}
+            aria-label={deps.t('editor.excalidraw.edit', { name })}
             onClick={openEditor}
             contentEditable={false}
             className={cn(surfaceClass, 'cursor-pointer text-left')}
@@ -87,7 +89,7 @@ export function ExcalidrawNodeView(props: ReactNodeViewProps) {
           <DownloadButton
             busy={busy}
             onClick={() => void download()}
-            label={deps.t('editor.attachment.download')}
+            label={deps.t('editor.attachment.download', { name })}
             className="absolute bottom-2 left-2 bg-background/80 text-foreground backdrop-blur-sm"
           />
         )}

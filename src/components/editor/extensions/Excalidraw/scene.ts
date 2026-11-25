@@ -1,4 +1,4 @@
-import { fileExtension } from '@/lib/attachments.ts';
+import { appMadeName, fileExtension } from '@/lib/attachments.ts';
 
 /** `files` is Excalidraw's own embedded-asset map, kept verbatim. */
 export interface ExcalidrawScene {
@@ -27,7 +27,7 @@ export function sceneToFile(scene: ExcalidrawScene): File {
     ...scene,
     appState: withoutTransientAppState(scene.appState),
   };
-  const name = `drawing.${fileExtension('excalidraw', 'application/json')}`;
+  const name = appMadeName('excalidraw', fileExtension('excalidraw', 'application/json') ?? 'json');
   return new File([JSON.stringify(persistableScene)], name, { type: 'application/json' });
 }
 

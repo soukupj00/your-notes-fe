@@ -98,17 +98,17 @@
       "tooltip": "Insert image",
       "unavailable": "Image unavailable",
       "fallbackAlt": "Image",
-      "delete": "Delete image",
+      "delete": "Delete {{name}}",
       "label": "Image"
     },
     "audio": {
       "recording": "Recording",
-      "play": "Play",
-      "pause": "Pause",
-      "seek": "Seek",
+      "play": "Play {{name}}",
+      "pause": "Pause {{name}}",
+      "seek": "Seek {{name}}",
       "unavailable": "Audio unavailable",
       "tooltip": "Record audio",
-      "delete": "Delete audio",
+      "delete": "Delete {{name}}",
       "stop": "Stop",
       "cancel": "Cancel",
       "errors": {
@@ -122,22 +122,22 @@
     },
     "video": {
       "tooltip": "Attach video",
-      "delete": "Delete video",
+      "delete": "Delete {{name}}",
       "unavailable": "Video unavailable",
       "label": "Video"
     },
     "file": {
       "tooltip": "Attach file",
-      "open": "Open file",
-      "delete": "Delete file",
+      "open": "Open {{name}}",
+      "delete": "Delete {{name}}",
       "unavailable": "File unavailable",
       "fallbackName": "File",
       "label": "File"
     },
     "excalidraw": {
       "tooltip": "Insert drawing",
-      "delete": "Delete drawing",
-      "edit": "Edit drawing",
+      "delete": "Delete {{name}}",
+      "edit": "Edit {{name}}",
       "unavailable": "Drawing unavailable",
       "title": "Drawing",
       "save": "Save",
@@ -192,7 +192,8 @@
       }
     },
     "attachment": {
-      "download": "Download",
+      "madeAt": "{{kind}}, {{time}}",
+      "download": "Download {{name}}",
       "notDownloaded": "Not on this device yet",
       "notOnServer": "Not on the server yet. Try again in a moment.",
       "downloadFailed": "Could not download. Check your connection.",

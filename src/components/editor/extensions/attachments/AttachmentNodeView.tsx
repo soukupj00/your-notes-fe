@@ -2,17 +2,20 @@ import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils.ts';
+import type { AttachmentKind } from '@/models.ts';
 import { AttachmentDeleteButton } from './AttachmentDeleteButton';
 import { AttachmentNotDownloaded } from './AttachmentNotDownloaded';
 import { AttachmentUnavailable } from './AttachmentUnavailable';
+import { attachmentLabelName } from './attachmentLabelName';
 import type { AttachmentDeps } from './deps';
 import { type AttachmentUrlState, useAttachmentObjectUrl } from './useAttachmentObjectUrl';
 
 type ReadyAttachment = Extract<AttachmentUrlState, { status: 'ready' }>;
 
-/** The three i18n keys a kind supplies: its delete label, its missing label, and the name
- *  shown for a row that has none. */
+/** A kind's copy: its delete label, its missing label, and the name shown for a row that has
+ *  none. */
 export interface AttachmentNodeCopy {
+  kind: AttachmentKind;
   delete: string;
   unavailable: string;
   fallbackName: string;
@@ -48,7 +51,9 @@ export function AttachmentNodeView({
   const deleteButton = canDelete ? (
     <AttachmentDeleteButton
       onConfirm={() => props.deleteNode()}
-      label={deps.t(copy.delete)}
+      label={deps.t(copy.delete, {
+        name: attachmentLabelName(copy.kind, 'attachment' in state ? state.attachment : null, deps),
+      })}
       t={deps.t}
       overlay
     />

@@ -149,6 +149,9 @@ All five kinds (image, audio, video, file, Excalidraw) are custom nodes from one
   An image shows its thumbnail with a download button; other kinds show a card.
   The Card on the feed never downloads.
 - An image's and a video's pixel size is stored at insert, so the box is reserved before the bytes land.
+- **Each control is named by its attachment** (`attachmentLabelName`), so two clips in a Note are not two "Play" buttons.
+  The app names every recording and drawing alike (`appMadeName` in `src/lib/attachments.ts`), as a browser names every pasted picture and an iPhone every camera shot (`image.png`, `image.jpg`).
+  Those are named by their kind and their row's time to the second instead; a drawing's row is its last Save.
 
 ### Audio
 

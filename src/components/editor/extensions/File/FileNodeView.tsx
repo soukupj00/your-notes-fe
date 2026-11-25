@@ -1,8 +1,10 @@
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { icons } from '@/components/icons';
 import { type AttachmentNodeCopy, AttachmentNodeView } from '../attachments/AttachmentNodeView';
+import { attachmentLabelName } from '../attachments/attachmentLabelName';
 
 const COPY: AttachmentNodeCopy = {
+  kind: 'file',
   delete: 'editor.file.delete',
   unavailable: 'editor.file.unavailable',
   fallbackName: 'editor.file.fallbackName',
@@ -28,7 +30,9 @@ export function FileNodeView(props: ReactNodeViewProps) {
             download={state.name ?? ''}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label={deps.t('editor.file.open')}
+            aria-label={deps.t('editor.file.open', {
+              name: attachmentLabelName('file', state.attachment, deps),
+            })}
             className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-accent-foreground"
           >
             <DownloadIcon className="size-4" />

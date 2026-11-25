@@ -26,17 +26,32 @@ function att(): Attachment {
     updatedAt: now,
   };
 }
-function props(get: (i: string) => Promise<Attachment | undefined>) {
+/** Shows the values a key was given, so a test sees what a name interpolated. */
+const withValues = (k: string, o?: Record<string, unknown>) =>
+  [k, ...Object.values(o ?? {})].join(' ');
+
+function props(
+  get: (i: string) => Promise<Attachment | undefined>,
+  t: typeof withValues = (k) => k
+) {
   const watchAttachment = liveRow(get);
   return {
     node: { attrs: { attachmentId: 'f1' } },
     extension: {
-      options: { getDeps: () => ({ watchAttachment, t: (k: string) => k }) },
+      options: { getDeps: () => ({ watchAttachment, t }) },
     },
   } as unknown as Parameters<typeof FileNodeView>[0];
 }
 
 describe('FileNodeView', () => {
+  it("names its open link by the file's name", async () => {
+    render(<FileNodeView {...props(async () => att(), withValues)} />);
+
+    expect(
+      await screen.findByRole('link', { name: 'editor.file.open report.pdf' })
+    ).toBeInTheDocument();
+  });
+
   it('shows the filename and an open link at the resolved object URL', async () => {
     render(<FileNodeView {...props(async () => att())} />);
     expect(await screen.findByText('report.pdf')).toBeInTheDocument();

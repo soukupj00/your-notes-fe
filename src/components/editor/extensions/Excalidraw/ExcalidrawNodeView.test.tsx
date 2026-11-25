@@ -28,6 +28,7 @@ function props(
     openExcalidraw?: () => void;
     deleteNode?: () => void;
     downloadAttachment?: (id: string) => Promise<boolean>;
+    t?: (k: string, o?: Record<string, unknown>) => string;
   } = {}
 ) {
   const openExcalidraw = over.openExcalidraw ?? vi.fn();
@@ -43,7 +44,7 @@ function props(
           openExcalidraw,
           watchAttachment,
           downloadAttachment,
-          t: (k: string) => k,
+          t: over.t ?? ((k: string) => k),
         }),
       },
     },
@@ -54,6 +55,23 @@ function props(
 afterEach(clearStore);
 
 describe('ExcalidrawNodeView (preview)', () => {
+  // Every drawing is stored as `drawing.excalidraw.json`, so the name says when it was saved.
+  it('names its controls by the kind and the time, which tell two drawings apart', async () => {
+    await testStore.attachments.add(att({ name: 'drawing.excalidraw.json' }));
+    const t = (k: string, o?: Record<string, unknown>) => [k, ...Object.values(o ?? {})].join(' ');
+    render(<ExcalidrawNodeView {...props({ t }).p} />);
+
+    const edit = await screen.findByRole('button', {
+      name: /^editor\.excalidraw\.edit editor\.attachment\.madeAt editor\.excalidraw\.label \S/,
+    });
+    expect(edit).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {
+        name: /^editor\.excalidraw\.delete editor\.attachment\.madeAt /,
+      })
+    ).toBeInTheDocument();
+  });
+
   it('a drawing synced without its scene shows the preview and downloads before opening', async () => {
     const remote = att();
     delete remote.blob;
