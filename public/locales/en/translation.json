@@ -495,7 +495,6 @@
     "trashEmptied_other": "Deleted {{count}} notes",
     "undo": "Undo",
     "view": {
-      "toggle": "Toggle layout",
       "masonry": "Masonry view",
       "stack": "Stack view"
     },

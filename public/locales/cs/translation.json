@@ -503,7 +503,6 @@
     "trashEmptied_other": "Smazáno {{count}} poznámek",
     "undo": "Zpět",
     "view": {
-      "toggle": "Přepnout rozvržení",
       "masonry": "Mřížkové zobrazení",
       "stack": "Zobrazení v jednom sloupci"
     },
