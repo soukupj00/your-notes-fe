@@ -5,13 +5,7 @@ import { XIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DeleteButton, SaveButton } from '@/components/ui/EntityActionButtons';
 import type { TFunction } from '../button-types';
 import { type ExcalidrawScene, emptyScene } from './scene';
@@ -205,10 +199,6 @@ export function ExcalidrawDialog({
         >
           <DialogHeader className="flex shrink-0 flex-row items-center gap-2 space-y-0 border-b p-3 text-left">
             <DialogTitle className="flex-1">{t('editor.excalidraw.title')}</DialogTitle>
-            {/* Description is required by Radix for a11y; the title says enough. */}
-            <DialogDescription className="sr-only">
-              {t('editor.excalidraw.title')}
-            </DialogDescription>
             <SaveButton
               size="sm"
               label={t('editor.excalidraw.save')}

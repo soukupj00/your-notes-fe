@@ -9,7 +9,7 @@ import {
 import { QuickCaptureBar } from '@/components/notes/QuickCaptureBar.tsx';
 import { useOpenerFocus } from '@/components/notes/useOpenerFocus.ts';
 import { TagFilterBar } from '@/components/tags/TagFilterBar.tsx';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog.tsx';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import type { NoteFeedScope } from '@/hooks/data/useNoteFeed.ts';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount.ts';
@@ -108,9 +108,6 @@ export function NotesView({
                 className="flex items-center justify-center"
               >
                 <DialogTitle className="sr-only">{t('notes.loadingEditor')}</DialogTitle>
-                <DialogDescription className="sr-only">
-                  {t('notes.loadingEditor')}
-                </DialogDescription>
                 <div className="flex items-center gap-2" role="status" aria-busy>
                   <Spinner className="size-6" />
                   <span>{t('notes.loadingEditor')}</span>

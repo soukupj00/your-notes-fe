@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button.tsx';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -91,8 +90,6 @@ function TextPromptDialog({ request, t, onAnswer, onClosed }: TextPromptDialogPr
         >
           <DialogHeader>
             <DialogTitle>{request.title}</DialogTitle>
-            {/* Radix requires a description; the title says enough. */}
-            <DialogDescription className="sr-only">{request.title}</DialogDescription>
           </DialogHeader>
           <Input
             autoFocus
