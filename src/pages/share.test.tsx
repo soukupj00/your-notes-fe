@@ -10,6 +10,7 @@ vi.mock('react-i18next', () => ({
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 const AT = '2026-09-28T10:00:00.000Z';
@@ -94,6 +95,27 @@ describe('/share/$token', () => {
     expect(container.querySelector('script')).toBeNull();
     expect(container.innerHTML).not.toContain('onerror');
     expect(container.innerHTML).not.toContain('javascript:');
+  });
+
+  it('mounts the sanitized body as nodes, never re-parsing it from a string', async () => {
+    const token = await shared({
+      header: 'Nodes',
+      body:
+        '<p>Pack <a href="https://example.com">this</a></p>' +
+        `<excalidraw-drawing data-attachment-id="${DRAWING}"></excalidraw-drawing>`,
+      attachments: [meta(DRAWING, 'excalidraw', { preview: '<svg><rect/></svg>' })],
+    });
+    const reparses = [
+      vi.spyOn(Element.prototype, 'innerHTML', 'set'),
+      vi.spyOn(Element.prototype, 'insertAdjacentHTML'),
+      vi.spyOn(Range.prototype, 'createContextualFragment'),
+    ];
+    render(<SharePage token={token} />);
+    await screen.findByRole('heading', { name: 'Nodes' });
+
+    expect(screen.getByRole('link', { name: 'this' })).toBeVisible();
+    expect(screen.getByRole('img', { name: 'notes.attachmentDrawing' })).toBeVisible();
+    for (const reparse of reparses) expect(reparse).not.toHaveBeenCalled();
   });
 
   it("keeps a Drawing's picture and drops a `<use>` that reaches outside it", async () => {

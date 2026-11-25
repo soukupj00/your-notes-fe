@@ -1,6 +1,6 @@
-import { useId, useMemo, useState } from 'react';
+import { useCallback, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { sharedBodyMarkup } from '@/components/share/sharedBody.ts';
+import { sharedBodyNodes } from '@/components/share/sharedBody.ts';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import type { SharedNote } from '@/contract/index.ts';
 import { fetchSharedNote } from '@/data/http/publicShare.ts';
@@ -65,9 +65,16 @@ function SharedNoteView({ shared }: { shared: SharedNote }) {
   const fileFallbackName = t('editor.file.fallbackName');
   const drawingFallbackName = t('notes.attachmentDrawing');
   const newTabHintId = useId();
-  const markup = useMemo(
-    () => sharedBodyMarkup(shared, { fileFallbackName, drawingFallbackName, newTabHintId }),
+  const nodes = useMemo(
+    () => sharedBodyNodes(shared, { fileFallbackName, drawingFallbackName, newTabHintId }),
     [shared, fileFallbackName, drawingFallbackName, newTabHintId]
+  );
+  // Moving the same nodes in again is harmless, so a repeated ref call (Strict Mode) keeps the Body.
+  const mountBody = useCallback(
+    (el: HTMLDivElement | null) => {
+      el?.replaceChildren(...nodes);
+    },
+    [nodes]
   );
   const header = shared.note.header?.trim();
 
@@ -84,11 +91,7 @@ function SharedNoteView({ shared }: { shared: SharedNote }) {
       >
         {header || t('share.page.untitled')}
       </h1>
-      <div
-        className="prose max-w-none text-foreground"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized by `sharedBodyMarkup` with the app's Body configuration.
-        dangerouslySetInnerHTML={{ __html: markup }}
-      />
+      <div ref={mountBody} className="prose max-w-none text-foreground" />
       {/* A description rather than words in the link, so copying the Note's text leaves it out. */}
       <span id={newTabHintId} hidden>
         {t('nav.newTab')}
