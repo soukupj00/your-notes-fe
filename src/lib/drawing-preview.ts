@@ -6,13 +6,17 @@ import DOMPurify from 'dompurify';
  * so it can neither reach outside the preview nor grow a chain of clones.
  */
 export function sanitizeDrawingPreview(svg: string): string {
+  const host = document.createElement('div');
+  host.append(sanitizeDrawingPreviewToNodes(svg));
+  return host.innerHTML;
+}
+
+export function sanitizeDrawingPreviewToNodes(svg: string): DocumentFragment {
   const fragment = DOMPurify.sanitize(svg, { ADD_TAGS: ['use'], RETURN_DOM_FRAGMENT: true });
   for (const use of fragment.querySelectorAll('use')) {
     if (!placesAPicture(use)) use.remove();
   }
-  const host = document.createElement('div');
-  host.append(fragment);
-  return host.innerHTML;
+  return fragment;
 }
 
 /** Outside the definitions, naming a symbol of the same SVG that holds pictures and nothing else. */

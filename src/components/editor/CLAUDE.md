@@ -167,7 +167,7 @@ All five kinds (image, audio, video, file, Excalidraw) are custom nodes from one
 ### Excalidraw
 
 - The scene is a JSON blob with a cached SVG preview; the node view is a passive preview with tap-to-edit.
-- Every place that draws a preview (the node view, the Card, the Share Link page) sanitizes it with `sanitizeDrawingPreview` (`lib/drawing-preview.ts`).
+- Every place that draws a preview (the node view, the Card, the Share Link page) sanitizes it through `lib/drawing-preview.ts`; the Share Link page takes the nodes (`sanitizeDrawingPreviewToNodes`), so a stranger's preview is never parsed twice.
   Excalidraw draws a picture once as a `<symbol>` and places it with `<use>`, which DOMPurify's defaults drop, so plain `DOMPurify.sanitize` loses every picture.
   A `<use>` is kept only outside the definitions and only when it names a `<symbol>` of pictures in the same SVG, so a hostile preview can neither reach outside itself nor nest clones until the tab hangs.
 - One shared `ExcalidrawDialog`, lazy-loaded when a drawing first opens, holds the live canvas.

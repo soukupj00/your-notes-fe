@@ -6,10 +6,16 @@ import { cn } from '@/lib/utils.ts';
 
 /**
  * The one sanitizer configuration for a Body's HTML, shared with the public
- * Share Link page (`SharedNoteBody`), where the Body is a stranger's input.
+ * Share Link page (`sharedBody.ts`), where the Body is a stranger's input.
  */
+const BODY_SANITIZE = { ADD_TAGS: ['excalidraw-drawing'] };
+
 export function sanitizeBody(html: string): string {
-  return DOMPurify.sanitize(html, { ADD_TAGS: ['excalidraw-drawing'] });
+  return DOMPurify.sanitize(html, BODY_SANITIZE);
+}
+
+export function sanitizeBodyToNodes(html: string): DocumentFragment {
+  return DOMPurify.sanitize(html, { ...BODY_SANITIZE, RETURN_DOM_FRAGMENT: true });
 }
 
 /**

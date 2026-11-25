@@ -10,6 +10,7 @@ vi.mock('react-i18next', () => ({
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 const AT = '2026-09-28T10:00:00.000Z';
@@ -72,11 +73,14 @@ describe('/share/$token', () => {
       `/api/public/shares/${token}/blobs/${FILE}`
     );
     const external = screen.getByRole('link', { name: 'this' });
+    expect(external).toHaveAccessibleDescription('nav.newTab');
     expect(external).toHaveAttribute('target', '_blank');
     expect(external).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(screen.getByRole('link', { name: 'tickets.pdf' })).toHaveAccessibleDescription('');
     // The node the Note does not list is gone rather than pointed anywhere.
     expect(container.querySelectorAll('img')).toHaveLength(1);
-    expect(screen.getByText('share.page.footer')).toBeVisible();
+    expect(screen.getByRole('contentinfo')).toHaveTextContent('share.page.footer');
+    expect(screen.getByRole('main')).not.toContainElement(screen.getByRole('contentinfo'));
     expect(container.querySelector('[contenteditable]')).toBeNull();
   });
 
@@ -91,6 +95,27 @@ describe('/share/$token', () => {
     expect(container.querySelector('script')).toBeNull();
     expect(container.innerHTML).not.toContain('onerror');
     expect(container.innerHTML).not.toContain('javascript:');
+  });
+
+  it('mounts the sanitized body as nodes, never re-parsing it from a string', async () => {
+    const token = await shared({
+      header: 'Nodes',
+      body:
+        '<p>Pack <a href="https://example.com">this</a></p>' +
+        `<excalidraw-drawing data-attachment-id="${DRAWING}"></excalidraw-drawing>`,
+      attachments: [meta(DRAWING, 'excalidraw', { preview: '<svg><rect/></svg>' })],
+    });
+    const reparses = [
+      vi.spyOn(Element.prototype, 'innerHTML', 'set'),
+      vi.spyOn(Element.prototype, 'insertAdjacentHTML'),
+      vi.spyOn(Range.prototype, 'createContextualFragment'),
+    ];
+    render(<SharePage token={token} />);
+    await screen.findByRole('heading', { name: 'Nodes' });
+
+    expect(screen.getByRole('link', { name: 'this' })).toBeVisible();
+    expect(screen.getByRole('img', { name: 'notes.attachmentDrawing' })).toBeVisible();
+    for (const reparse of reparses) expect(reparse).not.toHaveBeenCalled();
   });
 
   it("keeps a Drawing's picture and drops a `<use>` that reaches outside it", async () => {
@@ -108,6 +133,40 @@ describe('/share/$token', () => {
 
     const hrefs = [...container.querySelectorAll('use')].map((use) => use.getAttribute('href'));
     expect(hrefs).toEqual(['#image-1']);
+  });
+
+  it("opens a link inside a Drawing's preview in a new tab", async () => {
+    const token = await shared({
+      header: 'Linked',
+      body: `<excalidraw-drawing data-attachment-id="${DRAWING}"></excalidraw-drawing>`,
+      attachments: [
+        meta(DRAWING, 'excalidraw', {
+          preview: '<svg><a href="https://example.com/plan"><rect/></a></svg>',
+        }),
+      ],
+    });
+    const { container } = render(<SharePage token={token} />);
+    await screen.findByRole('heading', { name: 'Linked' });
+
+    const link = container.querySelector('svg a');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it.each([
+    ['no name', undefined, 'notes.attachmentDrawing'],
+    ["the app's own name", 'drawing.excalidraw', 'notes.attachmentDrawing'],
+    ["the user's name", 'Floor plan.excalidraw', 'Floor plan.excalidraw'],
+  ])('names a Drawing with %s as a picture', async (_, name, expected) => {
+    const token = await shared({
+      header: 'Sketch',
+      body: `<excalidraw-drawing data-attachment-id="${DRAWING}"></excalidraw-drawing>`,
+      attachments: [meta(DRAWING, 'excalidraw', { name, preview: '<svg><rect/></svg>' })],
+    });
+    render(<SharePage token={token} />);
+
+    const drawing = await screen.findByRole('img', { name: expected });
+    expect(drawing.querySelector('svg rect')).not.toBeNull();
   });
 
   it('a revoked, unknown or trashed share says nothing is shared', async () => {
