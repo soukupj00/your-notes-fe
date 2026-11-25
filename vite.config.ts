@@ -142,6 +142,9 @@ export default defineConfig({
       manifest: {
         name: 'YourNotes',
         short_name: 'YourNotes',
+        // The app's identity, apart from its launch URL. It equals the id installs computed before
+        // it was set; any other value would orphan them.
+        id: '/',
         start_url: '/',
         display: 'standalone',
         // The dark `--canvas` from `globals.css`, since the app opens dark. A manifest cannot read
