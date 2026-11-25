@@ -1,9 +1,10 @@
 import { Palette } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NoteColorPicker } from '@/components/color-picker/NoteColorPicker.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
 import { IconTooltip } from '@/components/ui/tooltip.tsx';
+import { labelledWith } from '@/lib/accessible-name.ts';
 
 interface NoteColorButtonProps {
   /** The stored palette token, or undefined for "no colour". */
@@ -11,21 +12,25 @@ interface NoteColorButtonProps {
   onChange: (color?: string) => void;
   /** The owning surface's icon-button style (see `lib/note-controls.ts`). */
   className?: string;
+  /** The Card's name, added after the label; an open Note's bar holds one Note and passes none. */
+  nameId?: string;
 }
 
 /**
  * Shared rather than repeated, so the grid's accessibility (per-swatch names, its own
  * `TooltipProvider`, 44px swatches) is the same on every surface that recolours a note.
  */
-export function NoteColorButton({ value, onChange, className }: NoteColorButtonProps) {
+export function NoteColorButton({ value, onChange, className, nameId }: NoteColorButtonProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const ownId = useId();
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <IconTooltip label={t('notes.color')}>
         <PopoverTrigger
           aria-label={t('notes.color')}
+          {...labelledWith(ownId, nameId)}
           // Every mount sits inside a larger click target (the card opens the editor,
           // the dialog forwards stray clicks into the body), so the trigger keeps its click.
           onClick={(e) => e.stopPropagation()}

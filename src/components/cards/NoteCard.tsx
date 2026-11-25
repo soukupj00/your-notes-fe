@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { CardActions } from '@/components/cards/CardActions.tsx';
 import { CardMedia } from '@/components/cards/CardMedia.tsx';
 import { CardPin } from '@/components/cards/CardPin.tsx';
+import { untitledCardName } from '@/components/cards/untitledCardName.ts';
 import { NoteBody } from '@/components/NoteBody.tsx';
 import { ReminderChip } from '@/components/reminders/ReminderChip.tsx';
 import { TagPills } from '@/components/tags/TagPills.tsx';
@@ -137,7 +138,8 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
   }, [select, hasProse]);
 
   const title = note.header?.trim();
-  const titleId = useId();
+  // Every control on the Card ends its name with this, so a wall of Cards has no two alike.
+  const nameId = useId();
 
   return (
     <Card
@@ -157,10 +159,13 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
         ref={openRef}
         data-slot="note-card-open"
         className="pointer-events-none absolute inset-0 -z-10 opacity-0"
-        aria-labelledby={title ? titleId : undefined}
-      >
-        {title ? null : t('notes.editNoteTitle')}
-      </button>
+        aria-labelledby={nameId}
+      />
+      {!title && (
+        <span id={nameId} hidden>
+          {untitledCardName(note.body, t)}
+        </span>
+      )}
 
       {/* Only this layer scales (DESIGN.md, Scale-The-Surface-Never-The-Text Rule). */}
       <div
@@ -179,16 +184,23 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
         <CardPin
           pinned={Boolean(note.pinnedAt)}
           onToggle={note.pinnedAt ? handleUnpin : handlePin}
+          nameId={nameId}
         />
       )}
 
       <div className="relative z-10 p-[var(--card-pad)] coarse:pb-1">
         {/* Above the title: how a note looks is the fastest way to recognise it in a wall. */}
-        <CardMedia noteId={note.id} body={note.body} attachments={attachments} onOpen={select} />
+        <CardMedia
+          noteId={note.id}
+          body={note.body}
+          attachments={attachments}
+          onOpen={select}
+          nameId={nameId}
+        />
 
         {title && (
           <h2
-            id={titleId}
+            id={nameId}
             dir="auto"
             className="wrap-break-word mb-1.5 line-clamp-3 min-w-0 max-w-full text-pretty pe-9 font-display text-foreground text-title"
           >
@@ -213,7 +225,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, attachments, onSelect 
 
           <TagPills tags={tags} maxVisible={3} className="min-w-0" />
 
-          <CardActions note={note} />
+          <CardActions note={note} nameId={nameId} />
         </div>
       </div>
     </Card>

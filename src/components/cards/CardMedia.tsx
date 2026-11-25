@@ -1,10 +1,11 @@
 import { FileText, Play } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useId, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { OverflowCount } from '@/components/ui/OverflowCount.tsx';
 import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { type NoteAttachments, useNoteAttachments } from '@/hooks/data/useNoteAttachments.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
+import { labelledWith } from '@/lib/accessible-name.ts';
 import { type BodyAttachment, extractBodyAttachments } from '@/lib/body.ts';
 import { sanitizeDrawingPreview } from '@/lib/drawing-preview.ts';
 import { formatBytes, formatDuration, formatFileType } from '@/lib/format.ts';
@@ -244,19 +245,23 @@ function AudioRow({
   extra,
   duration,
   onActivate,
+  nameId,
 }: {
   extra: number;
   duration: string | null;
   onActivate: () => void;
+  nameId: string;
 }) {
   const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
+  const ownId = useId();
 
   return (
     <div data-slot="card-media-audio" className={cn(BLOCK, 'flex items-center gap-2 px-2 py-1.5')}>
       <button
         type="button"
         aria-label={t('notes.playAudio')}
+        {...labelledWith(ownId, nameId)}
         onClick={(event) => {
           event.stopPropagation();
           onActivate();
@@ -322,6 +327,8 @@ interface CardMediaProps {
   onOpen: (intent?: Intent) => void;
   /** Rows the feed already joined on; absent means the card resolves its own. */
   attachments?: NoteAttachments;
+  /** The Card's name, added after the play button's label. */
+  nameId: string;
 }
 
 /**
@@ -329,7 +336,7 @@ interface CardMediaProps {
  * into one player, files into one row, each with a `+N`. A card's height then follows the layout,
  * not what was attached, which keeps the wall scannable.
  */
-export function CardMedia({ noteId, body, onOpen, attachments }: CardMediaProps) {
+export function CardMedia({ noteId, body, onOpen, attachments, nameId }: CardMediaProps) {
   const refs = useMemo(() => extractBodyAttachments(body), [body]);
   // Skip the query when the feed already joined the rows on, and when the Body
   // references nothing at all - most of a feed is prose.
@@ -362,6 +369,7 @@ export function CardMedia({ noteId, body, onOpen, attachments }: CardMediaProps)
           extra={audio.length - 1}
           duration={formatDuration(audio[0].row?.duration)}
           onActivate={() => onOpen({ kind: 'play' })}
+          nameId={nameId}
         />
       )}
 

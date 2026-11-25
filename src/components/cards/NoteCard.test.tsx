@@ -101,16 +101,11 @@ describe('NoteCard', () => {
     expect(screen.queryByRole('button', { name: /My note.+notes\./ })).not.toBeInTheDocument();
   });
 
-  it('puts the open button first in the tab order, and names an untitled one', async () => {
-    render(<NoteCard note={makeNote({ header: '' })} onSelect={vi.fn()} />);
+  it('puts the open button first in the tab order', async () => {
+    render(<NoteCard note={makeNote()} onSelect={vi.fn()} />);
 
     await userEvent.tab();
-    expect(screen.getByRole('button', { name: 'notes.editNoteTitle' })).toHaveFocus();
-  });
-
-  it('names a whitespace-only title as untitled', () => {
-    render(<NoteCard note={makeNote({ header: '   ' })} onSelect={vi.fn()} />);
-    expect(screen.getByRole('button', { name: 'notes.editNoteTitle' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'My note' })).toHaveFocus();
   });
 
   it('focuses the open button on a click, so closing the editor returns focus here', async () => {
@@ -126,7 +121,7 @@ describe('NoteCard', () => {
 
     // Focus a rail control and press Enter: it runs its own action, and its click
     // must not bubble to the Card's `onClick` and open the editor too.
-    screen.getByRole('button', { name: 'notes.color' }).focus();
+    screen.getByRole('button', { name: 'notes.color My note' }).focus();
     await userEvent.keyboard('{Enter}');
 
     expect(onSelect).not.toHaveBeenCalled();
@@ -145,7 +140,7 @@ describe('NoteCard', () => {
     await testStore.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'notes.moveToTrash' }));
+    await userEvent.click(screen.getByRole('button', { name: 'notes.moveToTrash My note' }));
 
     await waitFor(async () => expect((await testStore.notes.get(note.id))?.state).toBe('trashed'));
     // Trashing is recoverable - the row must still be there.
@@ -167,7 +162,7 @@ describe('NoteCard', () => {
     await testStore.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'notes.pin' }));
+    await userEvent.click(screen.getByRole('button', { name: 'notes.pin My note' }));
 
     await waitFor(async () =>
       expect((await testStore.notes.get(note.id))?.pinnedAt).toEqual(expect.any(String))
@@ -185,7 +180,7 @@ describe('NoteCard', () => {
     await testStore.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    const pin = screen.getByRole('button', { name: 'notes.pin', pressed: true });
+    const pin = screen.getByRole('button', { name: 'notes.pin My note', pressed: true });
 
     await userEvent.click(pin);
 
@@ -201,7 +196,7 @@ describe('NoteCard', () => {
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
     const card = screen.getByRole('heading', { name: 'My note' }).closest('[data-slot="card"]');
-    const pin = screen.getByRole('button', { name: 'notes.pin' });
+    const pin = screen.getByRole('button', { name: 'notes.pin My note' });
     expect(pin.parentElement).toBe(card);
   });
 
@@ -211,7 +206,7 @@ describe('NoteCard', () => {
     const onSelect = vi.fn();
     render(<NoteCard note={note} onSelect={onSelect} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'notes.pin' }));
+    await userEvent.click(screen.getByRole('button', { name: 'notes.pin My note' }));
 
     expect(onSelect).not.toHaveBeenCalled();
   });
@@ -236,7 +231,7 @@ describe('NoteCard', () => {
   it('hides the pin where pinning is meaningless', () => {
     render(<NoteCard note={makeNote({ state: 'archived' })} onSelect={vi.fn()} />);
 
-    expect(screen.queryByRole('button', { name: 'notes.pin' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'notes.pin My note' })).not.toBeInTheDocument();
   });
 
   it('archives an active note from the foot rail', async () => {
@@ -244,7 +239,7 @@ describe('NoteCard', () => {
     await testStore.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'notes.archive' }));
+    await userEvent.click(screen.getByRole('button', { name: 'notes.archive My note' }));
 
     await waitFor(async () => expect((await testStore.notes.get(note.id))?.state).toBe('archived'));
     expect(toastMock).toHaveBeenCalledWith('notes.archived', expect.anything());
@@ -255,7 +250,7 @@ describe('NoteCard', () => {
     await testStore.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'notes.color' }));
+    await userEvent.click(screen.getByRole('button', { name: 'notes.color My note' }));
     await userEvent.click(await screen.findByRole('button', { name: 'colors.blue' }));
 
     await waitFor(async () => expect((await testStore.notes.get(note.id))?.color).toBe('blue'));
@@ -267,7 +262,7 @@ describe('NoteCard', () => {
     const onSelect = vi.fn();
     render(<NoteCard note={note} onSelect={onSelect} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'notes.color' }));
+    await userEvent.click(screen.getByRole('button', { name: 'notes.color My note' }));
     expect(onSelect).not.toHaveBeenCalled();
   });
 
@@ -284,8 +279,8 @@ describe('NoteCard', () => {
     await testStore.notes.add(note);
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    expect(screen.queryByRole('button', { name: 'notes.archive' })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'notes.restore' }));
+    expect(screen.queryByRole('button', { name: 'notes.archive My note' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'notes.restore My note' }));
 
     await waitFor(async () => expect((await testStore.notes.get(note.id))?.state).toBe('active'));
   });
@@ -328,7 +323,9 @@ describe('NoteCard', () => {
     const note = makeNote({ header: '', body: '<audio data-attachment-id="au1"></audio>' });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'notes.playAudio' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'notes.playAudio notes.attachmentAudio' })
+    ).toBeInTheDocument();
   });
 
   it('collapses several voice notes into one player carrying a +N', () => {
@@ -337,7 +334,7 @@ describe('NoteCard', () => {
     });
     render(<NoteCard note={note} onSelect={vi.fn()} />);
 
-    expect(screen.getAllByRole('button', { name: 'notes.playAudio' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'notes.playAudio My note' })).toHaveLength(1);
     expect(screen.getByText('+2')).toBeInTheDocument();
   });
 
@@ -346,7 +343,7 @@ describe('NoteCard', () => {
     const onSelect = vi.fn();
     render(<NoteCard note={note} onSelect={onSelect} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'notes.playAudio' }));
+    await userEvent.click(screen.getByRole('button', { name: 'notes.playAudio My note' }));
     expect(onSelect).toHaveBeenCalledWith(note.id, { kind: 'play' });
     expect(onSelect).toHaveBeenCalledTimes(1);
 
@@ -360,7 +357,9 @@ describe('NoteCard', () => {
   it('renders no media summary at all when the note has no attachments', () => {
     render(<NoteCard note={makeNote()} onSelect={vi.fn()} />);
 
-    expect(screen.queryByRole('button', { name: 'notes.playAudio' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'notes.playAudio My note' })
+    ).not.toBeInTheDocument();
     expect(document.querySelector('[data-slot="card-media"]')).not.toBeInTheDocument();
   });
 

@@ -436,6 +436,7 @@
     "titlePlaceholder": "Název",
     "newNoteTitle": "Nová poznámka",
     "editNoteTitle": "Upravit poznámku",
+    "untitled": "Poznámka bez názvu",
     "editNamedNoteTitle": "Upravit poznámku: {{title}}",
     "loadingEditor": "Načítám editor…",
     "create": "Vytvořit poznámku",

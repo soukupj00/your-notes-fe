@@ -429,6 +429,7 @@
     "titlePlaceholder": "Title",
     "newNoteTitle": "New note",
     "editNoteTitle": "Edit note",
+    "untitled": "Untitled Note",
     "editNamedNoteTitle": "Edit note: {{title}}",
     "loadingEditor": "Loading editor…",
     "create": "Create note",

@@ -1,11 +1,14 @@
 import { Pin } from 'lucide-react';
+import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
+import { labelledWith } from '@/lib/accessible-name.ts';
 import { cn } from '@/lib/utils.ts';
 
 interface CardPinProps {
   pinned: boolean;
   onToggle: () => void;
+  nameId: string;
 }
 
 /**
@@ -13,15 +16,17 @@ interface CardPinProps {
  * Rule). Pinned is chrome, so it takes the accent: the note's own colour would vanish on a card
  * of that colour.
  */
-export function CardPin({ pinned, onToggle }: CardPinProps) {
+export function CardPin({ pinned, onToggle, nameId }: CardPinProps) {
   const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
+  const ownId = useId();
 
   return (
     <button
       type="button"
       data-slot="note-card-pin"
       aria-label={t('notes.pin')}
+      {...labelledWith(ownId, nameId)}
       aria-pressed={pinned}
       // A click on the card opens the editor; pinning must not also open it.
       onClick={(e) => {
