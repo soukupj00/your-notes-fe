@@ -13,9 +13,11 @@ import { useSidebarOpen } from '@/hooks/useSidebarOpen.ts';
 
 function SkipToContentLink({ children }: { children: React.ReactNode }) {
   return (
+    // Parked above the screen, not `sr-only`: `not-sr-only` resets `fixed` to `static` and the
+    // padding to 0, which stretched it into a full-height column of the shell.
     <a
       href="#main-content"
-      className="sr-only fixed top-2 left-2 z-50 -translate-y-full rounded-md bg-primary px-3 py-2 text-primary-foreground text-sm shadow-lg transition-transform focus:not-sr-only focus:translate-y-0"
+      className="fixed top-2 left-2 z-50 -translate-y-[200%] rounded-md bg-primary px-3 py-2 text-primary-foreground text-sm shadow-lg transition-transform focus:translate-y-0"
     >
       {children}
     </a>
