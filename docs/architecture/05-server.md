@@ -61,6 +61,10 @@ The brief commits to REST + HATEOAS, and ADR 0017 is what keeps that honest: not
 ## Security posture (for the paper's threat model)
 
 - **In scope**: session revocation per Device, `HttpOnly` cookies (no script-readable credentials), closed registration + Invites, origin isolation between servers, TLS in all three modes.
+- **A Content Security Policy** on the app document, a `<meta>` the build adds (`vite.config.ts`).
+  Scripts, styles, fonts, pictures and connections come from this origin only, so markup that slips past DOMPurify runs no script and reaches no other origin, and NFR2 is enforced rather than only observed.
+  Its exceptions: inline styles, because the Body's colour and font marks and KaTeX's output are `style` attributes; `'wasm-unsafe-eval'` for the WebAssembly in pica, which resizes a picture inserted into a Drawing, and in Excalidraw's font subsetting; `'unsafe-eval'` for the subsetter's generated glue code, without which a Drawing's preview embeds whole fonts; `blob:` workers for fflate and pica; `blob:` and `data:` pictures and media for local files; `data:` fonts, which an exported drawing embeds.
+  A `<meta>` policy cannot set `frame-ancestors`; behind the server its `X-Frame-Options: DENY` covers framing, while the frontend-only `nginx.conf` and `vercel.json` send no framing header.
 - **Out of scope, documented rather than hand-waved**: end-to-end encryption. E2EE here would protect the server disk while the devices' IndexedDB and the zip backup stay plaintext - it defends only against an attacker who has the server but no device, on a box in the user's own home. Its real cost is recovery: with no email and no reset, a forgotten password means permanent total loss, and the Owner's member-password reset becomes an act of destruction. Recorded as future work; the setup guide states the household caveat plainly: *the person who runs the server can read the database*.
 - Certificates remain the one honestly hard step; the design removes the typed-IP screen and the whole CORS failure class, not the physics of TLS on a home network.
 

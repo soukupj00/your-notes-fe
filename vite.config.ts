@@ -42,8 +42,60 @@ function excalidrawFonts(): Plugin {
   };
 }
 
+/** Why each source is allowed: docs/architecture/05-server.md, "Security posture". */
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' blob: data:",
+  "media-src 'self' blob:",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'self'",
+].join('; ');
+
+const EXCALIDRAW_CDN_FALLBACK = /\w+\.push\(new URL\(\w+,\s*\w+\.ASSETS_FALLBACK_URL\)\)[,;]/g;
+
+/**
+ * Build only: the dev server injects inline scripts, which the policy refuses. Also drops
+ * Excalidraw's esm.sh font fallback, which the policy would report on every Drawing open.
+ */
+function contentSecurityPolicy(): Plugin {
+  let fallbacksDropped = false;
+  return {
+    name: 'content-security-policy',
+    apply: 'build',
+    transformIndexHtml: () => [
+      {
+        tag: 'meta',
+        attrs: { 'http-equiv': 'Content-Security-Policy', content: CONTENT_SECURITY_POLICY },
+        injectTo: 'head-prepend',
+      },
+    ],
+    transform(code, id) {
+      if (!id.includes('/@excalidraw/excalidraw/')) return;
+      const dropped = code.replace(EXCALIDRAW_CDN_FALLBACK, '');
+      if (dropped === code) return;
+      fallbacksDropped = true;
+      return { code: dropped, map: null };
+    },
+    generateBundle(_options, bundle) {
+      const left = Object.values(bundle).some(
+        (file) => file.type === 'chunk' && file.code.includes('.ASSETS_FALLBACK_URL)')
+      );
+      if (!fallbacksDropped || left) {
+        this.error("Excalidraw's esm.sh font fallback moved; update the pattern.");
+      }
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
+    contentSecurityPolicy(),
     excalidrawFonts(),
     tanstackRouter({
       target: 'react',

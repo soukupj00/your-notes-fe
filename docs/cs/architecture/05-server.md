@@ -61,6 +61,10 @@ Zadání se zavazuje k REST + HATEOAS a právě ADR 0017 udržuje tento závazek
 ## Bezpečnostní postoj (pro model hrozeb v práci)
 
 - **V rozsahu**: odvolání relace po zařízeních, cookies `HttpOnly` (žádné přihlašovací údaje čitelné skriptem), uzavřená registrace + pozvánky, izolace originů mezi servery, TLS ve všech třech režimech.
+- **Content Security Policy** na dokumentu aplikace, `<meta>`, který přidává sestavení (`vite.config.ts`).
+  Skripty, styly, písma, obrázky a spojení smějí jen z tohoto originu, takže značkování, které projde přes DOMPurify, nespustí žádný skript a nedosáhne na jiný origin, a NFR2 je vynucený, ne jen dodržovaný.
+  Výjimky: inline styly, protože barvy a písma v těle poznámky i výstup KaTeX jsou atributy `style`; `'wasm-unsafe-eval'` pro WebAssembly v pica, která zmenšuje obrázek vložený do kresby, a v podmnožinách písem Excalidraw; `'unsafe-eval'` pro generovaný spojovací kód těchto podmnožin, bez něhož náhled kresby vkládá celá písma; workery z `blob:` pro fflate a pica; obrázky a média z `blob:` a `data:` pro místní soubory; písma z `data:`, která vkládá exportovaná kresba.
+  Politika v `<meta>` nemůže nastavit `frame-ancestors`; za serverem vkládání do rámců pokrývá jeho hlavička `X-Frame-Options: DENY`, kdežto `nginx.conf` a `vercel.json` samotného frontendu žádnou takovou hlavičku neposílají.
 - **Mimo rozsah, zdokumentováno místo zamlžení**: end-to-end šifrování. E2EE by zde chránilo disk serveru, zatímco IndexedDB zařízení i záloha do zipu zůstávají v otevřeném textu - bránilo by jen proti útočníkovi, který má server, ale žádné zařízení, a to na krabici u uživatele doma. Jeho skutečnou cenou je obnova: bez e-mailu a bez resetu znamená zapomenuté heslo trvalou úplnou ztrátu a reset hesla člena vlastníkem se stává aktem zničení. Zaznamenáno jako budoucí práce; návod k nastavení výhradu pro domácnost uvádí přímo: *kdo provozuje server, může číst databázi*.
 - Certifikáty zůstávají jediným poctivě těžkým krokem; návrh odstraňuje obrazovku pro zadání IP a celou třídu selhání CORS, ne fyziku TLS v domácí síti.
 

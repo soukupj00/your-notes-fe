@@ -283,6 +283,9 @@ Decisions: [ADR 0005](./docs/adr/0005-biome-replaces-eslint-prettier.md) (Biome)
   **ESLint** stays for the React Hooks and typed rules Biome cannot express, and nothing else.
 - **Pre-commit** (husky + lint-staged) runs `biome check --write` and ESLint on staged files; safe fixes are applied, the rest block the commit.
 - **Toolchain:** Node 24 (`.nvmrc`), pnpm through corepack.
+- **Content Security Policy:** the build adds it to `index.html` as a `<meta>` (`vite.config.ts`; why each source is allowed: `docs/architecture/05-server.md`).
+  `pnpm dev` has none, so a library that needs a new source fails only against the build.
+  `csp.spec.ts` (`pnpm test:e2e:pwa`) watches for violations while a Note and a Drawing with text are made; other features are checked by hand against `pnpm build && pnpm preview`.
 - **GitLab pipeline** (`.gitlab-ci.yml`): `quality` (Biome, typecheck) → `test` (Vitest, Playwright) → `build` → `publish`.
   On the default branch and tags it builds the `Dockerfile` image, smoke-tests it and tags it `latest` or `vX.Y.Z`; the backend image builds FROM it.
 

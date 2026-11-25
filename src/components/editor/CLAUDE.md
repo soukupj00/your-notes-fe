@@ -181,6 +181,7 @@ All five kinds (image, audio, video, file, Excalidraw) are custom nodes from one
 - The SVG exporter imports Excalidraw dynamically, because importing it eagerly touches a canvas at module scope and crashes under jsdom.
 - **Excalidraw's fonts come from this origin**, under `/assets/excalidraw/fonts/`: `vite.config.ts` serves them in dev and copies them into the build, and `EXCALIDRAW_ASSET_PATH` points there.
   Left to itself Excalidraw fetches them from esm.sh, a runtime request to a third party (NFR2), and offline a Drawing's text loses its font.
+  The build also drops esm.sh from each font's fallback list, which the Content Security Policy would otherwise report on every open; the build fails if that code moves in an upgrade.
 
 ## Text styling
 

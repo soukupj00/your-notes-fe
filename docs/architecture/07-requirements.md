@@ -56,7 +56,7 @@ Status: every requirement below has shipped.
 | Id | Quality | Requirement | Satisfied by | Verified by |
 |---|---|---|---|---|
 | NFR1 | Availability (offline) | Every feature works with no network; the network is the addition | IndexedDB as source of truth; no runtime fetches | Architecture: there is no online code path to degrade |
-| NFR2 | Privacy | Zero external requests at runtime: no CDN, no analytics, no remote assets | Self-hosted fonts (the app's and Excalidraw's), bundled assets | Build inspection; `e2e/pwa/drawing-fonts.spec.ts`; product constraint in `PRODUCT.md` |
+| NFR2 | Privacy | Zero external requests at runtime: no CDN, no analytics, no remote assets | Self-hosted fonts (the app's and Excalidraw's), bundled assets | The build's Content Security Policy (`e2e/pwa/csp.spec.ts`); `e2e/pwa/drawing-fonts.spec.ts`; product constraint in `PRODUCT.md` |
 | NFR3 | Usability | Keep-level approachability for a non-technical household member; capture is one-handed and interrupted | Mobile-first design, quick-capture starts, Tour | User testing ([09-evaluation.md](./09-evaluation.md)) |
 | NFR4 | Accessibility | 44px touch targets, descriptive icons, focus management, reduced motion honored, colour-blind palette, keyboard nav | `.touch-target`/`.touch-reach`, icon registry, `DocumentPreferences`, Radix | Behavior/a11y assertions in component tests |
 | NFR5 | Performance | Feed never loads full attachment bytes; bundle weight treated as a cost | Previews/thumbnails, pruned fonts | Thumbnail tests; build size watched manually |
