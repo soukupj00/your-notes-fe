@@ -1,9 +1,10 @@
 import { Slot } from '@radix-ui/react-slot';
 import type { TooltipContentProps } from '@radix-ui/react-tooltip';
+import type { VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 import { type IconName, icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
-import { Toggle } from '@/components/ui/toggle';
+import { Toggle, toggleVariants } from '@/components/ui/toggle';
 import { Tooltip, TooltipContent, TooltipTrigger, useTooltipFloor } from '@/components/ui/tooltip';
 import { useKeyboardAffordances } from '@/hooks/useKeyboardAffordances.ts';
 import { getShortcutKeys } from '@/lib/shortcut-keys.ts';
@@ -16,6 +17,20 @@ import type { ButtonViewReturnComponentProps } from '@/types';
  * would draw as a row too. None do today.
  */
 const MenuRowLabelContext = React.createContext<string | null>(null);
+
+type ToggleLookProps = React.ComponentProps<'button'> & VariantProps<typeof toggleVariants>;
+
+const ToggleLookButton = React.forwardRef<HTMLButtonElement, ToggleLookProps>(
+  ({ className, variant, size, ...props }, ref) => (
+    <button
+      ref={ref}
+      type="button"
+      className={cn(toggleVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
+);
+ToggleLookButton.displayName = 'ToggleLookButton';
 
 export const MenuRowLabelProvider = MenuRowLabelContext.Provider;
 
@@ -33,7 +48,10 @@ export interface ActionButtonProps {
   icon?: IconName;
   children?: React.ReactNode;
   asChild?: boolean;
+  /** An on/off button: pressed while `isActive`. */
   toggle?: boolean;
+  /** Drawn like a toggle with no on/off state: a popover or sheet trigger, or an action. */
+  toggleLook?: boolean;
   /** Off where the label is already visible. `tooltip` stays the accessible name either way. */
   showTooltip?: boolean;
 }
@@ -53,12 +71,15 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
       children,
       asChild = false,
       toggle = false,
+      toggleLook = false,
       showTooltip = true,
       ...rest
     },
     ref
   ) => {
-    const Comp = asChild ? Slot : toggle ? Toggle : Button;
+    const Comp = asChild ? Slot : toggle ? Toggle : toggleLook ? ToggleLookButton : Button;
+    const active = isActive?.() ?? false;
+    const looksLikeToggle = toggle || toggleLook;
     const menuRowLabel = React.useContext(MenuRowLabelContext);
     // Without a keyboard a shortcut is noise in the one place the user reads the
     // button's name, so it is hidden (ADR 0028).
@@ -67,11 +88,11 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
 
     // Flattens Button's filled `default` variant with classes rather than `variant`,
     // because `Comp` is a union and TS only sees Toggle's narrower variant type.
-    const flatButton = !toggle && 'bg-transparent text-foreground shadow-none';
+    const flatButton = !looksLikeToggle && 'bg-transparent text-foreground shadow-none';
 
     // A class, not just `data-[state=on]`: a `PopoverTrigger asChild` overwrites
     // `data-state` with `open`/`closed`, which hid the active highlight.
-    const activeToggle = toggle && isActive?.() && 'bg-accent text-accent-foreground';
+    const activeToggle = looksLikeToggle && active && 'bg-accent text-accent-foreground';
 
     const Icon = icon ? icons[icon] : undefined;
 
@@ -82,7 +103,8 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
             ref={ref}
             onClick={action}
             disabled={disabled || loading}
-            data-state={isActive?.() ? 'on' : 'off'}
+            {...(toggle && { pressed: active })}
+            data-state={active ? 'on' : 'off'}
             size="sm"
             // Icon-only buttons need an accessible name; the visual tooltip is not exposed to AT.
             aria-label={tooltip}

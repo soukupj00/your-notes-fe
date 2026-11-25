@@ -41,5 +41,8 @@ describe('Clear extension', () => {
     const props = getButtonProps(editor);
     expect(props.icon).toBe('RemoveFormatting');
     expect(props.tooltip).toBe('editor.clearFormatting.tooltip');
+    // An action, so it has no on/off state to report.
+    expect(props.toggle).toBeUndefined();
+    expect(props.toggleLook).toBe(true);
   });
 });

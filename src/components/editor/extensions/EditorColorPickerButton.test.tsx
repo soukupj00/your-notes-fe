@@ -42,6 +42,20 @@ describe('editor color picker buttons', () => {
     expect(editor.getAttributes('textStyle').color).toBe('#ef4444');
   });
 
+  it('opens its picker as a popover trigger, not a pressed toggle', async () => {
+    render(
+      <TooltipProvider>
+        <EditorColorPickerButton editor={createEditor()} tooltip="Text color" variant="text" />
+      </TooltipProvider>
+    );
+    const trigger = screen.getByRole('button', { name: 'Text color' });
+
+    await userEvent.click(trigger);
+
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect(trigger).not.toHaveAttribute('aria-pressed');
+  });
+
   it('commits highlight color to the selection captured when the picker opens', async () => {
     const editor = createEditor();
     render(

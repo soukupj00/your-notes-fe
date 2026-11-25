@@ -133,7 +133,7 @@ export function EditorColorPickerButton({
           come from where every button gets them. Do not hand-roll it again. */}
       <PopoverTrigger asChild>
         <ActionButton
-          toggle
+          toggleLook
           icon={config.icon}
           tooltip={tooltip}
           shortcutKeys={shortcutKeys}

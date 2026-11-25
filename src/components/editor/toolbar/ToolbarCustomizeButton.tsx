@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionButton } from '@/components/ui/ActionButton.tsx';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet.tsx';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet.tsx';
 import { cn } from '@/lib/utils.ts';
 import { ToolbarLayoutEditor } from './ToolbarLayoutEditor';
 import { useWidthClass } from './useWidthClass';
@@ -18,14 +24,15 @@ export function ToolbarCustomizeButton() {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <ActionButton
-        toggle
-        icon="Settings2"
-        tooltip={t('editor.toolbar.customize')}
-        isActive={() => open}
-        action={() => setOpen(true)}
-        data-testid="toolbar-customize"
-      />
+      <SheetTrigger asChild>
+        <ActionButton
+          toggleLook
+          icon="Settings2"
+          tooltip={t('editor.toolbar.customize')}
+          isActive={() => open}
+          data-testid="toolbar-customize"
+        />
+      </SheetTrigger>
       <SheetContent
         side={compact ? 'bottom' : 'right'}
         className={cn(

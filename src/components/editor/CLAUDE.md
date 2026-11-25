@@ -43,6 +43,8 @@ Three things to know before adding a button:
 - **A menu row's name comes from context** (`MenuRowLabelProvider`), not a prop, because half the leaves are custom components that wrap an `ActionButton` and could never be handed a label.
 - **The keyboard shortcut is desktop-only** and lives only in the tooltip, never on a menu row.
 - **Active styling is a class**, not only `data-[state=on]`, because a popover trigger overwrites `data-state` with its own.
+- **`toggle` is for on/off buttons only**: its `aria-pressed` follows `isActive`.
+  A popover or sheet trigger (it says `aria-expanded`) and an action such as Clear take `toggleLook`, the same look with no pressed state.
 
 ## Pattern A
 

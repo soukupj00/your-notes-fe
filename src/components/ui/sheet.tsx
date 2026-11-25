@@ -10,6 +10,8 @@ import { cn } from '@/lib/utils';
 
 const Sheet = SheetPrimitive.Root;
 
+const SheetTrigger = SheetPrimitive.Trigger;
+
 const SheetPortal = SheetPrimitive.Portal;
 
 const SheetOverlay = React.forwardRef<
@@ -105,4 +107,4 @@ const SheetDescription = React.forwardRef<
 ));
 SheetDescription.displayName = SheetPrimitive.Description.displayName;
 
-export { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle };
+export { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger };

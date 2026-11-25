@@ -17,7 +17,7 @@ export const Clear = Extension.create<ClearExtensionOptions>({
           action: () => editor.chain().focus().clearNodes().unsetAllMarks().run(),
           icon: 'RemoveFormatting',
           tooltip: t('editor.clearFormatting.tooltip'),
-          toggle: true,
+          toggleLook: true,
         },
       }),
     } as unknown as ClearExtensionOptions;
