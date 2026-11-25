@@ -124,6 +124,7 @@ Do not reintroduce a document mutation here: the stored order is what a Backup a
 
 `extensions/TaskItem/` adds the reorder grip in the editable node view only, driven by pointer events so a finger can use it; the stored Body and the Card never carry a grip.
 Its `ignoreMutation` must keep treating the row's own attribute changes as non-edits, or a rebuilt node view drops the row from under the pointer mid-drag.
+A row is named by its words (`taskItemName`), and its box takes that name through TipTap's `a11y.checkboxLabel`, whose own fallback is English.
 
 List buttons convert the whole list when the cursor is collapsed inside one (`extensions/list-toggle.ts`), because a task list uses a different item type from the other two.
 

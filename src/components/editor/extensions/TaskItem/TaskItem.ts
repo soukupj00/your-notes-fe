@@ -1,5 +1,6 @@
 import { type TaskItemOptions, TaskItem as TiptapTaskItem } from '@tiptap/extension-list';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
+import type { TFunction } from '../button-types';
 import { startTaskItemDrag } from './taskItemDrag';
 
 export interface TaskItemExtensionOptions extends TaskItemOptions {
@@ -21,6 +22,11 @@ const GRIP_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
   '<circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/>' +
   '<circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>';
+
+/** A row's accessible name: its words, or a stand-in, since an empty name says nothing. */
+export function taskItemName(node: ProseMirrorNode, t: TFunction): string {
+  return node.textBetween(0, node.content.size, ' ').trim() || t('editor.taskItem.empty');
+}
 
 /** Document position of a list's `index`th child, the list's content starting at `start`. */
 function childPos(list: ProseMirrorNode, start: number, index: number): number {

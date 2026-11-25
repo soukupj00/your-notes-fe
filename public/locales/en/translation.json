@@ -55,6 +55,7 @@
       "tooltip": "Task list"
     },
     "taskItem": {
+      "empty": "Empty item",
       "grip": "Reorder item"
     },
     "blockquote": {

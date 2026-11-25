@@ -180,6 +180,7 @@ A view's floating action sits at the distance in `floatingBottomBar.ts`, shared 
 The view that floats one also adds its bottom clearance (`FLOATING_BOTTOM_BAR_CLEARANCE`, in `NotesView`), so the shell keeps no list of such routes.
 
 **Checklists on a Card** are ticked by tapping the box or the words (`lib/point-over-text.ts`); press-and-hold opens the Note (`lib/long-press.ts`).
+The stored `<label>` wraps only the box, so `NoteBody` names each box by its item's words as it renders (`nameChecklistBoxes`).
 
 **A11y.**
 Every view renders an `<h1 tabIndex={-1}>` and focuses it on mount (`useFocusOnMount`), so a navigation moves focus to the destination heading.

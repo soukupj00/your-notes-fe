@@ -55,6 +55,7 @@
       "tooltip": "Seznam úkolů"
     },
     "taskItem": {
+      "empty": "Prázdná položka",
       "grip": "Přesunout položku"
     },
     "blockquote": {
