@@ -417,6 +417,8 @@ One contract for the whole system.
 - **Springs are overdamped.** The card spring (stiffness 180, damping 34, mass 0.9) has a damping ratio of ~1.34, so nothing in the system overshoots or bounces. Measured on the wall: a card reflowing travelled 84px with **0px of overshoot**. This is correct for a wall of text and should be preserved - a bouncing note wall is nauseating to read.
 - **Reflow.** Pinning a card re-packs the wall and every displaced card animates to its new slot rather than jumping.
 - **Reduced motion** is a hard killswitch: all animation and transition are disabled, and every hover that used scale must still change material.
+  The one exception is a spinner, which keeps turning: a stopped spinner reads as a hung app.
+  A fade driven by scrolling and a loading line's delay are not motion, so they stay.
 
 **The Direct-Manipulation Rule.** Pinning is direct manipulation and must respond on the same frame. **This is a required fix, not an observation - the implementation does not ship until the first frame of movement lands within one frame (~16ms) of the click.**
 
