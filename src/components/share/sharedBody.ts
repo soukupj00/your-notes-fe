@@ -6,6 +6,12 @@ import { sanitizeDrawingPreview } from '@/lib/drawing-preview.ts';
 
 const MEDIA = 'block h-auto max-w-full rounded-md';
 
+export interface SharedBodyLabels {
+  fileFallbackName: string;
+  /** The element saying "opens in a new tab", which every link that does is described by. */
+  newTabHintId: string;
+}
+
 /**
  * A shared Note's Body as markup for the read-only Share Link page. The Body is
  * untrusted server data here, so it goes through the app's own sanitizer first
@@ -15,18 +21,20 @@ const MEDIA = 'block h-auto max-w-full rounded-md';
  * The work happens in an inert `DOMParser` document, so nothing loads before
  * React mounts the result.
  */
-export function sharedBodyMarkup(shared: SharedNote, fileFallbackName: string): string {
+export function sharedBodyMarkup(shared: SharedNote, labels: SharedBodyLabels): string {
   const doc = new DOMParser().parseFromString(sanitizeBody(shared.note.body ?? ''), 'text/html');
   const listed = new Map((shared.note.attachments ?? []).map((a) => [a.id, a]));
 
   for (const node of doc.body.querySelectorAll(`[${ATTACHMENT_ID_ATTR}]`)) {
     const meta = listed.get(node.getAttribute(ATTACHMENT_ID_ATTR) ?? '');
-    if (meta) node.replaceWith(attachmentElement(doc, shared, meta, fileFallbackName));
+    if (meta) node.replaceWith(attachmentElement(doc, shared, meta, labels.fileFallbackName));
     else node.remove();
   }
+  // After the attachments, so a link inside a Drawing's preview is caught too.
   for (const a of doc.body.querySelectorAll('a[href]')) {
     a.setAttribute('target', '_blank');
     a.setAttribute('rel', 'noopener noreferrer');
+    if (!a.hasAttribute('download')) a.setAttribute('aria-describedby', labels.newTabHintId);
   }
   // Checklists are shown, not ticked: the page writes nothing anywhere.
   for (const input of doc.body.querySelectorAll('input')) input.setAttribute('disabled', '');
