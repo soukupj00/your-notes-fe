@@ -179,6 +179,8 @@ All five kinds (image, audio, video, file, Excalidraw) are custom nodes from one
 - **The dialog's entrance does not scale**, and that is load-bearing.
   Excalidraw sizes its canvas from a rect that includes transforms, so opening mid-scale left every stroke off the cursor; the fade is kept.
 - The SVG exporter imports Excalidraw dynamically, because importing it eagerly touches a canvas at module scope and crashes under jsdom.
+- **Excalidraw's fonts come from this origin**, under `/assets/excalidraw/fonts/`: `vite.config.ts` serves them in dev and copies them into the build, and `EXCALIDRAW_ASSET_PATH` points there.
+  Left to itself Excalidraw fetches them from esm.sh, a runtime request to a third party (NFR2), and offline a Drawing's text loses its font.
 
 ## Text styling
 

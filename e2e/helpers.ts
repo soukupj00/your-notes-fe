@@ -158,6 +158,21 @@ export async function newTextNote(page: Page, title: string, body = '') {
   await page.getByRole('heading', { name: title }).waitFor();
 }
 
+/** Opens a Drawing, writes `text` with Excalidraw's text tool and saves it into the Note. */
+export async function drawText(page: Page, text: string) {
+  await startNote(page, 'Drawing');
+  const canvas = page.locator('canvas.interactive');
+  await expect(canvas).toBeVisible();
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error('no canvas');
+  await page.locator('[data-testid="toolbar-text"]').click({ force: true });
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await page.keyboard.type(text);
+  await page.mouse.click(box.x + box.width * 0.8, box.y + box.height * 0.8);
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Edit drawing' })).toBeVisible();
+}
+
 /** Mobile closes from the app bar's back arrow, desktop from the dialog's X. */
 export async function closeNote(page: Page) {
   const back = page.getByRole('button', { name: 'Back' });

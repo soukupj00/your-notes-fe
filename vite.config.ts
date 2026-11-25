@@ -1,12 +1,50 @@
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+
+const EXCALIDRAW_FONTS_URL = '/assets/excalidraw/fonts/';
+const EXCALIDRAW_FONTS_PACKAGE = 'node_modules/@excalidraw/excalidraw/dist/prod/fonts/';
+const EXCALIDRAW_FONTS_DIR = path.resolve(__dirname, EXCALIDRAW_FONTS_PACKAGE);
+
+/**
+ * Excalidraw's fonts, served from this origin: without them it falls back to esm.sh (NFR2).
+ * The app points `EXCALIDRAW_ASSET_PATH` at the folder above `EXCALIDRAW_FONTS_URL`.
+ */
+function excalidrawFonts(): Plugin {
+  return {
+    name: 'excalidraw-fonts',
+    configureServer(server) {
+      server.middlewares.use((request, _response, next) => {
+        if (request.url?.startsWith(EXCALIDRAW_FONTS_URL)) {
+          request.url = `/${EXCALIDRAW_FONTS_PACKAGE}${request.url.slice(EXCALIDRAW_FONTS_URL.length)}`;
+        }
+        next();
+      });
+    },
+    generateBundle() {
+      const fonts = readdirSync(EXCALIDRAW_FONTS_DIR, { recursive: true, withFileTypes: true });
+      for (const font of fonts.filter((entry) => entry.isFile())) {
+        const file = path.join(font.parentPath, font.name);
+        this.emitFile({
+          type: 'asset',
+          fileName: path.join(
+            EXCALIDRAW_FONTS_URL.slice(1),
+            path.relative(EXCALIDRAW_FONTS_DIR, file)
+          ),
+          source: readFileSync(file),
+        });
+      }
+    },
+  };
+}
 
 export default defineConfig({
   plugins: [
+    excalidrawFonts(),
     tanstackRouter({
       target: 'react',
       autoCodeSplitting: true,
@@ -32,6 +70,14 @@ export default defineConfig({
           '**/{bricolage-grotesque,work-sans}-*.woff2',
         ],
         runtimeCaching: [
+          {
+            // Any destination: Excalidraw also fetches its fonts to subset them into a preview.
+            // A few are unhashed; one stale after an upgrade is harmless. Room for every file.
+            urlPattern: ({ sameOrigin, url }) =>
+              sameOrigin && url.pathname.startsWith('/assets/excalidraw/fonts/'),
+            handler: 'CacheFirst',
+            options: { cacheName: 'excalidraw-fonts', expiration: { maxEntries: 250 } },
+          },
           {
             // Hashed file names never change content, so cache-first is exact.
             urlPattern: ({ request, sameOrigin, url }) =>
