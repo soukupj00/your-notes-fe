@@ -67,6 +67,12 @@
 @utility ring-note-swatch-ring {
   --tw-ring-color: var(--note-swatch-ring);
 }
+/* The one focus look (DESIGN.md, Shapes). An outline, not a ring: forced colours keeps outlines
+   and drops box-shadows. For a control that shows the focus of a hidden input or button. */
+@utility focus-outline {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
 
 @layer base {
   /* The four safe-area insets, named once. Why variables, and why they need `viewport-fit=cover`:
@@ -104,6 +110,22 @@
   body {
     background-color: var(--background);
     color: var(--foreground);
+  }
+
+  /* Every control takes the same focus look; `outline-none` opts out a text surface, where the
+     caret is the indicator, and a menu row, where the highlight is. */
+  :focus-visible {
+    @apply focus-outline;
+  }
+
+  /* The outline's colour, width and offset hold at rest, so focus only switches its style and a
+     `transition-colors` or `transition-all` on the control never animates it in. */
+  *,
+  ::after,
+  ::before {
+    outline-color: var(--ring);
+    outline-width: 2px;
+    outline-offset: 2px;
   }
 
   /* Native buttons otherwise keep the arrow cursor; set once here, not per component. */
@@ -515,6 +537,49 @@
       content: "";
     }
   }
+}
+
+/* Forced colours (Windows High Contrast) paints every fill as Canvas, so a state shown by a fill
+   alone is repainted in system colours. `forced-color-adjust: none` drops the Canvas backplate
+   the browser puts behind text, which hid HighlightText. Unlayered, to beat the utilities. */
+@media (forced-colors: active) {
+  [data-sidebar="menu-button"][aria-current="page"],
+  [role="radio"][aria-checked="true"],
+  [role="radiogroup"] label:has(:checked),
+  [role="switch"][aria-checked="true"],
+  [data-highlighted] {
+    forced-color-adjust: none;
+    background-color: Highlight;
+    color: HighlightText;
+    outline-color: CanvasText;
+
+    /* The opt-out is inherited, so a glyph with its own colour class would keep it. */
+    & * {
+      color: inherit;
+    }
+  }
+
+  [role="switch"] > span {
+    forced-color-adjust: none;
+    background-color: CanvasText;
+  }
+
+  [role="switch"][aria-checked="true"] > span {
+    background-color: HighlightText;
+  }
+}
+
+/* Sonner's stylesheet is unlayered and turns outlines off; these selectors outrank it. */
+[data-sonner-toaster] [data-sonner-toast]:focus-visible,
+[data-sonner-toaster] [data-sonner-toast] :is([data-button], [data-close-button]):focus-visible {
+  @apply focus-outline;
+}
+
+/* `[data-styled]` outranks Sonner's own focus shadow, which ties without it and loads later. */
+[data-sonner-toaster]
+  [data-sonner-toast][data-styled]
+  :is([data-button], [data-close-button]):focus-visible {
+  box-shadow: none;
 }
 
 @theme {

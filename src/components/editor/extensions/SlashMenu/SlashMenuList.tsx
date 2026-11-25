@@ -79,6 +79,7 @@ export const SlashMenuList = forwardRef<SlashMenuListHandle, SlashMenuListProps>
                 type="button"
                 // The list never takes focus, so `aria-selected` on a focusless
                 // list would be a lie; the highlight is the affordance.
+                data-highlighted={index === selected || undefined}
                 onMouseEnter={() => setSelected(index)}
                 onClick={() => command(item)}
                 className={cn(

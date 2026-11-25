@@ -51,8 +51,8 @@ export function NoteColorPicker({ value, onChange, onEscape, className }: NoteCo
                   className={cn(
                     'relative size-11 rounded-full border border-note-swatch-ring bg-note-swatch transition-shadow',
                     'hover:ring-2 hover:ring-ring/50 hover:ring-offset-1 hover:ring-offset-background',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    selected && 'ring-2 ring-ring ring-offset-1 ring-offset-background'
+                    // Ink, not the accent, so it stays apart from the focus outline.
+                    selected && 'ring-2 ring-foreground'
                   )}
                 >
                   {isNone && (

@@ -89,7 +89,7 @@ export function SegmentedSetting<T extends string>({
           <ToggleGroupItem
             key={option.value}
             value={option.value}
-            className="min-h-9.5 rounded-[calc(var(--radius-control)-2px)] px-3 text-muted-foreground data-[state=on]:bg-selected data-[state=on]:text-foreground"
+            className="min-h-9.5 rounded-[calc(var(--radius-control)-2px)] px-3 text-muted-foreground -outline-offset-2 data-[state=on]:bg-selected data-[state=on]:text-foreground"
           >
             {option.label}
           </ToggleGroupItem>

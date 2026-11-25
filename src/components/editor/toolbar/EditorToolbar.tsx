@@ -114,7 +114,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
           'flex items-center gap-1',
           compact
             ? // `justify-between` is a no-op once the bar overflows: editor/CLAUDE.md.
-              'justify-between overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&_button]:shrink-0'
+              'justify-between overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&_*]:-outline-offset-2 [&_button]:shrink-0'
             : 'flex-wrap',
           // The sheet drops its own padding below `sm:`, so this bar clears the home
           // indicator and the keyboard itself. `--keyboard-inset` is 0 wherever the

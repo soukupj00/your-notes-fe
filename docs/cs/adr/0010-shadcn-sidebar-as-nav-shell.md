@@ -43,7 +43,7 @@ Na mobilu toto kolečko otevírá rychlá nastavení s odkazem „Všechna nasta
 5. Natvrdo anglické `SheetTitle` / `SheetDescription` procházejí přes `t()`.
 6. (V `use-mobile.tsx`, ne v `sidebar.tsx`) `MOBILE_BREAKPOINT` 768 → 640.
 7. Mobilní zásuvka zabírá 70 % šířky viewportu a odstraňuje zděděný pravý okraj a obrys fokusu; křížek `Sheet` si ponechává, v řádku loga.
-8. (V `sheet.tsx`) Křížek je 32px kotouč z `dialog.tsx` s 44px plochou pro dotyk a jeho prstenec se ukazuje jen při `focus-visible`.
+8. (V `sheet.tsx`) Křížek je 32px kotouč z `dialog.tsx` s 44px plochou pro dotyk a jeho obrys zaměření se ukazuje jen při `focus-visible`.
 
 Zaznamenání těchto úprav je hlavní důvod, proč tento ADR existuje.
 Budoucí čtenář najde vendorovaný soubor, v němž jsou smazané části, a bude rozumně předpokládat, že jde o omyly, nebo je „opraví“ opětovným spuštěním `shadcn add --overwrite`.
@@ -131,7 +131,7 @@ Zásuvka z upstreamu skrývá křížek `Sheet` (`[&>button]:hidden`), takže z 
 Uživatel VoiceOveru nebo TalkBacku nedosáhne ani na pozadí, které Radix skrývá před stromem přístupnosti, ani na Esc, takže jedinou cestou ven byl výběr stránky.
 Křížek teď zůstává, vycentrovaný na řádek loga a pod stavovým řádkem.
 Křížek `Sheet` byla holá 16px ikona, kterou 44px minimum pro hrubý ukazatel mine, a tak dostává kotouč z `dialog.tsx`.
-Radix ho zaměří při každém otevření, i po klepnutí, a proto jeho prstenec čeká na `focus-visible`.
+Radix ho zaměří při každém otevření, i po klepnutí, a proto jeho obrys zaměření čeká na `focus-visible`.
 
 Každá navigace teď zavírá zásuvku na jednom místě, v mobilním `Sidebar`, který po dobu otevření zásuvky odebírá události routeru; zavírání u jednotlivých odkazů odpadlo.
 Dřív ji zavíralo jen klepnutí na odkaz v ní, takže tlačítko Zpět nebo gesto zpět na Androidu změnilo stránku za otevřenou zásuvkou.

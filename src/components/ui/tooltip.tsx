@@ -5,7 +5,8 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-const GAP = 4;
+// Clear of a focused trigger's outline, which reaches 4px out.
+const GAP = 8;
 
 const TooltipProvider = TooltipPrimitive.Provider;
 

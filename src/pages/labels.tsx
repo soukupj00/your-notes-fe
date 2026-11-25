@@ -156,7 +156,7 @@ function LabelRow({ tag, tags, noteCount, justCreated }: LabelRowProps) {
               type="button"
               aria-label={t('labels.color', { name: tag.name })}
               {...noteColorAttrs(tag.color)}
-              className="touch-reach m-1.5 flex size-8 shrink-0 items-center justify-center rounded-full border border-note-swatch-ring bg-note-swatch text-muted-foreground transition-shadow hover:ring-2 hover:ring-ring/50 hover:ring-offset-1 hover:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="touch-reach m-1.5 flex size-8 shrink-0 items-center justify-center rounded-full border border-note-swatch-ring bg-note-swatch text-muted-foreground transition-shadow hover:ring-2 hover:ring-ring/50 hover:ring-offset-1 hover:ring-offset-background"
             >
               {!tag.color && <Palette className="size-4" aria-hidden />}
             </button>

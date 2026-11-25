@@ -43,7 +43,7 @@ On mobile that gear opens quick settings with an "All settings" link to the full
 5. The hardcoded English `SheetTitle` / `SheetDescription` go through `t()`.
 6. (In `use-mobile.tsx`, not `sidebar.tsx`) `MOBILE_BREAKPOINT` 768 → 640.
 7. The mobile drawer uses 70% of the viewport width and removes the inherited right border and focus outline; it keeps the `Sheet`'s X, on its brand row.
-8. (In `sheet.tsx`) The X is `dialog.tsx`'s 32px disc with a 44px hit box, its ring on `focus-visible` only.
+8. (In `sheet.tsx`) The X is `dialog.tsx`'s 32px disc with a 44px hit box, its focus outline on `focus-visible` only.
 
 Recording these is the main reason this ADR exists.
 A future reader finds a vendored file with deletions in it and will reasonably assume they were accidents, or "fix" them by re-running `shadcn add --overwrite`.
@@ -117,7 +117,7 @@ Upstream's drawer hides the `Sheet`'s X (`[&>button]:hidden`), leaving a tap on 
 A VoiceOver or TalkBack user can reach neither the overlay, which Radix hides from the accessibility tree, nor Escape, so the only way out was to pick a page.
 The X stays now, centred on the brand row and below the status bar.
 The `Sheet`'s X was a bare 16px icon, which the coarse-pointer 44px floor misses, so it takes `dialog.tsx`'s disc.
-Radix focuses it on every open, a tap included, so its ring waits for `focus-visible`.
+Radix focuses it on every open, a tap included, so its focus outline waits for `focus-visible`.
 
 Every navigation now closes the drawer in one place, the mobile `Sidebar`, which subscribes to the router while the drawer is open; the per-link closers are gone.
 Before, only a tap on a link in the drawer closed it, so Back or the Android back gesture changed the page behind an open drawer.

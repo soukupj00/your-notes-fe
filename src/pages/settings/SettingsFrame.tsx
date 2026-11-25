@@ -27,7 +27,7 @@ export function SettingsFrame({
       {!home && (
         <Link
           to="/settings"
-          className="mb-2 -ml-2 hidden min-h-11 items-center gap-1.5 rounded-control px-2 text-foreground text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring sm:inline-flex [&_svg]:size-4"
+          className="mb-2 -ml-2 hidden min-h-11 items-center gap-1.5 rounded-control px-2 text-foreground text-sm hover:bg-accent sm:inline-flex [&_svg]:size-4"
         >
           <ArrowLeft aria-hidden />
           {t('nav.settings')}

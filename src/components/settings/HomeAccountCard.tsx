@@ -30,7 +30,7 @@ export function HomeAccountCard({ session }: { session: Session }) {
     <section className="mb-4 rounded-card border bg-card">
       <Link
         to="/settings/account"
-        className="flex min-h-18 items-center gap-3.5 rounded-card px-4 py-3 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        className="flex min-h-18 items-center gap-3.5 rounded-card px-4 py-3 -outline-offset-2 hover:bg-accent"
       >
         <AccountIdentity session={session} />
         <ChevronRight aria-hidden className="size-4.5 shrink-0 text-muted-foreground" />

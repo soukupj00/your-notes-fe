@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const SETTINGS_ACTION_ROW =
-  'flex min-h-14 w-full items-center gap-3.5 px-4 py-2.5 text-left text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4.5 [&_svg]:shrink-0 [&_svg]:text-muted-foreground';
+  'flex min-h-14 w-full items-center gap-3.5 px-4 py-2.5 text-left text-sm hover:bg-accent -outline-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4.5 [&_svg]:shrink-0 [&_svg]:text-muted-foreground';
 
 export function NewTabRow({
   href,

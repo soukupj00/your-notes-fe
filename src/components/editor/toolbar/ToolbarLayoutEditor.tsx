@@ -239,7 +239,7 @@ function FamilyRow({ family, name, onOpen, onToggle, onCollapse }: FamilyRowProp
         type="button"
         onClick={onOpen}
         disabled={!registryFamily}
-        className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-md px-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring enabled:active:bg-accent enabled:hover:bg-accent disabled:opacity-60"
+        className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-md px-1 text-left enabled:active:bg-accent enabled:hover:bg-accent disabled:opacity-60"
       >
         {Icon && <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />}
         <span className="flex min-w-0 flex-col">

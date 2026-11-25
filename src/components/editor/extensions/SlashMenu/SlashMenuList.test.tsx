@@ -59,6 +59,16 @@ describe('SlashMenuList', () => {
     expect(command).toHaveBeenCalledWith(items[2]);
   });
 
+  // The attribute Radix menus set, which the forced-colours rule in globals.css repaints.
+  it('marks only the highlighted row as highlighted', () => {
+    const { ref } = renderList();
+    press(ref, 'ArrowDown');
+    const highlighted = screen
+      .getAllByRole('button')
+      .map((row) => row.hasAttribute('data-highlighted'));
+    expect(highlighted).toEqual([false, true, false]);
+  });
+
   it('leaves keys it does not own to the editor', () => {
     const { ref } = renderList();
     expect(press(ref, 'ArrowDown')).toBe(true);
