@@ -205,14 +205,30 @@ describe('NoteEditorDialog', () => {
     expect(saved.body).toContain('data-type="taskList"');
   });
 
-  it('surfaces a "saved" status after an edit autosaves', async () => {
+  // A save takes milliseconds, so a status read on every pause would only interrupt the typing echo.
+  it('announces "saved" once, after the first autosave only', async () => {
     render(<NoteEditorDialog noteId={crypto.randomUUID()} isNew onClose={vi.fn()} />);
+    const region = await waitFor(() => {
+      const found = document.querySelector('[aria-live="polite"]');
+      if (!found) throw new Error('no live region');
+      return found;
+    });
+    const announced: string[] = [];
+    const observer = new MutationObserver(() => announced.push(region.textContent ?? ''));
+    observer.observe(region, { childList: true, subtree: true, characterData: true });
 
     await userEvent.type(headerInput(), 'Hello');
 
-    expect(
-      await screen.findByText('notes.saveStatus.saved', undefined, { timeout: 2000 })
-    ).toBeInTheDocument();
+    await waitFor(() => expect(region).toHaveTextContent('notes.saveStatus.saved'), {
+      timeout: 2000,
+    });
+    await userEvent.type(headerInput(), ' again');
+    await waitFor(async () => expect((await allNotes(testStore))[0]?.header).toBe('Hello again'), {
+      timeout: 2000,
+    });
+    observer.disconnect();
+
+    expect(announced).toEqual(['notes.saveStatus.saved']);
   });
 
   it('stops writing once an edit settles (no autosave re-render loop)', async () => {
@@ -434,16 +450,11 @@ describe('NoteEditorDialog', () => {
 
     render(<NoteEditorDialog noteId={note.id} onClose={vi.fn()} />);
 
-    const pin = await screen.findByRole('button', { name: 'notes.pin' });
-    expect(pin).toHaveAttribute('aria-pressed', 'false');
-
-    await userEvent.click(pin);
+    await userEvent.click(await screen.findByRole('button', { name: 'notes.pin', pressed: false }));
 
     await waitFor(async () => expect((await testStore.notes.get(note.id))?.pinnedAt).toBeDefined());
-    const unpin = await screen.findByRole('button', { name: 'notes.unpin' });
-    expect(unpin).toHaveAttribute('aria-pressed', 'true');
 
-    await userEvent.click(unpin);
+    await userEvent.click(await screen.findByRole('button', { name: 'notes.pin', pressed: true }));
     await waitFor(async () =>
       expect((await testStore.notes.get(note.id))?.pinnedAt).toBeUndefined()
     );
@@ -457,7 +468,6 @@ describe('NoteEditorDialog', () => {
     await screen.findByDisplayValue(note.header as string);
 
     expect(screen.queryByRole('button', { name: 'notes.pin' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'notes.unpin' })).not.toBeInTheDocument();
     // Colour and labels are authoring moves and stay available.
     expect(screen.getByRole('button', { name: 'notes.color' })).toBeInTheDocument();
   });

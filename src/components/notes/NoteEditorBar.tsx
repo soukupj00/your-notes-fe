@@ -74,7 +74,9 @@ export function NoteEditorBar({
           <IconTooltip label={t(pinned ? 'notes.unpin' : 'notes.pin')}>
             <button
               type="button"
-              aria-label={t(pinned ? 'notes.unpin' : 'notes.pin')}
+              // A toggle keeps one name and `aria-pressed` says the state; only the tooltip
+              // names the next act, as the description.
+              aria-label={t('notes.pin')}
               aria-pressed={pinned}
               onClick={onPinToggle}
               className={cn(

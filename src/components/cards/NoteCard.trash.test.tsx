@@ -61,7 +61,7 @@ describe('NoteCard in the trash', () => {
     async (button, state, toast) => {
       const { note, onSelect } = await renderTrashed();
 
-      await userEvent.click(screen.getByRole('button', { name: button }));
+      await userEvent.click(screen.getByRole('button', { name: `${button} Binned` }));
 
       await waitFor(async () => expect((await stored(note.id))?.state).toBe(state));
       expect((await stored(note.id))?.trashedAt).toBeUndefined();
@@ -78,7 +78,7 @@ describe('NoteCard in the trash', () => {
   it('deletes forever only once confirmed, with no undo and without opening the note', async () => {
     const { note, onSelect } = await renderTrashed();
 
-    await userEvent.click(screen.getByRole('button', { name: 'notes.deleteForever' }));
+    await userEvent.click(screen.getByRole('button', { name: 'notes.deleteForever Binned' }));
     expect(await stored(note.id)).toBeDefined();
     await userEvent.click(
       await screen.findByRole('button', { name: 'notes.confirmDeleteForever.confirm' })
@@ -92,13 +92,13 @@ describe('NoteCard in the trash', () => {
   it('keeps the note when delete forever is cancelled, without opening it', async () => {
     const { note, onSelect } = await renderTrashed();
 
-    await userEvent.click(screen.getByRole('button', { name: 'notes.deleteForever' }));
+    await userEvent.click(screen.getByRole('button', { name: 'notes.deleteForever Binned' }));
     await userEvent.click(
       await screen.findByRole('button', { name: 'notes.confirmDeleteForever.cancel' })
     );
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(screen.getByRole('button', { name: 'notes.deleteForever' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'notes.deleteForever Binned' })).toHaveFocus();
     expect(await stored(note.id)).toEqual(note);
     expect(toastMock).not.toHaveBeenCalled();
     expect(onSelect).not.toHaveBeenCalled();

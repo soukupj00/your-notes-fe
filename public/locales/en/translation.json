@@ -429,6 +429,7 @@
     "titlePlaceholder": "Title",
     "newNoteTitle": "New note",
     "editNoteTitle": "Edit note",
+    "untitled": "Untitled Note",
     "editNamedNoteTitle": "Edit note: {{title}}",
     "loadingEditor": "Loading editor…",
     "create": "Create note",
@@ -495,7 +496,6 @@
     "trashEmptied_other": "Deleted {{count}} notes",
     "undo": "Undo",
     "view": {
-      "toggle": "Toggle layout",
       "masonry": "Masonry view",
       "stack": "Stack view"
     },

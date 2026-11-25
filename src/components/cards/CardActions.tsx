@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LifecycleButtons } from '@/components/cards/LifecycleButtons.tsx';
 import { NoteColorButton } from '@/components/color-picker/NoteColorButton.tsx';
@@ -7,6 +8,7 @@ import { IconTooltip } from '@/components/ui/tooltip.tsx';
 import { useNoteActions } from '@/hooks/data/useNoteActions.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { useUndoableLifecycle } from '@/hooks/useUndoableLifecycle.ts';
+import { labelledWith } from '@/lib/accessible-name.ts';
 import { noteControlButton } from '@/lib/note-controls.ts';
 import type { Note } from '@/models.ts';
 
@@ -14,8 +16,9 @@ import type { Note } from '@/models.ts';
  * Foot rail A (DESIGN.md, Card anatomy): always visible, and no `⋮` menu. Every action undoes
  * from its toast except Delete forever, which only a trashed Note offers and which asks first.
  */
-export function CardActions({ note }: { note: Note }) {
+export function CardActions({ note, nameId }: { note: Note; nameId: string }) {
   const { t } = useTranslation();
+  const deleteId = useId();
   const reducedMotion = useReducedMotion();
   const { updateNote } = useNoteActions();
   const lifecycle = useUndoableLifecycle();
@@ -31,6 +34,7 @@ export function CardActions({ note }: { note: Note }) {
           value={note.color}
           onChange={(color) => void updateNote(note.id, { color })}
           className={railButton}
+          nameId={nameId}
         />
       )}
       <LifecycleButtons
@@ -39,6 +43,7 @@ export function CardActions({ note }: { note: Note }) {
         onRestore={() => lifecycle.restore(note.id)}
         onTrash={() => lifecycle.trash(note.id)}
         className={railButton}
+        nameId={nameId}
       />
       {note.state === 'trashed' && (
         <DeleteForeverDialog noteId={note.id}>
@@ -46,6 +51,7 @@ export function CardActions({ note }: { note: Note }) {
             <button
               type="button"
               aria-label={t('notes.deleteForever')}
+              {...labelledWith(deleteId, nameId)}
               onClick={(e) => e.stopPropagation()}
               className={railButton}
             >

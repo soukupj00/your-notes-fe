@@ -101,7 +101,7 @@ describe('opening a note', () => {
     const router = renderRoute('/');
 
     const before = router.history.length;
-    await userEvent.click(await screen.findByRole('button', { name: /Milk and bread/ }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Milk and bread' }));
 
     await waitFor(() => expect(router.state.location.search).toMatchObject({ note: note.id }));
     expect(router.history.length).toBe(before + 1);
@@ -194,7 +194,7 @@ describe('closing a note', () => {
     // Arriving from `/` only, both leave you on `/` and look identical.
     const router = renderRoute(['/archive', '/']);
 
-    await userEvent.click(await screen.findByRole('button', { name: /Milk and bread/ }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Milk and bread' }));
     await waitFor(() => expect(router.state.location.search).toMatchObject({ note: note.id }));
 
     await userEvent.click(await screen.findByText('close-editor'));
