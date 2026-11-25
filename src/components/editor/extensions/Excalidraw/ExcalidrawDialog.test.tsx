@@ -98,6 +98,13 @@ beforeEach(() => {
 });
 
 describe('ExcalidrawDialog', () => {
+  it('is named Drawing and described by nothing, so the title is read once', async () => {
+    await setup();
+
+    const dialog = screen.getByRole('dialog', { name: 'editor.excalidraw.title' });
+    expect(dialog).not.toHaveAttribute('aria-describedby');
+  });
+
   it('disables Save when the scene is empty and shows the shared Save icon', async () => {
     await setup();
     const save = screen.getByRole('button', { name: 'editor.excalidraw.save' });

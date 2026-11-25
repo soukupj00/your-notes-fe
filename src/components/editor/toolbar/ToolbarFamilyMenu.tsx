@@ -56,7 +56,7 @@ export const ToolbarFamilyMenu: React.FC<ToolbarFamilyMenuProps> = ({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <ActionButton
-          toggle
+          toggleLook
           icon={triggerIcon(family, resolvable, editor, t)}
           tooltip={t(family.labelKey)}
           isActive={() => open}

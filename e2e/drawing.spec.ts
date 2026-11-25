@@ -70,7 +70,7 @@ test.describe('the platform Back over an open Drawing', () => {
     await drawRectangle(page);
 
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByRole('button', { name: 'Edit drawing' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Edit drawing, / })).toBeVisible();
     await expect(page.getByRole('dialog', { name: 'Discard drawing?' })).toHaveCount(0);
     await expect(page).toHaveURL(/[?&]note=/);
   });

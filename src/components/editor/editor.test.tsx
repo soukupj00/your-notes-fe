@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip.tsx';
 import { PreferencesProvider } from '@/context/PreferencesProvider.tsx';
+import { taskListMarkup } from '@/lib/body.ts';
 import { renderInRouter } from '@/test/renderInRouter.tsx';
 import { withStore } from '@/test/store.tsx';
 import { setViewport } from '@/test/viewport.ts';
@@ -45,6 +46,37 @@ describe('Editor focus', () => {
 
     expect(document.activeElement).toBe(container.querySelector('.tiptap'));
     expect(ref.current?.getEditor()?.state.selection.from).toBe(1);
+  });
+});
+
+describe('Editor body', () => {
+  // A Body with text has no placeholder to stand in for a name.
+  it('is a multiline textbox named Note', async () => {
+    const { findByRole } = render(<Editor content="<p>milk</p>" getNoteId={vi.fn()} />);
+
+    const body = await findByRole('textbox', { name: 'editor.body' });
+    expect(body).toHaveAttribute('aria-multiline', 'true');
+  });
+
+  // Upstream's fallback is "Task item checkbox for …", in English whatever the language.
+  it('names each checklist box by its item, through the app language', async () => {
+    const content = taskListMarkup([
+      ['Eggs', false],
+      ['', false],
+    ]);
+    const { findByRole } = render(<Editor content={content} getNoteId={vi.fn()} />);
+
+    await findByRole('checkbox', { name: 'Eggs' });
+    await findByRole('checkbox', { name: 'editor.taskItem.empty' });
+  });
+
+  it('names a row of several paragraphs with spaces between, and a row of spaces as empty', async () => {
+    const row = (inner: string) => `<li data-type="taskItem" data-checked="false">${inner}</li>`;
+    const content = `<ul data-type="taskList">${row('<p>Buy milk</p><p>and eggs</p>')}${row('<p>  </p>')}</ul>`;
+    const { findByRole } = render(<Editor content={content} getNoteId={vi.fn()} />);
+
+    await findByRole('checkbox', { name: 'Buy milk and eggs' });
+    await findByRole('checkbox', { name: 'editor.taskItem.empty' });
   });
 });
 

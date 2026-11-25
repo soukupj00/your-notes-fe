@@ -5,6 +5,7 @@ import { icons } from '@/components/icons';
 import { formatElapsed } from '@/lib/format.ts';
 import { AttachmentDeleteButton } from '../attachments/AttachmentDeleteButton';
 import { AttachmentNotDownloaded } from '../attachments/AttachmentNotDownloaded';
+import { attachmentLabelName } from '../attachments/attachmentLabelName';
 import type { AttachmentDeps } from '../attachments/deps';
 import { useAttachmentObjectUrl } from '../attachments/useAttachmentObjectUrl';
 
@@ -20,12 +21,13 @@ export function AudioNodeView(props: ReactNodeViewProps) {
   const Play = icons.Play;
   const Pause = icons.Pause;
   const canDelete = props.editor?.isEditable ?? false;
+  const name = attachmentLabelName('audio', 'attachment' in state ? state.attachment : null, deps);
 
   const deleteButton = (overlay?: boolean) =>
     canDelete ? (
       <AttachmentDeleteButton
         onConfirm={() => props.deleteNode()}
-        label={deps.t('editor.audio.delete')}
+        label={deps.t('editor.audio.delete', { name })}
         t={deps.t}
         overlay={overlay}
       />
@@ -122,7 +124,7 @@ export function AudioNodeView(props: ReactNodeViewProps) {
           type="button"
           onClick={toggle}
           disabled={state.status !== 'ready'}
-          aria-label={deps.t(playing ? 'editor.audio.pause' : 'editor.audio.play')}
+          aria-label={deps.t(playing ? 'editor.audio.pause' : 'editor.audio.play', { name })}
           className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:hover:bg-primary"
         >
           {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
@@ -134,7 +136,7 @@ export function AudioNodeView(props: ReactNodeViewProps) {
           value={current}
           step={0.1}
           onChange={(e) => seek(Number(e.target.value))}
-          aria-label={deps.t('editor.audio.seek')}
+          aria-label={deps.t('editor.audio.seek', { name })}
           className="h-1 flex-1 accent-primary"
         />
         <span className="text-muted-foreground text-xs tabular-nums">

@@ -55,6 +55,17 @@ describe('ToolbarFamilyMenu', () => {
     expect(screen.getByTestId('toolbar-family-style')).toBeInTheDocument();
   });
 
+  it('says the menu is open through aria-expanded, never as pressed', async () => {
+    renderMenu('style', createEditor());
+    const trigger = screen.getByTestId('toolbar-family-style');
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    await userEvent.click(trigger);
+
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect(trigger).not.toHaveAttribute('aria-pressed');
+  });
+
   it('opens the family real leaf buttons, and only the ones that are on', async () => {
     const editor = createEditor();
     // `h2` off: a leaf switched off is gone from inside the menu too, not just

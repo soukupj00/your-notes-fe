@@ -43,6 +43,8 @@ Three things to know before adding a button:
 - **A menu row's name comes from context** (`MenuRowLabelProvider`), not a prop, because half the leaves are custom components that wrap an `ActionButton` and could never be handed a label.
 - **The keyboard shortcut is desktop-only** and lives only in the tooltip, never on a menu row.
 - **Active styling is a class**, not only `data-[state=on]`, because a popover trigger overwrites `data-state` with its own.
+- **`toggle` is for on/off buttons only**: its `aria-pressed` follows `isActive`.
+  A popover or sheet trigger (it says `aria-expanded`) and an action such as Clear take `toggleLook`, the same look with no pressed state.
 
 ## Pattern A
 
@@ -124,6 +126,9 @@ Do not reintroduce a document mutation here: the stored order is what a Backup a
 
 `extensions/TaskItem/` adds the reorder grip in the editable node view only, driven by pointer events so a finger can use it; the stored Body and the Card never carry a grip.
 Its `ignoreMutation` must keep treating the row's own attribute changes as non-edits, or a rebuilt node view drops the row from under the pointer mid-drag.
+A row is named by its words (`taskItemName`), and its box takes that name through TipTap's `a11y.checkboxLabel`, whose own fallback is English.
+The grip is named "Reorder <row>" like a Settings handle, and the extension places two things beside the editor: one hidden hint its `aria-describedby` points at (`aria-description` is not Widely available), and one `role="status"` that speaks a keyboard move.
+The position a move announces is the stored one, which is what the keys change, even with Sinking on.
 
 List buttons convert the whole list when the cursor is collapsed inside one (`extensions/list-toggle.ts`), because a task list uses a different item type from the other two.
 
@@ -144,6 +149,9 @@ All five kinds (image, audio, video, file, Excalidraw) are custom nodes from one
   An image shows its thumbnail with a download button; other kinds show a card.
   The Card on the feed never downloads.
 - An image's and a video's pixel size is stored at insert, so the box is reserved before the bytes land.
+- **Each control is named by its attachment** (`attachmentLabelName`), so two clips in a Note are not two "Play" buttons.
+  The app names every recording and drawing alike (`appMadeName` in `src/lib/attachments.ts`), as a browser names every pasted picture and an iPhone every camera shot (`image.png`, `image.jpg`).
+  Those are named by their kind and their row's time to the second instead; a drawing's row is its last Save.
 
 ### Audio
 
@@ -206,7 +214,8 @@ The commit goes to the selection captured when the popover opened, without focus
   `Placeholder` only marks the empty paragraph; the rule that draws the hint is in `globals.css`, and the same words go on the textbox as `aria-placeholder`, because drawn `content` is not text a screen reader can rely on.
   The drawn copy has empty alt text, so the hint is announced once.
   Untouched means one empty paragraph: TipTap's `isEmpty` is also true of blank lines and of a new Checklist's first row, where no hint belongs.
-  The attribute comes from a plugin: TipTap spreads `editorProps.attributes`, so a function passed there is dropped.
+  The same plugin names the textbox ("Note"), because once the Body has text no placeholder stands in for a name.
+  The attributes come from a plugin: TipTap spreads `editorProps.attributes`, so a function passed there is dropped.
 - **TextPrompt** is how an extension, which is not React, asks for one line of text: Math's formula, and the link Shortcut when no Link button is on screen.
   `askText` resolves with the answer or `null`; `TextPromptHost`, mounted while the editor is editable, shows the dialog.
   Never `window.prompt`: it cannot be styled, and some embedded browsers block it.

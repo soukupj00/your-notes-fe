@@ -93,6 +93,24 @@ export function taskListMarkup(items: [label: string, checked: boolean][]): stri
   return `<ul data-type="taskList">${items.map(item).join('')}</ul>`;
 }
 
+/**
+ * Names each checklist box by its item for the Card, whose stored `<label>` wraps only the box;
+ * the stored Body is not changed.
+ */
+export function nameChecklistBoxes(html: string, emptyName: string): string {
+  if (!html.includes('data-type="taskItem"')) return html;
+  const template = document.createElement('template');
+  template.innerHTML = html;
+  for (const item of template.content.querySelectorAll(TASK_ITEM)) {
+    const blocks = item.querySelectorAll(':scope > div > *');
+    const words = Array.from(blocks, (block) => block.textContent)
+      .join(' ')
+      .trim();
+    checklistBox(item)?.setAttribute('aria-label', words || emptyName);
+  }
+  return template.innerHTML;
+}
+
 export function closestChecklistItem(target: Element): Element | null {
   return target.closest(TASK_ITEM);
 }

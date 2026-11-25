@@ -51,6 +51,16 @@ describe('BodyHint', () => {
   });
 
   it.each([
+    ['an empty body', ''],
+    ['a body with text', '<p>kept</p>'],
+  ])('names %s as a multiline textbox', (_case, content) => {
+    const body = mount(content);
+
+    expect(body.getAttribute('aria-label')).toBe('editor.body');
+    expect(body.getAttribute('aria-multiline')).toBe('true');
+  });
+
+  it.each([
     ['a body with text', '<p>kept</p>', true],
     ['a read-only body', '', false],
     ['blank lines', '<p></p><p></p>', true],

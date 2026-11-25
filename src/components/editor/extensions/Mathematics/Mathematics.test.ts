@@ -68,7 +68,9 @@ describe('Mathematics extension', () => {
     const props = getButtonProps(editor);
     expect(props.icon).toBe('Latex');
     expect(props.tooltip).toBe('editor.math.tooltip');
-    expect(props.toggle).toBe(true);
+    // It inserts a formula; it never turns maths off, so it reports no pressed state.
+    expect(props.toggle).toBeUndefined();
+    expect(props.toggleLook).toBe(true);
     expect(typeof props.isActive?.()).toBe('boolean');
   });
 

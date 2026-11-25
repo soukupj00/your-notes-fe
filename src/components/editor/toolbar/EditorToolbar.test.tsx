@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Editor } from '@tiptap/core';
 import Document from '@tiptap/extension-document';
@@ -256,6 +256,23 @@ describe('the customize gear', () => {
     // The bar it is editing is still mounted behind it: nothing was routed to,
     // so an unsaved draft in the editor is untouched.
     expect(screen.getByTestId('editor-toolbar')).toBeInTheDocument();
+  });
+
+  // A plain button gave no sign that it opens a dialog, and focus fell to `body` on close.
+  it('opens its sheet as a dialog trigger and takes focus back when it closes', async () => {
+    const user = userEvent.setup();
+    renderToolbar(META_ONLY);
+    const trigger = screen.getByTestId('toolbar-customize');
+    expect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(trigger);
+    await screen.findByRole('dialog');
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect(trigger).not.toHaveAttribute('aria-pressed');
+
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(trigger).toHaveFocus());
   });
 
   it('leaves Settings as the only way in once it is switched off', () => {

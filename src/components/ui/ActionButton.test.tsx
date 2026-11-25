@@ -61,13 +61,61 @@ describe('ActionButton', () => {
   // A `PopoverTrigger asChild` writes `open`/`closed` over `data-state`, so every
   // button that opens a popover lost its highlight.
   it('carries its active styling as a class, not only as data-state', () => {
-    renderButton({ icon: 'Baseline', tooltip: 'Text color', toggle: true, isActive: () => true });
+    renderButton({
+      icon: 'Baseline',
+      tooltip: 'Text color',
+      toggleLook: true,
+      isActive: () => true,
+    });
     expect(screen.getByRole('button', { name: 'Text color' })).toHaveClass('bg-accent');
   });
 
   it('leaves an inactive toggle unstyled', () => {
-    renderButton({ icon: 'Baseline', tooltip: 'Text color', toggle: true, isActive: () => false });
+    renderButton({
+      icon: 'Baseline',
+      tooltip: 'Text color',
+      toggleLook: true,
+      isActive: () => false,
+    });
     expect(screen.getByRole('button', { name: 'Text color' })).not.toHaveClass('bg-accent');
+  });
+
+  it("is pressed while the editor's state is on, whatever the clicks", async () => {
+    let bold = true;
+    const { rerender } = renderButton({
+      icon: 'Bold',
+      tooltip: 'Bold',
+      toggle: true,
+      isActive: () => bold,
+    });
+    const button = screen.getByRole('button', { name: 'Bold' });
+    expect(button).toHaveAttribute('aria-pressed', 'true');
+
+    await userEvent.click(button);
+    expect(button).toHaveAttribute('aria-pressed', 'true');
+
+    bold = false;
+    rerender(
+      <TooltipProvider delayDuration={0}>
+        <ActionButton icon="Bold" tooltip="Bold" toggle isActive={() => bold} />
+      </TooltipProvider>
+    );
+    expect(button).toHaveAttribute('aria-pressed', 'false');
+    expect(button).toHaveAttribute('data-state', 'off');
+  });
+
+  // A popover trigger says `aria-expanded`, and an action has no on/off state.
+  it('draws a toggle look with no pressed state, and keeps clear of the Button primitive', () => {
+    renderButton({
+      icon: 'Baseline',
+      tooltip: 'Text color',
+      toggleLook: true,
+      isActive: () => true,
+    });
+    const button = screen.getByRole('button', { name: 'Text color' });
+    expect(button).not.toHaveAttribute('aria-pressed');
+    expect(button).not.toHaveAttribute('data-slot');
+    expect(button).toHaveAttribute('type', 'button');
   });
 
   describe('keyboard shortcut hints', () => {

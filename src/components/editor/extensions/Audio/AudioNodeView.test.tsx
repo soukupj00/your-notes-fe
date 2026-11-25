@@ -30,9 +30,13 @@ function att(): Attachment {
     updatedAt: now,
   };
 }
+/** Shows the values a key was given, so a test sees what a name interpolated. */
+const withValues = (k: string, o?: Record<string, unknown>) =>
+  [k, ...Object.values(o ?? {})].join(' ');
+
 function props(
   get: (i: string) => Promise<Attachment | undefined>,
-  opts: { isEditable?: boolean; deleteNode?: () => void } = {}
+  opts: { isEditable?: boolean; deleteNode?: () => void; t?: typeof withValues } = {}
 ) {
   const watchAttachment = liveRow(get);
   return {
@@ -43,12 +47,23 @@ function props(
     },
     deleteNode: opts.deleteNode ?? vi.fn(),
     extension: {
-      options: { getDeps: () => ({ watchAttachment, t: (k: string) => k }) },
+      options: { getDeps: () => ({ watchAttachment, t: opts.t ?? ((k: string) => k) }) },
     },
   } as unknown as Parameters<typeof AudioNodeView>[0];
 }
 
 describe('AudioNodeView', () => {
+  // Three clips in a Note were three "Play", "Seek" and "Delete audio".
+  it("names every control by the clip's name", async () => {
+    render(<AudioNodeView {...props(async () => att(), { t: withValues })} />);
+
+    await screen.findByRole('button', { name: 'editor.audio.play memo.webm' });
+    expect(screen.getByRole('slider', { name: 'editor.audio.seek memo.webm' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'editor.audio.delete memo.webm' })
+    ).toBeInTheDocument();
+  });
+
   it('resolves the blob into the audio element src and exposes a play control', async () => {
     render(<AudioNodeView {...props(async () => att())} />);
     const play = await screen.findByRole('button', { name: /play/i });

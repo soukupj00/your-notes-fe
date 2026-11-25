@@ -39,6 +39,13 @@ describe('TextPromptHost', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  it('is named by its question and described by nothing, so the question is read once', () => {
+    void ask({ kind: 'math', title: 'Enter LaTeX' });
+
+    const dialog = screen.getByRole('dialog', { name: 'Enter LaTeX' });
+    expect(dialog).not.toHaveAttribute('aria-describedby');
+  });
+
   it('answers with what was typed, on Enter, and closes', async () => {
     const answer = ask();
 

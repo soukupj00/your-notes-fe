@@ -76,7 +76,7 @@ export function LinkButton({ editor, t, tooltip, shortcutKeys }: LinkButtonProps
           shortcutKeys={shortcutKeys}
           icon="Link2"
           tooltip={tooltip}
-          toggle
+          toggleLook
           isActive={() => editor.isActive('link')}
         />
       </PopoverTrigger>

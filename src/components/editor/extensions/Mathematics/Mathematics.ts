@@ -53,7 +53,7 @@ export const Mathematics = TiptapMathematics.extend({
           isActive: () => editor.isActive('inlineMath') || editor.isActive('blockMath'),
           icon: 'Latex',
           tooltip: t('editor.math.tooltip'),
-          toggle: true,
+          toggleLook: true,
         },
       }),
     } as unknown as MathematicsExtensionOptions;

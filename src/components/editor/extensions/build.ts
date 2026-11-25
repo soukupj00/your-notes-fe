@@ -36,7 +36,7 @@ import { ListItem } from './ListItem/ListItem';
 import { createMathematics } from './Mathematics/Mathematics';
 import { createShortcuts } from './Shortcuts/Shortcuts';
 import { createSlashMenu } from './SlashMenu/SlashMenu';
-import { TaskItem } from './TaskItem/TaskItem';
+import { TaskItem, taskItemName } from './TaskItem/TaskItem';
 import { ChecklistFlip } from './TaskList/ChecklistFlip';
 import { TaskList } from './TaskList/TaskList';
 import { TextAlign } from './TextAlign/TextAlign';
@@ -85,7 +85,10 @@ export function buildEditorExtensions({
     OrderedList,
     ListItem,
     TaskList,
-    TaskItem.configure({ gripLabel: () => t('editor.taskItem.grip') }),
+    TaskItem.configure({
+      t,
+      a11y: { checkboxLabel: (node) => taskItemName(node, t) },
+    }),
     ChecklistFlip.configure({ animate: animateChecklist ?? (() => false) }),
     Clear,
     Code,

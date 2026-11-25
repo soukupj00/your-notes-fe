@@ -44,7 +44,7 @@ for (const theme of ['light', 'dark'] as const) {
     await startNote(page, 'Image');
     await (await chooser).setFiles(PICTURE);
 
-    const remove = page.getByRole('dialog').getByRole('button', { name: 'Delete image' });
+    const remove = page.getByRole('dialog').getByRole('button', { name: 'Delete dot.png' });
     await expect(remove).toBeVisible();
 
     expect(await contrastAgainstFill(remove)).toBeGreaterThanOrEqual(3);

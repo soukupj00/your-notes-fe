@@ -6,6 +6,7 @@ import { Spinner } from '@/components/ui/Spinner.tsx';
 import { formatBytes } from '@/lib/format.ts';
 import { cn } from '@/lib/utils.ts';
 import type { Attachment } from '@/models.ts';
+import { attachmentLabelName } from './attachmentLabelName';
 import type { AttachmentDeps } from './deps';
 
 /** Writes the bytes into the row (docs/architecture/04-sync.md); the node view reads it
@@ -72,7 +73,9 @@ export function AttachmentNotDownloaded({
   deleteButton: ReactNode;
 }) {
   const { busy, download } = useDownloadAttachment(deps, attachment.id);
-  const label = deps.t('editor.attachment.download');
+  const label = deps.t('editor.attachment.download', {
+    name: attachmentLabelName(attachment.kind, attachment, deps),
+  });
   const name = attachment.name ?? fallbackName;
 
   // Sized like the real thing when the row knows it, so nothing jumps when the bytes land.

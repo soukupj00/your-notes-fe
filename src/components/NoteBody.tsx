@@ -1,5 +1,7 @@
 import DOMPurify from 'dompurify';
 import { memo, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { nameChecklistBoxes } from '@/lib/body.ts';
 import { cn } from '@/lib/utils.ts';
 
 /**
@@ -27,7 +29,12 @@ function NoteBodyRenderer({
   onClick?: React.MouseEventHandler<HTMLDivElement>;
   ref?: React.Ref<HTMLDivElement>;
 }) {
-  const markup = useMemo(() => sanitizeBody(html ?? ''), [html]);
+  const { t } = useTranslation();
+  const emptyName = t('editor.taskItem.empty');
+  const markup = useMemo(
+    () => nameChecklistBoxes(sanitizeBody(html ?? ''), emptyName),
+    [html, emptyName]
+  );
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: a delegate, not a control; the real checkboxes inside bring their own role.
