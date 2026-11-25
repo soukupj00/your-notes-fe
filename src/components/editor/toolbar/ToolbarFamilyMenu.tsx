@@ -53,7 +53,8 @@ export const ToolbarFamilyMenu: React.FC<ToolbarFamilyMenuProps> = ({
   if (resolvable.length === 0) return null;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    // `modal`, as TagPopover: inside the Note's Dialog a non-modal popover cannot scroll.
+    <Popover modal open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <ActionButton
           toggleLook
@@ -72,6 +73,12 @@ export const ToolbarFamilyMenu: React.FC<ToolbarFamilyMenuProps> = ({
         side="top"
         collisionPadding={8}
         className="w-auto min-w-[12rem] max-w-[min(90vw,18rem)] p-1"
+        // A modal popover keeps itself open when focus leaves; this menu closes when a leaf
+        // hands focus back to the text, as it did before it was modal.
+        onFocusOutside={() => setOpen(false)}
+        onCloseAutoFocus={(event) => {
+          if (!editor.isDestroyed && editor.view.hasFocus()) event.preventDefault();
+        }}
       >
         <div className="flex flex-col">
           {resolvable.map((item) => (

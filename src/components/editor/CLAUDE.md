@@ -187,6 +187,8 @@ All five kinds (image, audio, video, file, Excalidraw) are custom nodes from one
 - **The dialog withholds pointer moves above the canvas** during a drag that started on it, with a capture-phase `window` listener.
   The canvas takes pointer capture, so without it a stroke kept extending under the header, hidden but still in the exported image.
 - Excalidraw is given no theme and always draws light, so its canvas area pins `color-scheme: light`; the night theme's scheme would put dark scrollbars on its white panels.
+- **The dialog sets its own height and overflow**, overriding the shared dialog's height cap and inner scroll, because Excalidraw sizes its canvas to fill the box.
+  `e2e/dialog-fit.spec.ts` checks it keeps the whole phone screen.
 - **The dialog's entrance does not scale**, and that is load-bearing.
   Excalidraw sizes its canvas from a rect that includes transforms, so opening mid-scale left every stroke off the cursor; the fade is kept.
 - The SVG exporter imports Excalidraw dynamically, because importing it eagerly touches a canvas at module scope and crashes under jsdom.
@@ -230,6 +232,9 @@ The commit goes to the selection captured when the popover opened, without focus
   For the same reason the Back arrow is a plain button, not a `DialogClose`, which would carry that `data-slot` and be hidden too.
 - Below `sm:` the sheet has no bottom padding: the format toolbar owns the bottom edge and its insets, so it sits on the keyboard.
 - Top and side padding are tighter than the dialog's default, with the safe-area insets added, so the Back arrow never sits under the status bar.
+- A Popover inside the dialog that can outgrow the screen is `modal` (the toolbar's family menus, labels, the Reminder).
+  The dialog's scroll lock stops wheel and touch scrolling outside its own subtree, and the Popover portals to `body`; a modal Popover brings its own lock, which outranks the dialog's.
+  A modal Popover also keeps focus and ignores the first tap outside, so the family menu closes itself when a leaf hands focus back to the text and leaves that focus where it is.
 - The slash menu mounts inside the dialog, never on `body`.
   A Radix modal sets `pointer-events: none` on `body` and locks scrolling outside its own subtree, so a menu on `body` shows but takes no click, tap or wheel.
   The dialog scrolls and is transformed, which would clip a fixed child, so the menu is a `popover="manual"` shown in the top layer.

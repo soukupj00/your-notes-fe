@@ -73,8 +73,9 @@ function TextPromptDialog({ request, t, onAnswer, onClosed }: TextPromptDialogPr
     >
       <DialogContent
         showCloseButton={false}
-        // Centred in what the software keyboard leaves, or the field sits under it on a phone.
-        className="top-[calc((100%-var(--keyboard-inset,0px))/2)] sm:max-w-sm"
+        // Centred in, and no taller than, what the software keyboard leaves, or the field sits
+        // under it on a phone.
+        className="top-[calc((100%-var(--keyboard-inset,0px))/2)] max-h-[calc(100dvh-2rem-var(--keyboard-inset,0px))] sm:max-w-sm"
         // Back to the text, not to the button that asked: the answer lands at the cursor.
         onCloseAutoFocus={(event) => {
           event.preventDefault();
