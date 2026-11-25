@@ -77,7 +77,7 @@ export const ToolbarFamilyMenu: React.FC<ToolbarFamilyMenuProps> = ({
         // hands focus back to the text, as it did before it was modal.
         onFocusOutside={() => setOpen(false)}
         onCloseAutoFocus={(event) => {
-          if (editor.view.hasFocus()) event.preventDefault();
+          if (!editor.isDestroyed && editor.view.hasFocus()) event.preventDefault();
         }}
       >
         <div className="flex flex-col">
