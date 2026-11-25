@@ -1,8 +1,8 @@
-import DOMPurify from 'dompurify';
 import { sanitizeBody } from '@/components/NoteBody.tsx';
 import type { AttachmentMeta, SharedNote } from '@/contract/index.ts';
 import { sharedBlobUrl } from '@/data/http/publicShare.ts';
 import { ATTACHMENT_ID_ATTR } from '@/lib/body.ts';
+import { sanitizeDrawingPreview } from '@/lib/drawing-preview.ts';
 
 const MEDIA = 'block h-auto max-w-full rounded-md';
 
@@ -74,7 +74,7 @@ function attachmentElement(
     case 'excalidraw': {
       // The same call `ExcalidrawNodeView` makes on the stored preview SVG.
       const drawing = doc.createElement('div');
-      drawing.innerHTML = DOMPurify.sanitize(meta.preview ?? '');
+      drawing.innerHTML = sanitizeDrawingPreview(meta.preview ?? '');
       drawing.className =
         'my-2 block max-w-full overflow-hidden rounded-md border [&>svg]:block [&>svg]:h-auto [&>svg]:max-w-full';
       return drawing;

@@ -1,4 +1,3 @@
-import DOMPurify from 'dompurify';
 import { FileText, Play } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +6,7 @@ import { useAttachmentActions } from '@/hooks/data/useAttachmentActions.ts';
 import { type NoteAttachments, useNoteAttachments } from '@/hooks/data/useNoteAttachments.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { type BodyAttachment, extractBodyAttachments } from '@/lib/body.ts';
+import { sanitizeDrawingPreview } from '@/lib/drawing-preview.ts';
 import { formatBytes, formatDuration, formatFileType } from '@/lib/format.ts';
 import type { Intent } from '@/lib/intent.ts';
 import { cn } from '@/lib/utils.ts';
@@ -102,7 +102,7 @@ function VisualArt({
         // Self-generated SVG from our own Excalidraw export (see sceneToSvgString),
         // the same trust model NoteBody applies to the Body markup itself.
         // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized above, self-authored SVG
-        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(visual.row?.preview ?? '') }}
+        dangerouslySetInnerHTML={{ __html: sanitizeDrawingPreview(visual.row?.preview ?? '') }}
       />
     );
   }
