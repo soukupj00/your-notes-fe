@@ -48,6 +48,16 @@ describe('Editor focus', () => {
   });
 });
 
+describe('Editor body', () => {
+  // A Body with text has no placeholder to stand in for a name.
+  it('is a multiline textbox named Note', async () => {
+    const { findByRole } = render(<Editor content="<p>milk</p>" getNoteId={vi.fn()} />);
+
+    const body = await findByRole('textbox', { name: 'editor.body' });
+    expect(body).toHaveAttribute('aria-multiline', 'true');
+  });
+});
+
 describe('Editor content syncing', () => {
   // `content` is read once, at creation, so every later body must arrive through
   // the setContent effect, or opening an existing note shows a blank editor.

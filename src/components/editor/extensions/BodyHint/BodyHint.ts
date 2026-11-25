@@ -10,9 +10,9 @@ function isUntouched(doc: Node) {
 }
 
 /**
- * The untouched Body's hint, said twice: `Placeholder` marks the paragraph for `globals.css` to
- * draw, and the textbox carries the same words as `aria-placeholder`, since drawn `content` is
- * not text.
+ * The Body's textbox name, and the untouched Body's hint said twice: `Placeholder` marks the
+ * paragraph for `globals.css` to draw, and the textbox carries the same words as
+ * `aria-placeholder`, since drawn `content` is not text.
  */
 export function createBodyHint(t: TFunction) {
   const hint = () => t('editor.placeholder');
@@ -24,8 +24,13 @@ export function createBodyHint(t: TFunction) {
         // A plugin, because TipTap spreads `editorProps.attributes` and so drops a function.
         new Plugin({
           props: {
-            attributes: (state): Record<string, string> =>
-              editor.isEditable && isUntouched(state.doc) ? { 'aria-placeholder': hint() } : {},
+            attributes: (state): Record<string, string> => ({
+              'aria-label': t('editor.body'),
+              'aria-multiline': 'true',
+              ...(editor.isEditable && isUntouched(state.doc)
+                ? { 'aria-placeholder': hint() }
+                : {}),
+            }),
           },
         }),
       ];

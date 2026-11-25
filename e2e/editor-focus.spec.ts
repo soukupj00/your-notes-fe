@@ -285,6 +285,8 @@ test.describe('the empty body', () => {
     await page.keyboard.type('a');
     await expect.poll(() => drawnHint(page)).toBe('none');
     await expect(body).not.toHaveAttribute('aria-placeholder');
+    // The hint no longer stands in for a name.
+    await expect(page.getByRole('textbox', { name: 'Note', exact: true })).toBeFocused();
   });
 
   test('keeps its hint off blank lines and off a new Checklist', async ({ page }) => {

@@ -149,6 +149,7 @@
       "discardCancel": "Keep editing",
       "label": "Drawing"
     },
+    "body": "Note",
     "placeholder": "Write something, or press '/' for commands…",
     "code": {
       "tooltip": "Inline code"

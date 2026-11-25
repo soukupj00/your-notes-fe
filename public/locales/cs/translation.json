@@ -149,6 +149,7 @@
       "discardCancel": "Pokračovat v úpravách",
       "label": "Kresba"
     },
+    "body": "Poznámka",
     "placeholder": "Začněte psát, nebo stiskněte „/“ pro příkazy…",
     "code": {
       "tooltip": "Kód v řádku"
