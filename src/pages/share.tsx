@@ -63,10 +63,11 @@ export default function SharePage({ token }: { token: string }) {
 function SharedNoteView({ shared }: { shared: SharedNote }) {
   const { t } = useTranslation();
   const fileFallbackName = t('editor.file.fallbackName');
+  const drawingFallbackName = t('notes.attachmentDrawing');
   const newTabHintId = useId();
   const markup = useMemo(
-    () => sharedBodyMarkup(shared, { fileFallbackName, newTabHintId }),
-    [shared, fileFallbackName, newTabHintId]
+    () => sharedBodyMarkup(shared, { fileFallbackName, drawingFallbackName, newTabHintId }),
+    [shared, fileFallbackName, drawingFallbackName, newTabHintId]
   );
   const header = shared.note.header?.trim();
 

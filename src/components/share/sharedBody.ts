@@ -1,6 +1,7 @@
 import { sanitizeBody } from '@/components/NoteBody.tsx';
 import type { AttachmentMeta, SharedNote } from '@/contract/index.ts';
 import { sharedBlobUrl } from '@/data/http/publicShare.ts';
+import { isGenericName } from '@/lib/attachments.ts';
 import { ATTACHMENT_ID_ATTR } from '@/lib/body.ts';
 import { sanitizeDrawingPreview } from '@/lib/drawing-preview.ts';
 
@@ -8,6 +9,7 @@ const MEDIA = 'block h-auto max-w-full rounded-md';
 
 export interface SharedBodyLabels {
   fileFallbackName: string;
+  drawingFallbackName: string;
   /** The element saying "opens in a new tab", which every link that does is described by. */
   newTabHintId: string;
 }
@@ -27,7 +29,7 @@ export function sharedBodyMarkup(shared: SharedNote, labels: SharedBodyLabels): 
 
   for (const node of doc.body.querySelectorAll(`[${ATTACHMENT_ID_ATTR}]`)) {
     const meta = listed.get(node.getAttribute(ATTACHMENT_ID_ATTR) ?? '');
-    if (meta) node.replaceWith(attachmentElement(doc, shared, meta, labels.fileFallbackName));
+    if (meta) node.replaceWith(attachmentElement(doc, shared, meta, labels));
     else node.remove();
   }
   // After the attachments, so a link inside a Drawing's preview is caught too.
@@ -45,7 +47,7 @@ function attachmentElement(
   doc: Document,
   shared: SharedNote,
   meta: AttachmentMeta,
-  fileFallbackName: string
+  labels: SharedBodyLabels
 ): Element {
   const src = sharedBlobUrl(shared, meta.id);
   const sized = (el: HTMLElement) => {
@@ -83,6 +85,8 @@ function attachmentElement(
       // The same call `ExcalidrawNodeView` makes on the stored preview SVG.
       const drawing = doc.createElement('div');
       drawing.innerHTML = sanitizeDrawingPreview(meta.preview ?? '');
+      drawing.setAttribute('role', 'img');
+      drawing.setAttribute('aria-label', drawingName(meta, labels.drawingFallbackName));
       drawing.className =
         'my-2 block max-w-full overflow-hidden rounded-md border [&>svg]:block [&>svg]:h-auto [&>svg]:max-w-full';
       return drawing;
@@ -91,9 +95,13 @@ function attachmentElement(
       const a = doc.createElement('a');
       a.setAttribute('href', src);
       a.setAttribute('download', meta.name ?? '');
-      a.textContent = meta.name ?? fileFallbackName;
+      a.textContent = meta.name ?? labels.fileFallbackName;
       a.className = 'my-2 block truncate rounded-md border bg-muted/40 px-3 py-2 text-sm';
       return a;
     }
   }
+}
+
+function drawingName(meta: AttachmentMeta, fallback: string): string {
+  return meta.name && !isGenericName('excalidraw', meta.name) ? meta.name : fallback;
 }

@@ -131,6 +131,22 @@ describe('/share/$token', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
+  it.each([
+    ['no name', undefined, 'notes.attachmentDrawing'],
+    ["the app's own name", 'drawing.excalidraw', 'notes.attachmentDrawing'],
+    ["the user's name", 'Floor plan.excalidraw', 'Floor plan.excalidraw'],
+  ])('names a Drawing with %s as a picture', async (_, name, expected) => {
+    const token = await shared({
+      header: 'Sketch',
+      body: `<excalidraw-drawing data-attachment-id="${DRAWING}"></excalidraw-drawing>`,
+      attachments: [meta(DRAWING, 'excalidraw', { name, preview: '<svg><rect/></svg>' })],
+    });
+    render(<SharePage token={token} />);
+
+    const drawing = await screen.findByRole('img', { name: expected });
+    expect(drawing.querySelector('svg rect')).not.toBeNull();
+  });
+
   it('a revoked, unknown or trashed share says nothing is shared', async () => {
     await shared({ header: 'Gone', state: 'trashed' });
     render(<SharePage token="share-token-x" />);
