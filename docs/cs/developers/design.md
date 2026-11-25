@@ -35,7 +35,7 @@ Každá barva je vlastní CSS vlastnost v OKLCH v `src/styles/globals.css`, jedi
 - **Dotykové cíle 44px** pro každý ovládací prvek na dotykové obrazovce; kompaktní hustota zmenšuje text a rozestupy, nikdy plochy pro klepnutí.
 - **Pořadí v DOM je pořadí čtení.** Zděná (masonry) stěna se rozmísťuje v JavaScriptu, aby karty zůstaly v pořadí čtení i tabulátoru.
 - **Dvě rozvržení přehledu, Masonry a Stack,** s jednou anatomií karty; přepnutí mezi nimi je animované.
-- **Omezený pohyb vypne všechny animace** a každý hover, který zvětšuje, mění i výplň nebo stín, takže stav je vidět i bez pohybu.
+- **Omezený pohyb vypne všechny animace kromě načítacího kolečka** a každý hover, který zvětšuje, mění i výplň nebo stín, takže stav je vidět i bez pohybu.
 - **Záře jen v noci, stín jen ve dne.**
 - **Popisky nejsou nikdy menší než 11px.**
 - **Hierarchie přežije záložní písmo.** Řecké, cyrilské a další nelatinkové nadpisy přecházejí na systémové písmo, takže hierarchii nese velikost, tloušťka i barva, ne samotný řez písma.

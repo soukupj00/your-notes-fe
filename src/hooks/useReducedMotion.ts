@@ -3,7 +3,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery.ts';
 
 /**
  * Whether decorative motion should be suppressed. Use it for motion that lives in component
- * state (timers, rotations); `globals.css` already gates CSS transitions.
+ * state (timers, rotations); `globals.css` ends every CSS animation and transition at once.
  */
 export function useReducedMotion(): boolean {
   const { preferences } = usePreferences();

@@ -35,7 +35,7 @@ There is no `tailwind.config.js`; Tailwind 4 reads its configuration from that C
 - **44px touch targets** for every control on a touch screen; compact density shrinks text and spacing, never hit areas.
 - **DOM order is reading order.** The masonry wall is placed in JavaScript so that cards stay in reading and tab order.
 - **Two feed layouts, Masonry and Stack,** with one card anatomy; the switch between them animates.
-- **Reduced motion turns every animation off**, and every hover that scales also changes its fill or shadow, so state still shows without motion.
+- **Reduced motion turns every animation off except a spinner**, and every hover that scales also changes its fill or shadow, so state still shows without motion.
 - **Glow only at night, shadow only by day.**
 - **Labels are never smaller than 11px.**
 - **Hierarchy survives the fallback font.** Greek, Cyrillic and other non-Latin titles fall back to the system font, so size, weight and colour each carry the hierarchy, not the typeface alone.

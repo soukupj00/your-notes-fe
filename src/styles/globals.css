@@ -951,6 +951,47 @@
   }
 }
 
+/* Reduce animations is a hard killswitch (DESIGN.md Motion), spinners excepted. Ending every
+   animation at once rather than removing it keeps what a library hides until its entrance ends
+   (Excalidraw's dialogs) shown, and `animationend` still fires. */
+/* biome-ignore-start lint/complexity/noImportantStyles: it must beat inline and library styles */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-reduced-motion="never"]) {
+    & *,
+    & ::before,
+    & ::after,
+    & ::backdrop {
+      transition-duration: 0.01ms !important;
+    }
+
+    & *:not(.animate-spin, .excalidraw .Spinner *),
+    & ::before,
+    & ::after,
+    & ::backdrop {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+}
+
+:root[data-reduced-motion="always"] {
+  & *,
+  & ::before,
+  & ::after,
+  & ::backdrop {
+    transition-duration: 0.01ms !important;
+  }
+
+  & *:not(.animate-spin, .excalidraw .Spinner *),
+  & ::before,
+  & ::after,
+  & ::backdrop {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+/* biome-ignore-end lint/complexity/noImportantStyles: end of the killswitch */
+
 /* The phone's label filter row fades an edge only while labels hide past it (DESIGN.md Chips).
    Guarded because without a timeline the keyframes run once and stick on their last frame. */
 @property --filter-fade-start {
