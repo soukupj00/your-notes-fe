@@ -42,6 +42,49 @@ function excalidrawFonts(): Plugin {
   };
 }
 
+const EXCALIDRAW_LOCALE = /\/@excalidraw\/excalidraw\/dist\/prod\/locales\/(.+)-[A-Z0-9]{8}\.js$/;
+// English is bundled into Excalidraw's main code, which also reads `percentages`; Czech is the
+// app's other language.
+const REACHABLE_EXCALIDRAW_LOCALES = new Set(['en', 'percentages', 'cs-CZ']);
+
+/**
+ * Excalidraw fetches a language chunk only for its `langCode`, so the others stay out of the
+ * precache. A chunk is judged by the modules it holds, never by its name, which the bundler picks.
+ */
+function excalidrawLocales() {
+  const unreachable = new Set<string>();
+  const isUnreachable = (moduleId: string) => {
+    const locale = EXCALIDRAW_LOCALE.exec(moduleId)?.[1];
+    return locale !== undefined && !REACHABLE_EXCALIDRAW_LOCALES.has(locale);
+  };
+  const plugin: Plugin = {
+    name: 'excalidraw-locales',
+    apply: 'build',
+    generateBundle(_options, bundle) {
+      for (const file of Object.values(bundle)) {
+        if (
+          file.type === 'chunk' &&
+          file.moduleIds.length > 0 &&
+          file.moduleIds.every(isUnreachable)
+        ) {
+          unreachable.add(file.fileName);
+        }
+      }
+      if (unreachable.size === 0) {
+        this.error("Excalidraw's language chunks moved; update EXCALIDRAW_LOCALE.");
+      }
+    },
+  };
+  return {
+    plugin,
+    dropFromPrecache: <Entry extends { url: string }>(entries: Entry[]) => ({
+      manifest: entries.filter((entry) => !unreachable.has(entry.url)),
+    }),
+  };
+}
+
+const EXCALIDRAW_LOCALES = excalidrawLocales();
+
 /** Why each source is allowed: docs/architecture/05-server.md, "Security posture". */
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
@@ -97,6 +140,7 @@ export default defineConfig({
   plugins: [
     contentSecurityPolicy(),
     excalidrawFonts(),
+    EXCALIDRAW_LOCALES.plugin,
     tanstackRouter({
       target: 'react',
       autoCodeSplitting: true,
@@ -121,6 +165,7 @@ export default defineConfig({
           '**/*.{js,css,html,ico,png,svg,json}',
           '**/{bricolage-grotesque,work-sans}-*.woff2',
         ],
+        manifestTransforms: [EXCALIDRAW_LOCALES.dropFromPrecache],
         runtimeCaching: [
           {
             // Any destination: Excalidraw also fetches its fonts to subset them into a preview.

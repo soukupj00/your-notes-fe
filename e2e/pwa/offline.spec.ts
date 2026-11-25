@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { skipTour, startNote } from '../helpers.ts';
+import { drawText, skipTour, startNote } from '../helpers.ts';
 
 // Strings, not callbacks: `tsconfig.node.json` has no DOM lib (see `skipTour`).
 const CONTROLLED = 'navigator.serviceWorker.controller !== null';
@@ -50,4 +50,24 @@ test('the app fonts are precached, Czech subsets included', async ({ page }) => 
       font
     ).toBe(true);
   }
+});
+
+/** An Excalidraw language chunk: its locale code, Excalidraw's own hash, then Vite's. */
+const EXCALIDRAW_LOCALE = /\/assets\/([a-z]{2,3}(?:-[A-Z]{2,3})?)-[A-Z0-9]{8}-[\w-]+\.js$/;
+
+test("of Excalidraw's languages, only Czech is precached", async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate('navigator.serviceWorker.ready.then(() => true)');
+
+  const urls = (await page.evaluate(CACHED_URLS)) as string[];
+  const locales = urls.flatMap((url) => EXCALIDRAW_LOCALE.exec(url)?.[1] ?? []);
+  expect(locales).toEqual(['cs-CZ']);
+});
+
+test('a Drawing opens offline though it never opened online', async ({ page, context }) => {
+  await page.goto('/');
+  await untilControlled(page);
+
+  await context.setOffline(true);
+  await drawText(page, 'Offline');
 });
