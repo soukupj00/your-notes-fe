@@ -16,18 +16,16 @@ const pageOrder = async (page: Page) =>
     )
   );
 
-async function sidebarOrder(page: Page, isMobile: boolean) {
+async function expectSidebarOrder(page: Page, isMobile: boolean, names: string[]) {
   if (isMobile) await page.getByRole('button', { name: 'Toggle navigation' }).click();
   const links = page
     .getByRole('navigation', { name: 'Main navigation' })
     .locator('a[href^="/tag/"]');
-  await links.first().waitFor();
-  const names = await links.allInnerTexts();
+  await expect(links).toHaveText(names);
   if (isMobile) {
     await page.keyboard.press('Escape');
     await expect(links.first()).toBeHidden();
   }
-  return names;
 }
 
 /**
@@ -62,15 +60,16 @@ test('labels show A to Z until one is dragged, then in the dragged order everywh
 }) => {
   await createLabels(page, 'Work', 'Ideas', 'Personal');
   expect(await pageOrder(page)).toEqual(['Ideas', 'Personal', 'Work']);
-  expect(await sidebarOrder(page, isMobile)).toEqual(['Ideas', 'Personal', 'Work']);
+  await expectSidebarOrder(page, isMobile, ['Ideas', 'Personal', 'Work']);
 
   await moveUp(page, 'Work', 2);
 
   await expect.poll(() => pageOrder(page)).toEqual(['Work', 'Ideas', 'Personal']);
-  expect(await sidebarOrder(page, isMobile)).toEqual(['Work', 'Ideas', 'Personal']);
+  // The page shows the dropped order before the store's write lands, the sidebar only after it.
+  await expectSidebarOrder(page, isMobile, ['Work', 'Ideas', 'Personal']);
   await page.reload();
   await expect.poll(() => pageOrder(page)).toEqual(['Work', 'Ideas', 'Personal']);
-  expect(await sidebarOrder(page, isMobile)).toEqual(['Work', 'Ideas', 'Personal']);
+  await expectSidebarOrder(page, isMobile, ['Work', 'Ideas', 'Personal']);
 });
 
 test('Arrange A to Z and Undo', async ({ page }) => {
