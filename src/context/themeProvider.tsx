@@ -66,6 +66,15 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     : 'light';
   const resolvedTheme = theme === 'system' ? systemTheme : theme;
 
+  // Another window of the app (the installed one beside a tab) changed or cleared the choice.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === STORAGE_KEY || event.key === null) setTheme(readStoredTheme());
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark');

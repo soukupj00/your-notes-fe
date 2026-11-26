@@ -68,4 +68,22 @@ describe('ThemeProvider', () => {
       'oklch(17% 0.012 265)'
     );
   });
+
+  // An installed app and a browser tab of the same origin share the key but not the React state.
+  it.each([
+    ['takes a theme another window chose', 'vite-ui-theme', 'dark', 'dark'],
+    ['falls back to the default when another window clears storage', null, null, 'dark'],
+    ["ignores another window's other keys", 'preferences', 'dark', 'light'],
+  ])('%s', (_, key, stored, expected) => {
+    localStorage.setItem('vite-ui-theme', 'light');
+    render(<ThemeProvider>content</ThemeProvider>);
+
+    act(() => {
+      if (key === null) localStorage.clear();
+      else localStorage.setItem(key, stored ?? '');
+      window.dispatchEvent(new StorageEvent('storage', { key }));
+    });
+
+    expect(document.documentElement).toHaveClass(expected);
+  });
 });

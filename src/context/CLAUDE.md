@@ -100,6 +100,7 @@ A custom theme provider (not `next-themes`).
 
 - The theme is `dark`, `light` or `system`, persisted under its own `localStorage` key; the default is dark.
   Blocked storage or an unknown stored value reads as the default: the provider sits outside the error boundary, so a throw here would leave a blank page.
+- A `storage` event for that key re-reads it, as for Preferences, so the installed app and a browser tab of the same origin show the same theme.
 - `public/theme-boot.js`, a blocking classic script in `index.html`'s head, sets the same class and the `color-scheme` meta before the first paint, so a dark theme never flashes the day canvas while the app loads.
   It restates the storage key, the default and the validation; `themeBoot.test.tsx` runs it beside the provider for every stored value.
   The meta is not kept up to date after that: once the stylesheet loads, each theme block's `color-scheme` rules.
