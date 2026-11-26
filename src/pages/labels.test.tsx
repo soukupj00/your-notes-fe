@@ -1,4 +1,4 @@
-import { render as rtlRender, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render as rtlRender, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -82,6 +82,34 @@ describe('renaming', () => {
     await userEvent.tab();
 
     await waitFor(async () => expect((await tagById(testStore, 't1'))?.name).toBe('Job'));
+  });
+
+  it.each([
+    ['a plain Enter commits it', {}, 'Job', false],
+    ['an Enter confirming an IME conversion does not', { isComposing: true }, 'Work', true],
+    ["Safari's key 229 does not", { keyCode: 229 }, 'Work', true],
+  ])('Enter in a rename: %s', async (_, init, stored, stillEditing) => {
+    await putTag('t1', 'Work');
+    render(<LabelsPage />);
+
+    const field = await screen.findByRole('textbox', { name: 'labels.rename:Work' });
+    await userEvent.clear(field);
+    await userEvent.type(field, 'Job');
+    fireEvent.keyDown(field, { key: 'Enter', ...init });
+
+    expect(field === document.activeElement).toBe(stillEditing);
+    await waitFor(async () => expect((await tagById(testStore, 't1'))?.name).toBe(stored));
+  });
+
+  it('an Escape that cancels an IME conversion keeps the rename', async () => {
+    await putTag('t1', 'Work');
+    render(<LabelsPage />);
+
+    const field = await screen.findByRole('textbox', { name: 'labels.rename:Work' });
+    await userEvent.type(field, 'Job');
+    fireEvent.keyDown(field, { key: 'Escape', isComposing: true });
+
+    expect(field).toHaveValue('WorkJob');
   });
 
   it('snaps back rather than saving an empty name', async () => {
