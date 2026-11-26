@@ -191,7 +191,7 @@ describe('SharesSection', () => {
     const { server } = await listShares();
 
     expect(await screen.findByText('Trip')).toBeVisible();
-    await user.click(screen.getByRole('button', { name: 'share.stop' }));
+    await user.click(screen.getByRole('button', { name: 'share.stopNamed' }));
     expect(await screen.findByText('share.section.none')).toBeVisible();
     expect(server.shares).toEqual([]);
   });
@@ -201,7 +201,7 @@ describe('SharesSection', () => {
     const { server, service } = await listShares();
     const { revokeShare, release } = holdRevoke(service);
     expect(await screen.findByText('Trip')).toBeVisible();
-    const stop = screen.getByRole('button', { name: 'share.stop' });
+    const stop = screen.getByRole('button', { name: 'share.stopNamed' });
 
     await user.click(stop);
     expect(stop).toBeDisabled();

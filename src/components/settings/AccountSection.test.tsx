@@ -121,7 +121,9 @@ describe('Settings account sections', () => {
 
     expect(await screen.findByText('Laptop')).toBeVisible();
     expect(screen.getByText('account.devices.current')).toBeVisible();
-    await userEvent.click(screen.getByRole('button', { name: 'account.devices.remove' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'account.devices.removeNamed Laptop' })
+    );
     await userEvent.click(
       within(await screen.findByRole('dialog')).getByRole('button', {
         name: 'account.devices.remove',
@@ -152,14 +154,16 @@ describe('Settings account sections', () => {
     await signIn('ada', 'correct horse');
     expect(await screen.findByText('Laptop')).toBeVisible();
 
-    await userEvent.click(screen.getByRole('button', { name: 'account.devices.remove' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'account.devices.removeNamed Laptop' })
+    );
     await userEvent.click(
       within(await screen.findByRole('dialog')).getByRole('button', {
         name: 'account.devices.remove',
       })
     );
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-    const remove = screen.getByRole('button', { name: 'account.devices.remove' });
+    const remove = screen.getByRole('button', { name: 'account.devices.removeNamed Laptop' });
     expect(remove).toBeDisabled();
     await userEvent.click(remove);
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -214,7 +218,7 @@ describe('Settings account sections', () => {
     expect(await screen.findByText('bob')).toBeVisible();
     expect(screen.getByText('account.section.owner · account.members.you')).toBeVisible();
     // One reset button: the member's, never the Owner's own row.
-    await userEvent.click(screen.getByRole('button', { name: 'account.members.reset' }));
+    await userEvent.click(screen.getByRole('button', { name: 'account.members.resetNamed bob' }));
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText('account.members.resetTitle bob')).toBeVisible();
     await userEvent.type(

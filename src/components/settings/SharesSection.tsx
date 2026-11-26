@@ -40,19 +40,23 @@ export function SharesSection() {
       {rows.length === 0 && (
         <p className="px-4 py-3 text-muted-foreground text-sm">{t('share.section.none')}</p>
       )}
-      {rows.map((row) => (
-        <SettingsRow key={row.id} label={row.header ?? t('share.untitled')}>
-          <Button
-            variant="outline"
-            size="sm"
-            className="min-h-11"
-            disabled={busy}
-            onClick={() => void stop(row)}
-          >
-            {t('share.stop')}
-          </Button>
-        </SettingsRow>
-      ))}
+      {rows.map((row) => {
+        const name = row.header ?? t('share.untitled');
+        return (
+          <SettingsRow key={row.id} label={name}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="min-h-11"
+              disabled={busy}
+              onClick={() => void stop(row)}
+              aria-label={t('share.stopNamed', { name })}
+            >
+              {t('share.stop')}
+            </Button>
+          </SettingsRow>
+        );
+      })}
     </SettingsSection>
   );
 }

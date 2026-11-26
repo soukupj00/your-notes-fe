@@ -1,10 +1,16 @@
+import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Switch } from '@/components/ui/switch.tsx';
 import { type Preferences, usePreferences } from '@/context/PreferencesProvider.tsx';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
 import { cn } from '@/lib/utils.ts';
 import { PickerTiles } from './PickerTiles.tsx';
-import { PreferenceSwitch, SettingsRow, SettingsSection } from './SettingsSection.tsx';
+import {
+  descriptionIdOf,
+  PreferenceSwitch,
+  SettingsRow,
+  SettingsSection,
+} from './SettingsSection.tsx';
 
 export function DisplaySection() {
   const { t } = useTranslation();
@@ -77,15 +83,20 @@ export function ReduceAnimationsSwitch() {
   const { t } = useTranslation();
   const { setPreference } = usePreferences();
   const reduced = useReducedMotion();
-  const label = t('settings.reducedMotion.label');
+  const id = useId();
 
   return (
-    <SettingsRow label={label} description={t('settings.reducedMotion.description')}>
+    <SettingsRow
+      label={t('settings.reducedMotion.label')}
+      description={t('settings.reducedMotion.description')}
+      controlId={id}
+    >
       <Switch
+        id={id}
         className="touch-reach"
         checked={reduced}
         onCheckedChange={(next) => void setPreference('reducedMotion', next ? 'always' : 'never')}
-        aria-label={label}
+        aria-describedby={descriptionIdOf(id)}
       />
     </SettingsRow>
   );

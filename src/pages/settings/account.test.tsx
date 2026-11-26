@@ -3,11 +3,15 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountProvider } from '@/context/AccountProvider.tsx';
 import type { AccountService, Session } from '@/data/Remote.ts';
-import { clearStore, withStore } from '@/test/store.tsx';
+import { clearStore, testStore, withStore } from '@/test/store.tsx';
 import AccountSettingsPage from './account.tsx';
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
+  useTranslation: () => ({
+    t: (key: string, options?: Record<string, string>) =>
+      options ? `${key} ${Object.values(options).join(' ')}` : key,
+    i18n: { language: 'en' },
+  }),
 }));
 
 vi.mock('@tanstack/react-router', () => ({
@@ -86,6 +90,46 @@ describe('the Account page', () => {
       'account.members.title',
     ]);
     expect(screen.getByText('share.section.none')).toBeInTheDocument();
+  });
+
+  it("names each row's button after its row, so no two read the same", async () => {
+    const T0 = '2026-01-01T00:00:00.000Z';
+    for (const [id, header] of [
+      ['n1', 'Groceries'],
+      ['n2', 'Trip plan'],
+    ]) {
+      await testStore.notes.add({ id, header, state: 'active', createdAt: T0, updatedAt: T0 });
+    }
+    const service = signedIn();
+    mount({
+      ...service,
+      devices: async () => [
+        ...(await service.devices()),
+        { id: 'd2', name: 'Phone', lastSeenAt: T0, current: false },
+        { id: 'd3', name: 'Tablet', lastSeenAt: T0, current: false },
+      ],
+      shares: async () => [
+        { id: 's1', noteId: 'n1', token: 't1', createdAt: T0 },
+        { id: 's2', noteId: 'n2', token: 't2', createdAt: T0 },
+      ],
+      accounts: async () => [
+        ...(await service.accounts()),
+        { id: 'a2', username: 'bob', role: 'member', createdAt: T0 },
+        { id: 'a3', username: 'cy', role: 'member', createdAt: T0 },
+      ],
+    } as AccountService);
+
+    for (const row of ['Tablet', 'Trip plan', 'cy']) await screen.findByText(row);
+    for (const name of [
+      'account.devices.removeNamed Phone',
+      'account.devices.removeNamed Tablet',
+      'share.stopNamed Groceries',
+      'share.stopNamed Trip plan',
+      'account.members.resetNamed bob',
+      'account.members.resetNamed cy',
+    ]) {
+      expect(screen.getByRole('button', { name })).toBeInTheDocument();
+    }
   });
 
   // Each was a row whose button repeated its label; on a phone the button dropped under it.

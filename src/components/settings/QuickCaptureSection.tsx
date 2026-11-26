@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FILE_START, QUICK_CAPTURE_ACTIONS } from '@/components/notes/quickCaptureActions.ts';
 import {
@@ -64,6 +65,7 @@ export function QuickCaptureSection() {
   const write = (next: QuickCapturePref[]) => setPreference('quickCapture', next);
   const finePointer = useFinePointer();
   const mobile = useIsMobile();
+  const lastOneId = useId();
 
   // As the desktop bar draws it (`resolveDesktopQuickCapture`): File in Camera's slot for a
   // Fine pointer; below `sm:` the list is the dial's, which keeps Camera.
@@ -72,9 +74,9 @@ export function QuickCaptureSection() {
       ? FILE_START
       : QUICK_CAPTURE_ACTIONS.find((action) => action.key === id);
   const nameOf = (id: string) => t(actionOf(id)?.labelKey ?? id);
-  // On a phone the dial is the only way to start a note, so the last start on it
-  // may not be switched off. Refusing at the switch says so where the user is,
-  // rather than leaving them a `＋` that opens an empty menu.
+  // On a phone the dial is the only way to start a note, so its last start is refused at the
+  // switch, where the user is, rather than leaving a `＋` that opens an empty menu.
+  // `aria-disabled`, not `disabled`, keeps it in the Tab order with its reason as its description.
   const onCount = actions.filter((entry) => entry.on).length;
 
   return (
@@ -101,7 +103,7 @@ export function QuickCaptureSection() {
                       <span className="flex min-w-0 flex-col">
                         <span className="truncate text-sm">{name}</span>
                         {last && (
-                          <span className="text-muted-foreground text-xs">
+                          <span id={lastOneId} className="text-muted-foreground text-xs">
                             {t('settings.quickCapture.lastOne')}
                           </span>
                         )}
@@ -110,10 +112,14 @@ export function QuickCaptureSection() {
                     <Switch
                       className="touch-reach mx-2"
                       checked={entry.on}
-                      disabled={last}
-                      onCheckedChange={(on) =>
-                        write(actions.map((row) => (row.id === entry.id ? { ...row, on } : row)))
-                      }
+                      aria-disabled={last || undefined}
+                      aria-describedby={last ? lastOneId : undefined}
+                      onCheckedChange={(on) => {
+                        if (last) return;
+                        void write(
+                          actions.map((row) => (row.id === entry.id ? { ...row, on } : row))
+                        );
+                      }}
                       aria-label={t('settings.quickCapture.show', { name })}
                     />
                   </SortableRow>

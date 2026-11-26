@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LocaleFlag } from '@/components/LocaleFlag.tsx';
 import {
@@ -18,17 +19,18 @@ import { SegmentedSetting, SettingsRow, SettingsSection } from './SettingsSectio
 export function LanguageAndThemeSection() {
   const { t, i18n } = useTranslation();
   const locales = listLocales();
+  const id = useId();
 
   return (
     <SettingsSection title={t('settings.general.languageAndTheme')}>
-      <SettingsRow label={t('settings.locale.label')}>
+      <SettingsRow label={t('settings.locale.label')} controlId={id}>
         <Select
           value={i18n.resolvedLanguage}
           onValueChange={(code) => {
             void i18n.changeLanguage(code);
           }}
         >
-          <SelectTrigger className="w-44" aria-label={t('settings.locale.label')}>
+          <SelectTrigger id={id} className="w-44">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

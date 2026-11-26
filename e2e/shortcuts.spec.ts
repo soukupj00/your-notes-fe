@@ -70,3 +70,13 @@ test('a combination opens a new note from the Feed', async ({ page }) => {
   await page.keyboard.press('Control+Alt+n');
   await expect(page.getByRole('dialog')).toBeVisible();
 });
+
+test('the recorder speaks into a status region that was already there', async ({ page }) => {
+  const row = page.getByRole('listitem').filter({ hasText: /^New note/ });
+  await expect(row.getByRole('status')).toBeAttached();
+  const region = await row.getByRole('status').elementHandle();
+
+  await page.getByRole('button', { name: /^New note: .*\./ }).click();
+
+  await expect.poll(() => region?.textContent()).toBe('Press the new keys. Esc cancels.');
+});

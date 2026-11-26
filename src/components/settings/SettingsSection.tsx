@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Switch } from '@/components/ui/switch.tsx';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx';
@@ -37,22 +37,41 @@ export function SettingsSection({
   );
 }
 
+/** The id of the description a row with this `controlId` renders, for `aria-describedby`. */
+export const descriptionIdOf = (controlId: string) => `${controlId}-description`;
+
+/** With `controlId`, the label names and clicks that control, and the description is its own. */
 export function SettingsRow({
   label,
   description,
+  controlId,
   children,
 }: {
   label: string;
   /** For rows whose consequence needs saying. */
   description?: ReactNode;
+  controlId?: string;
   children: ReactNode;
 }) {
   return (
     // A control dropped under its label read as the next row's.
     <div className="flex items-center justify-between gap-3 px-4 py-3 *:last:shrink-0">
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="text-sm">{label}</span>
-        {description && <span className="text-muted-foreground text-xs">{description}</span>}
+        {controlId ? (
+          <label htmlFor={controlId} className="text-sm">
+            {label}
+          </label>
+        ) : (
+          <span className="text-sm">{label}</span>
+        )}
+        {description && (
+          <span
+            id={controlId && descriptionIdOf(controlId)}
+            className="text-muted-foreground text-xs"
+          >
+            {description}
+          </span>
+        )}
       </span>
       {children}
     </div>
@@ -120,15 +139,20 @@ export function PreferenceSwitch({
 }) {
   const { t } = useTranslation();
   const { preferences, setPreference } = usePreferences();
-  const label = t(`${keys}.label`);
+  const id = useId();
 
   return (
-    <SettingsRow label={label} description={describe ? t(`${keys}.description`) : undefined}>
+    <SettingsRow
+      label={t(`${keys}.label`)}
+      description={describe ? t(`${keys}.description`) : undefined}
+      controlId={id}
+    >
       <Switch
+        id={id}
         className="touch-reach"
         checked={preferences[pref]}
         onCheckedChange={(next) => void setPreference(pref, next)}
-        aria-label={label}
+        aria-describedby={describe ? descriptionIdOf(id) : undefined}
       />
     </SettingsRow>
   );
