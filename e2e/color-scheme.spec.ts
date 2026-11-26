@@ -34,6 +34,24 @@ test('in the dark theme the Reminder fields take the dark scheme', async ({ page
   await expect(page.getByLabel('Repeat')).toHaveCSS('color-scheme', 'dark');
 });
 
+// Chrome draws a select's option list on its own white behind a transparent select, in the
+// select's light text, whatever the colour scheme.
+test('in the dark theme the Reminder selects give their option list a dark ground', async ({
+  page,
+}) => {
+  await wallIn(page, 'dark');
+  await startNote(page, 'Checklist');
+  await page.getByRole('button', { name: 'Add reminder' }).click();
+
+  const popover = page.getByTestId('reminder-popover');
+  const ground = await popover.evaluate(
+    (el) => el.ownerDocument.defaultView?.getComputedStyle(el).backgroundColor ?? ''
+  );
+  for (const label of ['Hour', 'Minute', 'Repeat']) {
+    await expect(page.getByLabel(label)).toHaveCSS('background-color', ground);
+  }
+});
+
 test('in the dark theme the Drawing keeps the light scheme', async ({ page }) => {
   await wallIn(page, 'dark');
   await startNote(page, 'Drawing');

@@ -17,8 +17,8 @@ type ReminderButtonProps = {
   className?: string;
 };
 
-const FIELD =
-  'h-9 w-full rounded-control border border-input bg-transparent px-2 text-base md:text-sm';
+// Opaque, not transparent: Chrome draws a select's option list on white behind a transparent one.
+const FIELD = 'h-9 w-full rounded-control border border-input bg-popover px-2 text-base md:text-sm';
 
 const today = () => toLocalInput(new Date()).slice(0, 10);
 
