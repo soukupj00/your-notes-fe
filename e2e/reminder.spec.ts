@@ -138,6 +138,33 @@ test.describe('Reminders', () => {
     await expect(page.getByLabel('Hour')).toBeHidden();
   });
 
+  // Safari on iOS zooms the page when a field under 16px takes focus, and stays zoomed.
+  test('on a phone the fields are at least 16px', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'the fields drop to 14px from the md breakpoint up');
+    await freshWall(page);
+    await openNewNote(page, isMobile);
+    await page.getByRole('button', { name: 'Reminder' }).click();
+
+    const popover = page.getByTestId('reminder-popover');
+    // Measured after the entrance, which scales the box.
+    await popover.evaluate((el) =>
+      Promise.all(el.getAnimations().map((a: { finished: Promise<unknown> }) => a.finished))
+    );
+    const fields = popover.locator('input, select');
+    await expect(fields).toHaveCount(4);
+    for (const field of await fields.all()) await expect(field).toHaveCSS('font-size', '16px');
+
+    // The larger fields must still fit the 20rem popover on one row; the date's column can shrink.
+    const box = async (label: string) => {
+      const found = await page.getByLabel(label, { exact: true }).boundingBox();
+      if (!found) throw new Error(`no ${label} field`);
+      return found;
+    };
+    const [date, minute, repeat] = [await box('Date'), await box('Minute'), await box('Repeat')];
+    expect(minute.y).toBe(date.y);
+    expect(minute.x + minute.width).toBeLessThanOrEqual(repeat.x + repeat.width);
+  });
+
   test('on a phone that can share files, the calendar file goes to the share sheet', async ({
     page,
     isMobile,

@@ -17,7 +17,8 @@ type ReminderButtonProps = {
   className?: string;
 };
 
-const FIELD = 'h-9 w-full rounded-control border border-input bg-transparent px-2 text-sm';
+const FIELD =
+  'h-9 w-full rounded-control border border-input bg-transparent px-2 text-base md:text-sm';
 
 const today = () => toLocalInput(new Date()).slice(0, 10);
 
@@ -87,7 +88,7 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
       <PopoverContent align="end" data-testid="reminder-popover" className="w-80 space-y-3 p-3">
         {/* Two fields, not one datetime-local: Firefox reports that as empty until both halves
             are picked, so a new Reminder could not start on today. */}
-        <div className="grid grid-cols-[1fr_auto] gap-2">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
           <div className="space-y-1">
             <label htmlFor={dateId} className="block text-muted-foreground text-xs">
               {t('reminders.date')}
