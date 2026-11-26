@@ -3,16 +3,21 @@ import { card, newTextNote, skipTour } from './helpers';
 
 /** The box once it holds still for a frame: a new card's placement lands a frame after it renders. */
 async function stillBox(locator: Locator) {
-  await locator.evaluate(`(element) => new Promise((resolve) => {
-    let last = '';
-    const check = () => {
-      const { x, y } = element.getBoundingClientRect();
-      if (x + ',' + y === last) return resolve();
-      last = x + ',' + y;
-      requestAnimationFrame(check);
-    };
-    check();
-  })`);
+  // A function, not a string: `locator.evaluate` returns a string's value without calling it.
+  await locator.evaluate(
+    (element) =>
+      new Promise<void>((resolve) => {
+        const view = element.ownerDocument.defaultView;
+        let last = '';
+        const check = () => {
+          const { x, y } = element.getBoundingClientRect();
+          if (`${x},${y}` === last) return resolve();
+          last = `${x},${y}`;
+          view.requestAnimationFrame(check);
+        };
+        check();
+      })
+  );
   const box = await locator.boundingBox();
   if (!box) throw new Error('no box');
   return box;
