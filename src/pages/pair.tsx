@@ -24,7 +24,8 @@ export default function PairPage() {
   const navigate = useNavigate();
   const { service, setSession } = useAccount();
   const headingRef = useFocusOnMount<HTMLHeadingElement>();
-  const [code] = useState(() => decodeURIComponent(window.location.hash.slice(1)));
+  // Not decoded: codes are base64url, and a hand-mangled `%` would throw during render.
+  const [code] = useState(() => window.location.hash.slice(1));
   const [mode, setMode] = useState<Mode>(!code ? 'missing' : service ? 'checking' : 'unreachable');
 
   useAsyncEffect(
