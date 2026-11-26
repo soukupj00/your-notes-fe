@@ -189,6 +189,10 @@ All five kinds (image, audio, video, file, Excalidraw) are custom nodes from one
 - Excalidraw is given no theme and always draws light, so its canvas area pins `color-scheme: light`; the night theme's scheme would put dark scrollbars on its white panels.
 - **The dialog sets its own height and overflow**, overriding the shared dialog's height cap and inner scroll, because Excalidraw sizes its canvas to fill the box.
   `e2e/dialog-fit.spec.ts` checks it keeps the whole phone screen.
+- **Excalidraw's own dialogs mount in the canvas area** (Help, Mermaid, Reset the canvas; the `data-excalidraw-modal-host` element): `vite.config.ts` rewrites the one line that puts them on `<body>`, where the modal dialog would take their pointer and focus.
+  Excalidraw offers no option for it; the rewrite runs in dev and build, and fails loudly if an upgrade moves that line.
+  There they also inherit the area's light `color-scheme`.
+  They centre on the whole dialog, so on a short screen they overlap its header as they did on `<body>`; making the area their containing block would fix that but move the eye dropper's preview off the cursor.
 - **The dialog's entrance does not scale**, and that is load-bearing.
   Excalidraw sizes its canvas from a rect that includes transforms, so opening mid-scale left every stroke off the cursor; the fade is kept.
 - The SVG exporter imports Excalidraw dynamically, because importing it eagerly touches a canvas at module scope and crashes under jsdom.

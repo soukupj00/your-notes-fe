@@ -1,6 +1,15 @@
 import { expect, type Page, test } from '@playwright/test';
 import { card, closeNote, PICTURE, skipTour, startNote } from './helpers';
 
+/** Every Drawing preview in the Local Store. */
+const PREVIEWS = `new Promise((resolve) => {
+  const open = indexedDB.open('NotesDB');
+  open.onsuccess = () => {
+    const read = open.result.transaction('attachments').objectStore('attachments').getAll();
+    read.onsuccess = () => resolve(read.result.map((row) => row.preview).filter(Boolean));
+  };
+})`;
+
 async function openDrawing(page: Page) {
   await startNote(page, 'Drawing');
   await expect(page.locator('canvas.interactive')).toBeVisible();
@@ -97,4 +106,64 @@ test('a picture inserted into a Drawing shows in its preview, in the Note and on
   await page.getByRole('textbox', { name: 'Title' }).fill('Picture');
   await closeNote(page);
   await expect(card(page, 'Picture').locator('use[href^="#image-"]')).toHaveCount(1);
+});
+
+test.describe("Excalidraw's own dialogs over a Drawing", () => {
+  test.beforeEach(async ({ page }) => {
+    await skipTour(page);
+    await page.goto('/');
+    await openDrawing(page);
+  });
+
+  test('Help closes from its own control and from Escape', async ({ page }) => {
+    const help = page.locator('.HelpDialog');
+    const openHelp = async () => {
+      await page.getByTestId('main-menu-trigger').click();
+      await page.locator('.dropdown-menu-item', { hasText: 'Help' }).click();
+      await expect(help).toBeVisible();
+    };
+
+    await openHelp();
+    // A phone's dialogs fill the screen and carry a close button; elsewhere a click beside one closes it.
+    const close = page.locator('.Dialog__close');
+    if (await close.isVisible()) await close.click();
+    else await page.locator('.Modal__background').click({ position: { x: 5, y: 5 } });
+    await expect(help).toBeHidden();
+
+    await openHelp();
+    await page.keyboard.press('Escape');
+    await expect(help).toBeHidden();
+  });
+
+  test('Reset the canvas can be cancelled, keeping the shape', async ({ page }) => {
+    await drawRectangle(page);
+    await page.getByTestId('main-menu-trigger').click();
+    await page.getByText('Reset the canvas').click();
+    const confirm = page.locator('.confirm-dialog');
+    await expect(confirm).toBeVisible();
+
+    await confirm.getByRole('button', { name: 'Cancel' }).click();
+    await expect(confirm).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeEnabled();
+  });
+
+  test('the Mermaid tool takes a definition and inserts that diagram', async ({ page }) => {
+    await page.getByRole('button', { name: 'More tools' }).click();
+    await page.locator('.dropdown-menu-item', { hasText: 'Mermaid to Excalidraw' }).click();
+    const preview = page.locator('.ttd-dialog-output-canvas-container canvas');
+    await expect(preview).toBeVisible();
+    // Each render replaces the canvas, so a canvas without the mark is the typed definition's.
+    await preview.evaluate((canvas) => canvas.setAttribute('data-sample', ''));
+
+    await page.locator('.ttd-dialog textarea').fill('flowchart LR\n  Typed --> Here');
+    await expect(preview.and(page.locator(':not([data-sample])'))).toBeVisible();
+    await page.locator('.ttd-dialog').getByRole('button', { name: 'Insert' }).click();
+    await expect(page.locator('.ttd-dialog')).toBeHidden();
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+
+    await expect(page.getByRole('button', { name: 'Edit drawing' })).toBeVisible();
+    const [saved] = (await page.evaluate(PREVIEWS)) as string[];
+    expect(saved).toContain('Typed');
+    expect(saved).toContain('Here');
+  });
 });

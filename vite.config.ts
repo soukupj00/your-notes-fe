@@ -42,6 +42,31 @@ function excalidrawFonts(): Plugin {
   };
 }
 
+const EXCALIDRAW_MODAL_PARENT =
+  /(parentSelector\s*\?\s*([\w$]+)\?\.querySelector\([\w$.]+\)\s*:\s*)document\.body/;
+
+/**
+ * Excalidraw mounts its dialogs (Help, Mermaid, Reset the canvas) on `<body>`, where the Drawing's
+ * modal dialog takes away their pointer and focus, so they mount in its canvas area instead.
+ * Dev and build alike, since dev serves a pre-bundled copy that Excalidraw's file name does not name.
+ */
+function excalidrawModalsInDialog(): Plugin {
+  return {
+    name: 'excalidraw-modals-in-dialog',
+    transform(code, id) {
+      if (!id.includes('/node_modules/') || !code.includes('"excalidraw-modal-container"')) return;
+      const moved = code.replace(
+        EXCALIDRAW_MODAL_PARENT,
+        '$1$2?.closest("[data-excalidraw-modal-host]") ?? document.body'
+      );
+      if (moved === code) {
+        this.error("Excalidraw's modal container moved; update EXCALIDRAW_MODAL_PARENT.");
+      }
+      return { code: moved, map: null };
+    },
+  };
+}
+
 const EXCALIDRAW_LOCALE = /\/@excalidraw\/excalidraw\/dist\/prod\/locales\/(.+)-[A-Z0-9]{8}\.js$/;
 // English is bundled into Excalidraw's main code, which also reads `percentages`; Czech is the
 // app's other language.
@@ -203,6 +228,7 @@ export default defineConfig({
   plugins: [
     contentSecurityPolicy(),
     excalidrawFonts(),
+    excalidrawModalsInDialog(),
     EXCALIDRAW_LOCALES.plugin,
     MERMAID_CHUNKS.plugin,
     tanstackRouter({
