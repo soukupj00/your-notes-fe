@@ -62,8 +62,13 @@ export function NotesView({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [showCapture, openNoteId, keyboard, newNoteKey, openNote]);
 
+  const underFloatingBar = Boolean(toolbar) || showCapture;
+
   return (
-    <div className={cn('relative', (toolbar || showCapture) && FLOATING_BOTTOM_BAR_CLEARANCE)}>
+    <div
+      className={cn('relative', underFloatingBar && FLOATING_BOTTOM_BAR_CLEARANCE)}
+      data-under-floating-bar={underFloatingBar || undefined}
+    >
       {/* Visually hidden, but still the focus target a navigation lands on. */}
       <h1 ref={headingRef} tabIndex={-1} className="sr-only">
         {title}

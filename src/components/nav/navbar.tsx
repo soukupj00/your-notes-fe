@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { LocaleFlag } from '@/components/LocaleFlag.tsx';
 import { BackButton } from '@/components/nav/BackButton.tsx';
+import { publishNavHeight } from '@/components/nav/navHeight.ts';
 import { useTopbar } from '@/components/nav/useTopbar.ts';
 import { SearchInput } from '@/components/searchInput.tsx';
 import { ThemeModeToggleButton } from '@/components/themeModeToggleButton';
@@ -36,7 +37,10 @@ function Navbar() {
   return (
     // z-10 matches the sidebar panel and stays under QuickCaptureBar's z-40. The safe
     // insets pad the header itself, so `bg-chrome` paints under the status bar.
-    <header className="nav-scroll-shadow sticky top-0 z-10 bg-chrome pt-[var(--safe-top)] pr-[var(--safe-right)] pl-[var(--safe-left)] sm:border-b">
+    <header
+      ref={publishNavHeight}
+      className="nav-scroll-shadow sticky top-0 z-10 bg-chrome pt-[var(--safe-top)] pr-[var(--safe-right)] pl-[var(--safe-left)] sm:border-b"
+    >
       {/* Search sits over the capture bar at its width (`--feed-column`), so this container is
           as wide as the bar's. The open sidebar decides whether one row fits; else search drops
           below. */}

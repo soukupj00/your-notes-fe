@@ -94,6 +94,18 @@
     --feed-column: min(32rem, 100cqw - 2 * var(--header-side) - 2rem);
   }
 
+  /* Focus and `scrollIntoView` stop clear of the sticky navbar (`publishNavHeight`), outline
+     included, and of a phone's floating ＋: 6rem is the room the feed's end leaves it
+     (`FLOATING_BOTTOM_BAR_CLEARANCE` plus the layout's padding), so the two change together. */
+  :root {
+    scroll-padding-top: calc(var(--nav-height, 0px) + 0.5rem);
+  }
+  @media (width < 40rem) {
+    :root:has([data-under-floating-bar]) {
+      scroll-padding-bottom: calc(6rem + var(--safe-bottom));
+    }
+  }
+
   /* A large screen is read from further away, so everything sized in rem grows with it; px is
      left for hairlines, corners and the touch floor. */
   @media (min-width: 1920px) {
