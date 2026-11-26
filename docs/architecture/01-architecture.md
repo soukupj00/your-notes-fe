@@ -83,6 +83,7 @@ The TipTap-based Editor is itself a small architecture ([ADR 0004](../adr/0004-c
 
 - `vite-plugin-pwa` (Workbox) precaches the built app; `registerType: 'prompt'` gives an explicit in-app update flow rather than a silent swap.
   Accepting the update in one tab reloads every tab that was offered it, once the new worker controls it (`lib/appUpdate.ts`), so no tab runs old code under the new worker.
+- Mermaid's diagram types in Excalidraw, about 2.4 MiB that few users open, are left out of the precache and cached on first use, so offline the Mermaid tool draws the types already used online.
 - Installability, service worker, `navigator.storage.persist()` and media capture all require a secure context - the fact that forces the "server serves the PWA + Caddy TLS" decision ([05-server.md](./05-server.md)).
 - Persistent storage is requested on the user's first *saved* note (`src/lib/persistentStorage.ts`), not at startup, so the Firefox permission prompt cannot interrupt the onboarding Tour.
 - Safe-area insets (`viewport-fit=cover`, `--safe-top/right/bottom/left`) are always *added to* design spacing, never substituted for it.

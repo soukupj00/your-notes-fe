@@ -83,6 +83,7 @@ Editor postavený na TipTapu je sám malou architekturou ([ADR 0004](../adr/0004
 
 - `vite-plugin-pwa` (Workbox) předem ukládá do cache sestavenou aplikaci; `registerType: 'prompt'` dává explicitní postup aktualizace v aplikaci místo tiché výměny.
   Přijetí aktualizace v jedné záložce znovu načte každou záložku, které byla nabídnuta, jakmile ji nový worker ovládá (`lib/appUpdate.ts`), takže žádná záložka nespouští starý kód pod novým workerem.
+- Typy diagramů Mermaid v Excalidraw, asi 2,4 MiB, které otevře málokdo, se do cache předem neukládají; ukládají se při prvním použití, takže offline nástroj Mermaid nakreslí typy už jednou použité online.
 - Instalovatelnost, service worker, `navigator.storage.persist()` i záznam médií vyžadují zabezpečený kontext - právě to si vynutilo rozhodnutí „server servíruje PWA + Caddy TLS“ ([05-server.md](./05-server.md)).
 - O trvalé úložiště se žádá při první *uložené* poznámce uživatele (`src/lib/persistentStorage.ts`), ne při startu, aby výzva Firefoxu k oprávnění nemohla přerušit úvodního průvodce.
 - Safe-area insety (`viewport-fit=cover`, `--safe-top/right/bottom/left`) se vždy *přičítají* k odsazení z návrhu, nikdy ho nenahrazují.

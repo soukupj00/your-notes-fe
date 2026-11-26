@@ -197,6 +197,8 @@ All five kinds (image, audio, video, file, Excalidraw) are custom nodes from one
   The build also drops esm.sh from each font's fallback list, which the Content Security Policy would otherwise report on every open; the build fails if that code moves in an upgrade.
 - **Of Excalidraw's language chunks only Czech is precached** (`vite.config.ts`, judged by the modules a chunk holds); its English is bundled.
   A `langCode` for any other language must be added there too, or offline the Drawing falls back to English with a console error.
+- **Mermaid's diagram types are not precached** (`vite.config.ts`, the chunks only Mermaid's own dynamic imports reach); the worker caches each on first use, so offline a type never used online shows Excalidraw's load error in the tool.
+  Mermaid's entry stays precached: Excalidraw imports it, outside a try, on a paste of text that starts like Mermaid ("timeline for Monday"), and offline without it the paste was lost.
 
 ## Text styling
 
