@@ -17,6 +17,7 @@ export function VideoNodeView(props: ReactNodeViewProps) {
       className="not-prose relative my-2 inline-block max-w-full"
     >
       {(state) => (
+        // biome-ignore lint/a11y/useMediaCaption: a user's own recording has no captions to offer
         <video
           src={state.url}
           width={state.attachment.width}
@@ -25,9 +26,7 @@ export function VideoNodeView(props: ReactNodeViewProps) {
           playsInline
           preload="metadata"
           className="block h-auto max-w-full rounded-md"
-        >
-          <track kind="captions" />
-        </video>
+        />
       )}
     </AttachmentNodeView>
   );

@@ -74,6 +74,12 @@ describe('AudioNodeView', () => {
     );
   });
 
+  it('offers no empty captions track', async () => {
+    render(<AudioNodeView {...props(async () => att())} />);
+    await waitFor(() => expect(document.querySelector('audio')).not.toBeNull());
+    expect(document.querySelector('audio track')).toBeNull();
+  });
+
   it('toggles play/pause on click', async () => {
     render(<AudioNodeView {...props(async () => att())} />);
     const btn = await screen.findByRole('button', { name: /play/i });
