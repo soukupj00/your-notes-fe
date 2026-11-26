@@ -184,7 +184,7 @@ export function ShortcutRow({ def }: { def: ShortcutDef }) {
           </DropdownMenu>
         </span>
       </div>
-      <p role="status" className="mt-2 text-muted-foreground text-xs empty:hidden">
+      <p role="status" className="mt-2 text-muted-foreground text-xs empty:mt-0">
         {status}
       </p>
       {recording.kind === 'conflict' && (
