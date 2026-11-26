@@ -144,9 +144,8 @@ export function AudioNodeView(props: ReactNodeViewProps) {
         </span>
         {deleteButton()}
         {state.status === 'ready' && (
-          <audio ref={bindAudio} src={state.url} preload="metadata" className="hidden">
-            <track kind="captions" />
-          </audio>
+          // biome-ignore lint/a11y/useMediaCaption: a user's own recording has no captions to offer
+          <audio ref={bindAudio} src={state.url} preload="metadata" className="hidden" />
         )}
       </div>
     </NodeViewWrapper>

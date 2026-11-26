@@ -14,7 +14,6 @@ export function CrashScreen({ error, className }: { error: Error; className?: st
   const headingRef = useFocusOnMount<HTMLHeadingElement>();
   return (
     <div
-      role="alert"
       className={cn(
         'flex min-h-dvh flex-col items-center justify-center gap-4 p-6 text-center',
         className

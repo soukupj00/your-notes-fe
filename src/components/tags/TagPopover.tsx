@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { LabeledCheckbox } from '@/components/ui/LabeledCheckbox.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
+import { isComposing } from '@/lib/ime.ts';
 import type { Tag } from '@/models.ts';
 
 type TagPopoverProps = {
@@ -54,7 +55,7 @@ export function TagPopover({ tags, assignedIds, onToggle, onCreate, trigger }: T
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && canCreate) {
+            if (e.key === 'Enter' && canCreate && !isComposing(e.nativeEvent)) {
               e.preventDefault();
               create();
             }

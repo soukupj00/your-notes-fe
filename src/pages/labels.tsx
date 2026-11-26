@@ -24,6 +24,7 @@ import { useTagActions } from '@/hooks/data/useTagActions.ts';
 import { useTagNoteCounts } from '@/hooks/data/useTagNoteCounts.ts';
 import { useTags } from '@/hooks/data/useTags.ts';
 import { useReducedMotion } from '@/hooks/useReducedMotion.ts';
+import { isComposing } from '@/lib/ime.ts';
 import type { ArrangeKind } from '@/lib/label-order.ts';
 import { moveById } from '@/lib/move-by-id.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
@@ -175,6 +176,7 @@ function LabelRow({ tag, tags, noteCount, justCreated }: LabelRowProps) {
           onChange={(e) => setName(e.target.value)}
           onBlur={commitName}
           onKeyDown={(e) => {
+            if (isComposing(e.nativeEvent)) return;
             if (e.key === 'Enter') e.currentTarget.blur();
             if (e.key === 'Escape') setName(tag.name);
           }}

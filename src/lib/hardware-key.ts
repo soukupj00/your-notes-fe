@@ -1,4 +1,5 @@
 import { TYPES_ITS_KEYS } from './app-shortcut.ts';
+import { isComposing } from './ime.ts';
 import { MODIFIER_KEYS } from './key-combo.ts';
 
 const NAVIGATION_KEYS = new Set([
@@ -17,8 +18,8 @@ const NAVIGATION_KEYS = new Set([
  */
 export function isHardwareKey(event: KeyboardEvent, trusted = event.isTrusted): boolean {
   // Autofill can send a keydown with no `key` at all.
-  if (typeof event.key !== 'string' || !trusted || event.isComposing) return false;
-  if (event.key === 'Unidentified' || event.keyCode === 229) return false;
+  if (typeof event.key !== 'string' || !trusted || isComposing(event)) return false;
+  if (event.key === 'Unidentified') return false;
   if (MODIFIER_KEYS.has(event.key)) return false;
   if (event.ctrlKey || event.metaKey || event.altKey) return true;
   const inField = event.target instanceof Element && event.target.closest(TYPES_ITS_KEYS) !== null;

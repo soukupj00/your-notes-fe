@@ -42,4 +42,10 @@ describe('VideoNodeView', () => {
       expect(video).toHaveAttribute('src', expect.stringContaining('blob:mock/'));
     });
   });
+
+  it('offers no empty captions track', async () => {
+    render(<VideoNodeView {...props(async () => att())} />);
+    await waitFor(() => expect(document.querySelector('video')).not.toBeNull());
+    expect(document.querySelector('video track')).toBeNull();
+  });
 });

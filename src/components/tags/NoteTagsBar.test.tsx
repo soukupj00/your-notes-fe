@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Tag } from '@/models.ts';
@@ -87,6 +87,26 @@ describe('assigning labels', () => {
     await waitFor(async () => expect((await testStore.tags.list()).length).toBe(2));
     const created = (await testStore.tags.list()).find((tag) => tag.name === 'Home');
     expect(await linkedTagIds('n1')).toEqual([created?.id]);
+  });
+
+  // Safari reports the Enter that confirms an IME conversion as key 229, without `isComposing`.
+  it.each([
+    ['a plain Enter creates it', {}, '', ['Home', 'Work']],
+    ['an Enter confirming an IME conversion does not', { isComposing: true }, 'Home', ['Work']],
+    ["Safari's key 229 does not", { keyCode: 229 }, 'Home', ['Work']],
+  ])('Enter on a new name: %s', async (_, init, filterAfter, names) => {
+    await putTag('t1', 'Work');
+    render(<NoteTagsBar draft={openNote()} />);
+
+    const popover = await openPopover();
+    const filter = within(popover).getByRole('textbox');
+    await userEvent.type(filter, 'Home');
+    fireEvent.keyDown(filter, { key: 'Enter', ...init });
+
+    expect(filter).toHaveValue(filterAfter);
+    await waitFor(async () =>
+      expect((await testStore.tags.list()).map((tag) => tag.name).sort()).toEqual(names)
+    );
   });
 
   it('offers no create row for a name that already exists', async () => {

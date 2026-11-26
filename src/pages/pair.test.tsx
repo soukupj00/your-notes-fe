@@ -111,6 +111,12 @@ describe('/pair', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('account.pair.missingCode');
   });
 
+  it('a hand-mangled code is not a crash', async () => {
+    const server = createFakeServer();
+    open(server, 'abc%E0');
+    expect(await screen.findByRole('heading', { name: 'account.pair.ownerTitle' })).toBeVisible();
+  });
+
   it('no server answering is not a crash', async () => {
     const server = createFakeServer();
     server.state.staticHost = true;

@@ -255,8 +255,8 @@ It is the reading layout rather than the scanning layout - a longer note gets it
 
 Card content does not change between the layouts. The same anatomy, the same caps on labels and attachments, the same footer. Only the width and the placement change.
 
-**Responsive behavior** is driven by a container query on the app shell, not a media query, so the shell behaves the same whether it is the whole viewport or a panel.
-Below **46rem (736px)** the persistent left rail is hidden and the feed drops to `minmax(10rem, 1fr)`.
+**Responsive behavior** of the shell follows one media breakpoint, **640px** (ADR 0010): below it the persistent left rail is hidden.
+The feed's columns follow its own container instead, so a narrow panel gets the same columns as a narrow viewport: below a **46rem** feed (736px at the default root size) the columns drop to `minmax(10rem, 1fr)`.
 From a 1920px viewport the root font steps up to 112.5%, and from 2560px to 125%, because a large screen is read from further away; everything in rem grows with it, columns included, while hairlines, corners and the 44px floor stay in px.
 The rail's destinations must be reachable from a drawer at that width - the prototype simply hides them, which is a prototype gap, not a design decision. The real shell already solves this with its Sheet drawer.
 
@@ -406,7 +406,7 @@ A word-only choice stays a segmented control, as Theme does: one track in Rule C
 - **Style:** Vertical list of icon+label rows, 10px radius, above a labels section listing every tag with its identity-coloured dot
 - **Active:** Filled with the accent, text in on-accent
 - **Idle:** Ink-soft, no fill
-- **Mobile:** Hidden below 46rem; destinations move into a drawer
+- **Mobile:** Hidden below 640px; destinations move into a drawer
 
 The label dots in the day theme are noticeably paler than their night counterparts and should be checked against the colour-blind commitment - a dot is the only carrier of a label's identity in the rail, so it cannot be the weakest element on the surface.
 

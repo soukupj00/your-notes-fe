@@ -21,6 +21,7 @@ import { useLatest } from '@/hooks/useLatest.ts';
 import { useUndoableLifecycle } from '@/hooks/useUndoableLifecycle.ts';
 import { CHROME_ICON_BUTTON } from '@/lib/chrome-controls.ts';
 import { createNoteDraft, isEmpty } from '@/lib/draft.ts';
+import { isComposing } from '@/lib/ime.ts';
 import type { Intent } from '@/lib/intent.ts';
 import { noteColorAttrs } from '@/lib/note-colors.ts';
 import { type Reminder, reminderOf } from '@/lib/reminder.ts';
@@ -353,16 +354,8 @@ export function NoteEditorDialog({
               dirtyRef.current = true;
               setHeader(e.target.value);
             }}
-            // Not mid-composition: Safari reports the Enter that commits an IME word as key 229.
             onKeyDown={(e) => {
-              if (
-                e.key !== 'Enter' ||
-                e.shiftKey ||
-                e.nativeEvent.isComposing ||
-                e.keyCode === 229
-              ) {
-                return;
-              }
+              if (e.key !== 'Enter' || e.shiftKey || isComposing(e.nativeEvent)) return;
               e.preventDefault();
               editorRef.current?.focus('start');
             }}
