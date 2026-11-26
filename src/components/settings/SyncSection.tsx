@@ -25,7 +25,13 @@ function useStorage(): Storage | null {
 export function SyncSection() {
   const { t, i18n } = useTranslation();
   const { active, status, lastSyncedAt, pending, syncNow } = useSync();
-  if (!active) return null;
+  const [announcement, setAnnouncement] = useState({ text: '', count: 0 });
+  // The last sync a press started from, until its outcome is announced.
+  const [awaiting, setAwaiting] = useState<{ since: string | null } | null>(null);
+  if (!active) {
+    if (awaiting) setAwaiting(null);
+    return null;
+  }
 
   // A time alone reads as today's, and the full date wraps on a phone in Czech.
   const lastSynced = (at: string) =>
@@ -44,18 +50,40 @@ export function SyncSection() {
             ? lastSynced(lastSyncedAt)
             : t('sync.never');
 
+  // `lastSyncedAt` lands a moment after the run's status, and a press before the loop has started
+  // runs nothing, so a run's outcome is only told once that time has moved on.
+  const settled =
+    status === 'offline' ||
+    status === 'error' ||
+    (status === 'idle' && lastSyncedAt !== awaiting?.since);
+  if (awaiting && settled) {
+    setAwaiting(null);
+    setAnnouncement(({ count }) => ({ text: statusText, count: count + 1 }));
+  }
+
+  const press = async () => {
+    const since = lastSyncedAt;
+    setAnnouncement(({ count }) => ({ text: '', count }));
+    await syncNow();
+    setAwaiting({ since });
+  };
+
   return (
     <SettingsSection title={t('sync.label')}>
       <SettingsRow
         label={statusText}
         description={pending > 0 ? t('sync.pending', { count: pending }) : undefined}
       >
+        {/* A new node per outcome, so the same words twice are still spoken twice. */}
+        <span role="status" className="sr-only">
+          <span key={announcement.count}>{announcement.text}</span>
+        </span>
         <Button
           variant="outline"
           size="sm"
           className="min-h-11 gap-1"
           disabled={status === 'syncing'}
-          onClick={() => void syncNow()}
+          onClick={() => void press()}
         >
           {status === 'syncing' && <Spinner />}
           {t('sync.syncNow')}

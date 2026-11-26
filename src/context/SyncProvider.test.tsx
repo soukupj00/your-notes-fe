@@ -34,6 +34,7 @@ vi.mock('sonner', () => ({
 afterEach(async () => {
   await clearStore();
   vi.clearAllMocks();
+  vi.restoreAllMocks();
 });
 
 const T0 = '2026-01-01T00:00:00.000Z';
@@ -96,6 +97,45 @@ describe('SyncProvider', () => {
     await pressSyncNow();
     await waitFor(() => expect(server.sync.row(owner.id, 'note', id)).toBeDefined());
     await waitFor(() => expect(screen.queryByText(/sync\.pending/)).not.toBeInTheDocument());
+  });
+
+  it.each([
+    ['online', true, /^sync\.syncedAt /],
+    ['offline', false, /^sync\.offline$/],
+  ])(
+    'says how a Sync now pressed %s ended, and nothing for runs it did not start',
+    async (_name, online, said) => {
+      await mountSignedIn();
+      expect(await screen.findByText(/^sync\.syncedAt /)).toBeVisible();
+      const status = screen.getByRole('status');
+      expect(status.textContent).toBe('');
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(online);
+
+      // A run the loop starts by itself can disable the button between the check and the click,
+      // which drops the click, so the press is repeated until one lands.
+      await waitFor(
+        async () => {
+          await pressSyncNow();
+          await waitFor(() => expect(status).toHaveTextContent(said), { timeout: 300 });
+        },
+        { timeout: 3000 }
+      );
+    }
+  );
+
+  it('says Offline again on a second press, as a new announcement', async () => {
+    await mountSignedIn();
+    expect(await screen.findByText(/^sync\.syncedAt /)).toBeVisible();
+    const status = screen.getByRole('status');
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+
+    await pressSyncNow();
+    await waitFor(() => expect(status).toHaveTextContent(/^sync\.offline$/));
+    const first = status.firstElementChild;
+    await pressSyncNow();
+
+    await waitFor(() => expect(status.firstElementChild).not.toBe(first));
+    expect(status).toHaveTextContent(/^sync\.offline$/);
   });
 
   it('signs this Device out when the server forgets its Session, and keeps what it owes', async () => {
