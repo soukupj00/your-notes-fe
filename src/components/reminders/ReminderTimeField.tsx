@@ -15,6 +15,7 @@ type ReminderTimeFieldProps = {
   hour: string;
   minute: string;
   onChange: (hour: string, minute: string) => void;
+  describedBy?: string;
   className: string;
 };
 
@@ -22,7 +23,13 @@ type ReminderTimeFieldProps = {
  * Two selects rather than `<input type="time">`, which draws AM/PM whenever the OS locale does
  * and ignores `lang`.
  */
-export function ReminderTimeField({ hour, minute, onChange, className }: ReminderTimeFieldProps) {
+export function ReminderTimeField({
+  hour,
+  minute,
+  onChange,
+  describedBy,
+  className,
+}: ReminderTimeFieldProps) {
   const { t } = useTranslation();
 
   return (
@@ -31,6 +38,7 @@ export function ReminderTimeField({ hour, minute, onChange, className }: Reminde
       <div className="flex gap-1">
         <select
           aria-label={t('reminders.hour')}
+          aria-describedby={describedBy}
           value={hour}
           // One pick is a whole time: the minute starts on the hour.
           onChange={(e) => onChange(e.target.value, minute || '00')}
@@ -47,6 +55,7 @@ export function ReminderTimeField({ hour, minute, onChange, className }: Reminde
         </select>
         <select
           aria-label={t('reminders.minute')}
+          aria-describedby={describedBy}
           value={minute}
           onChange={(e) => onChange(hour, e.target.value)}
           className={cn(className, 'w-15')}

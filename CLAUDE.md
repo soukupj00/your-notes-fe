@@ -214,6 +214,7 @@ A Reminder is two fields on the Note, `remindAt` and `repeat` ([ADR 0021](./docs
 - A past one-shot's chip is struck through, not faded, because fading fails contrast at the label's size; the past state is also in its accessible name.
 - The bell carries the chip's words as its name (`reminderName`), not `aria-pressed`: it opens the popover and toggles nothing.
 - The popover's two actions are stacked, because side by side they are wider than the popover in Czech.
+- A passed one-shot time disables the primary rather than failing on submit; its line is a live region and the description of the date and time fields, so the reason is heard where it is fixed.
 
 ### Backup (`src/lib/backup.ts`, `src/components/settings/`)
 

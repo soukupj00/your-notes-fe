@@ -31,6 +31,7 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
   const name = reminder ? reminderName(reminder, t, i18n.language) : t('reminders.button');
   const dateId = useId();
   const repeatId = useId();
+  const pastId = useId();
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState('');
   const [hour, setHour] = useState('');
@@ -98,6 +99,7 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
               type="date"
               value={date}
               min={today()}
+              aria-describedby={past ? pastId : undefined}
               onChange={(e) => setDate(e.target.value)}
               className={FIELD}
             />
@@ -109,6 +111,7 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
               setHour(nextHour);
               setMinute(nextMinute);
             }}
+            describedBy={past ? pastId : undefined}
             className={FIELD}
           />
         </div>
@@ -132,8 +135,18 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
           </select>
         </div>
 
-        <p className="text-muted-foreground text-xs">{t('reminders.oneWay')}</p>
-        {past && <p className="text-destructive text-xs">{t('reminders.past')}</p>}
+        <div>
+          <p className="text-muted-foreground text-xs">{t('reminders.oneWay')}</p>
+          {/* Mounted with the popover, so an edit into the past is announced. A stored past time
+              is already shown on open, where the focused date field reads it as its description. */}
+          <div role="status">
+            {past && (
+              <p id={pastId} className="mt-3 text-destructive text-xs">
+                {t('reminders.past')}
+              </p>
+            )}
+          </div>
+        </div>
 
         {/* Stacked, not side by side (CLAUDE.md, Reminders). The primary keeps its whole sentence:
             it is the only place the user learns a Reminder goes to their calendar. */}

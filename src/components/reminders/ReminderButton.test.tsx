@@ -139,6 +139,28 @@ describe('ReminderButton', () => {
     expect(screen.queryByText('reminders.past')).not.toBeInTheDocument();
   });
 
+  // The button stays disabled (CLAUDE.md, Reminders), so the line is the one explanation: it is
+  // announced as it appears, and read again on the fields it asks the user to change.
+  it('announces a passed time and names it on the date and time fields', async () => {
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2030-03-04T10:00') });
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
+    render(<ReminderButton onSet={vi.fn()} onClear={vi.fn()} />);
+    await open();
+    const status = screen.getByRole('status');
+    const fields = ['reminders.date', 'reminders.hour', 'reminders.minute'].map((label) =>
+      screen.getByLabelText(label)
+    );
+    expect(status).toBeEmptyDOMElement();
+    for (const field of fields) expect(field).not.toHaveAccessibleDescription();
+
+    await userEvent.selectOptions(screen.getByLabelText('reminders.hour'), '09');
+    expect(status).toHaveTextContent('reminders.past');
+    for (const field of fields) expect(field).toHaveAccessibleDescription('reminders.past');
+    expect(screen.getByLabelText('reminders.repeat')).not.toHaveAccessibleDescription();
+  });
+
   it('sends no repeat for a one-shot', async () => {
     const onSet = vi.fn().mockResolvedValue(true);
     render(<ReminderButton onSet={onSet} onClear={vi.fn()} />);
