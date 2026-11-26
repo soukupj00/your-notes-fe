@@ -558,7 +558,7 @@
     "remove": "Remove label {{name}}"
   },
   "reminders": {
-    "button": "Reminder",
+    "button": "Add reminder",
     "date": "Date",
     "time": "Time",
     "hour": "Hour",

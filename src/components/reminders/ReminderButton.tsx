@@ -5,7 +5,7 @@ import { ReminderTimeField } from '@/components/reminders/ReminderTimeField.tsx'
 import { Button } from '@/components/ui/button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
 import { IconTooltip } from '@/components/ui/tooltip.tsx';
-import { isReminderPast, type Reminder, toLocalInput } from '@/lib/reminder.ts';
+import { isReminderPast, type Reminder, reminderName, toLocalInput } from '@/lib/reminder.ts';
 import { cn } from '@/lib/utils.ts';
 import { REMINDER_REPEATS, type ReminderRepeat } from '@/models.ts';
 
@@ -27,7 +27,8 @@ const today = () => toLocalInput(new Date()).slice(0, 10);
  * never offered would promise an alarm nothing sounds. Native inputs, no picker library.
  */
 export function ReminderButton({ reminder, onSet, onClear, className }: ReminderButtonProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const name = reminder ? reminderName(reminder, t, i18n.language) : t('reminders.button');
   const dateId = useId();
   const repeatId = useId();
   const [open, setOpen] = useState(false);
@@ -69,12 +70,11 @@ export function ReminderButton({ reminder, onSet, onClear, className }: Reminder
     // `modal` for the same reason as TagPopover: inside the editor's Dialog a
     // non-modal popover is outside react-remove-scroll's shard.
     <Popover modal open={open} onOpenChange={handleOpenChange}>
-      <IconTooltip label={t('reminders.button')}>
+      <IconTooltip label={name}>
         <PopoverTrigger asChild>
           <button
             type="button"
-            aria-label={t('reminders.button')}
-            aria-pressed={Boolean(reminder)}
+            aria-label={name}
             className={cn(
               className,
               reminder &&

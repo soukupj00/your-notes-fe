@@ -437,10 +437,8 @@ describe('NoteEditorDialog', () => {
     // The popover is modal and stays open on a failure, which puts the trigger
     // behind it; close it to reach the bell the user would be looking at.
     await userEvent.keyboard('{Escape}');
-    expect(await screen.findByRole('button', { name: 'reminders.button' })).toHaveAttribute(
-      'aria-pressed',
-      'false'
-    );
+    // The bell still offers to add one rather than naming a Reminder.
+    expect(await screen.findByRole('button', { name: 'reminders.button' })).toBeInTheDocument();
     update.mockRestore();
   });
 

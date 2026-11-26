@@ -24,7 +24,7 @@ async function openNewNote(page: Page, isMobile: boolean) {
 }
 
 async function setWeeklyReminder(page: Page) {
-  await page.getByRole('button', { name: 'Reminder' }).click();
+  await page.getByRole('button', { name: 'Add reminder' }).click();
   await page.getByLabel('Date', { exact: true }).fill('2030-03-04');
   await page.getByLabel('Hour').selectOption('09');
   await page.getByLabel('Minute').selectOption('00');
@@ -66,7 +66,7 @@ test.describe('Reminders', () => {
     await page.clock.setFixedTime(new Date('2030-03-04T08:00'));
     await freshWall(page);
     await openNewNote(page, isMobile);
-    await page.getByRole('button', { name: 'Reminder' }).click();
+    await page.getByRole('button', { name: 'Add reminder' }).click();
     await page.getByLabel('Hour').selectOption('09');
 
     const downloading = page.waitForEvent('download');
@@ -87,7 +87,7 @@ test.describe('Reminders', () => {
     // Wait on the field, not the primary action: that renames itself one render before the close.
     await expect(page.getByLabel('Hour')).toBeHidden();
 
-    await page.getByRole('button', { name: 'Reminder' }).click();
+    await page.getByRole('button', { name: /^Reminder: .*09:00, Weekly$/ }).click();
 
     // With a Reminder set the popover carries both actions, and side by side
     // their labels are wider than the popover. Measured rather than assumed:
@@ -124,7 +124,7 @@ test.describe('Reminders', () => {
     await downloading;
     await expect(page.getByLabel('Hour')).toBeHidden();
 
-    await page.getByRole('button', { name: 'Reminder' }).click();
+    await page.getByRole('button', { name: /^Reminder: .*09:00, Weekly$/ }).click();
     const popover = page.getByTestId('reminder-popover');
     // Measured after the entrance, which scales the box.
     await popover.evaluate((el) =>
@@ -143,7 +143,7 @@ test.describe('Reminders', () => {
     test.skip(!isMobile, 'the fields drop to 14px from the md breakpoint up');
     await freshWall(page);
     await openNewNote(page, isMobile);
-    await page.getByRole('button', { name: 'Reminder' }).click();
+    await page.getByRole('button', { name: 'Add reminder' }).click();
 
     const popover = page.getByTestId('reminder-popover');
     // Measured after the entrance, which scales the box.

@@ -566,7 +566,7 @@
     "remove": "Odebrat štítek {{name}}"
   },
   "reminders": {
-    "button": "Připomenutí",
+    "button": "Přidat připomenutí",
     "date": "Datum",
     "time": "Čas",
     "hour": "Hodina",

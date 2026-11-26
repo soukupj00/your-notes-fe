@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import type { Note, ReminderRepeat } from '@/models.ts';
 import { formatDate } from './format.ts';
 
@@ -54,4 +55,17 @@ const REMINDER_TIME: Intl.DateTimeFormatOptions = {
  */
 export function formatReminderTime(remindAt: string, locale: string): string {
   return formatDate(remindAt, locale, REMINDER_TIME);
+}
+
+/** The whole Reminder in words, as the chip and the bell are named. */
+export function reminderName(reminder: Reminder, t: TFunction, locale: string, now?: Date): string {
+  const when = formatReminderTime(reminder.remindAt, locale);
+  if (reminder.repeat) {
+    return t('reminders.chipRepeating', {
+      when,
+      repeat: t(`reminders.repeats.${reminder.repeat}`),
+    });
+  }
+  // A repeating Reminder is never past (`isReminderPast`), so there is no repeating-past variant.
+  return t(isReminderPast(reminder, now) ? 'reminders.chipPast' : 'reminders.chip', { when });
 }

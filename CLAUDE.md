@@ -212,6 +212,7 @@ A Reminder is two fields on the Note, `remindAt` and `repeat` ([ADR 0021](./docs
   It validates the fields (a backup's are unvalidated) and stops returning a one-shot more than 24h past.
   That lapse is a way of showing, never a write: no timer, and nothing bumps `updatedAt`.
 - A past one-shot's chip is struck through, not faded, because fading fails contrast at the label's size; the past state is also in its accessible name.
+- The bell carries the chip's words as its name (`reminderName`), not `aria-pressed`: it opens the popover and toggles nothing.
 - The popover's two actions are stacked, because side by side they are wider than the popover in Czech.
 
 ### Backup (`src/lib/backup.ts`, `src/components/settings/`)

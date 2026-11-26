@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import { Bell, Repeat } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { formatReminderTime, isReminderPast, type Reminder } from '@/lib/reminder.ts';
+import { formatReminderTime, isReminderPast, type Reminder, reminderName } from '@/lib/reminder.ts';
 
 /**
  * A record, not a control (ADR 0021): a tap falls through to the Card. Outlined and sentence-case
@@ -20,13 +20,8 @@ export function ReminderChip({ reminder, now }: { reminder: Reminder; now?: Date
       data-past={past}
       // One named unit, so its two truncating runs are read as the whole Reminder, untruncated.
       role="img"
-      aria-label={
-        repeat
-          ? t('reminders.chipRepeating', { when, repeat })
-          : // A repeating Reminder is never past (`isReminderPast`), so there is
-            // no repeating-past variant to write. The strike is pixels only.
-            t(past ? 'reminders.chipPast' : 'reminders.chip', { when })
-      }
+      // The strike is pixels only; the name says the past.
+      aria-label={reminderName(reminder, t, i18n.language, now)}
       className={clsx(
         'inline-flex min-w-0 max-w-full items-center gap-1 overflow-hidden rounded-full border border-border px-2 py-[3px] text-label text-muted-foreground normal-case tracking-normal',
         // Struck, not faded: fading fails contrast at the label floor (CLAUDE.md, Reminders).

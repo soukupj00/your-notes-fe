@@ -1,14 +1,19 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
-import { toLocalInput } from '@/lib/reminder.ts';
+import { formatReminderTime, toLocalInput } from '@/lib/reminder.ts';
 import { ReminderButton } from './ReminderButton.tsx';
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({
+    t: (key: string, vars?: Record<string, string>) =>
+      vars ? `${key}|${Object.values(vars).join('|')}` : key,
+    i18n: { language: 'en' },
+  }),
 }));
 
-const open = async () => userEvent.click(screen.getByRole('button', { name: 'reminders.button' }));
+const open = async () =>
+  userEvent.click(screen.getByRole('button', { name: /^reminders\.(button|chip)/ }));
 
 // userEvent.type cannot drive a date input in jsdom; change is the event the
 // component listens for.
@@ -20,23 +25,25 @@ const choose = async (date: string, time: string) => {
 };
 
 describe('ReminderButton', () => {
-  it('reads as pressed only while a Reminder is set', () => {
+  // It opens a popover and unsets nothing, so it is no toggle: the name carries the state,
+  // in the chip's words.
+  it('names the set Reminder instead of reading as pressed', () => {
     const { rerender } = render(<ReminderButton onSet={vi.fn()} onClear={vi.fn()} />);
-    expect(screen.getByRole('button', { name: 'reminders.button' })).toHaveAttribute(
-      'aria-pressed',
-      'false'
+    expect(screen.getByRole('button', { name: 'reminders.button' })).not.toHaveAttribute(
+      'aria-pressed'
     );
     rerender(
       <ReminderButton
-        reminder={{ remindAt: '2030-03-04T09:00' }}
+        reminder={{ remindAt: '2030-03-04T09:00', repeat: 'weekly' }}
         onSet={vi.fn()}
         onClear={vi.fn()}
       />
     );
-    expect(screen.getByRole('button', { name: 'reminders.button' })).toHaveAttribute(
-      'aria-pressed',
-      'true'
+    const bell = screen.getByRole('button', { name: /^reminders\.chipRepeating\|/ });
+    expect(bell).toHaveAccessibleName(
+      `reminders.chipRepeating|${formatReminderTime('2030-03-04T09:00', 'en')}|reminders.repeats.weekly`
     );
+    expect(bell).not.toHaveAttribute('aria-pressed');
   });
 
   it('will not hand off until a time is chosen', async () => {

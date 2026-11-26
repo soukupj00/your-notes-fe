@@ -28,7 +28,7 @@ for (const theme of ['light', 'dark'] as const) {
 test('in the dark theme the Reminder fields take the dark scheme', async ({ page }) => {
   await wallIn(page, 'dark');
   await startNote(page, 'Checklist');
-  await page.getByRole('button', { name: 'Reminder' }).click();
+  await page.getByRole('button', { name: 'Add reminder' }).click();
 
   await expect(page.getByLabel('Date', { exact: true })).toHaveCSS('color-scheme', 'dark');
   await expect(page.getByLabel('Repeat')).toHaveCSS('color-scheme', 'dark');
