@@ -58,6 +58,7 @@ export function DevicesSection() {
               className="min-h-11"
               disabled={busy}
               onClick={() => setRemoving(device)}
+              aria-label={t('account.devices.removeNamed', { name: device.name })}
             >
               {t('account.devices.remove')}
             </Button>

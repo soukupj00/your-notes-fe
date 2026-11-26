@@ -62,7 +62,7 @@ describe('Members', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(screen.queryAllByText(/^(ada|bob)$/).map((row) => row.textContent)).toEqual(rows);
     // Reset password is the member's only: the Owner's own is reset on the server.
-    expect(screen.queryAllByRole('button', { name: 'account.members.reset' })).toHaveLength(
+    expect(screen.queryAllByRole('button', { name: 'account.members.resetNamed' })).toHaveLength(
       rows.length > 0 ? 1 : 0
     );
   });

@@ -49,6 +49,7 @@ function ResetPasswordButton({ member }: { member: Member }) {
           clearError();
           setOpen(true);
         }}
+        aria-label={t('account.members.resetNamed', { username: member.username })}
       >
         {t('account.members.reset')}
       </Button>
