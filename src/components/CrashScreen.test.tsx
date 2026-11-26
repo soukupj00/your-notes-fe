@@ -36,8 +36,11 @@ describe('RouteError', () => {
     });
     render(<RouterProvider router={router} />);
 
-    expect(await screen.findByRole('alert')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 1, name: 'errors.crash.title' })).toHaveFocus();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'errors.crash.title' })
+    ).toHaveFocus();
+    // The focused heading announces it; an alert around it would read the title twice.
+    expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.getByText(/Unable to preload CSS/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'errors.crash.reload' })).toBeInTheDocument();
   });

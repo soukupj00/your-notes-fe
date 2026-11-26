@@ -30,15 +30,14 @@ describe('ErrorBoundary', () => {
 
   // A white screen in an installed PWA has no address bar to retype: the
   // fallback must be announced and must offer a way out.
-  it('shows a recoverable alert instead of white-screening', () => {
+  it('shows a recoverable crash screen instead of white-screening', () => {
     render(
       <ErrorBoundary>
         <Boom />
       </ErrorBoundary>
     );
 
-    expect(screen.getByRole('alert')).toBeInTheDocument();
-    expect(screen.getByText('errors.crash.title')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'errors.crash.title' })).toHaveFocus();
     // The message helps a bug report; the stack is deliberately not shown.
     expect(screen.getByText('kaboom')).toBeInTheDocument();
   });
