@@ -64,6 +64,60 @@ test("of Excalidraw's languages, only Czech is precached", async ({ page }) => {
   expect(locales).toEqual(['cs-CZ']);
 });
 
+/** Mermaid's diagram types and their layout code, such as `flowDiagram-…`, `diagram-…`, `cytoscape.esm-…`. */
+const MERMAID_DIAGRAM = /\/assets\/(\w+-)?(diagram|cytoscape)/i;
+
+/** Every script the page loaded from the app that no cache holds yet. */
+const UNCACHED_SCRIPTS = `(async () => {
+  const cached = new Set(await ${CACHED_URLS});
+  return performance
+    .getEntriesByType('resource')
+    .map((entry) => entry.name)
+    .filter((url) => url.includes('/assets/') && url.endsWith('.js') && !cached.has(url));
+})()`;
+
+/** Opens it in a new Drawing and waits for the sample diagram to render. */
+async function openMermaidTool(page: Page) {
+  await startNote(page, 'Drawing');
+  await page.getByRole('button', { name: 'More tools' }).click();
+  await page.locator('.dropdown-menu-item', { hasText: 'Mermaid to Excalidraw' }).click();
+  await expect(page.locator('.ttd-dialog-output-canvas-container canvas')).toBeVisible();
+}
+
+test("Mermaid's diagram types are not precached and work offline once used", async ({
+  page,
+  context,
+}) => {
+  await page.goto('/');
+  await untilControlled(page);
+  const precached = (await page.evaluate(CACHED_URLS)) as string[];
+  expect(precached.filter((url) => MERMAID_DIAGRAM.test(url))).toEqual([]);
+
+  await openMermaidTool(page);
+  // The worker writes its cache after it answers, so going offline sooner races the writes.
+  await expect.poll(() => page.evaluate(UNCACHED_SCRIPTS)).toEqual([]);
+  await context.setOffline(true);
+  await page.reload();
+  await openMermaidTool(page);
+});
+
+test('offline, text Excalidraw takes for Mermaid still pastes into a Drawing', async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/');
+  await untilControlled(page);
+
+  await context.setOffline(true);
+  await startNote(page, 'Drawing');
+  await page.evaluate(`navigator.clipboard.writeText('timeline for Monday')`);
+  await page.locator('canvas.interactive').click();
+  await page.keyboard.press('ControlOrMeta+V');
+
+  await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeEnabled();
+});
+
 test('a Drawing opens offline though it never opened online', async ({ page, context }) => {
   await page.goto('/');
   await untilControlled(page);

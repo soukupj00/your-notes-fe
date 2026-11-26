@@ -227,7 +227,11 @@ export function ExcalidrawDialog({
           {/* Actions sit in the header because Excalidraw's mobile toolbar owns the
               bottom edge. The drag clamp above bounds the drawing, not overflow-hidden.
               Excalidraw always draws its light theme, so the browser's own parts in it stay light. */}
-          <div ref={canvasAreaRef} className="min-h-0 flex-1 overflow-hidden [color-scheme:light]">
+          <div
+            ref={canvasAreaRef}
+            data-excalidraw-modal-host
+            className="min-h-0 flex-1 overflow-hidden [color-scheme:light]"
+          >
             <Excalidraw
               initialData={initialScene as never}
               excalidrawAPI={(api: unknown) => {

@@ -3,7 +3,7 @@ import path from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig, type Plugin, type Rollup } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 const EXCALIDRAW_FONTS_URL = '/assets/excalidraw/fonts/';
@@ -38,6 +38,31 @@ function excalidrawFonts(): Plugin {
           source: readFileSync(file),
         });
       }
+    },
+  };
+}
+
+const EXCALIDRAW_MODAL_PARENT =
+  /(parentSelector\s*\?\s*([\w$]+)\?\.querySelector\([\w$.]+\)\s*:\s*)document\.body/;
+
+/**
+ * Excalidraw mounts its dialogs (Help, Mermaid, Reset the canvas) on `<body>`, where the Drawing's
+ * modal dialog takes away their pointer and focus, so they mount in its canvas area instead.
+ * Dev and build alike, since dev serves a pre-bundled copy that Excalidraw's file name does not name.
+ */
+function excalidrawModalsInDialog(): Plugin {
+  return {
+    name: 'excalidraw-modals-in-dialog',
+    transform(code, id) {
+      if (!id.includes('/node_modules/') || !code.includes('"excalidraw-modal-container"')) return;
+      const moved = code.replace(
+        EXCALIDRAW_MODAL_PARENT,
+        '$1$2?.closest("[data-excalidraw-modal-host]") ?? document.body'
+      );
+      if (moved === code) {
+        this.error("Excalidraw's modal container moved; update EXCALIDRAW_MODAL_PARENT.");
+      }
+      return { code: moved, map: null };
     },
   };
 }
@@ -84,6 +109,69 @@ function excalidrawLocales() {
 }
 
 const EXCALIDRAW_LOCALES = excalidrawLocales();
+
+const MERMAID_TO_EXCALIDRAW = '/node_modules/@excalidraw/mermaid-to-excalidraw/';
+
+/** The chunks reachable from `from`, never following a dynamic import made by `lazy`. */
+function reachableChunks(
+  bundle: Rollup.OutputBundle,
+  from: Rollup.OutputChunk[],
+  lazy = new Set<Rollup.OutputChunk>()
+) {
+  const seen = new Set<Rollup.OutputChunk>();
+  const visit = (name: string) => {
+    const chunk = bundle[name];
+    if (chunk?.type !== 'chunk' || seen.has(chunk)) return;
+    seen.add(chunk);
+    chunk.imports.forEach(visit);
+    if (!lazy.has(chunk)) chunk.dynamicImports.forEach(visit);
+  };
+  for (const chunk of from) visit(chunk.fileName);
+  return seen;
+}
+
+/**
+ * Mermaid's diagram types, about 2.4 MiB that few users open, stay out of the precache and are
+ * cached on first use (`runtimeCaching`). Its entry stays: Excalidraw imports it on a paste
+ * outside its try, so offline without it the pasted text was lost.
+ */
+function mermaidChunks() {
+  const diagrams = new Set<string>();
+  const plugin: Plugin = {
+    name: 'mermaid-chunks',
+    apply: 'build',
+    generateBundle(_options, bundle) {
+      const chunks = Object.values(bundle).filter((file) => file.type === 'chunk');
+      const mermaid = chunks.filter(
+        (chunk) =>
+          chunk.isDynamicEntry && chunk.moduleIds.some((id) => id.includes(MERMAID_TO_EXCALIDRAW))
+      );
+      if (mermaid.length === 0) {
+        this.error("Excalidraw's Mermaid tool moved; update MERMAID_TO_EXCALIDRAW.");
+      }
+      const app = reachableChunks(
+        bundle,
+        chunks.filter((chunk) => chunk.isEntry),
+        new Set(mermaid)
+      );
+      const behindMermaid = reachableChunks(bundle, mermaid);
+      for (const chunk of behindMermaid) {
+        if (!app.has(chunk)) diagrams.add(chunk.fileName);
+      }
+      if (diagrams.size === 0) {
+        this.error('Nothing behind Mermaid is left to cache on first use; check `mermaidChunks`.');
+      }
+    },
+  };
+  return {
+    plugin,
+    dropFromPrecache: <Entry extends { url: string }>(entries: Entry[]) => ({
+      manifest: entries.filter((entry) => !diagrams.has(entry.url)),
+    }),
+  };
+}
+
+const MERMAID_CHUNKS = mermaidChunks();
 
 /** Why each source is allowed: docs/architecture/05-server.md, "Security posture". */
 const CONTENT_SECURITY_POLICY = [
@@ -140,7 +228,9 @@ export default defineConfig({
   plugins: [
     contentSecurityPolicy(),
     excalidrawFonts(),
+    excalidrawModalsInDialog(),
     EXCALIDRAW_LOCALES.plugin,
+    MERMAID_CHUNKS.plugin,
     tanstackRouter({
       target: 'react',
       autoCodeSplitting: true,
@@ -165,7 +255,7 @@ export default defineConfig({
           '**/*.{js,css,html,ico,png,svg,json}',
           '**/{bricolage-grotesque,work-sans}-*.woff2',
         ],
-        manifestTransforms: [EXCALIDRAW_LOCALES.dropFromPrecache],
+        manifestTransforms: [EXCALIDRAW_LOCALES.dropFromPrecache, MERMAID_CHUNKS.dropFromPrecache],
         runtimeCaching: [
           {
             // Any destination: Excalidraw also fetches its fonts to subset them into a preview.
@@ -181,6 +271,14 @@ export default defineConfig({
               sameOrigin && url.pathname.startsWith('/assets/') && request.destination === 'font',
             handler: 'CacheFirst',
             options: { cacheName: 'fonts', expiration: { maxEntries: 60 } },
+          },
+          {
+            // The scripts kept out of the precache, Mermaid's about 60. Room for two versions,
+            // so an upgrade never evicts a chunk the open version still needs.
+            urlPattern: ({ request, sameOrigin, url }) =>
+              sameOrigin && url.pathname.startsWith('/assets/') && request.destination === 'script',
+            handler: 'CacheFirst',
+            options: { cacheName: 'scripts', expiration: { maxEntries: 150 } },
           },
         ],
       },
