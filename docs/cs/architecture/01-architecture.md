@@ -91,7 +91,7 @@ Editor postavený na TipTapu je sám malou architekturou ([ADR 0004](../adr/0004
 ## Průřezové záležitosti
 
 - **Motivy**: designové tokeny OKLCH v `src/styles/globals.css`; vlastní `ThemeProvider` přepíná třídu `light`/`dark`; barvy se ukládají jako *tokeny* palety, nikdy jako surové hodnoty, takže režim pro barvoslepé je může přemapovat.
-- **Přístupnost**: pravidla pro 44px dotykové cíle, přesun fokusu na cílový `<h1>` při navigaci a do otevřené poznámky, uzamčení fokusu v průvodci pomocí `inert`, omezení pohybu jako tvrdá podmínka každé animace kromě načítacího kolečka.
+- **Přístupnost**: pravidla pro 44px dotykové cíle, přesun fokusu na cílový `<h1>` při navigaci a do otevřené poznámky, uzamčení fokusu v průvodci pomocí `inert`, omezení pohybu jako tvrdá podmínka každé animace kromě načítacího kolečka, `scroll-padding`, který drží zaměřený prvek mimo přilepenou horní lištu a plovoucí ＋ na telefonu.
 - **i18n**: i18next, `en`/`cs` se záložním jazykem `en`; test hlídá, aby se klíče obou balíčků nerozešly.
 - **Zpracování chyb**: `ErrorBoundary` na nejvyšší úrovni; validace na hranicích (parametry URL přes `validateSearch` routeru, import zálohy přes `parseBackupZip` a každá odpověď serveru přes Zod).
 

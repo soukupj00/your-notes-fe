@@ -132,3 +132,36 @@ test('a dropped label settles into its new place without jumping past it', async
   expect(Math.min(...tops)).toBeGreaterThanOrEqual(Math.min(held, settled) - 2);
   expect(Math.max(...tops)).toBeLessThanOrEqual(Math.max(held, settled) + 2);
 });
+
+test('a row reached by Shift+Tab from below stops clear of the sticky navbar', async ({ page }) => {
+  // A to Z: Alpha, Beta, Delta, then five rows, so Delta can be scrolled up to the navbar.
+  await createLabels(page, 'Alpha', 'Beta', 'Delta', 'Epsilon', 'Eta', 'Gamma', 'Theta', 'Zeta');
+  const viewport = page.viewportSize();
+  if (!viewport) throw new Error('no viewport');
+  await page.setViewportSize({ width: viewport.width, height: 360 });
+
+  // Inside `main`, so not a `banner` landmark; the page's one `header`.
+  const navbar = page.locator('header');
+  const barBottom = async () => {
+    const box = await navbar.boundingBox();
+    if (!box) throw new Error('no navbar');
+    return box.y + box.height;
+  };
+  const delta = page.getByRole('button', { name: 'Move label Delta' });
+  await delta.evaluate((element) => element.focus({ preventScroll: true }));
+  const deltaBox = await delta.boundingBox();
+  if (!deltaBox) throw new Error('no row');
+  await page.evaluate(`scrollBy(0, ${deltaBox.y - (await barBottom()) - 4})`);
+  // Beta's controls, the next stops back, now sit under the navbar.
+  await expect
+    .poll(async () => (await delta.boundingBox())?.y)
+    .toBeLessThan((await barBottom()) + 8);
+
+  await page.keyboard.press('Shift+Tab');
+  const focused = page.locator(':focus');
+  await expect(focused).toHaveAccessibleName(/Beta$/);
+  const box = await focused.boundingBox();
+  if (!box) throw new Error('no focus');
+  // The focus outline is drawn 4px outside the box.
+  expect(box.y - 4).toBeGreaterThanOrEqual(await barBottom());
+});
