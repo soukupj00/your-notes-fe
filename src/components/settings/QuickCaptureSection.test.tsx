@@ -74,12 +74,20 @@ describe('QuickCaptureSection', () => {
         })),
       })
     );
+    const user = userEvent.setup();
     render(<QuickCaptureSection />, { wrapper });
 
-    await waitFor(() => expect(switchFor('text')).toBeDisabled());
-    expect(screen.getByText('settings.quickCapture.lastOne')).toBeInTheDocument();
+    // Reachable and explained, not `disabled`, so a keyboard lands on it and hears why.
+    const last = switchFor('text');
+    await waitFor(() => expect(last).toHaveAttribute('aria-disabled', 'true'));
+    expect(last).toBeEnabled();
+    expect(last).toHaveAccessibleDescription('settings.quickCapture.lastOne');
+    await user.click(last);
+    expect(last).toBeChecked();
+    expect((await storedPrefs()).quickCapture.find((entry) => entry.id === 'text')?.on).toBe(true);
     // The others are still free to come back on.
     expect(switchFor('audio')).toBeEnabled();
+    expect(switchFor('audio')).not.toHaveAttribute('aria-disabled');
   });
 
   it('offers the placement as Left and Right tiles and persists the side', async () => {
