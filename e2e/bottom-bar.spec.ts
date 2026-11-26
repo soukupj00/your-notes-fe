@@ -45,6 +45,37 @@ test('a card under the floating ＋ strip still takes clicks', async ({ page }) 
   await expect(card(page, 'B')).toHaveCount(0);
 });
 
+test('Tab onto a control under the floating ＋ scrolls it clear', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'the ＋ floats over the wall only on a phone');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await skipTour(page);
+  await page.goto('/');
+  for (const title of ['A', 'B']) await newTextNote(page, title);
+
+  // Newest first, so A sits in the right column, above the ＋. The window is cut so A's trash
+  // button is fully on screen but under the ＋: the browser has no reason to scroll by itself.
+  const plus = page.getByRole('button', { name: 'New note' });
+  const trash = card(page, 'A').getByRole('button', { name: /^Move to trash/ });
+  const top = await stillBox(trash);
+  const viewport = page.viewportSize();
+  if (!viewport) throw new Error('no viewport');
+  await page.setViewportSize({ width: viewport.width, height: Math.ceil(top.y + top.height + 30) });
+  const under = await stillBox(trash);
+  const plusBox = await stillBox(plus);
+  expect(under.y + under.height).toBeGreaterThan(plusBox.y);
+  expect(under.x + under.width).toBeGreaterThan(plusBox.x);
+  expect(under.x).toBeLessThan(plusBox.x + plusBox.width);
+
+  await card(page, 'A')
+    .getByRole('button', { name: /^Archive/ })
+    .evaluate((element) => element.focus({ preventScroll: true }));
+  await page.keyboard.press('Tab');
+  await expect(trash).toBeFocused();
+  const focused = await stillBox(trash);
+  const plusAfter = await stillBox(plus);
+  expect(focused.y + focused.height).toBeLessThanOrEqual(plusAfter.y);
+});
+
 test('a tap on the dimmed wall closes the dial without opening the card under it', async ({
   page,
   isMobile,

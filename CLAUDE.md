@@ -178,6 +178,7 @@ The software keyboard is `--keyboard-inset`, published by `useKeyboardInset` fro
 It is a CSS variable rather than React state so the editor does not re-render on every frame of the keyboard's slide.
 A view's floating action sits at the distance in `floatingBottomBar.ts`, shared with the speed dial because both land in that corner.
 The view that floats one also adds its bottom clearance (`FLOATING_BOTTOM_BAR_CLEARANCE`, in `NotesView`), so the shell keeps no list of such routes.
+It also carries `data-under-floating-bar`, which gives the root a phone's `scroll-padding-bottom` (`globals.css`), so a control reached by Tab scrolls clear of the bar too.
 
 **Checklists on a Card** are ticked by tapping the box or the words (`lib/point-over-text.ts`); press-and-hold opens the Note (`lib/long-press.ts`).
 The stored `<label>` wraps only the box, so `NoteBody` names each box by its item's words as it renders (`nameChecklistBoxes`).
