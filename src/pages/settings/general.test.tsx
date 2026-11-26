@@ -71,6 +71,32 @@ describe('the General page', () => {
     expect(screen.queryByText('settings.sinkCheckedItems.description')).toBeNull();
   });
 
+  it.each([
+    ['settings.reducedMotion', 'settings.reducedMotion.description'],
+    ['settings.colorBlind', 'settings.colorBlind.description'],
+    ['settings.sinkCheckedItems', ''],
+  ])("names the %s switch by its row's label, which toggles it", async (keys, description) => {
+    const user = userEvent.setup();
+    mount();
+
+    const toggle = await screen.findByRole('switch', { name: `${keys}.label` });
+    expect(toggle).not.toHaveAttribute('aria-label');
+    expect(toggle).toHaveAccessibleDescription(description);
+    const before = toggle.getAttribute('aria-checked');
+    await user.click(screen.getByText(`${keys}.label`));
+    expect(toggle).not.toHaveAttribute('aria-checked', before);
+  });
+
+  it("names the language picker by its row's label", async () => {
+    mount();
+
+    const picker = await screen.findByRole('combobox', { name: 'settings.locale.label' });
+    expect(picker).not.toHaveAttribute('aria-label');
+    expect([...(picker as HTMLButtonElement).labels].map((l) => l.textContent)).toEqual([
+      'settings.locale.label',
+    ]);
+  });
+
   it('makes the colour-blind palette a plain switch with its description', async () => {
     mount();
 

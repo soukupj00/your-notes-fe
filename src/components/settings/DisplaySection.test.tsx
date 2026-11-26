@@ -45,7 +45,8 @@ describe('DisplaySection', () => {
     render(<DisplaySection />, { wrapper });
 
     expect(await screen.findByRole('radiogroup', { name: 'settings.density.label' })).toBeVisible();
-    expect(screen.getAllByRole('switch').map((s) => s.getAttribute('aria-label'))).toEqual([
+    const switches = screen.getAllByRole('switch') as HTMLButtonElement[];
+    expect(switches.map((s) => s.labels[0]?.textContent)).toEqual([
       'settings.reducedMotion.label',
       'settings.colorBlind.label',
     ]);
